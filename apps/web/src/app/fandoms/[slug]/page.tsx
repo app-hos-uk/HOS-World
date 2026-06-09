@@ -99,12 +99,36 @@ function FandomProducts({ fandomSlug, fandomName }: { fandomSlug: string; fandom
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getProducts({ fandom: fandomSlug, limit: 12 });
-      if (response?.data) {
-        setProducts((response.data as any).items || (response.data as any).data || []);
+      const fandomMeta = fandoms[fandomSlug];
+      const fandomFilters = [fandomSlug, fandomMeta?.name].filter(Boolean) as string[];
+
+      let items: any[] = [];
+
+      try {
+        const response = await apiClient.searchProducts('', {
+          fandoms: fandomFilters,
+          limit: 12,
+          page: 1,
+        });
+        const data = response?.data as { products?: any[] } | undefined;
+        items = Array.isArray(data?.products) ? data.products : [];
+      } catch {
+        // Fall back to REST products API (slug + display name)
+        for (const fandomValue of fandomFilters) {
+          const response = await apiClient.getProducts({ fandom: fandomValue, limit: 12 });
+          const paginated = response?.data as { data?: any[] } | undefined;
+          const batch = Array.isArray(paginated?.data) ? paginated.data : [];
+          if (batch.length > 0) {
+            items = batch;
+            break;
+          }
+        }
       }
-    } catch (err: any) {
+
+      setProducts(items);
+    } catch (err: unknown) {
       console.error('Error fetching products:', err);
+      setProducts([]);
     } finally {
       setLoading(false);
     }

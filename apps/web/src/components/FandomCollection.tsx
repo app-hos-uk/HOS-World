@@ -31,17 +31,25 @@ function resolveImageUrl(src: string | null | undefined): string {
   return origin + (src.startsWith('/') ? src : `/${src}`);
 }
 
-function getReferenceFandoms(limit?: number): FandomItem[] {
+function buildFranchiseList(apiFandoms: Array<{ slug?: string; id?: string; image?: string }>, limit?: number): FandomItem[] {
+  const apiSlugSet = new Set(
+    apiFandoms.map((f) => f.slug || f.id).filter((s): s is string => Boolean(s)),
+  );
+
   const items = REFERENCE_FRANCHISE_ORDER.map((key) => {
     const ref = REFERENCE_ASSETS.franchises[key];
+    const apiMatch = apiFandoms.find((f) => (f.slug || f.id) === key);
     return {
       id: key,
       slug: key,
       name: ref.name,
       logo: ref.logo,
       photo: 'photo' in ref ? ref.photo : false,
+      image: apiMatch?.image ? resolveImageUrl(apiMatch.image) : undefined,
+      hasProducts: apiSlugSet.has(key),
     };
   });
+
   return limit != null ? items.slice(0, limit) : items;
 }
 
@@ -60,35 +68,17 @@ export function FandomCollection({ limit, showAllPage = false }: FandomCollectio
       const response = await apiClient.getFandoms();
       const list = response?.data;
       const arr = Array.isArray(list) ? list : [];
-
-      if (arr.length > 0) {
-        const mapped: FandomItem[] = arr.map((f: any) => {
-          const slug = f.slug || f.id;
-          const ref = REFERENCE_ASSETS.franchises[slug as keyof typeof REFERENCE_ASSETS.franchises];
-          return {
-            id: f.id ?? slug,
-            slug,
-            name: f.name,
-            image: resolveImageUrl(f.image),
-            logo: ref?.logo,
-            photo: ref && 'photo' in ref ? ref.photo : false,
-          };
-        });
-        setFandoms(limit != null ? mapped.slice(0, limit) : mapped);
-        setUsingReference(false);
-      } else {
-        setFandoms(getReferenceFandoms(limit));
-        setUsingReference(true);
-      }
+      setFandoms(buildFranchiseList(arr, limit));
+      setUsingReference(arr.length === 0);
     } catch {
-      setFandoms(getReferenceFandoms(limit));
+      setFandoms(buildFranchiseList([], limit));
       setUsingReference(true);
     } finally {
       setLoading(false);
     }
   };
 
-  const skeletonCount = showAllPage ? 12 : 8;
+  const skeletonCount = showAllPage ? 12 : Math.min(limit ?? 12, 12);
   const gridClass = showAllPage
     ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5'
     : 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5';

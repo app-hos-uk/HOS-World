@@ -50,7 +50,7 @@ function FooterNavColumn({
   links: Array<{ label: string; href: string; external?: boolean }>;
 }) {
   return (
-    <nav aria-label={ariaLabel}>
+    <nav aria-label={ariaLabel} className="flex flex-col min-w-0">
       <h4 className="text-hos-text-secondary text-sm font-bold font-ui mb-4">{title}</h4>
       <ul className="space-y-2 text-hos-text-muted text-[13px]">
         {links.map((link) => (
@@ -106,7 +106,7 @@ function FooterNewsletter() {
   }
 
   return (
-    <div>
+    <div className="flex flex-col min-w-0">
       <h4 className="text-hos-text-secondary text-sm font-bold font-ui mb-4">Newsletter</h4>
       <p className="text-hos-text-muted text-[13px] leading-relaxed mb-3">
         Get updates on new collections, vendor spotlights, and exclusive offers.
@@ -182,8 +182,8 @@ export function Footer() {
     <footer className="w-full bg-hos-bg border-t border-hos-border" role="contentinfo">
       <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Row 1: brand, shop, policies, newsletter */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-          <div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-10 lg:gap-x-14 items-start [&>div]:min-w-0">
+          <div className="flex flex-col">
             <BrandLogo variant="stacked" linked href="/shop" />
             <p className="text-hos-text-muted text-[13px] leading-relaxed mt-4">{FOOTER_ABOUT}</p>
 

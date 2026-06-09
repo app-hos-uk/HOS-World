@@ -42,7 +42,7 @@ export default function ShopHomePage() {
           showArrows={true}
         />
 
-        <FandomCollection limit={8} />
+        <FandomCollection limit={12} />
 
         <BrowseByDepartment />
 
