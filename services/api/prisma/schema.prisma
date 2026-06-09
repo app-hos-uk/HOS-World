@@ -3915,3 +3915,51 @@ model FoundingMember {
   @@index([registeredAt])
   @@map("founding_members")
 }
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model BlogCategory {
+  id          String     @id @default(uuid())
+  name        String
+  slug        String     @unique
+  description String?    @db.Text
+  posts       BlogPost[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([slug])
+  @@map("blog_categories")
+}
+
+model BlogPost {
+  id              String        @id @default(uuid())
+  title           String
+  slug            String        @unique
+  excerpt         String        @db.Text
+  content         String        @db.Text
+  contentHtml     String        @db.Text
+  coverImage      String?
+  coverImageAlt   String?
+  coverImageTitle String?
+  author          String
+  status          BlogStatus    @default(DRAFT)
+  publishedAt     DateTime?
+  readingTime     Int?
+  seoTitle        String?
+  metaDescription String?       @db.Text
+  focusKeyword    String?
+  canonicalUrl    String?
+  categoryId      String?
+  category        BlogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([slug])
+  @@index([status, publishedAt])
+  @@index([categoryId])
+  @@map("blog_posts")
+}

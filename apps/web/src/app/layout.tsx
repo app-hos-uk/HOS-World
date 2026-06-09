@@ -7,6 +7,7 @@ import { CurrencyProvider } from '@/contexts/CurrencyContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { GDPRConsentBanner } from '@/components/GDPRConsentBanner';
 import { GoogleTags } from '@/components/analytics/GoogleTags';
+import { MetaPixel } from '@/components/analytics/MetaPixel';
 import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider';
 import { ConditionalSiteStructuredData } from '@/components/analytics/ConditionalSiteStructuredData';
 import { Toaster } from '@/components/Toaster';
@@ -89,6 +90,9 @@ export default function RootLayout({
     <html lang="en-US">
       <body className={`${cormorant.variable} ${figtree.variable} ${inter.variable} storefront-theme antialiased`}>
         <GoogleTags />
+        <Suspense fallback={null}>
+          <MetaPixel />
+        </Suspense>
         <ConditionalSiteStructuredData />
         <QueryProvider>
           <AuthProviderWrapper>

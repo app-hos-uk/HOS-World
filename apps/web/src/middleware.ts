@@ -62,6 +62,7 @@ const BYPASS_PREFIXES = [
   '/gift-cards',
   '/track-order',
   '/help',
+  '/blog',
   '/privacy-policy',
   '/terms',
   '/fandoms',

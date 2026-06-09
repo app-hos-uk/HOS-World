@@ -546,3 +546,24 @@ h6 {
          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hos-gold-ring focus-visible:ring-offset-2 focus-visible:ring-offset-hos-bg
          transition-colors duration-200;
 }
+
+/* Blog content typography */
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  @apply text-hos-text-secondary font-semibold mt-8 mb-4;
+}
+.prose h2 { @apply text-2xl; }
+.prose h3 { @apply text-xl; }
+.prose h4 { @apply text-lg; }
+.prose p { @apply text-hos-text-muted leading-relaxed mb-4; }
+.prose ul, .prose ol { @apply text-hos-text-muted mb-4 pl-6; }
+.prose ul { @apply list-disc; }
+.prose ol { @apply list-decimal; }
+.prose li { @apply mb-1; }
+.prose a { @apply text-hos-gold hover:underline; }
+.prose blockquote {
+  @apply border-l-4 border-hos-gold pl-4 italic text-hos-text-muted my-4;
+}
+.prose img { @apply rounded-lg max-w-full h-auto my-4; }
+.prose table { @apply w-full border-collapse my-4 text-sm; }
+.prose th, .prose td { @apply border border-hos-border px-3 py-2 text-left; }
+.prose th { @apply bg-hos-bg-tertiary text-hos-text-secondary; }

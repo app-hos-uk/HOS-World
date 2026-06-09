@@ -4,6 +4,40 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   'https://hos-marketplaceapi-production.up.railway.app';
 
+async function fetchBlogSlugs(): Promise<string[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/blog/posts?limit=500`, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    const posts = json?.data?.posts ?? [];
+    if (!Array.isArray(posts)) return [];
+    return posts
+      .map((p: { slug?: string }) => p.slug)
+      .filter((s): s is string => Boolean(s));
+  } catch {
+    return [];
+  }
+}
+
+async function fetchBlogCategorySlugs(): Promise<string[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/blog/categories`, {
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    const categories = json?.data ?? [];
+    if (!Array.isArray(categories)) return [];
+    return categories
+      .map((c: { slug?: string }) => c.slug)
+      .filter((s): s is string => Boolean(s));
+  } catch {
+    return [];
+  }
+}
+
 async function fetchSlugs(endpoint: string, field: string): Promise<string[]> {
   try {
     const res = await fetch(`${API_BASE}/api/${endpoint}`, {
@@ -38,6 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/shop',
     '/products',
     '/fandoms',
+    '/blog',
     '/login',
     '/help',
     '/support/kb',
@@ -65,9 +100,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ];
 
-  const [productSlugs, sellerSlugs] = await Promise.all([
+  const [productSlugs, sellerSlugs, blogSlugs, blogCategorySlugs] = await Promise.all([
     fetchSlugs('products?limit=500&status=ACTIVE', 'slug'),
     fetchSlugs('sellers?limit=200', 'slug'),
+    fetchBlogSlugs(),
+    fetchBlogCategorySlugs(),
   ]);
 
   for (const slug of productSlugs) {
@@ -85,6 +122,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.6,
+    });
+  }
+
+  for (const slug of blogSlugs) {
+    entries.push({
+      url: `${baseUrl}/blog/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+    });
+  }
+
+  for (const slug of blogCategorySlugs) {
+    entries.push({
+      url: `${baseUrl}/blog/category/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.65,
     });
   }
 

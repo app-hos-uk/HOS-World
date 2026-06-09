@@ -54,7 +54,7 @@ export default function CMSDashboardPage() {
       const [pagesResponse, bannersResponse, blogPostsResponse] = await Promise.all([
         apiClient.getCMSPages().catch(() => ({ data: [] })),
         apiClient.getCMSBanners().catch(() => ({ data: [] })),
-        apiClient.getCMSBlogPosts(100).catch(() => ({ data: [] })),
+        apiClient.getAdminBlogPosts(100).catch(() => ({ data: [] })),
       ]);
 
       const pages = Array.isArray(pagesResponse?.data) ? pagesResponse.data : [];
@@ -68,7 +68,7 @@ export default function CMSDashboardPage() {
         totalBlogPosts: blogPosts.length,
         publishedPages: pages.filter((p: any) => p.publishedAt).length,
         activeBanners: activeBanners.length,
-        publishedPosts: blogPosts.filter((p: any) => p.publishedAt).length,
+        publishedPosts: blogPosts.filter((p: any) => p.status === 'PUBLISHED').length,
       });
     } catch (err: unknown) {
       console.error('Error loading CMS dashboard:', err);
@@ -188,7 +188,7 @@ export default function CMSDashboardPage() {
                 </div>
               </Link>
               <Link
-                href="/cms/blog?action=create"
+                href="/cms/blog/new"
                 className="flex items-center gap-3 p-4 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
               >
                 <span className="text-2xl">✍️</span>

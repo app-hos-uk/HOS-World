@@ -30,6 +30,7 @@ const menuItems: MenuItem[] = [
       { title: 'Pages', href: '/cms/pages', icon: '📄' },
       { title: 'Banners', href: '/cms/banners', icon: '🖼️' },
       { title: 'Blog Posts', href: '/cms/blog', icon: '✍️' },
+      { title: 'Blog Categories', href: '/cms/blog/categories', icon: '🏷️' },
     ],
   },
   {

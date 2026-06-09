@@ -35,6 +35,7 @@ export function expandDepartmentCategories(slugs: string[]): string[] {
 /** Primary storefront nav — shared by header and footer */
 export const STOREFRONT_NAV_LINKS: NavLink[] = [
   { label: 'Deals of the day', href: '/products?sortBy=price_asc' },
+  { label: 'Blog', href: '/blog' },
   { label: 'Shop by franchise', href: '/fandoms' },
   { label: 'Collectibles & replicas', href: '/products?category=collectibles' },
   { label: 'Apparel & robes', href: '/products?category=apparel' },
@@ -45,6 +46,7 @@ export const STOREFRONT_NAV_LINKS: NavLink[] = [
 /** Footer column: main shop / navigation links */
 export const FOOTER_SHOP_LINKS: NavLink[] = [
   { label: 'Shop Now', href: '/fandoms' },
+  { label: 'Blog', href: '/blog' },
   { label: 'On Sale', href: '/products' },
   { label: 'Gift Cards', href: '/gift-cards' },
   { label: 'My Account', href: '/customer/dashboard' },

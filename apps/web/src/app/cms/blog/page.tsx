@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { CMSLayout } from '@/components/CMSLayout';
 import Image from 'next/image';
@@ -9,24 +10,23 @@ import { useToast } from '@/hooks/useToast';
 import { CmsPortalErrorBanner } from '@/components/CmsPortalErrorBanner';
 import { cmsActionToastMessage, cmsLoadingErrorMessage } from '@/lib/cmsPortalFeedback';
 
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  coverImage?: string;
+  author: string;
+  status: string;
+  publishedAt?: string;
+  category?: { name: string };
+}
+
 export default function CMSBlogPage() {
   const toast = useToast();
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [editingPostId, setEditingPostId] = useState<string | null>(null);
-  const [creatingPost, setCreatingPost] = useState(false);
-  const [updatingPost, setUpdatingPost] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    slug: '',
-    excerpt: '',
-    content: '',
-    coverImage: '',
-    author: '',
-  });
 
   useEffect(() => {
     loadBlogPosts();
@@ -36,12 +36,8 @@ export default function CMSBlogPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getCMSBlogPosts(100);
-      if (response?.data) {
-        setPosts(Array.isArray(response.data) ? response.data : []);
-      } else {
-        setPosts([]);
-      }
+      const response = await apiClient.getAdminBlogPosts(100);
+      setPosts(Array.isArray(response?.data) ? response.data : []);
     } catch (err: unknown) {
       console.error('Error loading blog posts:', err);
       setError(cmsLoadingErrorMessage(err));
@@ -51,89 +47,24 @@ export default function CMSBlogPage() {
     }
   };
 
-  const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (creatingPost) return;
+  const handleDeletePost = async (post: BlogPost) => {
+    if (!window.confirm(`Delete "${post.title}"? This cannot be undone.`)) return;
     try {
-      setCreatingPost(true);
-      await apiClient.createCMSBlogPost(formData);
-      toast.success('Blog post created successfully');
-      setShowCreateForm(false);
-      setFormData({
-        title: '',
-        slug: '',
-        excerpt: '',
-        content: '',
-        coverImage: '',
-        author: '',
-      });
-      loadBlogPosts();
-    } catch (err: unknown) {
-      toast.error(cmsActionToastMessage(err, 'Failed to create blog post'));
-    } finally {
-      setCreatingPost(false);
-    }
-  };
-
-  const handleEditPost = (post: any) => {
-    setFormData({
-      title: post.title || '',
-      slug: post.slug || '',
-      excerpt: post.excerpt || '',
-      content: post.content || '',
-      coverImage: post.coverImage || '',
-      author: post.author || '',
-    });
-    setEditingPostId(post.id);
-    setShowEditForm(true);
-    setShowCreateForm(false);
-  };
-
-  const handleUpdatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingPostId || updatingPost) return;
-    try {
-      setUpdatingPost(true);
-      await apiClient.updateCMSBlogPost(editingPostId, formData);
-      toast.success('Blog post updated successfully');
-      setShowEditForm(false);
-      setEditingPostId(null);
-      setFormData({
-        title: '',
-        slug: '',
-        excerpt: '',
-        content: '',
-        coverImage: '',
-        author: '',
-      });
-      loadBlogPosts();
-    } catch (err: unknown) {
-      toast.error(cmsActionToastMessage(err, 'Failed to update blog post'));
-    } finally {
-      setUpdatingPost(false);
-    }
-  };
-
-  const handleDeletePost = async (post: any) => {
-    if (!window.confirm(`Are you sure you want to delete "${post.title}"? This action cannot be undone.`)) {
-      return;
-    }
-    try {
-      await apiClient.deleteCMSBlogPost(post.id);
-      toast.success('Blog post deleted successfully');
+      await apiClient.deleteBlogPost(post.id);
+      toast.success('Blog post deleted');
       loadBlogPosts();
     } catch (err: unknown) {
       toast.error(cmsActionToastMessage(err, 'Failed to delete blog post'));
     }
   };
 
-  const handleTogglePublish = async (post: any) => {
+  const handleTogglePublish = async (post: BlogPost) => {
     try {
-      if (post.publishedAt) {
-        await apiClient.unpublishCMSBlogPost(post.id);
+      if (post.status === 'PUBLISHED') {
+        await apiClient.unpublishBlogPost(post.id);
         toast.success('Blog post unpublished');
       } else {
-        await apiClient.publishCMSBlogPost(post.id);
+        await apiClient.publishBlogPost(post.id);
         toast.success('Blog post published');
       }
       loadBlogPosts();
@@ -160,216 +91,23 @@ export default function CMSBlogPage() {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-hos-text-secondary">Blog Posts</h1>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
-            >
-              + Write Post
-            </button>
+            <div className="flex gap-2">
+              <Link
+                href="/cms/blog/categories"
+                className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
+              >
+                Categories
+              </Link>
+              <Link
+                href="/cms/blog/new"
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
+              >
+                + Write Post
+              </Link>
+            </div>
           </div>
 
           <CmsPortalErrorBanner message={error} />
-
-          {showEditForm && editingPostId && (
-            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Edit Blog Post</h2>
-              <form onSubmit={handleUpdatePost} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Post Title</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                    placeholder="Blog post title"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Slug</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.slug}
-                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                      placeholder="blog-post-slug"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Author</label>
-                    <input
-                      type="text"
-                      value={formData.author}
-                      onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                      placeholder="Author name"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Excerpt</label>
-                  <textarea
-                    required
-                    value={formData.excerpt}
-                    onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                    rows={2}
-                    placeholder="Short excerpt or summary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Cover Image URL</label>
-                  <input
-                    type="url"
-                    value={formData.coverImage}
-                    onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                    placeholder="https://example.com/image.jpg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Content</label>
-                  <textarea
-                    required
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                    rows={15}
-                    placeholder="Blog post content (Markdown or HTML)"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    disabled={updatingPost}
-                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {updatingPost ? 'Saving...' : 'Save Changes'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowEditForm(false);
-                      setEditingPostId(null);
-                      setFormData({
-                        title: '',
-                        slug: '',
-                        excerpt: '',
-                        content: '',
-                        coverImage: '',
-                        author: '',
-                      });
-                    }}
-                    className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {showCreateForm && (
-            <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold mb-4">Create New Blog Post</h2>
-              <form onSubmit={handleCreatePost} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Post Title</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                    placeholder="Blog post title"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Slug</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.slug}
-                      onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                      placeholder="blog-post-slug"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Author</label>
-                    <input
-                      type="text"
-                      value={formData.author}
-                      onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                      placeholder="Author name"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Excerpt</label>
-                  <textarea
-                    required
-                    value={formData.excerpt}
-                    onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                    rows={2}
-                    placeholder="Short excerpt or summary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Cover Image URL</label>
-                  <input
-                    type="url"
-                    value={formData.coverImage}
-                    onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                    placeholder="https://example.com/image.jpg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Content</label>
-                  <textarea
-                    required
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                    rows={15}
-                    placeholder="Blog post content (Markdown or HTML)"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    disabled={creatingPost}
-                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {creatingPost ? 'Creating...' : 'Create Post'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowCreateForm(false);
-                      setFormData({
-                        title: '',
-                        slug: '',
-                        excerpt: '',
-                        content: '',
-                        coverImage: '',
-                        author: '',
-                      });
-                    }}
-                    className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
 
           <div className="bg-hos-bg-secondary rounded-lg shadow">
             <div className="p-4 border-b border-hos-border">
@@ -378,8 +116,10 @@ export default function CMSBlogPage() {
             <div className="p-4">
               {posts.length === 0 ? (
                 <div className="text-center py-8 text-hos-text-muted">
-                  <p>No blog posts found.</p>
-                  <p className="text-sm mt-2">Create your first blog post to get started.</p>
+                  <p>No blog posts yet.</p>
+                  <Link href="/cms/blog/new" className="text-hos-gold hover:underline text-sm mt-2 inline-block">
+                    Create your first post
+                  </Link>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -394,48 +134,45 @@ export default function CMSBlogPage() {
                             src={post.coverImage}
                             alt={post.title}
                             width={128}
-                            height={128}
-                            className="object-cover rounded"
+                            height={80}
+                            className="object-cover rounded w-32 h-20"
                           />
                         )}
-                        <div className="flex-1">
-                          <h3 className="text-lg font-medium text-hos-text-secondary">{post.title}</h3>
-                          <p className="text-sm text-hos-text-secondary mt-1">{post.excerpt}</p>
-                          <div className="flex items-center gap-4 mt-2 text-xs text-hos-text-muted">
-                            {post.author && <span>By {post.author}</span>}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-medium text-hos-text-secondary truncate">{post.title}</h3>
+                          <p className="text-sm text-hos-text-muted mt-1 line-clamp-1">{post.excerpt}</p>
+                          <div className="flex items-center gap-3 mt-2 text-xs text-hos-text-muted">
+                            <span>By {post.author}</span>
+                            {post.category && <span>{post.category.name}</span>}
                             {post.publishedAt && (
-                              <span>
-                                Published: {new Date(post.publishedAt).toLocaleDateString()}
-                              </span>
+                              <span>Published {new Date(post.publishedAt).toLocaleDateString()}</span>
                             )}
                           </div>
-                          {post.publishedAt ? (
-                            <span className="inline-block mt-2 text-xs bg-green-500/15 text-green-300 px-2 py-1 rounded">
-                              Published
-                            </span>
-                          ) : (
-                            <span className="inline-block mt-2 text-xs bg-yellow-500/15 text-yellow-300 px-2 py-1 rounded">
-                              Draft
-                            </span>
-                          )}
+                          <span className={`inline-block mt-2 text-xs px-2 py-1 rounded ${
+                            post.status === 'PUBLISHED'
+                              ? 'bg-green-500/15 text-green-300'
+                              : 'bg-yellow-500/15 text-yellow-300'
+                          }`}>
+                            {post.status === 'PUBLISHED' ? 'Published' : 'Draft'}
+                          </span>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 shrink-0">
                           <button
                             onClick={() => handleTogglePublish(post)}
                             className={`px-3 py-1 text-sm rounded ${
-                              post.publishedAt
-                                ? 'bg-yellow-500/10 text-white hover:bg-yellow-600'
+                              post.status === 'PUBLISHED'
+                                ? 'bg-yellow-500/10 text-yellow-300 hover:bg-yellow-500/20'
                                 : 'bg-green-600 text-white hover:bg-green-700'
                             }`}
                           >
-                            {post.publishedAt ? 'Unpublish' : 'Publish'}
+                            {post.status === 'PUBLISHED' ? 'Unpublish' : 'Publish'}
                           </button>
-                          <button
-                            onClick={() => handleEditPost(post)}
+                          <Link
+                            href={`/cms/blog/${post.id}/edit`}
                             className="px-3 py-1 text-sm bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover"
                           >
                             Edit
-                          </button>
+                          </Link>
                           <button
                             onClick={() => handleDeletePost(post)}
                             className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
@@ -455,4 +192,3 @@ export default function CMSBlogPage() {
     </RouteGuard>
   );
 }
-

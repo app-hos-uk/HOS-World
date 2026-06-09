@@ -53,6 +53,7 @@ import { SupportModule } from './support/support.module';
 import { WhatsAppModule } from './whatsapp/whatsapp.module';
 import { TaxonomyModule } from './taxonomy/taxonomy.module';
 import { CMSModule } from './cms/cms.module';
+import { BlogModule } from './blog/blog.module';
 import { CollectionsModule } from './collections/collections.module';
 import { BadgesModule } from './badges/badges.module';
 import { QuestsModule } from './quests/quests.module';
@@ -166,6 +167,7 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     WhatsAppModule,
     TaxonomyModule,
     CMSModule,
+    BlogModule,
     CollectionsModule,
     BadgesModule,
     QuestsModule,

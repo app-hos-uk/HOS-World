@@ -8,6 +8,7 @@ const ALLOWED_REVALIDATE_PREFIXES = [
   '/collections',
   '/sellers',
   '/help',
+  '/blog',
   '/shipping',
   '/founding-members',
   '/universes',

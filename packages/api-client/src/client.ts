@@ -3920,6 +3920,111 @@ export class ApiClient {
     });
   }
 
+  // Native Blog (Prisma-backed)
+  async getBlogPosts(params?: {
+    category?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams();
+    if (params?.category) query.set('category', params.category);
+    if (params?.search) query.set('search', params.search);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return this.request<ApiResponse<any>>(`/blog/posts${qs ? `?${qs}` : ''}`);
+  }
+
+  async getBlogPostBySlug(slug: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/blog/posts/${slug}`);
+  }
+
+  async searchBlogPosts(q: string, category?: string): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams({ q });
+    if (category) query.set('category', category);
+    return this.request<ApiResponse<any>>(`/blog/search?${query.toString()}`);
+  }
+
+  async getBlogCategories(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/blog/categories');
+  }
+
+  async getBlogCategoryBySlug(slug: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/blog/categories/${slug}`);
+  }
+
+  async getAdminBlogPosts(limit = 100): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>(`/blog/admin/posts?limit=${limit}`);
+  }
+
+  async getAdminBlogPost(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/blog/admin/posts/${id}`);
+  }
+
+  async createBlogPost(data: Record<string, unknown>): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/blog/admin/posts', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateBlogPost(id: string, data: Record<string, unknown>): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/blog/admin/posts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteBlogPost(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/blog/admin/posts/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async publishBlogPost(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/blog/admin/posts/${id}/publish`, {
+      method: 'POST',
+    });
+  }
+
+  async unpublishBlogPost(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/blog/admin/posts/${id}/unpublish`, {
+      method: 'POST',
+    });
+  }
+
+  async getAdminBlogCategories(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/blog/admin/categories');
+  }
+
+  async createBlogCategory(data: {
+    name: string;
+    slug?: string;
+    description?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/blog/admin/categories', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateBlogCategory(
+    id: string,
+    data: { name?: string; slug?: string; description?: string },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/blog/admin/categories/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteBlogCategory(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/blog/admin/categories/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // CMS Media - Uses uploads endpoint
   async getCMSMedia(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/cms/media', {

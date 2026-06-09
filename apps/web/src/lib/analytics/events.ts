@@ -1,5 +1,11 @@
 import { hasAnalyticsConsent } from './consent';
 import { gtag, isAnyGoogleTagEnabled } from './gtag';
+import {
+  trackMetaAddToCart,
+  trackMetaInitiateCheckout,
+  trackMetaPurchase,
+  trackMetaViewContent,
+} from './meta-events';
 
 type AnalyticsItem = {
   item_id: string;
@@ -40,28 +46,36 @@ function toItem(product: {
 }
 
 export function trackViewItem(product: Parameters<typeof toItem>[0]): void {
-  if (!canTrack() || !product) return;
+  if (!product) return;
 
-  const item = toItem(product);
-  gtag('event', 'view_item', {
-    currency: product.currency || 'USD',
-    value: product.price,
-    items: [item],
-  });
+  if (canTrack()) {
+    const item = toItem(product);
+    gtag('event', 'view_item', {
+      currency: product.currency || 'USD',
+      value: product.price,
+      items: [item],
+    });
+  }
+
+  trackMetaViewContent(product);
 }
 
 export function trackAddToCart(
   product: Parameters<typeof toItem>[0],
   quantity = 1,
 ): void {
-  if (!canTrack() || !product) return;
+  if (!product) return;
 
-  const item = toItem(product, quantity);
-  gtag('event', 'add_to_cart', {
-    currency: product.currency || 'USD',
-    value: (product.price || 0) * quantity,
-    items: [item],
-  });
+  if (canTrack()) {
+    const item = toItem(product, quantity);
+    gtag('event', 'add_to_cart', {
+      currency: product.currency || 'USD',
+      value: (product.price || 0) * quantity,
+      items: [item],
+    });
+  }
+
+  trackMetaAddToCart(product, quantity);
 }
 
 export function trackBeginCheckout(cart: {
@@ -75,25 +89,37 @@ export function trackBeginCheckout(cart: {
     price?: number;
   }>;
 }): void {
-  if (!canTrack() || !cart?.items?.length) return;
+  if (!cart?.items?.length) return;
 
-  const items = cart.items.map((line) =>
-    toItem(
-      {
-        id: line.productId || line.product?.id,
-        name: line.product?.name,
-        price: line.price ?? line.product?.price,
-        currency: cart.currency || line.product?.currency,
-        fandom: line.product?.fandom,
-      },
-      line.quantity ?? 1,
-    ),
-  );
+  if (canTrack()) {
+    const items = cart.items.map((line) =>
+      toItem(
+        {
+          id: line.productId || line.product?.id,
+          name: line.product?.name,
+          price: line.price ?? line.product?.price,
+          currency: cart.currency || line.product?.currency,
+          fandom: line.product?.fandom,
+        },
+        line.quantity ?? 1,
+      ),
+    );
 
-  gtag('event', 'begin_checkout', {
-    currency: cart.currency || 'USD',
-    value: cart.total ?? cart.subtotal ?? 0,
-    items,
+    gtag('event', 'begin_checkout', {
+      currency: cart.currency || 'USD',
+      value: cart.total ?? cart.subtotal ?? 0,
+      items,
+    });
+  }
+
+  trackMetaInitiateCheckout({
+    currency: cart.currency,
+    total: cart.total,
+    subtotal: cart.subtotal,
+    items: cart.items.map((line) => ({
+      productId: line.productId || line.product?.id,
+      quantity: line.quantity,
+    })),
   });
 }
 
@@ -110,29 +136,41 @@ export function trackPurchase(order: {
     price?: number;
   }>;
 }): void {
-  if (!canTrack() || !order?.id) return;
+  if (!order?.id) return;
 
   const dedupeKey = `${PURCHASE_DEDUPE_PREFIX}${order.id}`;
   if (typeof window !== 'undefined' && sessionStorage.getItem(dedupeKey)) return;
   if (typeof window !== 'undefined') sessionStorage.setItem(dedupeKey, '1');
 
-  const items =
-    order.items?.map((line) =>
-      toItem(
-        {
-          id: line.productId || line.product?.id,
-          name: line.product?.name,
-          price: line.price ?? line.product?.price,
-          fandom: line.product?.fandom,
-        },
-        line.quantity ?? 1,
-      ),
-    ) ?? [];
+  if (canTrack()) {
+    const items =
+      order.items?.map((line) =>
+        toItem(
+          {
+            id: line.productId || line.product?.id,
+            name: line.product?.name,
+            price: line.price ?? line.product?.price,
+            fandom: line.product?.fandom,
+          },
+          line.quantity ?? 1,
+        ),
+      ) ?? [];
 
-  gtag('event', 'purchase', {
-    transaction_id: order.id,
-    currency: order.currency || 'USD',
-    value: order.total ?? 0,
-    items,
+    gtag('event', 'purchase', {
+      transaction_id: order.id,
+      currency: order.currency || 'USD',
+      value: order.total ?? 0,
+      items,
+    });
+  }
+
+  trackMetaPurchase({
+    id: order.id,
+    currency: order.currency,
+    total: order.total,
+    items: order.items?.map((line) => ({
+      productId: line.productId || line.product?.id,
+      quantity: line.quantity,
+    })),
   });
 }
