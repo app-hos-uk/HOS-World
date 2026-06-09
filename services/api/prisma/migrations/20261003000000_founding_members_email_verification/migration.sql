@@ -39,7 +39,15 @@ CREATE INDEX IF NOT EXISTS "founding_members_status_idx" ON "founding_members"("
 CREATE INDEX IF NOT EXISTS "founding_members_registeredAt_idx" ON "founding_members"("registeredAt");
 
 -- Foreign key to users table (optional linkage)
-ALTER TABLE "founding_members"
-    ADD CONSTRAINT IF NOT EXISTS "founding_members_userId_fkey"
-    FOREIGN KEY ("userId") REFERENCES "users"("id")
-    ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'founding_members_userId_fkey'
+    ) THEN
+        ALTER TABLE "founding_members"
+            ADD CONSTRAINT "founding_members_userId_fkey"
+            FOREIGN KEY ("userId") REFERENCES "users"("id")
+            ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END
+$$;
