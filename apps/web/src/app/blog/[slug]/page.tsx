@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { TableOfContents, injectHeadingIds } from '@/components/blog/TableOfContents';
+import { TableOfContents } from '@/components/blog/TableOfContents';
+import { processBlogHeadings } from '@/lib/blogHeadings';
 import { RelatedPosts } from '@/components/blog/RelatedPosts';
 import { BlogStructuredData } from '@/components/blog/BlogStructuredData';
 import { getPostBySlug } from '@/lib/blog';
@@ -54,7 +55,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   if (!data?.post) notFound();
 
   const { post, related } = data;
-  const contentWithIds = injectHeadingIds(post.contentHtml);
+  const { html: contentWithIds, toc } = processBlogHeadings(post.contentHtml);
   const publishedDate = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -114,7 +115,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </div>
           )}
 
-          <TableOfContents contentHtml={post.contentHtml} />
+          <TableOfContents items={toc} />
 
           <div
             className="prose prose-invert max-w-none prose-headings:text-hos-text-secondary prose-p:text-hos-text-muted prose-a:text-hos-gold prose-img:rounded-lg"

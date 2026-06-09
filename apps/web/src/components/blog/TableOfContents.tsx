@@ -1,40 +1,10 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-
-interface TocItem {
-  id: string;
-  text: string;
-  level: number;
-}
+import type { TocItem } from '@/lib/blogHeadings';
 
 interface TableOfContentsProps {
-  contentHtml: string;
+  items: TocItem[];
 }
 
-export function TableOfContents({ contentHtml }: TableOfContentsProps) {
-  const [items, setItems] = useState<TocItem[]>([]);
-
-  useEffect(() => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(contentHtml, 'text/html');
-    const headings = doc.querySelectorAll('h2, h3');
-    const toc: TocItem[] = [];
-
-    headings.forEach((heading, index) => {
-      const text = heading.textContent?.trim();
-      if (!text) return;
-      const id = `section-${index}`;
-      toc.push({
-        id,
-        text,
-        level: heading.tagName === 'H2' ? 2 : 3,
-      });
-    });
-
-    setItems(toc);
-  }, [contentHtml]);
-
+export function TableOfContents({ items }: TableOfContentsProps) {
   if (items.length < 2) return null;
 
   return (
@@ -56,13 +26,4 @@ export function TableOfContents({ contentHtml }: TableOfContentsProps) {
       </ol>
     </nav>
   );
-}
-
-export function injectHeadingIds(html: string): string {
-  let index = 0;
-  return html.replace(/<(h[23])([^>]*)>(.*?)<\/\1>/gi, (_match, tag, attrs, content) => {
-    const id = `section-${index++}`;
-    if (attrs.includes('id=')) return `<${tag}${attrs}>${content}</${tag}>`;
-    return `<${tag}${attrs} id="${id}">${content}</${tag}>`;
-  });
 }
