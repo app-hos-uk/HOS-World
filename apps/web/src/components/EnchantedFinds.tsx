@@ -29,10 +29,22 @@ export default function EnchantedFinds() {
 
   const fetchProducts = async () => {
     try {
-      const response = await apiClient.getProducts({ sortBy: 'popular', limit: 5, status: 'ACTIVE' } as any);
-      const data = response?.data;
-      const items = Array.isArray(data) ? data : (data as any)?.items || (data as any)?.data || [];
-      const list = Array.isArray(items) ? items.slice(0, 5) : [];
+      let list: Product[] = [];
+
+      try {
+        const searchResponse = await apiClient.searchProducts('', { sort: 'popular', limit: 5, page: 1 });
+        const searchData = searchResponse?.data as { products?: Product[] } | undefined;
+        list = Array.isArray(searchData?.products) ? searchData.products.slice(0, 5) : [];
+      } catch {
+        // Fall through to REST API
+      }
+
+      if (list.length === 0) {
+        const response = await apiClient.getProducts({ sortBy: 'popular', limit: 5, status: 'ACTIVE' } as any);
+        const data = response?.data;
+        const items = Array.isArray(data) ? data : (data as any)?.data || [];
+        list = Array.isArray(items) ? items.slice(0, 5) : [];
+      }
 
       if (list.length > 0) {
         setProducts(list);

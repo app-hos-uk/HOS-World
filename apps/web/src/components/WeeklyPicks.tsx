@@ -41,15 +41,23 @@ export default function WeeklyPicks() {
   const fetchProducts = async (tab: Tab) => {
     setLoading(true);
     try {
-      let params: Record<string, string | number> = { limit: 10, status: 'ACTIVE' };
-      if (tab === 'sale') params.sortBy = 'price_asc';
-      else if (tab === 'new') params.sortBy = 'newest';
-      else params.sortBy = 'popular';
+      const sort = tab === 'sale' ? 'price_asc' : tab === 'new' ? 'newest' : 'popular';
+      let list: Product[] = [];
 
-      const response = await apiClient.getProducts(params as any);
-      const data = response?.data;
-      const items = Array.isArray(data) ? data : (data as any)?.items || (data as any)?.data || [];
-      const list = Array.isArray(items) ? items.slice(0, 10) : [];
+      try {
+        const searchResponse = await apiClient.searchProducts('', { sort, limit: 10, page: 1 });
+        const searchData = searchResponse?.data as { products?: Product[] } | undefined;
+        list = Array.isArray(searchData?.products) ? searchData.products.slice(0, 10) : [];
+      } catch {
+        // Fall through to REST API
+      }
+
+      if (list.length === 0) {
+        const response = await apiClient.getProducts({ limit: 10, status: 'ACTIVE', sortBy: sort } as any);
+        const data = response?.data;
+        const items = Array.isArray(data) ? data : (data as any)?.data || [];
+        list = Array.isArray(items) ? items.slice(0, 10) : [];
+      }
 
       if (list.length > 0) {
         setProducts(list);
