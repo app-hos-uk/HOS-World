@@ -76,11 +76,22 @@ export class OrdersService {
   }
 
   async create(userId: string, createOrderDto: CreateOrderDto): Promise<Order> {
-    if (!createOrderDto.idempotencyKey) {
-      this.logger.warn(`Checkout for user ${userId} missing idempotencyKey — auto-generating (not retry-safe)`);
+    let idempotencyKey = createOrderDto.idempotencyKey;
+
+    if (!idempotencyKey) {
+      // Derive a stable key from the cartId so retries for the same cart
+      // resolve to the same key even if the response was lost.
+      const userCart = await this.prisma.cart.findUnique({
+        where: { userId },
+        select: { id: true },
+      });
+      idempotencyKey = userCart
+        ? `auto-${userId}-${userCart.id}`
+        : `auto-${userId}-nocart-${Date.now()}`;
+      this.logger.warn(
+        `Checkout for user ${userId} missing idempotencyKey — derived from cart: ${idempotencyKey}`,
+      );
     }
-    const idempotencyKey =
-      createOrderDto.idempotencyKey || `auto-${userId}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     createOrderDto.idempotencyKey = idempotencyKey;
 
     const existingOrder = await this.prisma.order.findFirst({
