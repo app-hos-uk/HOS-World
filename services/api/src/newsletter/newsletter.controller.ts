@@ -18,6 +18,7 @@ import {
   ApiBody,
   ApiQuery,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { NewsletterService } from './newsletter.service';
 import { CreateNewsletterSubscriptionDto } from './dto/create-newsletter-subscription.dto';
 import { SendNewsletterCampaignDto } from './dto/send-newsletter-campaign.dto';
@@ -34,6 +35,7 @@ export class NewsletterController {
 
   @Public()
   @Post('subscribe')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @ApiOperation({
     summary: 'Subscribe to newsletter',
     description:

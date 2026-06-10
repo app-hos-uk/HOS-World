@@ -1062,6 +1062,8 @@ export class InventoryService {
     let lowStockCount = lowStockItems;
     if (typeof lowStockItems !== 'number') {
       const locations = await this.prisma.inventoryLocation.findMany({
+        where: { quantity: { lte: 100 } },
+        take: 10000,
         select: { quantity: true, lowStockThreshold: true },
       });
       lowStockCount = locations.filter((l) => l.quantity <= l.lowStockThreshold).length;

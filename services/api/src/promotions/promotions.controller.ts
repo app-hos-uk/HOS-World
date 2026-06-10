@@ -9,7 +9,10 @@ import {
   UseGuards,
   Request,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -54,6 +57,8 @@ export class PromotionsController {
 
   @Get()
   @Public()
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(30)
   @ApiOperation({
     summary: 'Get active promotions',
     description:
@@ -184,6 +189,7 @@ export class PromotionsController {
   }
 
   @Post('coupons/validate')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -220,6 +226,7 @@ export class PromotionsController {
   }
 
   @Post('coupons/apply')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

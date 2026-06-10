@@ -64,11 +64,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       this.client = new MeiliSearch({
         host,
         apiKey: apiKey || undefined,
-        // Avoid using non-standard `timeout` property on RequestInit since
-        // TypeScript types for the MeiliSearch client expect `requestConfig`
-        // to be compatible with `RequestInit`. Use default network timeouts
-        // and rely on waitForTask timeouts where appropriate.
-        requestConfig: {},
+        timeout: 5000,
       });
 
       // Verify connection with health check
@@ -779,11 +775,16 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       where.averageRating = { gte: filters.minRating };
     }
 
+    const safeTake = Math.min(limit, 50);
+    const maxFallbackDepth = 5000;
+    if (skip > maxFallbackDepth) {
+      return { hits: [], total: 0, processingTimeMs: 0, query: query || '' };
+    }
     const [products, total] = await Promise.all([
       this.prisma.product.findMany({
         where,
         skip,
-        take: limit,
+        take: safeTake,
         include: {
           seller: { select: { id: true, storeName: true, slug: true } },
           images: { orderBy: { order: 'asc' }, take: 3 },

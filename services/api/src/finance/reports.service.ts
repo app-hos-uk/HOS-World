@@ -32,6 +32,8 @@ export class ReportsService {
 
     const transactions = await this.prisma.transaction.findMany({
       where,
+      take: 10000,
+      orderBy: { createdAt: 'desc' },
       include: {
         seller: {
           select: {
@@ -109,6 +111,8 @@ export class ReportsService {
 
     const transactions = await this.prisma.transaction.findMany({
       where,
+      take: 10000,
+      orderBy: { createdAt: 'desc' },
       include: {
         seller: {
           select: {
@@ -183,6 +187,8 @@ export class ReportsService {
 
     const transactions = await this.prisma.transaction.findMany({
       where,
+      take: 10000,
+      orderBy: { createdAt: 'desc' },
       include: {
         customer: {
           select: {
@@ -259,6 +265,8 @@ export class ReportsService {
 
     const transactions = await this.prisma.transaction.findMany({
       where,
+      take: 10000,
+      orderBy: { createdAt: 'desc' },
       include: {
         seller: {
           select: {

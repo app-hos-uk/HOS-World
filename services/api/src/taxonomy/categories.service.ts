@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { CacheService } from '../cache/cache.service';
 import { slugify } from '@hos-marketplace/utils';
 
 export interface CreateCategoryDto {
@@ -22,7 +23,7 @@ export interface UpdateCategoryDto {
 
 @Injectable()
 export class CategoriesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private cache: CacheService) {}
 
   async createCategory(data: CreateCategoryDto) {
     // Validate Fandom (parent) if provided
@@ -63,7 +64,7 @@ export class CategoriesService {
       counter++;
     }
 
-    return this.prisma.category.create({
+    const result = await this.prisma.category.create({
       data: {
         name: data.name,
         slug,
@@ -85,6 +86,8 @@ export class CategoriesService {
         },
       },
     });
+    await this.invalidateCategoryTreeCache();
+    return result;
   }
 
   async findAll() {
@@ -110,8 +113,18 @@ export class CategoriesService {
     });
   }
 
+  private static readonly TREE_CACHE_KEY = 'categories:tree';
+  private static readonly TREE_CACHE_TTL = 60;
+  private readonly logger = new Logger(CategoriesService.name);
+
+  private async invalidateCategoryTreeCache() {
+    await this.cache.del(CategoriesService.TREE_CACHE_KEY).catch(() => {});
+  }
+
   async getCategoryTree() {
-    // Get all Fandoms (level 0 - top-level categories)
+    const cached = await this.cache.get<any[]>(CategoriesService.TREE_CACHE_KEY);
+    if (cached) return cached;
+
     const rootCategories = await this.prisma.category.findMany({
       where: {
         isActive: true,
@@ -135,6 +148,7 @@ export class CategoriesService {
       orderBy: [{ order: 'asc' }, { name: 'asc' }],
     });
 
+    await this.cache.set(CategoriesService.TREE_CACHE_KEY, rootCategories, CategoriesService.TREE_CACHE_TTL);
     return rootCategories;
   }
 
@@ -244,7 +258,7 @@ export class CategoriesService {
       }
     }
 
-    return this.prisma.category.update({
+    const result = await this.prisma.category.update({
       where: { id },
       data: {
         name: data.name,
@@ -267,6 +281,8 @@ export class CategoriesService {
         },
       },
     });
+    await this.invalidateCategoryTreeCache();
+    return result;
   }
 
   async deleteCategory(id: string) {
@@ -298,9 +314,11 @@ export class CategoriesService {
       );
     }
 
-    return this.prisma.category.delete({
+    const result = await this.prisma.category.delete({
       where: { id },
     });
+    await this.invalidateCategoryTreeCache();
+    return result;
   }
 
   async getCategoryPath(id: string): Promise<string> {

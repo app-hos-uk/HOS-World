@@ -130,19 +130,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Delete keys matching pattern (uses KEYS — acceptable for low-cardinality patterns)
+   * Delete keys matching pattern using SCAN (production-safe, non-blocking).
+   * @deprecated Use deleteByPattern() directly for new code.
    */
   async delPattern(pattern: string): Promise<void> {
-    if (!this.isConnected) return;
-
-    try {
-      const keys = await this.client.keys(pattern);
-      if (keys.length > 0) {
-        await this.client.del(keys);
-      }
-    } catch (error) {
-      this.logger.error(`Failed to delete Redis keys matching ${pattern}:`, error);
-    }
+    await this.deleteByPattern(pattern);
   }
 
   /**
@@ -346,26 +338,22 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * @param ttlSeconds - Optional TTL in seconds (prevents deadlocks)
    * @returns true if the key was set, false if it already existed
    */
+  /**
+   * Set a key only if it doesn't exist (SETNX) with optional TTL.
+   * Returns true if the key was set, false if it already existed.
+   * Throws on Redis connection/command errors (callers must handle).
+   */
   async setNX(key: string, value: string, ttlSeconds?: number): Promise<boolean> {
-    if (!this.isConnected) return false;
-
-    try {
-      // Use SET with NX (only set if not exists) and optionally EX (expire) flags
-      // This is atomic and race-condition safe
-      // Build options object conditionally to avoid passing undefined values
-      const options: { NX: true; EX?: number } = { NX: true };
-
-      if (ttlSeconds !== undefined && ttlSeconds > 0) {
-        options.EX = ttlSeconds;
-      }
-
-      const result = await this.client.set(key, value, options);
-
-      // Redis returns 'OK' if set, null if key already existed
-      return result === 'OK';
-    } catch (error) {
-      this.logger.error(`Failed to setNX Redis key ${key}:`, error);
-      return false;
+    if (!this.isConnected) {
+      throw new Error('Redis not connected');
     }
+
+    const options: { NX: true; EX?: number } = { NX: true };
+    if (ttlSeconds !== undefined && ttlSeconds > 0) {
+      options.EX = ttlSeconds;
+    }
+
+    const result = await this.client.set(key, value, options);
+    return result === 'OK';
   }
 }

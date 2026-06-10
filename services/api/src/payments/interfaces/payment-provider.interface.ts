@@ -24,6 +24,14 @@ export interface PaymentProvider {
   confirmPayment(params: ConfirmPaymentParams): Promise<PaymentResult>;
 
   /**
+   * Cancel a prior payment intent. Returns status:
+   * 'cancelled' — intent was cancelled or already in a terminal state.
+   * 'already_succeeded' — intent already charged; caller should NOT create a new one.
+   * 'skipped' — provider unavailable or intent not found.
+   */
+  cancelPaymentIntent?(paymentIntentId: string): Promise<'cancelled' | 'already_succeeded' | 'skipped'>;
+
+  /**
    * Refund a payment
    */
   refundPayment(params: RefundPaymentParams): Promise<RefundResult>;

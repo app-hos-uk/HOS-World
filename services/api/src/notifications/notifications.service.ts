@@ -501,9 +501,9 @@ export class NotificationsService implements OnModuleInit {
         bodyContent: escapeHtml(content).replace(/\n/g, '<br>'),
       });
 
-      for (const user of users) {
-        await this.queueNotification(user.email, rendered.subject, rendered.body);
-      }
+      await Promise.all(
+        users.map((user) => this.queueNotification(user.email, rendered.subject, rendered.body)),
+      );
 
       this.logger.log(`✅ Sent ${notifications.length} notifications to ${role} team`);
     } catch (error: any) {

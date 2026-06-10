@@ -163,11 +163,11 @@ export class AnalyticsService {
       };
     }
 
-    // Get all customers (in date range via user.createdAt)
     const allCustomers = await this.prisma.customer.findMany({
       where: customerWhere,
+      take: 10000,
       include: {
-        user: true,
+        user: { select: { id: true, createdAt: true } },
       },
     });
 
@@ -286,6 +286,8 @@ export class AnalyticsService {
 
     const orders = await this.prisma.order.findMany({
       where: orderWhere,
+      take: 10000,
+      orderBy: { createdAt: 'desc' },
       include: {
         items: {
           include: {
@@ -350,6 +352,7 @@ export class AnalyticsService {
 
     const locations = await this.prisma.inventoryLocation.findMany({
       where,
+      take: 10000,
       include: {
         product: {
           select: {
@@ -392,11 +395,11 @@ export class AnalyticsService {
 
     const orders = await this.prisma.order.findMany({
       where: dateFilter,
-      include: {
+      take: 10000,
+      orderBy: { createdAt: 'desc' },
+      select: {
         items: {
-          include: {
-            product: true,
-          },
+          select: { price: true, quantity: true },
         },
       },
     });
@@ -480,6 +483,8 @@ export class AnalyticsService {
 
     return this.prisma.order.findMany({
       where,
+      take: 10000,
+      orderBy: { createdAt: 'desc' },
       include: {
         items: {
           include: {

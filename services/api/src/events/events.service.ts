@@ -404,7 +404,7 @@ export class EventsService {
         ticketCode,
         startsAt: event.startsAt.toISOString(),
       })
-      .catch(() => {});
+      .catch((e: any) => this.logger.warn(`Marketing event emit failed: ${e?.message}`));
 
     return rsvp;
   }
@@ -621,7 +621,7 @@ export class EventsService {
         eventType: event.type,
         storeId: event.storeId,
       })
-      .catch(() => {});
+      .catch((e: any) => this.logger.warn(`Marketing event emit failed: ${e?.message}`));
 
     return this.prisma.eventAttendance.findUnique({
       where: { eventId_userId: { eventId, userId } },
@@ -737,7 +737,7 @@ export class EventsService {
         fandomId: event.fandomId,
         minTierLevel: event.minTierLevel,
       })
-      .catch(() => {});
+      .catch((e: any) => this.logger.warn(`Marketing event emit failed: ${e?.message}`));
 
     return event;
   }
@@ -777,7 +777,7 @@ export class EventsService {
           eventTitle: e.title,
           reason: reason ?? '',
         })
-        .catch(() => {});
+        .catch((e: any) => this.logger.warn(`Marketing event emit failed: ${e?.message}`));
     }
     return this.prisma.event.findUnique({ where: { id } });
   }
@@ -978,7 +978,7 @@ export class EventsService {
               startsAt: ev.startsAt.toISOString(),
               hoursUntil: 24,
             })
-            .catch(() => {});
+            .catch((e: any) => this.logger.warn(`Marketing event emit failed: ${e?.message}`));
         } catch (e) {
           this.logger.warn(`24h reminder failed: ${(e as Error).message}`);
         }
@@ -1015,7 +1015,7 @@ export class EventsService {
               startsAt: ev.startsAt.toISOString(),
               hoursUntil: 2,
             })
-            .catch(() => {});
+            .catch((e: any) => this.logger.warn(`Marketing event emit failed: ${e?.message}`));
         } catch (e) {
           this.logger.warn(`2h reminder failed: ${(e as Error).message}`);
         }

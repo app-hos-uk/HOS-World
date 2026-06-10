@@ -122,7 +122,6 @@ export class CartService {
   }
 
   async addItem(userId: string, addToCartDto: AddToCartDto): Promise<Cart> {
-    // Verify product exists and is available
     const product = await this.prisma.product.findUnique({
       where: { id: addToCartDto.productId },
       include: {
@@ -145,72 +144,72 @@ export class CartService {
       throw new BadRequestException('Insufficient stock available');
     }
 
-    // Get or create cart
-    let cart = await this.prisma.cart.findUnique({
-      where: { userId },
-      include: { items: true },
-    });
-
-    if (!cart) {
-      cart = await this.prisma.cart.create({
-        data: { userId },
+    // Use a serializable transaction to prevent duplicate lines and MAX_CART_ITEMS races
+    const cartId = await this.prisma.$transaction(async (tx) => {
+      let cart = await tx.cart.findUnique({
+        where: { userId },
         include: { items: true },
       });
-    }
 
-    // Enforce max cart items limit to prevent abuse
-    const MAX_CART_ITEMS = 50;
-    if (cart.items.length >= MAX_CART_ITEMS) {
-      const hasMatchingItem = cart.items.some((item) => item.productId === addToCartDto.productId);
-      if (!hasMatchingItem) {
-        throw new BadRequestException(
-          `Cart cannot contain more than ${MAX_CART_ITEMS} distinct items`,
-        );
+      if (!cart) {
+        cart = await tx.cart.create({
+          data: { userId },
+          include: { items: true },
+        });
       }
-    }
 
-    // Check if item already exists in cart with same variations
-    const existingItem = cart.items.find((item) => {
-      if (item.productId !== addToCartDto.productId) return false;
-      const itemVariations = item.variationOptions as Record<string, string> | null;
-      const newVariations = addToCartDto.variationOptions || {};
+      const MAX_CART_ITEMS = 50;
+      if (cart.items.length >= MAX_CART_ITEMS) {
+        const hasMatchingItem = cart.items.some((item) => item.productId === addToCartDto.productId);
+        if (!hasMatchingItem) {
+          throw new BadRequestException(
+            `Cart cannot contain more than ${MAX_CART_ITEMS} distinct items`,
+          );
+        }
+      }
 
-      if (!itemVariations && !addToCartDto.variationOptions) return true;
-      if (!itemVariations || !addToCartDto.variationOptions) return false;
+      const existingItem = cart.items.find((item) => {
+        if (item.productId !== addToCartDto.productId) return false;
+        const itemVariations = item.variationOptions as Record<string, string> | null;
+        const newVariations = addToCartDto.variationOptions || {};
 
-      const itemKeys = Object.keys(itemVariations).sort().join(',');
-      const newKeys = Object.keys(newVariations).sort().join(',');
-      if (itemKeys !== newKeys) return false;
+        if (!itemVariations && !addToCartDto.variationOptions) return true;
+        if (!itemVariations || !addToCartDto.variationOptions) return false;
 
-      return Object.keys(itemVariations).every((key) => itemVariations[key] === newVariations[key]);
+        const itemKeys = Object.keys(itemVariations).sort().join(',');
+        const newKeys = Object.keys(newVariations).sort().join(',');
+        if (itemKeys !== newKeys) return false;
+
+        return Object.keys(itemVariations).every((key) => itemVariations[key] === newVariations[key]);
+      });
+
+      if (existingItem) {
+        const newQuantity = existingItem.quantity + addToCartDto.quantity;
+        if (newQuantity > product.stock) {
+          throw new BadRequestException('Insufficient stock available');
+        }
+
+        await tx.cartItem.update({
+          where: { id: existingItem.id },
+          data: {
+            quantity: newQuantity,
+            price: product.price,
+          },
+        });
+      } else {
+        await tx.cartItem.create({
+          data: {
+            cartId: cart.id,
+            productId: product.id,
+            quantity: addToCartDto.quantity,
+            variationOptions: addToCartDto.variationOptions || {},
+            price: product.price,
+          },
+        });
+      }
+
+      return cart.id;
     });
-
-    if (existingItem) {
-      // Update quantity
-      const newQuantity = existingItem.quantity + addToCartDto.quantity;
-      if (newQuantity > product.stock) {
-        throw new BadRequestException('Insufficient stock available');
-      }
-
-      await this.prisma.cartItem.update({
-        where: { id: existingItem.id },
-        data: {
-          quantity: newQuantity,
-          price: product.price, // Update price in case it changed
-        },
-      });
-    } else {
-      // Add new item
-      await this.prisma.cartItem.create({
-        data: {
-          cartId: cart.id,
-          productId: product.id,
-          quantity: addToCartDto.quantity,
-          variationOptions: addToCartDto.variationOptions || {},
-          price: product.price,
-        },
-      });
-    }
 
     try {
       await this.prisma.wishlistItem.deleteMany({
@@ -223,7 +222,7 @@ export class CartService {
       this.logger.warn(`Failed to remove product from wishlist after adding to cart: ${err.message}`);
     }
 
-    return this.recalculateCart(cart.id, { userMutated: true });
+    return this.recalculateCart(cartId, { userMutated: true });
   }
 
   async updateItem(

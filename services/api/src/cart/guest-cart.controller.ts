@@ -19,6 +19,7 @@ import {
   ApiBody,
   ApiParam,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { CartService } from './cart.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
@@ -28,6 +29,7 @@ import type { ApiResponse, Cart } from '@hos-marketplace/shared-types';
 @ApiTags('cart')
 @Controller('cart/guest')
 @Public()
+@Throttle({ default: { limit: 30, ttl: 60000 } })
 export class GuestCartController {
   constructor(private readonly cartService: CartService) {}
 

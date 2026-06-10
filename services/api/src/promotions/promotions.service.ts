@@ -6,6 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { CacheService } from '../cache/cache.service';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -23,7 +24,7 @@ import {
 export class PromotionsService {
   private readonly logger = new Logger(PromotionsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private cache: CacheService) {}
 
   /**
    * Create a new promotion
@@ -37,7 +38,7 @@ export class PromotionsService {
       throw new BadRequestException('End date must be after start date');
     }
 
-    return this.prisma.promotion.create({
+    const promo = await this.prisma.promotion.create({
       data: {
         name: createDto.name,
         description: createDto.description,
@@ -54,6 +55,8 @@ export class PromotionsService {
         sellerId: createDto.sellerId,
       },
     });
+    await this.invalidatePromoCache();
+    return promo;
   }
 
   /**
@@ -83,6 +86,21 @@ export class PromotionsService {
         },
       },
     });
+  }
+
+  private static readonly PROMO_CACHE_KEY = 'promos:active';
+  private static readonly PROMO_CACHE_TTL = 30;
+
+  private async invalidatePromoCache() {
+    await this.cache.del(PromotionsService.PROMO_CACHE_KEY).catch(() => {});
+  }
+
+  private async findAllCached() {
+    const cached = await this.cache.get<any[]>(PromotionsService.PROMO_CACHE_KEY);
+    if (cached) return cached;
+    const data = await this.findAll();
+    await this.cache.set(PromotionsService.PROMO_CACHE_KEY, data, PromotionsService.PROMO_CACHE_TTL);
+    return data;
   }
 
   /**
@@ -143,28 +161,29 @@ export class PromotionsService {
       if (updateData[key] === undefined) delete updateData[key];
     });
 
-    return this.prisma.promotion.update({
+    const result = await this.prisma.promotion.update({
       where: { id },
       data: updateData,
     });
+    await this.invalidatePromoCache();
+    return result;
   }
 
   /**
    * Delete a promotion
    */
   async delete(id: string) {
-    // First verify the promotion exists
     await this.findOne(id);
 
-    // Delete associated coupons first
     await this.prisma.coupon.deleteMany({
       where: { promotionId: id },
     });
 
-    // Delete the promotion
-    return this.prisma.promotion.delete({
+    const result = await this.prisma.promotion.delete({
       where: { id },
     });
+    await this.invalidatePromoCache();
+    return result;
   }
 
   /**
@@ -516,7 +535,24 @@ export class PromotionsService {
     });
     const customerGroupId = userForPromotions?.customerGroupId ?? null;
 
-    const promotions = await this.findAll();
+    const promotions = await this.findAllCached();
+    // Batch-fetch per-user usage counts for all promotions that have a userUsageLimit
+    const promosWithUserLimit = promotions.filter((p: any) => p.userUsageLimit != null);
+    const userUsageMap = new Map<string, number>();
+    if (promosWithUserLimit.length > 0) {
+      const usageCounts = await this.prisma.promotionUsage.groupBy({
+        by: ['promotionId'],
+        where: {
+          userId,
+          promotionId: { in: promosWithUserLimit.map((p: any) => p.id) },
+        },
+        _count: { promotionId: true },
+      });
+      for (const row of usageCounts) {
+        userUsageMap.set(row.promotionId, row._count.promotionId);
+      }
+    }
+
     for (const promotion of promotions) {
       const promo = promotion as PromotionWithDetails;
 
@@ -525,9 +561,7 @@ export class PromotionsService {
       }
 
       if (promo.userUsageLimit != null) {
-        const userUses = await this.prisma.promotionUsage.count({
-          where: { userId, promotionId: promo.id },
-        });
+        const userUses = userUsageMap.get(promo.id) ?? 0;
         if (userUses >= promo.userUsageLimit) {
           continue;
         }
@@ -581,37 +615,44 @@ export class PromotionsService {
     orderId: string,
     discountAmount: number,
   ) {
-    // Get current coupon to check limits
-    const coupon = await this.prisma.coupon.findUnique({
-      where: { id: couponId },
-    });
+    // Atomic conditional increment: only bump if under limit (prevents concurrent overshooting)
+    return this.prisma.$transaction(async (tx) => {
+      const coupon = await tx.coupon.findUnique({ where: { id: couponId } });
+      if (!coupon) {
+        throw new NotFoundException('Coupon not found');
+      }
 
-    if (!coupon) {
-      throw new NotFoundException('Coupon not found');
-    }
+      const bumped = await tx.coupon.updateMany({
+        where: {
+          id: couponId,
+          OR: [
+            { usageLimit: null },
+            { usageCount: { lt: coupon.usageLimit ?? 999999999 } },
+          ],
+        },
+        data: { usageCount: { increment: 1 } },
+      });
+      if (bumped.count === 0) {
+        this.logger.warn(`Coupon ${couponId} usage limit reached; skipping`);
+        return null;
+      }
 
-    // Check if coupon will be exhausted
-    const newUsageCount = coupon.usageCount + 1;
-    const newStatus =
-      coupon.usageLimit && newUsageCount >= coupon.usageLimit ? 'EXHAUSTED' : coupon.status;
+      // Check if coupon is now exhausted
+      if (coupon.usageLimit && coupon.usageCount + 1 >= coupon.usageLimit) {
+        await tx.coupon.update({
+          where: { id: couponId },
+          data: { status: 'EXHAUSTED' },
+        });
+      }
 
-    // Update coupon usage count and status
-    await this.prisma.coupon.update({
-      where: { id: couponId },
-      data: {
-        usageCount: { increment: 1 },
-        status: newStatus,
-      },
-    });
-
-    // Record usage
-    return this.prisma.couponUsage.create({
-      data: {
-        couponId,
-        userId,
-        orderId,
-        discountAmount: new Decimal(discountAmount),
-      },
+      return tx.couponUsage.create({
+        data: {
+          couponId,
+          userId,
+          orderId,
+          discountAmount: new Decimal(discountAmount),
+        },
+      });
     });
   }
 
@@ -640,12 +681,10 @@ export class PromotionsService {
         try {
           await this.prisma.$transaction(async (tx) => {
             const promo = await tx.promotion.findUnique({ where: { id: ap.id! } });
-            if (!promo) {
-              return;
-            }
+            if (!promo) return;
             if (promo.usageLimit != null && promo.usageCount >= promo.usageLimit) {
               this.logger.warn(
-                `Promotion ${ap.id} global usage limit reached; skipping increment for order ${orderId}`,
+                `Promotion ${ap.id} global usage limit reached; skipping for order ${orderId}`,
               );
               return;
             }
@@ -653,20 +692,22 @@ export class PromotionsService {
               const n = await tx.promotionUsage.count({
                 where: { userId, promotionId: ap.id! },
               });
-              if (n >= promo.userUsageLimit) {
-                return;
-              }
+              if (n >= promo.userUsageLimit) return;
             }
-            await tx.promotion.update({
-              where: { id: ap.id! },
+            // Conditional increment: only if still under limit
+            const bumped = await tx.promotion.updateMany({
+              where: {
+                id: ap.id!,
+                OR: [
+                  { usageLimit: null },
+                  { usageCount: { lt: promo.usageLimit ?? 999999999 } },
+                ],
+              },
               data: { usageCount: { increment: 1 } },
             });
+            if (bumped.count === 0) return;
             await tx.promotionUsage.create({
-              data: {
-                promotionId: ap.id!,
-                userId,
-                orderId,
-              },
+              data: { promotionId: ap.id!, userId, orderId },
             });
           });
         } catch (e: any) {

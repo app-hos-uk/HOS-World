@@ -17,14 +17,15 @@ export class SellersService {
 
   constructor(private prisma: PrismaService) {
     const key = process.env.ENCRYPTION_KEY;
-    if (!key && process.env.NODE_ENV === 'production') {
-      // Fail closed: a hardcoded fallback key offers no real protection for seller bank
-      // details and would make stored ciphertext trivially decryptable.
-      throw new Error(
-        'ENCRYPTION_KEY must be set in production for seller field encryption',
-      );
+    if (!key) {
+      if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
+        throw new Error(
+          'ENCRYPTION_KEY must be set in production/staging for seller field encryption',
+        );
+      }
+      this.logger.warn('ENCRYPTION_KEY not set — seller encryption uses a random ephemeral key (dev only)');
     }
-    this.encryptionKey = key || 'hos-default-key-change-in-production';
+    this.encryptionKey = key || require('crypto').randomBytes(32).toString('hex');
   }
 
   /**
@@ -78,6 +79,7 @@ export class SellersService {
     }
     const products = await this.prisma.product.findMany({
       where: { sellerId: seller.id },
+      take: 200,
       orderBy: { createdAt: 'desc' },
       include: {
         images: { orderBy: { order: 'asc' }, take: 1 },

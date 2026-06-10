@@ -76,19 +76,27 @@ export class MarketingJobsService implements OnModuleInit {
         items: { some: {} },
         OR: [{ abandonedEmailSentAt: null }, { abandonedEmailSentAt: { lt: dayAgo } }],
       },
+      take: 500,
       include: { items: true },
     });
 
+    if (carts.length === 0) return;
+
+    // Batch-fetch paid orders for all cart users to avoid N+1
+    const userIds = [...new Set(carts.map((c) => c.userId).filter(Boolean))] as string[];
+    const paidOrders = await this.prisma.order.findMany({
+      where: {
+        userId: { in: userIds },
+        paymentStatus: 'PAID',
+        createdAt: { gt: since },
+      },
+      select: { userId: true },
+    });
+    const paidUserIds = new Set(paidOrders.map((o) => o.userId));
+
     for (const cart of carts) {
       if (!cart.userId) continue;
-      const paidAfter = await this.prisma.order.findFirst({
-        where: {
-          userId: cart.userId,
-          paymentStatus: 'PAID',
-          createdAt: { gt: cart.updatedAt },
-        },
-      });
-      if (paidAfter) continue;
+      if (paidUserIds.has(cart.userId)) continue;
 
       await this.bus.emit('CART_ABANDONED', cart.userId, {
         cartId: cart.id,
@@ -117,38 +125,52 @@ export class MarketingJobsService implements OnModuleInit {
           ],
         },
       },
+      take: 500,
       select: { userId: true },
     });
 
+    if (memberships.length === 0) return;
+
+    // Batch-fetch recent orders and active win-back enrollments to avoid N+1
+    const memberUserIds = memberships.map((m) => m.userId);
+    const [recentOrders, activeEnrollments] = await Promise.all([
+      this.prisma.order.findMany({
+        where: { userId: { in: memberUserIds }, paymentStatus: 'PAID', createdAt: { gte: since } },
+        select: { userId: true },
+      }),
+      this.prisma.journeyEnrollment.findMany({
+        where: { userId: { in: memberUserIds }, status: 'ACTIVE', journey: { slug: 'win-back' } },
+        select: { userId: true },
+      }),
+    ]);
+    const recentOrderUserIds = new Set(recentOrders.map((o) => o.userId));
+    const activeWinBackUserIds = new Set(activeEnrollments.map((e) => e.userId));
+
+    // Pre-filter candidates
+    const candidateUserIds = memberUserIds.filter(
+      (uid) => !recentOrderUserIds.has(uid) && !activeWinBackUserIds.has(uid),
+    );
+
+    // Batch-fetch last paid order dates
+    const lastPaidOrders = candidateUserIds.length > 0
+      ? await this.prisma.order.groupBy({
+          by: ['userId'],
+          where: { userId: { in: candidateUserIds }, paymentStatus: 'PAID' },
+          _max: { createdAt: true },
+        })
+      : [];
+    const lastPaidMap = new Map(lastPaidOrders.map((o) => [o.userId, o._max.createdAt]));
+
     for (const m of memberships) {
-      const recentOrder = await this.prisma.order.findFirst({
-        where: {
-          userId: m.userId,
-          paymentStatus: 'PAID',
-          createdAt: { gte: since },
-        },
-      });
-      if (recentOrder) continue;
+      if (recentOrderUserIds.has(m.userId)) continue;
+      if (activeWinBackUserIds.has(m.userId)) continue;
 
-      const activeWinBack = await this.prisma.journeyEnrollment.findFirst({
-        where: {
-          userId: m.userId,
-          status: 'ACTIVE',
-          journey: { slug: 'win-back' },
-        },
-      });
-      if (activeWinBack) continue;
-
-      const lastPaid = await this.prisma.order.findFirst({
-        where: { userId: m.userId, paymentStatus: 'PAID' },
-        orderBy: { createdAt: 'desc' },
-        select: { createdAt: true },
-      });
-      const lastPurchaseDate = lastPaid?.createdAt
-        ? lastPaid.createdAt.toISOString().split('T')[0]
+      const lastPaidDate = lastPaidMap.get(m.userId) ?? null;
+      const lastPurchaseDate = lastPaidDate
+        ? lastPaidDate.toISOString().split('T')[0]
         : '';
-      const daysSince = lastPaid?.createdAt
-        ? Math.floor((Date.now() - lastPaid.createdAt.getTime()) / 86400000)
+      const daysSince = lastPaidDate
+        ? Math.floor((Date.now() - lastPaidDate.getTime()) / 86400000)
         : days;
 
       await this.bus.emit('MEMBER_INACTIVE', m.userId, {

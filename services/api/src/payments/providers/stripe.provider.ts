@@ -119,6 +119,25 @@ export class StripeProvider implements PaymentProvider {
     });
   }
 
+  async cancelPaymentIntent(paymentIntentId: string): Promise<'cancelled' | 'already_succeeded' | 'skipped'> {
+    if (!this.stripe) return 'skipped';
+    try {
+      const intent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+      if (intent.status === 'succeeded') {
+        return 'already_succeeded';
+      }
+      if (['canceled', 'requires_payment_method'].includes(intent.status)) {
+        return 'cancelled';
+      }
+      await this.stripe.paymentIntents.cancel(paymentIntentId);
+      return 'cancelled';
+    } catch (err: any) {
+      if (err?.code === 'payment_intent_unexpected_state') return 'cancelled';
+      if (err?.code === 'resource_missing') return 'skipped';
+      throw err;
+    }
+  }
+
   async refundPayment(params: RefundPaymentParams): Promise<RefundResult> {
     if (!this.stripe) {
       throw new Error('Stripe provider is not available');

@@ -50,13 +50,11 @@ export class DuplicatesService {
     const productData = submission.productData as any;
     const duplicates: SimilarityResult[] = [];
 
-    // Get all active products
     const existingProducts = await this.prisma.product.findMany({
       where: {
-        status: {
-          in: ['ACTIVE', 'DRAFT'],
-        },
+        status: { in: ['ACTIVE', 'DRAFT'] },
       },
+      take: 5000,
       select: {
         id: true,
         name: true,
