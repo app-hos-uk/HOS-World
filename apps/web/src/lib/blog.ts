@@ -76,8 +76,17 @@ export async function getCategoryBySlug(slug: string) {
 }
 
 export async function getAllPublishedSlugs(): Promise<string[]> {
-  const data = await getPublishedPosts({ limit: 500 });
-  return data?.posts?.map((p) => p.slug).filter(Boolean) ?? [];
+  const allSlugs: string[] = [];
+  let page = 1;
+  const batchSize = 50;
+  while (true) {
+    const data = await getPublishedPosts({ limit: batchSize, page });
+    const slugs = data?.posts?.map((p) => p.slug).filter(Boolean) ?? [];
+    allSlugs.push(...slugs);
+    if (!data?.totalPages || page >= data.totalPages) break;
+    page++;
+  }
+  return allSlugs;
 }
 
 export async function getAllCategorySlugs(): Promise<string[]> {

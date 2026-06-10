@@ -191,8 +191,14 @@ async function bootstrap() {
           dsn: process.env.SENTRY_DSN,
           environment: process.env.NODE_ENV || 'production',
           tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
+          beforeSend(event) {
+            // Drop 4xx HTTP exceptions from Sentry (client errors are not actionable)
+            const status = event?.contexts?.response?.status_code;
+            if (typeof status === 'number' && status >= 400 && status < 500) return null;
+            return event;
+          },
         });
-        logger.info('✅ Sentry initialized', 'Bootstrap');
+        logger.info('✅ Sentry initialized (4xx filtered)', 'Bootstrap');
       }
 
       app = await NestFactory.create(AppModule, {

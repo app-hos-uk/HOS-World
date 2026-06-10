@@ -30,7 +30,6 @@ interface Review {
     id: string;
     firstName?: string;
     lastName?: string;
-    email: string;
     avatar?: string;
   };
 }
@@ -149,7 +148,6 @@ export class ReviewsService {
               id: true,
               firstName: true,
               lastName: true,
-              email: true,
               avatar: true,
             },
           },
@@ -289,35 +287,17 @@ export class ReviewsService {
   }
 
   private async updateProductRating(productId: string): Promise<void> {
-    const reviews = await this.prisma.productReview.findMany({
-      where: {
-        productId,
-        status: 'APPROVED',
-      },
-      select: {
-        rating: true,
-      },
+    const agg = await this.prisma.productReview.aggregate({
+      where: { productId, status: 'APPROVED' },
+      _avg: { rating: true },
+      _count: { rating: true },
     });
-
-    if (reviews.length === 0) {
-      await this.prisma.product.update({
-        where: { id: productId },
-        data: {
-          averageRating: 0,
-          reviewCount: 0,
-        },
-      });
-      return;
-    }
-
-    const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
-    const averageRating = totalRating / reviews.length;
 
     await this.prisma.product.update({
       where: { id: productId },
       data: {
-        averageRating,
-        reviewCount: reviews.length,
+        averageRating: agg._avg.rating ?? 0,
+        reviewCount: agg._count.rating,
       },
     });
   }
@@ -340,7 +320,6 @@ export class ReviewsService {
             id: review.user.id,
             firstName: review.user.firstName || undefined,
             lastName: review.user.lastName || undefined,
-            email: review.user.email,
             avatar: review.user.avatar || undefined,
           }
         : undefined,

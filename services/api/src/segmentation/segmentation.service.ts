@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -60,6 +61,8 @@ export type SegmentMember = {
 
 @Injectable()
 export class SegmentationService {
+  private readonly logger = new Logger(SegmentationService.name);
+
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
@@ -117,7 +120,9 @@ export class SegmentationService {
       },
     });
     if (segment.status === 'ACTIVE' && segment.type === 'DYNAMIC') {
-      await this.evaluateSegment(segment.id).catch(() => {});
+      await this.evaluateSegment(segment.id).catch((e: any) =>
+        this.logger.warn(`Segment ${segment.id} initial evaluation failed: ${e?.message}`),
+      );
     }
     return segment;
   }
@@ -143,7 +148,9 @@ export class SegmentationService {
       },
     });
     if (rulesJson != null && segment.status === 'ACTIVE' && segment.type === 'DYNAMIC') {
-      await this.evaluateSegment(id).catch(() => {});
+      await this.evaluateSegment(id).catch((e: any) =>
+        this.logger.warn(`Segment ${id} re-evaluation failed: ${e?.message}`),
+      );
     }
     return segment;
   }

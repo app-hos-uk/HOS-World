@@ -76,33 +76,75 @@ export class OrdersService {
   }
 
   async create(userId: string, createOrderDto: CreateOrderDto): Promise<Order> {
-    if (createOrderDto.idempotencyKey) {
-      const existingOrder = await this.prisma.order.findFirst({
-        where: {
-          userId,
-          idempotencyKey: createOrderDto.idempotencyKey,
-          parentOrderId: null,
-        },
-        include: {
-          items: {
-            include: {
-              product: {
-                include: { images: { orderBy: { order: 'asc' }, take: 1 } },
-              },
+    let idempotencyKey = createOrderDto.idempotencyKey;
+
+    if (!idempotencyKey) {
+      // Derive a stable key from the cartId so retries for the same cart
+      // resolve to the same key even if the response was lost.
+      const userCart = await this.prisma.cart.findUnique({
+        where: { userId },
+        select: { id: true },
+      });
+      idempotencyKey = userCart
+        ? `auto-${userId}-${userCart.id}`
+        : `auto-${userId}-nocart-${Date.now()}`;
+      this.logger.warn(
+        `Checkout for user ${userId} missing idempotencyKey — derived from cart: ${idempotencyKey}`,
+      );
+    }
+    createOrderDto.idempotencyKey = idempotencyKey;
+
+    const existingOrder = await this.prisma.order.findFirst({
+      where: {
+        userId,
+        idempotencyKey,
+        parentOrderId: null,
+      },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: { images: { orderBy: { order: 'asc' }, take: 1 } },
             },
           },
-          shippingAddress: true,
-          billingAddress: true,
-          seller: { select: { id: true, storeName: true, slug: true } },
         },
+        shippingAddress: true,
+        billingAddress: true,
+        seller: { select: { id: true, storeName: true, slug: true } },
+      },
+    });
+    if (existingOrder) {
+      this.logger.log(
+        `Idempotent checkout: returning existing order ${existingOrder.orderNumber} for key ${idempotencyKey}`,
+      );
+      return this.mapToOrderType(existingOrder, true);
+    }
+
+    // Acquire a checkout-in-progress lock on the cart to prevent concurrent order creation.
+    // First try: lock only if unlocked. Second try: atomically steal a stale lock (>2 min).
+    const now = new Date();
+    const staleCutoff = new Date(Date.now() - 120_000);
+    const cartLock = await this.prisma.cart.updateMany({
+      where: { userId, checkoutLockedAt: null },
+      data: { checkoutLockedAt: now },
+    });
+    if (cartLock.count === 0) {
+      const staleLock = await this.prisma.cart.updateMany({
+        where: { userId, checkoutLockedAt: { lt: staleCutoff } },
+        data: { checkoutLockedAt: now },
       });
-      if (existingOrder) {
-        this.logger.log(
-          `Idempotent checkout: returning existing order ${existingOrder.orderNumber} for key ${createOrderDto.idempotencyKey}`,
-        );
-        return this.mapToOrderType(existingOrder, true);
+      if (staleLock.count > 0) {
+        this.logger.warn(`Stale checkout lock cleared atomically for user ${userId}`);
+      } else {
+        const cartExists = await this.prisma.cart.findUnique({ where: { userId }, select: { id: true } });
+        if (!cartExists) {
+          throw new BadRequestException('Cart is empty');
+        }
+        throw new BadRequestException('Checkout already in progress. Please wait.');
       }
     }
+
+    try {
 
     // Get user's cart with product tax classes — refresh line prices from catalog before charging.
     const cartInclude = {
@@ -231,14 +273,22 @@ export class OrdersService {
       total: Decimal;
     }> = [];
 
+    // Prefetch all relevant sellers in one query instead of N queries inside the loop
+    const sellerIds = [...itemsBySeller.keys()].filter((k) => k !== 'platform');
+    const sellersMap = new Map<string, { id: string; commissionRate?: any }>();
+    if (sellerIds.length > 0) {
+      const sellers = await this.prisma.seller.findMany({
+        where: { id: { in: sellerIds } },
+        select: { id: true, commissionRate: true },
+      });
+      for (const s of sellers) sellersMap.set(s.id, s);
+    }
+
     for (const [sellerIdOrPlatform, items] of itemsBySeller) {
       let seller: { id: string; commissionRate?: any } | null = null;
 
       if (sellerIdOrPlatform !== 'platform') {
-        seller = await this.prisma.seller.findUnique({
-          where: { id: sellerIdOrPlatform },
-          select: { id: true, commissionRate: true },
-        });
+        seller = sellersMap.get(sellerIdOrPlatform) ?? null;
         if (!seller) {
           const productNames = items.map((i) => i.product.name).join(', ');
           throw new BadRequestException(
@@ -352,15 +402,64 @@ export class OrdersService {
 
     let skipPromotionUsageRecording = false;
 
+    // Pre-compute warehouse routing OUTSIDE the transaction to avoid holding DB connections
+    // during network I/O (geocoding, warehouse distance calculations).
+    type RoutingResult = {
+      fulfillingWarehouseId: string | null;
+      fulfillmentCenterId: string | null;
+      estimatedDistance: number | null;
+      routingMethod: string;
+    };
+    const precomputedRouting = new Map<string, RoutingResult>();
+    if (this.warehouseRoutingService && this.geocodingService) {
+      try {
+        const customerCoords = await this.geocodingService.getCoordinatesForAddress(
+          createOrderDto.shippingAddressId,
+        );
+        if (customerCoords) {
+          for (const group of vendorGroups) {
+            const productQuantities = group.items.map((item) => ({
+              productId: item.productId,
+              quantity: item.quantity,
+            }));
+            try {
+              const routingResult =
+                await this.warehouseRoutingService.findOptimalFulfillmentSource(
+                  customerCoords.latitude,
+                  customerCoords.longitude,
+                  productQuantities,
+                );
+              precomputedRouting.set(group.sellerIdOrPlatform, {
+                fulfillingWarehouseId: routingResult.warehouseId,
+                fulfillmentCenterId: routingResult.fulfillmentCenterId,
+                estimatedDistance: routingResult.distance,
+                routingMethod: routingResult.routingMethod,
+              });
+            } catch (routingError) {
+              this.logger.error(
+                `Pre-tx routing failed for group ${group.sellerIdOrPlatform}`,
+                routingError,
+              );
+            }
+          }
+        }
+      } catch (geoError) {
+        this.logger.error(`Pre-tx geocoding failed`, geoError);
+      }
+    }
+
     // Use a single transaction for the entire checkout
     const result = await this.prisma.$transaction(async (tx) => {
-      // Re-check stock for all items within transaction
+      // Batch stock re-check: single query instead of N per item
+      const allProductIds = vendorGroups.flatMap((g) => g.items.map((i) => i.productId));
+      const stockRows = await tx.product.findMany({
+        where: { id: { in: allProductIds } },
+        select: { id: true, stock: true, name: true },
+      });
+      const stockMap = new Map(stockRows.map((r) => [r.id, r]));
       for (const group of vendorGroups) {
         for (const item of group.items) {
-          const product = await tx.product.findUnique({
-            where: { id: item.productId },
-            select: { stock: true, name: true },
-          });
+          const product = stockMap.get(item.productId);
           if (!product) throw new NotFoundException(`Product ${item.productId} not found`);
           if (product.stock < item.quantity) {
             throw new BadRequestException(
@@ -419,40 +518,11 @@ export class OrdersService {
         for (const group of vendorGroups) {
           const childOrderNumber = this.generateOrderNumber();
 
-          // Warehouse routing per child order
-          let fulfillingWarehouseId: string | null = null;
-          let fulfillmentCenterId: string | null = null;
-          let estimatedDistance: number | null = null;
-          let routingMethod = 'MANUAL';
-
-          if (this.warehouseRoutingService && this.geocodingService) {
-            try {
-              const customerCoords = await this.geocodingService.getCoordinatesForAddress(
-                createOrderDto.shippingAddressId,
-              );
-              if (customerCoords) {
-                const productQuantities = group.items.map((item) => ({
-                  productId: item.productId,
-                  quantity: item.quantity,
-                }));
-                const routingResult =
-                  await this.warehouseRoutingService.findOptimalFulfillmentSource(
-                    customerCoords.latitude,
-                    customerCoords.longitude,
-                    productQuantities,
-                  );
-                fulfillingWarehouseId = routingResult.warehouseId;
-                fulfillmentCenterId = routingResult.fulfillmentCenterId;
-                estimatedDistance = routingResult.distance;
-                routingMethod = routingResult.routingMethod;
-              }
-            } catch (routingError) {
-              this.logger.error(
-                `Child order routing failed for seller ${group.sellerIdOrPlatform}`,
-                routingError,
-              );
-            }
-          }
+          const routing = precomputedRouting.get(group.sellerIdOrPlatform);
+          const fulfillingWarehouseId = routing?.fulfillingWarehouseId ?? null;
+          const fulfillmentCenterId = routing?.fulfillmentCenterId ?? null;
+          const estimatedDistance = routing?.estimatedDistance ?? null;
+          const routingMethod = routing?.routingMethod ?? 'MANUAL';
 
           const commissionRate = group.seller?.commissionRate != null
             ? Number(group.seller.commissionRate)
@@ -501,35 +571,18 @@ export class OrdersService {
           });
         }
       } else {
-        // Single vendor: apply warehouse routing to the parent order itself
-        if (this.warehouseRoutingService && this.geocodingService) {
-          try {
-            const customerCoords = await this.geocodingService.getCoordinatesForAddress(
-              createOrderDto.shippingAddressId,
-            );
-            if (customerCoords) {
-              const productQuantities = cart.items.map((item) => ({
-                productId: item.productId,
-                quantity: item.quantity,
-              }));
-              const routingResult = await this.warehouseRoutingService.findOptimalFulfillmentSource(
-                customerCoords.latitude,
-                customerCoords.longitude,
-                productQuantities,
-              );
-              await tx.order.update({
-                where: { id: parentOrder.id },
-                data: {
-                  fulfillingWarehouseId: routingResult.warehouseId,
-                  fulfillmentCenterId: routingResult.fulfillmentCenterId,
-                  estimatedDistance: routingResult.distance,
-                  routingMethod: routingResult.routingMethod,
-                },
-              });
-            }
-          } catch (routingError) {
-            this.logger.error(`Order routing failed for single-vendor order`, routingError);
-          }
+        // Single vendor: apply pre-computed warehouse routing to the parent order
+        const singleRouting = precomputedRouting.get(vendorGroups[0].sellerIdOrPlatform);
+        if (singleRouting) {
+          await tx.order.update({
+            where: { id: parentOrder.id },
+            data: {
+              fulfillingWarehouseId: singleRouting.fulfillingWarehouseId,
+              fulfillmentCenterId: singleRouting.fulfillmentCenterId,
+              estimatedDistance: singleRouting.estimatedDistance,
+              routingMethod: singleRouting.routingMethod,
+            },
+          });
         }
 
         // Set platform fee on the parent order for single vendor
@@ -584,20 +637,27 @@ export class OrdersService {
             );
           }
 
-          // Also decrement vendor stock if this product is fulfilled by a vendor
+          // Atomic vendor stock decrement — mirrors the product stock pattern
           if (group.seller) {
-            const activeVendorProduct = await tx.vendorProduct.findFirst({
+            const vendorDecremented = await tx.vendorProduct.updateMany({
               where: {
                 productId: item.productId,
                 sellerId: group.seller.id,
                 status: 'ACTIVE' as any,
+                vendorStock: { gte: item.quantity },
               },
+              data: { vendorStock: { decrement: item.quantity } },
             });
-            if (activeVendorProduct) {
-              await tx.vendorProduct.update({
-                where: { id: activeVendorProduct.id },
-                data: { vendorStock: { decrement: item.quantity } },
+            if (vendorDecremented.count === 0) {
+              const vp = await tx.vendorProduct.findFirst({
+                where: { productId: item.productId, sellerId: group.seller.id, status: 'ACTIVE' as any },
+                select: { vendorStock: true },
               });
+              if (vp) {
+                throw new BadRequestException(
+                  `Insufficient vendor stock for product ${item.productId}. Available: ${vp.vendorStock}, Requested: ${item.quantity}`,
+                );
+              }
             }
           }
         }
@@ -685,6 +745,12 @@ export class OrdersService {
     }
 
     return parentOrder;
+    } finally {
+      await this.prisma.cart.updateMany({
+        where: { userId },
+        data: { checkoutLockedAt: null },
+      }).catch((e) => this.logger.warn(`Failed to release checkout lock: ${e?.message}`));
+    }
   }
 
   /**
@@ -1018,7 +1084,7 @@ export class OrdersService {
     opts?: { page?: number; limit?: number; status?: string },
   ): Promise<{ data: Order[]; pagination: { page: number; limit: number; total: number; totalPages: number } }> {
     const page = Math.max(1, opts?.page ?? 1);
-    const limit = Math.min(500, Math.max(1, opts?.limit ?? 20));
+    const limit = Math.min(50, Math.max(1, opts?.limit ?? 20));
     const skip = (page - 1) * limit;
 
     const where: any = {

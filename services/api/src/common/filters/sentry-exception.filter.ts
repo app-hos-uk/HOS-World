@@ -1,20 +1,21 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 
 @Catch()
 export class SentryExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger('ExceptionFilter');
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const request = ctx.getRequest();
     const requestId = request?.requestId || request?.headers?.['x-request-id'];
-    try {
-      if (requestId && typeof Sentry?.setTag === 'function') {
-        Sentry.setTag('request_id', requestId);
-      }
-      Sentry.captureException(exception);
-    } catch (e) {
-      // ignore Sentry errors
-    }
 
     const response = ctx.getResponse();
     let status =
@@ -43,10 +44,27 @@ export class SentryExceptionFilter implements ExceptionFilter {
       };
     }
 
+    // Only report server errors (5xx) to Sentry — 4xx are expected client mistakes
+    if (status >= 500) {
+      try {
+        if (requestId && typeof Sentry?.setTag === 'function') {
+          Sentry.setTag('request_id', requestId);
+        }
+        Sentry.captureException(exception);
+      } catch {
+        // ignore Sentry errors
+      }
+
+      this.logger.error(
+        `[${requestId ?? '-'}] ${request?.method ?? '?'} ${request?.url ?? '?'} → ${status}: ${msg}`,
+        exception instanceof Error ? exception.stack : undefined,
+      );
+    }
+
     response.status(status).json({
       ...message,
       timestamp: new Date().toISOString(),
-      path: request.url,
+      path: request?.url,
     });
   }
 }

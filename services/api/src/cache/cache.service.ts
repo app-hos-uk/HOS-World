@@ -28,14 +28,19 @@ export class CacheService {
   }
 
   /**
-   * Delete multiple keys matching pattern
+   * Delete multiple keys matching pattern.
+   * Delegates to the store's own `keys()` which handles prefixes and
+   * uses SCAN internally on Redis-backed stores (cache-manager-redis-yet).
    */
   async delPattern(pattern: string): Promise<void> {
-    // This is Redis-specific, in-memory cache doesn't support patterns
-    // Implementation depends on cache store
-    const keys = await this.cacheManager.store.keys?.(pattern);
-    if (keys && keys.length > 0) {
-      await Promise.all(keys.map((key) => this.del(key)));
+    try {
+      const store = this.cacheManager.store as any;
+      const keys = await store?.keys?.(pattern);
+      if (keys && keys.length > 0) {
+        await Promise.all(keys.map((key: string) => this.del(key)));
+      }
+    } catch {
+      // Silently degrade — cache invalidation failure is non-fatal
     }
   }
 

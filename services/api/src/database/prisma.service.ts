@@ -30,7 +30,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       await this.connectWithRetry();
       this.logger.log('Database connected successfully', 'PrismaService');
 
-      if (process.env.NODE_ENV === 'production' && process.env.SYNC_DB_SCHEMA !== 'false') {
+      // Only run in-app migration when explicitly opted-in.
+      // The docker-entrypoint.sh already runs `prisma migrate deploy` before boot,
+      // so running it again here doubles the migration time and can cause lock contention.
+      if (
+        process.env.NODE_ENV === 'production' &&
+        process.env.SYNC_DB_SCHEMA === 'true'
+      ) {
         this.syncDatabaseSchema().catch((error: unknown) => {
           const msg = error instanceof Error ? error.message : 'Unknown error';
           this.logger.warn(`Database schema sync failed: ${msg}`, 'PrismaService');

@@ -28,6 +28,11 @@ export class CreateOrderDto {
   @Min(0)
   shippingCost?: number;
 
+  /**
+   * Client-generated idempotency key for safe retries. Strongly recommended —
+   * without one, server-generated keys cannot protect against network retries.
+   * Use a UUID or `${userId}-${cartId}-${timestamp}` pattern.
+   */
   @IsOptional()
   @IsString()
   @MaxLength(128)

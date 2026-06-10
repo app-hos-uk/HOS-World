@@ -434,33 +434,21 @@ export class ProductsService {
         include: {
           images: {
             orderBy: { order: 'asc' },
+            take: 3,
           },
           variations: true,
           categoryRelation: {
-            include: {
-              parent: {
-                include: {
-                  parent: true,
-                },
-              },
-            },
+            select: { id: true, name: true, slug: true, parentId: true },
           },
           tagsRelation: {
-            include: {
-              tag: true,
-            },
+            include: { tag: { select: { id: true, name: true, slug: true } } },
           },
           attributes: {
             include: {
-              attribute: {
-                include: {
-                  values: true,
-                },
-              },
-              attributeValue: true,
+              attribute: { select: { id: true, name: true } },
+              attributeValue: { select: { id: true, value: true } },
             },
           },
-          // Seller information hidden for identity privacy
         },
       }),
       this.prisma.product.count({ where }),

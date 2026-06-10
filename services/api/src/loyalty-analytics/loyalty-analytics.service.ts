@@ -110,6 +110,7 @@ export class LoyaltyAnalyticsService {
 
     const memberUserIds = await this.prisma.loyaltyMembership.findMany({
       select: { userId: true },
+      take: 50000,
     });
     const memberSet = new Set(memberUserIds.map((m) => m.userId));
 
@@ -486,11 +487,13 @@ export class LoyaltyAnalyticsService {
 
     const items = await this.prisma.orderItem.findMany({
       where: { order: { createdAt: { gte: since }, parentOrderId: null } },
+      take: 50000,
       select: { quantity: true, price: true, product: { select: { fandom: true, name: true } } },
     });
 
     const priorItems = await this.prisma.orderItem.findMany({
       where: { order: { createdAt: { gte: priorStart, lt: since }, parentOrderId: null } },
+      take: 50000,
       select: { quantity: true, price: true, product: { select: { fandom: true } } },
     });
 
@@ -605,6 +608,7 @@ export class LoyaltyAnalyticsService {
 
     const allOrders30 = await this.prisma.order.findMany({
       where: { parentOrderId: null, createdAt: { gte: daysAgo(30) }, status: { not: 'CANCELLED' } },
+      take: 50000,
       select: { userId: true, subtotal: true },
     });
 

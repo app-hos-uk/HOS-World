@@ -6,6 +6,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { CacheService } from '../cache/cache.service';
 import { CreateTaxZoneDto } from './dto/create-tax-zone.dto';
 import { CreateTaxClassDto } from './dto/create-tax-class.dto';
 import { CreateTaxRateDto } from './dto/create-tax-rate.dto';
@@ -17,25 +18,24 @@ import type { TaxCalculationRequest } from './interfaces/tax-provider.interface'
 export class TaxService {
   private readonly logger = new Logger(TaxService.name);
 
-  private readonly taxRateCache = new Map<string, { data: any; expiresAt: number }>();
-  private readonly CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+  private static readonly CACHE_TTL = 300;
 
-  private getCachedTaxRate(key: string): any | null {
-    const entry = this.taxRateCache.get(key);
-    if (!entry) return null;
-    if (Date.now() > entry.expiresAt) {
-      this.taxRateCache.delete(key);
-      return null;
-    }
-    return entry.data;
+  private async clearTaxCaches() {
+    await this.cache.delPattern('taxzone:*').catch(() => {});
+    await this.cache.delPattern('taxrate:*').catch(() => {});
   }
 
-  private setCachedTaxRate(key: string, data: any): void {
-    this.taxRateCache.set(key, { data, expiresAt: Date.now() + this.CACHE_TTL_MS });
+  private async getCachedTaxRate(key: string): Promise<any | null> {
+    return (await this.cache.get(`taxrate:${key}`)) ?? null;
+  }
+
+  private async setCachedTaxRate(key: string, data: any): Promise<void> {
+    await this.cache.set(`taxrate:${key}`, data, TaxService.CACHE_TTL);
   }
 
   constructor(
     private prisma: PrismaService,
+    private cache: CacheService,
     @Optional() private readonly taxFactory?: TaxFactoryService,
   ) {}
 
@@ -71,7 +71,7 @@ export class TaxService {
       isActive = createDto.isActive ?? true;
     }
 
-    return this.prisma.taxZone.create({
+    const zone = await this.prisma.taxZone.create({
       data: {
         name: createDto.name,
         country: country || null,
@@ -81,6 +81,8 @@ export class TaxService {
         isActive,
       },
     });
+    await this.clearTaxCaches();
+    return zone;
   }
 
   /**
@@ -262,7 +264,7 @@ export class TaxService {
       throw new BadRequestException('Tax rate already exists for this zone and class combination');
     }
 
-    return this.prisma.taxRate.create({
+    const rate = await this.prisma.taxRate.create({
       data: {
         taxZoneId: createDto.taxZoneId,
         taxClassId,
@@ -289,6 +291,8 @@ export class TaxService {
         },
       },
     });
+    await this.clearTaxCaches();
+    return rate;
   }
 
   /**
@@ -300,7 +304,21 @@ export class TaxService {
     city?: string,
     postalCode?: string,
   ) {
-    // Find all active zones for this country, then pick the most specific match
+    const cacheKey = `taxzone:${country}:${state ?? ''}:${city ?? ''}:${postalCode ?? ''}`;
+    const cached = await this.cache.get<any>(cacheKey);
+    if (cached) return cached;
+
+    const zone = await this._resolveTaxZone(country, state, city, postalCode);
+    await this.cache.set(cacheKey, zone, TaxService.CACHE_TTL);
+    return zone;
+  }
+
+  private async _resolveTaxZone(
+    country: string,
+    state?: string,
+    city?: string,
+    postalCode?: string,
+  ) {
     const zones = await this.prisma.taxZone.findMany({
       where: {
         isActive: true,
@@ -466,7 +484,7 @@ export class TaxService {
     }
 
     const cacheKey = `${taxZone.id}:${taxClassId}`;
-    let taxRate = this.getCachedTaxRate(cacheKey);
+    let taxRate = await this.getCachedTaxRate(cacheKey);
     if (taxRate === null) {
       taxRate = await this.prisma.taxRate.findFirst({
         where: {
@@ -478,7 +496,7 @@ export class TaxService {
           taxClass: true,
         },
       });
-      this.setCachedTaxRate(cacheKey, taxRate);
+      await this.setCachedTaxRate(cacheKey, taxRate);
     }
 
     if (!taxRate) {
@@ -552,10 +570,12 @@ export class TaxService {
       }
     });
 
-    return this.prisma.taxZone.update({
+    const result = await this.prisma.taxZone.update({
       where: { id },
       data: updateData,
     });
+    await this.clearTaxCaches();
+    return result;
   }
 
   /**
@@ -591,7 +611,7 @@ export class TaxService {
       updateData.rate = new Decimal(updateDto.rate);
     }
 
-    return this.prisma.taxRate.update({
+    const result = await this.prisma.taxRate.update({
       where: { id },
       data: updateData,
       include: {
@@ -599,6 +619,8 @@ export class TaxService {
         taxClass: true,
       },
     });
+    await this.clearTaxCaches();
+    return result;
   }
 
   /**
@@ -625,15 +647,19 @@ export class TaxService {
       this.logger.warn(
         `Tax zone ${id} has ${inactiveRates.length} inactive rate(s) — soft-deleting zone instead of hard delete`,
       );
-      return this.prisma.taxZone.update({
+      const result = await this.prisma.taxZone.update({
         where: { id },
         data: { isActive: false },
       });
+      await this.clearTaxCaches();
+      return result;
     }
 
-    return this.prisma.taxZone.delete({
+    const result = await this.prisma.taxZone.delete({
       where: { id },
     });
+    await this.clearTaxCaches();
+    return result;
   }
 
   /**
@@ -668,8 +694,10 @@ export class TaxService {
       throw new NotFoundException('Tax rate not found');
     }
 
-    return this.prisma.taxRate.delete({
+    const result = await this.prisma.taxRate.delete({
       where: { id },
     });
+    await this.clearTaxCaches();
+    return result;
   }
 }

@@ -12,6 +12,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiTags,
   ApiOperation,
@@ -39,6 +40,7 @@ export class OrdersController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @ApiOperation({
     summary: 'Create a new order',
     description: "Creates a new order from the user's cart",
@@ -86,6 +88,7 @@ export class OrdersController {
 
   @Public()
   @Get('track/:orderNumber')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     summary: 'Track order by order number (public)',
     description:

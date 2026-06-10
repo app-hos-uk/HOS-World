@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
   Optional,
   forwardRef,
@@ -50,6 +51,8 @@ function startOfMonthLocal(d = new Date()): Date {
 
 @Injectable()
 export class AmbassadorService {
+  private readonly logger = new Logger(AmbassadorService.name);
+
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
@@ -160,7 +163,7 @@ export class AmbassadorService {
         displayName: dto.displayName,
         tier: profile.tier,
       })
-      .catch(() => {});
+      .catch((e: any) => this.logger.warn(`Marketing event emit failed: ${e?.message}`));
 
     await this.achievementService.checkAndAward(profile.id);
     await this.checkTierProgression(profile.id);
@@ -388,11 +391,11 @@ export class AmbassadorService {
     if (dto.status === 'FEATURED') {
       void this.marketingBus
         .emit('AMBASSADOR_UGC_FEATURED', userId, { ugcType: sub.type, title: sub.title })
-        .catch(() => {});
+        .catch((e: any) => this.logger.warn(`Marketing event emit failed: ${e?.message}`));
     } else {
       void this.marketingBus
         .emit('AMBASSADOR_UGC_APPROVED', userId, { ugcType: sub.type, pointsAwarded: totalPts })
-        .catch(() => {});
+        .catch((e: any) => this.logger.warn(`Marketing event emit failed: ${e?.message}`));
     }
 
     await this.achievementService.checkAndAward(sub.ambassadorId);
@@ -777,7 +780,7 @@ export class AmbassadorService {
 
     void this.marketingBus
       .emit('AMBASSADOR_TIER_UPGRADE', profile.userId, { oldTier, newTier: next.slug })
-      .catch(() => {});
+      .catch((e: any) => this.logger.warn(`Marketing event emit failed: ${e?.message}`));
 
     await this.achievementService.checkAndAward(ambassadorId);
     return { upgraded: true, newTier: next.slug };

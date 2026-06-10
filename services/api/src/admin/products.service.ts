@@ -834,6 +834,7 @@ export class AdminProductsService {
           { ean: { not: null } },
         ],
       },
+      take: 5000,
       select: {
         id: true,
         name: true,

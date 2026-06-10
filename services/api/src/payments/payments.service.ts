@@ -134,6 +134,33 @@ export class PaymentsService {
     let clientSecret: string | null = null;
     let paymentIntentId: string | null = null;
 
+    // Cancel any prior intent to avoid leaving chargeable orphans.
+    // If the prior intent already succeeded (customer was charged), skip creating
+    // a new one — the webhook will eventually mark the order as paid.
+    if (order.stripePaymentIntentId) {
+      try {
+        if (provider.cancelPaymentIntent) {
+          const cancelStatus = await provider.cancelPaymentIntent(order.stripePaymentIntentId);
+          if (cancelStatus === 'already_succeeded') {
+            this.logger.warn(
+              `Prior intent ${order.stripePaymentIntentId} already succeeded for order ${order.id} — not creating a new intent`,
+            );
+            return {
+              success: true,
+              paymentIntentId: order.stripePaymentIntentId,
+              clientSecret: null,
+              message: 'Payment already processed. Please wait for confirmation.',
+            };
+          }
+          this.logger.log(`Cancelled prior intent ${order.stripePaymentIntentId} for order ${order.id}`);
+        }
+      } catch (cancelErr: any) {
+        this.logger.warn(
+          `Could not cancel prior intent ${order.stripePaymentIntentId}: ${cancelErr?.message}`,
+        );
+      }
+    }
+
     try {
       // Use Stripe Connect split if vendor has a connected account
       const vendorAccountId = order.seller?.stripeConnectAccountId;
@@ -297,6 +324,17 @@ export class PaymentsService {
     }
 
     const created = await this.prisma.$transaction(async (tx) => {
+      // Double-check: bail out if the order is already paid (guards against
+      // concurrent duplicate webhooks when Redis dedup is unavailable).
+      const freshOrder = await tx.order.findUnique({
+        where: { id: order.id },
+        select: { paymentStatus: true },
+      });
+      if (freshOrder?.paymentStatus === 'PAID') {
+        this.logger.log(`Order ${order.id} already PAID — skipping duplicate`);
+        return false;
+      }
+
       const existingPayment = await tx.payment.findFirst({
         where: { orderId: order.id, status: 'PAID' },
       });
@@ -431,7 +469,7 @@ export class PaymentsService {
             loyaltyPointsEarned: lt?.points ?? 0,
             productName: enriched?.items?.[0]?.product?.name ?? 'your purchase',
           })
-          .catch(() => {});
+          .catch((e: any) => this.logger.warn(`Marketing event emit failed: ${e?.message}`));
       } catch (e: any) {
         this.logger.warn(`Marketing ORDER_PAID hook failed: ${e?.message ?? e}`);
       }
@@ -464,13 +502,20 @@ export class PaymentsService {
     this.logger.log(`Received ${providerName} webhook: ${event.type || 'unknown'}`);
 
     // Deduplicate by Stripe event id (retries / duplicate delivery).
+    // When Redis is down, fall through and process the event — better to risk a
+    // duplicate (markPaymentAsPaid is already idempotent) than to silently drop
+    // a payment confirmation.
     const eventId = typeof event?.id === 'string' ? event.id : null;
-    if (eventId && this.redisService) {
-      const dedupeKey = `stripe:webhook:${eventId}`;
-      const isNew = await this.redisService.setNX(dedupeKey, '1', 7 * 24 * 60 * 60);
-      if (!isNew) {
-        this.logger.log(`Skipping duplicate webhook event ${eventId}`);
-        return;
+    if (eventId && this.redisService?.isRedisConnected()) {
+      try {
+        const dedupeKey = `stripe:webhook:${eventId}`;
+        const isNew = await this.redisService.setNX(dedupeKey, '1', 7 * 24 * 60 * 60);
+        if (!isNew) {
+          this.logger.log(`Skipping duplicate webhook event ${eventId}`);
+          return;
+        }
+      } catch (redisErr: any) {
+        this.logger.warn(`Webhook dedup Redis error (proceeding anyway): ${redisErr?.message}`);
       }
     }
 
