@@ -2,7 +2,7 @@
 set -e
 
 echo "=== Step 1: Execute fix SQL directly (bypasses Prisma checksum) ==="
-npx prisma db execute --file ./prisma/migrations/20260315120000_fix_missing_tables/migration.sql 2>&1 || echo "WARN: db execute had issues (may be OK if already applied)"
+npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260315120000_fix_missing_tables/migration.sql 2>&1 || echo "WARN: db execute had issues (may be OK if already applied)"
 
 echo "=== Step 2: Mark all known migrations as applied ==="
 npx prisma migrate resolve --applied 20260219100000_convert_gbp_to_usd 2>/dev/null || true
@@ -16,10 +16,10 @@ npx prisma migrate resolve --applied 20260609000000_add_blog_system 2>/dev/null 
 npx prisma migrate resolve --applied 20260610000000_campaign_readiness_indexes 2>/dev/null || true
 
 echo "=== Step 2b: Execute new migrations directly (IF NOT EXISTS - safe to re-run) ==="
-npx prisma db execute --file ./prisma/migrations/20261003000000_founding_members_email_verification/migration.sql 2>&1 || echo "WARN: founding members migration had issues (may be OK if already applied)"
-npx prisma db execute --file ./prisma/migrations/20261004000000_security_indexes/migration.sql 2>&1 || echo "WARN: security indexes migration had issues (may be OK if already applied)"
-npx prisma db execute --file ./prisma/migrations/20260609000000_add_blog_system/migration.sql 2>&1 || echo "WARN: blog system migration had issues (may be OK if already applied)"
-npx prisma db execute --file ./prisma/migrations/20260610000000_campaign_readiness_indexes/migration.sql 2>&1 || echo "WARN: campaign readiness migration had issues (may be OK if already applied)"
+npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20261003000000_founding_members_email_verification/migration.sql 2>&1 || echo "WARN: founding members migration had issues (may be OK if already applied)"
+npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20261004000000_security_indexes/migration.sql 2>&1 || echo "WARN: security indexes migration had issues (may be OK if already applied)"
+npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260609000000_add_blog_system/migration.sql 2>&1 || echo "WARN: blog system migration had issues (may be OK if already applied)"
+npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260610000000_campaign_readiness_indexes/migration.sql 2>&1 || echo "WARN: campaign readiness migration had issues (may be OK if already applied)"
 
 echo "=== Step 3: Run migrate deploy (authoritative) ==="
 # Fail closed: if migrations cannot be applied the schema is in an unknown state and the app

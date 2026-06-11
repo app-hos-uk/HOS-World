@@ -39,6 +39,6 @@ const cacheLogger = new Logger('CacheModule');
     }),
   ],
   providers: [CacheService, RedisService],
-  exports: [CacheService, RedisService],
+  exports: [NestCacheModule, CacheService, RedisService],
 })
 export class CacheModule {}
