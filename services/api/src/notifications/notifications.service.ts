@@ -129,8 +129,7 @@ export class NotificationsService implements OnModuleInit {
         this.emailEnabled = false;
       }
     } else {
-      this.logger.warn('⚠️ Email configuration missing - email notifications disabled');
-      this.logger.warn('Set SMTP_HOST, SMTP_USER, and SMTP_PASS to enable email');
+      this.logger.log('Email not configured (SMTP_HOST/SMTP_USER/SMTP_PASS) — notifications will be logged only');
       this.emailEnabled = false;
     }
   }

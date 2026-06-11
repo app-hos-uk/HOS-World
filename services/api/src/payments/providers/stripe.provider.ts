@@ -32,7 +32,7 @@ export class StripeProvider implements PaymentProvider {
       this.stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
       this.logger.log('Stripe provider initialized');
     } else {
-      this.logger.warn('STRIPE_SECRET_KEY not set - Stripe provider disabled');
+      this.logger.log('STRIPE_SECRET_KEY not set — Stripe provider disabled');
     }
   }
 

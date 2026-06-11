@@ -67,7 +67,7 @@ export class UploadsService implements OnModuleInit {
 
   async onModuleInit() {
     if (!sharp) {
-      this.logger.warn('sharp is not installed — image processing pipeline disabled');
+      this.logger.log('sharp not available — image processing pipeline disabled');
       return;
     }
 

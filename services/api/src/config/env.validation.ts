@@ -184,7 +184,7 @@ export function validateEnvironmentVariables(
   }
 
   for (const warning of warnings) {
-    logger.warn(`⚠️  ${warning}`);
+    logger.log(`ℹ️  ${warning}`);
   }
 
   if (errors.length > 0) {
