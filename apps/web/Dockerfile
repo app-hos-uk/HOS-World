@@ -1,19 +1,16 @@
-# Web Service Dockerfile
-# Cache-bust: 2025-12-05-20:15 - Force fresh build to deploy latest login fixes
+# Web Service Dockerfile — Next.js standalone output
 FROM node:18-slim AS base
 
-# Install pnpm
 RUN npm install -g pnpm
 
 WORKDIR /app
 
-# Copy package files (order matters for Docker layer caching)
+# ── Layer 1: Workspace config + lockfile (rarely changes) ──
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-
-# Root `prepare` runs on pnpm install; include this script before any install (no full scripts/ dir needed)
+# Root `prepare` runs on pnpm install; include this script before any install.
 COPY scripts/setup-git-hooks.mjs ./scripts/setup-git-hooks.mjs
 
-# Copy all package.json files from packages (must be before install)
+# ── Layer 2: Package manifests only (cached unless deps change) ──
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/api-client/package.json ./packages/api-client/
 COPY packages/theme-system/package.json ./packages/theme-system/
@@ -21,124 +18,50 @@ COPY packages/utils/package.json ./packages/utils/
 COPY packages/cms-client/package.json ./packages/cms-client/
 COPY apps/web/package.json ./apps/web/
 
-# Install ALL dependencies including dev dependencies (needed for building packages)
-# Using --no-frozen-lockfile for CI/CD compatibility
-# This installs @types/react and other dev dependencies needed for TypeScript builds
-# Add cache-busting ARG to force fresh install when code changes
-ARG CACHE_BUST=1
-ARG BUILD_DATE=unknown
-RUN pnpm install --no-frozen-lockfile
+# Frozen lockfile is faster and deterministic; fall back if it drifts.
+RUN pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
-# Copy source code
-# Copy packages first (including tsconfig.json files and source files)
-# Use --chown to ensure proper permissions and avoid cache issues
-# Force cache invalidation by copying in a specific order
-# Cache-bust: 2025-12-04 - Fixed api-client TypeScript build error
-RUN echo "Build date: ${BUILD_DATE}" && echo "Forcing fresh package copy..."
-# Copy all package files (package.json, tsconfig.json, and source)
+# ── Layer 3: Source code ──
 COPY --chown=node:node packages ./packages
-# Copy web app
 COPY --chown=node:node apps/web ./apps/web
 
-# Build packages first (in dependency order)
-# This ensures workspace packages are available for the web app build
+# Build workspace packages in dependency order
+RUN cd /app/packages/shared-types && pnpm build \
+    && cd /app/packages/theme-system && pnpm build \
+    && cd /app/packages/utils && pnpm build \
+    && cd /app/packages/api-client && pnpm build \
+    && cd /app/packages/cms-client && (pnpm build || echo "cms-client build skipped")
 
-# 1. shared-types (no dependencies - must be built first)
-WORKDIR /app/packages/shared-types
-RUN pnpm build
-
-# 2. theme-system (depends on shared-types)
-WORKDIR /app/packages/theme-system
-RUN pnpm build
-
-# 3. utils (depends on shared-types)
-# Verify tsconfig.json has DOM lib before building
-WORKDIR /app/packages/utils
-RUN cat tsconfig.json | grep -q '"DOM"' || (echo "ERROR: DOM lib missing from tsconfig.json" && cat tsconfig.json && exit 1)
-RUN pnpm build
-
-# 4. api-client (depends on shared-types)
-WORKDIR /app/packages/api-client
-# Verify tsconfig.json has DOM lib and NO types node before building
-RUN cat tsconfig.json | grep -q '"DOM"' || (echo "ERROR: DOM lib missing from api-client tsconfig.json" && cat tsconfig.json && exit 1)
-RUN cat tsconfig.json | grep -q '"types"' && (echo "ERROR: types field should not be in tsconfig.json" && cat tsconfig.json && exit 1) || echo "OK: No types field (correct)"
-# Verify put/delete methods exist in client.ts
-RUN grep -q "async put" src/client.ts || (echo "ERROR: put method missing from ApiClient" && exit 1)
-RUN grep -q "async delete" src/client.ts || (echo "ERROR: delete method missing from ApiClient" && exit 1)
-# Verify headers type fix is present (should use Record, not HeadersInit for assignment)
-RUN grep -q "Record<string, string>" src/client.ts || (echo "ERROR: headers type fix missing - should use Record<string, string>" && grep -A 2 "const headers" src/client.ts && exit 1)
-RUN pnpm build
-
-# 5. cms-client (if exists)
-WORKDIR /app/packages/cms-client
-RUN pnpm build || echo "cms-client build skipped if no build script"
-
-# Build web app
-# Accept build-time environment variables for Next.js
+# Build-time public env vars for Next.js
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_CMS_URL
 ARG NEXT_PUBLIC_FRONTEND_URL
-
-# Set as ENV so Next.js can access them during build
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_CMS_URL=$NEXT_PUBLIC_CMS_URL
 ENV NEXT_PUBLIC_FRONTEND_URL=$NEXT_PUBLIC_FRONTEND_URL
 
 WORKDIR /app/apps/web
-
-# Debug: Print env vars to verify they're set (will be visible in build logs)
-RUN echo "Building with NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
-
-# Avoid OOM on Railway Metal builder (Next.js build can use a lot of memory)
+# Avoid OOM on Railway builder (Next.js build can use a lot of memory)
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN pnpm build
 
-# Production image
+# ── Production image: standalone bundle, no install needed ──
 FROM node:18-slim
-
-# Force cache invalidation — change this value to trigger a full rebuild
-ARG BUILD_VERSION=2026-02-25
-RUN echo "Build: $BUILD_VERSION"
-
-# Install pnpm
-RUN npm install -g pnpm
 
 WORKDIR /app
 
-# Copy package files for production install
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY scripts/setup-git-hooks.mjs ./scripts/setup-git-hooks.mjs
-COPY apps/web/package.json ./apps/web/
-COPY packages/shared-types/package.json ./packages/shared-types/
-COPY packages/api-client/package.json ./packages/api-client/
-COPY packages/theme-system/package.json ./packages/theme-system/
-COPY packages/utils/package.json ./packages/utils/
-COPY packages/cms-client/package.json ./packages/cms-client/
-
-# Install production dependencies
-RUN pnpm install --prod --no-frozen-lockfile
-
-# Copy built files and source
-COPY --from=base /app/apps/web/.next ./apps/web/.next
-COPY --from=base /app/apps/web/public ./apps/web/public
-COPY --from=base /app/apps/web/package.json ./apps/web/
-COPY --from=base /app/apps/web/next.config.js ./apps/web/next.config.js
-# Note: next.config.ts is optional - Next.js will use next.config.js if .ts doesn't exist
-COPY --from=base /app/packages ./packages
-
-# Set working directory to web app
-WORKDIR /app/apps/web
-
-# Non-root runtime (align with base stage ownership; Next.js works as uid 1000 "node" user)
-USER node
-
-EXPOSE 3000
-
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
-# Start Next.js production server
-# The "start" script in package.json passes -H 0.0.0.0 so Next.js
-# listens on all interfaces (required for Railway's proxy/healthcheck).
-CMD ["pnpm", "start"]
+# Standalone output bundles a minimal node_modules + server.js.
+# Static assets and public/ are not included by the tracer — copy them in.
+COPY --from=base /app/apps/web/.next/standalone ./
+COPY --from=base /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=base /app/apps/web/public ./apps/web/public
 
+USER node
+EXPOSE 3000
+
+# server.js lives at apps/web/ because outputFileTracingRoot is the monorepo root.
+CMD ["node", "apps/web/server.js"]

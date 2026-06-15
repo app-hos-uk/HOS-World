@@ -1,3 +1,5 @@
+const path = require('path');
+
 const withBundleAnalyzer =
   process.env.ANALYZE === 'true'
     ? require('@next/bundle-analyzer')({ enabled: true })
@@ -6,7 +8,12 @@ const withBundleAnalyzer =
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true, // Re-enabled after fixing useEffect dependencies
+  // Emit a self-contained server bundle (.next/standalone) so the Docker
+  // runtime stage needs no `pnpm install` and only copies a minimal tree.
+  output: 'standalone',
   experimental: {
+    // Trace workspace deps from the monorepo root so standalone includes them.
+    outputFileTracingRoot: path.join(__dirname, '../../'),
     optimizePackageImports: [
       '@heroicons/react',
       'recharts',
