@@ -651,89 +651,116 @@ export class AdminService {
     return { message: 'Password reset successfully' };
   }
 
-  async getSystemSettings() {
-    // Try to get settings from database (using a simple key-value approach)
-    // If no settings exist, use environment variables as defaults
+  // ---------------------------------------------------------------------------
+  // Platform Config helpers (uses the `configs` table with level=PLATFORM)
+  // ---------------------------------------------------------------------------
+
+  private async getPlatformConfig(key: string): Promise<any | undefined> {
+    const row = await this.prisma.config.findFirst({
+      where: { level: 'PLATFORM', levelId: 'PLATFORM', key },
+    });
+    return row?.value;
+  }
+
+  private async setPlatformConfig(key: string, value: any): Promise<void> {
+    const existing = await this.prisma.config.findFirst({
+      where: { level: 'PLATFORM', levelId: 'PLATFORM', key },
+      select: { id: true },
+    });
+
+    if (existing) {
+      await this.prisma.config.update({
+        where: { id: existing.id },
+        data: { value },
+      });
+    } else {
+      await this.prisma.config.create({
+        data: { level: 'PLATFORM', levelId: 'PLATFORM', key, value },
+      });
+    }
+  }
+
+  /**
+   * Returns whether the e-commerce shop is enabled.
+   * Reads from the DB first; falls back to the env var.
+   */
+  async isShopEnabled(): Promise<boolean> {
     try {
-      // Check if we have a system settings record (using ActivityLog or a dedicated approach)
-      // For now, we'll use environment variables with database override capability
-      // In production, you could create a SystemSettings model
+      const dbVal = await this.getPlatformConfig('shopEnabled');
+      if (dbVal !== undefined) {
+        return dbVal === true || dbVal === 'true';
+      }
+    } catch {
+      // DB unavailable — fall through to env var
+    }
+    return process.env.NEXT_PUBLIC_SHOP_ENABLED === 'true';
+  }
 
-      const defaultSettings = {
-        platformName: process.env.PLATFORM_NAME || 'House of Spells Marketplace',
-        platformUrl: process.env.PLATFORM_URL || process.env.FRONTEND_URL || '',
-        maintenanceMode: process.env.MAINTENANCE_MODE === 'true',
-        allowRegistration: process.env.ALLOW_REGISTRATION !== 'false',
-        requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === 'true',
-        platformFeeRate: parseFloat(process.env.PLATFORM_FEE_RATE || '0.15'),
-        currency: process.env.DEFAULT_CURRENCY || 'USD',
-        maxUploadSize: parseInt(process.env.MAX_UPLOAD_SIZE || '10485760', 10), // 10MB default
-        enableOAuth: process.env.ENABLE_OAUTH !== 'false',
-        enableStripe: process.env.STRIPE_SECRET_KEY ? true : false,
-      };
+  async getSystemSettings() {
+    const envDefaults = {
+      platformName: process.env.PLATFORM_NAME || 'House of Spells Marketplace',
+      platformUrl: process.env.PLATFORM_URL || process.env.FRONTEND_URL || '',
+      maintenanceMode: process.env.MAINTENANCE_MODE === 'true',
+      allowRegistration: process.env.ALLOW_REGISTRATION !== 'false',
+      requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === 'true',
+      platformFeeRate: parseFloat(process.env.PLATFORM_FEE_RATE || '0.15'),
+      currency: process.env.DEFAULT_CURRENCY || 'USD',
+      maxUploadSize: parseInt(process.env.MAX_UPLOAD_SIZE || '10485760', 10),
+      enableOAuth: process.env.ENABLE_OAUTH !== 'false',
+      enableStripe: process.env.STRIPE_SECRET_KEY ? true : false,
+      shopEnabled: process.env.NEXT_PUBLIC_SHOP_ENABLED === 'true',
+    };
 
-      // Try to get custom settings from a metadata field or dedicated storage
-      // For now, return defaults. In production, you could:
-      // 1. Create a SystemSettings model
-      // 2. Use a JSON file
-      // 3. Use Redis for settings cache
+    try {
+      const rows = await this.prisma.config.findMany({
+        where: { level: 'PLATFORM', levelId: 'PLATFORM' },
+      });
 
-      return defaultSettings;
-    } catch (error) {
-      // Fallback to environment variables only
-      return {
-        platformName: process.env.PLATFORM_NAME || 'House of Spells Marketplace',
-        platformUrl: process.env.PLATFORM_URL || '',
-        maintenanceMode: process.env.MAINTENANCE_MODE === 'true',
-        allowRegistration: process.env.ALLOW_REGISTRATION !== 'false',
-        requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === 'true',
-      };
+      const dbOverrides: Record<string, any> = {};
+      for (const row of rows) {
+        dbOverrides[row.key] = row.value;
+      }
+
+      return { ...envDefaults, ...dbOverrides };
+    } catch {
+      return envDefaults;
     }
   }
 
   async updateSystemSettings(settings: any) {
-    // Store settings in a way that persists
-    // For now, we'll log the update and return success
-    // In production, you should:
-    // 1. Create a SystemSettings model and store in database
-    // 2. Or use a JSON file with proper locking
-    // 3. Or use Redis for settings cache
-
     try {
-      // Validate settings
-      const validSettings: any = {};
+      const allowed: Record<string, (v: any) => any> = {
+        platformName: (v) => String(v),
+        platformUrl: (v) => String(v),
+        maintenanceMode: (v) => Boolean(v),
+        allowRegistration: (v) => Boolean(v),
+        requireEmailVerification: (v) => Boolean(v),
+        shopEnabled: (v) => Boolean(v),
+        platformFeeRate: (v) => {
+          const r = parseFloat(v);
+          return r >= 0 && r <= 1 ? r : undefined;
+        },
+        currency: (v) => String(v).toUpperCase(),
+        maxUploadSize: (v) => parseInt(v, 10),
+      };
 
-      if (settings.platformName !== undefined) {
-        validSettings.platformName = String(settings.platformName);
-      }
-      if (settings.platformUrl !== undefined) {
-        validSettings.platformUrl = String(settings.platformUrl);
-      }
-      if (settings.maintenanceMode !== undefined) {
-        validSettings.maintenanceMode = Boolean(settings.maintenanceMode);
-      }
-      if (settings.allowRegistration !== undefined) {
-        validSettings.allowRegistration = Boolean(settings.allowRegistration);
-      }
-      if (settings.requireEmailVerification !== undefined) {
-        validSettings.requireEmailVerification = Boolean(settings.requireEmailVerification);
-      }
-      if (settings.platformFeeRate !== undefined) {
-        const rate = parseFloat(settings.platformFeeRate);
-        if (rate >= 0 && rate <= 1) {
-          validSettings.platformFeeRate = rate;
+      const validSettings: Record<string, any> = {};
+
+      for (const [key, sanitize] of Object.entries(allowed)) {
+        if (settings[key] !== undefined) {
+          const cleaned = sanitize(settings[key]);
+          if (cleaned !== undefined) {
+            validSettings[key] = cleaned;
+          }
         }
       }
-      if (settings.currency !== undefined) {
-        validSettings.currency = String(settings.currency).toUpperCase();
-      }
-      if (settings.maxUploadSize !== undefined) {
-        validSettings.maxUploadSize = parseInt(settings.maxUploadSize, 10);
+
+      // Persist each setting to the Config table
+      for (const [key, value] of Object.entries(validSettings)) {
+        await this.setPlatformConfig(key, value);
       }
 
-      // Log the settings update (for audit trail)
-      // In production, store in SystemSettings table
-      // For now, we'll create an activity log entry
+      // Audit trail
       await this.prisma.activityLog.create({
         data: {
           action: 'SYSTEM_SETTINGS_UPDATED',
@@ -746,7 +773,6 @@ export class AdminService {
       return {
         message: 'Settings updated successfully',
         settings: validSettings,
-        note: 'Settings are stored in activity log. For production, consider creating a SystemSettings model for persistent storage.',
       };
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'unknown';

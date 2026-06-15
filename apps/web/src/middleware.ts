@@ -1,14 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getDirectApiBaseUrl } from '@/lib/apiBaseUrl';
 
 /**
  * Middleware handles:
- * 1. Shop feature gate — when NEXT_PUBLIC_SHOP_ENABLED !== 'true', all
+ * 1. Shop feature gate — reads the shopEnabled flag from the backend API
+ *    (cached in-memory for 30 s, env-var fallback). When disabled, all
  *    e-commerce routes redirect to /coming-soon. Admin routes are excluded.
  * 2. Auth protection — redirects unauthenticated users from protected routes
  * 3. Subdomain routing — rewrites seller subdomains to /sellers/{slug}
  */
 
-const SHOP_ENABLED = process.env.NEXT_PUBLIC_SHOP_ENABLED === 'true';
+// ---------------------------------------------------------------------------
+// Dynamic shop-enabled check with in-memory cache
+// ---------------------------------------------------------------------------
+const ENV_SHOP_ENABLED = process.env.NEXT_PUBLIC_SHOP_ENABLED === 'true';
+const CACHE_TTL_MS = 30_000; // 30 seconds
+
+let cachedShopEnabled: boolean = ENV_SHOP_ENABLED;
+let cacheTimestamp = 0;
+
+async function fetchShopEnabled(): Promise<boolean> {
+  const now = Date.now();
+  if (now - cacheTimestamp < CACHE_TTL_MS) return cachedShopEnabled;
+
+  try {
+    const res = await fetch(`${getDirectApiBaseUrl()}/config/shop-enabled`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      cachedShopEnabled = data.enabled === true;
+    }
+  } catch {
+    // API unreachable — keep previous cached value
+  }
+  cacheTimestamp = now;
+  return cachedShopEnabled;
+}
 
 const SHOP_ROUTE_PREFIXES = [
   '/shop',
@@ -118,12 +146,13 @@ const BYPASS_PREFIXES = [
   '/the-experience',
 ];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.headers.get('host') || '';
 
   // --- Shop Feature Gate ---
-  if (!SHOP_ENABLED) {
+  const shopEnabled = await fetchShopEnabled();
+  if (!shopEnabled) {
     const isShopRoute = SHOP_ROUTE_PREFIXES.some((p) => pathname.startsWith(p));
     if (isShopRoute) {
       const url = request.nextUrl.clone();

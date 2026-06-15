@@ -9,6 +9,7 @@ import { AdminProductsController } from './products.controller';
 import { MigrationFeaturesController } from './migration-features.controller';
 import { MigrationTaxonomyController } from './migration-taxonomy.controller';
 import { MigrationTaxonomyDataController } from './migration-taxonomy-data.controller';
+import { PublicConfigController } from './public-config.controller';
 import { AdminService } from './admin.service';
 import { AdminSellersService } from './sellers.service';
 import { AdminProductsService } from './products.service';
@@ -26,6 +27,7 @@ const coreControllers = [
   AdminController,
   AdminSellersController,
   AdminProductsController,
+  PublicConfigController,
 ];
 
 // Never register HTTP migration runners in production (defense in depth vs raw SQL).

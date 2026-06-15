@@ -1,11 +1,14 @@
+'use client';
+
 import Link from 'next/link';
 import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from '../lib/constants';
-
-const SHOP_ENABLED = process.env.NEXT_PUBLIC_SHOP_ENABLED === 'true';
-const SHOP_LINK = SHOP_ENABLED ? '/shop' : '/coming-soon';
-const SHOP_LABEL = SHOP_ENABLED ? 'Enter Shop' : 'Coming Soon';
+import { useShopEnabled } from '@/hooks/useShopEnabled';
 
 export function LandingFooter() {
+  const shopEnabled = useShopEnabled();
+  const shopLink = shopEnabled ? '/shop' : '/coming-soon';
+  const shopLabel = shopEnabled ? 'Enter Shop' : 'Coming Soon';
+
   return (
     <footer>
       <div className="f-logo-wrap" role="img" aria-label="House of Spells">
@@ -25,7 +28,7 @@ export function LandingFooter() {
         <Link href="/universes">Universes</Link>
         <Link href="/the-experience">Experience</Link>
         <Link href={LANDING_REGISTER_PATH}>Register</Link>
-        <Link href={SHOP_LINK}>{SHOP_LABEL}</Link>
+        <Link href={shopLink}>{shopLabel}</Link>
         <a href="https://houseofspells.co.uk/policies/privacy-policy" target="_blank" rel="noopener noreferrer">
           Privacy
         </a>

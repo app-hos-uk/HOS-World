@@ -14,6 +14,7 @@ const defaultSettings = {
   maintenanceMode: false,
   allowRegistration: true,
   requireEmailVerification: false,
+  shopEnabled: false,
   
   // Email Settings
   smtpHost: '',
@@ -207,6 +208,46 @@ export default function AdminSettingsPage() {
           <div className="p-6">
             {activeTab === 'general' && (
               <div className="space-y-6">
+                {/* ── E-Commerce Toggle ── */}
+                <div className="rounded-lg border border-hos-border p-5 bg-gradient-to-r from-hos-bg to-hos-bg-tertiary">
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div>
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        Online Shop
+                        <span
+                          className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${
+                            settings.shopEnabled
+                              ? 'bg-green-500/20 text-green-400'
+                              : 'bg-red-500/20 text-red-400'
+                          }`}
+                        >
+                          {settings.shopEnabled ? 'LIVE' : 'OFF'}
+                        </span>
+                      </h3>
+                      <p className="text-sm text-hos-text-muted mt-1">
+                        {settings.shopEnabled
+                          ? 'The storefront is live. Customers can browse products, add to cart, and checkout.'
+                          : 'All e-commerce routes redirect to a "Coming Soon" page. Toggle on when ready to launch.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={settings.shopEnabled}
+                      onClick={() => updateSetting('shopEnabled', !settings.shopEnabled)}
+                      className={`relative inline-flex h-8 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${
+                        settings.shopEnabled ? 'bg-green-500' : 'bg-hos-bg-tertiary'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          settings.shopEnabled ? 'translate-x-6' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
                 <div>
                   <h3 className="text-lg font-semibold mb-4">General Settings</h3>
                   <div className="space-y-4">

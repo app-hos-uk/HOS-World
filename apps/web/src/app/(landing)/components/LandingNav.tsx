@@ -3,10 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK, type LandingNavKey } from '../lib/constants';
-
-const SHOP_ENABLED = process.env.NEXT_PUBLIC_SHOP_ENABLED === 'true';
-const SHOP_LINK = SHOP_ENABLED ? '/shop' : '/coming-soon';
-const SHOP_LABEL = SHOP_ENABLED ? 'Enter Shop' : 'Coming Soon';
+import { useShopEnabled } from '@/hooks/useShopEnabled';
 
 type Props = {
   active: LandingNavKey;
@@ -20,6 +17,9 @@ const LINKS: { key: LandingNavKey; href: string; label: string }[] = [
 ];
 
 export function LandingNav({ active }: Props) {
+  const shopEnabled = useShopEnabled();
+  const shopLink = shopEnabled ? '/shop' : '/coming-soon';
+  const shopLabel = shopEnabled ? 'Enter Shop' : 'Coming Soon';
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -58,8 +58,8 @@ export function LandingNav({ active }: Props) {
             {l.label}
           </Link>
         ))}
-        <Link href={SHOP_LINK} className="nav-link" onClick={closeMobile}>
-          {SHOP_LABEL}
+        <Link href={shopLink} className="nav-link" onClick={closeMobile}>
+          {shopLabel}
         </Link>
       </div>
 
@@ -79,8 +79,8 @@ export function LandingNav({ active }: Props) {
               {l.label}
             </Link>
           ))}
-          <Link href={SHOP_LINK} className="nav-link nav-link-shop">
-            {SHOP_LABEL}
+          <Link href={shopLink} className="nav-link nav-link-shop">
+            {shopLabel}
           </Link>
         </div>
         <Link href={LANDING_REGISTER_PATH} className="nav-cta">
