@@ -12,7 +12,9 @@ export function Ticker({ reverse }: Props) {
         {items.map((t, i) => (
           <span key={`${t}-${i}`} className="t-item">
             {t}
-            <span className="t-gem">✦</span>
+            <span className="t-sep" aria-hidden="true">
+              ·
+            </span>
           </span>
         ))}
       </div>

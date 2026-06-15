@@ -16,42 +16,36 @@ export const metadata: Metadata = landingPageMetadata({
 const EXP_BLOCKS = [
   {
     num: '01',
-    icon: '🌌',
     title: 'Immersive Universe Zones',
     text: 'Step inside your favourite worlds. Each zone is a fully realised environment — from the halls of Hogwarts to the streets of Gotham, the forests of Middle Earth to the galaxies of Star Wars.',
   },
   {
     num: '02',
-    icon: '🏆',
     title: 'Exclusive Collectibles',
     text: "Rare, limited-edition merchandise you won't find anywhere else on Earth. Founding members get first access to the most sought-after items before doors even open.",
   },
   {
     num: '03',
-    icon: '🎭',
     title: 'Live Fandom Events',
     text: "Screenings, signings, cosplay competitions, launch events, and community gatherings. The House is always alive — there's always something happening inside.",
   },
   {
     num: '04',
-    icon: '🔮',
     title: 'Fan-Curated Inventory',
     text: 'Every shelf is shaped by you. Registrants\' fandom preferences directly determine what we stock — this is the first store ever built by the fans themselves.',
   },
   {
     num: '05',
-    icon: '📍',
     title: 'Times Square, New York',
     text: "50 million visitors pass through Times Square every year. We're planting the House of Spells flag at the very centre of that energy — a flagship for every fan on Earth.",
   },
   {
     num: '06',
-    icon: '🌐',
     title: 'The Global Launch',
     text: (
       <>
-        <strong>houseofspells.com</strong> is the global flagship story — the UK store lives on at{' '}
-        <strong>houseofspells.co.uk</strong>. New York is just the beginning. Register now to be part of day one.
+        <strong>House Of Spells</strong> is the global flagship story — our UK stores continue at{' '}
+        <strong>House Of Spells UK</strong>. New York is just the beginning. Register now to be part of day one.
       </>
     ),
   },
@@ -91,16 +85,15 @@ export default function ExperiencePage() {
           {EXP_BLOCKS.map((b) => (
             <div key={b.num} className="exp-block">
               <div className="exp-block-num">{b.num}</div>
-              <span className="exp-block-icon">{b.icon}</span>
               <h3>{b.title}</h3>
               <p>{b.text}</p>
             </div>
           ))}
         </div>
 
-        <div style={{ textAlign: 'center', padding: '0 24px 80px' }}>
+        <div className="landing-cta-row landing-cta-row--tight">
           <Link href={LANDING_REGISTER_PATH} className="btn-p">
-            ✦ &nbsp;Register Now — Shape What We Build
+            Register Now — Shape What We Build
           </Link>
         </div>
 

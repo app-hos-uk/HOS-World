@@ -9,10 +9,10 @@ export function LandingFooter() {
         <img className="f-logo-mark" src={LANDING_WORDMARK} width={1024} height={258} alt="" aria-hidden="true" />
       </div>
       <div className="f-urls">
-        <a href="https://houseofspells.com/">houseofspells.com</a>
+        <strong>House Of Spells</strong>
         {' '}&nbsp;·&nbsp;{' '}
         <a href="https://www.houseofspells.co.uk/" target="_blank" rel="noopener noreferrer">
-          houseofspells.co.uk
+          House Of Spells UK
         </a>
         {' '}&nbsp;·&nbsp; Times Square, New York
       </div>

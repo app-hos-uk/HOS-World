@@ -80,7 +80,7 @@ export function LandingNav({ active }: Props) {
           </Link>
         </div>
         <Link href={LANDING_REGISTER_PATH} className="nav-cta">
-          ✦ Claim Your Place
+          Claim Your Place
         </Link>
         <button
           type="button"

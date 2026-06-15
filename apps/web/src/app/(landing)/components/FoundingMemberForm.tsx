@@ -59,7 +59,7 @@ export function FoundingMemberForm() {
 
   const syncHint = useCallback((size: number) => {
     if (size > 0) {
-      setHint(`${size} universe${size > 1 ? 's' : ''} selected ✦`);
+      setHint(`${size} universe${size > 1 ? 's' : ''} selected`);
       setHintColor('var(--gold)');
     } else {
       setHint('Select at least one universe ↑');
@@ -156,7 +156,7 @@ export function FoundingMemberForm() {
       setSuccess({ name: firstName || 'Friend', fandoms, other: otherFranchises });
     } catch (err) {
       const message = err instanceof Error && err.message === 'no_backend_config'
-        ? 'Registration backend is not configured yet. Please contact us at houseofspells.com.'
+        ? 'Registration backend is not configured yet. Please contact us at House Of Spells.'
         : 'Something went wrong. Please try again.';
       setHint(message);
       setHintColor('#c75c5c');
@@ -167,7 +167,7 @@ export function FoundingMemberForm() {
   if (success) {
     return (
       <div className="reg-form-inner rv vis" style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center' }}>
-        <h2 className="confirm-h1">Welcome, {success.name} ✦</h2>
+        <h2 className="confirm-h1">Welcome, {success.name}</h2>
         <p className="confirm-msg">Your place in the circle is claimed. We&apos;ll summon you when the gates open in Times Square.</p>
         <div className="confirm-fandoms" id="confirmFandoms">
           {success.fandoms.map((n) => {
@@ -206,8 +206,7 @@ export function FoundingMemberForm() {
               <div className="fan-chk">✓</div>
               <div className="fan-brand">
                 <div className="fan-brand-plate">
-                  <img className="fan-brand-img" src={f.logo} alt="" loading="lazy" />
-                  <span className="fan-em">{f.e}</span>
+                  <img className="fan-brand-img" src={f.logo} alt={`${f.n} logo`} loading="lazy" />
                 </div>
               </div>
               <div className="fan-nm">{f.n}</div>
@@ -273,8 +272,8 @@ export function FoundingMemberForm() {
                     <option>Instagram</option>
                     <option>TikTok</option>
                     <option>Friend / Word of Mouth</option>
-                    <option>houseofspells.com</option>
-                    <option>houseofspells.co.uk</option>
+                    <option>House Of Spells</option>
+                    <option>House Of Spells UK</option>
                     <option>Times Square Ad</option>
                     <option>Google Search</option>
                     <option>Other</option>
@@ -305,7 +304,7 @@ export function FoundingMemberForm() {
                 />
               </div>
               <button type="submit" className="sub-btn" disabled={submitting}>
-                {submitting ? '✦  Sending...' : '✦   Claim My Place   ✦'}
+                {submitting ? 'Sending...' : 'Claim My Place'}
               </button>
             </form>
             <div className="reg-perks">

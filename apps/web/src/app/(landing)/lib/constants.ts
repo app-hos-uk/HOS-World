@@ -10,7 +10,7 @@ export const TICKER_ITEMS = [
   'Times Square · New York',
   'Marvel · Star Wars · DC Universe',
   'Naruto · Middle Earth · Studio Ghibli',
-  'houseofspells.com',
+  'House Of Spells',
   'Every Universe. One Destination.',
   'Game of Thrones · Avatar · The Witcher',
   'Opening in New York',

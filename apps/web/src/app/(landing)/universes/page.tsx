@@ -35,12 +35,12 @@ export default function UniversesPage() {
 
         <UniverseGrid />
 
-        <div style={{ textAlign: 'center', padding: '60px 24px 80px' }}>
-          <Link href={LANDING_REGISTER_PATH} className="btn-p" style={{ marginRight: 14 }}>
-            ✦ Claim Your Place
+        <div className="landing-cta-row">
+          <Link href={LANDING_REGISTER_PATH} className="btn-p">
+            Claim Your Place
           </Link>
           <Link href="/the-experience" className="btn-g">
-            The Experience →
+            The Experience
           </Link>
         </div>
 

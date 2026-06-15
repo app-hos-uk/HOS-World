@@ -3,7 +3,6 @@ import { LandingShell } from './components/LandingShell';
 import { LandingFooter } from './components/LandingFooter';
 import { LandingStructuredData } from './components/LandingStructuredData';
 import { Ticker } from './components/Ticker';
-import { FanFloaters } from './components/FanFloaters';
 import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from './lib/constants';
 
 export default function LandingHomePage() {
@@ -12,7 +11,6 @@ export default function LandingHomePage() {
       <LandingStructuredData />
       <main id="pg-home" className="hos-page" tabIndex={-1}>
         <div className="hero-inner">
-          <FanFloaters />
           <div className="hero-brand-lockup">
             <div className="hero-logo-wrap">
               <div className="hero-logo-ring" />
@@ -49,7 +47,7 @@ export default function LandingHomePage() {
           </p>
           <div className="h-btns">
             <Link href="/universes" className="btn-p">
-              ✦ &nbsp;Explore Universes
+              Explore Universes
             </Link>
             <Link href={LANDING_REGISTER_PATH} className="btn-g">
               Claim Your Place
@@ -131,7 +129,7 @@ export default function LandingHomePage() {
               equal. Every fan is sovereign.
               <br />
               <br />
-              Now <strong>houseofspells.com</strong> brings that vision to the centre of the world — opening in Times
+              Now <strong>House Of Spells</strong> brings that vision to the centre of the world — opening in Times
               Square, New York.
             </p>
             <div className="manifesto-cta">
