@@ -663,21 +663,23 @@ export class AdminService {
   }
 
   private async setPlatformConfig(key: string, value: any): Promise<void> {
-    const existing = await this.prisma.config.findFirst({
-      where: { level: 'PLATFORM', levelId: 'PLATFORM', key },
-      select: { id: true },
-    });
+    await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.config.findFirst({
+        where: { level: 'PLATFORM', levelId: 'PLATFORM', key },
+        select: { id: true },
+      });
 
-    if (existing) {
-      await this.prisma.config.update({
-        where: { id: existing.id },
-        data: { value },
-      });
-    } else {
-      await this.prisma.config.create({
-        data: { level: 'PLATFORM', levelId: 'PLATFORM', key, value },
-      });
-    }
+      if (existing) {
+        await tx.config.update({
+          where: { id: existing.id },
+          data: { value },
+        });
+      } else {
+        await tx.config.create({
+          data: { level: 'PLATFORM', levelId: 'PLATFORM', key, value },
+        });
+      }
+    });
   }
 
   /**

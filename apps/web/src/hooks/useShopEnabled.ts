@@ -15,7 +15,10 @@ export function useShopEnabled(): boolean {
   useEffect(() => {
     let cancelled = false;
     fetch('/api/shop-status')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((d) => {
         if (!cancelled && typeof d.enabled === 'boolean') setEnabled(d.enabled);
       })
