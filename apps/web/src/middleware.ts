@@ -2,9 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Middleware handles:
- * 1. Auth protection — redirects unauthenticated users from protected routes
- * 2. Subdomain routing — rewrites seller subdomains to /sellers/{slug}
+ * 1. Shop feature gate — when NEXT_PUBLIC_SHOP_ENABLED !== 'true', all
+ *    e-commerce routes redirect to /coming-soon. Admin routes are excluded.
+ * 2. Auth protection — redirects unauthenticated users from protected routes
+ * 3. Subdomain routing — rewrites seller subdomains to /sellers/{slug}
  */
+
+const SHOP_ENABLED = process.env.NEXT_PUBLIC_SHOP_ENABLED === 'true';
+
+const SHOP_ROUTE_PREFIXES = [
+  '/shop',
+  '/products',
+  '/cart',
+  '/checkout',
+  '/sellers',
+  '/fandoms',
+  '/collections',
+  '/wishlist',
+  '/orders',
+  '/track-order',
+  '/gift-cards',
+  '/returns',
+  '/refund-policy',
+];
 
 // Routes that require authentication (server-side redirect to /login)
 const PROTECTED_PREFIXES = [
@@ -101,6 +121,16 @@ const BYPASS_PREFIXES = [
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.headers.get('host') || '';
+
+  // --- Shop Feature Gate ---
+  if (!SHOP_ENABLED) {
+    const isShopRoute = SHOP_ROUTE_PREFIXES.some((p) => pathname.startsWith(p));
+    if (isShopRoute) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/coming-soon';
+      return NextResponse.redirect(url);
+    }
+  }
 
   // --- Auth Protection ---
   // Check is_logged_in cookie set by the frontend after successful auth.

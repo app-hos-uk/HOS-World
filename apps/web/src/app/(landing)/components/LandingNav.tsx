@@ -4,6 +4,10 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK, type LandingNavKey } from '../lib/constants';
 
+const SHOP_ENABLED = process.env.NEXT_PUBLIC_SHOP_ENABLED === 'true';
+const SHOP_LINK = SHOP_ENABLED ? '/shop' : '/coming-soon';
+const SHOP_LABEL = SHOP_ENABLED ? 'Enter Shop' : 'Coming Soon';
+
 type Props = {
   active: LandingNavKey;
 };
@@ -54,8 +58,8 @@ export function LandingNav({ active }: Props) {
             {l.label}
           </Link>
         ))}
-        <Link href="/shop" className="nav-link" onClick={closeMobile}>
-          Enter Shop
+        <Link href={SHOP_LINK} className="nav-link" onClick={closeMobile}>
+          {SHOP_LABEL}
         </Link>
       </div>
 
@@ -75,8 +79,8 @@ export function LandingNav({ active }: Props) {
               {l.label}
             </Link>
           ))}
-          <Link href="/shop" className="nav-link nav-link-shop">
-            Enter Shop
+          <Link href={SHOP_LINK} className="nav-link nav-link-shop">
+            {SHOP_LABEL}
           </Link>
         </div>
         <Link href={LANDING_REGISTER_PATH} className="nav-cta">

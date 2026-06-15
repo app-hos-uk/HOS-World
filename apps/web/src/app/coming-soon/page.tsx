@@ -1,56 +1,111 @@
-'use client';
-
-import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
+import '../(landing)/landing.css';
 
-function ComingSoonContent() {
-  const searchParams = useSearchParams();
-  const franchise = searchParams.get('franchise') || 'This Collection';
+const LOGO = '/assets/logo-emblem.png';
+const WORDMARK = '/assets/logo-wordmark.png';
+const REGISTER_PATH = '/founding-members';
 
-  return (
-    <div className="min-h-screen bg-hos-bg flex flex-col">
-      <Header />
-      <main className="flex-1 flex items-center justify-center px-4 py-16">
-        <div className="max-w-lg w-full text-center space-y-6">
-          <div className="text-6xl mb-4">✨</div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-hos-text-primary">
-            {franchise}
-          </h1>
-          <p className="text-lg text-hos-text-secondary">
-            Coming Soon
-          </p>
-          <p className="text-hos-text-muted">
-            We&apos;re working on bringing you an amazing collection. 
-            Stay tuned for exclusive merchandise and collectibles!
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-            <Link
-              href="/fandoms"
-              className="px-6 py-3 text-sm font-semibold rounded-lg bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover transition-colors"
-            >
-              Browse Other Franchises
-            </Link>
-            <Link
-              href="/shop"
-              className="px-6 py-3 text-sm font-semibold rounded-lg border border-hos-border text-hos-text-secondary hover:border-hos-gold hover:text-hos-gold transition-colors"
-            >
-              Back to Shop
-            </Link>
-          </div>
-        </div>
-      </main>
-      <Footer />
-    </div>
-  );
+export const metadata = {
+  title: 'Coming Soon — House of Spells',
+  description:
+    'We are curating something extraordinary. Become a Founding Member to get early access when the House of Spells online shop launches.',
+};
+
+interface ComingSoonPageProps {
+  searchParams: Promise<{ franchise?: string }>;
 }
 
-export default function ComingSoonPage() {
+export default async function ComingSoonPage({ searchParams }: ComingSoonPageProps) {
+  const params = await searchParams;
+  const franchise = params.franchise?.trim();
+  const hasFranchise = Boolean(franchise);
+
+  const heading = hasFranchise ? franchise! : 'Curating Your Fandoms';
+  const sub = hasFranchise
+    ? (
+        <>
+          <strong>{franchise}</strong> is coming soon — we&apos;re hand-picking exclusive collectibles, merch
+          &amp; memorabilia for this universe.
+        </>
+      )
+    : (
+        <>
+          Our online shop is being prepared — hand-picking the finest collectibles, merch &amp; memorabilia from{' '}
+          <em>every universe</em> you love.
+        </>
+      );
+
   return (
-    <Suspense fallback={<div className="min-h-screen bg-hos-bg" />}>
-      <ComingSoonContent />
-    </Suspense>
+    <div className="landing-site coming-soon-shell">
+      <div className="grain" aria-hidden="true" />
+      <div className="vignette" aria-hidden="true" />
+
+      <main className="cs-main">
+        <div className="cs-brand">
+          <img
+            className="cs-logo"
+            src={LOGO}
+            width={140}
+            height={140}
+            alt=""
+            aria-hidden="true"
+          />
+          <img
+            className="cs-wordmark"
+            src={WORDMARK}
+            width={1024}
+            height={258}
+            alt="House of Spells"
+          />
+        </div>
+
+        <div className="cs-rule" />
+
+        {hasFranchise && <p className="cs-eyebrow">Coming Soon</p>}
+        <h1 className="cs-heading">{heading}</h1>
+        <p className="cs-sub">{sub}</p>
+
+        <div className="cs-features">
+          <div className="cs-feat">
+            <span className="cs-feat-icon">&#9733;</span>
+            <h3>Exclusive Collectibles</h3>
+            <p>Rare finds from Marvel, Star Wars, DC, Naruto, Studio Ghibli &amp; beyond.</p>
+          </div>
+          <div className="cs-feat">
+            <span className="cs-feat-icon">&#9830;</span>
+            <h3>Founding Member Perks</h3>
+            <p>Early access, special discounts &amp; a place in House of Spells history.</p>
+          </div>
+          <div className="cs-feat">
+            <span className="cs-feat-icon">&#9812;</span>
+            <h3>Times Square, NYC</h3>
+            <p>A planet-scale fandom destination — online and in the heart of New York.</p>
+          </div>
+        </div>
+
+        <div className="cs-cta">
+          <Link href={REGISTER_PATH} className="btn-p">
+            Become a Founding Member
+          </Link>
+          <Link href="/universes" className="btn-g">
+            Explore Universes
+          </Link>
+        </div>
+
+        <p className="cs-footnote">
+          You&apos;ll be the first to know when the shop goes live.
+        </p>
+      </main>
+
+      <footer className="cs-footer">
+        <Link href="/">Home</Link>
+        <span className="cs-dot">&middot;</span>
+        <Link href="/universes">Universes</Link>
+        <span className="cs-dot">&middot;</span>
+        <Link href="/the-experience">The Experience</Link>
+        <span className="cs-dot">&middot;</span>
+        <Link href={REGISTER_PATH}>Register</Link>
+      </footer>
+    </div>
   );
 }

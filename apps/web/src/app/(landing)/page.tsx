@@ -38,7 +38,17 @@ export default function LandingHomePage() {
           <p className="h-ny-banner" role="status">
             A grand launch in <span className="h-ny-place">Times Square, New York</span> &mdash; coming soon.
           </p>
-          <p className="h-pre">Earth&apos;s Multi-Fandom Universe &nbsp;·&nbsp; Times Square &nbsp;·&nbsp; New York</p>
+          <p className="h-pre">
+            <span className="h-pre-line">Earth&apos;s Multi-Fandom Universe</span>
+            <span className="h-pre-sep" aria-hidden="true">
+              ·
+            </span>
+            <span className="h-pre-line">Times Square</span>
+            <span className="h-pre-sep" aria-hidden="true">
+              ·
+            </span>
+            <span className="h-pre-line">New York</span>
+          </p>
           <div className="h-rule" />
           <p className="h-tag">
             <em>Every fandom. Every universe. Every legend.</em>

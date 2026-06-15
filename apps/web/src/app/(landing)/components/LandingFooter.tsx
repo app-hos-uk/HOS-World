@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from '../lib/constants';
 
+const SHOP_ENABLED = process.env.NEXT_PUBLIC_SHOP_ENABLED === 'true';
+const SHOP_LINK = SHOP_ENABLED ? '/shop' : '/coming-soon';
+const SHOP_LABEL = SHOP_ENABLED ? 'Enter Shop' : 'Coming Soon';
+
 export function LandingFooter() {
   return (
     <footer>
@@ -21,7 +25,7 @@ export function LandingFooter() {
         <Link href="/universes">Universes</Link>
         <Link href="/the-experience">Experience</Link>
         <Link href={LANDING_REGISTER_PATH}>Register</Link>
-        <Link href="/shop">Enter Shop</Link>
+        <Link href={SHOP_LINK}>{SHOP_LABEL}</Link>
         <a href="https://houseofspells.co.uk/policies/privacy-policy" target="_blank" rel="noopener noreferrer">
           Privacy
         </a>
