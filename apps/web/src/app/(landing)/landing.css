@@ -132,7 +132,7 @@
 /* Page intros + confirm: horizontal wordmark hidden until 769px, same as nav */
 .hos-lockup .hos-wordmark-img,
 .confirm-brand-lockup > .hos-wordmark-img{display:none;}
-.page-hero-lockup{margin:0 auto 16px;}
+.page-hero-lockup{margin:0 auto 16px;flex-direction:column;}
 .page-hero-lockup .hos-wordmark-img{height:clamp(26px,7vw,42px);max-width:min(72vw,400px);}
 .intro-lockup{margin:0 auto 20px;}
 .intro-lockup .hos-wordmark-img{height:clamp(24px,6.5vw,38px);max-width:min(70vw,360px);}
@@ -141,6 +141,7 @@
   .hos-lockup{flex-direction:row;flex-wrap:wrap;}
   .hos-lockup .hos-wordmark-img,
   .confirm-brand-lockup > .hos-wordmark-img{display:block;}
+  .page-hero-lockup,.intro-lockup{flex-direction:column;}
   .page-hero-lockup .hos-wordmark-img{height:clamp(32px,4vw,46px);max-width:min(55vw,440px);}
   .intro-lockup .hos-wordmark-img{height:clamp(30px,3.5vw,42px);max-width:min(50vw,400px);}
 }
