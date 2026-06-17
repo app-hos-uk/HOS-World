@@ -1,6 +1,6 @@
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ||
-  'https://hos-marketplaceapi-production.up.railway.app';
+import { getDirectApiBaseUrl } from './apiBaseUrl';
+
+const API_BASE = getDirectApiBaseUrl();
 
 export interface BlogPost {
   id: string;
@@ -33,7 +33,7 @@ export interface BlogCategory {
 
 async function blogFetch<T>(path: string): Promise<T | null> {
   try {
-    const res = await fetch(`${API_BASE}/api${path}`, {
+    const res = await fetch(`${API_BASE}${path}`, {
       next: { revalidate: 300 },
     });
     if (!res.ok) return null;

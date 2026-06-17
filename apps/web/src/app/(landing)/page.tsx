@@ -94,16 +94,15 @@ export default function LandingHomePage() {
           <div className="rv-l">
             <div
               style={{
-                fontFamily: "'Cinzel Decorative',serif",
+                fontFamily: "system-ui, sans-serif",
                 fontSize: 'clamp(5rem,12vw,10rem)',
-                fontWeight: 900,
+                fontWeight: 100,
                 lineHeight: 1,
-                color: 'transparent',
-                WebkitTextStroke: '1px rgba(201,168,76,.14)',
+                color: 'rgba(201,168,76,.18)',
                 userSelect: 'none',
               }}
             >
-              ∞
+              &#8734;
             </div>
             <div
               style={{
@@ -117,8 +116,7 @@ export default function LandingHomePage() {
               style={{
                 fontFamily: "'Cinzel Decorative',serif",
                 fontSize: 'clamp(3rem,7vw,6rem)',
-                color: 'transparent',
-                WebkitTextStroke: '1px rgba(201,168,76,.18)',
+                color: 'rgba(201,168,76,.22)',
               }}
             >
               ONE
