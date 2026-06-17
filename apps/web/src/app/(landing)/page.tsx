@@ -102,7 +102,7 @@ export default function LandingHomePage() {
                 userSelect: 'none',
               }}
             >
-              &#8734;
+              {'\u221E'}
             </div>
             <div
               style={{
