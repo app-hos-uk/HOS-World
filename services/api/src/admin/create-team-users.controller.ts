@@ -447,4 +447,148 @@ export class CreateTeamUsersController {
     }
     return `${slug}-${randomBytes(3).toString('hex')}`;
   }
+
+  @Public()
+  @Post('seed-test-users')
+  @ApiOperation({
+    summary: 'Seed test users (production-safe)',
+    description:
+      'Seeds admin, seller, wholesaler, and customer test users. Requires PROD_SEED_SECRET header.',
+  })
+  @SwaggerApiResponse({ status: 201, description: 'Test users seeded successfully' })
+  async seedTestUsers(@Request() req: any): Promise<ApiResponse<any>> {
+    const expected = this.configService.get<string>('PROD_SEED_SECRET');
+    if (!expected) {
+      throw new ForbiddenException('PROD_SEED_SECRET is not configured');
+    }
+    const provided = req.headers?.['x-prod-seed-secret'];
+    const value = Array.isArray(provided) ? provided[0] : provided;
+    if (value !== expected) {
+      throw new ForbiddenException('Invalid production seed secret');
+    }
+
+    const password = 'Test123!';
+    const passwordHash = await bcrypt.hash(password, BCRYPT_PASSWORD_ROUNDS);
+
+    const testUsers = [
+      {
+        email: 'admin@hos.test',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: UserRole.ADMIN,
+      },
+      {
+        email: 'seller.test@hos.test',
+        firstName: 'Test',
+        lastName: 'Seller',
+        role: UserRole.SELLER,
+        storeName: 'Test Seller Store',
+      },
+      {
+        email: 'wholesaler.test@hos.test',
+        firstName: 'Test',
+        lastName: 'Wholesaler',
+        role: UserRole.WHOLESALER,
+        storeName: 'Test Wholesaler Store',
+      },
+      {
+        email: 'customer.test@hos.test',
+        firstName: 'Test',
+        lastName: 'Customer',
+        role: UserRole.CUSTOMER,
+      },
+    ];
+
+    const results = [];
+
+    for (const userData of testUsers) {
+      try {
+        const existingUser = await this.prisma.user.findUnique({
+          where: { email: userData.email },
+          include: { sellerProfile: true },
+        });
+
+        if (existingUser) {
+          await this.prisma.user.update({
+            where: { id: existingUser.id },
+            data: {
+              password: passwordHash,
+              role: userData.role,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+            },
+          });
+
+          if (
+            (userData.role === UserRole.SELLER || userData.role === UserRole.WHOLESALER) &&
+            'storeName' in userData &&
+            !existingUser.sellerProfile
+          ) {
+            const slug = userData.storeName!.toLowerCase().replace(/\s+/g, '-');
+            await this.prisma.seller.create({
+              data: {
+                userId: existingUser.id,
+                storeName: userData.storeName!,
+                slug,
+                country: 'US',
+                timezone: 'UTC',
+                sellerType: userData.role === UserRole.WHOLESALER ? 'WHOLESALER' : 'B2C_SELLER',
+                logisticsOption: 'HOS_LOGISTICS',
+              },
+            });
+          }
+
+          results.push({ email: userData.email, status: 'updated', role: userData.role });
+        } else {
+          const newUser = await this.prisma.user.create({
+            data: {
+              email: userData.email,
+              password: passwordHash,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              role: userData.role,
+            },
+          });
+
+          if (
+            (userData.role === UserRole.SELLER || userData.role === UserRole.WHOLESALER) &&
+            'storeName' in userData
+          ) {
+            const slug = userData.storeName!.toLowerCase().replace(/\s+/g, '-');
+            await this.prisma.seller.create({
+              data: {
+                userId: newUser.id,
+                storeName: userData.storeName!,
+                slug,
+                country: 'US',
+                timezone: 'UTC',
+                sellerType: userData.role === UserRole.WHOLESALER ? 'WHOLESALER' : 'B2C_SELLER',
+                logisticsOption: 'HOS_LOGISTICS',
+              },
+            });
+          }
+
+          if (userData.role === UserRole.CUSTOMER) {
+            await this.prisma.customer.create({
+              data: { userId: newUser.id },
+            });
+          }
+
+          results.push({ email: userData.email, status: 'created', role: userData.role });
+        }
+      } catch (error: any) {
+        results.push({ email: userData.email, status: 'error', error: error.message });
+      }
+    }
+
+    return {
+      data: {
+        users: results,
+        totalCreated: results.filter((r) => r.status === 'created').length,
+        totalUpdated: results.filter((r) => r.status === 'updated').length,
+        password: 'Test123!',
+      },
+      message: 'Test users seeded successfully',
+    };
+  }
 }
