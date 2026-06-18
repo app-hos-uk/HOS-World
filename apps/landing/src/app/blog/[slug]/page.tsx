@@ -38,7 +38,7 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <>
-      <LandingNav />
+      <LandingNav active="blog" />
       <main className="min-h-screen bg-[#05050D] pt-24 pb-16">
         <article className="container mx-auto px-4 max-w-4xl">
           <header className="mb-8">

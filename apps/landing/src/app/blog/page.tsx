@@ -30,7 +30,7 @@ export default async function BlogPage({
 
   return (
     <>
-      <LandingNav />
+      <LandingNav active="blog" />
       <main className="min-h-screen bg-[#05050D] pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-6xl">
           <header className="text-center mb-12">
