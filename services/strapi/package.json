@@ -16,6 +16,10 @@
     "@strapi/plugin-cloud": "4.25.0",
     "@strapi/provider-upload-cloudinary": "4.25.0",
     "ajv": "8.12.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-router-dom": "5.3.4",
+    "styled-components": "5.3.11",
     "pg": "8.11.3",
     "better-sqlite3": "9.4.3"
   },
