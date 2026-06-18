@@ -8,7 +8,7 @@ module.exports = ({ env }) => ({
       user: env('DATABASE_USERNAME', 'postgres'),
       password: env('DATABASE_PASSWORD', ''),
       ssl: env.bool('DATABASE_SSL', false) ? { rejectUnauthorized: false } : false,
-      schema: env('DATABASE_SCHEMA', 'public'),
+      schema: env('DATABASE_SCHEMA', 'strapi'),
     },
     pool: {
       min: env.int('DATABASE_POOL_MIN', 2),

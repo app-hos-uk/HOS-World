@@ -23,5 +23,8 @@ RUN npm run build
 # Expose port
 EXPOSE 1337
 
-# Start Strapi
-CMD ["npm", "run", "start"]
+# Copy schema script
+COPY services/strapi/scripts ./scripts
+
+# Start: create schema then launch Strapi
+CMD ["sh", "-c", "node scripts/ensure-schema.js && npm run start"]
