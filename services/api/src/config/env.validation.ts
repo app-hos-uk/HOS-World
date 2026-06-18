@@ -86,6 +86,8 @@ interface EnvSchema {
   CC_EXPIRY_CRON?: string;
   CC_REMINDER_CRON?: string;
   GLOBAL_SUPPORTED_CURRENCIES?: string;
+  REGISTRATION_MODE?: string;
+  REGISTRATION_INVITE_CODES?: string;
 }
 
 const required: (keyof EnvSchema)[] = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];

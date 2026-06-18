@@ -49,8 +49,8 @@ function LoginPageInner() {
     essential: true, // Always true
   });
   const [currencyPreference, setCurrencyPreference] = useState('USD');
-
-  // Backend OAuth endpoints
+  const [inviteCode, setInviteCode] = useState('');
+  const requiresInviteCode = process.env.NEXT_PUBLIC_REGISTRATION_REQUIRES_INVITE === 'true';
   const oauthBaseUrl = getDirectApiBaseUrl() || 'https://hos-marketplaceapi-production.up.railway.app/api';
 
   // Set mounted state after hydration to prevent server/client mismatch
@@ -69,6 +69,8 @@ function LoginPageInner() {
     }
     const returnParam = searchParams.get('returnUrl') ?? searchParams.get('redirect');
     stashAuthReturnUrl(returnParam);
+    const inviteParam = searchParams.get('invite');
+    if (inviteParam) setInviteCode(inviteParam);
     try {
       const checkoutEmail = sessionStorage.getItem('hos_checkout_email');
       if (checkoutEmail) {
@@ -305,6 +307,7 @@ function LoginPageInner() {
         preferredCommunicationMethod,
         gdprConsent,
         dataProcessingConsent,
+        ...(inviteCode ? { inviteCode } : {}),
       });
       if (!response || !response.data) {
         throw new Error('Invalid response from server');
@@ -612,6 +615,24 @@ function LoginPageInner() {
               {/* Registration-specific fields */}
               {!isLogin && (
                 <>
+                  {requiresInviteCode && (
+                    <div>
+                      <label htmlFor="inviteCode" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                        Invite Code
+                      </label>
+                      <input
+                        id="inviteCode"
+                        type="text"
+                        name="inviteCode"
+                        autoComplete="off"
+                        value={inviteCode}
+                        onChange={(e) => setInviteCode(e.target.value)}
+                        required={requiresInviteCode}
+                        className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
+                        placeholder="Enter your team invite code"
+                      />
+                    </div>
+                  )}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="firstName" className="block text-sm font-medium text-hos-text-secondary mb-1">
@@ -912,6 +933,7 @@ function LoginPageInner() {
                     setGdprConsent(false);
                     setDataProcessingConsent({ marketing: false, analytics: false, essential: true });
                     setDetectedCountry(null);
+                    setInviteCode('');
                   }
                 }}
                 className="text-hos-gold hover:underline text-sm"

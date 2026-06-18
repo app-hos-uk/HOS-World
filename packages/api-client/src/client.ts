@@ -290,6 +290,7 @@ export class ApiClient {
     preferredCommunicationMethod: 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PHONE';
     gdprConsent: boolean;
     dataProcessingConsent?: Record<string, boolean>;
+    inviteCode?: string;
   }): Promise<ApiResponse<AuthResponse>> {
     return this.request<ApiResponse<AuthResponse>>('/auth/register', {
       method: 'POST',

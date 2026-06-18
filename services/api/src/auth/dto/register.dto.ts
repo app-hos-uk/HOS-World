@@ -113,4 +113,8 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   businessType?: string;
+
+  @IsOptional()
+  @IsString()
+  inviteCode?: string;
 }

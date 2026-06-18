@@ -3,6 +3,7 @@ import {
   ConflictException,
   UnauthorizedException,
   BadRequestException,
+  ForbiddenException,
   NotFoundException,
   Logger,
 } from '@nestjs/common';
@@ -118,6 +119,19 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto, ipAddress?: string, userAgent?: string): Promise<AuthResponse> {
+    // Invite-only registration gate
+    const registrationMode = this.configService.get<string>('REGISTRATION_MODE', 'open');
+    if (registrationMode === 'invite_only') {
+      const inviteCode = registerDto.inviteCode;
+      const validCodes = (this.configService.get<string>('REGISTRATION_INVITE_CODES', '') || '')
+        .split(',')
+        .map((c) => c.trim())
+        .filter(Boolean);
+      if (!inviteCode || !validCodes.includes(inviteCode)) {
+        throw new ForbiddenException('Registration is currently invite-only. Please provide a valid invite code.');
+      }
+    }
+
     // Check if user already exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email: registerDto.email },
