@@ -482,7 +482,7 @@ export class CreateTeamUsersController {
         firstName: 'Test',
         lastName: 'Seller',
         role: UserRole.SELLER,
-        storeName: 'Test Seller Store',
+        storeName: 'Seller Test Store',
       },
       {
         email: 'wholesaler.test@hos.test',
