@@ -21,8 +21,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 const migrationControllersEnabled = process.env.ENABLE_ADMIN_MIGRATIONS === 'true';
 
 const coreControllers = [
-  // Dev seed controller is excluded in production — defense in depth alongside runtime guard.
-  ...(isProduction ? [] : [CreateTeamUsersController]),
+  // CreateTeamUsersController has both dev-only and production-safe endpoints with separate guards
+  CreateTeamUsersController,
   AdminUsersController,
   AdminController,
   AdminSellersController,
