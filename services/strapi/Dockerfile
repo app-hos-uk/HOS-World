@@ -1,19 +1,20 @@
 # Strapi Dockerfile for Railway
+# Build context is the monorepo root
 FROM node:18-alpine
 
-# Install dependencies for native modules
+# Install dependencies for native modules (vips for image processing)
 RUN apk add --no-cache build-base gcc autoconf automake zlib-dev libpng-dev vips-dev git python3
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy Strapi package files only (from services/strapi/)
+COPY services/strapi/package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies (no prepare script in strapi's package.json)
+RUN npm install --legacy-peer-deps
 
-# Copy source code
-COPY . .
+# Copy Strapi source code
+COPY services/strapi/ ./
 
 # Build Strapi admin panel
 ENV NODE_ENV=production
