@@ -60,7 +60,7 @@ async function strapiFetch<T>(endpoint: string, options?: RequestInit): Promise<
     const url = `${STRAPI_URL}${endpoint}`;
     const res = await fetch(url, {
       ...options,
-      next: { revalidate: 300 },
+      next: { revalidate: 60 },
     });
     
     if (!res.ok) {
@@ -105,8 +105,39 @@ export async function getBlogCategories(): Promise<StrapiResponse<StrapiBlogCate
   return strapiFetch<StrapiResponse<StrapiBlogCategory[]>>('/blog-categories?populate=*');
 }
 
+export interface StrapiBanner {
+  id: number;
+  attributes: {
+    title: string;
+    type: 'hero' | 'promotional' | 'sidebar';
+    link?: string;
+    content?: string;
+    active: boolean;
+    displayOrder: number;
+    image?: {
+      data?: {
+        attributes: {
+          url: string;
+          alternativeText?: string;
+        };
+      };
+    };
+  };
+}
+
 export function getStrapiMediaUrl(url?: string): string {
   if (!url) return '';
   if (url.startsWith('http')) return url;
   return `${STRAPI_URL.replace('/api', '')}${url}`;
+}
+
+export async function getBanners(type?: 'hero' | 'promotional' | 'sidebar'): Promise<StrapiResponse<StrapiBanner[]> | null> {
+  const searchParams = new URLSearchParams();
+  searchParams.set('populate', 'image');
+  searchParams.set('filters[active][$eq]', 'true');
+  searchParams.set('filters[publishedAt][$notNull]', 'true');
+  searchParams.set('sort', 'displayOrder:asc');
+  if (type) searchParams.set('filters[type][$eq]', type);
+
+  return strapiFetch<StrapiResponse<StrapiBanner[]>>(`/banners?${searchParams}`);
 }
