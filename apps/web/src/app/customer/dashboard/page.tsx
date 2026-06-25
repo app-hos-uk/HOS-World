@@ -536,7 +536,7 @@ export default function CustomerDashboardPage() {
                       </Link>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {recentWishlist.slice(0, 4).map((item: any) => {
                         const product = item.product || item;
                         const imageUrl = product.images?.[0]?.url || product.images?.[0];
@@ -546,7 +546,7 @@ export default function CustomerDashboardPage() {
                             href={`/products/${product.id}`}
                             className="group"
                           >
-                            <div className="relative aspect-square rounded-lg overflow-hidden bg-hos-bg-tertiary mb-2">
+                            <div className="relative h-32 w-full max-h-32 rounded-lg overflow-hidden bg-hos-bg-tertiary mb-2">
                               {imageUrl ? (
                                 <Image
                                   src={imageUrl}
