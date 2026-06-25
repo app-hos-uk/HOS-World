@@ -1158,14 +1158,14 @@ export class AuthService {
         resetLink,
         expiresInMinutes: '1440',
       });
-      await this.notificationsService.sendNotificationToUser(
-        user.id,
-        'SYSTEM',
+      await this.notificationsService.queueNotification(
+        user.email,
         rendered.subject,
         rendered.body,
       );
-    } catch (err) {
-      this.logger.warn(`Failed to queue password reset email for ${email}: ${err?.message}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Failed to queue password reset email for ${email}: ${message}`);
     }
 
     this.logger.log(`Password reset requested for ${email}`);
