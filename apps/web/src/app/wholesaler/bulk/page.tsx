@@ -293,7 +293,13 @@ export default function WholesalerBulkProductsPage() {
       }
     } catch (err: any) {
       console.error('Import error:', err);
-      toast.error(err?.message || 'Failed to import products');
+      const apiMsg = err?.message || 'Failed to import products';
+      toast.error(apiMsg);
+      setImportResults({
+        successCount: 0,
+        errorCount: 1,
+        errors: [apiMsg],
+      });
       setImportLoading(false);
     }
   };
