@@ -169,7 +169,7 @@ export default function AdminInfluencerCampaignsPage() {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-    }).format(amount);
+    }).format(amount || 0);
   };
 
   const formatDate = (dateString: string) => {
@@ -268,7 +268,7 @@ export default function AdminInfluencerCampaignsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         <div>{campaign.totalClicks} clicks · {campaign.totalConversions} sales</div>
-                        <div className="text-green-400 font-medium">{formatCurrency(campaign.totalSales)}</div>
+                        <div className="text-green-400 font-medium">{formatCurrency(campaign.totalSales || 0)}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusBadge(campaign.status)}`}>
