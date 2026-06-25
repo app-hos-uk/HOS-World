@@ -134,8 +134,9 @@ export class ThemesService {
       throw new NotFoundException('Theme not found');
     }
 
-    await this.prisma.theme.delete({
-      where: { id },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.sellerThemeSettings.deleteMany({ where: { themeId: id } });
+      await tx.theme.delete({ where: { id } });
     });
   }
 
