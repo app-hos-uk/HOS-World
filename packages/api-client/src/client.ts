@@ -2972,26 +2972,13 @@ export class ApiClient {
   }
 
   async getWholesalerProducts(): Promise<ApiResponse<any[]>> {
-    // Wholesalers are sellers with WHOLESALER role, use same approach as sellers
-    const profileResponse = await this.getSellerProfile();
-    if (!profileResponse?.data?.id) {
-      return { data: [], message: 'Seller profile not found' };
-    }
-    // The seller object has an 'id' field which is the seller's database ID
-    // The products service expects sellerId to be the userId, which it then converts to seller database ID
-    // So we need to use the userId from the seller's user relation
-    const userId = profileResponse.data.user?.id || profileResponse.data.userId;
-    if (!userId) {
-      return { data: [], message: 'User ID not found in seller profile' };
-    }
-    // Use products endpoint with sellerId filter (expects userId)
-    const url = `/products?sellerId=${userId}`;
-    const response = await this.request<ApiResponse<any>>(url, {
+    // Wholesalers are sellers — use the dedicated /sellers/me/products endpoint
+    // (avoids invalid query params on the public /products search endpoint)
+    const response = await this.request<ApiResponse<any[]>>('/sellers/me/products', {
       method: 'GET',
     });
-    // Extract products from paginated response
-    const products = response.data?.data || response.data || [];
-    return { data: Array.isArray(products) ? products : [], message: 'Products retrieved successfully' };
+    const products = response?.data;
+    return { data: Array.isArray(products) ? products : [], message: response?.message || 'Products retrieved successfully' };
   }
 
   async getWholesalerOrders(status?: string): Promise<ApiResponse<any[]>> {
