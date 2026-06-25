@@ -62,6 +62,14 @@ export default function AdminSearchPage() {
     fetchStats();
   }, [fetchStats]);
 
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setSearchCount(null);
+      setSearchPage(1);
+    }
+  }, [searchQuery]);
+
   const handleSync = async () => {
     setConfirmAction(null);
     try {
