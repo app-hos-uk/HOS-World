@@ -86,6 +86,7 @@ export default function AdminInfluencerCampaignsPage() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
 
     if (start < today) {
       toast.error('Start date cannot be in the past');

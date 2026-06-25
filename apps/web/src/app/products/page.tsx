@@ -271,8 +271,8 @@ function ProductsContent() {
       }
     };
 
-    prevFilterDepsKeyRef.current = filterDepsKey;
     fetchProducts();
+    prevFilterDepsKeyRef.current = filterDepsKey;
     return () => { cancelled = true; };
   }, [state.page, filterDepsKey, state.query]);
 
