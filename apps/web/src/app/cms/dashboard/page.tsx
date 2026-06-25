@@ -108,7 +108,7 @@ export default function CMSDashboardPage() {
                 <div>
                   <p className="text-sm font-medium text-hos-text-secondary">Total Pages</p>
                   <p className="text-2xl font-bold text-hos-text-secondary mt-2">{stats.totalPages}</p>
-                  <p className="text-xs text-hos-text-muted mt-1">
+                  <p className="text-xs text-hos-text-secondary mt-1">
                     {stats.publishedPages} published
                   </p>
                 </div>
@@ -128,7 +128,7 @@ export default function CMSDashboardPage() {
                 <div>
                   <p className="text-sm font-medium text-hos-text-secondary">Total Banners</p>
                   <p className="text-2xl font-bold text-hos-text-secondary mt-2">{stats.totalBanners}</p>
-                  <p className="text-xs text-hos-text-muted mt-1">
+                  <p className="text-xs text-hos-text-secondary mt-1">
                     {stats.activeBanners} active
                   </p>
                 </div>
@@ -148,7 +148,7 @@ export default function CMSDashboardPage() {
                 <div>
                   <p className="text-sm font-medium text-hos-text-secondary">Blog Posts</p>
                   <p className="text-2xl font-bold text-hos-text-secondary mt-2">{stats.totalBlogPosts}</p>
-                  <p className="text-xs text-hos-text-muted mt-1">
+                  <p className="text-xs text-hos-text-secondary mt-1">
                     {stats.publishedPosts} published
                   </p>
                 </div>
@@ -174,7 +174,7 @@ export default function CMSDashboardPage() {
                 <span className="text-2xl">➕</span>
                 <div>
                   <p className="font-medium text-hos-text-secondary">Create New Page</p>
-                  <p className="text-sm text-hos-text-muted">Add a new content page</p>
+                  <p className="text-sm text-hos-text-secondary">Add a new content page</p>
                 </div>
               </Link>
               <Link
@@ -184,7 +184,7 @@ export default function CMSDashboardPage() {
                 <span className="text-2xl">🖼️</span>
                 <div>
                   <p className="font-medium text-hos-text-secondary">Create Banner</p>
-                  <p className="text-sm text-hos-text-muted">Add a new banner</p>
+                  <p className="text-sm text-hos-text-secondary">Add a new banner</p>
                 </div>
               </Link>
               <Link
@@ -194,7 +194,7 @@ export default function CMSDashboardPage() {
                 <span className="text-2xl">✍️</span>
                 <div>
                   <p className="font-medium text-hos-text-secondary">Write Blog Post</p>
-                  <p className="text-sm text-hos-text-muted">Create a new blog post</p>
+                  <p className="text-sm text-hos-text-secondary">Create a new blog post</p>
                 </div>
               </Link>
             </div>
@@ -203,7 +203,7 @@ export default function CMSDashboardPage() {
           {/* Recent Activity */}
           <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Recent Activity</h2>
-            <div className="text-sm text-hos-text-muted">
+            <div className="text-sm text-hos-text-secondary">
               <p>Recent content updates will appear here.</p>
               <p className="mt-2">
                 Connect the external content service to view detailed activity logs.

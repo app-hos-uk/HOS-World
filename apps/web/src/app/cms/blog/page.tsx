@@ -140,8 +140,8 @@ export default function CMSBlogPage() {
                         )}
                         <div className="flex-1 min-w-0">
                           <h3 className="text-lg font-medium text-hos-text-secondary truncate">{post.title}</h3>
-                          <p className="text-sm text-hos-text-muted mt-1 line-clamp-1">{post.excerpt}</p>
-                          <div className="flex items-center gap-3 mt-2 text-xs text-hos-text-muted">
+                          <p className="text-sm text-hos-text-secondary mt-1 line-clamp-1">{post.excerpt}</p>
+                          <div className="flex items-center gap-3 mt-2 text-xs text-hos-text-secondary">
                             <span>By {post.author}</span>
                             {post.category && <span>{post.category.name}</span>}
                             {post.publishedAt && (

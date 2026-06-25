@@ -133,11 +133,11 @@ export default function CMSMediaPage() {
                     <p className="text-sm font-medium text-hos-text-secondary truncate">
                       {item.name || 'Untitled'}
                     </p>
-                    <p className="text-xs text-hos-text-muted mt-1">
+                    <p className="text-xs text-hos-text-secondary mt-1">
                       {item.mime || 'Unknown type'}
                     </p>
                     {item.size && (
-                      <p className="text-xs text-hos-text-muted mt-1">
+                      <p className="text-xs text-hos-text-secondary mt-1">
                         {(item.size / 1024).toFixed(2)} KB
                       </p>
                     )}

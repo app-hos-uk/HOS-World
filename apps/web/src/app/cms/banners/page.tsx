@@ -460,7 +460,7 @@ export default function CMSBannersPage() {
                         )}
                       </div>
                       {banner.link && (
-                        <p className="text-xs text-hos-text-muted mb-2">Link: {banner.link}</p>
+                        <p className="text-xs text-hos-text-secondary mb-2">Link: {banner.link}</p>
                       )}
                       <div className="flex gap-2 mt-3">
                         <button

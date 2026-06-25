@@ -148,8 +148,8 @@ export default function BlogCategoriesPage() {
                   <div key={cat.id} className="flex items-center justify-between p-4">
                     <div>
                       <p className="font-medium text-hos-text-secondary">{cat.name}</p>
-                      <p className="text-sm text-hos-text-muted">/blog/category/{cat.slug}</p>
-                      {cat._count && <p className="text-xs text-hos-text-muted mt-1">{cat._count.posts} posts</p>}
+                      <p className="text-sm text-hos-text-secondary">/blog/category/{cat.slug}</p>
+                      {cat._count && <p className="text-xs text-hos-text-secondary mt-1">{cat._count.posts} posts</p>}
                     </div>
                     <div className="flex gap-2">
                       <button onClick={() => handleEdit(cat)} className="px-3 py-1 text-sm text-hos-gold border border-hos-gold/30 rounded">Edit</button>
