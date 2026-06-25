@@ -261,6 +261,7 @@ function ProductsContent() {
               Number.isFinite(fbApi) && fbApi > 0 ? Math.max(fbApi, fbPages) : fbPages,
             );
             setProcessingTimeMs(0);
+            setFacets({});
           }
         } catch (fallbackErr) {
           if (!cancelled) {
