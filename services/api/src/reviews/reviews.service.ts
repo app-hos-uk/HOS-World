@@ -242,7 +242,7 @@ export class ReviewsService {
     }
 
     // Allow deletion if user owns review or is admin
-    if (review.userId !== userId && role !== 'ADMIN') {
+    if (review.userId !== userId && role?.toUpperCase() !== 'ADMIN') {
       throw new ForbiddenException('You do not have permission to delete this review');
     }
 
