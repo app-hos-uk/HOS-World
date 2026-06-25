@@ -208,7 +208,9 @@ export class AttributesService {
     }
 
     if (attribute._count.productAttributes > 0) {
-      throw new BadRequestException('Cannot delete attribute that is used by products');
+      throw new BadRequestException(
+        `Cannot delete attribute: it is currently used by ${attribute._count.productAttributes} products. Remove it from products first.`,
+      );
     }
 
     return this.prisma.attribute.delete({
