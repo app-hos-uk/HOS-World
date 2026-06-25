@@ -1,10 +1,11 @@
-import { IsOptional, IsObject, IsUUID, ValidateIf } from 'class-validator';
+import { IsOptional, IsObject, IsString, ValidateIf, IsNotEmpty } from 'class-validator';
 import { IsHttpPublicUrl } from '../../common/validators/http-public-url.validator';
 
 export class UpdateSellerThemeDto {
   @IsOptional()
   @ValidateIf((_, v) => v !== undefined && v !== null && String(v).trim() !== '')
-  @IsUUID('4')
+  @IsString()
+  @IsNotEmpty()
   themeId?: string;
 
   @IsOptional()
