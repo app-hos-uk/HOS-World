@@ -204,7 +204,17 @@ export default function CartPage() {
         if (prev.items.some((i) => i.id === itemId)) return prev;
         return { ...prev, items: [...prev.items, item] };
       });
-      toast.error(error.message || 'Failed to remove item');
+      const msg = error?.message || '';
+      if (msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('log in')) {
+        toast.error('Your session expired. Please sign in again and retry.');
+      } else {
+        toast.error(msg || 'Could not remove item from cart. Please try again.');
+      }
+      try {
+        await fetchCart();
+      } catch {
+        /* resync best-effort */
+      }
     } finally {
       setRemovingItemId(null);
     }
