@@ -202,6 +202,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/login');
   }, [router]);
 
+  const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
+
+  useEffect(() => {
+    if (!user) return;
+
+    let inactivityTimer: ReturnType<typeof setTimeout>;
+
+    const resetInactivityTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        logout();
+      }, INACTIVITY_TIMEOUT_MS);
+    };
+
+    const activityEvents = ['mousemove', 'keydown', 'click'] as const;
+    activityEvents.forEach((event) => window.addEventListener(event, resetInactivityTimer));
+    resetInactivityTimer();
+
+    return () => {
+      clearTimeout(inactivityTimer);
+      activityEvents.forEach((event) => window.removeEventListener(event, resetInactivityTimer));
+    };
+  }, [user, logout]);
+
   const value: AuthContextType = {
     user,
     loading,
