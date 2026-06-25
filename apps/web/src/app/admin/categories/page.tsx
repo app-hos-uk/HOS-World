@@ -262,13 +262,16 @@ export default function AdminCategoriesPage() {
     if (index === -1) return;
 
     const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= siblings.length) return;
+    if (newIndex < 0 || newIndex >= siblings.length) {
+      toast.error(direction === 'up' ? 'Already at the top' : 'Already at the bottom');
+      return;
+    }
 
     try {
-      // Swap orders
-      await apiClient.updateCategory(siblings[index].id, { order: siblings[newIndex].order });
-      await apiClient.updateCategory(siblings[newIndex].id, { order: siblings[index].order });
-      fetchCategories();
+      // Use index-based order values to avoid collisions when siblings share the same order
+      await apiClient.updateCategory(siblings[index].id, { order: newIndex });
+      await apiClient.updateCategory(siblings[newIndex].id, { order: index });
+      await fetchCategories();
     } catch (err: any) {
       toast.error(err.message || 'Failed to reorder fandom');
     }
@@ -521,11 +524,11 @@ export default function AdminCategoriesPage() {
     return allCats.map(category => (
       <div
         key={category.id}
-        className={`bg-hos-bg-secondary border rounded-lg p-4 hover:shadow-lg transition-shadow ${
+        className={`h-full flex flex-col bg-hos-bg-secondary border rounded-lg p-4 hover:shadow-lg transition-shadow ${
           !category.isActive ? 'opacity-60' : ''
         } ${category.isFeatured ? 'border-hos-border-accent' : 'border-hos-border'}`}
       >
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-3 flex-1">
           {category.image ? (
             <div className="w-16 h-16 rounded overflow-hidden bg-hos-bg-tertiary flex-shrink-0">
               <SafeImage
@@ -873,7 +876,7 @@ export default function AdminCategoriesPage() {
               ) : viewMode === 'tree' ? (
                 <div className="space-y-2">{renderCategoryTree(filteredCategories)}</div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-fr">
                   {renderCategoryGrid(filteredCategories)}
                 </div>
               )}
