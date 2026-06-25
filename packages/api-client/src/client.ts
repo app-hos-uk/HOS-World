@@ -4743,6 +4743,10 @@ export class ApiClient {
     return this.request<ApiResponse<string[]>>('/payments/providers');
   }
 
+  async getPaymentConfig(): Promise<ApiResponse<{ stripePublishableKey: string | null }>> {
+    return this.request<ApiResponse<{ stripePublishableKey: string | null }>>('/payments/config');
+  }
+
   // Tax Zones & Classes
   async getTaxZones(includeInactive?: boolean): Promise<ApiResponse<any[]>> {
     const query = includeInactive ? '?includeInactive=true' : '';

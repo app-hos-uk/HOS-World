@@ -100,6 +100,21 @@ export class PaymentsController {
   }
 
   @Public()
+  @Get('config')
+  @ApiOperation({
+    summary: 'Get payment configuration for frontend',
+    description: 'Returns non-secret payment config (e.g. Stripe publishable key) for client-side SDK initialization.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Payment config retrieved' })
+  async getPaymentConfig(): Promise<ApiResponse<{ stripePublishableKey: string | null }>> {
+    const stripePublishableKey = await this.paymentsService.getStripePublishableKey();
+    return {
+      data: { stripePublishableKey },
+      message: 'Payment config retrieved',
+    };
+  }
+
+  @Public()
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @Post('webhook')
   @HttpCode(HttpStatus.OK)

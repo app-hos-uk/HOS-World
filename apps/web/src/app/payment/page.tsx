@@ -13,8 +13,8 @@ import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 import { trackPurchase } from '@/lib/analytics';
 
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
-const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
+let stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
+let stripePromise: ReturnType<typeof loadStripe> | null = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 /** Allowed characters match server-generated codes (no I, O, 0, 1); max length 19 (XXXX-XXXX-XXXX-XXXX) */
 const GIFT_CARD_ALLOWED_CHAR = /^[A-HJ-NP-Z2-9-]$/;
@@ -332,6 +332,18 @@ function PaymentForm({ order }: { order: any }) {
   const loadPaymentProviders = async () => {
     try {
       setLoadingProviders(true);
+
+      // Fetch Stripe publishable key from API if not set via env
+      if (!stripePublishableKey.trim()) {
+        try {
+          const configRes = await apiClient.getPaymentConfig();
+          if (configRes?.data?.stripePublishableKey) {
+            stripePublishableKey = configRes.data.stripePublishableKey;
+            stripePromise = loadStripe(stripePublishableKey);
+          }
+        } catch { /* API may not have config endpoint on older deploys */ }
+      }
+
       const response = await apiClient.getPaymentProviders();
       if (response?.data && response.data.length > 0) {
         const providers = stripePublishableKey.trim()

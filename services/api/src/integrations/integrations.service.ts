@@ -15,6 +15,7 @@ import {
   TestConnectionResultDto,
 } from './dto/create-integration.dto';
 import { verifySendGridApiKey, sendViaSendGrid } from './sendgrid.client';
+import { resolveOutboundFromEmail, isProtectedAdminEmail } from '../config/protected-admin-emails';
 
 /**
  * Provider metadata definitions
@@ -691,11 +692,11 @@ export class IntegrationsService {
       return { success: false, message: verify.error || 'SendGrid API key verification failed' };
     }
 
-    const fromEmail = credentials.fromEmail?.trim() || 'noreply@houseofspells.com';
+    const fromEmail = resolveOutboundFromEmail(credentials.fromEmail, 'noreply@houseofspells.com');
     const fromName = credentials.fromName?.trim() || 'House of Spells';
 
     // Optional: send a minimal test to verify sender identity when fromEmail is set
-    if (credentials.fromEmail?.trim()) {
+    if (credentials.fromEmail?.trim() && !isProtectedAdminEmail(credentials.fromEmail)) {
       const probe = await sendViaSendGrid({
         apiKey: credentials.apiKey,
         to: fromEmail,

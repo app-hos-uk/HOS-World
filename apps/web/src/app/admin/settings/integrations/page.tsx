@@ -95,6 +95,7 @@ export default function IntegrationsPage() {
   const [loading, setLoading] = useState(true);
   const [testingId, setTestingId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingIntegration, setEditingIntegration] = useState<Integration | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -172,26 +173,56 @@ export default function IntegrationsPage() {
     }
   };
 
+  const handleEditIntegration = (integration: Integration) => {
+    setEditingIntegration(integration);
+    setSelectedCategory(integration.category);
+    setSelectedProvider(integration.provider);
+    setFormData({
+      displayName: integration.displayName,
+      description: integration.description || '',
+      isTestMode: integration.isTestMode,
+      credentials: {},
+    });
+    setShowAddModal(true);
+  };
+
   const handleAddIntegration = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCategory || !selectedProvider) return;
 
     setSubmitting(true);
     try {
-      await apiClient.createIntegration({
-        category: selectedCategory,
-        provider: selectedProvider,
-        displayName: formData.displayName,
-        description: formData.description || undefined,
-        isTestMode: formData.isTestMode,
-        credentials: formData.credentials,
-      });
-      toast.success('Integration added successfully!');
+      if (editingIntegration) {
+        const updatePayload: Record<string, any> = {
+          displayName: formData.displayName,
+          description: formData.description || undefined,
+          isTestMode: formData.isTestMode,
+        };
+        const nonEmptyCreds = Object.fromEntries(
+          Object.entries(formData.credentials).filter(([, v]) => v.trim() !== ''),
+        );
+        if (Object.keys(nonEmptyCreds).length > 0) {
+          updatePayload.credentials = nonEmptyCreds;
+        }
+        await apiClient.updateIntegration(editingIntegration.id, updatePayload);
+        toast.success('Integration updated successfully!');
+      } else {
+        await apiClient.createIntegration({
+          category: selectedCategory,
+          provider: selectedProvider,
+          displayName: formData.displayName,
+          description: formData.description || undefined,
+          isTestMode: formData.isTestMode,
+          isActive: true,
+          credentials: formData.credentials,
+        });
+        toast.success('Integration added and activated!');
+      }
       setShowAddModal(false);
       resetForm();
       fetchData();
     } catch (error: any) {
-      toast.error(error.message || 'Failed to add integration');
+      toast.error(error.message || 'Failed to save integration');
     } finally {
       setSubmitting(false);
     }
@@ -210,6 +241,7 @@ export default function IntegrationsPage() {
   };
 
   const resetForm = () => {
+    setEditingIntegration(null);
     setSelectedCategory(null);
     setSelectedProvider(null);
     setFormData({
@@ -370,13 +402,19 @@ export default function IntegrationsPage() {
                               </p>
                             )}
 
-                            <div className="flex gap-2 pt-3 border-t border-hos-border">
+                            <div className="flex gap-2 pt-3 border-t border-hos-border flex-wrap">
                               <button
                                 onClick={() => handleTestConnection(integration.id)}
                                 disabled={testingId === integration.id}
                                 className="flex-1 px-3 py-1.5 text-sm bg-hos-bg-tertiary hover:bg-hos-bg-tertiary rounded disabled:opacity-50"
                               >
                                 {testingId === integration.id ? 'Testing...' : 'Test'}
+                              </button>
+                              <button
+                                onClick={() => handleEditIntegration(integration)}
+                                className="flex-1 px-3 py-1.5 text-sm bg-blue-500/15 hover:bg-blue-200 text-blue-400 rounded"
+                              >
+                                Edit
                               </button>
                               <button
                                 onClick={() => handleToggleActive(integration)}
@@ -436,7 +474,7 @@ export default function IntegrationsPage() {
                 >
                   <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 shadow-xl transition-all">
                     <Dialog.Title as="h3" className="text-lg font-semibold mb-4">
-                      Add Integration
+                      {editingIntegration ? 'Edit Integration' : 'Add Integration'}
                     </Dialog.Title>
 
                     <form onSubmit={handleAddIntegration} className="space-y-4">
@@ -452,8 +490,9 @@ export default function IntegrationsPage() {
                             setSelectedProvider(null);
                             setFormData({ ...formData, credentials: {} });
                           }}
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold disabled:opacity-60"
                           required
+                          disabled={!!editingIntegration}
                         >
                           <option value="">Select category...</option>
                           {Object.entries(CATEGORY_INFO).map(([cat, info]) => (
@@ -485,8 +524,9 @@ export default function IntegrationsPage() {
                                 });
                               }
                             }}
-                            className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                            className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold disabled:opacity-60"
                             required
+                            disabled={!!editingIntegration}
                           >
                             <option value="">Select provider...</option>
                             {(availableProviders[selectedCategory] || []).map(({ provider, metadata }) => (
@@ -535,10 +575,10 @@ export default function IntegrationsPage() {
                               {getProviderMetadata()!.requiredCredentials.map((field) => (
                                 <div key={field}>
                                   <label className="block text-sm text-hos-text-secondary mb-1">
-                                    {field.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())} *
+                                    {field.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())} {editingIntegration ? '' : '*'}
                                   </label>
                                   <input
-                                    type={field.toLowerCase().includes('secret') || field.toLowerCase().includes('key') || field.toLowerCase().includes('password') ? 'password' : 'text'}
+                                    type={field.toLowerCase().includes('secret') || (field.toLowerCase().includes('key') && !field.toLowerCase().includes('publishable')) || field.toLowerCase().includes('password') ? 'password' : 'text'}
                                     value={formData.credentials[field] || ''}
                                     onChange={(e) =>
                                       setFormData({
@@ -546,8 +586,9 @@ export default function IntegrationsPage() {
                                         credentials: { ...formData.credentials, [field]: e.target.value },
                                       })
                                     }
+                                    placeholder={editingIntegration ? '(leave blank to keep current)' : ''}
                                     className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                                    required
+                                    required={!editingIntegration}
                                   />
                                 </div>
                               ))}
@@ -603,7 +644,7 @@ export default function IntegrationsPage() {
                           disabled={submitting || !selectedProvider}
                           className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                         >
-                          {submitting ? 'Adding...' : 'Add Integration'}
+                          {submitting ? 'Saving...' : editingIntegration ? 'Update Integration' : 'Add Integration'}
                         </button>
                       </div>
                     </form>

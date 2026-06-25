@@ -20,6 +20,7 @@ import { LoyaltyService } from '../loyalty/loyalty.service';
 import { PosInventorySyncService } from '../pos/sync/inventory-sync.service';
 import { MarketingEventBus } from '../journeys/marketing-event.bus';
 import { RedisService } from '../cache/redis.service';
+import { IntegrationsService } from '../integrations/integrations.service';
 
 @Injectable()
 export class PaymentsService {
@@ -41,6 +42,7 @@ export class PaymentsService {
     @Optional() @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
     @Optional() private redisService?: RedisService,
+    @Optional() private integrationsService?: IntegrationsService,
   ) {
     this.logger.log('PaymentsService initialized with payment provider framework');
   }
@@ -674,5 +676,22 @@ export class PaymentsService {
    */
   getAvailableProviders(): string[] {
     return this.paymentProviderService.getAvailableProviders();
+  }
+
+  /**
+   * Get Stripe publishable key for frontend Stripe.js initialization.
+   * Reads from STRIPE_PUBLISHABLE_KEY env var or from admin integrations DB.
+   */
+  async getStripePublishableKey(): Promise<string | null> {
+    const envKey = this.configService.get<string>('STRIPE_PUBLISHABLE_KEY');
+    if (envKey) return envKey;
+
+    try {
+      if (!this.integrationsService) return null;
+      const creds = await this.integrationsService.getDecryptedCredentials('PAYMENT', 'stripe');
+      return creds.publishableKey?.trim() || null;
+    } catch {
+      return null;
+    }
   }
 }

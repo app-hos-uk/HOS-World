@@ -1,0 +1,58 @@
+Row,Module,Recommendation,Priority,Current Status
+2,Product Detail Page,Display seller/store information more prominently inside the product detail page,Medium,Not Started
+3,Product Detail Page,Add seller ratings and public seller reviews,Medium,Not Started
+4,Product Detail Page,Add direct seller storefront navigation,Medium,Not Started
+5,Product Detail Page,Add estimated delivery information,High,Implemented
+6,Product Detail Page,Improve product image zoom/gallery experience,Medium,Implemented
+7,Product Detail Page,Add related/recommended products section,Medium,Implemented
+8,Product Detail Page,Expand product specification/details section,Medium,Implemented
+9,Homepage,Remove remaining placeholder/demo contents,High,Partially Implemented
+10,Homepage,Improve spacing and UI alignment consistency across homepage sections,Medium,Partially Implemented
+11,Homepage,Add featured sellers or spotlight collections section,Medium,Not Started
+12,Search,Improve search relevance and filtering accuracy,High,Partially Implemented
+13,Search,Add autocomplete/search suggestions,Medium,Implemented
+14,Cart,Add seller-wise grouping for products in cart,High,Implemented
+15,Cart,Add delivery estimation within cart summary,Medium,Implemented
+16,Cart,Add low stock/inventory warning indicators,Medium,Implemented
+17,Checkout,Complete payment gateway integration and transaction flow validation,Critical,Partially Implemented — Pending Live Validation
+18,Checkout,Add payment retry/recovery workflow,High,Partially Implemented
+19,Checkout,Add dynamic shipping calculation support,High,Implemented
+20,Orders,Add downloadable invoice support,Medium,Implemented
+21,Orders,Add reorder functionality,Medium,Implemented
+22,Returns,Complete payment-linked refund and settlement workflow,Critical,Partially Implemented — Pending Live Validation
+23,Returns,Add detailed refund reason and refund tracking visibility,High,Partially Implemented
+24,Customer Dashboard,Add loyalty/rewards system,Medium,Implemented
+25,Customer Dashboard,Add personalized product recommendations,Medium,Implemented
+26,Customer Dashboard,Add recently viewed products section,Low,Implemented
+27,Seller Dashboard,Add revenue analytics visualization,Medium,Implemented
+28,Seller Dashboard,Add payout and settlement tracking visibility,High,Partially Implemented — Pending Live Validation
+29,Seller Dashboard,Add low stock alert notifications,Medium,Implemented — Pending Prod Validation
+30,Seller Dashboard,Add product performance analytics,Medium,Partially Implemented
+31,Submit Product,Add SEO/meta fields for products,Medium,Implemented
+32,Submit Product,Add draft save functionality during submission workflow,Medium,Not Started
+33,Submit Product,Add product preview before submission,Medium,Not Started
+34,Submit Product,Add shipping dimensions and weight fields,High,Implemented
+35,Submit Product,Add collectibles/compliance/license fields,Medium,Partially Implemented
+36,Product Management,Add bulk product edit functionality,High,Implemented
+37,Product Management,Add inline inventory update support,Medium,Implemented
+38,Themes,Add live storefront preview functionality,Medium,Implemented
+39,Themes,Add advanced storefront customization options,Medium,Implemented
+40,Bulk Import,Add downloadable sample CSV template,High,Implemented
+41,Bulk Import,Add import validation and detailed error reporting,High,Implemented
+42,Bulk Import,Add failed row export/report generation,Medium,Implemented
+43,Bulk Import,Add duplicate SKU validation handling,High,Implemented
+44,Wholesale Operations,Add MOQ (Minimum Order Quantity) management,High,Not Started
+45,Wholesale Operations,Add tier-based pricing functionality,High,Partially Implemented
+46,Wholesale Operations,Add quotation/request workflow,Medium,Not Started
+47,Wholesale Operations,Add wholesale business verification workflow,High,Partially Implemented
+48,Marketplace Operations,Complete marketplace payment orchestration and settlement integration,Critical,Partially Implemented — Pending Live Validation
+49,Marketplace Operations,Complete seller payout execution workflow,Critical,Partially Implemented — Pending Live Validation
+50,Marketplace Operations,Complete refund reconciliation workflow,Critical,Partially Implemented — Pending Live Validation
+51,Marketplace Operations,Improve review moderation synchronization between customer and admin workflows,High,Implemented — Pending E2E Validation
+52,Marketplace Operations,Improve activity log/event tracking synchronization,Medium,Partially Implemented
+53,Marketplace Operations,Add notification delivery monitoring and validation,Medium,Partially Implemented — Pending Live Validation
+54,Marketplace Operations,Improve analytics population with real operational data,Medium,Partially Implemented
+55,Marketplace Operations,Add inventory synchronization validation across workflows,High,Partially Implemented
+56,Monitoring & Audit,Improve operational activity logging coverage,Medium,Partially Implemented
+57,Monitoring & Audit,Add discrepancy/event monitoring automation,Medium,Implemented — Pending Prod Validation
+58,Notifications,Validate email/SMS/WhatsApp delivery workflows end-to-end,High,Partially Implemented — Pending Live Validation

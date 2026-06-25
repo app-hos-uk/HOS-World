@@ -30,6 +30,8 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { StripeProvider } from '../payments/providers/stripe.provider';
+import { Optional } from '@nestjs/common';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('integrations')
@@ -38,7 +40,10 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
 export class IntegrationsController {
-  constructor(private readonly integrationsService: IntegrationsService) {}
+  constructor(
+    private readonly integrationsService: IntegrationsService,
+    @Optional() private readonly stripeProvider?: StripeProvider,
+  ) {}
 
   @Post()
   @ApiOperation({
@@ -52,6 +57,9 @@ export class IntegrationsController {
     @Body() createDto: CreateIntegrationDto,
   ): Promise<ApiResponse<IntegrationResponseDto>> {
     const integration = await this.integrationsService.create(createDto);
+    if (integration.provider === 'stripe' && integration.isActive && this.stripeProvider) {
+      void this.stripeProvider.initFromIntegrations();
+    }
     return {
       data: integration,
       message: 'Integration created successfully',
@@ -184,6 +192,9 @@ export class IntegrationsController {
     @Body() updateDto: UpdateIntegrationDto,
   ): Promise<ApiResponse<IntegrationResponseDto>> {
     const integration = await this.integrationsService.update(id, updateDto);
+    if (integration.provider === 'stripe' && integration.isActive && this.stripeProvider) {
+      void this.stripeProvider.initFromIntegrations();
+    }
     return {
       data: integration,
       message: 'Integration updated successfully',
@@ -264,6 +275,9 @@ export class IntegrationsController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ApiResponse<IntegrationResponseDto>> {
     const integration = await this.integrationsService.update(id, { isActive: true });
+    if (integration.provider === 'stripe' && this.stripeProvider) {
+      void this.stripeProvider.initFromIntegrations();
+    }
     return {
       data: integration,
       message: 'Integration activated successfully',

@@ -17,3 +17,19 @@ export function isProtectedAdminEmail(email: string | null | undefined): boolean
 export function isSuperAdminEmail(email: string | null | undefined): boolean {
   return isProtectedAdminEmail(email);
 }
+
+/**
+ * Resolve a safe outbound From address.
+ * If the candidate is a protected admin email, falls back to DEFAULT_OUTBOUND_FROM.
+ */
+export function resolveOutboundFromEmail(
+  candidate: string | null | undefined,
+  fallback: string = DEFAULT_OUTBOUND_FROM,
+): string {
+  const fb = fallback.trim() || DEFAULT_OUTBOUND_FROM;
+  const raw = candidate?.trim() || fb;
+  if (isProtectedAdminEmail(raw)) {
+    return fb;
+  }
+  return raw;
+}

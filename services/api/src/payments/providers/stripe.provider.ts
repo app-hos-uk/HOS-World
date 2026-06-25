@@ -45,7 +45,11 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
     void this.initFromIntegrations();
   }
 
-  private async initFromIntegrations(): Promise<void> {
+  /**
+   * Re-initialize from integrations DB. Called on startup and when
+   * Stripe integration is activated/updated at runtime.
+   */
+  async initFromIntegrations(): Promise<void> {
     try {
       const creds = await this.integrationsService.getDecryptedCredentials('PAYMENT', 'stripe');
       const secretKey = creds.secretKey?.trim();

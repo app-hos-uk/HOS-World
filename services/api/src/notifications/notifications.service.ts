@@ -6,6 +6,7 @@ import { QueueService, JobType } from '../queue/queue.service';
 import { TemplatesService } from '../templates/templates.service';
 import { IntegrationsService } from '../integrations/integrations.service';
 import { sendViaSendGrid } from '../integrations/sendgrid.client';
+import { resolveOutboundFromEmail } from '../config/protected-admin-emails';
 import * as nodemailer from 'nodemailer';
 
 const VALID_NOTIFICATION_TYPES = new Set([
@@ -137,7 +138,7 @@ export class NotificationsService implements OnModuleInit {
         return false;
       }
 
-      const fromEmail = credentials.fromEmail?.trim() || this.defaultFromEmail();
+      const fromEmail = resolveOutboundFromEmail(credentials.fromEmail, this.defaultFromEmail());
       const fromName = credentials.fromName?.trim() || 'House of Spells';
 
       const result = await sendViaSendGrid({
@@ -202,8 +203,13 @@ export class NotificationsService implements OnModuleInit {
 
   private async sendEmail(to: string, subject: string, html: string): Promise<boolean> {
     const sendGridResult = await this.sendViaActiveSendGrid(to, subject, html);
-    if (sendGridResult !== null) {
-      return sendGridResult;
+    if (sendGridResult === true) {
+      return true;
+    }
+
+    // SendGrid not configured (null) or failed (false) — fall through to SMTP
+    if (sendGridResult === false) {
+      this.logger.warn(`SendGrid failed for ${to}, falling back to SMTP`);
     }
 
     if (!this.emailEnabled || !this.transporter) {
@@ -263,7 +269,7 @@ export class NotificationsService implements OnModuleInit {
         if (!apiKey) {
           throw new BadRequestException('SendGrid is active but API key is missing');
         }
-        const fromEmail = credentials.fromEmail?.trim() || this.defaultFromEmail();
+        const fromEmail = resolveOutboundFromEmail(credentials.fromEmail, this.defaultFromEmail());
         const fromName = credentials.fromName?.trim() || 'House of Spells';
         const result = await sendViaSendGrid({
           apiKey,

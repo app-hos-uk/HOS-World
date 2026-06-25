@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 const HASHED_PASSWORD = '$2b$10$rQZ8KJ9vXqY5LmNpR3sT0uVwXyZ1A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P7Q8R9S0';
 
 async function seedAdmin() {
-  const adminEmail = 'mail@jsabu.com';
+  const adminEmail = 'app@houseofspells.co.uk';
   const adminPassword = 'Admin123';
 
   try {

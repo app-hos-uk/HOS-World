@@ -8,7 +8,7 @@
 import { PrismaClient } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { EncryptionService } from '../src/integrations/encryption.service';
-import { sendViaSendGrid } from '../src/notifications/sendgrid.client';
+import { sendViaSendGrid } from '../src/integrations/sendgrid.client';
 
 const to = process.argv[2] || 'arun@houseofspells.com';
 

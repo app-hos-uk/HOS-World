@@ -1,0 +1,110 @@
+/**
+ * Fixes Hos Recommendations sheet: restores column A (Module) and fills column E (Current Status).
+ *
+ * Sheet: https://docs.google.com/spreadsheets/d/1S_aE_TyUONJA2DtNOHR9ltQez7ZC1b1ZynoFHb-mxlg
+ *
+ * How to run:
+ * 1. Open the sheet → Extensions → Apps Script (tab may already be open)
+ * 2. Replace Code.gs contents with this file
+ * 3. Run fixHosRecommendationsSheet() → Allow permissions
+ *
+ * Audited against codebase: Jun 25, 2026
+ */
+function fixHosRecommendationsSheet() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
+  if (!sheet) throw new Error('Sheet1 not found');
+
+  const rows = [
+    ['Module', 'Recommendation', 'Business Impact', 'Priority', 'Current Status'],
+    ['Product Detail Page', 'Display seller/store information more prominently inside the product detail page', 'Improves marketplace trust and seller visibility', 'Medium', 'Not Started'],
+    ['Product Detail Page', 'Add seller ratings and public seller reviews', 'Improves purchase confidence and seller transparency', 'Medium', 'Not Started'],
+    ['Product Detail Page', 'Add direct seller storefront navigation', 'Improves seller discoverability and marketplace engagement', 'Medium', 'Not Started'],
+    ['Product Detail Page', 'Add estimated delivery information', 'Improves customer purchase confidence', 'High', 'Implemented'],
+    ['Product Detail Page', 'Improve product image zoom/gallery experience', 'Enhances product viewing experience', 'Medium', 'Implemented'],
+    ['Product Detail Page', 'Add related/recommended products section', 'Improves customer engagement and conversions', 'Medium', 'Implemented'],
+    ['Product Detail Page', 'Expand product specification/details section', 'Improves product clarity and customer decision-making', 'Medium', 'Implemented'],
+    ['Homepage', 'Remove remaining placeholder/demo contents', 'Improves production readiness and professionalism', 'High', 'Partially Implemented'],
+    ['Homepage', 'Improve spacing and UI alignment consistency across homepage sections', 'Improves UI quality and readability', 'Medium', 'Partially Implemented'],
+    ['Homepage', 'Add featured sellers or spotlight collections section', 'Improves marketplace engagement and seller exposure', 'Medium', 'Not Started'],
+    ['Search', 'Improve search relevance and filtering accuracy', 'Improves product discovery experience', 'High', 'Partially Implemented'],
+    ['Search', 'Add autocomplete/search suggestions', 'Improves search usability and speed', 'Medium', 'Implemented'],
+    ['Cart', 'Add seller-wise grouping for products in cart', 'Improves multi-vendor order clarity', 'High', 'Implemented'],
+    ['Cart', 'Add delivery estimation within cart summary', 'Improves order transparency', 'Medium', 'Implemented'],
+    ['Cart', 'Add low stock/inventory warning indicators', 'Prevents checkout failures and overselling', 'Medium', 'Implemented'],
+    ['Checkout', 'Complete payment gateway integration and transaction flow validation', 'Required for complete marketplace operations', 'Critical', 'Partially Implemented — Pending Live Validation'],
+    ['Checkout', 'Add payment retry/recovery workflow', 'Improves payment completion success rate', 'High', 'Partially Implemented'],
+    ['Checkout', 'Add dynamic shipping calculation support', 'Improves pricing and shipping accuracy', 'High', 'Implemented'],
+    ['Orders', 'Add downloadable invoice support', 'Improves operational completeness and customer usability', 'Medium', 'Implemented'],
+    ['Orders', 'Add reorder functionality', 'Encourages repeat purchases', 'Medium', 'Implemented'],
+    ['Returns', 'Complete payment-linked refund and settlement workflow', 'Required for end-to-end marketplace financial operations', 'Critical', 'Partially Implemented — Pending Live Validation'],
+    ['Returns', 'Add detailed refund reason and refund tracking visibility', 'Improves operational transparency', 'High', 'Partially Implemented'],
+    ['Customer Dashboard', 'Add loyalty/rewards system', 'Improves customer retention and engagement', 'Medium', 'Implemented'],
+    ['Customer Dashboard', 'Add personalized product recommendations', 'Improves customer engagement and conversions', 'Medium', 'Implemented'],
+    ['Customer Dashboard', 'Add recently viewed products section', 'Improves product rediscovery', 'Low', 'Implemented'],
+    ['Seller Dashboard', 'Add revenue analytics visualization', 'Improves seller business insights', 'Medium', 'Implemented'],
+    ['Seller Dashboard', 'Add payout and settlement tracking visibility', 'Improves seller financial transparency', 'High', 'Partially Implemented — Pending Live Validation'],
+    ['Seller Dashboard', 'Add low stock alert notifications', 'Improves inventory management', 'Medium', 'Implemented — Pending Prod Validation'],
+    ['Seller Dashboard', 'Add product performance analytics', 'Improves seller operational insights', 'Medium', 'Partially Implemented'],
+    ['Submit Product', 'Add SEO/meta fields for products', 'Improves search engine discoverability', 'Medium', 'Implemented'],
+    ['Submit Product', 'Add draft save functionality during submission workflow', 'Improves seller operational workflow', 'Medium', 'Not Started'],
+    ['Submit Product', 'Add product preview before submission', 'Improves submission confidence and validation', 'Medium', 'Not Started'],
+    ['Submit Product', 'Add shipping dimensions and weight fields', 'Required for advanced shipping and logistics calculations', 'High', 'Implemented'],
+    ['Submit Product', 'Add collectibles/compliance/license fields', 'Improves marketplace governance and compliance management', 'Medium', 'Partially Implemented'],
+    ['Product Management', 'Add bulk product edit functionality', 'Improves seller operational efficiency', 'High', 'Implemented'],
+    ['Product Management', 'Add inline inventory update support', 'Improves inventory management workflow', 'Medium', 'Implemented'],
+    ['Themes', 'Add live storefront preview functionality', 'Improves seller customization experience', 'Medium', 'Implemented'],
+    ['Themes', 'Add advanced storefront customization options', 'Improves seller branding flexibility', 'Medium', 'Implemented'],
+    ['Bulk Import', 'Add downloadable sample CSV template', 'Improves seller onboarding experience', 'High', 'Implemented'],
+    ['Bulk Import', 'Add import validation and detailed error reporting', 'Improves import usability and troubleshooting', 'High', 'Implemented'],
+    ['Bulk Import', 'Add failed row export/report generation', 'Improves operational troubleshooting', 'Medium', 'Implemented'],
+    ['Bulk Import', 'Add duplicate SKU validation handling', 'Prevents inventory conflicts and duplication issues', 'High', 'Implemented'],
+    ['Wholesale Operations', 'Add MOQ (Minimum Order Quantity) management', 'Important for wholesale marketplace operations', 'High', 'Not Started'],
+    ['Wholesale Operations', 'Add tier-based pricing functionality', 'Improves wholesale operational flexibility', 'High', 'Partially Implemented'],
+    ['Wholesale Operations', 'Add quotation/request workflow', 'Improves B2B order handling', 'Medium', 'Not Started'],
+    ['Wholesale Operations', 'Add wholesale business verification workflow', 'Improves operational trust and compliance', 'High', 'Partially Implemented'],
+    ['Marketplace Operations', 'Complete marketplace payment orchestration and settlement integration', 'Required for financial operational readiness', 'Critical', 'Partially Implemented — Pending Live Validation'],
+    ['Marketplace Operations', 'Complete seller payout execution workflow', 'Required for operational marketplace finance flow', 'Critical', 'Partially Implemented — Pending Live Validation'],
+    ['Marketplace Operations', 'Complete refund reconciliation workflow', 'Required for financial consistency and operational stability', 'Critical', 'Partially Implemented — Pending Live Validation'],
+    ['Marketplace Operations', 'Improve review moderation synchronization between customer and admin workflows', 'Prevents review visibility inconsistencies', 'High', 'Implemented — Pending E2E Validation'],
+    ['Marketplace Operations', 'Improve activity log/event tracking synchronization', 'Improves operational observability and auditability', 'Medium', 'Partially Implemented'],
+    ['Marketplace Operations', 'Add notification delivery monitoring and validation', 'Improves operational communication reliability', 'Medium', 'Partially Implemented — Pending Live Validation'],
+    ['Marketplace Operations', 'Improve analytics population with real operational data', 'Improves reporting accuracy and decision-making', 'Medium', 'Partially Implemented'],
+    ['Marketplace Operations', 'Add inventory synchronization validation across workflows', 'Prevents inventory inconsistencies', 'High', 'Partially Implemented'],
+    ['Monitoring & Audit', 'Improve operational activity logging coverage', 'Improves traceability and operational monitoring', 'Medium', 'Partially Implemented'],
+    ['Monitoring & Audit', 'Add discrepancy/event monitoring automation', 'Improves operational issue detection', 'Medium', 'Implemented — Pending Prod Validation'],
+    ['Notifications', 'Validate email/SMS/WhatsApp delivery workflows end-to-end', 'Improves communication reliability', 'High', 'Partially Implemented — Pending Live Validation'],
+  ];
+
+  sheet.getRange(1, 1, rows.length, 5).setValues(rows);
+
+  SpreadsheetApp.getUi().alert(
+    'Updated rows 1–' + rows.length + ': Module (A), Recommendation (B), and Current Status (E).',
+  );
+}
+
+/** Updates column E only (if sheet structure is already correct). */
+function updateHosRecommendationStatuses() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet1');
+  if (!sheet) throw new Error('Sheet1 not found');
+
+  const statuses = [
+    'Not Started', 'Not Started', 'Not Started', 'Implemented', 'Implemented', 'Implemented', 'Implemented',
+    'Partially Implemented', 'Partially Implemented', 'Not Started', 'Partially Implemented', 'Implemented',
+    'Implemented', 'Implemented', 'Implemented', 'Partially Implemented — Pending Live Validation',
+    'Partially Implemented', 'Implemented', 'Implemented', 'Implemented',
+    'Partially Implemented — Pending Live Validation', 'Partially Implemented', 'Implemented', 'Implemented',
+    'Implemented', 'Implemented', 'Partially Implemented — Pending Live Validation',
+    'Implemented — Pending Prod Validation', 'Partially Implemented', 'Implemented', 'Not Started', 'Not Started',
+    'Implemented', 'Partially Implemented', 'Implemented', 'Implemented', 'Implemented', 'Implemented',
+    'Implemented', 'Implemented', 'Implemented', 'Implemented', 'Not Started', 'Partially Implemented',
+    'Not Started', 'Partially Implemented', 'Partially Implemented — Pending Live Validation',
+    'Partially Implemented — Pending Live Validation', 'Partially Implemented — Pending Live Validation',
+    'Implemented — Pending E2E Validation', 'Partially Implemented',
+    'Partially Implemented — Pending Live Validation', 'Partially Implemented', 'Partially Implemented',
+    'Partially Implemented', 'Implemented — Pending Prod Validation',
+    'Partially Implemented — Pending Live Validation',
+  ];
+
+  sheet.getRange(2, 5, statuses.length, 1).setValues(statuses.map((s) => [s]));
+  SpreadsheetApp.getUi().alert('Updated column E (Current Status) for rows 2–58.');
+}
