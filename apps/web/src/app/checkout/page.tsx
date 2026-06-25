@@ -478,9 +478,9 @@ export default function CheckoutPage() {
           sessionStorage.getItem(GUEST_CHECKOUT_ACCOUNT_KEY) === 'true';
         if (isGuestCheckoutAccount) {
           sessionStorage.removeItem(GUEST_CHECKOUT_ACCOUNT_KEY);
-          toast.success('Order created! Check your email to set a password and track your orders anytime.');
+          toast.success('Order created! Check your email to set a password and track your orders anytime.', { id: 'order-created' });
         } else {
-          toast.success('Order created successfully!');
+          toast.success('Order created successfully!', { id: 'order-created' });
         }
         router.push(`/payment?orderId=${orderResponse.data.id}`);
       } else {
@@ -490,12 +490,9 @@ export default function CheckoutPage() {
       console.error('Error creating order:', error);
       const errorMessage = error.message || 'Failed to create order';
       toast.error(errorMessage);
-      // Check if it's a stock-related error and update issues
       if (errorMessage.toLowerCase().includes('stock') || errorMessage.toLowerCase().includes('insufficient')) {
-        // Reload cart to get fresh stock data
         loadCheckoutData();
       }
-    } finally {
       setCreatingOrder(false);
       isSubmittingRef.current = false;
     }

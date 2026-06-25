@@ -1,33 +1,42 @@
 import { useMemo } from 'react';
 import toast from 'react-hot-toast';
 
+interface ToastOptions {
+  id?: string;
+  duration?: number;
+}
+
 const toastMethods = {
-  success: (message: string) => {
+  success: (message: string, options?: ToastOptions) => {
     toast.success(message, {
       duration: 4000,
+      ...options,
     });
   },
-  error: (message: string) => {
+  error: (message: string, options?: ToastOptions) => {
     toast.error(message, {
       duration: 5000,
+      ...options,
     });
   },
-  info: (message: string) => {
+  info: (message: string, options?: ToastOptions) => {
     toast(message, {
       duration: 4000,
       icon: 'ℹ️',
       style: {
         border: '1px solid #6366f1',
       },
+      ...options,
     });
   },
-  warning: (message: string) => {
+  warning: (message: string, options?: ToastOptions) => {
     toast(message, {
       duration: 5000,
       icon: '⚠️',
       style: {
         border: '1px solid #f59e0b',
       },
+      ...options,
     });
   },
   loading: (message: string) => {

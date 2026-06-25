@@ -1303,11 +1303,11 @@ export class OrdersService {
     }
 
     // Check permissions
-    if (role === 'CUSTOMER' && order.userId !== userId) {
-      throw new ForbiddenException('You do not have permission to view this order');
-    }
-
-    if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
+    if (role === 'CUSTOMER') {
+      if (order.userId !== userId) {
+        throw new ForbiddenException('You do not have permission to view this order');
+      }
+    } else if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
       const seller = await this.prisma.seller.findUnique({
         where: { userId },
       });
