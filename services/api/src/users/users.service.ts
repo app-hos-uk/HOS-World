@@ -4,13 +4,11 @@ import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 import { PrismaService } from '../database/prisma.service';
 import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';
 import type { User } from '@hos-marketplace/shared-types';
+import { isProtectedAdminEmail } from '../config/protected-admin-emails';
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
-
-  // Hard-protected admin accounts that must never be deleted via self-service endpoints.
-  private readonly protectedAdminEmails = new Set(['app@houseofspells.co.uk', 'mail@jsabu.com']);
 
   async getProfile(userId: string): Promise<User> {
     const user = await this.prisma.user.findUnique({
@@ -242,7 +240,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    if (this.protectedAdminEmails.has(user.email)) {
+    if (isProtectedAdminEmail(user.email)) {
       throw new BadRequestException('This account is protected and cannot be deleted');
     }
 

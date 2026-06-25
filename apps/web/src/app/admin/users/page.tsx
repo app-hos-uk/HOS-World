@@ -7,6 +7,7 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
+import { isProtectedAdminEmail, isSuperAdminEmail } from '@/lib/protectedAdminEmails';
 import { DataExport } from '@/components/DataExport';
 import { VirtualizedTableBody } from '@/components/VirtualizedTableBody';
 
@@ -71,7 +72,7 @@ const ROLE_DESCRIPTIONS: Record<string, string> = {
 export default function AdminUsersPage() {
   const toast = useToast();
   const { user: currentUser } = useAuth();
-  const isSuperAdmin = currentUser?.email?.toLowerCase() === 'mail@jsabu.com';
+  const isSuperAdmin = isSuperAdminEmail(currentUser?.email);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -395,7 +396,7 @@ export default function AdminUsersPage() {
   const confirmDelete = async () => {
     if (!selectedUser) return;
 
-    if (selectedUser.email === 'app@houseofspells.co.uk') {
+    if (isProtectedAdminEmail(selectedUser.email)) {
       toast.error('Cannot delete the primary admin user');
       setShowDeleteModal(false);
       return;
@@ -422,7 +423,7 @@ export default function AdminUsersPage() {
   };
 
   const handleToggleStatus = async (user: User) => {
-    if (user.email === 'app@houseofspells.co.uk') {
+    if (isProtectedAdminEmail(user.email)) {
       toast.error('Cannot modify the primary admin user');
       return;
     }
@@ -483,10 +484,9 @@ export default function AdminUsersPage() {
   const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete') => {
     if (selectedUsers.size === 0) return;
     
-    const protectedEmail = 'app@houseofspells.co.uk';
     const selectedList = [...selectedUsers].filter(id => {
       const user = users.find(u => u.id === id);
-      return user && user.email !== protectedEmail;
+      return user && !isProtectedAdminEmail(user.email);
     });
 
     if (selectedList.length === 0) {
@@ -902,7 +902,7 @@ export default function AdminUsersPage() {
                                 Reset Pwd
                               </button>
                             )}
-                            {user.email !== 'app@houseofspells.co.uk' && (
+                            {!isProtectedAdminEmail(user.email) && (
                               <>
                                 <button
                                   onClick={() => handleToggleStatus(user)}
@@ -1090,7 +1090,7 @@ export default function AdminUsersPage() {
                         type="email"
                         value={editForm.email}
                         onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                        disabled={selectedUser.email === 'app@houseofspells.co.uk'}
+                        disabled={isProtectedAdminEmail(selectedUser.email)}
                         className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 disabled:bg-hos-bg-tertiary"
                       />
                     </div>
@@ -1100,7 +1100,7 @@ export default function AdminUsersPage() {
                       <select
                         value={editForm.role}
                         onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                        disabled={selectedUser.email === 'app@houseofspells.co.uk'}
+                        disabled={isProtectedAdminEmail(selectedUser.email)}
                         className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 disabled:bg-hos-bg-tertiary"
                       >
                         {ROLES.map((role) => (
@@ -1115,7 +1115,7 @@ export default function AdminUsersPage() {
                         id="isActive"
                         checked={editForm.isActive}
                         onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
-                        disabled={selectedUser.email === 'app@houseofspells.co.uk'}
+                        disabled={isProtectedAdminEmail(selectedUser.email)}
                         className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                       />
                       <label htmlFor="isActive" className="text-sm font-medium text-hos-text-secondary">Active Account</label>

@@ -5,7 +5,7 @@ import { PrismaService } from '../database/prisma.service';
 import { QueueService, JobType } from '../queue/queue.service';
 import { TemplatesService } from '../templates/templates.service';
 import { IntegrationsService } from '../integrations/integrations.service';
-import { sendViaSendGrid } from './sendgrid.client';
+import { sendViaSendGrid } from '../integrations/sendgrid.client';
 import * as nodemailer from 'nodemailer';
 
 const VALID_NOTIFICATION_TYPES = new Set([
@@ -71,8 +71,9 @@ export class NotificationsService implements OnModuleInit {
     this.initializeEmailTransporter();
   }
 
-  async onModuleInit() {
-    await this.detectSendGridProvider();
+  onModuleInit() {
+    // Non-blocking: do not delay HTTP listen / healthcheck while probing integrations DB.
+    void this.detectSendGridProvider();
     this.queueService.registerProcessor(JobType.EMAIL_NOTIFICATION, async (job: Job) => {
       const { to, subject, html, notificationId } = job.data;
       const sent = await this.sendEmail(to, subject, html);
@@ -122,7 +123,10 @@ export class NotificationsService implements OnModuleInit {
 
   private async sendViaActiveSendGrid(to: string, subject: string, html: string): Promise<boolean | null> {
     if (!this.sendGridActive) {
-      return null;
+      await this.detectSendGridProvider();
+      if (!this.sendGridActive) {
+        return null;
+      }
     }
 
     try {
@@ -168,7 +172,7 @@ export class NotificationsService implements OnModuleInit {
     const smtpPort = this.configService.get('SMTP_PORT', 587);
     const smtpUser = this.configService.get('SMTP_USER');
     const smtpPass = this.configService.get('SMTP_PASS');
-    const smtpFrom = this.configService.get('SMTP_FROM', 'noreply@hos-marketplace.com');
+    const smtpFrom = this.configService.get('SMTP_FROM', 'noreply@houseofspells.com');
 
     if (smtpHost && smtpUser && smtpPass) {
       try {
@@ -247,6 +251,10 @@ export class NotificationsService implements OnModuleInit {
         <p style="color: #718096; font-size: 12px;">House of Spells Marketplace</p>
       </div>
     `;
+
+    if (!this.sendGridActive) {
+      await this.detectSendGridProvider();
+    }
 
     if (this.sendGridActive) {
       try {

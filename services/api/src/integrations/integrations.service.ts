@@ -14,7 +14,7 @@ import {
   IntegrationResponseDto,
   TestConnectionResultDto,
 } from './dto/create-integration.dto';
-import { verifySendGridApiKey, sendViaSendGrid } from '../notifications/sendgrid.client';
+import { verifySendGridApiKey, sendViaSendGrid } from './sendgrid.client';
 
 /**
  * Provider metadata definitions
@@ -648,7 +648,6 @@ export class IntegrationsService {
     credentials: Record<string, any>,
     isTestMode: boolean,
   ): Promise<TestConnectionResultDto> {
-    // TODO: Implement real Stripe API test
     if (!credentials.secretKey) {
       return { success: false, message: 'Missing secret key' };
     }
@@ -656,11 +655,27 @@ export class IntegrationsService {
     if (isTestMode && !isTestKey) {
       return { success: false, message: 'Test mode requires a test secret key (sk_test_...)' };
     }
-    return {
-      success: true,
-      message: `Stripe ${isTestMode ? 'test' : 'live'} connection verified (placeholder)`,
-      details: { environment: isTestMode ? 'test' : 'live' },
-    };
+
+    try {
+      const response = await fetch('https://api.stripe.com/v1/balance', {
+        headers: { Authorization: `Bearer ${credentials.secretKey}` },
+      });
+      if (!response.ok) {
+        const body = await response.text();
+        return { success: false, message: `Stripe API returned ${response.status}: ${body.slice(0, 200)}` };
+      }
+      const balance = await response.json();
+      return {
+        success: true,
+        message: `Stripe ${isTestKey ? 'test' : 'live'} key verified — balance accessible`,
+        details: {
+          environment: isTestKey ? 'test' : 'live',
+          currency: balance.available?.[0]?.currency?.toUpperCase() || 'N/A',
+        },
+      };
+    } catch (err: any) {
+      return { success: false, message: `Stripe connection failed: ${err.message}` };
+    }
   }
 
   private async testSendGridConnection(

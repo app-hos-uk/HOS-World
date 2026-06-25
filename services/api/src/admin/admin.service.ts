@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, BadRequestException, Logger } from '@nes
 import { PrismaService } from '../database/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
+import { isProtectedAdminEmail, isSuperAdminEmail } from '../config/protected-admin-emails';
 import { randomBytes } from 'crypto';
 import { UserRole } from '@prisma/client';
 
@@ -10,10 +11,6 @@ export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
   constructor(private prisma: PrismaService) {}
-
-  // Hard-protected admin accounts that must never be modified/deleted by other users.
-  // These are emergency/owner accounts for platform recovery.
-  private readonly protectedAdminEmails = new Set(['app@houseofspells.co.uk', 'mail@jsabu.com']);
 
   async getUserStats() {
     const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
@@ -500,7 +497,7 @@ export class AdminService {
     }
 
     // Protect hard-protected admin accounts from role/email/status changes.
-    if (this.protectedAdminEmails.has(user.email)) {
+    if (isProtectedAdminEmail(user.email)) {
       if (updateData.role && updateData.role !== 'ADMIN') {
         throw new BadRequestException('Cannot change role of a protected admin user');
       }
@@ -564,7 +561,7 @@ export class AdminService {
     }
 
     // Protect hard-protected admin accounts from being deactivated
-    if (this.protectedAdminEmails.has(user.email)) {
+    if (isProtectedAdminEmail(user.email)) {
       throw new BadRequestException('Cannot deactivate a protected admin user');
     }
 
@@ -598,7 +595,7 @@ export class AdminService {
     }
 
     // Protect hard-protected admin accounts from deletion (even if role is changed somehow).
-    if (this.protectedAdminEmails.has(user.email)) {
+    if (isProtectedAdminEmail(user.email)) {
       throw new BadRequestException('Cannot delete a protected admin user');
     }
 
@@ -614,8 +611,6 @@ export class AdminService {
     return { message: 'User deleted successfully' };
   }
 
-  private readonly superAdminEmail = 'mail@jsabu.com';
-
   async resetUserPassword(userId: string, newPassword: string, requesterEmail?: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -625,9 +620,9 @@ export class AdminService {
       throw new NotFoundException('User not found');
     }
 
-    const isSuperAdmin = requesterEmail?.toLowerCase() === this.superAdminEmail;
+    const requesterIsSuper = isSuperAdminEmail(requesterEmail);
 
-    if (this.protectedAdminEmails.has(user.email) && !isSuperAdmin) {
+    if (isProtectedAdminEmail(user.email) && !requesterIsSuper) {
       throw new BadRequestException(
         'Cannot reset password for a protected admin user via admin panel',
       );
@@ -881,7 +876,7 @@ export class AdminService {
     }
 
     // Protect admin accounts
-    if (this.protectedAdminEmails.has(seller.user.email)) {
+    if (isProtectedAdminEmail(seller.user.email)) {
       throw new BadRequestException('Cannot suspend a protected admin user');
     }
 

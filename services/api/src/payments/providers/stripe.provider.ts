@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import {
@@ -13,12 +13,14 @@ import {
   WebhookResult,
 } from '../interfaces/payment-provider.interface';
 import { CircuitBreaker } from '../../common/utils/circuit-breaker';
+import { IntegrationsService } from '../../integrations/integrations.service';
 
 @Injectable()
-export class StripeProvider implements PaymentProvider {
+export class StripeProvider implements PaymentProvider, OnModuleInit {
   readonly name = 'stripe';
   private readonly logger = new Logger(StripeProvider.name);
   private stripe: Stripe | null = null;
+  private webhookSecret: string | null = null;
   private readonly circuitBreaker = new CircuitBreaker({
     name: 'stripe',
     failureThreshold: 5,
@@ -26,13 +28,34 @@ export class StripeProvider implements PaymentProvider {
     halfOpenMaxAttempts: 1,
   });
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private integrationsService: IntegrationsService,
+  ) {
     const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     if (stripeKey) {
       this.stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
-      this.logger.log('Stripe provider initialized');
-    } else {
-      this.logger.log('STRIPE_SECRET_KEY not set — Stripe provider disabled');
+      this.webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || null;
+      this.logger.log('Stripe provider initialized from env vars');
+    }
+  }
+
+  async onModuleInit() {
+    if (this.stripe) return;
+    void this.initFromIntegrations();
+  }
+
+  private async initFromIntegrations(): Promise<void> {
+    try {
+      const creds = await this.integrationsService.getDecryptedCredentials('PAYMENT', 'stripe');
+      const secretKey = creds.secretKey?.trim();
+      if (secretKey) {
+        this.stripe = new Stripe(secretKey, { apiVersion: '2023-10-16' });
+        this.webhookSecret = creds.webhookSecret?.trim() || null;
+        this.logger.log('Stripe provider initialized from admin integrations DB');
+      }
+    } catch {
+      this.logger.log('Stripe integration not configured in admin — provider disabled');
     }
   }
 
@@ -199,13 +222,13 @@ export class StripeProvider implements PaymentProvider {
       return false;
     }
 
-    const webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET');
-    if (!webhookSecret) {
+    const secret = this.webhookSecret || this.configService.get<string>('STRIPE_WEBHOOK_SECRET');
+    if (!secret) {
       throw new Error('Stripe webhook secret not configured');
     }
 
     try {
-      this.stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+      this.stripe.webhooks.constructEvent(payload, signature, secret);
       return true;
     } catch (error) {
       this.logger.error('Webhook signature validation failed:', error);
