@@ -122,8 +122,9 @@ export default function AdminInfluencerCampaignsPage() {
 
   const handleUpdateStatus = async (campaign: Campaign, status: string) => {
     if (status === 'ACTIVE') {
-      const endDate = new Date(campaign.endDate);
-      endDate.setHours(23, 59, 59, 999);
+      const dateStr = typeof campaign.endDate === 'string' ? campaign.endDate : new Date(campaign.endDate).toISOString();
+      const [y, m, d] = dateStr.slice(0, 10).split('-').map(Number);
+      const endDate = new Date(y, m - 1, d, 23, 59, 59, 999);
       if (endDate < new Date()) {
         toast.error('Cannot resume an expired campaign');
         return;
