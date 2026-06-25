@@ -113,7 +113,7 @@ function FooterNewsletter() {
       </p>
 
       {status === 'success' ? (
-        <p className="text-sm text-hos-new-green">You&apos;re subscribed! Check your inbox to confirm.</p>
+        <p className="text-sm text-hos-new-green">You&apos;re subscribed! Thank you.</p>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="flex flex-col sm:flex-row gap-2">
