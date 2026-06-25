@@ -1,6 +1,6 @@
 /** Default message when upstream CMS fails or exposes internal wording */
 export const CMS_PORTAL_LOAD_FAILURE =
-  'We could not load data from the content service. Confirm the integration under CMS Settings if this continues.';
+  'Content management is being configured. Please try again later.';
 
 export function cmsLoadingErrorMessage(err: unknown): string {
   const raw = err instanceof Error ? err.message.trim() : '';
