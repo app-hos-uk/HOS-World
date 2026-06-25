@@ -279,11 +279,21 @@ export class CartService {
       throw new ForbiddenException('You do not have permission to remove this item');
     }
 
-    await this.prisma.cartItem.delete({
-      where: { id: itemId },
+    const cartId = item.cartId;
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.cartItem.delete({
+        where: { id: itemId },
+      });
     });
 
-    return this.recalculateCart(item.cartId, { userMutated: true });
+    try {
+      return await this.recalculateCart(cartId, { userMutated: true });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Cart recalculation failed after removing item ${itemId}: ${message}`);
+      return this.getCart(userId);
+    }
   }
 
   async clearCart(userId: string): Promise<Cart> {
