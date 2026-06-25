@@ -175,15 +175,14 @@ export class InfluencerInvitationsService {
       throw new BadRequestException('Invitation has expired');
     }
 
-    // Check if user already exists
-    let user = await this.prisma.user.findUnique({
-      where: { email: invitation.email },
-    });
-
     // Use transaction to create user and influencer profile
     const result = await this.prisma.$transaction(async (tx) => {
+      // Lookup inside transaction to prevent race conditions
+      let user = await tx.user.findUnique({
+        where: { email: invitation.email },
+      });
+
       if (!user) {
-        // Create new user
         const bcrypt = await import('bcrypt');
         const { BCRYPT_PASSWORD_ROUNDS } = await import('../config/bcrypt-cost');
         const hashedPassword = await bcrypt.hash(userData.password, BCRYPT_PASSWORD_ROUNDS);
@@ -198,7 +197,6 @@ export class InfluencerInvitationsService {
           },
         });
       } else {
-        // Existing user — verify password before role elevation
         if (!userData.password) {
           throw new BadRequestException(
             'An account with this email already exists. Please provide your current password to continue.',
