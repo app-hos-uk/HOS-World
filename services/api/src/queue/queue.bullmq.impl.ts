@@ -44,6 +44,8 @@ export enum JobType {
   CLICK_COLLECT_REMINDER = 'cc:reminder',
   PRODUCT_CAMPAIGN_ACTIVATE = 'product-campaign:activate',
   PRODUCT_CAMPAIGN_EXPIRE = 'product-campaign:expire',
+  MONITORING_HEALTH_CHECK = 'monitoring:health-check',
+  MONITORING_DISCREPANCY_SCAN = 'monitoring:discrepancy-scan',
 }
 
 export interface JobOptions {

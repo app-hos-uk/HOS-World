@@ -23,6 +23,8 @@ import { ShippingService } from '../shipping/shipping.service';
 import { PromotionsService } from '../promotions/promotions.service';
 import { LoyaltyService } from '../loyalty/loyalty.service';
 import { AmbassadorService } from '../ambassador/ambassador.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { ActivityService } from '../activity/activity.service';
 import type { PromotionApplicationResult } from '../promotions/types/promotion.types';
 import type { Order, OrderStatus, PaymentStatus } from '@hos-marketplace/shared-types';
 import {
@@ -59,6 +61,46 @@ export class OrdersService {
     }
   }
 
+  private async triggerOrderStatusNotification(
+    orderId: string,
+    orderUserId: string,
+    newStatus: string,
+    orderNumber: string,
+    trackingCode?: string,
+  ): Promise<void> {
+    if (!this.notificationsService) return;
+
+    switch (newStatus) {
+      case 'SHIPPED':
+        await this.notificationsService.sendOrderShipped(orderId, trackingCode || '', 'Carrier');
+        break;
+      case 'DELIVERED':
+        await this.notificationsService.sendOrderDelivered(orderId);
+        break;
+      case 'CANCELLED':
+        await this.notificationsService.sendNotificationToUser(
+          orderUserId,
+          'ORDER_CANCELLED',
+          'Order Cancelled',
+          `Your order ${orderNumber} has been cancelled. If you have any questions, please contact our support team.`,
+          { orderId, orderNumber },
+        );
+        break;
+      case 'CONFIRMED':
+        await this.notificationsService.sendOrderConfirmation(orderId);
+        break;
+      case 'PROCESSING':
+        await this.notificationsService.sendNotificationToUser(
+          orderUserId,
+          'GENERAL',
+          'Order Being Processed',
+          `Your order ${orderNumber} is now being processed and will be shipped soon.`,
+          { orderId, orderNumber },
+        );
+        break;
+    }
+  }
+
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
@@ -71,6 +113,8 @@ export class OrdersService {
     @Optional() private promotionsService?: PromotionsService,
     @Optional() @Inject(forwardRef(() => LoyaltyService)) private loyaltyService?: LoyaltyService,
     @Optional() @Inject(forwardRef(() => AmbassadorService)) private ambassadorService?: AmbassadorService,
+    @Optional() @Inject(forwardRef(() => NotificationsService)) private notificationsService?: NotificationsService,
+    @Optional() private activityService?: ActivityService,
   ) {
     this.defaultCommissionRate = this.configService.get<number>('DEFAULT_COMMISSION_RATE', 0.1);
   }
@@ -1429,6 +1473,27 @@ export class OrdersService {
           createdBy: userId,
         },
       });
+
+      // Trigger notifications for key status changes
+      this.triggerOrderStatusNotification(
+        id,
+        order.userId,
+        normalizedStatus,
+        updated.orderNumber,
+        updateOrderDto.trackingCode || updated.trackingCode || undefined,
+      ).catch((e) => {
+        this.logger.warn(`Order status notification failed: ${(e as Error).message}`);
+      });
+
+      // Log activity for order status change
+      this.activityService?.createLog({
+        userId,
+        action: `ORDER_${normalizedStatus}`,
+        entityType: 'Order',
+        entityId: id,
+        description: `Order ${updated.orderNumber} status changed: ${previousStatus} → ${normalizedStatus}`,
+        metadata: { previousStatus, newStatus: normalizedStatus, orderNumber: updated.orderNumber },
+      }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
       // When admin updates a parent order's status, cascade to child orders
       // so sellers (who see child orders) get the updated status.

@@ -920,6 +920,12 @@ export class AdminService {
       totalUsers,
       submissionsByStatus,
       ordersByStatus,
+      pendingReviews,
+      totalReviews,
+      pendingNotifications,
+      failedNotifications,
+      recentActivityLogs,
+      openDiscrepancies,
     ] = await Promise.all([
       this.prisma.product.count(),
       this.prisma.order.count(),
@@ -935,6 +941,21 @@ export class AdminService {
         by: ['status'],
         _count: true,
       }),
+      this.prisma.productReview.count({ where: { status: 'PENDING' } }),
+      this.prisma.productReview.count(),
+      this.prisma.notification.count({ where: { status: 'PENDING' as any } }),
+      this.prisma.notification.count({ where: { status: 'FAILED' as any } }),
+      this.prisma.activityLog.findMany({
+        take: 15,
+        orderBy: { createdAt: 'desc' },
+        where: {
+          action: { notIn: ['SYSTEM_HEALTH_CHECK', 'DISCREPANCY_SCAN_COMPLETED'] },
+        },
+        include: {
+          user: { select: { id: true, email: true, firstName: true, lastName: true } },
+        },
+      }),
+      this.prisma.discrepancy.count({ where: { status: 'OPEN' } }),
     ]);
 
     const recentActivity = await this.prisma.productSubmission.findMany({
@@ -957,6 +978,13 @@ export class AdminService {
         totalSellers,
         totalCustomers,
         totalUsers,
+        pendingReviews,
+        totalReviews,
+        openDiscrepancies,
+      },
+      notifications: {
+        pending: pendingNotifications,
+        failed: failedNotifications,
       },
       submissionsByStatus: submissionsByStatus.map((s) => ({
         status: s.status,
@@ -967,6 +995,7 @@ export class AdminService {
         _count: o._count,
       })),
       recentActivity,
+      recentActivityLogs,
     };
   }
 }

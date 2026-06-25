@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { CreateTeamUsersController } from './create-team-users.controller';
 import { AdminUsersController } from './users.controller';
@@ -16,6 +16,7 @@ import { AdminProductsService } from './products.service';
 import { DatabaseModule } from '../database/database.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ProductsModule } from '../products/products.module';
+import { ReviewsModule } from '../reviews/reviews.module';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const migrationControllersEnabled = process.env.ENABLE_ADMIN_MIGRATIONS === 'true';
@@ -42,7 +43,7 @@ const migrationControllers =
     : [];
 
 @Module({
-  imports: [DatabaseModule, ConfigModule, NotificationsModule, ProductsModule],
+  imports: [DatabaseModule, ConfigModule, NotificationsModule, ProductsModule, forwardRef(() => ReviewsModule)],
   controllers: [...coreControllers, ...migrationControllers],
   providers: [AdminService, AdminSellersService, AdminProductsService],
   exports: [AdminService, AdminSellersService, AdminProductsService],

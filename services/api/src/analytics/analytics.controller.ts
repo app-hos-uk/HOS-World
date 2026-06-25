@@ -269,6 +269,39 @@ export class AnalyticsController {
     };
   }
 
+  @Get('wholesale')
+  @Roles('ADMIN')
+  @ApiOperation({
+    summary: 'Get wholesale metrics (admin only)',
+    description: 'Retrieves wholesale-specific operational analytics including order volume and revenue.',
+  })
+  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
+  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @SwaggerApiResponse({ status: 200, description: 'Wholesale metrics retrieved successfully' })
+  async getWholesaleMetrics(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ): Promise<ApiResponse<any>> {
+    const filters: AnalyticsFilters = {
+      startDate: startDate ? new Date(startDate) : undefined,
+      endDate: endDate ? new Date(endDate) : undefined,
+    };
+    const data = await this.analyticsService.getWholesaleMetrics(filters);
+    return { data, message: 'Wholesale metrics retrieved successfully' };
+  }
+
+  @Get('operational')
+  @Roles('ADMIN')
+  @ApiOperation({
+    summary: 'Get operational health metrics (admin only)',
+    description: 'Retrieves operational metrics for notifications, reviews, discrepancies, and activity logging.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Operational metrics retrieved successfully' })
+  async getOperationalMetrics(): Promise<ApiResponse<any>> {
+    const data = await this.analyticsService.getOperationalMetrics();
+    return { data, message: 'Operational metrics retrieved successfully' };
+  }
+
   @Get('export/:format')
   @ApiOperation({
     summary: 'Export analytics data',

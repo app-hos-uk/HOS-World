@@ -22,6 +22,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
+import { ReviewsService } from '../reviews/reviews.service';
 import { CreateAdminUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -36,7 +37,10 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly reviewsService: ReviewsService,
+  ) {}
 
   @Get('dashboard')
   @ApiOperation({
@@ -416,5 +420,70 @@ export class AdminController {
       data: result,
       message: result.message || 'Seller status updated successfully',
     };
+  }
+
+  // ─── Review Moderation ────────────────────────────────────────────────────────
+
+  @Get('reviews/pending')
+  @ApiOperation({
+    summary: 'Get pending reviews for moderation',
+    description: 'Retrieves all reviews awaiting moderation. Admin access required.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Pending reviews retrieved successfully' })
+  async getPendingReviews(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ): Promise<ApiResponse<any>> {
+    const result = await this.reviewsService.getPendingReviews(page, limit);
+    return { data: result, message: 'Pending reviews retrieved successfully' };
+  }
+
+  @Get('reviews')
+  @ApiOperation({
+    summary: 'Get all reviews with optional status filter',
+    description: 'Retrieves all reviews, optionally filtered by status. Admin access required.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Reviews retrieved successfully' })
+  async getAllReviews(
+    @Query('status') status?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+  ): Promise<ApiResponse<any>> {
+    const result = await this.reviewsService.getAllReviewsForAdmin({ status, page, limit });
+    return { data: result, message: 'Reviews retrieved successfully' };
+  }
+
+  @Put('reviews/:id/approve')
+  @ApiOperation({
+    summary: 'Approve a pending review',
+    description: 'Approves a review, making it visible. Notifies the review author. Admin access required.',
+  })
+  @ApiParam({ name: 'id', description: 'Review UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Review approved successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Review already moderated' })
+  @SwaggerApiResponse({ status: 404, description: 'Review not found' })
+  async approveReview(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+  ): Promise<ApiResponse<any>> {
+    const review = await this.reviewsService.moderateReview(id, 'approve', req.user.id);
+    return { data: review, message: 'Review approved successfully' };
+  }
+
+  @Put('reviews/:id/reject')
+  @ApiOperation({
+    summary: 'Reject a pending review',
+    description: 'Rejects a review. Notifies the review author. Admin access required.',
+  })
+  @ApiParam({ name: 'id', description: 'Review UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Review rejected successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Review already moderated' })
+  @SwaggerApiResponse({ status: 404, description: 'Review not found' })
+  async rejectReview(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+  ): Promise<ApiResponse<any>> {
+    const review = await this.reviewsService.moderateReview(id, 'reject', req.user.id);
+    return { data: review, message: 'Review rejected successfully' };
   }
 }

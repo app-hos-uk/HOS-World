@@ -10,6 +10,8 @@ import { CartModule } from '../cart/cart.module';
 import { PaymentProviderModule } from '../payments/payment-provider.module';
 import { ShippingModule } from '../shipping/shipping.module';
 import { PromotionsModule } from '../promotions/promotions.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { ActivityModule } from '../activity/activity.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { PromotionsModule } from '../promotions/promotions.module';
     PromotionsModule,
     forwardRef(() => LoyaltyModule),
     forwardRef(() => AmbassadorModule),
+    forwardRef(() => NotificationsModule),
+    ActivityModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService],

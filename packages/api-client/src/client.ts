@@ -4910,6 +4910,36 @@ export class ApiClient {
     });
   }
 
+  // Admin review moderation
+  async getPendingReviews(params?: { page?: number; limit?: number }): Promise<ApiResponse<any>> {
+    const qs = new URLSearchParams();
+    if (params?.page != null) qs.set('page', String(params.page));
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return this.request<ApiResponse<any>>(`/admin/reviews/pending${suffix}`);
+  }
+
+  async getAdminReviews(params?: { status?: string; page?: number; limit?: number }): Promise<ApiResponse<any>> {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.page != null) qs.set('page', String(params.page));
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    return this.request<ApiResponse<any>>(`/admin/reviews${suffix}`);
+  }
+
+  async approveReview(reviewId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/reviews/${encodeURIComponent(reviewId)}/approve`, {
+      method: 'PUT',
+    });
+  }
+
+  async rejectReview(reviewId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/reviews/${encodeURIComponent(reviewId)}/reject`, {
+      method: 'PUT',
+    });
+  }
+
   // Addresses
   async getAddresses(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/addresses');

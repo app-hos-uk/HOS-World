@@ -580,4 +580,139 @@ export class AnalyticsService {
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
   }
+
+  /**
+   * Get wholesale-specific operational analytics
+   */
+  async getWholesaleMetrics(filters: AnalyticsFilters): Promise<{
+    totalWholesalers: number;
+    activeWholesalers: number;
+    wholesaleOrders: number;
+    wholesaleRevenue: number;
+    averageWholesaleOrderValue: number;
+    topWholesalers: Array<{ sellerId: string; storeName: string; revenue: number; orders: number }>;
+  }> {
+    const { startDate, endDate } = filters;
+
+    const [totalWholesalers, activeWholesalers] = await Promise.all([
+      this.prisma.seller.count({ where: { sellerType: 'WHOLESALER' } }),
+      this.prisma.seller.count({
+        where: {
+          sellerType: 'WHOLESALER',
+          vendorStatus: 'ACTIVE',
+        },
+      }),
+    ]);
+
+    const orderWhere: any = {
+      paymentStatus: 'PAID',
+      seller: { sellerType: 'WHOLESALER' },
+    };
+    if (startDate || endDate) {
+      orderWhere.createdAt = {};
+      if (startDate) orderWhere.createdAt.gte = startDate;
+      if (endDate) orderWhere.createdAt.lte = endDate;
+    }
+
+    const [orderAgg, sellerGroups] = await Promise.all([
+      this.prisma.order.aggregate({
+        where: orderWhere,
+        _count: { id: true },
+        _sum: { total: true },
+      }),
+      this.prisma.order.groupBy({
+        by: ['sellerId'],
+        where: { ...orderWhere, sellerId: { not: null } },
+        _count: { id: true },
+        _sum: { total: true },
+        orderBy: { _sum: { total: 'desc' } },
+        take: 10,
+      }),
+    ]);
+
+    const wholesaleOrderCount = orderAgg._count.id;
+    const wholesaleRevenue = Number(orderAgg._sum.total ?? 0);
+    const averageWholesaleOrderValue =
+      wholesaleOrderCount > 0 ? wholesaleRevenue / wholesaleOrderCount : 0;
+
+    const sellerIds = sellerGroups
+      .map((g) => g.sellerId)
+      .filter((id): id is string => id != null);
+    const sellers = sellerIds.length
+      ? await this.prisma.seller.findMany({
+          where: { id: { in: sellerIds } },
+          select: { id: true, storeName: true },
+        })
+      : [];
+    const sellerNameById = new Map(sellers.map((s) => [s.id, s.storeName]));
+
+    const topWholesalers = sellerGroups
+      .filter((g) => g.sellerId != null)
+      .map((g) => ({
+        sellerId: g.sellerId as string,
+        storeName: sellerNameById.get(g.sellerId as string) || 'Unknown',
+        revenue: Number(g._sum.total ?? 0),
+        orders: g._count.id,
+      }));
+
+    return {
+      totalWholesalers,
+      activeWholesalers,
+      wholesaleOrders: wholesaleOrderCount,
+      wholesaleRevenue: Math.round(wholesaleRevenue * 100) / 100,
+      averageWholesaleOrderValue: Math.round(averageWholesaleOrderValue * 100) / 100,
+      topWholesalers,
+    };
+  }
+
+  /**
+   * Get operational health metrics for monitoring dashboards
+   */
+  async getOperationalMetrics(): Promise<{
+    notifications: { total: number; pending: number; sent: number; failed: number };
+    reviews: { total: number; pending: number; approved: number; rejected: number };
+    discrepancies: { total: number; open: number; resolved: number };
+    activityLogs: { today: number; thisWeek: number };
+  }> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const [
+      notifTotal,
+      notifPending,
+      notifSent,
+      notifFailed,
+      reviewTotal,
+      reviewPending,
+      reviewApproved,
+      reviewRejected,
+      discTotal,
+      discOpen,
+      discResolved,
+      logsToday,
+      logsWeek,
+    ] = await Promise.all([
+      this.prisma.notification.count(),
+      this.prisma.notification.count({ where: { status: 'PENDING' as any } }),
+      this.prisma.notification.count({ where: { status: 'SENT' as any } }),
+      this.prisma.notification.count({ where: { status: 'FAILED' as any } }),
+      this.prisma.productReview.count(),
+      this.prisma.productReview.count({ where: { status: 'PENDING' } }),
+      this.prisma.productReview.count({ where: { status: 'APPROVED' } }),
+      this.prisma.productReview.count({ where: { status: 'REJECTED' } }),
+      this.prisma.discrepancy.count(),
+      this.prisma.discrepancy.count({ where: { status: 'OPEN' } }),
+      this.prisma.discrepancy.count({ where: { status: 'RESOLVED' } }),
+      this.prisma.activityLog.count({ where: { createdAt: { gte: today } } }),
+      this.prisma.activityLog.count({ where: { createdAt: { gte: weekAgo } } }),
+    ]);
+
+    return {
+      notifications: { total: notifTotal, pending: notifPending, sent: notifSent, failed: notifFailed },
+      reviews: { total: reviewTotal, pending: reviewPending, approved: reviewApproved, rejected: reviewRejected },
+      discrepancies: { total: discTotal, open: discOpen, resolved: discResolved },
+      activityLogs: { today: logsToday, thisWeek: logsWeek },
+    };
+  }
 }
