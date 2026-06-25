@@ -85,7 +85,10 @@ export class InfluencerInvitationsService {
         message: rendered.body,
       });
     } catch (err) {
-      this.logger.warn(`Failed to send influencer invitation email: ${err?.message}`);
+      this.logger.error(
+        `Failed to send influencer invitation email to ${dto.email}: ${err instanceof Error ? err.message : String(err)}`,
+        err instanceof Error ? err.stack : undefined,
+      );
     }
 
     return invitation;
