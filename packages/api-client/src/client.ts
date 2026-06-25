@@ -4725,10 +4725,12 @@ export class ApiClient {
 
   async createTaxZone(data: {
     name: string;
-    country?: string;
-    state?: string;
-    city?: string;
-    postalCodes?: string[];
+    countries: Array<{
+      country: string;
+      state?: string;
+      city?: string;
+      postalCode?: string;
+    }>;
     isActive?: boolean;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/tax/zones', {
@@ -4739,10 +4741,12 @@ export class ApiClient {
 
   async updateTaxZone(id: string, data: {
     name?: string;
-    country?: string;
-    state?: string;
-    city?: string;
-    postalCodes?: string[];
+    countries?: Array<{
+      country: string;
+      state?: string;
+      city?: string;
+      postalCode?: string;
+    }>;
     isActive?: boolean;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/tax/zones/${id}`, {

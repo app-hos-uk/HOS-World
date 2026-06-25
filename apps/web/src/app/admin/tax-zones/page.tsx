@@ -108,11 +108,34 @@ export default function AdminTaxZonesPage() {
     }
   };
 
+  const buildTaxZonePayload = (formData: typeof zoneFormData) => {
+    const { postalCodeInput, country, state, city, postalCodes, name, isActive } = formData;
+    const countryEntry = {
+      country,
+      ...(state ? { state } : {}),
+      ...(city ? { city } : {}),
+    };
+
+    if (postalCodes.length > 0) {
+      return {
+        name,
+        isActive,
+        countries: postalCodes.map((postalCode) => ({ ...countryEntry, postalCode })),
+      };
+    }
+
+    return {
+      name,
+      isActive,
+      countries: [countryEntry],
+    };
+  };
+
   const handleZoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setSubmitting(true);
-      const { postalCodeInput, ...submitData } = zoneFormData;
+      const submitData = buildTaxZonePayload(zoneFormData);
       if (isEditMode && selectedZone) {
         await apiClient.updateTaxZone(selectedZone.id, submitData);
         toast.success('Tax zone updated successfully!');
