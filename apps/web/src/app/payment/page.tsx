@@ -691,7 +691,12 @@ function PaymentForm({ order }: { order: any }) {
                   name="paymentProvider"
                   value={provider}
                   checked={selectedProvider === provider}
-                  onChange={(e) => setSelectedProvider(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedProvider(e.target.value);
+                    setStripeClientSecret(null);
+                    setStripePaymentIntentId(null);
+                    setPaymentError(null);
+                  }}
                   className="mr-2"
                 />
                 <span className="font-medium">{getProviderDisplayName(provider)}</span>

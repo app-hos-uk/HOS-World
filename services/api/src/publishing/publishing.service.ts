@@ -227,33 +227,43 @@ export class PublishingService {
       }
     }
 
-    // Link product to submission
-    await this.prisma.productSubmission.update({
-      where: { id: submissionId },
-      data: {
-        productId: product.id,
-        status: 'PUBLISHED',
-        publishedAt: new Date(),
-      },
-    });
+    // Link product to submission and create pricing atomically
+    await this.prisma.$transaction(async (tx) => {
+      // Guard: re-check submission hasn't been published by a concurrent request
+      const fresh = await tx.productSubmission.findUnique({
+        where: { id: submissionId },
+        select: { status: true },
+      });
+      if (fresh?.status === 'PUBLISHED') {
+        throw new BadRequestException('This submission has already been published.');
+      }
 
-    // Create ProductPricing record (for new products or updated pricing for existing ones)
-    const existingPricing = await this.prisma.productPricing.findFirst({
-      where: { productId: product.id },
-    });
-    if (!existingPricing) {
-      await this.prisma.productPricing.create({
+      await tx.productSubmission.update({
+        where: { id: submissionId },
         data: {
           productId: product.id,
-          basePrice: pricingData?.basePrice ?? productData.price,
-          hosMargin: hosMargin,
-          finalPrice: finalPrice,
-          visibilityLevel: visibilityLevel as any,
-          approvedBy: userId,
-          approvedAt: new Date(),
+          status: 'PUBLISHED',
+          publishedAt: new Date(),
         },
       });
-    }
+
+      const existingPricing = await tx.productPricing.findFirst({
+        where: { productId: product.id },
+      });
+      if (!existingPricing) {
+        await tx.productPricing.create({
+          data: {
+            productId: product.id,
+            basePrice: pricingData?.basePrice ?? productData.price,
+            hosMargin: hosMargin,
+            finalPrice: finalPrice,
+            visibilityLevel: visibilityLevel as any,
+            approvedBy: userId,
+            approvedAt: new Date(),
+          },
+        });
+      }
+    });
 
     // Index in MeiliSearch (non-blocking — don't let search indexing failures block publish)
     if (this.meilisearchService) {

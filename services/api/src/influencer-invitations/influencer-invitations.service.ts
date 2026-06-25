@@ -198,7 +198,17 @@ export class InfluencerInvitationsService {
           },
         });
       } else {
-        // Update existing user to influencer role
+        // Existing user — verify password before role elevation
+        if (!userData.password) {
+          throw new BadRequestException(
+            'An account with this email already exists. Please provide your current password to continue.',
+          );
+        }
+        const bcrypt = await import('bcrypt');
+        const isPasswordValid = await bcrypt.compare(userData.password, user.password);
+        if (!isPasswordValid) {
+          throw new BadRequestException('Incorrect password for existing account.');
+        }
         user = await tx.user.update({
           where: { id: user.id },
           data: { role: 'INFLUENCER' },

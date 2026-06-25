@@ -234,6 +234,11 @@ export default function CartPage() {
           ...prev,
           items: prev.items.filter(i => i.id !== item.id)
         } : null);
+        const response = await apiClient.getCart();
+        if (response?.data) {
+          setCart(response.data);
+          syncCart(response.data);
+        }
         toast.success('Moved to wishlist');
       } catch (removeErr: any) {
         // Item was added to wishlist but couldn't be removed from cart

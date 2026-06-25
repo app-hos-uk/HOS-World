@@ -248,6 +248,9 @@ function ProductsContent() {
             category: state.categories[0],
             fandom: state.fandoms[0],
             sortBy: (state.sort || 'newest') as any,
+            ...(state.minPrice ? { minPrice: Number(state.minPrice) } : {}),
+            ...(state.maxPrice ? { maxPrice: Number(state.maxPrice) } : {}),
+            ...(state.inStock ? { inStock: true } : {}),
           });
           if (cancelled) return;
           if (fallback?.data) {
@@ -278,6 +281,12 @@ function ProductsContent() {
     fetchProducts();
     return () => { cancelled = true; };
   }, [state.page, filterDepsKey, state.query]);
+
+  useEffect(() => {
+    if (totalPages > 0 && state.page > totalPages) {
+      updateState({ page: totalPages });
+    }
+  }, [totalPages, state.page, updateState]);
 
   const toggleArrayFilter = (key: 'categories' | 'fandoms', value: string) => {
     updateState(prev => {
