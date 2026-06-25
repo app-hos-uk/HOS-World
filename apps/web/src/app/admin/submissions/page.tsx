@@ -118,6 +118,8 @@ export default function AdminSubmissionsPage() {
   const [dateFilter, setDateFilter] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<'date' | 'status' | 'seller'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 20;
   
   // Modals
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
@@ -240,6 +242,22 @@ export default function AdminSubmissionsPage() {
 
     return filtered;
   }, [submissions, searchTerm, statusFilter, dateFilter, sortBy, sortOrder]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredSubmissions.length / PAGE_SIZE));
+  const paginatedSubmissions = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredSubmissions.slice(start, start + PAGE_SIZE);
+  }, [filteredSubmissions, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, dateFilter, sortBy, sortOrder]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   // Chart data: non-empty slices only; colors match STATUSES (no rotated palette drift)
   const chartData = useMemo(() => {
@@ -599,7 +617,7 @@ export default function AdminSubmissionsPage() {
                         </td>
                       </tr>
                     ) : (
-                      filteredSubmissions.map((submission) => (
+                      paginatedSubmissions.map((submission) => (
                         <tr key={submission.id} className="hover:bg-hos-bg-tertiary">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
@@ -693,6 +711,31 @@ export default function AdminSubmissionsPage() {
                   </tbody>
                 </table>
               </div>
+              {filteredSubmissions.length > PAGE_SIZE && (
+                <div className="flex items-center justify-between px-4 py-3 border-t border-hos-border">
+                  <p className="text-sm text-hos-text-muted">
+                    Page {currentPage} of {totalPages}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="px-4 py-2 text-sm font-medium border border-hos-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hos-bg-tertiary"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-4 py-2 text-sm font-medium border border-hos-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hos-bg-tertiary"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
