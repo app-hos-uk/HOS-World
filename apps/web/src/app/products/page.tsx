@@ -12,6 +12,9 @@ import { expandDepartmentCategories } from '@/lib/storefrontNavigation';
 
 const ITEMS_PER_PAGE = 20;
 
+/** Survives ProductsContent remount when router.replace updates searchParams. */
+let cachedBaselineFacets: Record<string, Record<string, number>> = {};
+
 const SORT_OPTIONS = [
   { value: '', label: 'Relevance' },
   { value: 'price_asc', label: 'Price: Low to High' },
@@ -152,7 +155,6 @@ function ProductsContent() {
 
   const [state, setState] = useState<SearchState>(() => parseSearchParams(searchParams));
   const internalNavCountRef = useRef(0);
-  const baselineFacetsRef = useRef<Record<string, Record<string, number>>>({});
 
   const filterDepsKey = useMemo(
     () =>
@@ -267,10 +269,10 @@ function ProductsContent() {
           const filtersChanged = prevFilterKey !== filterDepsKey;
           if (data.facets && filtersChanged) {
             if (state.categories.length === 0 && state.fandoms.length === 0) {
-              baselineFacetsRef.current = data.facets;
+              cachedBaselineFacets = data.facets;
             }
             setFacets(
-              mergeFacetsForDisplay(baselineFacetsRef.current, data.facets, {
+              mergeFacetsForDisplay(cachedBaselineFacets, data.facets, {
                 categories: state.categories,
                 fandoms: state.fandoms,
               }),
