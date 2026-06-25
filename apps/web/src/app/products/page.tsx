@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, Suspense, useRef } from 'react';
+import { useEffect, useState, useCallback, Suspense, useRef, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -127,6 +127,31 @@ function ProductsContent() {
 
   const [state, setState] = useState<SearchState>(() => parseSearchParams(searchParams));
 
+  const filterDepsKey = useMemo(
+    () =>
+      JSON.stringify({
+        query: state.query,
+        categories: state.categories,
+        fandoms: state.fandoms,
+        minPrice: state.minPrice,
+        maxPrice: state.maxPrice,
+        rating: state.rating,
+        inStock: state.inStock,
+        sort: state.sort,
+      }),
+    [
+      state.query,
+      state.categories,
+      state.fandoms,
+      state.minPrice,
+      state.maxPrice,
+      state.rating,
+      state.inStock,
+      state.sort,
+    ],
+  );
+  const prevFilterDepsKeyRef = useRef('');
+
   useEffect(() => {
     setPriceDraft({ min: state.minPrice, max: state.maxPrice });
   }, [state.minPrice, state.maxPrice]);
@@ -204,7 +229,10 @@ function ProductsContent() {
             Number.isFinite(fromApi) && fromApi > 0 ? Math.max(fromApi, fromTotal) : fromTotal,
           );
           setProcessingTimeMs(data.processingTimeMs || 0);
-          setFacets(data.facets || {});
+          const filtersChanged = prevFilterDepsKeyRef.current !== filterDepsKey;
+          if (data.facets && filtersChanged) {
+            setFacets(data.facets);
+          }
         }
       } catch (err) {
         if (cancelled) return;
@@ -230,7 +258,6 @@ function ProductsContent() {
               Number.isFinite(fbApi) && fbApi > 0 ? Math.max(fbApi, fbPages) : fbPages,
             );
             setProcessingTimeMs(0);
-            setFacets({});
           }
         } catch (fallbackErr) {
           if (!cancelled) {
@@ -244,9 +271,10 @@ function ProductsContent() {
       }
     };
 
+    prevFilterDepsKeyRef.current = filterDepsKey;
     fetchProducts();
     return () => { cancelled = true; };
-  }, [state]);
+  }, [state.page, filterDepsKey, state.query]);
 
   const toggleArrayFilter = (key: 'categories' | 'fandoms', value: string) => {
     updateState(prev => {
