@@ -19,6 +19,8 @@ const SIZE_CLASS = {
 export function Modal({ open, onClose, titleId, children, size = 'lg' }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
@@ -40,7 +42,7 @@ export function Modal({ open, onClose, titleId, children, size = 'lg' }: ModalPr
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== 'Tab') return;
@@ -69,7 +71,7 @@ export function Modal({ open, onClose, titleId, children, size = 'lg' }: ModalPr
       document.body.style.overflow = prevOverflow;
       previousFocusRef.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
