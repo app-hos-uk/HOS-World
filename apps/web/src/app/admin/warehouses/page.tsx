@@ -553,8 +553,15 @@ export default function AdminWarehousesPage() {
                             </label>
                             <input
                               type="tel"
+                              inputMode="numeric"
+                              pattern="[0-9+]*"
                               value={formData.contactPhone}
-                              onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  contactPhone: e.target.value.replace(/[^\d+]/g, ''),
+                                })
+                              }
                               className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                             />
                           </div>

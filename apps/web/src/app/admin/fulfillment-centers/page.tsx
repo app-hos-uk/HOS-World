@@ -446,8 +446,15 @@ export default function AdminFulfillmentCentersPage() {
                           <label className="block text-sm font-medium text-hos-text-secondary">Contact Phone</label>
                           <input
                             type="tel"
+                            inputMode="numeric"
+                            pattern="[0-9+]*"
                             value={formData.contactPhone}
-                            onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                contactPhone: e.target.value.replace(/[^\d+]/g, ''),
+                              })
+                            }
                             className="mt-1 block w-full px-3 py-2 border border-hos-border rounded-md shadow-sm focus:outline-none focus:ring-hos-gold/50 focus:border-hos-gold"
                           />
                         </div>
