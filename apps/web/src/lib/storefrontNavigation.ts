@@ -91,7 +91,7 @@ export const SOCIAL_LINKS: Array<{
     label: 'Facebook',
     ariaLabel: 'Facebook',
     envKey: 'NEXT_PUBLIC_SOCIAL_FACEBOOK_URL',
-    defaultHref: 'https://www.facebook.com/',
+    defaultHref: 'https://www.facebook.com/houseofspellsuk',
   },
   {
     platform: 'x',
@@ -99,14 +99,14 @@ export const SOCIAL_LINKS: Array<{
     ariaLabel: 'X (Twitter)',
     envKey: 'NEXT_PUBLIC_SOCIAL_X_URL',
     fallbackEnvKey: 'NEXT_PUBLIC_SOCIAL_TWITTER_URL',
-    defaultHref: 'https://x.com/',
+    defaultHref: 'https://x.com/houseofspells',
   },
   {
     platform: 'instagram',
     label: 'Instagram',
     ariaLabel: 'Instagram',
     envKey: 'NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL',
-    defaultHref: 'https://www.instagram.com/',
+    defaultHref: 'https://www.instagram.com/houseofspells',
   },
 ];
 
