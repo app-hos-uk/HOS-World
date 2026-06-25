@@ -7,12 +7,23 @@ import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import Link from 'next/link';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 interface SellerDashboardData {
   totalSales: number;
   totalOrders: number;
   totalProducts: number;
   averageOrderValue: number;
+  salesByMonth?: Array<{ month: string; sales: number }>;
+  topProducts?: Array<{ id: string; name: string; sales: number }>;
   submissions?: any[];
   submissionsByStatus?: Array<{ status: string; _count: number }>;
   recentOrders?: any[];
@@ -200,6 +211,40 @@ export default function SellerDashboardPage() {
                 </Link>
               </div>
             </div>
+
+            {(dashboardData?.salesByMonth?.length || dashboardData?.topProducts?.length) && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                {dashboardData?.salesByMonth && dashboardData.salesByMonth.length > 0 && (
+                  <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
+                    <h2 className="text-xl font-semibold mb-4">Revenue Trends</h2>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <LineChart data={dashboardData.salesByMonth}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} />
+                        <Tooltip formatter={(v: number) => formatPrice(v)} />
+                        <Line type="monotone" dataKey="sales" stroke="#d4a853" strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+                {dashboardData?.topProducts && dashboardData.topProducts.length > 0 && (
+                  <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
+                    <h2 className="text-xl font-semibold mb-4">Top Products</h2>
+                    <ul className="space-y-3">
+                      {dashboardData.topProducts.slice(0, 5).map((p, i) => (
+                        <li key={p.id} className="flex justify-between items-center text-sm">
+                          <span className="text-hos-text-secondary truncate pr-4">
+                            {i + 1}. {p.name}
+                          </span>
+                          <span className="text-hos-gold font-medium shrink-0">{formatPrice(p.sales)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">

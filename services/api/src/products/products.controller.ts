@@ -25,6 +25,7 @@ import { ProductsService } from './products.service';
 import { ProductsBulkService } from './products-bulk.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { BulkUpdateProductsDto } from './dto/bulk-update-products.dto';
 import { SearchProductsDto } from './dto/search-products.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -120,7 +121,7 @@ export class ProductsController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'CATALOG')
+  @Roles('ADMIN', 'CATALOG', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @Put(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -164,6 +165,48 @@ export class ProductsController {
     return {
       data: { message: 'Product deleted successfully' },
       message: 'Product deleted successfully',
+    };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Post('bulk-update')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Bulk update seller products',
+    description: 'Update status, stock, or apply price adjustment to multiple products (Seller only)',
+  })
+  async bulkUpdate(
+    @Request() req: any,
+    @Body() dto: BulkUpdateProductsDto,
+  ): Promise<ApiResponse<{ updated: number; failed: number; errors: string[] }>> {
+    const result = await this.productsService.bulkUpdate(req.user.id, dto.productIds, {
+      status: dto.status,
+      stock: dto.stock,
+      priceAdjustmentPercent: dto.priceAdjustmentPercent,
+    });
+    return {
+      data: result,
+      message: `Bulk update completed: ${result.updated} updated, ${result.failed} failed`,
+    };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Post('import/validate')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Validate product import (dry-run)',
+    description: 'Preview import validation without creating products (Seller only)',
+  })
+  async validateImport(
+    @Request() req: any,
+    @Body() body: { products: any[] },
+  ): Promise<ApiResponse<any>> {
+    const result = await this.productsBulkService.validateImport(req.user.id, body.products);
+    return {
+      data: result,
+      message: `Validation complete: ${result.valid} valid, ${result.invalid} invalid`,
     };
   }
 

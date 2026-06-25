@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api';
 import { ProductCard } from '@/components/ProductCard';
-import { REFERENCE_DEMO_PRODUCTS } from '@/lib/referenceAssets';
 
 type Tab = 'sale' | 'new' | 'top-rated';
 
@@ -18,20 +17,9 @@ interface Product {
   seller?: { storeName?: string };
 }
 
-function mapDemoProducts(tab: Tab) {
-  if (tab === 'sale') {
-    return REFERENCE_DEMO_PRODUCTS.filter((p) => 'badge' in p && p.badge === 'sale').slice(0, 5);
-  }
-  if (tab === 'new') {
-    return REFERENCE_DEMO_PRODUCTS.filter((p) => 'badge' in p && p.badge === 'new').slice(0, 5);
-  }
-  return REFERENCE_DEMO_PRODUCTS.filter((p) => !('badge' in p)).slice(0, 5);
-}
-
 export default function WeeklyPicks() {
   const [activeTab, setActiveTab] = useState<Tab>('sale');
   const [products, setProducts] = useState<Product[]>([]);
-  const [usingDemo, setUsingDemo] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,14 +49,11 @@ export default function WeeklyPicks() {
 
       if (list.length > 0) {
         setProducts(list);
-        setUsingDemo(false);
       } else {
-        setProducts(mapDemoProducts(tab) as unknown as Product[]);
-        setUsingDemo(true);
+        setProducts([]);
       }
     } catch {
-      setProducts(mapDemoProducts(tab) as unknown as Product[]);
-      setUsingDemo(true);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -81,7 +66,7 @@ export default function WeeklyPicks() {
   ];
 
   return (
-    <section className="max-w-7xl mx-auto px-4 py-12">
+    <section className="max-w-7xl mx-auto px-4 py-12 sm:py-16">
       <div className="mb-8 section-head">
         <h2 className="font-display text-hos-gold-hover text-2xl md:text-3xl">
           This week on the marketplace
@@ -90,12 +75,6 @@ export default function WeeklyPicks() {
           Rotating picks from vendors across the marketplace.
         </p>
       </div>
-
-      {usingDemo && !loading && (
-        <p className="mb-4 text-xs text-hos-text-muted bg-hos-bg-secondary border border-hos-border rounded-lg px-3 py-2" role="status">
-          Showing sample products while live listings load.
-        </p>
-      )}
 
       <div
         className="flex gap-2 mb-6 overflow-x-auto scrollbar-hide"
@@ -133,10 +112,11 @@ export default function WeeklyPicks() {
               </div>
             ))}
           </div>
+        ) : products.length === 0 ? (
+          <p className="text-hos-text-muted text-sm py-8 text-center">No products in this category yet. Check back soon.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {products.map((product) => {
-              const demo = usingDemo && 'image' in (product as any);
               const p = product as any;
               const hasDiscount = product.rrp && product.rrp > product.price;
               return (
@@ -151,7 +131,6 @@ export default function WeeklyPicks() {
                   averageRating={product.averageRating ?? p.averageRating}
                   vendor={product.seller?.storeName ?? p.vendor}
                   badge={activeTab === 'new' ? 'new' : hasDiscount ? 'sale' : null}
-                  demo={demo}
                 />
               );
             })}

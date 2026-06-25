@@ -142,6 +142,11 @@ export interface Product {
   taxRate: number;
   taxClassId?: string;
   stock: number;
+  seller?: {
+    id: string;
+    storeName?: string;
+    slug?: string;
+  };
   images: ProductImage[];
   variations?: ProductVariation[];
   fandom?: string;

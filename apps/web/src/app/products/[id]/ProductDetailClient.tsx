@@ -55,6 +55,10 @@ export default function ProductDetailClient() {
   /** Selected variation per dimension (e.g. { Size: 'M', Color: 'Red' }) for add-to-cart */
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
+  const [deliveryEstimate, setDeliveryEstimate] = useState<string | null>(null);
   /** Track if user has navigation history to go back to */
   const [canGoBack, setCanGoBack] = useState(false);
 
@@ -153,6 +157,66 @@ export default function ProductDetailClient() {
       localStorage.setItem('recentlyViewed', JSON.stringify(filtered.slice(0, MAX_RECENT)));
     } catch { /* localStorage quota or parse error — non-critical */ }
   }, [product]);
+
+  useEffect(() => {
+    if (!product?.id) return;
+    let cancelled = false;
+    const loadRelated = async () => {
+      setRelatedLoading(true);
+      try {
+        const categoryId = product.categoryId || product.categoryData?.id;
+        const filters: Record<string, string | number> = { limit: 8, status: 'ACTIVE' };
+        if (categoryId) filters.categoryId = categoryId;
+        const response = await apiClient.getProducts(filters);
+        if (!cancelled && response?.data?.data) {
+          const items = response.data.data.filter((p: any) => p.id !== product.id).slice(0, 8);
+          setRelatedProducts(items);
+        }
+      } catch {
+        if (!cancelled) setRelatedProducts([]);
+      } finally {
+        if (!cancelled) setRelatedLoading(false);
+      }
+    };
+    loadRelated();
+    return () => { cancelled = true; };
+  }, [product?.id, product?.categoryId, product?.categoryData?.id]);
+
+  useEffect(() => {
+    if (!product?.id) return;
+    let cancelled = false;
+    const loadDeliveryEstimate = async () => {
+      try {
+        const response = await apiClient.getShippingOptions({
+          cartItems: [{ productId: product.id, quantity: 1, price: product.price ?? 0 }],
+          cartValue: product.price ?? 0,
+          destination: { country: 'US', state: 'NY', city: 'New York', postalCode: '10001' },
+        });
+        if (!cancelled && response?.data?.length) {
+          const days = response.data
+            .map((opt: any) => opt.estimatedDays)
+            .filter((d: number | null | undefined) => d != null && d > 0) as number[];
+          if (days.length > 0) {
+            const min = Math.min(...days);
+            const max = Math.max(...days);
+            setDeliveryEstimate(
+              min === max
+                ? `Estimated delivery: ${min} business day${min !== 1 ? 's' : ''}`
+                : `Estimated delivery: ${min}–${max} business days`,
+            );
+          } else {
+            setDeliveryEstimate('Estimated delivery: 3–7 business days');
+          }
+        } else if (!cancelled) {
+          setDeliveryEstimate('Estimated delivery: 3–7 business days');
+        }
+      } catch {
+        if (!cancelled) setDeliveryEstimate('Estimated delivery: 3–7 business days');
+      }
+    };
+    loadDeliveryEstimate();
+    return () => { cancelled = true; };
+  }, [product?.id, product?.price]);
 
   useEffect(() => {
     if (!product?.id || !isAuthenticated) return;
@@ -345,15 +409,23 @@ export default function ProductDetailClient() {
           {/* Product Images */}
           <div>
             {product.images && product.images.length > 0 ? (
-              <div className="relative w-full aspect-square mb-4 bg-hos-bg-secondary rounded-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setLightboxOpen(true)}
+                className="relative w-full aspect-square mb-4 bg-hos-bg-secondary rounded-lg overflow-hidden cursor-zoom-in group"
+                aria-label="Zoom product image"
+              >
                 <SafeImage
                   src={typeof product.images[selectedImageIndex] === 'string' ? product.images[selectedImageIndex] : product.images[selectedImageIndex]?.url || product.images[selectedImageIndex]}
                   alt={product.name}
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-contain rounded-lg"
+                  className="object-contain rounded-lg transition-transform group-hover:scale-[1.02]"
                 />
-              </div>
+                <span className="absolute bottom-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                  Click to zoom
+                </span>
+              </button>
             ) : (
               <div className="w-full aspect-square bg-hos-bg-tertiary rounded-lg flex items-center justify-center">
                 <span className="text-hos-text-muted">No Image</span>
@@ -416,6 +488,11 @@ export default function ProductDetailClient() {
               {product.stock !== undefined && (
                 <p className={`text-sm ${product.stock > 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {product.stock > 0 ? `In Stock (${product.stock} available)` : 'Out of Stock'}
+                </p>
+              )}
+              {deliveryEstimate && (
+                <p className="text-sm text-hos-text-secondary mt-2 flex items-center gap-1">
+                  <span>🚚</span> {deliveryEstimate}
                 </p>
               )}
             </div>
@@ -537,6 +614,34 @@ export default function ProductDetailClient() {
           </div>
         </div>
 
+        {/* Specifications */}
+        {product.attributes && product.attributes.length > 0 && (
+          <div className="mt-12 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-4">Specifications</h2>
+            <div className="bg-hos-bg-secondary rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <tbody>
+                  {product.attributes.map((attr: any) => {
+                    const label = attr.attribute?.name || 'Specification';
+                    const value =
+                      typeof attr.value === 'object' && attr.value?.value != null
+                        ? attr.value.value
+                        : attr.value != null
+                          ? String(attr.value)
+                          : '—';
+                    return (
+                      <tr key={attr.id || attr.attributeId} className="border-b border-hos-border last:border-0">
+                        <td className="px-4 py-3 font-medium text-hos-text-primary w-1/3">{label}</td>
+                        <td className="px-4 py-3 text-hos-text-secondary">{value}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Full Product Description */}
         {product.description && (
           <div className="mt-12 border-t pt-8">
@@ -657,6 +762,47 @@ export default function ProductDetailClient() {
           )}
         </div>
 
+        {/* Related Products */}
+        {(relatedLoading || relatedProducts.length > 0) && (
+          <div className="mt-12 border-t pt-8">
+            <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
+            {relatedLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {relatedProducts.map((related) => {
+                  const img = related.images?.[0];
+                  const imgUrl = typeof img === 'string' ? img : img?.url || '';
+                  const href = related.slug ? `/products/${related.slug}` : `/products/${related.id}`;
+                  return (
+                    <Link
+                      key={related.id}
+                      href={href}
+                      className="bg-hos-bg-secondary rounded-lg overflow-hidden hover:ring-2 hover:ring-hos-gold/40 transition-all"
+                    >
+                      <div className="relative aspect-square bg-hos-bg-tertiary">
+                        {imgUrl ? (
+                          <SafeImage src={imgUrl} alt={related.name} fill sizes="200px" className="object-cover" />
+                        ) : (
+                          <div className="flex items-center justify-center h-full text-hos-text-muted text-sm">No image</div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <p className="text-sm font-medium text-hos-text-primary line-clamp-2">{related.name}</p>
+                        <p className="text-hos-gold font-semibold mt-1">
+                          {formatPrice(related.price, related.currency || 'USD')}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Additional Product Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
           {product.category && (
@@ -673,6 +819,66 @@ export default function ProductDetailClient() {
           )}
         </div>
       </main>
+
+      {/* Image lightbox */}
+      {lightboxOpen && product.images && product.images.length > 0 && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setLightboxOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Product image zoom"
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxOpen(false)}
+            className="absolute top-4 right-4 text-white text-2xl hover:text-hos-gold z-10"
+            aria-label="Close zoom"
+          >
+            ✕
+          </button>
+          {product.images.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedImageIndex((i) => (i > 0 ? i - 1 : product.images.length - 1));
+              }}
+              className="absolute left-4 text-white text-3xl hover:text-hos-gold z-10"
+              aria-label="Previous image"
+            >
+              ‹
+            </button>
+          )}
+          <div className="relative w-full max-w-4xl aspect-square" onClick={(e) => e.stopPropagation()}>
+            <SafeImage
+              src={
+                typeof product.images[selectedImageIndex] === 'string'
+                  ? product.images[selectedImageIndex]
+                  : product.images[selectedImageIndex]?.url || product.images[selectedImageIndex]
+              }
+              alt={product.name}
+              fill
+              sizes="90vw"
+              className="object-contain"
+            />
+          </div>
+          {product.images.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedImageIndex((i) => (i < product.images.length - 1 ? i + 1 : 0));
+              }}
+              className="absolute right-4 text-white text-3xl hover:text-hos-gold z-10"
+              aria-label="Next image"
+            >
+              ›
+            </button>
+          )}
+        </div>
+      )}
+
       <Footer />
     </div>
   );

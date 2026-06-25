@@ -2957,6 +2957,36 @@ export class ApiClient {
     return { data: Array.isArray(products) ? products : [], message: response?.message || 'Products retrieved successfully' };
   }
 
+  async updateSellerProduct(
+    productId: string,
+    data: {
+      stock?: number;
+      price?: number;
+      status?: string;
+      name?: string;
+    },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/products/${productId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async bulkUpdateProducts(data: {
+    productIds: string[];
+    status?: string;
+    stock?: number;
+    priceAdjustmentPercent?: number;
+  }): Promise<ApiResponse<{ updated: number; failed: number; errors: string[] }>> {
+    return this.request<ApiResponse<{ updated: number; failed: number; errors: string[] }>>(
+      '/products/bulk-update',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
   async getSellerOrders(status?: string): Promise<ApiResponse<any[]>> {
     // Orders endpoint automatically filters by user role (seller gets their orders)
     const response = await this.getOrders({ limit: 500 });
@@ -5024,6 +5054,13 @@ export class ApiClient {
     });
   }
 
+  async validateProductImport(products: any[]): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/products/import/validate', {
+      method: 'POST',
+      body: JSON.stringify({ products }),
+    });
+  }
+
   // Analytics
   async getSalesTrends(filters?: {
     startDate?: string;
@@ -6080,6 +6117,21 @@ export class ApiClient {
 
   async getMyLedgerBalance(): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/vendor-ledger/me/balance', { method: 'GET' });
+  }
+
+  // ===== Volume pricing =====
+  async getVolumePricing(productId: string): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>(`/products/${productId}/volume-pricing`);
+  }
+
+  async createVolumePricing(
+    productId: string,
+    data: { minQuantity: number; price: number; discountType?: string; discountValue?: number },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/products/${productId}/volume-pricing`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   // ===== Invoices =====

@@ -38,6 +38,7 @@ interface Order {
   id: string;
   orderNumber?: string;
   status: string;
+  paymentStatus?: string;
   total: number;
   subtotal?: number;
   shippingCost?: number;
@@ -433,6 +434,30 @@ export default function OrderDetailPage() {
                     >
                       Track Order
                     </Link>
+                  )}
+                  {order.paymentStatus?.toUpperCase() === 'PAID' && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const blob = await apiClient.downloadInvoice(orderId);
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `invoice-${order.orderNumber || orderId}.pdf`;
+                          document.body.appendChild(a);
+                          a.click();
+                          a.remove();
+                          window.URL.revokeObjectURL(url);
+                          toast.success('Invoice downloaded');
+                        } catch (err: any) {
+                          toast.error(err.message || 'Failed to download invoice');
+                        }
+                      }}
+                      className="block w-full px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-center font-medium transition-colors"
+                    >
+                      Download Invoice
+                    </button>
                   )}
                   {['DELIVERED', 'COMPLETED'].includes(order.status.toUpperCase()) && (
                     <>

@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { ProductCard } from '@/components/ProductCard';
-import { REFERENCE_DEMO_PRODUCTS } from '@/lib/referenceAssets';
 
 interface Product {
   id: string;
@@ -16,11 +15,8 @@ interface Product {
   seller?: { storeName?: string };
 }
 
-const ENCHANTED_DEMO = REFERENCE_DEMO_PRODUCTS.filter((p) => !('badge' in p)).slice(0, 5);
-
 export default function EnchantedFinds() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [usingDemo, setUsingDemo] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,14 +44,11 @@ export default function EnchantedFinds() {
 
       if (list.length > 0) {
         setProducts(list);
-        setUsingDemo(false);
       } else {
-        setProducts(ENCHANTED_DEMO as unknown as Product[]);
-        setUsingDemo(true);
+        setProducts([]);
       }
     } catch {
-      setProducts(ENCHANTED_DEMO as unknown as Product[]);
-      setUsingDemo(true);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -64,7 +57,7 @@ export default function EnchantedFinds() {
   if (!loading && products.length === 0) return null;
 
   return (
-    <section className="max-w-7xl mx-auto px-4 py-12">
+    <section className="max-w-7xl mx-auto px-4 py-12 sm:py-16">
       <div className="flex items-end justify-between mb-8 gap-4 section-head">
         <div>
           <h2 className="font-display text-hos-gold-hover text-2xl md:text-3xl">
@@ -81,12 +74,6 @@ export default function EnchantedFinds() {
           View collection →
         </Link>
       </div>
-
-      {usingDemo && !loading && (
-        <p className="mb-4 text-xs text-hos-text-muted bg-hos-bg-secondary border border-hos-border rounded-lg px-3 py-2" role="status">
-          Showing sample products while live listings load.
-        </p>
-      )}
 
       {loading ? (
         <div className="flex gap-4 overflow-x-auto pb-4">
@@ -113,7 +100,6 @@ export default function EnchantedFinds() {
                     imageUrl={p.image}
                     averageRating={product.averageRating ?? p.averageRating}
                     vendor={product.seller?.storeName ?? p.vendor}
-                    demo={usingDemo}
                   />
                 </div>
               );

@@ -156,6 +156,15 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
     fandom: '',
     categoryId: '',
     tags: '',
+    metaTitle: '',
+    metaDescription: '',
+    weight: '',
+    length: '',
+    width: '',
+    height: '',
+    brandAuthorization: false,
+    ageRestriction: '',
+    complianceNotes: '',
   });
 
   const [images, setImages] = useState<ImageUpload[]>([]);
@@ -204,6 +213,15 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
           fandom: pd.fandom ?? '',
           categoryId: pd.categoryId ?? '',
           tags: Array.isArray(pd.tags) ? pd.tags.join(', ') : '',
+          metaTitle: pd.metaTitle ?? '',
+          metaDescription: pd.metaDescription ?? '',
+          weight: pd.weight != null ? String(pd.weight) : '',
+          length: pd.length != null ? String(pd.length) : '',
+          width: pd.width != null ? String(pd.width) : '',
+          height: pd.height != null ? String(pd.height) : '',
+          brandAuthorization: Boolean(pd.brandAuthorization),
+          ageRestriction: pd.ageRestriction ?? '',
+          complianceNotes: pd.complianceNotes ?? '',
         });
         const imgList = Array.isArray(pd.images) ? pd.images : [];
         setImages(
@@ -494,6 +512,15 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
         images: images,
         variations:
           normalizedVariations && normalizedVariations.length > 0 ? normalizedVariations : undefined,
+        metaTitle: formData.metaTitle.trim() || undefined,
+        metaDescription: formData.metaDescription.trim() || undefined,
+        weight: formData.weight ? parseFloat(formData.weight) : undefined,
+        length: formData.length ? parseFloat(formData.length) : undefined,
+        width: formData.width ? parseFloat(formData.width) : undefined,
+        height: formData.height ? parseFloat(formData.height) : undefined,
+        brandAuthorization: formData.brandAuthorization || undefined,
+        ageRestriction: formData.ageRestriction || undefined,
+        complianceNotes: formData.complianceNotes.trim() || undefined,
       };
 
       if (editSubmissionId) {
@@ -1145,6 +1172,57 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                     <p className="text-xs text-hos-text-muted mt-1">Minimum units a buyer must order at wholesale price</p>
                   </div>
                   )}
+                </div>
+              </div>
+
+              <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-4 sm:p-6 mb-6">
+                <h2 className="text-xl font-semibold mb-4">SEO & Shipping</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="metaTitle" className="block text-sm font-medium text-hos-text-secondary mb-1">Meta title</label>
+                    <input id="metaTitle" name="metaTitle" maxLength={60} value={formData.metaTitle} onChange={handleInputChange} className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary" placeholder="Max 60 characters" />
+                  </div>
+                  <div>
+                    <label htmlFor="metaDescription" className="block text-sm font-medium text-hos-text-secondary mb-1">Meta description</label>
+                    <textarea id="metaDescription" name="metaDescription" maxLength={160} rows={2} value={formData.metaDescription} onChange={handleInputChange} className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary" placeholder="Max 160 characters" />
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div>
+                      <label htmlFor="weight" className="block text-sm font-medium text-hos-text-secondary mb-1">Weight (kg)</label>
+                      <input type="number" id="weight" name="weight" min="0" step="0.01" value={formData.weight} onChange={handleInputChange} className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary" />
+                    </div>
+                    <div>
+                      <label htmlFor="length" className="block text-sm font-medium text-hos-text-secondary mb-1">Length (cm)</label>
+                      <input type="number" id="length" name="length" min="0" step="0.1" value={formData.length} onChange={handleInputChange} className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary" />
+                    </div>
+                    <div>
+                      <label htmlFor="width" className="block text-sm font-medium text-hos-text-secondary mb-1">Width (cm)</label>
+                      <input type="number" id="width" name="width" min="0" step="0.1" value={formData.width} onChange={handleInputChange} className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary" />
+                    </div>
+                    <div>
+                      <label htmlFor="height" className="block text-sm font-medium text-hos-text-secondary mb-1">Height (cm)</label>
+                      <input type="number" id="height" name="height" min="0" step="0.1" value={formData.height} onChange={handleInputChange} className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-2 text-sm text-hos-text-secondary">
+                      <input type="checkbox" checked={formData.brandAuthorization} onChange={(e) => setFormData((p) => ({ ...p, brandAuthorization: e.target.checked }))} />
+                      I have brand authorization for this product
+                    </label>
+                  </div>
+                  <div>
+                    <label htmlFor="ageRestriction" className="block text-sm font-medium text-hos-text-secondary mb-1">Age restriction</label>
+                    <select id="ageRestriction" name="ageRestriction" value={formData.ageRestriction} onChange={handleInputChange} className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary">
+                      <option value="">None</option>
+                      <option value="12+">12+</option>
+                      <option value="16+">16+</option>
+                      <option value="18+">18+</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="complianceNotes" className="block text-sm font-medium text-hos-text-secondary mb-1">Compliance notes</label>
+                    <textarea id="complianceNotes" name="complianceNotes" rows={3} value={formData.complianceNotes} onChange={handleInputChange} className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary" placeholder="Licenses, certifications, or regulatory details" />
+                  </div>
                 </div>
               </div>
 

@@ -27,6 +27,7 @@ interface Order {
   id: string;
   orderNumber?: string;
   status: string;
+  paymentStatus?: string;
   total: number;
   subtotal?: number;
   shippingCost?: number;
@@ -314,6 +315,16 @@ export default function OrdersPage() {
                     >
                       View Details
                     </button>
+                    {normalizeStatus(order.status) === 'pending' &&
+                      order.paymentStatus &&
+                      order.paymentStatus.toUpperCase() !== 'PAID' && (
+                      <Link
+                        href={`/payment?orderId=${order.id}`}
+                        className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium text-sm"
+                      >
+                        Complete Payment
+                      </Link>
+                    )}
                     {(order.trackingNumber || order.trackingCode) && (
                       <Link
                         href={`/track-order?orderNumber=${order.orderNumber || order.id}`}

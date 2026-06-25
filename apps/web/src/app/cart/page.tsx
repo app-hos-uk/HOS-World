@@ -23,6 +23,8 @@ interface CartItem {
     stock?: number;
     images?: Array<{ url: string }>;
     estimatedDelivery?: string;
+    seller?: { id?: string; storeName?: string; slug?: string };
+    sellerId?: string;
   };
 }
 
@@ -49,11 +51,73 @@ export default function CartPage() {
   const [movingToWishlist, setMovingToWishlist] = useState<string | null>(null);
   const [updatingQuantityItemId, setUpdatingQuantityItemId] = useState<string | null>(null);
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
+  const [deliveryEstimate, setDeliveryEstimate] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!cart?.items?.length) {
+      setDeliveryEstimate(null);
+      return;
+    }
+    let cancelled = false;
+    const loadEstimate = async () => {
+      try {
+        const subtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        const response = await apiClient.getShippingOptions({
+          cartItems: cart.items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+          cartValue: subtotal,
+          destination: { country: 'US', state: 'NY', city: 'New York', postalCode: '10001' },
+        });
+        if (!cancelled && response?.data?.length) {
+          const days = response.data
+            .map((opt: any) => opt.estimatedDays)
+            .filter((d: number | null | undefined) => d != null && d > 0) as number[];
+          if (days.length > 0) {
+            const min = Math.min(...days);
+            const max = Math.max(...days);
+            setDeliveryEstimate(
+              min === max
+                ? `${min} business day${min !== 1 ? 's' : ''}`
+                : `${min}–${max} business days`,
+            );
+          } else {
+            setDeliveryEstimate('3–7 business days');
+          }
+        } else if (!cancelled) {
+          setDeliveryEstimate('3–7 business days');
+        }
+      } catch {
+        if (!cancelled) setDeliveryEstimate('3–7 business days');
+      }
+    };
+    loadEstimate();
+    return () => { cancelled = true; };
+  }, [cart?.items, cart?.id]);
+
+  const sellerGroups = useMemo(() => {
+    if (!cart?.items) return [];
+    const groups = new Map<string, { key: string; name: string; items: CartItem[] }>();
+    for (const item of cart.items) {
+      const seller = item.product?.seller;
+      const key = seller?.id || item.product?.sellerId || 'platform';
+      const name = seller?.storeName || 'House of Spells';
+      const existing = groups.get(key);
+      if (existing) {
+        existing.items.push(item);
+      } else {
+        groups.set(key, { key, name, items: [item] });
+      }
+    }
+    return Array.from(groups.values());
+  }, [cart?.items]);
 
   const fetchCart = async () => {
     try {
@@ -349,8 +413,19 @@ export default function CartPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2">
-            <div className="bg-hos-bg-secondary rounded-lg shadow-sm border border-hos-border p-4 sm:p-6">
-              {cart.items.map((item: CartItem) => {
+            <div className="bg-hos-bg-secondary rounded-lg shadow-sm border border-hos-border p-4 sm:p-6 space-y-8">
+              {sellerGroups.map((group) => (
+                <div key={group.key}>
+                  <div className="flex items-center justify-between border-b border-hos-border pb-3 mb-4">
+                    <h2 className="text-sm font-semibold text-hos-gold uppercase tracking-wide">
+                      Sold by {group.name}
+                    </h2>
+                    <span className="text-xs text-hos-text-muted">
+                      {formatPrice(group.items.reduce((s, i) => s + i.price * i.quantity, 0))}
+                    </span>
+                  </div>
+                  <div className="space-y-0">
+                    {group.items.map((item: CartItem) => {
                 const stockWarning = getStockWarning(item);
                 const isMoving = movingToWishlist === item.id;
                 
@@ -460,6 +535,9 @@ export default function CartPage() {
                   </div>
                 );
               })}
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Coupon Code Section (authenticated only) */}
@@ -546,6 +624,13 @@ export default function CartPage() {
                     <span className="font-semibold">You saved {formatPrice(discount)}</span>
                     {cart.couponCode && ` with coupon ${cart.couponCode}`}!
                   </p>
+                </div>
+              )}
+
+              {deliveryEstimate && (
+                <div className="flex justify-between text-sm mb-3">
+                  <span className="text-hos-text-secondary">Est. delivery</span>
+                  <span className="text-hos-text-primary">{deliveryEstimate}</span>
                 </div>
               )}
 

@@ -23,14 +23,16 @@ const QUOTES = [
 
 export default function Testimonials() {
   return (
-    <section className="bg-hos-bg py-16">
+    <section className="bg-hos-bg py-12 sm:py-16">
       <div className="max-w-7xl mx-auto px-4">
-        <h2 className="font-display text-hos-text-secondary text-2xl md:text-3xl font-bold">
-          Why fans shop with us
-        </h2>
-        <p className="text-hos-text-secondary text-sm mt-2 mb-10">
-          Real voices from the community — demo quotes for this storefront concept.
-        </p>
+        <div className="section-head mb-10">
+          <h2 className="font-display text-hos-gold-hover text-2xl md:text-3xl">
+            Why fans shop with us
+          </h2>
+          <p className="text-hos-text-muted text-sm mt-2 font-body">
+            Voices from collectors and fans in our community.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {QUOTES.map((item) => (

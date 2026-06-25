@@ -127,6 +127,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         'sellerName',
         'sku',
         'barcode',
+        'brand',
       ],
 
       // Filterable attributes for faceted search
@@ -142,6 +143,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         'tags',
         'isPlatformOwned',
         'createdAt',
+        'brand',
       ],
 
       // Sortable attributes
@@ -381,6 +383,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       stock: product.stock || 0,
       category: product.category || null,
       categoryId: product.categoryId || null,
+      brand: product.brand || null,
       fandom: product.fandom || null,
       sellerId: product.sellerId || null,
       sellerName: product.seller?.storeName || null,

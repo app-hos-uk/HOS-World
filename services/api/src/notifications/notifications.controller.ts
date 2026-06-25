@@ -19,6 +19,7 @@ import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('notifications')
@@ -27,6 +28,13 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @UseGuards(JwtAuthGuard)
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
+
+  @Get('health')
+  @Public()
+  @ApiOperation({ summary: 'Notification channel health (public)' })
+  async getHealth(): Promise<ApiResponse<any>> {
+    return { data: this.notificationsService.getChannelHealth(), message: 'Notification channel status' };
+  }
 
   @Get('admin/failed-jobs')
   @UseGuards(RolesGuard)

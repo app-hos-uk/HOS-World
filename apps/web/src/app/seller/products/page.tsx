@@ -46,6 +46,12 @@ export default function SellerProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('newest');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState('');
+  const [bulkStock, setBulkStock] = useState('');
+  const [bulkPriceAdj, setBulkPriceAdj] = useState('');
+  const [stockSavingId, setStockSavingId] = useState<string | null>(null);
 
   const menuItems = getSellerMenuItems(false);
 
@@ -185,6 +191,96 @@ export default function SellerProductsPage() {
     return status;
   };
 
+  const selectableProducts = useMemo(
+    () => filteredProducts.filter((p) => !p._isSubmission),
+    [filteredProducts],
+  );
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === selectableProducts.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(selectableProducts.map((p) => p.id)));
+    }
+  };
+
+  const handleInlineStockSave = async (productId: string, value: string) => {
+    const stock = parseInt(value, 10);
+    if (Number.isNaN(stock) || stock < 0) {
+      toast.error('Enter a valid stock quantity');
+      return;
+    }
+    try {
+      setStockSavingId(productId);
+      await apiClient.updateSellerProduct(productId, { stock });
+      setProducts((prev) =>
+        prev.map((p) => (p.id === productId ? { ...p, stock } : p)),
+      );
+      toast.success('Stock updated');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update stock');
+    } finally {
+      setStockSavingId(null);
+    }
+  };
+
+  const handleBulkUpdate = async () => {
+    if (selectedIds.size === 0) return;
+    const updates: {
+      productIds: string[];
+      status?: string;
+      stock?: number;
+      priceAdjustmentPercent?: number;
+    } = { productIds: Array.from(selectedIds) };
+
+    if (bulkStatus) updates.status = bulkStatus;
+    if (bulkStock) {
+      const stock = parseInt(bulkStock, 10);
+      if (Number.isNaN(stock) || stock < 0) {
+        toast.error('Enter a valid bulk stock value');
+        return;
+      }
+      updates.stock = stock;
+    }
+    if (bulkPriceAdj) {
+      const pct = parseFloat(bulkPriceAdj);
+      if (Number.isNaN(pct)) {
+        toast.error('Enter a valid price adjustment percentage');
+        return;
+      }
+      updates.priceAdjustmentPercent = pct;
+    }
+
+    if (!updates.status && updates.stock == null && updates.priceAdjustmentPercent == null) {
+      toast.error('Select at least one field to update');
+      return;
+    }
+
+    try {
+      setBulkLoading(true);
+      const res = await apiClient.bulkUpdateProducts(updates);
+      toast.success(`Updated ${res.data?.updated ?? 0} products`);
+      setSelectedIds(new Set());
+      setBulkStatus('');
+      setBulkStock('');
+      setBulkPriceAdj('');
+      await fetchProducts();
+    } catch (err: any) {
+      toast.error(err?.message || 'Bulk update failed');
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
   return (
     <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
       <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller" backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}>
@@ -309,6 +405,53 @@ export default function SellerProductsPage() {
             </div>
           ) : (
             <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+              {selectedIds.size > 0 && (
+                <div className="p-4 border-b border-hos-border bg-hos-bg-tertiary/50 flex flex-wrap items-end gap-3">
+                  <span className="text-sm font-medium text-hos-text-secondary">
+                    {selectedIds.size} selected
+                  </span>
+                  <select
+                    value={bulkStatus}
+                    onChange={(e) => setBulkStatus(e.target.value)}
+                    className="px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary"
+                  >
+                    <option value="">Status (no change)</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                    <option value="DRAFT">Draft</option>
+                  </select>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="Set stock"
+                    value={bulkStock}
+                    onChange={(e) => setBulkStock(e.target.value)}
+                    className="px-3 py-2 border border-hos-border rounded-lg text-sm w-28 bg-hos-bg-secondary"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Price adj %"
+                    value={bulkPriceAdj}
+                    onChange={(e) => setBulkPriceAdj(e.target.value)}
+                    className="px-3 py-2 border border-hos-border rounded-lg text-sm w-28 bg-hos-bg-secondary"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleBulkUpdate}
+                    disabled={bulkLoading}
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm font-medium hover:bg-hos-gold-hover disabled:opacity-50"
+                  >
+                    {bulkLoading ? 'Updating...' : 'Apply to selected'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIds(new Set())}
+                    className="px-3 py-2 text-sm text-hos-text-muted hover:text-hos-text-secondary"
+                  >
+                    Clear
+                  </button>
+                </div>
+              )}
               {filteredProducts.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-hos-text-muted mb-4">
@@ -362,6 +505,15 @@ export default function SellerProductsPage() {
                   <table className="min-w-full divide-y divide-hos-border">
                     <thead className="bg-hos-bg-secondary">
                       <tr>
+                        <th className="px-4 py-3 text-left">
+                          <input
+                            type="checkbox"
+                            checked={selectableProducts.length > 0 && selectedIds.size === selectableProducts.length}
+                            onChange={toggleSelectAll}
+                            className="rounded border-hos-border"
+                            aria-label="Select all products"
+                          />
+                        </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Product</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Price</th>
@@ -374,6 +526,17 @@ export default function SellerProductsPage() {
                     <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                       {filteredProducts.map((product) => (
                         <tr key={product.id} className="hover:bg-hos-bg-tertiary">
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            {!product._isSubmission ? (
+                              <input
+                                type="checkbox"
+                                checked={selectedIds.has(product.id)}
+                                onChange={() => toggleSelect(product.id)}
+                                className="rounded border-hos-border"
+                                aria-label={`Select ${product.name}`}
+                              />
+                            ) : null}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               {product.images && product.images[0] ? (
@@ -404,14 +567,33 @@ export default function SellerProductsPage() {
                             {formatPrice(Number(product.price || 0))}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`text-sm font-medium ${
-                              (product.stock || 0) <= 0 ? 'text-red-400' :
-                              product.stock <= 5 ? 'text-orange-400' :
-                              'text-hos-text-secondary'
-                            }`}>
-                              {product.stock || 0}
-                            </span>
-                            {(product.stock || 0) <= 5 && product.stock > 0 && (
+                            {!product._isSubmission ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={product.stock ?? 0}
+                                disabled={stockSavingId === product.id}
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value, 10);
+                                  if (!Number.isNaN(val)) {
+                                    setProducts((prev) =>
+                                      prev.map((p) =>
+                                        p.id === product.id ? { ...p, stock: val } : p,
+                                      ),
+                                    );
+                                  }
+                                }}
+                                onBlur={(e) => handleInlineStockSave(product.id, e.target.value)}
+                                className={`w-20 px-2 py-1 text-sm border border-hos-border rounded bg-hos-bg-secondary ${
+                                  (product.stock || 0) <= 0 ? 'text-red-400' :
+                                  product.stock <= 5 ? 'text-orange-400' :
+                                  'text-hos-text-secondary'
+                                }`}
+                              />
+                            ) : (
+                              <span className="text-sm text-hos-text-muted">{product.stock || 0}</span>
+                            )}
+                            {!product._isSubmission && (product.stock || 0) <= 5 && product.stock > 0 && (
                               <span className="ml-2 text-xs text-orange-400">(Low)</span>
                             )}
                           </td>
@@ -423,12 +605,20 @@ export default function SellerProductsPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {!product._isSubmission && (
-                              <Link
-                                href={`/products/${product.slug || product.id}`}
-                                className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium"
-                              >
-                                View
-                              </Link>
+                              <div className="flex items-center gap-3">
+                                <Link
+                                  href={`/seller/products/${product.id}/pricing`}
+                                  className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium"
+                                >
+                                  Pricing tiers
+                                </Link>
+                                <Link
+                                  href={`/products/${product.slug || product.id}`}
+                                  className="text-hos-text-muted hover:text-hos-gold text-sm font-medium"
+                                >
+                                  View
+                                </Link>
+                              </div>
                             )}
                           </td>
                         </tr>

@@ -4,6 +4,7 @@ import { QueueService, JobType } from '../../queue/queue.service';
 import { PrismaService } from '../../database/prisma.service';
 import { DiscrepanciesService } from '../../discrepancies/discrepancies.service';
 import { ActivityService } from '../../activity/activity.service';
+import { NotificationsService } from '../../notifications/notifications.service';
 
 @Injectable()
 export class MonitoringJobsService implements OnModuleInit {
@@ -15,6 +16,7 @@ export class MonitoringJobsService implements OnModuleInit {
     private prisma: PrismaService,
     private discrepanciesService: DiscrepanciesService,
     private activityService: ActivityService,
+    private notificationsService: NotificationsService,
   ) {}
 
   async onModuleInit() {
@@ -149,5 +151,73 @@ export class MonitoringJobsService implements OnModuleInit {
     }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
     this.logger.log(`Discrepancy scan complete: ${detected} new discrepancies detected`);
+
+    // Pricing anomalies: negative price or price below trade price when set
+    const pricingIssues = await this.prisma.product.findMany({
+      where: { price: { lt: 0 } },
+      select: { id: true, name: true, price: true, sellerId: true },
+      take: 50,
+    });
+
+    for (const product of pricingIssues) {
+      if (Number(product.price) < 0) {
+        try {
+          const existing = await this.prisma.discrepancy.findFirst({
+            where: { productId: product.id, type: 'PRICING', status: 'OPEN' },
+          });
+          if (!existing) {
+            await this.discrepanciesService.createDiscrepancy({
+              type: 'PRICING',
+              productId: product.id,
+              sellerId: product.sellerId || undefined,
+              severity: 'HIGH',
+              expectedValue: { price: '>= 0' },
+              actualValue: { price: product.price },
+              description: `Product "${product.name}" has invalid price: ${product.price}`,
+            });
+            detected++;
+          }
+        } catch (e) {
+          this.logger.warn(`Pricing discrepancy scan failed for ${product.id}: ${(e as Error).message}`);
+        }
+      }
+    }
+
+    // Low stock alerts for sellers (stock between 1 and 3, inclusive)
+    const lowStockProducts = await this.prisma.product.findMany({
+      where: { stock: { gt: 0, lte: 3 }, status: 'ACTIVE' },
+      select: { id: true, name: true, stock: true, seller: { select: { userId: true } } },
+      take: 100,
+    });
+
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    for (const product of lowStockProducts) {
+      const sellerUserId = product.seller?.userId;
+      if (!sellerUserId) continue;
+      try {
+        // Dedup: skip if a low-stock notification was already sent for this product in the last 24h
+        const recentNotification = await this.prisma.notification.findFirst({
+          where: {
+            userId: sellerUserId,
+            subject: 'Low stock alert',
+            metadata: { path: ['productId'], equals: product.id },
+            createdAt: { gte: oneDayAgo },
+          },
+          select: { id: true },
+        });
+        if (recentNotification) continue;
+
+        await this.notificationsService.sendNotificationToUser(
+          sellerUserId,
+          'GENERAL',
+          'Low stock alert',
+          `Product "${product.name}" is low on stock (${product.stock} remaining). Consider restocking soon.`,
+          { productId: product.id, stock: product.stock },
+        );
+      } catch (e) {
+        this.logger.warn(`Low stock notification failed for product ${product.id}: ${(e as Error).message}`);
+      }
+    }
   }
 }

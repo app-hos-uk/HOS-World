@@ -9,6 +9,7 @@ import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
 import { SafeImage } from '@/components/SafeImage';
 import { isValidHttpPublicUrl } from '@/lib/httpUrlValidation';
+import { GoogleFontLink } from '@/components/GoogleFontLink';
 
 interface Theme {
   id: string;
@@ -70,6 +71,79 @@ function ThemeColorSwatch({ colors }: { colors?: Record<string, string> }) {
   );
 }
 
+function resolveThemeColors(
+  theme: Theme | null,
+  customColors?: Record<string, string>,
+) {
+  const base = (theme?.config?.colors || {}) as Record<string, string>;
+  return {
+    primary: customColors?.primary || base.primary || '#d4a853',
+    secondary: customColors?.secondary || base.secondary || '#1a1a2e',
+    accent: customColors?.accent || base.accent || '#d4a853',
+    background: customColors?.background || base.background || '#0f0f14',
+    text: customColors?.text || base.text || '#f5f5f5',
+  };
+}
+
+function ThemeStorefrontPreview({
+  theme,
+  colors,
+  fontFamily,
+  logoUrl,
+  storeName,
+}: {
+  theme: Theme | null;
+  colors: ReturnType<typeof resolveThemeColors>;
+  fontFamily: string;
+  logoUrl?: string;
+  storeName?: string;
+}) {
+  return (
+    <div
+      className="rounded-xl border border-hos-border overflow-hidden shadow-lg"
+      style={{ backgroundColor: colors.background, fontFamily }}
+    >
+      <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: colors.secondary }}>
+        <div className="flex items-center gap-2">
+          {logoUrl && isValidHttpPublicUrl(logoUrl) ? (
+            <SafeImage src={logoUrl} alt="Logo" width={32} height={32} className="object-contain" />
+          ) : (
+            <div className="w-8 h-8 rounded-full" style={{ backgroundColor: colors.primary }} />
+          )}
+          <span className="text-sm font-semibold" style={{ color: colors.text }}>
+            {storeName || theme?.name || 'Your Store'}
+          </span>
+        </div>
+        <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: colors.primary, color: '#1a1406' }}>
+          Shop
+        </span>
+      </div>
+      <div className="p-4 space-y-3">
+        <div className="h-20 rounded-lg" style={{ background: `linear-gradient(135deg, ${colors.primary}40, ${colors.accent}30)` }} />
+        <p className="text-sm font-medium" style={{ color: colors.text }}>Featured Products</p>
+        <div className="grid grid-cols-3 gap-2">
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="rounded-lg p-2" style={{ backgroundColor: colors.secondary }}>
+              <div className="aspect-square rounded mb-1" style={{ backgroundColor: colors.background }} />
+              <div className="h-2 rounded w-full mb-1" style={{ backgroundColor: colors.text, opacity: 0.2 }} />
+              <div className="text-xs font-semibold" style={{ color: colors.primary }}>$29.99</div>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="w-full py-2 rounded-lg text-sm font-semibold"
+          style={{ backgroundColor: colors.primary, color: '#1a1406' }}
+        >
+          View all products
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const FONT_OPTIONS = ['Inter', 'Roboto', 'Open Sans', 'Lato', 'Poppins', 'Montserrat', 'Playfair Display', 'Raleway'];
+
 export default function SellerThemesPage() {
   const toast = useToast();
   const { user, effectiveRole } = useAuth();
@@ -92,6 +166,14 @@ export default function SellerThemesPage() {
   const [customForm, setCustomForm] = useState({
     customLogoUrl: '',
     customFaviconUrl: '',
+    fontFamily: 'Inter',
+    customColors: {
+      primary: '#d4a853',
+      secondary: '#1a1a2e',
+      accent: '#d4a853',
+      background: '#0f0f14',
+      text: '#f5f5f5',
+    },
   });
 
   const currentRole = effectiveRole || user?.role;
@@ -120,9 +202,18 @@ export default function SellerThemesPage() {
         setCurrentTheme(payload);
         const settings = payload.customSettings;
         if (settings) {
+          const themeColors = resolveThemeColors(payload.theme, settings.customColors);
           setCustomForm({
             customLogoUrl: settings.customLogoUrl || '',
             customFaviconUrl: settings.customFaviconUrl || '',
+            fontFamily: (settings.customColors as Record<string, string>)?.fontFamily || payload.theme?.config?.fontFamily || 'Inter',
+            customColors: {
+              primary: themeColors.primary,
+              secondary: themeColors.secondary,
+              accent: themeColors.accent,
+              background: themeColors.background,
+              text: themeColors.text,
+            },
           });
         }
       }
@@ -173,10 +264,32 @@ export default function SellerThemesPage() {
         setCurrentTheme(payload);
         const settings = payload.customSettings;
         if (settings) {
+          const themeColors = resolveThemeColors(theme, settings.customColors);
           setCustomForm({
             customLogoUrl: settings.customLogoUrl || '',
             customFaviconUrl: settings.customFaviconUrl || '',
+            fontFamily: (settings.customColors as Record<string, string>)?.fontFamily || theme.config?.fontFamily || 'Inter',
+            customColors: {
+              primary: themeColors.primary,
+              secondary: themeColors.secondary,
+              accent: themeColors.accent,
+              background: themeColors.background,
+              text: themeColors.text,
+            },
           });
+        } else {
+          const themeColors = resolveThemeColors(theme);
+          setCustomForm((prev) => ({
+            ...prev,
+            fontFamily: theme.config?.fontFamily || 'Inter',
+            customColors: {
+              primary: themeColors.primary,
+              secondary: themeColors.secondary,
+              accent: themeColors.accent,
+              background: themeColors.background,
+              text: themeColors.text,
+            },
+          }));
         }
       }
       toast.success(`${theme.name} installed successfully!`);
@@ -213,6 +326,10 @@ export default function SellerThemesPage() {
         themeId: customizingTheme.id,
         customLogoUrl: logo || undefined,
         customFaviconUrl: fav || undefined,
+        customColors: {
+          ...customForm.customColors,
+          fontFamily: customForm.fontFamily,
+        },
       });
       toast.success('Customization saved!');
       setShowCustomizeModal(false);
@@ -227,6 +344,7 @@ export default function SellerThemesPage() {
 
   return (
     <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
+      <GoogleFontLink family={customForm.fontFamily} />
       <DashboardLayout
         role={isWholesaler ? 'WHOLESALER' : 'SELLER'}
         menuItems={menuItems}
@@ -533,6 +651,17 @@ export default function SellerThemesPage() {
                 </button>
               </div>
 
+              {/* Live storefront preview */}
+              <div className="p-6 border-b border-hos-border">
+                <h3 className="text-sm font-semibold text-hos-text-secondary uppercase mb-3">Live Storefront Preview</h3>
+                <ThemeStorefrontPreview
+                  theme={previewTheme}
+                  colors={resolveThemeColors(previewTheme)}
+                  fontFamily={previewTheme.config?.fontFamily || 'Inter'}
+                  storeName={previewTheme.name}
+                />
+              </div>
+
               {/* Preview Images */}
               <div className="bg-hos-bg-tertiary">
                 {previewTheme.previewImages && previewTheme.previewImages.length > 0 ? (
@@ -543,14 +672,7 @@ export default function SellerThemesPage() {
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center py-20">
-                    <div className="text-center">
-                      <div className="text-6xl mb-3">🎨</div>
-                      <p className="text-hos-text-muted">No preview images available</p>
-                    </div>
-                  </div>
-                )}
+                ) : null}
               </div>
 
               {/* Theme Details */}
@@ -657,7 +779,7 @@ export default function SellerThemesPage() {
         {showCustomizeModal && customizingTheme && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50" onClick={() => setShowCustomizeModal(false)} />
-            <div className="relative bg-hos-bg-secondary rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="relative bg-hos-bg-secondary rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-start mb-6">
                   <div>
@@ -671,41 +793,89 @@ export default function SellerThemesPage() {
                   </button>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-hos-text-secondary mb-1.5">Custom Logo URL</label>
-                    <input
-                      type="url"
-                      inputMode="url"
-                      autoComplete="url"
-                      value={customForm.customLogoUrl}
-                      onChange={(e) => setCustomForm(prev => ({ ...prev, customLogoUrl: e.target.value }))}
-                      placeholder="https://your-brand.com/logo.png"
-                      className="w-full px-4 py-2.5 border border-hos-border rounded-lg text-sm focus:ring-hos-gold/50 focus:border-hos-gold"
-                    />
-                    {customForm.customLogoUrl.trim() && isValidHttpPublicUrl(customForm.customLogoUrl.trim()) && (
-                      <div className="mt-2 p-2 bg-hos-bg-secondary rounded-lg">
-                        <SafeImage src={customForm.customLogoUrl.trim()} alt="Logo preview" width={120} height={40} className="object-contain" />
-                      </div>
-                    )}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1.5">Font family</label>
+                      <select
+                        value={customForm.fontFamily}
+                        onChange={(e) => setCustomForm((prev) => ({ ...prev, fontFamily: e.target.value }))}
+                        className="w-full px-4 py-2.5 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary"
+                      >
+                        {FONT_OPTIONS.map((font) => (
+                          <option key={font} value={font}>{font}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      {(['primary', 'secondary', 'accent', 'background', 'text'] as const).map((key) => (
+                        <div key={key}>
+                          <label className="block text-xs font-medium text-hos-text-muted mb-1 capitalize">{key}</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="color"
+                              value={customForm.customColors[key]}
+                              onChange={(e) =>
+                                setCustomForm((prev) => ({
+                                  ...prev,
+                                  customColors: { ...prev.customColors, [key]: e.target.value },
+                                }))
+                              }
+                              className="w-10 h-10 rounded border border-hos-border cursor-pointer"
+                            />
+                            <input
+                              type="text"
+                              value={customForm.customColors[key]}
+                              onChange={(e) =>
+                                setCustomForm((prev) => ({
+                                  ...prev,
+                                  customColors: { ...prev.customColors, [key]: e.target.value },
+                                }))
+                              }
+                              className="flex-1 px-2 py-1 border border-hos-border rounded text-xs font-mono bg-hos-bg-secondary"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1.5">Custom Logo URL</label>
+                      <input
+                        type="url"
+                        inputMode="url"
+                        autoComplete="url"
+                        value={customForm.customLogoUrl}
+                        onChange={(e) => setCustomForm(prev => ({ ...prev, customLogoUrl: e.target.value }))}
+                        placeholder="https://your-brand.com/logo.png"
+                        className="w-full px-4 py-2.5 border border-hos-border rounded-lg text-sm focus:ring-hos-gold/50 focus:border-hos-gold"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1.5">Custom Favicon URL</label>
+                      <input
+                        type="url"
+                        inputMode="url"
+                        autoComplete="url"
+                        value={customForm.customFaviconUrl}
+                        onChange={(e) => setCustomForm(prev => ({ ...prev, customFaviconUrl: e.target.value }))}
+                        placeholder="https://your-brand.com/favicon.ico"
+                        className="w-full px-4 py-2.5 border border-hos-border rounded-lg text-sm focus:ring-hos-gold/50 focus:border-hos-gold"
+                      />
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-hos-text-secondary mb-1.5">Custom Favicon URL</label>
-                    <input
-                      type="url"
-                      inputMode="url"
-                      autoComplete="url"
-                      value={customForm.customFaviconUrl}
-                      onChange={(e) => setCustomForm(prev => ({ ...prev, customFaviconUrl: e.target.value }))}
-                      placeholder="https://your-brand.com/favicon.ico"
-                      className="w-full px-4 py-2.5 border border-hos-border rounded-lg text-sm focus:ring-hos-gold/50 focus:border-hos-gold"
+                    <p className="text-sm font-medium text-hos-text-secondary mb-3">Live preview</p>
+                    <ThemeStorefrontPreview
+                      theme={customizingTheme}
+                      colors={customForm.customColors}
+                      fontFamily={customForm.fontFamily}
+                      logoUrl={customForm.customLogoUrl}
+                      storeName={customizingTheme.name}
                     />
-                    {customForm.customFaviconUrl.trim() && isValidHttpPublicUrl(customForm.customFaviconUrl.trim()) && (
-                      <p className="mt-1.5 text-xs text-hos-text-muted break-all">
-                        Preview: <span className="font-mono">{customForm.customFaviconUrl.trim()}</span>
-                      </p>
-                    )}
                   </div>
                 </div>
 

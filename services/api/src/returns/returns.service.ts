@@ -3,9 +3,15 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Logger,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateReturnDto } from './dto/create-return.dto';
+import { RefundsService } from '../finance/refunds.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { ActivityService } from '../activity/activity.service';
+import { InventoryService } from '../inventory/inventory.service';
 
 interface ReturnRequest {
   id: string;
@@ -23,7 +29,15 @@ interface ReturnRequest {
 
 @Injectable()
 export class ReturnsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(ReturnsService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private refundsService: RefundsService,
+    @Optional() private notificationsService?: NotificationsService,
+    @Optional() private activityService?: ActivityService,
+    @Optional() private _inventoryService?: InventoryService,
+  ) {}
 
   async create(userId: string, createReturnDto: CreateReturnDto): Promise<ReturnRequest> {
     // Verify order exists and belongs to user
@@ -130,6 +144,25 @@ export class ReturnsService {
         },
       },
     });
+
+    this.activityService?.createLog({
+      userId,
+      action: 'RETURN_REQUESTED',
+      entityType: 'ReturnRequest',
+      entityId: returnRequest.id,
+      description: `Return requested for order ${order.orderNumber || order.id}`,
+      metadata: { orderId: order.id, reason: createReturnDto.reason },
+    }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+
+    if (this.notificationsService) {
+      this.notificationsService.sendNotificationToUser(
+        userId,
+        'RETURN_REQUESTED',
+        'Return request received',
+        `Your return request for order ${order.orderNumber || order.id} has been submitted and is pending review.`,
+        { returnId: returnRequest.id, orderId: order.id },
+      ).catch((e) => this.logger.warn(`Return notification failed: ${(e as Error).message}`));
+    }
 
     return this.mapToReturnType(returnRequest);
   }
@@ -257,6 +290,64 @@ export class ReturnsService {
       );
     }
 
+    // For APPROVED status, process the refund BEFORE committing the status change.
+    // This prevents the return being marked APPROVED when the refund actually failed.
+    if (newStatus === 'APPROVED') {
+      const amount = refundAmount ?? this.calculateReturnRefundAmount(returnRequest);
+      try {
+        await this.refundsService.processRefund({
+          returnId: id,
+          amount,
+          currency: returnRequest.order.currency,
+          description: `Refund for return request ${id}`,
+        });
+      } catch (err) {
+        this.logger.error(`Stripe refund failed for return ${id}: ${(err as Error).message}`);
+        throw err instanceof BadRequestException ? err : new BadRequestException(
+          'Refund processing failed. Return has NOT been approved. Please retry.',
+        );
+      }
+
+      // Refund succeeded — now persist APPROVED status and mark order as refunded
+      await this.prisma.$transaction(async (tx) => {
+        await tx.returnRequest.update({
+          where: { id },
+          data: {
+            status: 'APPROVED' as any,
+            refundAmount: amount,
+            refundMethod,
+          },
+        });
+        await tx.order.update({
+          where: { id: returnRequest.orderId },
+          data: { paymentStatus: 'REFUNDED' },
+        });
+      });
+
+      this.activityService?.createLog({
+        userId: userId || returnRequest.userId,
+        action: 'RETURN_APPROVED',
+        entityType: 'ReturnRequest',
+        entityId: id,
+        description: `Return approved for order ${returnRequest.order.orderNumber || returnRequest.orderId}`,
+        metadata: { refundAmount: amount },
+      }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+
+      if (this.notificationsService) {
+        this.notificationsService.sendNotificationToUser(
+          returnRequest.userId,
+          'RETURN_APPROVED',
+          'Return approved',
+          `Your return for order ${returnRequest.order.orderNumber || returnRequest.orderId} has been approved. Refund is being processed.`,
+          { returnId: id },
+        ).catch((e) => this.logger.warn(`Return approval notification failed: ${(e as Error).message}`));
+      }
+
+      const updated = await this.prisma.returnRequest.findUnique({ where: { id } });
+      return this.mapToReturnType(updated);
+    }
+
+    // For non-APPROVED transitions, commit directly
     const updated = await this.prisma.$transaction(async (tx) => {
       const result = await tx.returnRequest.update({
         where: { id },
@@ -267,13 +358,6 @@ export class ReturnsService {
           processedAt: newStatus === 'COMPLETED' ? new Date() : undefined,
         },
       });
-
-      if (newStatus === 'APPROVED' && refundAmount) {
-        await tx.order.update({
-          where: { id: returnRequest.orderId },
-          data: { paymentStatus: 'REFUNDED' },
-        });
-      }
 
       if (newStatus === 'COMPLETED' && returnRequest.order) {
         const returnItems = (returnRequest as any).items;
@@ -299,6 +383,12 @@ export class ReturnsService {
 
       return result;
     });
+
+    // Note: product.stock is already incremented in the transaction above.
+    // We intentionally do NOT call inventoryService.recordStockMovement here because
+    // the main order flow does not decrement warehouse inventory locations (only product.stock).
+    // Recording an IN movement without a prior OUT would overstate warehouse quantities.
+    // Warehouse reconciliation should be handled separately by ops when the physical item is received back.
 
     return this.mapToReturnType(updated);
   }
@@ -326,6 +416,21 @@ export class ReturnsService {
     });
 
     return this.mapToReturnType(updated);
+  }
+
+  private calculateReturnRefundAmount(returnRequest: any): number {
+    const returnItems = returnRequest.items;
+    if (returnItems && returnItems.length > 0) {
+      let total = 0;
+      for (const ri of returnItems) {
+        const orderItem = returnRequest.order?.items?.find((oi: any) => oi.id === ri.orderItemId);
+        if (orderItem) {
+          total += Number(orderItem.price) * (ri.quantity || 1);
+        }
+      }
+      if (total > 0) return total;
+    }
+    return Number(returnRequest.order?.total ?? 0);
   }
 
   private mapToReturnType(returnRequest: any): ReturnRequest {

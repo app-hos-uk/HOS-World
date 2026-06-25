@@ -11,6 +11,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { RecentlyViewed } from '@/components/RecentlyViewed';
 import {
   LineChart,
   Line,
@@ -66,6 +67,7 @@ export default function CustomerDashboardPage() {
   const [loyaltyMembership, setLoyaltyMembership] = useState<any>(null);
   const [loyaltyProgress, setLoyaltyProgress] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [recommendedProducts, setRecommendedProducts] = useState<any[]>([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -139,6 +141,10 @@ export default function CustomerDashboardPage() {
       ]);
       setLoyaltyMembership(loyaltyRes?.data ?? null);
       setLoyaltyProgress(loyaltyProgressRes?.data ?? null);
+
+      const recommendationsRes = await apiClient.getAIRecommendations().catch(() => null);
+      const recs = recommendationsRes?.data;
+      setRecommendedProducts(Array.isArray(recs) ? recs.slice(0, 8) : []);
 
       // Build recent activity from orders and wishlist
       const activity: any[] = [];
@@ -569,6 +575,38 @@ export default function CustomerDashboardPage() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              {recommendedProducts.length > 0 && (
+                <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-hos-border mb-6">
+                  <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Recommended For You</h2>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {recommendedProducts.map((product: any) => {
+                      const imageUrl = product.images?.[0]?.url || product.images?.[0];
+                      return (
+                        <Link
+                          key={product.id}
+                          href={`/products/${product.slug || product.id}`}
+                          className="group"
+                        >
+                          <div className="relative h-32 rounded-lg overflow-hidden bg-hos-bg-tertiary mb-2">
+                            {imageUrl ? (
+                              <Image src={imageUrl} alt={product.name} fill className="object-cover group-hover:scale-105 transition-transform" sizes="150px" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-hos-text-muted text-xs">No image</div>
+                            )}
+                          </div>
+                          <p className="text-xs font-medium text-hos-text-secondary truncate">{product.name}</p>
+                          <p className="text-xs text-hos-gold">{formatPrice(product.price, product.currency || 'USD')}</p>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="mb-6">
+                <RecentlyViewed />
               </div>
 
               {/* Quick Actions — horizontal tiles */}

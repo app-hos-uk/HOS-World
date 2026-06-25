@@ -567,4 +567,24 @@ export class NotificationsService implements OnModuleInit {
       throw error;
     }
   }
+
+  getChannelHealth(): {
+    email: { configured: boolean; enabled: boolean };
+    queue: { available: boolean };
+    sms: { configured: boolean };
+    whatsapp: { configured: boolean };
+  } {
+    const smtpHost = this.configService.get<string>('SMTP_HOST');
+    const twilioSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
+    const twilioWhatsApp = this.configService.get<string>('TWILIO_WHATSAPP_FROM');
+    return {
+      email: {
+        configured: Boolean(smtpHost && this.configService.get<string>('SMTP_USER')),
+        enabled: this.emailEnabled,
+      },
+      queue: { available: true },
+      sms: { configured: Boolean(twilioSid) },
+      whatsapp: { configured: Boolean(twilioWhatsApp || twilioSid) },
+    };
+  }
 }

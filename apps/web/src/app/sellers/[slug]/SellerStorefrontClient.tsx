@@ -8,6 +8,16 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { GoogleFontLink } from '@/components/GoogleFontLink';
+
+interface SellerThemeSettings {
+  theme: { config?: { colors?: Record<string, string>; fontFamily?: string } } | null;
+  customSettings: {
+    customLogoUrl?: string;
+    customFaviconUrl?: string;
+    customColors?: Record<string, string>;
+  } | null;
+}
 
 interface SellerProfile {
   id: string;
@@ -58,6 +68,8 @@ export default function SellerStorefrontClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc' | 'name'>('newest');
+  const [themeColors, setThemeColors] = useState<Record<string, string>>({});
+  const [themeFontFamily, setThemeFontFamily] = useState<string>('');
 
   useEffect(() => {
     if (slug) {
@@ -80,6 +92,28 @@ export default function SellerStorefrontClient() {
 
       const sellerData = sellerResponse.data;
       setSeller(sellerData);
+
+      // Fetch seller's theme settings
+      try {
+        const themeRes = await apiClient.getSellerTheme(sellerData.userId);
+        const themeData = themeRes?.data as SellerThemeSettings | null;
+        if (themeData) {
+          const baseColors = (themeData.theme?.config?.colors || {}) as Record<string, string>;
+          const custom = themeData.customSettings?.customColors || {};
+          const merged: Record<string, string> = {};
+          if (custom.primary || baseColors.primary) merged['--storefront-primary'] = custom.primary || baseColors.primary;
+          if (custom.secondary || baseColors.secondary) merged['--storefront-secondary'] = custom.secondary || baseColors.secondary;
+          if (custom.accent || baseColors.accent) merged['--storefront-accent'] = custom.accent || baseColors.accent;
+          if (custom.background || baseColors.background) merged['--storefront-bg'] = custom.background || baseColors.background;
+          if (custom.text || baseColors.text) merged['--storefront-text'] = custom.text || baseColors.text;
+          setThemeColors(merged);
+
+          const font = custom.fontFamily || themeData.theme?.config?.fontFamily || '';
+          setThemeFontFamily(font);
+        }
+      } catch {
+        // Non-critical: continue with default styling
+      }
 
       // Fetch seller's active products
       // Note: the products API expects userId as sellerId for filtering
@@ -158,12 +192,20 @@ export default function SellerStorefrontClient() {
     );
   }
 
+  const hasCustomTheme = Object.keys(themeColors).length > 0;
+
   return (
-    <div className="min-h-screen bg-hos-bg-secondary">
+    <div className="min-h-screen bg-hos-bg-secondary" style={{ ...themeColors, fontFamily: themeFontFamily || undefined } as React.CSSProperties}>
+      {themeFontFamily && <GoogleFontLink family={themeFontFamily} />}
       <Header />
       <main>
         {/* Store Banner */}
-        <div className="bg-gradient-to-r from-hos-bg-secondary to-hos-bg-tertiary text-white">
+        <div
+          className="text-white"
+          style={hasCustomTheme ? {
+            background: `linear-gradient(135deg, ${themeColors['--storefront-secondary'] || '#1a1a2e'}, ${themeColors['--storefront-bg'] || '#0f0f14'})`,
+          } : undefined}
+        >
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
               {/* Store Logo/Avatar */}
@@ -316,7 +358,7 @@ export default function SellerStorefrontClient() {
                       </p>
                     )}
                     <div className="mt-2 flex items-center justify-between">
-                      <p className="text-lg font-bold text-hos-gold">
+                      <p className="text-lg font-bold" style={hasCustomTheme ? { color: themeColors['--storefront-primary'] } : undefined}>
                         {formatPrice(product.price, product.currency || 'USD')}
                       </p>
                       {product.averageRating != null && product.averageRating > 0 && (

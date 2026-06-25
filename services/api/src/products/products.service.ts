@@ -864,6 +864,94 @@ export class ProductsService {
     return mappedProduct;
   }
 
+  async bulkUpdate(
+    sellerUserId: string,
+    productIds: string[],
+    updates: { status?: ProductStatus; stock?: number; priceAdjustmentPercent?: number },
+  ): Promise<{ updated: number; failed: number; errors: string[] }> {
+    const seller = await this.prisma.seller.findUnique({
+      where: { userId: sellerUserId },
+    });
+
+    if (!seller) {
+      throw new BadRequestException('Seller not found');
+    }
+
+    if (!productIds.length) {
+      throw new BadRequestException('No products selected');
+    }
+
+    if (
+      updates.stock != null &&
+      (typeof updates.stock !== 'number' || updates.stock < 0)
+    ) {
+      throw new BadRequestException('Stock cannot be negative');
+    }
+
+    const products = await this.prisma.product.findMany({
+      where: { id: { in: productIds }, sellerId: seller.id },
+      select: { id: true, price: true },
+    });
+
+    if (products.length !== productIds.length) {
+      throw new ForbiddenException('One or more products not found or not owned by you');
+    }
+
+    let updated = 0;
+    let failed = 0;
+    const errors: string[] = [];
+
+    for (const product of products) {
+      try {
+        const data: Prisma.ProductUpdateInput = {};
+        if (updates.status) data.status = updates.status;
+        if (updates.stock != null) data.stock = updates.stock;
+        if (updates.priceAdjustmentPercent != null) {
+          const current = Number(product.price);
+          const adjusted = current * (1 + updates.priceAdjustmentPercent / 100);
+          data.price = Math.max(0, Math.round(adjusted * 100) / 100);
+        }
+
+        if (Object.keys(data).length === 0) {
+          continue;
+        }
+
+        const updatedProduct = await this.prisma.product.update({
+          where: { id: product.id },
+          data,
+          include: {
+            images: { orderBy: { order: 'asc' } },
+            variations: true,
+            seller: { select: { id: true, storeName: true, slug: true } },
+            categoryRelation: { include: { parent: { include: { parent: true } } } },
+            tagsRelation: { include: { tag: true } },
+            attributes: {
+              include: {
+                attribute: { include: { values: true } },
+                attributeValue: true,
+              },
+            },
+          },
+        });
+
+        this.cacheHook.onProductUpdated(updatedProduct).catch((error) => {
+          console.error('Failed to sync product update to cache:', error);
+        });
+        if (this.meilisearchService) {
+          this.meilisearchService.indexProduct(updatedProduct).catch((err) => {
+            this.logger.warn(`Failed to re-index product ${updatedProduct.id}:`, err);
+          });
+        }
+        updated++;
+      } catch (error: any) {
+        failed++;
+        errors.push(`Product ${product.id}: ${error.message}`);
+      }
+    }
+
+    return { updated, failed, errors };
+  }
+
   async delete(sellerId: string, productId: string): Promise<void> {
     // Verify product exists and belongs to seller
     const product = await this.prisma.product.findUnique({

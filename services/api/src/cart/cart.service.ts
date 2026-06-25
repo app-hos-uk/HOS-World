@@ -961,6 +961,13 @@ export class CartService {
       taxRate: Number(product.taxRate),
       taxClassId: product.taxClassId || undefined,
       stock: product.stock,
+      seller: product.seller
+        ? {
+            id: product.seller.id,
+            storeName: product.seller.storeName,
+            slug: product.seller.slug,
+          }
+        : undefined,
       images:
         product.images?.map((img: any) => ({
           id: img.id,

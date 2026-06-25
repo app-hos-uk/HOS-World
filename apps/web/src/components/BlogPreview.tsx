@@ -22,20 +22,20 @@ const POSTS = [
 
 export default function BlogPreview() {
   return (
-    <section className="bg-hos-bg py-16">
+    <section className="bg-hos-bg py-12 sm:py-16">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-end justify-between mb-8 gap-4">
+        <div className="flex items-end justify-between mb-8 gap-4 section-head">
           <div>
-            <h2 className="font-display text-hos-text-secondary text-2xl md:text-3xl font-bold italic">
+            <h2 className="font-display text-hos-gold-hover text-2xl md:text-3xl">
               From the grimoire
             </h2>
-            <p className="text-hos-text-secondary text-sm mt-1">
-              Guides, drops, and fandom essays — starter titles for this demo.
+            <p className="text-hos-text-muted text-sm mt-1 font-body">
+              Guides, drops, and fandom essays from our team.
             </p>
           </div>
           <Link
             href="/help"
-            className="text-hos-gold text-sm hover:text-hos-gold-hover transition-colors duration-200 shrink-0"
+            className="text-hos-gold text-sm font-ui font-semibold hover:text-hos-gold-hover transition-colors shrink-0"
           >
             View all stories →
           </Link>

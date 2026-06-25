@@ -19,6 +19,20 @@ interface JobProgress {
   success?: number;
   failed?: number;
   errors?: string[];
+  failedRows?: Array<Record<string, unknown>>;
+}
+
+interface ValidationPreview {
+  total: number;
+  valid: number;
+  invalid: number;
+  rows: Array<{
+    rowIndex: number;
+    name: string;
+    sku?: string;
+    valid: boolean;
+    errors: string[];
+  }>;
 }
 
 const STATUS_CONFIG: Record<JobStatus, { label: string; color: string; bg: string; bar: string }> = {
@@ -35,6 +49,10 @@ export default function SellerBulkProductsPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importResults, setImportResults] = useState<any>(null);
   const [jobProgress, setJobProgress] = useState<JobProgress | null>(null);
+  const [parsedProducts, setParsedProducts] = useState<any[]>([]);
+  const [validationPreview, setValidationPreview] = useState<ValidationPreview | null>(null);
+  const [validating, setValidating] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stopPolling = useCallback(() => {
@@ -74,6 +92,7 @@ export default function SellerBulkProductsPage() {
               successCount: data.success || 0,
               errorCount: data.failed || 0,
               errors: data.errors || [],
+              failedRows: data.failedRows || [],
             });
             toast.success(`Import completed! ${data.success || 0} products imported, ${data.failed || 0} errors`);
           } else {
@@ -91,6 +110,62 @@ export default function SellerBulkProductsPage() {
   }, [stopPolling]);
 
   const menuItems = getSellerMenuItems(false);
+
+  const downloadFailedRowsCsv = (rows: Array<Record<string, unknown>>) => {
+    if (!rows.length) return;
+    const headers = ['rowIndex', 'error', 'name', 'sku', 'price', 'stock', 'description', 'currency', 'category', 'fandom', 'tags', 'images', 'status'];
+    const csvRows = [
+      headers.join(','),
+      ...rows.map((row) =>
+        headers
+          .map((h) => {
+            let value = row[h] ?? '';
+            if (typeof value === 'object') value = JSON.stringify(value);
+            value = String(value).replace(/"/g, '""');
+            return `"${value}"`;
+          })
+          .join(','),
+      ),
+    ];
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `import-failed-rows-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    toast.success('Failed rows exported');
+  };
+
+  const handleFileChange = async (file: File | null) => {
+    setSelectedFile(file);
+    setValidationPreview(null);
+    setShowPreview(false);
+    setParsedProducts([]);
+    if (!file) return;
+
+    try {
+      const fileText = await file.text();
+      const products = parseCSV(fileText);
+      setParsedProducts(products);
+      if (products.length === 0) {
+        toast.error('No valid product rows found in CSV');
+        return;
+      }
+      setValidating(true);
+      const response = await apiClient.validateProductImport(products);
+      if (response?.data) {
+        setValidationPreview(response.data);
+        setShowPreview(true);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to validate CSV');
+    } finally {
+      setValidating(false);
+    }
+  };
 
   const handleDownloadSampleCSV = () => {
     const sampleHeaders = ['name', 'description', 'sku', 'price', 'stock', 'currency', 'category', 'fandom', 'tags', 'images', 'status'];
@@ -239,21 +314,23 @@ export default function SellerBulkProductsPage() {
 
   const handleImport = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile) {
-      toast.error('Please select a file');
+    if (!selectedFile || parsedProducts.length === 0) {
+      toast.error('Please select a valid CSV file');
+      return;
+    }
+
+    if (!validationPreview) {
+      toast.error('Validation is required before importing. Please re-select the file to validate.');
+      return;
+    }
+    if (validationPreview.invalid > 0) {
+      toast.error(`${validationPreview.invalid} rows have errors — fix them or remove invalid rows before importing`);
       return;
     }
 
     try {
       setImportLoading(true);
-      const fileText = await selectedFile.text();
-      const products = parseCSV(fileText);
-      
-      if (products.length === 0) {
-        toast.error('No valid products found in CSV file');
-        setImportLoading(false);
-        return;
-      }
+      const products = parsedProducts;
 
       setImportResults(null);
       setJobProgress(null);
@@ -274,6 +351,9 @@ export default function SellerBulkProductsPage() {
         pollJobStatus(jobId);
 
         setSelectedFile(null);
+        setParsedProducts([]);
+        setValidationPreview(null);
+        setShowPreview(false);
         const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
         // importLoading stays true until job completes
@@ -283,11 +363,15 @@ export default function SellerBulkProductsPage() {
           successCount: response.data.success || 0,
           errorCount: response.data.failed || 0,
           errors: response.data.errors || [],
+          failedRows: response.data.failedRows || [],
         });
         const successCount = response.data.success || 0;
         const errorCount = response.data.failed || 0;
         toast.success(`Import completed! ${successCount} products imported, ${errorCount} errors`);
         setSelectedFile(null);
+        setParsedProducts([]);
+        setValidationPreview(null);
+        setShowPreview(false);
 
         const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
@@ -335,21 +419,74 @@ export default function SellerBulkProductsPage() {
                 <input
                   type="file"
                   accept=".csv"
-                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
                   className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
                   required
                 />
+                {validating && (
+                  <p className="text-sm text-hos-text-muted mt-2">Validating import preview...</p>
+                )}
               </div>
               <button
                 type="submit"
-                disabled={importLoading || !selectedFile}
+                disabled={importLoading || !selectedFile || validating || (validationPreview?.invalid ?? 0) > 0}
                 className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {importLoading ? 'Importing...' : '📤 Import Products from CSV'}
+                {importLoading ? 'Importing...' : validating ? 'Validating...' : '📤 Confirm Import'}
               </button>
             </form>
           </div>
         </div>
+
+        {/* Import Preview (dry-run) */}
+        {showPreview && validationPreview && (
+          <div className="mt-6 bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Import Preview</h3>
+              <div className="flex gap-3 text-sm">
+                <span className="text-green-400">{validationPreview.valid} valid</span>
+                <span className="text-red-400">{validationPreview.invalid} invalid</span>
+                <span className="text-hos-text-muted">{validationPreview.total} total rows</span>
+              </div>
+            </div>
+            <div className="overflow-x-auto max-h-80 border border-hos-border rounded-lg">
+              <table className="min-w-full text-sm">
+                <thead className="bg-hos-bg-tertiary sticky top-0">
+                  <tr>
+                    <th className="px-3 py-2 text-left">Row</th>
+                    <th className="px-3 py-2 text-left">Name</th>
+                    <th className="px-3 py-2 text-left">SKU</th>
+                    <th className="px-3 py-2 text-left">Status</th>
+                    <th className="px-3 py-2 text-left">Errors</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-hos-border">
+                  {validationPreview.rows.slice(0, 50).map((row) => (
+                    <tr key={row.rowIndex} className={row.valid ? '' : 'bg-red-500/5'}>
+                      <td className="px-3 py-2">{row.rowIndex}</td>
+                      <td className="px-3 py-2">{row.name || '—'}</td>
+                      <td className="px-3 py-2">{row.sku || '—'}</td>
+                      <td className="px-3 py-2">
+                        <span className={row.valid ? 'text-green-400' : 'text-red-400'}>
+                          {row.valid ? 'Valid' : 'Invalid'}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-red-400">{row.errors.join('; ') || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {validationPreview.rows.length > 50 && (
+              <p className="text-xs text-hos-text-muted mt-2">Showing first 50 rows</p>
+            )}
+            {validationPreview.invalid > 0 && (
+              <p className="text-sm text-red-400 mt-3">
+                Fix invalid rows before importing. Duplicate SKUs and missing names are common issues.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Job Progress Tracking */}
         {jobProgress && jobProgress.status !== 'completed' && (
@@ -392,7 +529,18 @@ export default function SellerBulkProductsPage() {
         {/* Import Results */}
         {importResults && (
           <div className="mt-6 bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">Import Results</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Import Results</h3>
+              {importResults.failedRows?.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => downloadFailedRowsCsv(importResults.failedRows)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700"
+                >
+                  Download failed rows CSV
+                </button>
+              )}
+            </div>
             <div className="space-y-2">
               <p><span className="font-medium">Success:</span> {importResults.successCount || 0} products imported</p>
               <p><span className="font-medium">Errors:</span> {importResults.errorCount || 0}</p>

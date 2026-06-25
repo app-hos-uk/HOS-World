@@ -78,6 +78,86 @@ export class ProductsBulkService implements OnModuleInit {
     }));
   }
 
+  async validateImport(
+    sellerId: string,
+    products: any[],
+  ): Promise<{
+    total: number;
+    valid: number;
+    invalid: number;
+    rows: Array<{
+      rowIndex: number;
+      name: string;
+      sku?: string;
+      valid: boolean;
+      errors: string[];
+      data: Record<string, unknown>;
+    }>;
+  }> {
+    const seller = await this.prisma.seller.findUnique({
+      where: { userId: sellerId },
+    });
+
+    if (!seller) {
+      throw new BadRequestException('Seller not found');
+    }
+
+    const rows = await Promise.all(
+      products.map(async (productData, index) => {
+        const errors = await this.getImportValidationErrorsAsync(productData, seller.id);
+        return {
+          rowIndex: index + 1,
+          name: productData.name || '',
+          sku: productData.sku || undefined,
+          valid: errors.length === 0,
+          errors,
+          data: productData as Record<string, unknown>,
+        };
+      }),
+    );
+
+    const valid = rows.filter((r) => r.valid).length;
+    return {
+      total: rows.length,
+      valid,
+      invalid: rows.length - valid,
+      rows,
+    };
+  }
+
+  private async checkDuplicateSku(sellerId: string, sku: string): Promise<boolean> {
+    const existing = await this.prisma.product.findFirst({
+      where: { sellerId, sku },
+      select: { id: true },
+    });
+    return !!existing;
+  }
+
+  private getImportValidationErrors(productData: any, sellerId: string): string[] {
+    const errors: string[] = [];
+    if (!productData.name?.trim()) {
+      errors.push('Name is required');
+    }
+    if (productData.price != null && Number(productData.price) < 0) {
+      errors.push('Price cannot be negative');
+    }
+    if (productData.stock != null && Number(productData.stock) < 0) {
+      errors.push('Stock cannot be negative');
+    }
+    return errors;
+  }
+
+  private async getImportValidationErrorsAsync(productData: any, sellerId: string): Promise<string[]> {
+    const errors = this.getImportValidationErrors(productData, sellerId);
+    if (productData.sku?.trim()) {
+      const duplicate = await this.checkDuplicateSku(sellerId, productData.sku.trim());
+      if (duplicate) {
+        errors.push(`Duplicate SKU "${productData.sku}" for this seller`);
+      }
+    }
+    return errors;
+  }
+
   async importProducts(
     sellerId: string,
     products: any[],
@@ -85,6 +165,7 @@ export class ProductsBulkService implements OnModuleInit {
     success: number;
     failed: number;
     errors: string[];
+    failedRows: Array<Record<string, unknown>>;
   }> {
     const seller = await this.prisma.seller.findUnique({
       where: { userId: sellerId },
@@ -97,9 +178,34 @@ export class ProductsBulkService implements OnModuleInit {
     let success = 0;
     let failed = 0;
     const errors: string[] = [];
+    const failedRows: Array<Record<string, unknown>> = [];
 
-    for (const productData of products) {
+    for (let index = 0; index < products.length; index++) {
+      const productData = products[index];
       try {
+        const validationErrors = await this.getImportValidationErrorsAsync(productData, seller.id);
+        if (validationErrors.length > 0) {
+          failed++;
+          const errorMsg = validationErrors.join('; ');
+          errors.push(`Row ${index + 1} "${productData.name || 'Unknown'}": ${errorMsg}`);
+          failedRows.push({
+            rowIndex: index + 1,
+            error: errorMsg,
+            name: productData.name || '',
+            sku: productData.sku || '',
+            price: productData.price ?? '',
+            stock: productData.stock ?? '',
+            description: productData.description || '',
+            currency: productData.currency || '',
+            category: productData.category || '',
+            fandom: productData.fandom || '',
+            tags: productData.tags || '',
+            images: productData.images || '',
+            status: productData.status || '',
+          });
+          continue;
+        }
+
         await this.productsService.create(sellerId, {
           name: productData.name,
           description: productData.description || '',
@@ -135,10 +241,26 @@ export class ProductsBulkService implements OnModuleInit {
         success++;
       } catch (error: any) {
         failed++;
-        errors.push(`Product "${productData.name}": ${error.message}`);
+        const errorMsg = error.message || 'Import failed';
+        errors.push(`Row ${index + 1} "${productData.name || 'Unknown'}": ${errorMsg}`);
+        failedRows.push({
+          rowIndex: index + 1,
+          error: errorMsg,
+          name: productData.name || '',
+          sku: productData.sku || '',
+          price: productData.price ?? '',
+          stock: productData.stock ?? '',
+          description: productData.description || '',
+          currency: productData.currency || '',
+          category: productData.category || '',
+          fandom: productData.fandom || '',
+          tags: productData.tags || '',
+          images: productData.images || '',
+          status: productData.status || '',
+        });
       }
     }
 
-    return { success, failed, errors };
+    return { success, failed, errors, failedRows };
   }
 }
