@@ -85,7 +85,7 @@ export default function AdminCategoriesPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getCategoryTree();
+      const response = await apiClient.getAdminCategoryTree();
       if (response?.data && Array.isArray(response.data)) {
         setCategories(response.data);
         calculateStats(response.data);

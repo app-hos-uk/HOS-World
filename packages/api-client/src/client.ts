@@ -3564,6 +3564,10 @@ export class ApiClient {
     return this.request<ApiResponse<any[]>>('/taxonomy/categories/tree');
   }
 
+  async getAdminCategoryTree(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/taxonomy/categories/admin/tree');
+  }
+
   async getCategory(id: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/taxonomy/categories/${id}`);
   }

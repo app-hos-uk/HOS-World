@@ -152,6 +152,26 @@ export class CategoriesService {
     return rootCategories;
   }
 
+  async getAdminCategoryTree() {
+    const rootCategories = await this.prisma.category.findMany({
+      where: { level: 0 },
+      include: {
+        children: {
+          include: {
+            children: true,
+          },
+        },
+        _count: {
+          select: {
+            products: true,
+          },
+        },
+      },
+      orderBy: [{ order: 'asc' }, { name: 'asc' }],
+    });
+    return rootCategories;
+  }
+
   async findOne(id: string) {
     const category = await this.prisma.category.findUnique({
       where: { id },

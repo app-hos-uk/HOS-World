@@ -102,7 +102,7 @@ export class ThemesController {
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Theme not found' })
   async update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @Body() updateThemeDto: UpdateThemeDto,
   ): Promise<ApiResponse<any>> {
     const theme = await this.themesService.update(id, updateThemeDto);
@@ -125,7 +125,7 @@ export class ThemesController {
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Theme not found' })
-  async delete(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<{ message: string }>> {
+  async delete(@Param('id') id: string): Promise<ApiResponse<{ message: string }>> {
     await this.themesService.delete(id);
     return {
       data: { message: 'Theme deleted successfully' },
@@ -146,7 +146,7 @@ export class ThemesController {
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Theme not found' })
-  async duplicate(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
+  async duplicate(@Param('id') id: string): Promise<ApiResponse<any>> {
     const theme = await this.themesService.duplicate(id);
     return {
       data: theme,
@@ -225,7 +225,7 @@ export class ThemesController {
   @ApiParam({ name: 'id', description: 'Theme UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Theme retrieved successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Theme not found' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
+  async findOne(@Param('id') id: string): Promise<ApiResponse<any>> {
     const theme = await this.themesService.findOne(id);
     return {
       data: theme,
@@ -385,7 +385,7 @@ export class ThemesController {
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Theme not found' })
   async generatePreview(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
   ): Promise<ApiResponse<{ previewImages: string[] }>> {
     const previewImages = await this.themeUploadService.generatePreview(id);
     return {

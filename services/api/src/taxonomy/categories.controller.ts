@@ -60,6 +60,23 @@ export class CategoriesController {
     };
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Get('admin/tree')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get full category tree including inactive (Admin only)',
+    description: 'Retrieves all categories including inactive ones. Admin access required.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Admin category tree retrieved successfully' })
+  async getAdminCategoryTree(): Promise<ApiResponse<any[]>> {
+    const tree = await this.categoriesService.getAdminCategoryTree();
+    return {
+      data: tree,
+      message: 'Admin category tree retrieved successfully',
+    };
+  }
+
   @Public()
   @Get(':id')
   @ApiOperation({

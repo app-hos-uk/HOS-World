@@ -126,6 +126,7 @@ function ProductsContent() {
   const priceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [state, setState] = useState<SearchState>(() => parseSearchParams(searchParams));
+  const isInternalNavRef = useRef(false);
 
   const filterDepsKey = useMemo(
     () =>
@@ -158,6 +159,10 @@ function ProductsContent() {
 
   // Sync state from URL when searchParams change (browser back/forward)
   useEffect(() => {
+    if (isInternalNavRef.current) {
+      isInternalNavRef.current = false;
+      return;
+    }
     setState(parseSearchParams(searchParams));
   }, [searchParams]);
 
@@ -170,6 +175,7 @@ function ProductsContent() {
         next.page = 1;
       }
       const qs = buildSearchParams(next);
+      isInternalNavRef.current = true;
       router.replace(`/products${qs ? `?${qs}` : ''}`, { scroll: false });
       return next;
     });
