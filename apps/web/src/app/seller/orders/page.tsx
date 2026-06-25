@@ -21,7 +21,7 @@ interface OrderItem {
   price: number;
   product?: {
     name: string;
-    images?: string[];
+    images?: Array<string | { url?: string }>;
   };
 }
 
@@ -574,7 +574,11 @@ export default function SellerOrdersPage() {
                         <div key={item.id || index} className="p-4 flex items-center gap-4">
                           {item.product?.images?.[0] && (
                             <Image
-                              src={item.product.images[0]}
+                              src={
+                                typeof item.product.images[0] === 'string'
+                                  ? item.product.images[0]
+                                  : item.product.images[0]?.url || ''
+                              }
                               alt={item.product?.name || item.productName || 'Product'}
                               width={64}
                               height={64}
