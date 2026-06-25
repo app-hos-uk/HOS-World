@@ -81,6 +81,21 @@ export default function AdminInfluencerCampaignsPage() {
       return;
     }
 
+    const start = new Date(form.startDate);
+    const end = new Date(form.endDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    start.setHours(0, 0, 0, 0);
+
+    if (start < today) {
+      toast.error('Start date cannot be in the past');
+      return;
+    }
+    if (end <= start) {
+      toast.error('End date must be after start date');
+      return;
+    }
+
     try {
       setCreating(true);
       await api.createCampaign({
@@ -104,9 +119,13 @@ export default function AdminInfluencerCampaignsPage() {
     }
   };
 
-  const handleUpdateStatus = async (id: string, status: string) => {
+  const handleUpdateStatus = async (campaign: Campaign, status: string) => {
+    if (status === 'ACTIVE' && new Date(campaign.endDate) < new Date()) {
+      toast.error('Cannot resume an expired campaign');
+      return;
+    }
     try {
-      await api.updateCampaign(id, { status });
+      await api.updateCampaign(campaign.id, { status });
       toast.success('Campaign status updated');
       fetchData();
     } catch (err: any) {
@@ -267,7 +286,7 @@ export default function AdminInfluencerCampaignsPage() {
                           </button>
                           {campaign.status === 'ACTIVE' && (
                             <button
-                              onClick={() => handleUpdateStatus(campaign.id, 'PAUSED')}
+                              onClick={() => handleUpdateStatus(campaign, 'PAUSED')}
                               className="text-yellow-400 hover:text-yellow-300 text-sm font-medium"
                             >
                               Pause
@@ -275,7 +294,7 @@ export default function AdminInfluencerCampaignsPage() {
                           )}
                           {campaign.status === 'PAUSED' && (
                             <button
-                              onClick={() => handleUpdateStatus(campaign.id, 'ACTIVE')}
+                              onClick={() => handleUpdateStatus(campaign, 'ACTIVE')}
                               className="text-green-400 hover:text-green-300 text-sm font-medium"
                             >
                               Resume
