@@ -337,6 +337,13 @@ export default function CheckoutPage() {
   const idempotencyKeyRef = useRef<string>(
     typeof crypto !== 'undefined' ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
   );
+  const orderNavTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (orderNavTimeoutRef.current) clearTimeout(orderNavTimeoutRef.current);
+    };
+  }, []);
 
   const goNextStep = () => {
     if (checkoutStep === 1 && !shippingAddressId) {
@@ -483,6 +490,10 @@ export default function CheckoutPage() {
           toast.success('Order created successfully!', { id: 'order-created' });
         }
         router.push(`/payment?orderId=${orderResponse.data.id}`);
+        orderNavTimeoutRef.current = setTimeout(() => {
+          setCreatingOrder(false);
+          isSubmittingRef.current = false;
+        }, 8000);
       } else {
         throw new Error('Order creation failed - no data returned');
       }

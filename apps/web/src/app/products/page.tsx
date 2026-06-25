@@ -1,24 +1,25 @@
 'use client';
 
-import { useEffect, useState, useCallback, Suspense, useRef, useMemo } from 'react';
+import { useEffect, useState, useCallback, Suspense, useRef, useMemo, memo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import Link from 'next/link';
 import { ProductCard } from '@/components/ProductCard';
 import { expandDepartmentCategories } from '@/lib/storefrontNavigation';
 
 const ITEMS_PER_PAGE = 20;
 
-/** Survives ProductsContent remount when router.replace updates searchParams. */
+/** Module-level caches survive ProductsContent remount on router.replace. */
 let cachedBaselineFacets: Record<string, Record<string, number>> = {};
-let cachedListing: { products: any[]; totalHits: number; totalPages: number } = {
-  products: [],
-  totalHits: 0,
-  totalPages: 1,
-};
+let cachedListing: {
+  filterKey: string;
+  products: any[];
+  totalHits: number;
+  totalPages: number;
+} = { filterKey: '', products: [], totalHits: 0, totalPages: 0 };
+let internalNavCount = 0;
 
 const SORT_OPTIONS = [
   { value: '', label: 'Relevance' },
@@ -56,7 +57,7 @@ function parseSearchParams(params: URLSearchParams): SearchState {
   };
 }
 
-/** Keep all baseline facet options visible so users can multi-select fandoms/categories. */
+/** Keep all baseline facet options visible; use live counts where available. */
 function mergeFacetsForDisplay(
   baseline: Record<string, Record<string, number>>,
   incoming: Record<string, Record<string, number>>,
@@ -65,10 +66,16 @@ function mergeFacetsForDisplay(
   const mergeKey = (key: string, selectedValues: string[]) => {
     const base = baseline[key] || {};
     const inc = incoming[key] || {};
-    const merged = { ...base, ...inc };
+    const merged: Record<string, number> = {};
+    for (const name of Object.keys(base)) {
+      merged[name] = inc[name] ?? base[name];
+    }
+    for (const name of Object.keys(inc)) {
+      merged[name] = inc[name];
+    }
     for (const val of selectedValues) {
       if (merged[val] === undefined) {
-        merged[val] = base[val] ?? inc[val] ?? 0;
+        merged[val] = 0;
       }
     }
     return merged;
@@ -93,6 +100,20 @@ function buildSearchParams(state: SearchState): string {
   if (state.sort) params.set('sortBy', state.sort);
   if (state.page > 1) params.set('page', String(state.page));
   return params.toString();
+}
+
+function buildFilterKey(s: SearchState): string {
+  return JSON.stringify({
+    q: s.query,
+    c: s.categories,
+    f: s.fandoms,
+    mn: s.minPrice,
+    mx: s.maxPrice,
+    r: s.rating,
+    st: s.inStock,
+    so: s.sort,
+    p: s.page,
+  });
 }
 
 function StarRating({ rating, onClick, interactive = false }: {
@@ -125,7 +146,7 @@ function StarRating({ rating, onClick, interactive = false }: {
   );
 }
 
-function ActiveFilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+const ActiveFilterChip = memo(function ActiveFilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
     <span className="inline-flex items-center gap-1 px-3 py-1 bg-hos-gold/20 text-hos-gold rounded-full text-sm">
       {label}
@@ -140,18 +161,28 @@ function ActiveFilterChip({ label, onRemove }: { label: string; onRemove: () => 
       </button>
     </span>
   );
-}
+});
 
 function ProductsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { formatPrice } = useCurrency();
 
-  const [products, setProducts] = useState<any[]>(() => cachedListing.products);
-  const [loading, setLoading] = useState(() => cachedListing.products.length === 0);
-  const [totalHits, setTotalHits] = useState(() => cachedListing.totalHits);
-  const [totalPages, setTotalPages] = useState(() => cachedListing.totalPages);
-  const [processingTimeMs, setProcessingTimeMs] = useState(0);
+  const initialState = useMemo(() => parseSearchParams(searchParams), []);
+  const currentFilterKey = useMemo(() => buildFilterKey(initialState), []);
+
+  const [products, setProducts] = useState<any[]>(() =>
+    cachedListing.filterKey === currentFilterKey ? cachedListing.products : [],
+  );
+  const [loading, setLoading] = useState(() =>
+    cachedListing.filterKey !== currentFilterKey || cachedListing.products.length === 0,
+  );
+  const [totalHits, setTotalHits] = useState(() =>
+    cachedListing.filterKey === currentFilterKey ? cachedListing.totalHits : 0,
+  );
+  const [totalPages, setTotalPages] = useState(() =>
+    cachedListing.filterKey === currentFilterKey ? cachedListing.totalPages : 1,
+  );
   const [facets, setFacets] = useState<Record<string, Record<string, number>>>(() =>
     Object.keys(cachedBaselineFacets).length > 0 ? cachedBaselineFacets : {},
   );
@@ -160,8 +191,7 @@ function ProductsContent() {
   const [priceDraft, setPriceDraft] = useState({ min: '', max: '' });
   const priceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [state, setState] = useState<SearchState>(() => parseSearchParams(searchParams));
-  const internalNavCountRef = useRef(0);
+  const [state, setState] = useState<SearchState>(() => initialState);
 
   const filterDepsKey = useMemo(
     () =>
@@ -186,7 +216,6 @@ function ProductsContent() {
       state.sort,
     ],
   );
-  const prevFilterDepsKeyRef = useRef('');
 
   useEffect(() => {
     setPriceDraft({ min: state.minPrice, max: state.maxPrice });
@@ -194,8 +223,8 @@ function ProductsContent() {
 
   // Sync state from URL when searchParams change (browser back/forward)
   useEffect(() => {
-    if (internalNavCountRef.current > 0) {
-      internalNavCountRef.current -= 1;
+    if (internalNavCount > 0) {
+      internalNavCount -= 1;
       return;
     }
     setState(parseSearchParams(searchParams));
@@ -205,12 +234,11 @@ function ProductsContent() {
     setState(prev => {
       const updates = typeof updatesOrFn === 'function' ? updatesOrFn(prev) : updatesOrFn;
       const next = { ...prev, ...updates };
-      // Reset to page 1 when any filter changes (except page itself)
       if (!('page' in updates)) {
         next.page = 1;
       }
       const qs = buildSearchParams(next);
-      internalNavCountRef.current += 1;
+      internalNavCount += 1;
       router.replace(`/products${qs ? `?${qs}` : ''}`, { scroll: false });
       return next;
     });
@@ -239,9 +267,6 @@ function ProductsContent() {
   useEffect(() => {
     let cancelled = false;
 
-    const prevFilterKey = prevFilterDepsKeyRef.current;
-    prevFilterDepsKeyRef.current = filterDepsKey;
-
     const fetchProducts = async () => {
       setLoading(true);
       setFetchError(null);
@@ -264,7 +289,8 @@ function ProductsContent() {
 
         if (response?.data) {
           const data = response.data as any;
-          setProducts(data.products || []);
+          const prods = data.products || [];
+          setProducts(prods);
           const total = Number(data.total) || 0;
           setTotalHits(total);
           const fromTotal = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
@@ -273,13 +299,12 @@ function ProductsContent() {
             Number.isFinite(fromApi) && fromApi > 0 ? Math.max(fromApi, fromTotal) : fromTotal;
           setTotalPages(resolvedTotalPages);
           cachedListing = {
-            products: data.products || [],
+            filterKey: buildFilterKey(state),
+            products: prods,
             totalHits: total,
             totalPages: resolvedTotalPages,
           };
-          setProcessingTimeMs(data.processingTimeMs || 0);
-          const filtersChanged = prevFilterKey !== filterDepsKey;
-          if (data.facets && filtersChanged) {
+          if (data.facets) {
             if (state.categories.length === 0 && state.fandoms.length === 0) {
               cachedBaselineFacets = data.facets;
             }
@@ -309,21 +334,27 @@ function ProductsContent() {
           if (cancelled) return;
           if (fallback?.data) {
             const d = fallback.data as any;
-            setProducts(d.items || d.data || []);
+            const prods = d.items || d.data || [];
+            setProducts(prods);
             const fbTotal = Number(d.total) || 0;
             setTotalHits(fbTotal);
             const fbPages = Math.max(1, Math.ceil(fbTotal / ITEMS_PER_PAGE));
             const fbApi = Number(d.totalPages);
-            setTotalPages(
-              Number.isFinite(fbApi) && fbApi > 0 ? Math.max(fbApi, fbPages) : fbPages,
-            );
-            setProcessingTimeMs(0);
-            setFacets({});
+            const resolvedPages =
+              Number.isFinite(fbApi) && fbApi > 0 ? Math.max(fbApi, fbPages) : fbPages;
+            setTotalPages(resolvedPages);
+            cachedListing = {
+              filterKey: buildFilterKey(state),
+              products: prods,
+              totalHits: fbTotal,
+              totalPages: resolvedPages,
+            };
           }
         } catch (fallbackErr) {
           if (!cancelled) {
             console.error('Fallback also failed:', fallbackErr);
             setProducts([]);
+            cachedListing = { filterKey: '', products: [], totalHits: 0, totalPages: 0 };
             setFetchError('Unable to load products. Please try again.');
           }
         }
@@ -342,7 +373,7 @@ function ProductsContent() {
     }
   }, [totalPages, state.page, updateState]);
 
-  const toggleArrayFilter = (key: 'categories' | 'fandoms', value: string) => {
+  const toggleArrayFilter = useCallback((key: 'categories' | 'fandoms', value: string) => {
     updateState(prev => {
       const current = prev[key];
       const next = current.includes(value)
@@ -350,7 +381,7 @@ function ProductsContent() {
         : [...current, value];
       return { [key]: next };
     });
-  };
+  }, [updateState]);
 
   /** Keep sidebar filters visible during remount/refetch (avoids "No fandoms available" flash). */
   const displayFacets = useMemo(() => {
@@ -369,7 +400,7 @@ function ProductsContent() {
   const startIndex = (state.page - 1) * ITEMS_PER_PAGE + 1;
   const endIndex = Math.min(state.page * ITEMS_PER_PAGE, totalHits);
 
-  const pageNumbers = (() => {
+  const pageNumbers = useMemo(() => {
     const pages: number[] = [];
     const maxVisible = 7;
     if (totalPages <= maxVisible) {
@@ -386,13 +417,13 @@ function ProductsContent() {
         start = totalPages - 4;
         end = totalPages - 1;
       }
-      if (start > 2) pages.push(-1); // ellipsis
+      if (start > 2) pages.push(-1);
       for (let i = start; i <= end; i++) pages.push(i);
-      if (end < totalPages - 1) pages.push(-2); // ellipsis
+      if (end < totalPages - 1) pages.push(-2);
       pages.push(totalPages);
     }
     return pages;
-  })();
+  }, [totalPages, state.page]);
 
   const FilterPanel = () => (
     <div className="space-y-6">

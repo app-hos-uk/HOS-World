@@ -171,10 +171,13 @@ export class CartService {
       const existingItem = cart.items.find((item) => {
         if (item.productId !== addToCartDto.productId) return false;
         const itemVariations = item.variationOptions as Record<string, string> | null;
-        const newVariations = addToCartDto.variationOptions || {};
+        const newVariations = addToCartDto.variationOptions || null;
 
-        if (!itemVariations && !addToCartDto.variationOptions) return true;
-        if (!itemVariations || !addToCartDto.variationOptions) return false;
+        const itemEmpty = !itemVariations || Object.keys(itemVariations).length === 0;
+        const newEmpty = !newVariations || Object.keys(newVariations).length === 0;
+
+        if (itemEmpty && newEmpty) return true;
+        if (itemEmpty || newEmpty) return false;
 
         const itemKeys = Object.keys(itemVariations).sort().join(',');
         const newKeys = Object.keys(newVariations).sort().join(',');
@@ -459,10 +462,13 @@ export class CartService {
     const existingItem = cart.items.find((item) => {
       if (item.productId !== addToCartDto.productId) return false;
       const itemVariations = item.variationOptions as Record<string, string> | null;
-      const newVariations = addToCartDto.variationOptions || {};
+      const newVariations = addToCartDto.variationOptions || null;
 
-      if (!itemVariations && !addToCartDto.variationOptions) return true;
-      if (!itemVariations || !addToCartDto.variationOptions) return false;
+      const itemEmpty = !itemVariations || Object.keys(itemVariations).length === 0;
+      const newEmpty = !newVariations || Object.keys(newVariations).length === 0;
+
+      if (itemEmpty && newEmpty) return true;
+      if (itemEmpty || newEmpty) return false;
 
       const itemKeys = Object.keys(itemVariations).sort().join(',');
       const newKeys = Object.keys(newVariations).sort().join(',');
@@ -674,6 +680,34 @@ export class CartService {
         where: { id: { in: invalidItemIds } },
       });
       cart.items = cart.items.filter((item) => !invalidItemIds.includes(item.id));
+    }
+
+    // Consolidate duplicate items (same productId + variationOptions)
+    const consolidated = new Map<string, typeof cart.items[number]>();
+    const duplicateIds: string[] = [];
+    for (const item of cart.items) {
+      const vars = item.variationOptions as Record<string, string> | null;
+      const varKey = vars && Object.keys(vars).length > 0
+        ? Object.keys(vars).sort().map(k => `${k}=${vars[k]}`).join('|')
+        : '';
+      const key = `${item.productId}::${varKey}`;
+      const existing = consolidated.get(key);
+      if (existing) {
+        existing.quantity += item.quantity;
+        duplicateIds.push(item.id);
+      } else {
+        consolidated.set(key, item);
+      }
+    }
+    if (duplicateIds.length > 0) {
+      await this.prisma.cartItem.deleteMany({ where: { id: { in: duplicateIds } } });
+      for (const item of consolidated.values()) {
+        await this.prisma.cartItem.update({
+          where: { id: item.id },
+          data: { quantity: item.quantity },
+        });
+      }
+      cart.items = [...consolidated.values()];
     }
 
     // Refresh cart item prices from current product data
