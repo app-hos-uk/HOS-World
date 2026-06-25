@@ -194,31 +194,37 @@ export class PublishingService {
       });
     } else {
       // No duplicate — create a new product as normal
-      product = await this.productsService.create(submission.seller.userId, {
-        name: catalogEntry.title,
-        description: catalogEntry.description,
-        sku: productData.sku,
-        barcode: productData.barcode,
-        ean: productData.ean,
-        price: finalPrice,
-        tradePrice: productData.tradePrice,
-        rrp: productData.rrp,
-        currency: productData.currency || 'USD',
-        taxRate: productData.taxRate > 1 ? productData.taxRate / 100 : productData.taxRate || 0,
-        stock: submission.selectedQuantity || productData.stock || 0,
-        fandom: productData.fandom,
-        category: productData.category,
-        categoryId: productData.categoryId,
-        tags: productData.tags || [],
-        status: 'ACTIVE' as any,
-        images: imageUrls.map((url, index) => ({
-          url,
-          alt: catalogEntry.title,
-          order: index,
-          type: ImageType.IMAGE,
-        })),
-        variations: productData.variations || [],
-      });
+      try {
+        product = await this.productsService.create(submission.seller.userId, {
+          name: catalogEntry.title,
+          description: catalogEntry.description,
+          sku: productData.sku,
+          barcode: productData.barcode,
+          ean: productData.ean,
+          price: finalPrice,
+          tradePrice: productData.tradePrice,
+          rrp: productData.rrp,
+          currency: productData.currency || 'USD',
+          taxRate: productData.taxRate > 1 ? productData.taxRate / 100 : productData.taxRate || 0,
+          stock: submission.selectedQuantity || productData.stock || 0,
+          fandom: productData.fandom,
+          category: productData.category,
+          categoryId: productData.categoryId,
+          tags: productData.tags || [],
+          status: 'ACTIVE' as any,
+          images: imageUrls.map((url, index) => ({
+            url,
+            alt: catalogEntry.title,
+            order: index,
+            type: ImageType.IMAGE,
+          })),
+          variations: productData.variations || [],
+        });
+      } catch (error: any) {
+        throw new BadRequestException(
+          `Failed to create product during publish: ${error?.message || 'unknown error'}`,
+        );
+      }
     }
 
     // Link product to submission
