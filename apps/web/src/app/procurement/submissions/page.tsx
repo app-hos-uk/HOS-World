@@ -803,6 +803,8 @@ function ProcurementSubmissionsContent() {
                         </div>
                       )}
 
+                      {selectedSubmission.status !== 'PROCUREMENT_APPROVED' &&
+                        selectedSubmission.status !== 'PROCUREMENT_REJECTED' && (
                       <div className="flex gap-3 pt-4">
                         <button
                           onClick={() => setActionType('approve')}
@@ -817,6 +819,7 @@ function ProcurementSubmissionsContent() {
                           Reject
                         </button>
                       </div>
+                      )}
                     </div>
                   )}
 
