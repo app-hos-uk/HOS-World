@@ -319,10 +319,10 @@ function ProfilePageContent() {
       setSavingAddress(true);
       if (editingAddress) {
         await apiClient.updateAddress(editingAddress.id, addressForm);
-        toast.success('Address updated successfully!');
+        if (!returnUrl) toast.success('Address updated successfully!');
       } else {
         await apiClient.createAddress(addressForm);
-        toast.success('Address added successfully!');
+        if (!returnUrl) toast.success('Address added successfully!');
       }
       setShowAddressForm(false);
       setEditingAddress(null);
