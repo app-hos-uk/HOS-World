@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { Decimal } from '@prisma/client/runtime/library';
 
@@ -354,9 +354,17 @@ export class InfluencerCampaignsService {
       throw new NotFoundException('Campaign not found');
     }
 
-    await this.prisma.influencerCampaign.delete({
-      where: { id },
-    });
+    try {
+      await this.prisma.influencerCampaign.delete({
+        where: { id },
+      });
+    } catch (err: any) {
+      throw new BadRequestException(
+        err?.code === 'P2003'
+          ? 'Cannot delete campaign: it has related tracking or commission records. Archive it instead.'
+          : `Failed to delete campaign: ${err?.message || 'unknown error'}`,
+      );
+    }
 
     return { message: 'Campaign deleted successfully' };
   }
