@@ -166,7 +166,7 @@ export function HeroBanner({
   return (
     <>
       <div
-        className="relative w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] min-h-[380px] sm:min-h-[420px] mx-4 sm:mx-6 my-4 sm:my-6 max-w-7xl lg:mx-auto flex items-center overflow-hidden rounded-xl sm:rounded-2xl border border-hos-border"
+        className="relative w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] min-h-[380px] sm:min-h-[420px] mx-4 sm:mx-6 my-4 sm:my-6 max-w-7xl lg:mx-auto flex items-center overflow-hidden rounded-xl sm:rounded-2xl border border-hos-border -mt-[var(--header-height)] pt-[var(--header-height)] scroll-mt-[var(--header-height)]"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onFocusCapture={() => setIsPaused(true)}

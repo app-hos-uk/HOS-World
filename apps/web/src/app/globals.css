@@ -10,6 +10,8 @@
   --font-display: var(--font-cormorant), Georgia, 'Times New Roman', serif;
   --font-body: var(--font-cormorant);
   --font-ui: var(--font-figtree);
+  /* Sticky storefront header — utility bar (lg) + main row */
+  --header-height: 3.75rem;
   /* Legacy aliases */
   --font-cinzel: var(--font-display);
   --font-lora: var(--font-body);
