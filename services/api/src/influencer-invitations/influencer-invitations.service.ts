@@ -79,11 +79,7 @@ export class InfluencerInvitationsService {
         personalMessage: dto.message ? `<p>${dto.message}</p>` : '',
         commissionRate: String(dto.baseCommissionRate || 10),
       });
-      await this.notificationsService.sendSellerInvitation(dto.email, {
-        sellerType: 'B2C_SELLER',
-        invitationLink: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/accept-invitation?token=${token}&type=influencer`,
-        message: rendered.body,
-      });
+      await this.notificationsService.queueNotification(dto.email, rendered.subject, rendered.body);
     } catch (err) {
       this.logger.error(
         `Failed to send influencer invitation email to ${dto.email}: ${err instanceof Error ? err.message : String(err)}`,
@@ -303,11 +299,16 @@ export class InfluencerInvitationsService {
     });
 
     try {
-      await this.notificationsService.sendSellerInvitation(invitation.email, {
-        sellerType: 'B2C_SELLER',
+      const rendered = await this.templatesService.render('influencer_invitation', {
         invitationLink: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/accept-invitation?token=${invitation.token}&type=influencer`,
-        message: (invitation as any).message,
+        personalMessage: (invitation as any).message ? `<p>${(invitation as any).message}</p>` : '',
+        commissionRate: String((invitation as any).baseCommissionRate || 10),
       });
+      await this.notificationsService.queueNotification(
+        invitation.email,
+        rendered.subject,
+        rendered.body,
+      );
     } catch (err) {
       this.logger.warn(`Failed to resend influencer invitation email: ${err?.message}`);
     }

@@ -185,10 +185,8 @@ export class PromotionsService {
 
         if (couponIds.length > 0) {
           await tx.couponUsage.deleteMany({ where: { couponId: { in: couponIds } } });
-          await tx.cart.updateMany({
-            where: { couponId: { in: couponIds } },
-            data: { couponId: null },
-          });
+          // Carts referencing these coupons are auto-nulled via the
+          // Cart.coupon relation (onDelete: SetNull on couponCode).
           await tx.coupon.deleteMany({ where: { promotionId: id } });
         }
 
