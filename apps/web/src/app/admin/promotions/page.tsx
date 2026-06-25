@@ -380,7 +380,7 @@ export default function AdminPromotionsPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
         ) : (
-          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg overflow-hidden">
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg overflow-x-auto">
             <table className="w-full">
               <thead className="bg-hos-bg-secondary">
                 <tr>
