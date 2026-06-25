@@ -87,6 +87,19 @@ export default function AdminLogisticsPage() {
     }
   };
 
+  const handleDelete = async (partner: { id: string; name?: string }) => {
+    if (!window.confirm(`Are you sure you want to delete "${partner.name || 'this partner'}"?`)) {
+      return;
+    }
+    try {
+      await apiClient.deleteLogisticsPartner(partner.id);
+      toast.success('Logistics partner deleted successfully!');
+      fetchPartners();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete logistics partner');
+    }
+  };
+
   if (loading) {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
@@ -177,7 +190,16 @@ export default function AdminLogisticsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button className="text-hos-gold hover:text-hos-gold">Edit</button>
+                        <div className="flex gap-3">
+                          <button className="text-hos-gold hover:text-hos-gold">Edit</button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(partner)}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

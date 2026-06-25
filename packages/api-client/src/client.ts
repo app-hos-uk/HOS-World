@@ -3298,6 +3298,12 @@ export class ApiClient {
     return this.request<ApiResponse<any[]>>(`/logistics/partners${query}`);
   }
 
+  async deleteLogisticsPartner(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/logistics/partners/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Activity Logs
   async getActivityLogs(filters?: { sellerId?: string; userId?: string; action?: string }): Promise<ApiResponse<any[]>> {
     const params = new URLSearchParams();
