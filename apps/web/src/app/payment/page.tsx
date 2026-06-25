@@ -334,8 +334,17 @@ function PaymentForm({ order }: { order: any }) {
       setLoadingProviders(true);
       const response = await apiClient.getPaymentProviders();
       if (response?.data && response.data.length > 0) {
-        setAvailableProviders(response.data);
-        setSelectedProvider(response.data[0]);
+        const providers = stripePublishableKey.trim()
+          ? response.data
+          : response.data.filter((p: string) => p !== 'stripe');
+        if (providers.length > 0) {
+          setAvailableProviders(providers);
+          setSelectedProvider(providers[0]);
+        } else {
+          setAvailableProviders([]);
+          setSelectedProvider('');
+          toast.error('No payment methods are available. Please contact support.');
+        }
       } else {
         setAvailableProviders([]);
         setSelectedProvider('');
@@ -647,21 +656,6 @@ function PaymentForm({ order }: { order: any }) {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold mx-auto mb-2"></div>
             <p className="text-sm text-hos-text-secondary">Loading payment options...</p>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!stripePublishableKey.trim() && selectedProvider === 'stripe') {
-    return (
-      <div className="bg-hos-bg-secondary border rounded-lg p-4 sm:p-6">
-        <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg text-center">
-          <p className="text-sm text-amber-200 font-medium">
-            Payment processing is being configured. Please try again later.
-          </p>
-          <p className="text-xs text-amber-300/80 mt-2">
-            Card payments are temporarily unavailable. You may still use a gift card if you have one.
-          </p>
         </div>
       </div>
     );
