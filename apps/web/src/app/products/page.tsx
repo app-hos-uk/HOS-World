@@ -14,6 +14,11 @@ const ITEMS_PER_PAGE = 20;
 
 /** Survives ProductsContent remount when router.replace updates searchParams. */
 let cachedBaselineFacets: Record<string, Record<string, number>> = {};
+let cachedListing: { products: any[]; totalHits: number; totalPages: number } = {
+  products: [],
+  totalHits: 0,
+  totalPages: 1,
+};
 
 const SORT_OPTIONS = [
   { value: '', label: 'Relevance' },
@@ -142,12 +147,14 @@ function ProductsContent() {
   const router = useRouter();
   const { formatPrice } = useCurrency();
 
-  const [products, setProducts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [totalHits, setTotalHits] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [products, setProducts] = useState<any[]>(() => cachedListing.products);
+  const [loading, setLoading] = useState(() => cachedListing.products.length === 0);
+  const [totalHits, setTotalHits] = useState(() => cachedListing.totalHits);
+  const [totalPages, setTotalPages] = useState(() => cachedListing.totalPages);
   const [processingTimeMs, setProcessingTimeMs] = useState(0);
-  const [facets, setFacets] = useState<Record<string, Record<string, number>>>({});
+  const [facets, setFacets] = useState<Record<string, Record<string, number>>>(() =>
+    Object.keys(cachedBaselineFacets).length > 0 ? cachedBaselineFacets : {},
+  );
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [priceDraft, setPriceDraft] = useState({ min: '', max: '' });
@@ -262,9 +269,14 @@ function ProductsContent() {
           setTotalHits(total);
           const fromTotal = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
           const fromApi = Number(data.totalPages);
-          setTotalPages(
-            Number.isFinite(fromApi) && fromApi > 0 ? Math.max(fromApi, fromTotal) : fromTotal,
-          );
+          const resolvedTotalPages =
+            Number.isFinite(fromApi) && fromApi > 0 ? Math.max(fromApi, fromTotal) : fromTotal;
+          setTotalPages(resolvedTotalPages);
+          cachedListing = {
+            products: data.products || [],
+            totalHits: total,
+            totalPages: resolvedTotalPages,
+          };
           setProcessingTimeMs(data.processingTimeMs || 0);
           const filtersChanged = prevFilterKey !== filterDepsKey;
           if (data.facets && filtersChanged) {
@@ -340,6 +352,20 @@ function ProductsContent() {
     });
   };
 
+  /** Keep sidebar filters visible during remount/refetch (avoids "No fandoms available" flash). */
+  const displayFacets = useMemo(() => {
+    const hasFandomFacets = facets.fandom && Object.keys(facets.fandom).length > 0;
+    const hasCategoryFacets = facets.category && Object.keys(facets.category).length > 0;
+    if (hasFandomFacets || hasCategoryFacets) return facets;
+    if (Object.keys(cachedBaselineFacets).length > 0) {
+      return mergeFacetsForDisplay(cachedBaselineFacets, cachedBaselineFacets, {
+        categories: state.categories,
+        fandoms: state.fandoms,
+      });
+    }
+    return facets;
+  }, [facets, state.categories, state.fandoms]);
+
   const startIndex = (state.page - 1) * ITEMS_PER_PAGE + 1;
   const endIndex = Math.min(state.page * ITEMS_PER_PAGE, totalHits);
 
@@ -392,8 +418,8 @@ function ProductsContent() {
       <div>
         <h3 className="text-sm font-semibold text-hos-text-secondary mb-2">Category</h3>
         <div className="space-y-1.5 max-h-48 overflow-y-auto">
-          {facets.category && Object.entries(facets.category).length > 0 ? (
-            Object.entries(facets.category)
+          {displayFacets.category && Object.entries(displayFacets.category).length > 0 ? (
+            Object.entries(displayFacets.category)
               .sort(([, a], [, b]) => b - a)
               .map(([name, count]) => (
                 <label key={name} className="flex items-center gap-2 cursor-pointer text-sm text-hos-text-secondary hover:text-hos-gold">
@@ -407,6 +433,8 @@ function ProductsContent() {
                   <span className="text-xs text-hos-text-muted">({count})</span>
                 </label>
               ))
+          ) : loading && Object.keys(cachedBaselineFacets).length === 0 ? (
+            <p className="text-xs text-hos-text-muted italic">Loading categories...</p>
           ) : (
             <p className="text-xs text-hos-text-muted italic">No categories available</p>
           )}
@@ -417,8 +445,8 @@ function ProductsContent() {
       <div>
         <h3 className="text-sm font-semibold text-hos-text-secondary mb-2">Fandom</h3>
         <div className="space-y-1.5 max-h-48 overflow-y-auto">
-          {facets.fandom && Object.entries(facets.fandom).length > 0 ? (
-            Object.entries(facets.fandom)
+          {displayFacets.fandom && Object.entries(displayFacets.fandom).length > 0 ? (
+            Object.entries(displayFacets.fandom)
               .sort(([, a], [, b]) => b - a)
               .map(([name, count]) => (
                 <label key={name} className="flex items-center gap-2 cursor-pointer text-sm text-hos-text-secondary hover:text-hos-gold">
@@ -432,6 +460,8 @@ function ProductsContent() {
                   <span className="text-xs text-hos-text-muted">({count})</span>
                 </label>
               ))
+          ) : loading && Object.keys(cachedBaselineFacets).length === 0 ? (
+            <p className="text-xs text-hos-text-muted italic">Loading fandoms...</p>
           ) : (
             <p className="text-xs text-hos-text-muted italic">No fandoms available</p>
           )}
