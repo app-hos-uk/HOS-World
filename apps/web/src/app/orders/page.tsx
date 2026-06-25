@@ -314,12 +314,6 @@ export default function OrdersPage() {
                     >
                       View Details
                     </button>
-                    <Link
-                      href={`/orders/${order.id}`}
-                      className="px-4 py-2 border border-hos-border-accent text-hos-gold-hover rounded-lg hover:bg-hos-gold/10 transition-colors font-medium text-sm"
-                    >
-                      View Full Details
-                    </Link>
                     {(order.trackingNumber || order.trackingCode) && (
                       <Link
                         href={`/track-order?orderNumber=${order.orderNumber || order.id}`}
