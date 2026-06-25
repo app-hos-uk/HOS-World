@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -54,6 +54,8 @@ export default function CustomerDashboardPage() {
   const { user } = useAuth();
   const { formatPrice } = useCurrency();
   const [loading, setLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const hasLoadedOnceRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<DashboardOrder[]>([]);
@@ -85,7 +87,7 @@ export default function CustomerDashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedOnceRef.current) setLoading(true);
       setError(null);
 
       // Fetch orders
@@ -187,6 +189,8 @@ export default function CustomerDashboardPage() {
       setError(err.message || 'Failed to load dashboard');
     } finally {
       setLoading(false);
+      hasLoadedOnceRef.current = true;
+      setHasLoadedOnce(true);
     }
   };
 
@@ -282,7 +286,7 @@ export default function CustomerDashboardPage() {
     return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
   };
 
-  if (loading) {
+  if (loading && !hasLoadedOnce) {
     return (
       <RouteGuard allowedRoles={['CUSTOMER']}>
         <div className="min-h-screen bg-hos-bg-secondary">
