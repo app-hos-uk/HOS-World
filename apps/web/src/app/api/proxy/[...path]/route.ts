@@ -40,10 +40,8 @@ async function handler(req: NextRequest) {
   headers.set('X-Forwarded-Host', req.headers.get('host') || '');
   headers.set('X-Forwarded-Proto', req.headers.get('x-forwarded-proto') || req.nextUrl.protocol.replace(':', '') || 'https');
 
-  const body =
-    req.method !== 'GET' && req.method !== 'HEAD'
-      ? await req.arrayBuffer()
-      : undefined;
+  const hasBody = req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'DELETE';
+  const body = hasBody ? await req.arrayBuffer() : undefined;
 
   const upstream = await fetch(target, {
     method: req.method,
@@ -51,7 +49,7 @@ async function handler(req: NextRequest) {
     body,
     redirect: 'manual',
     // @ts-expect-error — Next.js extended fetch supports duplex for streaming
-    duplex: 'half',
+    ...(hasBody ? { duplex: 'half' } : {}),
   });
 
   const resHeaders = new Headers();

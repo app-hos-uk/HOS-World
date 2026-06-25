@@ -80,11 +80,14 @@ export class ApiClient {
       throw new Error(errorMessage);
     }
 
+    const method = (options.method || 'GET').toUpperCase();
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
       ...(options.headers as Record<string, string> || {}),
     };
+    if (method !== 'GET' && method !== 'HEAD' && method !== 'DELETE') {
+      headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+    }
 
     const url = `${this.baseUrl}${endpoint}`;
 
