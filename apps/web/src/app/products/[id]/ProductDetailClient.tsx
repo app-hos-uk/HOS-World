@@ -160,7 +160,14 @@ export default function ProductDetailClient() {
     const check = async () => {
       try {
         const response = await apiClient.checkWishlistStatus(product.id);
-        if (!cancelled) setIsInWishlist(response?.data?.inWishlist ?? false);
+        if (!cancelled) {
+          const payload = response?.data;
+          const inWishlist =
+            typeof payload === 'object' && payload !== null && 'inWishlist' in payload
+              ? Boolean((payload as { inWishlist?: boolean }).inWishlist)
+              : false;
+          setIsInWishlist(inWishlist);
+        }
       } catch {
         if (!cancelled) setIsInWishlist(false);
       }
@@ -213,7 +220,13 @@ export default function ProductDetailClient() {
         wishlistAnimationTimeoutRef.current = null;
       }
       setWishlistAnimating(false);
-      toast.error(err.message || 'Failed to update wishlist');
+      const msg = err?.message || '';
+      if (msg.toLowerCase().includes('not found in wishlist')) {
+        setIsInWishlist(false);
+      } else if (msg.toLowerCase().includes('already in wishlist')) {
+        setIsInWishlist(true);
+      }
+      toast.error(msg || 'Failed to update wishlist');
     }
   };
 
