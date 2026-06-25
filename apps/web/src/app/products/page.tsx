@@ -48,6 +48,31 @@ function parseSearchParams(params: URLSearchParams): SearchState {
   };
 }
 
+/** Keep all baseline facet options visible so users can multi-select fandoms/categories. */
+function mergeFacetsForDisplay(
+  baseline: Record<string, Record<string, number>>,
+  incoming: Record<string, Record<string, number>>,
+  selected: { categories: string[]; fandoms: string[] },
+): Record<string, Record<string, number>> {
+  const mergeKey = (key: string, selectedValues: string[]) => {
+    const base = baseline[key] || {};
+    const inc = incoming[key] || {};
+    const merged = { ...base, ...inc };
+    for (const val of selectedValues) {
+      if (merged[val] === undefined) {
+        merged[val] = base[val] ?? inc[val] ?? 0;
+      }
+    }
+    return merged;
+  };
+
+  return {
+    ...incoming,
+    category: mergeKey('category', selected.categories),
+    fandom: mergeKey('fandom', selected.fandoms),
+  };
+}
+
 function buildSearchParams(state: SearchState): string {
   const params = new URLSearchParams();
   if (state.query) params.set('q', state.query);
@@ -126,7 +151,8 @@ function ProductsContent() {
   const priceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [state, setState] = useState<SearchState>(() => parseSearchParams(searchParams));
-  const isInternalNavRef = useRef(false);
+  const internalNavCountRef = useRef(0);
+  const baselineFacetsRef = useRef<Record<string, Record<string, number>>>({});
 
   const filterDepsKey = useMemo(
     () =>
@@ -159,8 +185,8 @@ function ProductsContent() {
 
   // Sync state from URL when searchParams change (browser back/forward)
   useEffect(() => {
-    if (isInternalNavRef.current) {
-      isInternalNavRef.current = false;
+    if (internalNavCountRef.current > 0) {
+      internalNavCountRef.current -= 1;
       return;
     }
     setState(parseSearchParams(searchParams));
@@ -175,7 +201,7 @@ function ProductsContent() {
         next.page = 1;
       }
       const qs = buildSearchParams(next);
-      isInternalNavRef.current = true;
+      internalNavCountRef.current += 1;
       router.replace(`/products${qs ? `?${qs}` : ''}`, { scroll: false });
       return next;
     });
@@ -240,7 +266,15 @@ function ProductsContent() {
           setProcessingTimeMs(data.processingTimeMs || 0);
           const filtersChanged = prevFilterKey !== filterDepsKey;
           if (data.facets && filtersChanged) {
-            setFacets(data.facets);
+            if (state.categories.length === 0 && state.fandoms.length === 0) {
+              baselineFacetsRef.current = data.facets;
+            }
+            setFacets(
+              mergeFacetsForDisplay(baselineFacetsRef.current, data.facets, {
+                categories: state.categories,
+                fandoms: state.fandoms,
+              }),
+            );
           }
         }
       } catch (err) {
