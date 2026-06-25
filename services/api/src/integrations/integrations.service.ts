@@ -14,6 +14,7 @@ import {
   IntegrationResponseDto,
   TestConnectionResultDto,
 } from './dto/create-integration.dto';
+import { verifySendGridApiKey, sendViaSendGrid } from '../notifications/sendgrid.client';
 
 /**
  * Provider metadata definitions
@@ -666,13 +667,45 @@ export class IntegrationsService {
     credentials: Record<string, any>,
     isTestMode: boolean,
   ): Promise<TestConnectionResultDto> {
-    // TODO: Implement real SendGrid API test
     if (!credentials.apiKey) {
       return { success: false, message: 'Missing API key' };
     }
+
+    const verify = await verifySendGridApiKey(credentials.apiKey);
+    if (!verify.success) {
+      return { success: false, message: verify.error || 'SendGrid API key verification failed' };
+    }
+
+    const fromEmail = credentials.fromEmail?.trim() || 'noreply@houseofspells.com';
+    const fromName = credentials.fromName?.trim() || 'House of Spells';
+
+    // Optional: send a minimal test to verify sender identity when fromEmail is set
+    if (credentials.fromEmail?.trim()) {
+      const probe = await sendViaSendGrid({
+        apiKey: credentials.apiKey,
+        to: fromEmail,
+        subject: 'SendGrid connection test',
+        html: '<p>SendGrid connection test from House of Spells admin.</p>',
+        fromEmail,
+        fromName,
+      });
+      if (!probe.success) {
+        return {
+          success: false,
+          message: `API key valid but sender test failed: ${probe.error}`,
+        };
+      }
+      return {
+        success: true,
+        message: `SendGrid verified; test message sent to ${fromEmail}`,
+        details: { environment: isTestMode ? 'test' : 'production', messageId: probe.messageId },
+      };
+    }
+
     return {
       success: true,
-      message: 'SendGrid connection verified (placeholder)',
+      message: 'SendGrid API key verified. Set fromEmail to run a sender test.',
+      details: { environment: isTestMode ? 'test' : 'production' },
     };
   }
 }

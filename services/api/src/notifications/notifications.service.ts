@@ -1,9 +1,11 @@
-import { Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, OnModuleInit, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Job } from 'bullmq';
 import { PrismaService } from '../database/prisma.service';
 import { QueueService, JobType } from '../queue/queue.service';
 import { TemplatesService } from '../templates/templates.service';
+import { IntegrationsService } from '../integrations/integrations.service';
+import { sendViaSendGrid } from './sendgrid.client';
 import * as nodemailer from 'nodemailer';
 
 const VALID_NOTIFICATION_TYPES = new Set([
@@ -56,18 +58,21 @@ function escapeHtml(str: string): string {
 export class NotificationsService implements OnModuleInit {
   private transporter: nodemailer.Transporter | null = null;
   private readonly logger = new Logger(NotificationsService.name);
-  private emailEnabled: boolean;
+  private emailEnabled = false;
+  private sendGridActive = false;
 
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
     private queueService: QueueService,
     private templatesService: TemplatesService,
+    private integrationsService: IntegrationsService,
   ) {
     this.initializeEmailTransporter();
   }
 
-  onModuleInit() {
+  async onModuleInit() {
+    await this.detectSendGridProvider();
     this.queueService.registerProcessor(JobType.EMAIL_NOTIFICATION, async (job: Job) => {
       const { to, subject, html, notificationId } = job.data;
       const sent = await this.sendEmail(to, subject, html);
@@ -95,6 +100,63 @@ export class NotificationsService implements OnModuleInit {
       }
     });
     this.logger.log('Registered EMAIL_NOTIFICATION processor with BullMQ');
+  }
+
+  private async detectSendGridProvider(): Promise<void> {
+    try {
+      const integration = await this.integrationsService.getActiveIntegration('EMAIL');
+      if (integration?.provider === 'sendgrid') {
+        this.sendGridActive = true;
+        this.emailEnabled = true;
+        this.logger.log('✅ SendGrid email provider active (admin integrations)');
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn(`SendGrid provider detection failed: ${message}`);
+    }
+  }
+
+  private defaultFromEmail(): string {
+    return this.configService.get('SMTP_FROM', 'noreply@houseofspells.com');
+  }
+
+  private async sendViaActiveSendGrid(to: string, subject: string, html: string): Promise<boolean | null> {
+    if (!this.sendGridActive) {
+      return null;
+    }
+
+    try {
+      const credentials = await this.integrationsService.getDecryptedCredentials('EMAIL', 'sendgrid');
+      const apiKey = credentials.apiKey?.trim();
+      if (!apiKey) {
+        this.logger.warn('SendGrid integration active but apiKey missing');
+        return false;
+      }
+
+      const fromEmail = credentials.fromEmail?.trim() || this.defaultFromEmail();
+      const fromName = credentials.fromName?.trim() || 'House of Spells';
+
+      const result = await sendViaSendGrid({
+        apiKey,
+        to,
+        subject,
+        html,
+        fromEmail,
+        fromName,
+      });
+
+      if (result.success) {
+        this.logger.log(`✅ SendGrid email sent to ${to}: ${subject}`);
+        return true;
+      }
+
+      this.logger.error(`❌ SendGrid failed for ${to}: ${result.error}`);
+      return false;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(`❌ SendGrid send error: ${message}`);
+      return false;
+    }
   }
 
   async queueNotification(to: string, subject: string, html: string, notificationId?: string): Promise<void> {
@@ -135,6 +197,11 @@ export class NotificationsService implements OnModuleInit {
   }
 
   private async sendEmail(to: string, subject: string, html: string): Promise<boolean> {
+    const sendGridResult = await this.sendViaActiveSendGrid(to, subject, html);
+    if (sendGridResult !== null) {
+      return sendGridResult;
+    }
+
     if (!this.emailEnabled || !this.transporter) {
       this.logger.debug(`📧 Email would be sent to ${to}: ${subject} (email disabled)`);
       return false;
@@ -142,17 +209,96 @@ export class NotificationsService implements OnModuleInit {
 
     try {
       await this.transporter.sendMail({
-        from: this.configService.get('SMTP_FROM', 'noreply@hos-marketplace.com'),
+        from: this.defaultFromEmail(),
         to,
         subject,
         html,
       });
-      this.logger.log(`✅ Email sent to ${to}: ${subject}`);
+      this.logger.log(`✅ SMTP email sent to ${to}: ${subject}`);
       return true;
     } catch (error: any) {
       this.logger.error(`❌ Failed to send email to ${to}: ${error?.message}`);
       return false;
     }
+  }
+
+  /**
+   * Admin test — sends immediately (not queued) using active email provider.
+   */
+  async sendTestEmail(to: string): Promise<{
+    success: boolean;
+    provider: 'sendgrid' | 'smtp' | 'none';
+    to: string;
+    from?: string;
+    messageId?: string;
+    error?: string;
+  }> {
+    const email = to?.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new BadRequestException('A valid recipient email is required');
+    }
+
+    const subject = 'House of Spells — Test Email';
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+        <h2 style="color: #4a5568;">Test email from House of Spells</h2>
+        <p>This message confirms that outbound email from the marketplace application is working.</p>
+        <p><strong>Sent at:</strong> ${new Date().toISOString()}</p>
+        <p style="color: #718096; font-size: 12px;">House of Spells Marketplace</p>
+      </div>
+    `;
+
+    if (this.sendGridActive) {
+      try {
+        const credentials = await this.integrationsService.getDecryptedCredentials('EMAIL', 'sendgrid');
+        const apiKey = credentials.apiKey?.trim();
+        if (!apiKey) {
+          throw new BadRequestException('SendGrid is active but API key is missing');
+        }
+        const fromEmail = credentials.fromEmail?.trim() || this.defaultFromEmail();
+        const fromName = credentials.fromName?.trim() || 'House of Spells';
+        const result = await sendViaSendGrid({
+          apiKey,
+          to: email,
+          subject,
+          html,
+          fromEmail,
+          fromName,
+        });
+        return {
+          success: result.success,
+          provider: 'sendgrid',
+          to: email,
+          from: fromEmail,
+          messageId: result.messageId,
+          error: result.error,
+        };
+      } catch (error: unknown) {
+        if (error instanceof BadRequestException) {
+          throw error;
+        }
+        const message = error instanceof Error ? error.message : String(error);
+        return { success: false, provider: 'sendgrid', to: email, error: message };
+      }
+    }
+
+    if (this.emailEnabled && this.transporter) {
+      const sent = await this.sendEmail(email, subject, html);
+      return {
+        success: sent,
+        provider: 'smtp',
+        to: email,
+        from: this.defaultFromEmail(),
+        error: sent ? undefined : 'SMTP send failed',
+      };
+    }
+
+    return {
+      success: false,
+      provider: 'none',
+      to: email,
+      error: 'No email provider configured. Activate SendGrid in Admin → Integrations or set SMTP env vars.',
+    };
   }
 
   async sendSellerInvitation(
@@ -569,7 +715,7 @@ export class NotificationsService implements OnModuleInit {
   }
 
   getChannelHealth(): {
-    email: { configured: boolean; enabled: boolean };
+    email: { configured: boolean; enabled: boolean; provider?: string };
     queue: { available: boolean };
     sms: { configured: boolean };
     whatsapp: { configured: boolean };
@@ -577,10 +723,12 @@ export class NotificationsService implements OnModuleInit {
     const smtpHost = this.configService.get<string>('SMTP_HOST');
     const twilioSid = this.configService.get<string>('TWILIO_ACCOUNT_SID');
     const twilioWhatsApp = this.configService.get<string>('TWILIO_WHATSAPP_FROM');
+    const smtpConfigured = Boolean(smtpHost && this.configService.get<string>('SMTP_USER'));
     return {
       email: {
-        configured: Boolean(smtpHost && this.configService.get<string>('SMTP_USER')),
+        configured: smtpConfigured || this.sendGridActive,
         enabled: this.emailEnabled,
+        provider: this.sendGridActive ? 'sendgrid' : smtpConfigured ? 'smtp' : undefined,
       },
       queue: { available: true },
       sms: { configured: Boolean(twilioSid) },

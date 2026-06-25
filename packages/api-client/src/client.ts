@@ -5901,6 +5901,10 @@ export class ApiClient {
     return this.request<ApiResponse<any>>(`/notifications${qs}`, { method: 'GET' });
   }
 
+  async getNotificationChannelHealth(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/notifications/health', { method: 'GET' });
+  }
+
   async markNotificationRead(id: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/notifications/${id}/read`, { method: 'PUT' });
   }
@@ -5924,6 +5928,13 @@ export class ApiClient {
       `/notifications/admin/failed-jobs/${id}/retry`,
       { method: 'POST' }
     );
+  }
+
+  async sendTestEmail(to: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/notifications/admin/test-email', {
+      method: 'POST',
+      body: JSON.stringify({ to }),
+    });
   }
 
   // ===== Support: Tickets =====

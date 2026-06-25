@@ -6,6 +6,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { EmailTestPanel } from '@/components/admin/EmailTestPanel';
 import { Dialog, Transition } from '@headlessui/react';
 
 interface Integration {
@@ -301,6 +302,9 @@ export default function IntegrationsPage() {
                   </div>
 
                   <div className="p-6">
+                    {category === 'EMAIL' && (
+                      <EmailTestPanel className="mb-6" />
+                    )}
                     {categoryIntegrations.length === 0 ? (
                       <div className="text-center py-8 text-hos-text-muted">
                         <p>No integrations configured for this category.</p>

@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Query,
+  Body,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
+import { SendTestEmailDto } from './dto/send-test-email.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -34,6 +36,25 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Notification channel health (public)' })
   async getHealth(): Promise<ApiResponse<any>> {
     return { data: this.notificationsService.getChannelHealth(), message: 'Notification channel status' };
+  }
+
+  @Post('admin/test-email')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
+  @ApiOperation({
+    summary: 'Send test email (admin)',
+    description:
+      'Sends a test email using the active email provider (SendGrid integration or SMTP).',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Test email attempted' })
+  async sendTestEmail(@Body() dto: SendTestEmailDto): Promise<ApiResponse<any>> {
+    const result = await this.notificationsService.sendTestEmail(dto.to);
+    return {
+      data: result,
+      message: result.success
+        ? `Test email sent to ${result.to} via ${result.provider}`
+        : `Test email failed: ${result.error || 'unknown error'}`,
+    };
   }
 
   @Get('admin/failed-jobs')

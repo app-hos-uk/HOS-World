@@ -6,6 +6,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { EmailTestPanel } from '@/components/admin/EmailTestPanel';
 
 const defaultSettings = {
   // General Settings
@@ -370,8 +371,16 @@ export default function AdminSettingsPage() {
                         Enable Email Notifications
                       </label>
                     </div>
+                    <p className="text-xs text-hos-text-muted">
+                      For production, configure SendGrid under{' '}
+                      <Link href="/admin/settings/integrations" className="text-hos-gold hover:text-hos-gold-hover">
+                        Settings → Integrations → Email Services
+                      </Link>
+                      . SMTP fields here are not persisted to the server yet.
+                    </p>
                   </div>
                 </div>
+                <EmailTestPanel showIntegrationsLink />
               </div>
             )}
 
