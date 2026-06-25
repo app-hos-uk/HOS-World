@@ -11,7 +11,12 @@ END $$;
 
 DO $$
 BEGIN
-  ALTER TABLE "vendor_products" ADD CONSTRAINT "vendor_products_stock_non_negative" CHECK ("vendorStock" >= 0);
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'vendor_products'
+  ) THEN
+    ALTER TABLE "vendor_products" ADD CONSTRAINT "vendor_products_stock_non_negative" CHECK ("vendorStock" >= 0);
+  END IF;
 EXCEPTION WHEN duplicate_object THEN
   RAISE NOTICE 'Constraint vendor_products_stock_non_negative already exists, skipping';
 END $$;

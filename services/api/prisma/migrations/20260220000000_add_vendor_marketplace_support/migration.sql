@@ -125,3 +125,11 @@ ALTER TYPE "OrderStatus" ADD VALUE IF NOT EXISTS 'REJECTED';
 
 -- Transaction default currency to USD
 DO $$ BEGIN ALTER TABLE "transactions" ALTER COLUMN "currency" SET DEFAULT 'USD'; EXCEPTION WHEN OTHERS THEN NULL; END $$;
+
+-- Stock non-negative constraint (vendor_products created in this migration)
+DO $$
+BEGIN
+  ALTER TABLE "vendor_products" ADD CONSTRAINT "vendor_products_stock_non_negative" CHECK ("vendorStock" >= 0);
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'Constraint vendor_products_stock_non_negative already exists, skipping';
+END $$;
