@@ -48,7 +48,6 @@ async function handler(req: NextRequest) {
     headers,
     body,
     redirect: 'manual',
-    // @ts-expect-error — Next.js extended fetch supports duplex for streaming
     ...(hasBody ? { duplex: 'half' } : {}),
   });
 
