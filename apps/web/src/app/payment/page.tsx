@@ -652,6 +652,21 @@ function PaymentForm({ order }: { order: any }) {
     );
   }
 
+  if (!stripePublishableKey.trim() && selectedProvider === 'stripe') {
+    return (
+      <div className="bg-hos-bg-secondary border rounded-lg p-4 sm:p-6">
+        <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg text-center">
+          <p className="text-sm text-amber-200 font-medium">
+            Payment processing is being configured. Please try again later.
+          </p>
+          <p className="text-xs text-amber-300/80 mt-2">
+            Card payments are temporarily unavailable. You may still use a gift card if you have one.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-hos-bg-secondary border rounded-lg p-4 sm:p-6 relative">
       {processing && (
