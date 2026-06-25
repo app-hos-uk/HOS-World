@@ -279,17 +279,17 @@ export default function AdminDashboardPage() {
               <ChartCard title="Orders by Status" subtitle="Current order distribution">
                 {orderStatusData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <PieChart margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
                     <Pie
                       data={orderStatusData}
                       cx="50%"
-                      cy="50%"
+                      cy="45%"
                       innerRadius={60}
                       outerRadius={85}
                       fill="#8884d8"
                       paddingAngle={3}
                       dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      nameKey="name"
                       labelLine={false}
                     >
                       {orderStatusData.map((entry, index) => (
@@ -297,6 +297,21 @@ export default function AdminDashboardPage() {
                       ))}
                     </Pie>
                     <Tooltip contentStyle={DARK_CHART_TOOLTIP} />
+                    <Legend
+                      verticalAlign="bottom"
+                      align="center"
+                      layout="horizontal"
+                      wrapperStyle={{ paddingTop: 8 }}
+                      formatter={(value, entry) => {
+                        const percent = (entry?.payload as { percent?: number })?.percent;
+                        return (
+                          <span className="text-xs text-hos-text-secondary">
+                            {value}
+                            {typeof percent === 'number' ? ` ${(percent * 100).toFixed(0)}%` : ''}
+                          </span>
+                        );
+                      }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
                 ) : (
@@ -317,26 +332,11 @@ export default function AdminDashboardPage() {
                   <BarChart
                     data={topProductsData}
                     layout="horizontal"
-                    margin={{ top: 10, right: 12, left: 8, bottom: 56 }}
+                    margin={{ top: 10, right: 12, left: 8, bottom: 8 }}
                     barCategoryGap="20%"
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke={DARK_CHART_GRID} vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={DARK_CHART_GRID} horizontal={false} />
                     <XAxis
-                      dataKey="name"
-                      type="category"
-                      stroke={DARK_CHART_AXIS}
-                      fontSize={10}
-                      tickLine={false}
-                      axisLine={{ stroke: DARK_CHART_GRID }}
-                      interval={0}
-                      height={56}
-                      tickFormatter={(name: string) =>
-                        name.length > 14 ? `${name.slice(0, 12)}…` : name
-                      }
-                      angle={-30}
-                      textAnchor="end"
-                    />
-                    <YAxis
                       type="number"
                       stroke={DARK_CHART_AXIS}
                       fontSize={12}
@@ -344,7 +344,18 @@ export default function AdminDashboardPage() {
                       axisLine={{ stroke: DARK_CHART_GRID }}
                       domain={[0, 'auto']}
                       allowDecimals={false}
-                      width={40}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      stroke={DARK_CHART_AXIS}
+                      fontSize={10}
+                      tickLine={false}
+                      axisLine={{ stroke: DARK_CHART_GRID }}
+                      width={120}
+                      tickFormatter={(name: string) =>
+                        name.length > 14 ? `${name.slice(0, 12)}…` : name
+                      }
                     />
                     <Tooltip
                       formatter={(value: number) => [`${value}`, 'Sales']}
@@ -353,7 +364,7 @@ export default function AdminDashboardPage() {
                     <Bar
                       dataKey="sales"
                       fill="#a855f7"
-                      radius={[6, 6, 0, 0]}
+                      radius={[0, 6, 6, 0]}
                       name="Sales"
                       maxBarSize={48}
                       isAnimationActive={false}
