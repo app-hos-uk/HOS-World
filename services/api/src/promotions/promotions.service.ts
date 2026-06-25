@@ -175,15 +175,36 @@ export class PromotionsService {
   async delete(id: string) {
     await this.findOne(id);
 
-    await this.prisma.coupon.deleteMany({
-      where: { promotionId: id },
-    });
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        const coupons = await tx.coupon.findMany({
+          where: { promotionId: id },
+          select: { id: true },
+        });
+        const couponIds = coupons.map((c) => c.id);
 
-    const result = await this.prisma.promotion.delete({
-      where: { id },
-    });
+        if (couponIds.length > 0) {
+          await tx.couponUsage.deleteMany({ where: { couponId: { in: couponIds } } });
+          await tx.cart.updateMany({
+            where: { couponId: { in: couponIds } },
+            data: { couponId: null },
+          });
+          await tx.coupon.deleteMany({ where: { promotionId: id } });
+        }
+
+        await tx.promotionUsage.deleteMany({ where: { promotionId: id } });
+        await tx.promotion.delete({ where: { id } });
+      });
+    } catch (err: any) {
+      throw new BadRequestException(
+        err?.message?.includes('Foreign key')
+          ? 'Cannot delete promotion: it is still referenced by orders or carts. Deactivate it instead.'
+          : `Failed to delete promotion: ${err?.message || 'unknown error'}`,
+      );
+    }
+
     await this.invalidatePromoCache();
-    return result;
+    return { message: 'Promotion deleted successfully' };
   }
 
   /**
