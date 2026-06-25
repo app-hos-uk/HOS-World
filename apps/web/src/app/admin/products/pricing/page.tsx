@@ -43,6 +43,8 @@ export default function PriceManagementPage() {
     taxRate: '',
     currency: 'USD',
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 20;
 
   useEffect(() => {
     fetchProducts();
@@ -103,6 +105,22 @@ export default function PriceManagementPage() {
 
     return filtered;
   }, [products, searchQuery, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredProducts.slice(start, start + PAGE_SIZE);
+  }, [filteredProducts, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const handleEditPricing = (product: any) => {
     setSelectedProduct(product);
@@ -303,7 +321,7 @@ export default function PriceManagementPage() {
                       </td>
                     </tr>
                   ) : (
-                    filteredProducts.map((product) => (
+                    paginatedProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-hos-text-secondary">
@@ -360,6 +378,31 @@ export default function PriceManagementPage() {
                   )}
                 </tbody>
               </table>
+            {filteredProducts.length > PAGE_SIZE && (
+              <div className="flex items-center justify-between px-6 py-3 border-t border-hos-border">
+                <p className="text-sm text-hos-text-muted">
+                  Page {currentPage} of {totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 text-sm font-medium border border-hos-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hos-bg-tertiary"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 text-sm font-medium border border-hos-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hos-bg-tertiary"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
             </div>
           )}
 
