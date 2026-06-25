@@ -241,6 +241,9 @@ export default function AdminCategoriesPage() {
   };
 
   const handleToggleActive = async (category: Category) => {
+    if (category.isActive && !window.confirm(`Are you sure you want to deactivate "${category.name}"?`)) {
+      return;
+    }
     try {
       await apiClient.updateCategory(category.id, {
         isActive: !category.isActive,
