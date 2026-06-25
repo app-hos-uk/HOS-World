@@ -302,15 +302,11 @@ export class CategoriesService {
       throw new NotFoundException('Category not found');
     }
 
-    if (category.children.length > 0) {
+    if (category.children.length > 0 || category._count.products > 0) {
+      const subCount = category.children.length;
+      const productCount = category._count.products;
       throw new BadRequestException(
-        'Cannot delete category with subcategories. Delete or move subcategories first.',
-      );
-    }
-
-    if (category._count.products > 0) {
-      throw new BadRequestException(
-        'Cannot delete category with products. Reassign products first.',
+        `Cannot delete: category has ${subCount} subcategor${subCount === 1 ? 'y' : 'ies'} and ${productCount} product${productCount === 1 ? '' : 's'}. Remove them first.`,
       );
     }
 
