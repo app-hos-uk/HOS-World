@@ -51,6 +51,10 @@ function LoginPageInner() {
   const [currencyPreference, setCurrencyPreference] = useState('USD');
   const [inviteCode, setInviteCode] = useState('');
   const requiresInviteCode = process.env.NEXT_PUBLIC_REGISTRATION_REQUIRES_INVITE === 'true';
+  const oauthGoogleEnabled = process.env.NEXT_PUBLIC_OAUTH_GOOGLE_ENABLED === 'true';
+  const oauthFacebookEnabled = process.env.NEXT_PUBLIC_OAUTH_FACEBOOK_ENABLED === 'true';
+  const oauthAppleEnabled = process.env.NEXT_PUBLIC_OAUTH_APPLE_ENABLED === 'true';
+  const anyOAuthEnabled = oauthGoogleEnabled || oauthFacebookEnabled || oauthAppleEnabled;
   const oauthBaseUrl = getDirectApiBaseUrl() || 'https://hos-marketplaceapi-production.up.railway.app/api';
 
   // Set mounted state after hydration to prevent server/client mismatch
@@ -944,41 +948,55 @@ function LoginPageInner() {
               </button>
             </div>
 
-            {/* Social Login */}
-            <div className="mt-4 sm:mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-hos-border"></div>
+            {/* Social Login — only shown when at least one provider is enabled via env */}
+            {anyOAuthEnabled && (
+              <div className="mt-4 sm:mt-6">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-hos-border"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs sm:text-sm">
+                    <span className="px-2 bg-hos-bg-secondary text-hos-text-muted">Or continue with</span>
+                  </div>
                 </div>
-                <div className="relative flex justify-center text-xs sm:text-sm">
-                  <span className="px-2 bg-hos-bg-secondary text-hos-text-muted">Or continue with</span>
-                </div>
-              </div>
 
-              <div className="mt-3 sm:mt-4 grid grid-cols-3 gap-2 sm:gap-3">
-                <button
-                  type="button"
-                  onClick={() => startOAuth('google')}
-                  className="flex items-center justify-center px-2 sm:px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
-                >
-                  <span className="text-xs sm:text-sm font-medium">Google</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => startOAuth('facebook')}
-                  className="flex items-center justify-center px-2 sm:px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
-                >
-                  <span className="text-xs sm:text-sm font-medium">Facebook</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => startOAuth('apple')}
-                  className="flex items-center justify-center px-2 sm:px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
-                >
-                  <span className="text-xs sm:text-sm font-medium">Apple</span>
-                </button>
+                <div className={`mt-3 sm:mt-4 grid gap-2 sm:gap-3 ${
+                  [oauthGoogleEnabled, oauthFacebookEnabled, oauthAppleEnabled].filter(Boolean).length === 3
+                    ? 'grid-cols-3'
+                    : [oauthGoogleEnabled, oauthFacebookEnabled, oauthAppleEnabled].filter(Boolean).length === 2
+                      ? 'grid-cols-2'
+                      : 'grid-cols-1'
+                }`}>
+                  {oauthGoogleEnabled && (
+                    <button
+                      type="button"
+                      onClick={() => startOAuth('google')}
+                      className="flex items-center justify-center px-2 sm:px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
+                    >
+                      <span className="text-xs sm:text-sm font-medium">Google</span>
+                    </button>
+                  )}
+                  {oauthFacebookEnabled && (
+                    <button
+                      type="button"
+                      onClick={() => startOAuth('facebook')}
+                      className="flex items-center justify-center px-2 sm:px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
+                    >
+                      <span className="text-xs sm:text-sm font-medium">Facebook</span>
+                    </button>
+                  )}
+                  {oauthAppleEnabled && (
+                    <button
+                      type="button"
+                      onClick={() => startOAuth('apple')}
+                      className="flex items-center justify-center px-2 sm:px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
+                    >
+                      <span className="text-xs sm:text-sm font-medium">Apple</span>
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>
