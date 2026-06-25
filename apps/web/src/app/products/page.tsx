@@ -198,6 +198,9 @@ function ProductsContent() {
   useEffect(() => {
     let cancelled = false;
 
+    const prevFilterKey = prevFilterDepsKeyRef.current;
+    prevFilterDepsKeyRef.current = filterDepsKey;
+
     const fetchProducts = async () => {
       setLoading(true);
       setFetchError(null);
@@ -229,7 +232,7 @@ function ProductsContent() {
             Number.isFinite(fromApi) && fromApi > 0 ? Math.max(fromApi, fromTotal) : fromTotal,
           );
           setProcessingTimeMs(data.processingTimeMs || 0);
-          const filtersChanged = prevFilterDepsKeyRef.current !== filterDepsKey;
+          const filtersChanged = prevFilterKey !== filterDepsKey;
           if (data.facets && filtersChanged) {
             setFacets(data.facets);
           }
@@ -272,7 +275,6 @@ function ProductsContent() {
     };
 
     fetchProducts();
-    prevFilterDepsKeyRef.current = filterDepsKey;
     return () => { cancelled = true; };
   }, [state.page, filterDepsKey, state.query]);
 

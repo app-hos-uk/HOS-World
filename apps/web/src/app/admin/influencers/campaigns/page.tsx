@@ -92,8 +92,8 @@ export default function AdminInfluencerCampaignsPage() {
       toast.error('Start date cannot be in the past');
       return;
     }
-    if (end <= start) {
-      toast.error('End date must be after start date');
+    if (end < start) {
+      toast.error('End date must be on or after start date');
       return;
     }
 
@@ -121,9 +121,13 @@ export default function AdminInfluencerCampaignsPage() {
   };
 
   const handleUpdateStatus = async (campaign: Campaign, status: string) => {
-    if (status === 'ACTIVE' && new Date(campaign.endDate) < new Date()) {
-      toast.error('Cannot resume an expired campaign');
-      return;
+    if (status === 'ACTIVE') {
+      const endDate = new Date(campaign.endDate);
+      endDate.setHours(23, 59, 59, 999);
+      if (endDate < new Date()) {
+        toast.error('Cannot resume an expired campaign');
+        return;
+      }
     }
     try {
       await api.updateCampaign(campaign.id, { status });

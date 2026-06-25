@@ -132,7 +132,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [fetchCart, isAuthenticated],
   );
 
-  const cartItemCount = cart?.items?.reduce((sum, item) => sum + item.quantity, 0) ?? 0;
+  const cartItemCount = cart?.items?.reduce((sum, item) => sum + (item.quantity || 1), 0) ?? 0;
 
   return (
     <CartContext.Provider
