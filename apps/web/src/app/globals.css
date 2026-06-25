@@ -458,7 +458,7 @@ h6 {
   .btn-storefront-primary {
     @apply inline-flex items-center justify-center gap-2 font-ui font-semibold text-sm px-6 py-3.5 rounded-full
            bg-gradient-to-b from-hos-gold-hover to-hos-gold text-[#1a1406]
-           shadow-[0_8px_28px_rgba(201,162,39,0.25)] hover:brightness-110 hover:shadow-[0_10px_32px_rgba(201,162,39,0.35)]
+           shadow-[0_8px_28px_rgba(201,162,39,0.25)] hover:brightness-110 hover:text-[#1a1406] hover:shadow-[0_10px_32px_rgba(201,162,39,0.35)]
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hos-gold-ring focus-visible:ring-offset-2 focus-visible:ring-offset-hos-bg
            transition-all duration-200;
   }
@@ -466,7 +466,7 @@ h6 {
   .btn-storefront-ghost {
     @apply inline-flex items-center justify-center gap-2 font-ui font-semibold text-sm px-6 py-3.5 rounded-full
            border border-hos-border text-hos-text-primary bg-black/35
-           hover:border-hos-gold-dim transition-all duration-200;
+           hover:border-hos-gold-dim hover:text-hos-text-primary hover:bg-black/50 transition-all duration-200;
   }
 
   .dept-card {
