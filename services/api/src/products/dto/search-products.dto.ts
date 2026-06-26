@@ -90,4 +90,7 @@ export class SearchProductsDto {
   @Min(1)
   @Max(100)
   limit?: number;
+
+  // Internal flag set by authenticated admin/seller controllers; not settable from query string
+  isAdmin?: boolean;
 }

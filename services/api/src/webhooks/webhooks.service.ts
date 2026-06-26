@@ -18,11 +18,36 @@ export class WebhooksService {
    * Create a new webhook
    */
   async create(createDto: CreateWebhookDto) {
-    // Validate URL
+    // Validate URL and block private/internal addresses (SSRF prevention)
+    let parsedUrl: URL;
     try {
-      new URL(createDto.url);
+      parsedUrl = new URL(createDto.url);
     } catch {
       throw new BadRequestException('Invalid webhook URL');
+    }
+
+    const hostname = parsedUrl.hostname.toLowerCase();
+    const blockedPatterns = [
+      /^localhost$/,
+      /^127\./,
+      /^10\./,
+      /^172\.(1[6-9]|2\d|3[01])\./,
+      /^192\.168\./,
+      /^169\.254\./,
+      /^0\./,
+      /^\[::1\]$/,
+      /^\[fc/,
+      /^\[fd/,
+      /^\[fe80/,
+      /\.internal$/,
+      /\.local$/,
+      /\.railway\.internal$/,
+    ];
+    if (blockedPatterns.some((p) => p.test(hostname))) {
+      throw new BadRequestException('Webhook URLs cannot point to private or internal addresses');
+    }
+    if (!['https:', 'http:'].includes(parsedUrl.protocol)) {
+      throw new BadRequestException('Webhook URL must use HTTP or HTTPS');
     }
 
     // Generate secret if not provided

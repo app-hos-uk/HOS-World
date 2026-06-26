@@ -18,6 +18,15 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { PrismaService } from '../database/prisma.service';
 import { LoyaltyService } from './loyalty.service';
 import { AdminLoyaltyAdjustDto } from './dto/admin-adjust.dto';
+import {
+  UpdateLoyaltyTierDto,
+  CreateEarnRuleDto,
+  UpdateEarnRuleDto,
+  CreateRedemptionOptionDto,
+  UpdateRedemptionOptionDto,
+  CreateCampaignDto,
+  UpdateCampaignDto,
+} from './dto/loyalty-admin.dto';
 import { FandomProfileService } from './services/fandom-profile.service';
 
 @ApiTags('admin-loyalty')
@@ -59,7 +68,7 @@ export class LoyaltyAdminController {
   @Put('tiers/:id')
   async updateTier(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: Record<string, unknown>,
+    @Body() body: UpdateLoyaltyTierDto,
   ): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyTier.update({
       where: { id },
@@ -77,7 +86,7 @@ export class LoyaltyAdminController {
   }
 
   @Post('earn-rules')
-  async createEarnRule(@Body() body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+  async createEarnRule(@Body() body: CreateEarnRuleDto): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyEarnRule.create({ data: body as any });
     return { data, message: 'Created' };
   }
@@ -85,7 +94,7 @@ export class LoyaltyAdminController {
   @Put('earn-rules/:id')
   async updateEarnRule(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: Record<string, unknown>,
+    @Body() body: UpdateEarnRuleDto,
   ): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyEarnRule.update({ where: { id }, data: body as any });
     return { data, message: 'Updated' };
@@ -106,7 +115,7 @@ export class LoyaltyAdminController {
   }
 
   @Post('redemption-options')
-  async createRedemptionOption(@Body() body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+  async createRedemptionOption(@Body() body: CreateRedemptionOptionDto): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyRedemptionOption.create({ data: body as any });
     return { data, message: 'Created' };
   }
@@ -114,7 +123,7 @@ export class LoyaltyAdminController {
   @Put('redemption-options/:id')
   async updateRedemptionOption(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: Record<string, unknown>,
+    @Body() body: UpdateRedemptionOptionDto,
   ): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyRedemptionOption.update({ where: { id }, data: body as any });
     return { data, message: 'Updated' };
@@ -143,7 +152,7 @@ export class LoyaltyAdminController {
   }
 
   @Post('campaigns')
-  async createCampaign(@Body() body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+  async createCampaign(@Body() body: CreateCampaignDto): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyBonusCampaign.create({ data: body as any });
     return { data, message: 'Created' };
   }
@@ -151,7 +160,7 @@ export class LoyaltyAdminController {
   @Put('campaigns/:id')
   async updateCampaign(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: Record<string, unknown>,
+    @Body() body: UpdateCampaignDto,
   ): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyBonusCampaign.update({ where: { id }, data: body as any });
     return { data, message: 'Updated' };

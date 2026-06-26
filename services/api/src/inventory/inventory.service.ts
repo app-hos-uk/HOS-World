@@ -101,7 +101,7 @@ export class InventoryService {
   /**
    * Create or update inventory location
    */
-  async upsertInventoryLocation(createDto: CreateInventoryLocationDto) {
+  async upsertInventoryLocation(createDto: CreateInventoryLocationDto, userId?: string, role?: string) {
     if (!Number.isInteger(createDto.quantity) || createDto.quantity < 0) {
       throw new BadRequestException('Quantity must be a non-negative integer');
     }
@@ -112,10 +112,19 @@ export class InventoryService {
     // Verify product exists
     const product = await this.prisma.product.findUnique({
       where: { id: createDto.productId },
+      select: { id: true, sellerId: true },
     });
 
     if (!product) {
       throw new NotFoundException('Product not found');
+    }
+
+    // Non-admin sellers can only manage inventory for their own products
+    if (userId && role && role !== 'ADMIN' && role !== 'FULFILLMENT') {
+      const seller = await this.prisma.seller.findUnique({ where: { userId } });
+      if (!seller || product.sellerId !== seller.id) {
+        throw new ForbiddenException('You can only manage inventory for your own products');
+      }
     }
 
     return this.prisma.inventoryLocation.upsert({

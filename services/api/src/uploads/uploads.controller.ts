@@ -376,7 +376,8 @@ export class UploadsController {
   }
 
   @Get('cloudinary/signature')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get Cloudinary upload signature',

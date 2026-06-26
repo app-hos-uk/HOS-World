@@ -284,9 +284,15 @@ export class ProductsService {
     const limit = Math.min(searchDto.limit || 20, 100);
     const skip = (page - 1) * limit;
 
-    // Build where clause — default to ACTIVE for public browsing; allow override for admin/internal use
+    // Public browsing always shows ACTIVE only; status override requires admin context (isAdmin flag).
+    // Without an explicit admin flag the query param is ignored for security.
+    const requestedStatus = searchDto.status?.toUpperCase();
+    const effectiveStatus =
+      searchDto.isAdmin && requestedStatus
+        ? (requestedStatus as ProductStatus)
+        : ProductStatus.ACTIVE;
     const where: Prisma.ProductWhereInput = {
-      status: (searchDto.status as ProductStatus) || ProductStatus.ACTIVE,
+      status: effectiveStatus,
     };
 
     // Listing eligibility: when browsing publicly (status=ACTIVE), only show products that
@@ -539,6 +545,11 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
 
+    // Public (unauthenticated) context: only return ACTIVE products
+    if ((product as any).status !== 'ACTIVE' && !includeSeller && !includeBundles) {
+      throw new NotFoundException('Product not found');
+    }
+
     return this.mapToProductType(product, includeSeller, includeBundles);
   }
 
@@ -612,9 +623,9 @@ export class ProductsService {
     return this.mapToProductType(product, includeSeller);
   }
 
-  async findBySlugOnly(slug: string, includeSeller: boolean = false): Promise<Product> {
+  async findBySlugOnly(slug: string, includeSeller: boolean = false, requireActive: boolean = true): Promise<Product> {
     const product = await this.prisma.product.findFirst({
-      where: { slug },
+      where: { slug, ...(requireActive ? { status: 'ACTIVE' as any } : {}) },
       include: {
         images: {
           orderBy: { order: 'asc' },

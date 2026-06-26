@@ -46,12 +46,29 @@ export class RefundsService {
       throw new NotFoundException('Return request not found');
     }
 
-    if (returnRequest.status !== 'APPROVED') {
-      throw new BadRequestException('Return request must be approved before processing refund');
+    // Allow PENDING (called during approval transition) or APPROVED (called after)
+    const allowedStatuses = ['PENDING', 'APPROVED'];
+    if (!allowedStatuses.includes(returnRequest.status)) {
+      throw new BadRequestException('Return request must be pending approval or approved before processing refund');
     }
 
     if (data.amount > Number(returnRequest.order.total)) {
       throw new BadRequestException('Refund amount cannot exceed order total');
+    }
+
+    // Cumulative refund cap: sum all existing COMPLETED refunds for this order
+    const existingOrderRefunds = await this.transactionsService.getTransactions({
+      orderId: returnRequest.orderId,
+      type: 'REFUND',
+      status: 'COMPLETED',
+    });
+    const totalRefundedSoFar = (existingOrderRefunds?.transactions || []).reduce(
+      (sum: number, tx: any) => sum + Number(tx.amount || 0), 0,
+    );
+    if (totalRefundedSoFar + data.amount > Number(returnRequest.order.total)) {
+      throw new BadRequestException(
+        `Refund would exceed order total. Already refunded: ${totalRefundedSoFar.toFixed(2)}, requested: ${data.amount.toFixed(2)}, order total: ${Number(returnRequest.order.total).toFixed(2)}`,
+      );
     }
 
     const existingRefund = await this.transactionsService.getTransactions({

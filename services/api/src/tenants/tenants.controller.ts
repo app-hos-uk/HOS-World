@@ -79,8 +79,11 @@ export class TenantsController {
   @ApiOperation({ summary: 'Get tenant by ID' })
   @SwaggerApiResponse({ status: 200, description: 'Tenant retrieved successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Tenant not found' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
-    const tenant = await this.tenantsService.findOne(id);
+  async findOne(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: any,
+  ): Promise<ApiResponse<any>> {
+    const tenant = await this.tenantsService.findOne(id, req.user?.id, req.user?.role);
     return {
       data: tenant,
       message: 'Tenant retrieved successfully',

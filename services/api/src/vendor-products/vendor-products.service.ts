@@ -90,9 +90,9 @@ export class VendorProductsService {
     const limit = query.limit || 20;
     const skip = (page - 1) * limit;
 
-    const orderBy: any = {};
-    const sortBy = query.sortBy || 'createdAt';
-    orderBy[sortBy] = query.sortOrder || 'desc';
+    const allowedSortFields = ['createdAt', 'updatedAt', 'vendorPrice', 'vendorStock', 'status'];
+    const sortBy = allowedSortFields.includes(query.sortBy || '') ? query.sortBy! : 'createdAt';
+    const orderBy: any = { [sortBy]: query.sortOrder || 'desc' };
 
     const [items, total] = await Promise.all([
       this.prisma.vendorProduct.findMany({

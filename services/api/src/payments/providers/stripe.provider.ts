@@ -179,7 +179,7 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
           metadata: params.metadata,
         },
         {
-          idempotencyKey: `refund-${params.paymentId}-${params.amount || 'full'}-${params.metadata?.returnId || Date.now()}`,
+          idempotencyKey: `refund-${params.paymentId}-${params.amount || 'full'}-${params.metadata?.returnId || params.metadata?.reason || 'cancel'}`,
         },
       );
 
@@ -247,14 +247,23 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
 
     try {
       const eventType = event.type;
-      const paymentIntent = event.data.object;
+      const dataObject = event.data.object;
+
+      // For charge events, the PI id is in payment_intent; for PI events, it's .id
+      const isCharge = eventType.startsWith('charge.');
+      const paymentId = isCharge
+        ? (dataObject.payment_intent || dataObject.id)
+        : dataObject.id;
+      const metadata = isCharge
+        ? (dataObject.metadata || {})
+        : (dataObject.metadata || {});
 
       return {
         processed: true,
         eventType,
-        paymentId: paymentIntent.id,
-        orderId: paymentIntent.metadata?.orderId,
-        metadata: paymentIntent.metadata,
+        paymentId,
+        orderId: metadata?.orderId,
+        metadata,
       };
     } catch (error: any) {
       this.logger.error('Failed to process Stripe webhook:', error);

@@ -314,12 +314,14 @@ export class PaymentsService {
     stripePaymentId: string,
     amount: number,
   ): Promise<void> {
+    // Use the actual card amount (passed in), not order.total which includes gift-card coverage
+    const cardAmount = amount > 0 ? amount : Number(order.total);
     let paymentAmountBase: number;
     if (order.currency === this.BASE_CURRENCY) {
-      paymentAmountBase = Number(order.total);
+      paymentAmountBase = cardAmount;
     } else {
       paymentAmountBase = await this.currencyService.convertBetween(
-        Number(order.total),
+        cardAmount,
         order.currency,
         this.BASE_CURRENCY,
       );
@@ -418,6 +420,25 @@ export class PaymentsService {
           currency: order.currency,
         });
       }
+    }
+
+    // Activate influencer commissions for this order now that payment is confirmed
+    try {
+      const pendingCommissions = await this.prisma.influencerCommission.findMany({
+        where: { orderId: order.id, status: 'PENDING' },
+      });
+      for (const comm of pendingCommissions) {
+        await this.prisma.influencer.update({
+          where: { id: comm.influencerId },
+          data: {
+            totalConversions: { increment: 1 },
+            totalSalesAmount: { increment: comm.orderTotal },
+            totalCommission: { increment: comm.amount },
+          },
+        });
+      }
+    } catch (commErr: any) {
+      this.logger.warn(`Influencer commission activation failed for order ${order.id}: ${commErr?.message}`);
     }
 
     this.logger.log(`Payment confirmed for order ${order.id}`);

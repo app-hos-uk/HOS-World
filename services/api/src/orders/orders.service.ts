@@ -25,6 +25,7 @@ import { LoyaltyService } from '../loyalty/loyalty.service';
 import { AmbassadorService } from '../ambassador/ambassador.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ActivityService } from '../activity/activity.service';
+import { VendorLedgerService } from '../vendor-ledger/vendor-ledger.service';
 import type { PromotionApplicationResult } from '../promotions/types/promotion.types';
 import type { Order, OrderStatus, PaymentStatus } from '@hos-marketplace/shared-types';
 import {
@@ -115,6 +116,7 @@ export class OrdersService {
     @Optional() @Inject(forwardRef(() => AmbassadorService)) private ambassadorService?: AmbassadorService,
     @Optional() @Inject(forwardRef(() => NotificationsService)) private notificationsService?: NotificationsService,
     @Optional() private activityService?: ActivityService,
+    @Optional() @Inject(forwardRef(() => VendorLedgerService)) private vendorLedgerService?: VendorLedgerService,
   ) {
     this.defaultCommissionRate = this.configService.get<number>('DEFAULT_COMMISSION_RATE', 0.1);
   }
@@ -1086,14 +1088,9 @@ export class OrdersService {
         },
       });
 
-      await tx.influencer.update({
-        where: { id: influencer.id },
-        data: {
-          totalConversions: { increment: 1 },
-          totalSalesAmount: { increment: orderTotal },
-          totalCommission: { increment: commissionAmount },
-        },
-      });
+      // Note: aggregate stats (totalConversions, totalSalesAmount, totalCommission) are
+      // incremented only after payment confirmation (in PaymentsService.markPaymentAsPaid)
+      // to avoid inflating stats for unpaid/abandoned orders.
 
       if (campaignForAttribution?.id) {
         await tx.influencerCampaign.update({
@@ -1147,22 +1144,11 @@ export class OrdersService {
         where: { userId },
       });
       if (seller) {
-        // Show orders directly assigned to this seller AND orders where any item's
-        // product has an active VendorProduct for this seller (handles cases where
-        // the same product is sold by multiple sellers).
+        // Show orders directly assigned to this seller OR parent orders that
+        // have a child order assigned to them (multi-vendor marketplace).
         where.OR = [
           { sellerId: seller.id },
-          {
-            items: {
-              some: {
-                product: {
-                  vendorProducts: {
-                    some: { sellerId: seller.id, status: 'ACTIVE' },
-                  },
-                },
-              },
-            },
-          },
+          { childOrders: { some: { sellerId: seller.id } } },
         ];
       } else {
         return {
@@ -1953,6 +1939,27 @@ export class OrdersService {
               `Failed to reverse gift-card redemption for order ${order.orderNumber}: ${err}`,
             );
           }
+        }
+      }
+    }
+
+    // Reverse vendor ledger entries for this order
+    if (this.vendorLedgerService && order.paymentStatus === 'PAID') {
+      const sellerId = order.sellerId;
+      if (sellerId) {
+        const commissionRate = order.seller?.commissionRate
+          ? Number(order.seller.commissionRate)
+          : this.defaultCommissionRate;
+        try {
+          await this.vendorLedgerService.recordRefund({
+            sellerId,
+            orderId: order.id,
+            refundAmount: Number(order.subtotal || order.total),
+            commissionRate,
+            currency: order.currency,
+          });
+        } catch (ledgerErr: any) {
+          this.logger.error(`Vendor ledger reversal failed for order ${order.orderNumber}: ${ledgerErr?.message}`);
         }
       }
     }

@@ -250,6 +250,11 @@ export class ReturnsService {
     // Check permissions
     if (role === 'CUSTOMER' && returnRequest.userId !== userId) {
       throw new ForbiddenException('You do not have permission to view this return');
+    } else if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
+      const seller = await this.prisma.seller.findUnique({ where: { userId } });
+      if (!seller || returnRequest.order?.sellerId !== seller.id) {
+        throw new ForbiddenException('You do not have permission to view this return');
+      }
     }
 
     return this.mapToReturnType(returnRequest);
@@ -302,7 +307,11 @@ export class ReturnsService {
     // For APPROVED status, process the refund BEFORE committing the status change.
     // This prevents the return being marked APPROVED when the refund actually failed.
     if (newStatus === 'APPROVED') {
-      const amount = refundAmount ?? this.calculateReturnRefundAmount(returnRequest);
+      const maxRefundable = this.calculateReturnRefundAmount(returnRequest);
+      const amount = Math.min(refundAmount ?? maxRefundable, maxRefundable);
+      if (amount <= 0) {
+        throw new BadRequestException('No refundable amount for the returned items');
+      }
       try {
         await this.refundsService.processRefund({
           returnId: id,

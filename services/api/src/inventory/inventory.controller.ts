@@ -103,8 +103,9 @@ export class InventoryController {
   })
   async upsertInventoryLocation(
     @Body() createDto: CreateInventoryLocationDto,
+    @Request() req: any,
   ): Promise<ApiResponse<any>> {
-    const location = await this.inventoryService.upsertInventoryLocation(createDto);
+    const location = await this.inventoryService.upsertInventoryLocation(createDto, req.user?.id, req.user?.role);
     return {
       data: location,
       message: 'Inventory location created/updated successfully',
@@ -130,7 +131,8 @@ export class InventoryController {
   }
 
   @Post('reserve')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Reserve stock',

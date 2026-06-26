@@ -12,6 +12,7 @@ import { ShippingModule } from '../shipping/shipping.module';
 import { PromotionsModule } from '../promotions/promotions.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ActivityModule } from '../activity/activity.module';
+import { VendorLedgerModule } from '../vendor-ledger/vendor-ledger.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ActivityModule } from '../activity/activity.module';
     forwardRef(() => AmbassadorModule),
     forwardRef(() => NotificationsModule),
     ActivityModule,
+    VendorLedgerModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService],

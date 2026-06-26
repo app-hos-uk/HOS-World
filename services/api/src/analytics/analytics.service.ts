@@ -163,6 +163,20 @@ export class AnalyticsService {
       };
     }
 
+    // When sellerId is present, only count customers who have placed orders with this seller
+    if (filters.sellerId) {
+      customerWhere.user = {
+        ...customerWhere.user,
+        orders: {
+          some: {
+            OR: [
+              { sellerId: filters.sellerId },
+              { childOrders: { some: { sellerId: filters.sellerId } } },
+            ],
+          },
+        },
+      };
+    }
     const allCustomers = await this.prisma.customer.findMany({
       where: customerWhere,
       take: 10000,
@@ -178,6 +192,13 @@ export class AnalyticsService {
         ...(startDate && { gte: startDate }),
         ...(endDate && { lte: endDate }),
       };
+    }
+    // Scope to seller's own orders when a sellerId filter is provided
+    if (filters.sellerId) {
+      orderWhere.OR = [
+        { sellerId: filters.sellerId },
+        { childOrders: { some: { sellerId: filters.sellerId } } },
+      ];
     }
     const customersWithOrders = await this.prisma.order.findMany({
       where: orderWhere,

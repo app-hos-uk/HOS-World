@@ -586,9 +586,8 @@ export class CreateTeamUsersController {
         users: results,
         totalCreated: results.filter((r) => r.status === 'created').length,
         totalUpdated: results.filter((r) => r.status === 'updated').length,
-        password: 'Test123!',
       },
-      message: 'Test users seeded successfully',
+      message: 'Test users seeded successfully. Passwords set to environment-configured defaults.',
     };
   }
 }
