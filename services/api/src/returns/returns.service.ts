@@ -172,7 +172,16 @@ export class ReturnsService {
 
     if (role === 'CUSTOMER') {
       where.userId = userId;
+    } else if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
+      // Sellers should only see returns for orders assigned to them
+      const seller = await this.prisma.seller.findUnique({ where: { userId } });
+      if (seller) {
+        where.order = { sellerId: seller.id };
+      } else {
+        where.userId = userId; // Fallback: show nothing meaningful
+      }
     }
+    // ADMIN and FINANCE see all returns (no filter)
 
     const take = Math.min(limit, 100);
     const skip = (page - 1) * take;

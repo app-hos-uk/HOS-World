@@ -179,7 +179,7 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
           metadata: params.metadata,
         },
         {
-          idempotencyKey: `refund-${params.paymentId}`,
+          idempotencyKey: `refund-${params.paymentId}-${params.amount || 'full'}-${params.metadata?.returnId || Date.now()}`,
         },
       );
 

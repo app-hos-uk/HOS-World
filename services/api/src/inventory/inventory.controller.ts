@@ -168,7 +168,8 @@ export class InventoryController {
   }
 
   @Post('reservations/:id/cancel')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Cancel reservation',
@@ -176,8 +177,11 @@ export class InventoryController {
   })
   @ApiParam({ name: 'id', description: 'Reservation UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Reservation cancelled successfully' })
-  async cancelReservation(@Param('id') id: string): Promise<ApiResponse<any>> {
-    const reservation = await this.inventoryService.cancelReservation(id);
+  async cancelReservation(
+    @Param('id') id: string,
+    @Request() req: any,
+  ): Promise<ApiResponse<any>> {
+    const reservation = await this.inventoryService.cancelReservation(id, req.user?.id, req.user?.role);
     return {
       data: reservation,
       message: 'Reservation cancelled successfully',

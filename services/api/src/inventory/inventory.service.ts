@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateWarehouseDto, UpdateWarehouseDto } from './dto/create-warehouse.dto';
 import { CreateInventoryLocationDto } from './dto/create-inventory-location.dto';
@@ -312,7 +312,7 @@ export class InventoryService {
   /**
    * Cancel reservation
    */
-  async cancelReservation(reservationId: string) {
+  async cancelReservation(reservationId: string, userId?: string, role?: string) {
     return this.prisma.$transaction(async (tx) => {
       await tx.$executeRaw(
         Prisma.sql`SELECT 1 FROM stock_reservations WHERE id = ${reservationId}::uuid FOR UPDATE`,
@@ -320,11 +320,20 @@ export class InventoryService {
 
       const reservation = await tx.stockReservation.findUnique({
         where: { id: reservationId },
-        include: { inventoryLocation: true },
+        include: { inventoryLocation: { include: { warehouse: true } } },
       });
 
       if (!reservation) {
         throw new NotFoundException('Reservation not found');
+      }
+
+      // Ownership check: non-ADMIN sellers can only cancel reservations in their own warehouses
+      if (userId && role && role !== 'ADMIN') {
+        const seller = await tx.seller.findUnique({ where: { userId } });
+        const warehouseOwnerId = (reservation.inventoryLocation as any)?.warehouse?.sellerId;
+        if (seller && warehouseOwnerId && warehouseOwnerId !== seller.id) {
+          throw new ForbiddenException('You can only cancel reservations in your own warehouses');
+        }
       }
 
       if (reservation.status !== 'ACTIVE') {

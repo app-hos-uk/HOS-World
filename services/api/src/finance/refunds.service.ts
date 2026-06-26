@@ -85,14 +85,44 @@ export class RefundsService {
       },
     });
 
+    // Split refund between card and gift-card portions (mirrors cancel logic).
+    // Gift-card redemptions reduce the card-refundable amount.
+    const giftCardRedemptions = await this.prisma.giftCardTransaction.findMany({
+      where: { orderId: returnRequest.orderId, type: 'REDEMPTION' },
+      select: { amount: true, giftCardId: true },
+    });
+    const giftCardTotal = giftCardRedemptions.reduce(
+      (sum: number, tx: any) => sum + Number(tx.amount), 0,
+    );
+    const orderTotal = Number(returnRequest.order.total);
+    // Proportion of this refund that should go to card vs gift card
+    const cardProportion = orderTotal > 0 ? Math.max(0, orderTotal - giftCardTotal) / orderTotal : 1;
+    const cardRefundAmount = Math.round(data.amount * cardProportion * 100) / 100;
+    const giftCardRefundAmount = data.amount - cardRefundAmount;
+
+    // Reverse gift-card portion back to cards
+    if (giftCardRefundAmount > 0 && giftCardRedemptions.length > 0) {
+      let remaining = giftCardRefundAmount;
+      for (const redemption of giftCardRedemptions) {
+        if (remaining <= 0) break;
+        const reverseAmount = Math.min(remaining, Number(redemption.amount));
+        await this.prisma.giftCard.update({
+          where: { id: redemption.giftCardId },
+          data: { balance: { increment: reverseAmount } },
+        });
+        remaining -= reverseAmount;
+      }
+      this.logger.log(`Reversed ${giftCardRefundAmount} to gift cards for return ${data.returnId}`);
+    }
+
     const stripePaymentId = returnRequest.order.stripePaymentIntentId;
-    if (stripePaymentId && this.paymentProviderService.isProviderAvailable('stripe')) {
+    if (stripePaymentId && cardRefundAmount > 0 && this.paymentProviderService.isProviderAvailable('stripe')) {
       try {
         const provider = this.paymentProviderService.getProvider('stripe');
         const result = await provider.refundPayment({
           paymentId: stripePaymentId,
-          amount: data.amount,
-          metadata: { currency: data.currency || returnRequest.order.currency },
+          amount: cardRefundAmount,
+          metadata: { currency: data.currency || returnRequest.order.currency, returnId: data.returnId },
         });
 
         if (result && !result.success) {
@@ -108,6 +138,16 @@ export class RefundsService {
         await this.transactionsService.updateTransactionStatus(transaction.id, 'FAILED');
         throw new BadRequestException('Payment provider refund failed. Please retry.');
       }
+    } else if (stripePaymentId && cardRefundAmount > 0) {
+      // Stripe PI exists but provider is temporarily unavailable — do not silently succeed
+      await this.transactionsService.updateTransactionStatus(transaction.id, 'FAILED');
+      throw new BadRequestException(
+        'Payment provider is temporarily unavailable. Refund could not be processed. Please retry later.',
+      );
+    } else if (cardRefundAmount <= 0 || !stripePaymentId) {
+      // No card refund needed (gift-card-only order, or zero card amount) — complete immediately
+      await this.transactionsService.updateTransactionStatus(transaction.id, 'COMPLETED');
+      this.logger.log(`Refund for return ${data.returnId} completed (gift-card only, no Stripe refund needed)`);
     } else {
       await this.transactionsService.updateTransactionStatus(transaction.id, 'PENDING');
       this.logger.warn(

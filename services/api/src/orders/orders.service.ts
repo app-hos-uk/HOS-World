@@ -1406,6 +1406,14 @@ export class OrdersService {
     const previousStatus = order.status;
     const normalizedStatus = updateOrderDto.status?.toUpperCase();
 
+    // CANCELLED must go through the dedicated cancel() endpoint which handles
+    // stock restoration, Stripe refunds, and gift-card reversals.
+    if (normalizedStatus === 'CANCELLED') {
+      throw new BadRequestException(
+        'Cannot set status to CANCELLED via update. Use POST /orders/:id/cancel instead, which handles refunds and stock restoration.',
+      );
+    }
+
     if (normalizedStatus && normalizedStatus !== order.status) {
       this.validateStatusTransition(order.status, normalizedStatus);
     }
@@ -1679,11 +1687,31 @@ export class OrdersService {
       });
       this.logger.log(`Parent order ${parentOrderId} auto-confirmed: all children accepted`);
     } else if (allRejected) {
-      await this.prisma.order.update({
+      // All vendors rejected — cancel parent and issue refund if paid.
+      const parentOrder = await this.prisma.order.findUnique({
         where: { id: parentOrderId },
-        data: { status: 'CANCELLED' as PrismaOrderStatus },
+        include: { items: true, seller: true },
       });
-      this.logger.log(`Parent order ${parentOrderId} auto-cancelled: all children rejected`);
+      if (parentOrder && parentOrder.paymentStatus === ('PAID' as PrismaPaymentStatus)) {
+        // Trigger full cancel flow (refund + stock restore) via internal call
+        try {
+          await this.cancel(parentOrderId, parentOrder.userId, 'ADMIN');
+          this.logger.log(`Parent order ${parentOrderId} auto-cancelled with refund: all children rejected`);
+        } catch (cancelErr: any) {
+          this.logger.error(`Auto-cancel refund failed for ${parentOrderId}: ${cancelErr?.message}`);
+          // Fallback: at least mark cancelled
+          await this.prisma.order.update({
+            where: { id: parentOrderId },
+            data: { status: 'CANCELLED' as PrismaOrderStatus },
+          });
+        }
+      } else {
+        await this.prisma.order.update({
+          where: { id: parentOrderId },
+          data: { status: 'CANCELLED' as PrismaOrderStatus },
+        });
+        this.logger.log(`Parent order ${parentOrderId} auto-cancelled: all children rejected`);
+      }
     }
   }
 
@@ -1731,6 +1759,20 @@ export class OrdersService {
       if (!seller || order.sellerId !== seller.id) {
         throw new ForbiddenException('You do not have permission to cancel this order');
       }
+      // Sellers cannot cancel paid child orders — payment intent is on the parent.
+      // They should reject instead; customer cancels parent for refund.
+      if (order.parentOrderId && order.paymentStatus === 'PAID') {
+        throw new BadRequestException(
+          'Cannot cancel a paid sub-order directly. Use "Reject" instead, or ask the customer to cancel the parent order for a refund.',
+        );
+      }
+    }
+
+    // Only CUSTOMER, seller roles, and ADMIN can cancel orders.
+    // Other roles (FINANCE, FULFILLMENT, etc.) must not cancel directly.
+    const allowedCancelRoles = ['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN'];
+    if (!allowedCancelRoles.includes(role)) {
+      throw new ForbiddenException('Your role does not have permission to cancel orders');
     }
 
     this.validateStatusTransition(order.status, 'CANCELLED');
@@ -1831,6 +1873,7 @@ export class OrdersService {
     });
 
     // Issue actual Stripe refund for paid orders — only refund the card portion (not gift-card covered amount).
+    // Two-phase: attempt Stripe refund first; roll back paymentStatus if it fails.
     if (order.paymentStatus === 'PAID' && order.stripePaymentIntentId) {
       const giftCardRedemptions = await this.prisma.giftCardTransaction.findMany({
         where: { orderId: order.id, type: 'REDEMPTION' },
@@ -1842,6 +1885,7 @@ export class OrdersService {
       );
       const cardRefundAmount = Math.max(0, Number(order.total) - giftCardTotal);
 
+      let stripeRefundSucceeded = false;
       if (cardRefundAmount > 0 && this.paymentProviderService?.isProviderAvailable('stripe')) {
         try {
           const provider = this.paymentProviderService.getProvider('stripe');
@@ -1851,20 +1895,31 @@ export class OrdersService {
             metadata: { currency: order.currency, reason: 'order_cancelled' },
           });
           if (result?.success) {
+            stripeRefundSucceeded = true;
             this.logger.log(
               `Stripe refund of ${cardRefundAmount} succeeded for cancelled order ${order.orderNumber}`,
             );
           } else {
             this.logger.warn(
-              `Stripe refund returned non-success for order ${order.orderNumber} — manual refund required`,
+              `Stripe refund returned non-success for order ${order.orderNumber} — reverting paymentStatus`,
             );
           }
         } catch (err) {
           this.logger.error(`Failed to auto-refund cancelled order ${order.orderNumber}: ${err}`);
         }
-      } else if (cardRefundAmount > 0) {
+      } else if (cardRefundAmount <= 0) {
+        // Gift cards cover everything — no Stripe refund needed
+        stripeRefundSucceeded = true;
+      }
+
+      // If Stripe refund did not succeed, revert paymentStatus to PAID so admin knows manual action is needed
+      if (!stripeRefundSucceeded) {
+        await this.prisma.order.update({
+          where: { id },
+          data: { paymentStatus: 'PAID' as PrismaPaymentStatus },
+        });
         this.logger.warn(
-          `Stripe provider unavailable — refund of ${cardRefundAmount} for order ${order.orderNumber} must be processed manually`,
+          `Order ${order.orderNumber} cancelled but Stripe refund failed — paymentStatus remains PAID. Manual refund required.`,
         );
       }
 
@@ -1903,6 +1958,16 @@ export class OrdersService {
     }
 
     this.logger.log(`Order ${order.orderNumber} cancelled by user ${userId} (role: ${role})`);
+
+    // Send cancellation notification to customer
+    this.triggerOrderStatusNotification(
+      order.id,
+      order.userId,
+      'CANCELLED',
+      order.orderNumber,
+    ).catch((e) => {
+      this.logger.warn(`Cancel notification failed for ${order.orderNumber}: ${(e as Error).message}`);
+    });
 
     return this.mapToOrderType(cancelledOrder, false, role);
   }
