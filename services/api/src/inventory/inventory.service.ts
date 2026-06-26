@@ -1202,4 +1202,22 @@ export class InventoryService {
       where: { id },
     });
   }
+
+  async verifyAddressAccess(addressId: string, userId: string): Promise<boolean> {
+    const address = await this.prisma.address.findUnique({ where: { id: addressId } });
+    if (!address) return false;
+    if ((address as any).userId === userId) return true;
+    // Check if address is on one of the user's orders
+    const orderWithAddress = await this.prisma.order.findFirst({
+      where: {
+        OR: [
+          { shippingAddressId: addressId },
+          { billingAddressId: addressId },
+        ],
+        userId,
+      },
+      select: { id: true },
+    });
+    return !!orderWithAddress;
+  }
 }

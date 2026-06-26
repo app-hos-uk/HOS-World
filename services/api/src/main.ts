@@ -5,6 +5,7 @@ import { ValidationPipe, VersioningType, VERSION_NEUTRAL } from '@nestjs/common'
 import { AppModule } from './app.module';
 import { Logger } from './common/logger/logger.service';
 import { SentryExceptionFilter } from './common/filters/sentry-exception.filter';
+import { PaginationCapInterceptor } from './common/interceptors/pagination-cap.interceptor';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression = require('compression');
@@ -449,6 +450,26 @@ async function bootstrap() {
       : 'api/docs';
 
     if (!isProduction || swaggerDocsToken) {
+      // In production, protect Swagger with HTTP Basic Auth
+      if (isProduction && swaggerDocsToken) {
+        const swaggerUser = process.env.SWAGGER_USER || 'admin';
+        const swaggerPass = process.env.SWAGGER_PASS || swaggerDocsToken;
+        const expressApp = app.getHttpAdapter().getInstance();
+        expressApp.use(`/${swaggerPath}`, (req: any, res: any, next: any) => {
+          const authHeader = req.headers.authorization;
+          if (!authHeader || !authHeader.startsWith('Basic ')) {
+            res.setHeader('WWW-Authenticate', 'Basic realm="API Docs"');
+            return res.status(401).send('Authentication required');
+          }
+          const decoded = Buffer.from(authHeader.slice(6), 'base64').toString();
+          const [user, pass] = decoded.split(':');
+          if (user === swaggerUser && pass === swaggerPass) {
+            return next();
+          }
+          res.setHeader('WWW-Authenticate', 'Basic realm="API Docs"');
+          return res.status(401).send('Invalid credentials');
+        });
+      }
       SwaggerModule.setup(swaggerPath, app, document, {
         swaggerOptions: {
           persistAuthorization: true,
@@ -491,13 +512,16 @@ async function bootstrap() {
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
-        forbidNonWhitelisted: false,
+        forbidNonWhitelisted: true,
         transform: true,
         transformOptions: {
           enableImplicitConversion: true,
         },
       }),
     );
+
+    // Global pagination cap interceptor (prevents runaway queries)
+    app.useGlobalInterceptors(new PaginationCapInterceptor());
 
     // Global Sentry exception filter (capture all HTTP exceptions to Sentry)
     app.useGlobalFilters(new SentryExceptionFilter());

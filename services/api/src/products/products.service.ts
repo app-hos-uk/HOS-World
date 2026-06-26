@@ -262,7 +262,7 @@ export class ProductsService {
       },
     });
 
-    const mappedProduct = this.mapToProductType(product);
+    const mappedProduct = this.mapToProductType(product, false, false, false);
 
     // Sync cache (fire and forget - don't block response)
     this.cacheHook.onProductCreated(product).catch((error) => {
@@ -299,7 +299,7 @@ export class ProductsService {
     // either have an active VendorProduct with stock + price, or are platform-owned (no vendor mapping).
     // Wrapped in vendorTableExists check to gracefully degrade if vendor_products table
     // hasn't been created yet (migration pending).
-    if (!searchDto.status || searchDto.status === 'ACTIVE') {
+    if (effectiveStatus === ProductStatus.ACTIVE) {
       const vendorTableExists = await this.checkVendorTableExists();
       if (vendorTableExists) {
         if (!where.AND) where.AND = [];
@@ -860,7 +860,7 @@ export class ProductsService {
       },
     });
 
-    const mappedProduct = this.mapToProductType(updated);
+    const mappedProduct = this.mapToProductType(updated, false, false, false);
 
     this.cacheHook.onProductUpdated(updated).catch((error) => {
       console.error('Failed to sync product update to cache:', error);
@@ -1009,6 +1009,7 @@ export class ProductsService {
     product: any,
     includeSeller: boolean = false,
     includeBundles: boolean = false,
+    isPublicContext: boolean = true,
   ): Product {
     const mapped: any = {
       id: product.id,
@@ -1020,7 +1021,7 @@ export class ProductsService {
       barcode: product.barcode || undefined,
       ean: product.ean || undefined,
       price: Number(product.price),
-      tradePrice: product.tradePrice ? Number(product.tradePrice) : undefined,
+      tradePrice: isPublicContext ? undefined : (product.tradePrice ? Number(product.tradePrice) : undefined),
       rrp: product.rrp ? Number(product.rrp) : undefined,
       currency: product.currency,
       taxRate: Number(product.taxRate),
@@ -1240,6 +1241,6 @@ export class ProductsService {
     // Invalidate cache for bundle
     await this.cacheHook.onProductCreated(bundle.id);
 
-    return this.mapToProductType(bundle, false, true);
+    return this.mapToProductType(bundle, false, true, false);
   }
 }

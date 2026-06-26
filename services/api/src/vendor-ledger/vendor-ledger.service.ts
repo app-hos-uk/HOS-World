@@ -89,19 +89,28 @@ export class VendorLedgerService {
         const currentBalance = lastEntry ? Number(lastEntry.balance) : 0;
         const newBalance = +(currentBalance - netRefund).toFixed(2);
 
+        if (newBalance < 0) {
+          this.logger.warn(
+            `Vendor ledger for seller ${sellerId} would go negative (${newBalance}) on refund for order ${orderId}. Capping at 0.`,
+          );
+        }
+        const clampedBalance = Math.max(newBalance, 0);
+        const effectiveDebit = +(currentBalance - clampedBalance).toFixed(2);
+
         return tx.vendorLedgerEntry.create({
           data: {
             sellerId,
             orderId,
             type: 'REFUND',
-            amount: -netRefund,
+            amount: -effectiveDebit,
             currency,
-            balance: newBalance,
+            balance: clampedBalance,
             description: `Refund for order (net of commission)`,
             metadata: {
               grossRefund: refundAmount,
               commissionRefund,
               netRefund,
+              balanceCapped: newBalance < 0,
             },
           },
         });

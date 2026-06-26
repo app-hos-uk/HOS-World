@@ -1547,11 +1547,15 @@ export class OrdersService {
       throw new ForbiddenException('You do not have permission to add notes to this order');
     }
 
+    // Only staff and seller roles can mark notes as internal
+    const staffRoles = ['ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT'];
+    const isInternal = staffRoles.includes(role) ? (addNoteDto.internal || false) : false;
+
     await this.prisma.orderNote.create({
       data: {
         orderId: id,
         content: addNoteDto.content,
-        internal: addNoteDto.internal || false,
+        internal: isInternal,
         createdBy: userId,
       },
     });
@@ -1909,36 +1913,44 @@ export class OrdersService {
         );
       }
 
-      // Reverse gift-card redemptions back to their respective cards
+      // Reverse gift-card redemptions back to their respective cards (idempotent)
       if (giftCardTotal > 0) {
-        const allRedemptions = await this.prisma.giftCardTransaction.findMany({
-          where: { orderId: order.id, type: 'REDEMPTION' },
-          include: { giftCard: true },
+        // Check if reversals already exist to avoid double-reversal
+        const existingReversals = await this.prisma.giftCardTransaction.count({
+          where: { orderId: order.id, type: 'REFUND' },
         });
-        for (const redemption of allRedemptions) {
-          try {
-            const newBalance = Number(redemption.giftCard.balance) + Number(redemption.amount);
-            await this.prisma.$transaction([
-              this.prisma.giftCard.update({
-                where: { id: redemption.giftCardId },
-                data: { balance: { increment: Number(redemption.amount) } },
-              }),
-              this.prisma.giftCardTransaction.create({
-                data: {
-                  giftCard: { connect: { id: redemption.giftCardId } },
-                  order: { connect: { id: order.id } },
-                  type: 'REFUND',
-                  amount: Number(redemption.amount),
-                  balanceAfter: newBalance,
-                  notes: `Auto-reversed on order cancel (${order.orderNumber})`,
-                },
-              }),
-            ]);
-          } catch (err) {
-            this.logger.error(
-              `Failed to reverse gift-card redemption for order ${order.orderNumber}: ${err}`,
-            );
+        if (existingReversals === 0) {
+          const allRedemptions = await this.prisma.giftCardTransaction.findMany({
+            where: { orderId: order.id, type: 'REDEMPTION' },
+            include: { giftCard: true },
+          });
+          for (const redemption of allRedemptions) {
+            try {
+              const newBalance = Number(redemption.giftCard.balance) + Number(redemption.amount);
+              await this.prisma.$transaction([
+                this.prisma.giftCard.update({
+                  where: { id: redemption.giftCardId },
+                  data: { balance: { increment: Number(redemption.amount) } },
+                }),
+                this.prisma.giftCardTransaction.create({
+                  data: {
+                    giftCard: { connect: { id: redemption.giftCardId } },
+                    order: { connect: { id: order.id } },
+                    type: 'REFUND',
+                    amount: Number(redemption.amount),
+                    balanceAfter: newBalance,
+                    notes: `Auto-reversed on order cancel (${order.orderNumber})`,
+                  },
+                }),
+              ]);
+            } catch (err) {
+              this.logger.error(
+                `Failed to reverse gift-card redemption for order ${order.orderNumber}: ${err}`,
+              );
+            }
           }
+        } else {
+          this.logger.log(`Gift-card reversals already exist for order ${order.orderNumber}, skipping`);
         }
       }
     }
@@ -1961,6 +1973,34 @@ export class OrdersService {
         } catch (ledgerErr: any) {
           this.logger.error(`Vendor ledger reversal failed for order ${order.orderNumber}: ${ledgerErr?.message}`);
         }
+      }
+    }
+
+    // Reverse influencer commission stats that were incremented on payment confirmation
+    if (order.paymentStatus === 'PAID') {
+      try {
+        const commissions = await this.prisma.influencerCommission.findMany({
+          where: { orderId: order.id },
+        });
+        for (const comm of commissions) {
+          await this.prisma.influencer.update({
+            where: { id: comm.influencerId },
+            data: {
+              totalConversions: { decrement: 1 },
+              totalSalesAmount: { decrement: comm.orderTotal },
+              totalCommission: { decrement: comm.amount },
+            },
+          });
+          await this.prisma.influencerCommission.update({
+            where: { id: comm.id },
+            data: { status: 'CANCELLED' },
+          });
+        }
+        if (commissions.length > 0) {
+          this.logger.log(`Reversed ${commissions.length} influencer commission(s) for order ${order.orderNumber}`);
+        }
+      } catch (commErr: any) {
+        this.logger.error(`Influencer commission reversal failed for order ${order.orderNumber}: ${commErr?.message}`);
       }
     }
 

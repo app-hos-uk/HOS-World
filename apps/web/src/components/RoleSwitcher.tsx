@@ -84,7 +84,9 @@ export function RoleSwitcher() {
   
   if (!isActualAdmin) {
     // User is not an admin - log for debugging
-    console.warn('[RoleSwitcher] Not showing - User is not ADMIN. Current role:', user.role, 'Normalized:', normalizedRole, 'User:', user);
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[RoleSwitcher] Not showing - User is not ADMIN. Role:', normalizedRole);
+    }
     return null;
   }
 

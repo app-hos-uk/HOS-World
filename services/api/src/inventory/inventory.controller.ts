@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, NotFoundException } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -549,7 +549,17 @@ export class InventoryController {
   @ApiParam({ name: 'addressId', description: 'Address UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Address geocoded successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Address not found' })
-  async geocodeAddress(@Param('addressId') addressId: string): Promise<ApiResponse<any>> {
+  async geocodeAddress(
+    @Param('addressId') addressId: string,
+    @Request() req: any,
+  ): Promise<ApiResponse<any>> {
+    // Non-admin roles can only geocode addresses belonging to their own orders
+    if (req.user?.role && req.user.role !== 'ADMIN' && req.user.role !== 'FULFILLMENT') {
+      const address = await this.inventoryService.verifyAddressAccess(addressId, req.user.id);
+      if (!address) {
+        throw new NotFoundException('Address not found or you do not have access');
+      }
+    }
     const result = await this.geocodingService.geocodeAndSaveAddress(addressId);
     return {
       data: result,

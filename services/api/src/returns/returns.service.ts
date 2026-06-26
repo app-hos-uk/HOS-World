@@ -284,7 +284,14 @@ export class ReturnsService {
       const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
       if (sellerRoles.includes(role)) {
         const seller = await this.prisma.seller.findUnique({ where: { userId } });
-        if (!seller || returnRequest.order?.sellerId !== seller.id) {
+        // Check direct sellerId OR if seller has a child order for this parent order
+        const isDirectSeller = seller && returnRequest.order?.sellerId === seller.id;
+        const hasChildOrder = seller && returnRequest.order?.id
+          ? await this.prisma.order.count({
+              where: { parentOrderId: returnRequest.order.id, sellerId: seller.id },
+            }) > 0
+          : false;
+        if (!seller || (!isDirectSeller && !hasChildOrder)) {
           throw new ForbiddenException('You do not have permission to update this return');
         }
       }

@@ -137,6 +137,7 @@ export class SellersService {
 
   async findAllPublic(limit = 200) {
     const sellers = await this.prisma.seller.findMany({
+      where: { vendorStatus: 'ACTIVE' },
       take: Math.min(limit, 500),
       select: {
         id: true,

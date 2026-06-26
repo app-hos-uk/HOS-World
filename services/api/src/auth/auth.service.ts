@@ -1291,7 +1291,7 @@ export class AuthService {
 
     await this.prisma.user.update({
       where: { id: userId },
-      data: { emailVerifyToken: tokenHash },
+      data: { emailVerifyToken: tokenHash, updatedAt: new Date() },
     });
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
@@ -1330,6 +1330,17 @@ export class AuthService {
 
     if (!user) {
       throw new BadRequestException('Invalid or expired verification token.');
+    }
+
+    // Token expires after 24 hours (updatedAt is set when token is created)
+    const tokenAge = Date.now() - new Date(user.updatedAt).getTime();
+    const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
+    if (tokenAge > TOKEN_EXPIRY_MS) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerifyToken: null },
+      });
+      throw new BadRequestException('Verification token has expired. Please request a new one.');
     }
 
     await this.prisma.user.update({

@@ -172,6 +172,10 @@ export class VendorProductsService {
         throw new ForbiddenException('You can only view your own listings');
       }
     }
+    // Strip internal fields for non-staff roles
+    if (requestingUserRole && !staffRoles.includes(requestingUserRole) && vp.seller) {
+      delete (vp.seller as any).commissionRate;
+    }
     return vp;
   }
 
