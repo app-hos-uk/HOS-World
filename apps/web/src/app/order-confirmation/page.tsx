@@ -12,6 +12,7 @@ interface OrderSummary {
   id: string;
   orderNumber?: string;
   status: string;
+  paymentStatus?: string;
   total: number;
   items: Array<{ name: string; quantity: number; price: number; image?: string }>;
   shippingAddress?: { city?: string; country?: string };
@@ -25,6 +26,10 @@ export default function OrderConfirmationPage() {
   const { formatPrice } = useCurrency();
   const [order, setOrder] = useState<OrderSummary | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const paidStatuses = ['paid', 'PAID'];
+  const confirmedStatuses = ['confirmed', 'CONFIRMED', 'processing', 'PROCESSING', 'fulfilled', 'FULFILLED', 'shipped', 'SHIPPED', 'delivered', 'DELIVERED'];
+  const isPaid = order ? (paidStatuses.includes(order.paymentStatus || '') || confirmedStatuses.includes(order.status)) : false;
 
   useEffect(() => {
     if (!orderId) {
@@ -41,6 +46,7 @@ export default function OrderConfirmationPage() {
             id: data.id,
             orderNumber: data.orderNumber || data.id?.slice(0, 8).toUpperCase(),
             status: data.status,
+            paymentStatus: data.paymentStatus,
             total: data.total || 0,
             items: (data.items || data.orderItems || []).map((item: any) => ({
               name: item.productName || item.name || 'Product',
@@ -73,21 +79,51 @@ export default function OrderConfirmationPage() {
           </div>
         ) : (
           <div className="text-center space-y-8">
-            {/* Success Icon */}
-            <div className="w-20 h-20 bg-green-900/20 border-2 border-green-500/30 rounded-full flex items-center justify-center mx-auto">
-              <svg className="w-10 h-10 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
+            {/* Status Icon */}
+            {isPaid ? (
+              <div className="w-20 h-20 bg-green-900/20 border-2 border-green-500/30 rounded-full flex items-center justify-center mx-auto">
+                <svg className="w-10 h-10 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            ) : (
+              <div className="w-20 h-20 bg-yellow-900/20 border-2 border-yellow-500/30 rounded-full flex items-center justify-center mx-auto">
+                <svg className="w-10 h-10 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            )}
 
             <div>
-              <h1 className="text-3xl md:text-4xl font-display text-hos-text-secondary font-bold">
-                Order Confirmed!
-              </h1>
-              <p className="text-hos-text-muted mt-2 text-lg">
-                Thank you for your purchase. Your order has been placed successfully.
-              </p>
+              {isPaid ? (
+                <>
+                  <h1 className="text-3xl md:text-4xl font-display text-hos-text-secondary font-bold">
+                    Order Confirmed!
+                  </h1>
+                  <p className="text-hos-text-muted mt-2 text-lg">
+                    Thank you for your purchase. Your order has been placed successfully.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-3xl md:text-4xl font-display text-hos-text-secondary font-bold">
+                    Payment Pending
+                  </h1>
+                  <p className="text-hos-text-muted mt-2 text-lg">
+                    Your order is awaiting payment confirmation. If you&apos;ve already paid, this page will update shortly.
+                  </p>
+                  {orderId && (
+                    <Link
+                      href={`/payment?orderId=${orderId}`}
+                      className="inline-block mt-4 px-6 py-3 bg-hos-gold text-hos-bg rounded-lg font-semibold hover:bg-hos-gold-hover transition-colors"
+                    >
+                      Complete Payment
+                    </Link>
+                  )}
+                </>
+              )}
             </div>
+
 
             {order && (
               <div className="bg-hos-bg-secondary border border-hos-border rounded-xl p-6 text-left space-y-4">

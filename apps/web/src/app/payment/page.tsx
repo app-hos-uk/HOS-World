@@ -94,8 +94,29 @@ function StripeCardCheckout({
       }
     } catch (confirmErr: any) {
       console.error('Payment confirmation error:', confirmErr);
+      // Card was charged but backend confirm failed — poll order status as webhook may resolve it
+      const loadingToastId = toast.loading('Payment received, confirming order...');
+      let confirmed = false;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        await new Promise(r => setTimeout(r, 2000));
+        try {
+          const orderCheck = await apiClient.getOrder(order.id);
+          if ((orderCheck?.data?.paymentStatus as string)?.toUpperCase() === 'PAID') {
+            confirmed = true;
+            break;
+          }
+        } catch { /* retry */ }
+      }
+      toast.dismiss(loadingToastId);
+      if (confirmed) {
+        toast.success('Payment confirmed!', { id: 'payment-success' });
+        trackPurchase(order);
+        onClearStripe();
+        router.push(`/order-confirmation?orderId=${order.id}`);
+        return;
+      }
       const errorMessage =
-        confirmErr.message || 'Payment confirmation failed. Please try again or contact support.';
+        'Your card was charged but we could not confirm the order. Please do not pay again — contact support if this persists.';
       setPaymentError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -164,6 +185,11 @@ function PaymentContent() {
       setError(null);
       const response = await apiClient.getOrder(orderId!);
       if (response?.data) {
+        // Redirect to confirmation if order is already paid
+        if ((response.data.paymentStatus as string)?.toUpperCase() === 'PAID') {
+          router.push(`/order-confirmation?orderId=${orderId}`);
+          return;
+        }
         setOrder(response.data);
       } else {
         setError('Order not found');
@@ -546,13 +572,31 @@ function PaymentForm({ order }: { order: any }) {
           // This avoids the React setState async issue
           const finalAmountAfterRedemption = Math.max(0, (order.total || 0) - totalRedeemedAmount);
           
-          // If gift card fully covers the order
+          // If gift card fully covers the order, still call createPaymentIntent so backend
+          // can verify and mark the order as PAID (backend handles zero-balance logic).
           if (finalAmountAfterRedemption <= 0) {
-            toast.success('Payment successful with gift card!', { id: 'payment-success' });
-            trackPurchase(order);
-            setProcessing(false);
-            router.push(`/order-confirmation?orderId=${order.id}`);
-            return;
+            try {
+              const zeroResponse = await apiClient.createPaymentIntent({
+                orderId: order.id,
+                paymentMethod: selectedProvider || 'stripe',
+                amount: 0,
+                currency: order.currency || 'USD',
+              });
+              if (zeroResponse?.data?.paid) {
+                toast.success('Payment successful with gift card!', { id: 'payment-success' });
+                trackPurchase(order);
+                setProcessing(false);
+                router.push(`/order-confirmation?orderId=${order.id}`);
+                return;
+              }
+              // Unexpected: backend didn't confirm paid. Show error.
+              throw new Error('Gift card payment could not be confirmed by server');
+            } catch (gcErr: any) {
+              console.error('Gift card full-coverage payment error:', gcErr);
+              toast.error(gcErr.message || 'Payment confirmation failed. Please try again.');
+              setProcessing(false);
+              return;
+            }
           }
           
           // If partial coverage, continue to payment for remaining amount
@@ -595,6 +639,14 @@ function PaymentForm({ order }: { order: any }) {
             throw new Error('Failed to create payment intent');
           }
 
+          // Backend may return { paid: true } if gift cards fully covered the order
+          if (response.data.paid) {
+            toast.success('Payment successful!', { id: 'payment-success' });
+            trackPurchase(order);
+            router.push(`/order-confirmation?orderId=${order.id}`);
+            return;
+          }
+
           // Handle different payment providers
           if (selectedProvider === 'stripe') {
             if (response.data.clientSecret) {
@@ -629,9 +681,27 @@ function PaymentForm({ order }: { order: any }) {
           return;
         }
       } else {
-        toast.success('Payment successful!', { id: 'payment-success' });
-        trackPurchase(order);
-        router.push(`/order-confirmation?orderId=${order.id}`);
+        // finalAmount <= 0 without new redemption — prior gift cards already cover the total.
+        // Call backend to verify and mark order PAID.
+        try {
+          const zeroResponse = await apiClient.createPaymentIntent({
+            orderId: order.id,
+            paymentMethod: selectedProvider || 'stripe',
+            amount: 0,
+            currency: order.currency || 'USD',
+          });
+          if (zeroResponse?.data?.paid) {
+            toast.success('Payment successful!', { id: 'payment-success' });
+            trackPurchase(order);
+            router.push(`/order-confirmation?orderId=${order.id}`);
+          } else {
+            throw new Error('Payment could not be confirmed by server');
+          }
+        } catch (zeroErr: any) {
+          console.error('Zero-amount payment confirmation error:', zeroErr);
+          setPaymentError(zeroErr.message || 'Payment confirmation failed');
+          toast.error(zeroErr.message || 'Payment confirmation failed');
+        }
       }
     } catch (err: any) {
       console.error('Payment processing error:', err);

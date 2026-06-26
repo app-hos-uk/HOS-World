@@ -61,10 +61,15 @@ export class PaymentProviderService implements OnModuleInit {
   }
 
   /**
-   * Check if a provider is available
+   * Check if a provider is available (includes lazy registration for stripe)
    */
   isProviderAvailable(name: string): boolean {
-    return this.providers.has(name.toLowerCase());
+    if (this.providers.has(name.toLowerCase())) return true;
+    if (name.toLowerCase() === 'stripe' && this.stripeProvider.isAvailable()) {
+      this.providers.set('stripe', this.stripeProvider);
+      return true;
+    }
+    return false;
   }
 
   /**

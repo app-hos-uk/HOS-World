@@ -529,10 +529,24 @@ export class PaymentsService {
       'payment_intent.payment_failed',
       'charge.failed',
     ]);
+    const DISPUTE_EVENTS = new Set([
+      'charge.dispute.created',
+      'charge.dispute.updated',
+      'charge.dispute.closed',
+    ]);
+
     const isSuccess = SUCCESS_EVENTS.has(event.type);
     const isFailure = FAILURE_EVENTS.has(event.type);
-    if (!isSuccess && !isFailure) {
+    const isDispute = DISPUTE_EVENTS.has(event.type);
+
+    if (!isSuccess && !isFailure && !isDispute) {
       this.logger.log(`Ignoring unhandled webhook event type: ${event.type}`);
+      return;
+    }
+
+    // Handle disputes separately — they reference a charge, not a PI
+    if (isDispute) {
+      await this.handleDispute(event);
       return;
     }
 
@@ -639,6 +653,80 @@ export class PaymentsService {
     }
 
     this.logger.log(`Payment failed for order ${order.id} via webhook`);
+  }
+
+  /**
+   * Handle Stripe dispute webhooks (charge.dispute.created/updated/closed).
+   * Flags the associated order and logs for admin review.
+   */
+  private async handleDispute(event: any): Promise<void> {
+    const dispute = event.data?.object;
+    if (!dispute) return;
+
+    const chargeId = dispute.charge;
+    const paymentIntentId = dispute.payment_intent;
+    const status = dispute.status; // needs_response, under_review, won, lost
+    const amount = dispute.amount; // cents
+    const reason = dispute.reason;
+
+    this.logger.warn(
+      `Dispute ${event.type}: id=${dispute.id} status=${status} reason=${reason} amount=${amount} charge=${chargeId} pi=${paymentIntentId}`,
+    );
+
+    // Find order by payment intent ID
+    let order = paymentIntentId
+      ? await this.prisma.order.findFirst({ where: { stripePaymentIntentId: paymentIntentId } })
+      : null;
+
+    // Fallback: find by charge stored in payment records
+    if (!order && chargeId) {
+      const payment = await this.prisma.payment.findFirst({
+        where: { stripePaymentId: chargeId },
+      });
+      if (payment) {
+        order = await this.prisma.order.findUnique({ where: { id: payment.orderId } });
+      }
+    }
+
+    if (!order) {
+      this.logger.error(`Dispute ${dispute.id}: could not find associated order`);
+      return;
+    }
+
+    if (event.type === 'charge.dispute.created') {
+      await this.prisma.order.update({
+        where: { id: order.id },
+        data: { paymentStatus: 'DISPUTED' },
+      });
+      // Record dispute details on the payment record
+      await this.prisma.payment.updateMany({
+        where: { orderId: order.id, stripePaymentId: paymentIntentId || chargeId },
+        data: {
+          metadata: {
+            disputeId: dispute.id,
+            disputeReason: reason,
+            disputeAmount: amount,
+            disputeStatus: status,
+            disputeCreatedAt: new Date().toISOString(),
+          } as any,
+        },
+      });
+      this.logger.warn(`Order ${order.id} marked as DISPUTED (${reason})`);
+    } else if (event.type === 'charge.dispute.closed') {
+      if (status === 'lost') {
+        await this.prisma.order.update({
+          where: { id: order.id },
+          data: { paymentStatus: 'REFUNDED' },
+        });
+        this.logger.warn(`Dispute lost for order ${order.id} — marked REFUNDED`);
+      } else if (status === 'won') {
+        await this.prisma.order.update({
+          where: { id: order.id },
+          data: { paymentStatus: 'PAID' },
+        });
+        this.logger.log(`Dispute won for order ${order.id} — restored to PAID`);
+      }
+    }
   }
 
   private async markAbandonedCartRecovery(userId: string): Promise<void> {
