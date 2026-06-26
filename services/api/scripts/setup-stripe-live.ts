@@ -74,13 +74,11 @@ async function findOrCreateWebhook(secretKey: string): Promise<string> {
   if (list.data) {
     const match = list.data.find((ep: { url: string }) => ep.url === WEBHOOK_URL);
     if (match) {
-      console.log(`Found existing webhook endpoint: ${match.id}`);
-      console.error(
-        '❌ Webhook exists but signing secret is not returned by Stripe API on list.',
-      );
-      console.error('   Stripe Dashboard → Developers → Webhooks → your endpoint → Reveal signing secret');
-      console.error('   Then run: export STRIPE_WEBHOOK_SECRET=whsec_... and re-run this script.');
-      process.exit(1);
+      console.log(`Replacing existing webhook endpoint ${match.id} to obtain signing secret...`);
+      await fetch(`https://api.stripe.com/v1/webhook_endpoints/${match.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${secretKey}` },
+      });
     }
   }
 
