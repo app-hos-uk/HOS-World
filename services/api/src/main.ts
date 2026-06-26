@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, VersioningType, VERSION_NEUTRAL } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { Logger } from './common/logger/logger.service';
@@ -9,7 +10,6 @@ import helmet from 'helmet';
 import compression = require('compression');
 import * as cookieParser from 'cookie-parser';
 import { randomUUID } from 'crypto';
-import * as express from 'express';
 import * as Sentry from '@sentry/node';
 import { createBullBoard } from '@bull-board/api';
 import { ExpressAdapter } from '@bull-board/express';
@@ -201,7 +201,7 @@ async function bootstrap() {
         logger.info('✅ Sentry initialized (4xx filtered)', 'Bootstrap');
       }
 
-      app = await NestFactory.create(AppModule, {
+      app = await NestFactory.create<NestExpressApplication>(AppModule, {
         cors: false,
         logger: logger,
         rawBody: true,
@@ -503,10 +503,9 @@ async function bootstrap() {
     app.useGlobalFilters(new SentryExceptionFilter());
     logger.info('✅ Sentry exception filter registered', 'Bootstrap');
 
-    // Add request size limits (NestJS handles JSON parsing, but we can set limits via the underlying Express instance)
-    const expressApp = app.getHttpAdapter().getInstance();
-    expressApp.use(express.json({ limit: '10mb' }));
-    expressApp.use(express.urlencoded({ limit: '10mb', extended: true }));
+    // useBodyParser respects rawBody:true (required for Stripe webhook signature verification)
+    app.useBodyParser('json', { limit: '10mb' });
+    app.useBodyParser('urlencoded', { limit: '10mb', extended: true });
     logger.info('✅ Request size limits configured (10MB)', 'Bootstrap');
 
     const port = process.env.PORT || 3001;
