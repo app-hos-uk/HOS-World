@@ -12,6 +12,32 @@ import {
   UpdateInfluencerCommissionDto,
   CreateProductLinkDto,
 } from './dto/update-influencer.dto';
+import { AdminUpdateInfluencerDto } from './dto/admin-update-influencer.dto';
+
+const RESERVED_CUSTOM_SLUGS = new Set([
+  'admin',
+  'api',
+  'auth',
+  'login',
+  'register',
+  'signup',
+  'influencers',
+  'products',
+  'cart',
+  'checkout',
+  'health',
+  'swagger',
+  'docs',
+  'static',
+  'assets',
+  'i',
+  'me',
+  'www',
+]);
+
+function clampPage(page?: number): number {
+  return Math.max(1, parseInt(String(page), 10) || 1);
+}
 
 @Injectable()
 export class InfluencersService {
@@ -37,6 +63,54 @@ export class InfluencersService {
         if (e instanceof BadRequestException) throw e;
         throw new BadRequestException(`Social link "${key}" must be a valid URL`);
       }
+    }
+  }
+
+  private assertCategoryCommissions(categoryCommissions: Record<string, number> | undefined) {
+    if (!categoryCommissions) return;
+    for (const [categoryId, rate] of Object.entries(categoryCommissions)) {
+      if (typeof rate !== 'number' || rate < 0 || rate > 1) {
+        throw new BadRequestException(
+          `Category commission rate for "${categoryId}" must be between 0 and 1`,
+        );
+      }
+    }
+  }
+
+  private async validateCustomSlug(
+    customSlug: string | undefined,
+    influencerId: string,
+  ): Promise<void> {
+    if (!customSlug?.trim()) return;
+
+    const normalized = customSlug.trim().toLowerCase();
+
+    if (RESERVED_CUSTOM_SLUGS.has(normalized)) {
+      throw new BadRequestException(`Custom slug "${customSlug}" is reserved`);
+    }
+
+    const slugConflict = await this.prisma.influencer.findFirst({
+      where: {
+        slug: normalized,
+        NOT: { id: influencerId },
+      },
+      select: { id: true },
+    });
+    if (slugConflict) {
+      throw new BadRequestException(
+        `Custom slug "${customSlug}" conflicts with an existing influencer slug`,
+      );
+    }
+
+    const linkConflict = await this.prisma.influencerProductLink.findFirst({
+      where: {
+        customSlug: normalized,
+        NOT: { influencerId },
+      },
+      select: { id: true },
+    });
+    if (linkConflict) {
+      throw new BadRequestException(`Custom slug "${customSlug}" is already in use`);
     }
   }
 
@@ -213,7 +287,8 @@ export class InfluencersService {
       throw new NotFoundException('Influencer profile not found');
     }
 
-    const { page = 1, limit = 20 } = options || {};
+    const page = clampPage(options?.page);
+    const { limit = 20 } = options || {};
 
     const [links, total] = await Promise.all([
       this.prisma.influencerProductLink.findMany({
@@ -266,6 +341,8 @@ export class InfluencersService {
       throw new NotFoundException('Influencer profile not found');
     }
 
+    await this.validateCustomSlug(dto.customSlug, influencer.id);
+
     // Check if product exists
     const product = await this.prisma.product.findUnique({
       where: { id: dto.productId },
@@ -289,11 +366,13 @@ export class InfluencersService {
       throw new ConflictException('Product link already exists');
     }
 
+    const normalizedSlug = dto.customSlug?.trim().toLowerCase() || undefined;
+
     const link = await this.prisma.influencerProductLink.create({
       data: {
         influencerId: influencer.id,
         productId: dto.productId,
-        customSlug: dto.customSlug,
+        customSlug: normalizedSlug,
       },
       include: {
         product: {
@@ -360,7 +439,8 @@ export class InfluencersService {
     limit?: number;
     search?: string;
   }) {
-    const { status, tier, page = 1, limit = 20, search } = options || {};
+    const page = clampPage(options?.page);
+    const { status, tier, limit = 20, search } = options || {};
 
     const where: any = {};
     if (status) where.status = status;
@@ -429,7 +509,7 @@ export class InfluencersService {
   /**
    * Update influencer (admin)
    */
-  async adminUpdate(id: string, dto: UpdateInfluencerDto & { status?: string; tier?: string }) {
+  async adminUpdate(id: string, dto: AdminUpdateInfluencerDto) {
     this.assertSocialLinksUrls(dto.socialLinks);
 
     const influencer = await this.prisma.influencer.findUnique({
@@ -448,8 +528,8 @@ export class InfluencersService {
         profileImage: dto.profileImage,
         bannerImage: dto.bannerImage,
         socialLinks: dto.socialLinks,
-        status: dto.status as any,
-        tier: dto.tier as any,
+        status: dto.status,
+        tier: dto.tier,
       },
       include: {
         user: {
@@ -464,6 +544,8 @@ export class InfluencersService {
    * Update influencer commission config (admin)
    */
   async updateCommission(id: string, dto: UpdateInfluencerCommissionDto) {
+    this.assertCategoryCommissions(dto.categoryCommissions);
+
     const influencer = await this.prisma.influencer.findUnique({
       where: { id },
     });

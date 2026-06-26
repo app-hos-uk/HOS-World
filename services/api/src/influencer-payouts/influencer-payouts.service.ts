@@ -1,5 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { CreatePayoutDto } from './dto/create-payout.dto';
+
+function clampPage(page?: number): number {
+  return Math.max(1, parseInt(String(page), 10) || 1);
+}
 
 @Injectable()
 export class InfluencerPayoutsService {
@@ -19,7 +24,8 @@ export class InfluencerPayoutsService {
       throw new NotFoundException('Influencer profile not found');
     }
 
-    const { page = 1, limit = 20 } = options || {};
+    const page = clampPage(options?.page);
+    const { limit = 20 } = options || {};
 
     const [payouts, total] = await Promise.all([
       this.prisma.influencerPayout.findMany({
@@ -54,7 +60,8 @@ export class InfluencerPayoutsService {
     status?: string;
     influencerId?: string;
   }) {
-    const { page = 1, limit = 20, status, influencerId } = options || {};
+    const page = clampPage(options?.page);
+    const { limit = 20, status, influencerId } = options || {};
 
     const where: any = {};
     if (status) where.status = status;
@@ -90,13 +97,7 @@ export class InfluencerPayoutsService {
   /**
    * Create payout record (admin)
    */
-  async create(data: {
-    influencerId: string;
-    periodStart: Date;
-    periodEnd: Date;
-    commissionIds?: string[];
-    notes?: string;
-  }) {
+  async create(data: CreatePayoutDto) {
     const influencer = await this.prisma.influencer.findUnique({
       where: { id: data.influencerId },
     });
@@ -105,45 +106,69 @@ export class InfluencerPayoutsService {
       throw new NotFoundException('Influencer not found');
     }
 
-    // Get approved commissions in period
-    const commissions = await this.prisma.influencerCommission.findMany({
-      where: {
-        influencerId: data.influencerId,
-        status: 'APPROVED',
-        createdAt: {
-          gte: data.periodStart,
-          lte: data.periodEnd,
-        },
-        payoutId: null, // Not yet assigned to a payout
-      },
-    });
+    const periodStart = new Date(data.periodStart);
+    const periodEnd = new Date(data.periodEnd);
 
-    if (commissions.length === 0) {
-      throw new BadRequestException('No approved commissions found for this period');
-    }
-
-    const totalAmount = commissions.reduce((sum, c) => sum + Number(c.amount), 0);
-
-    // Create payout and link commissions in transaction
     const payout = await this.prisma.$transaction(async (tx) => {
+      const commissionWhere = {
+        influencerId: data.influencerId,
+        status: 'APPROVED' as const,
+        payoutId: null,
+        createdAt: {
+          gte: periodStart,
+          lte: periodEnd,
+        },
+        ...(data.commissionIds?.length ? { id: { in: data.commissionIds } } : {}),
+      };
+
+      const candidates = await tx.influencerCommission.findMany({
+        where: commissionWhere,
+        select: { id: true },
+      });
+
+      if (candidates.length === 0) {
+        throw new BadRequestException('No approved commissions found for this period');
+      }
+
+      const candidateIds = candidates.map((c) => c.id);
+
       const newPayout = await tx.influencerPayout.create({
         data: {
           influencerId: data.influencerId,
-          periodStart: data.periodStart,
-          periodEnd: data.periodEnd,
-          totalAmount,
+          periodStart,
+          periodEnd,
+          totalAmount: 0,
           notes: data.notes,
           status: 'PENDING',
         },
       });
 
-      // Link commissions to payout
-      await tx.influencerCommission.updateMany({
-        where: { id: { in: commissions.map((c) => c.id) } },
+      const claimResult = await tx.influencerCommission.updateMany({
+        where: {
+          id: { in: candidateIds },
+          status: 'APPROVED',
+          payoutId: null,
+        },
         data: { payoutId: newPayout.id },
       });
 
-      return newPayout;
+      if (claimResult.count !== candidateIds.length) {
+        throw new BadRequestException(
+          'Some commissions were claimed by another payout; please retry',
+        );
+      }
+
+      const claimed = await tx.influencerCommission.findMany({
+        where: { payoutId: newPayout.id },
+        select: { amount: true },
+      });
+
+      const totalAmount = claimed.reduce((sum, c) => sum + Number(c.amount), 0);
+
+      return tx.influencerPayout.update({
+        where: { id: newPayout.id },
+        data: { totalAmount },
+      });
     });
 
     return payout;
@@ -170,6 +195,13 @@ export class InfluencerPayoutsService {
       throw new BadRequestException('Payout has already been marked as paid');
     }
 
+    const invalidCommissions = payout.commissions.filter((c) => c.status !== 'APPROVED');
+    if (invalidCommissions.length > 0) {
+      throw new BadRequestException(
+        'All linked commissions must be in APPROVED status before marking payout as paid',
+      );
+    }
+
     // Update payout and commissions in transaction
     await this.prisma.$transaction(async (tx) => {
       await tx.influencerPayout.update({
@@ -185,7 +217,7 @@ export class InfluencerPayoutsService {
 
       // Mark all linked commissions as paid
       await tx.influencerCommission.updateMany({
-        where: { payoutId: id },
+        where: { payoutId: id, status: 'APPROVED' },
         data: { status: 'PAID' },
       });
     });

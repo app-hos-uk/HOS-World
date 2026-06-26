@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
@@ -33,39 +33,60 @@ interface Product {
 export default function InfluencerProductLinksPage() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [links, setLinks] = useState<ProductLink[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProductId, setSelectedProductId] = useState('');
   const [creating, setCreating] = useState(false);
+  const fetchGenerationRef = useRef(0);
 
-  useEffect(() => {
-    fetchLinks();
-    fetchProducts();
-  }, []);
-
-  const fetchLinks = async () => {
+  const loadData = useCallback(async () => {
+    const generation = ++fetchGenerationRef.current;
     try {
       setLoading(true);
-      const response = await apiClient.getMyProductLinks({ limit: 100 });
-      setLinks(response.data || []);
-    } catch (err: any) {
-      console.error('Error fetching product links:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      setError(null);
+      const [linksRes, productsRes] = await Promise.all([
+        apiClient.getMyProductLinks({ limit: 100 }),
+        apiClient.getProducts({ status: 'ACTIVE', limit: 100 }),
+      ]);
+      if (generation !== fetchGenerationRef.current) return;
 
-  const fetchProducts = async () => {
-    try {
-      const response = await apiClient.getProducts({ status: 'ACTIVE', limit: 100 });
-      const raw = response.data;
-      const list = Array.isArray(raw) ? raw : (raw as any)?.data ?? [];
+      setLinks(linksRes.data || []);
+      const raw = productsRes.data;
+      const list = Array.isArray(raw) ? raw : (raw as { data?: Product[] })?.data ?? [];
       setProducts(list);
-    } catch (err: any) {
-      console.error('Error fetching products:', err);
-      setProducts([]);
+    } catch (err: unknown) {
+      if (generation !== fetchGenerationRef.current) return;
+      console.error('Failed to load product links');
+      const message = err instanceof Error ? err.message : 'Failed to load product links';
+      setError(message);
+      toast.error(message);
+    } finally {
+      if (generation === fetchGenerationRef.current) {
+        setLoading(false);
+      }
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const fetchLinks = async () => {
+    const generation = ++fetchGenerationRef.current;
+    try {
+      const response = await apiClient.getMyProductLinks({ limit: 100 });
+      if (generation !== fetchGenerationRef.current) return;
+      setLinks(response.data || []);
+      setError(null);
+    } catch (err: unknown) {
+      if (generation !== fetchGenerationRef.current) return;
+      console.error('Failed to refresh product links');
+      const message = err instanceof Error ? err.message : 'Failed to load product links';
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -101,9 +122,13 @@ export default function InfluencerProductLinksPage() {
     }
   };
 
-  const copyLink = (url: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}${url}`);
-    toast.success('Link copied to clipboard!');
+  const copyLink = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}${url}`);
+      toast.success('Link copied to clipboard!');
+    } catch {
+      toast.error('Failed to copy link to clipboard');
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -149,8 +174,20 @@ export default function InfluencerProductLinksPage() {
           </button>
         </div>
 
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 flex items-center justify-between gap-4">
+            <p className="text-sm text-red-300">{error}</p>
+            <button
+              onClick={loadData}
+              className="shrink-0 px-3 py-1.5 text-sm font-medium bg-red-500/20 text-red-200 rounded-lg hover:bg-red-500/30 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Links Grid */}
-        {links.length === 0 ? (
+        {!error && links.length === 0 ? (
           <div className="bg-hos-bg-secondary rounded-xl p-12 text-center shadow-sm">
             <svg className="w-16 h-16 text-hos-text-muted mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -164,7 +201,7 @@ export default function InfluencerProductLinksPage() {
               Create Your First Link
             </button>
           </div>
-        ) : (
+        ) : !error ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {links.map((link) => (
               <div key={link.id} className="bg-hos-bg-secondary rounded-xl shadow-sm overflow-hidden">
@@ -234,7 +271,7 @@ export default function InfluencerProductLinksPage() {
               </div>
             ))}
           </div>
-        )}
+        ) : null}
 
         {/* Add Product Modal */}
         {showAddModal && (

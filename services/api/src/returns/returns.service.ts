@@ -6,12 +6,14 @@ import {
   Logger,
   Optional,
 } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { PrismaService } from '../database/prisma.service';
 import { CreateReturnDto } from './dto/create-return.dto';
 import { RefundsService } from '../finance/refunds.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ActivityService } from '../activity/activity.service';
 import { InventoryService } from '../inventory/inventory.service';
+import { OrdersService } from '../orders/orders.service';
 
 interface ReturnRequest {
   id: string;
@@ -34,10 +36,15 @@ export class ReturnsService {
   constructor(
     private prisma: PrismaService,
     private refundsService: RefundsService,
+    private moduleRef: ModuleRef,
     @Optional() private notificationsService?: NotificationsService,
     @Optional() private activityService?: ActivityService,
     @Optional() private _inventoryService?: InventoryService,
   ) {}
+
+  private getOrdersService(): OrdersService {
+    return this.moduleRef.get(OrdersService, { strict: false });
+  }
 
   async create(userId: string, createReturnDto: CreateReturnDto): Promise<ReturnRequest> {
     // Verify order exists and belongs to user
@@ -348,6 +355,14 @@ export class ReturnsService {
           data: { paymentStatus: 'REFUNDED' },
         });
       });
+
+      try {
+        await this.getOrdersService().reverseInfluencerAttribution(returnRequest.orderId);
+      } catch (commErr) {
+        this.logger.error(
+          `Influencer attribution reversal failed for refunded order ${returnRequest.orderId}: ${(commErr as Error).message}`,
+        );
+      }
 
       this.activityService?.createLog({
         userId: userId || returnRequest.userId,

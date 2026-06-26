@@ -19,6 +19,8 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { InfluencerPayoutsService } from './influencer-payouts.service';
+import { CreatePayoutDto } from './dto/create-payout.dto';
+import { MarkPaidPayoutDto } from './dto/mark-paid-payout.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -96,15 +98,8 @@ export class InfluencerPayoutsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create payout record' })
   @SwaggerApiResponse({ status: 201, description: 'Payout created successfully' })
-  async create(
-    @Body() body: { influencerId: string; periodStart: string; periodEnd: string; notes?: string },
-  ): Promise<ApiResponse<any>> {
-    const payout = await this.payoutsService.create({
-      influencerId: body.influencerId,
-      periodStart: new Date(body.periodStart),
-      periodEnd: new Date(body.periodEnd),
-      notes: body.notes,
-    });
+  async create(@Body() body: CreatePayoutDto): Promise<ApiResponse<any>> {
+    const payout = await this.payoutsService.create(body);
     return {
       data: payout,
       message: 'Payout created successfully',
@@ -121,7 +116,7 @@ export class InfluencerPayoutsController {
   async markPaid(
     @Request() req: any,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { paymentMethod?: string; paymentRef?: string },
+    @Body() body: MarkPaidPayoutDto,
   ): Promise<ApiResponse<any>> {
     const payout = await this.payoutsService.markPaid(id, req.user.id, body);
     return {

@@ -8,6 +8,17 @@ import { useSecureUrlParam, useSecureUrlToken } from '@/hooks/useSecureUrlToken'
 
 type InvitationType = 'seller' | 'influencer';
 
+function invitationBlockingError(data: { status?: string; expiresAt?: string } | null): string | null {
+  if (!data) return 'Invalid or expired invitation token.';
+  if (data.status && data.status !== 'PENDING') {
+    return 'This invitation is no longer valid.';
+  }
+  if (data.expiresAt && new Date(data.expiresAt) < new Date()) {
+    return 'This invitation has expired.';
+  }
+  return null;
+}
+
 function AcceptInvitationForm() {
   const router = useRouter();
   const toast = useToast();
@@ -50,6 +61,12 @@ function AcceptInvitationForm() {
         if (invitationType === 'influencer') {
           const response = await apiClient.getInfluencerInvitationByToken(token);
           if (response?.data) {
+            const blockReason = invitationBlockingError(response.data);
+            if (blockReason) {
+              setError(blockReason);
+              setIsValidationError(true);
+              return;
+            }
             setInvitationData(response.data);
             setDetectedType('influencer');
             setFormData(prev => ({
@@ -65,6 +82,12 @@ function AcceptInvitationForm() {
           try {
             const response = await apiClient.validateInvitation(token);
             if (response?.data) {
+              const blockReason = invitationBlockingError(response.data);
+              if (blockReason) {
+                setError(blockReason);
+                setIsValidationError(true);
+                return;
+              }
               setInvitationData(response.data);
               setDetectedType('seller');
               setFormData(prev => ({
@@ -79,6 +102,12 @@ function AcceptInvitationForm() {
             try {
               const infResponse = await apiClient.getInfluencerInvitationByToken(token);
               if (infResponse?.data) {
+                const blockReason = invitationBlockingError(infResponse.data);
+                if (blockReason) {
+                  setError(blockReason);
+                  setIsValidationError(true);
+                  return;
+                }
                 setInvitationData(infResponse.data);
                 setDetectedType('influencer');
                 setFormData(prev => ({
@@ -136,13 +165,23 @@ function AcceptInvitationForm() {
       return;
     }
 
-    if (detectedType === 'seller' && !formData.storeName) {
-      setError('Store name is required');
-      return;
+    if (detectedType === 'influencer') {
+      if (!formData.firstName.trim()) {
+        setError('First name is required');
+        return;
+      }
+      if (!formData.lastName.trim()) {
+        setError('Last name is required');
+        return;
+      }
+      if (!formData.displayName.trim()) {
+        setError('Display name is required');
+        return;
+      }
     }
 
-    if (detectedType === 'influencer' && !formData.displayName) {
-      setError('Display name is required');
+    if (detectedType === 'seller' && !formData.storeName) {
+      setError('Store name is required');
       return;
     }
 
@@ -474,7 +513,15 @@ function AcceptInvitationForm() {
                 className="h-4 w-4 text-hos-gold focus:ring-hos-gold/50 border-hos-border rounded"
               />
               <label htmlFor="gdprConsent" className="ml-2 block text-sm text-hos-text-secondary">
-                I acknowledge the <a href="/privacy-policy" target="_blank" className="text-hos-gold hover:underline">Privacy Policy</a> and consent to data processing *
+                I acknowledge the{' '}
+                <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-hos-gold hover:underline">
+                  Privacy Policy
+                </a>{' '}
+                and agree to the{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-hos-gold hover:underline">
+                  Terms of Service
+                </a>{' '}
+                *
               </label>
             </div>
           </div>

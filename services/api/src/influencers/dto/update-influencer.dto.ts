@@ -1,5 +1,33 @@
-import { IsOptional, IsString, IsNumber, Min, Max, IsObject, IsUrl, ValidateIf } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNumber,
+  Min,
+  Max,
+  IsObject,
+  IsUrl,
+  ValidateIf,
+  Validate,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
+@ValidatorConstraint({ name: 'categoryCommissionRates', async: false })
+class CategoryCommissionRatesConstraint implements ValidatorConstraintInterface {
+  validate(value: unknown): boolean {
+    if (value == null) return true;
+    if (typeof value !== 'object' || Array.isArray(value)) return false;
+    for (const rate of Object.values(value as Record<string, unknown>)) {
+      if (typeof rate !== 'number' || rate < 0 || rate > 1) return false;
+    }
+    return true;
+  }
+
+  defaultMessage(): string {
+    return 'Each category commission rate must be a number between 0 and 1';
+  }
+}
 
 export class UpdateInfluencerDto {
   @ApiPropertyOptional({ description: 'Display name for storefront' })
@@ -47,6 +75,7 @@ export class UpdateInfluencerCommissionDto {
   })
   @IsOptional()
   @IsObject()
+  @Validate(CategoryCommissionRatesConstraint)
   categoryCommissions?: Record<string, number>;
 
   @ApiPropertyOptional({ description: 'Cookie duration in days' })

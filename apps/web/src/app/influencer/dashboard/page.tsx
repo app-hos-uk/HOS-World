@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
+import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 import { useToast } from '@/hooks/useToast';
 import {
   AreaChart,
@@ -64,24 +65,52 @@ interface Influencer {
   status: string;
 }
 
+function getErrorStatus(err: unknown): number | undefined {
+  if (err && typeof err === 'object' && 'status' in err && typeof (err as { status: unknown }).status === 'number') {
+    return (err as { status: number }).status;
+  }
+  const msg = err instanceof Error ? err.message : String(err);
+  const match = msg.match(/status:\s*(\d{3})/i);
+  return match ? parseInt(match[1], 10) : undefined;
+}
+
+function isUnauthorizedError(err: unknown): boolean {
+  const status = getErrorStatus(err);
+  if (status === 401) return true;
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.includes('401') || msg.toLowerCase().includes('unauthorized');
+}
+
+async function recordReferralShare(referralCode: string, platform: string) {
+  const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
+  await fetch(`${apiUrl}/social-sharing/share`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      type: 'REFERRAL',
+      itemId: referralCode,
+      platform,
+    }),
+  });
+}
+
 export default function InfluencerDashboardPage() {
   const router = useRouter();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<Influencer | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
+    fetchData(true);
     const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') fetchData();
+      if (document.visibilityState === 'visible') fetchData(false);
     };
-    const interval = setInterval(() => fetchData(), 60_000);
+    const interval = setInterval(() => fetchData(false), 60_000);
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
       clearInterval(interval);
@@ -90,32 +119,47 @@ export default function InfluencerDashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchData = async () => {
-    try {
+  const fetchData = async (isInitial = false) => {
+    if (isInitial) {
       setLoading(true);
+    } else {
+      setRefreshing(true);
+    }
+    try {
       const [profileRes, analyticsRes] = await Promise.all([
         apiClient.getMyInfluencerProfile(),
         apiClient.getMyInfluencerAnalytics(),
       ]);
       setProfile(profileRes.data);
       setAnalytics(analyticsRes.data);
-    } catch (err: any) {
-      console.error('Error fetching dashboard data:', err);
-      if (err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+      setError(null);
+    } catch (err: unknown) {
+      console.error('Failed to load influencer dashboard');
+      const message = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      setError(message);
+      toast.error(message);
+      if (isUnauthorizedError(err)) {
         router.push('/login');
       }
     } finally {
-      setLoading(false);
+      if (isInitial) {
+        setLoading(false);
+      } else {
+        setRefreshing(false);
+      }
     }
   };
 
-  const copyReferralLink = () => {
-    if (analytics?.referralCode) {
-      const link = `${window.location.origin}?ref=${analytics.referralCode}`;
-      navigator.clipboard.writeText(link);
+  const copyReferralLink = async () => {
+    if (!analytics?.referralCode) return;
+    const link = `${window.location.origin}?ref=${analytics.referralCode}`;
+    try {
+      await navigator.clipboard.writeText(link);
       setCopied(true);
       toast.success('Referral link copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Failed to copy link to clipboard');
     }
   };
 
@@ -125,21 +169,9 @@ export default function InfluencerDashboardPage() {
       const link = `${window.location.origin}?ref=${analytics.referralCode}`;
       const text = encodeURIComponent('Check out the House of Spells Marketplace!');
       window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(link)}&text=${text}`, '_blank');
-
-      await fetch('/api/social-sharing/share', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          type: 'REFERRAL',
-          itemId: analytics.referralCode,
-          platform: 'twitter',
-        }),
-      });
-    } catch (err) {
-      console.error('Error recording twitter share:', err);
+      await recordReferralShare(analytics.referralCode, 'twitter');
+    } catch {
+      console.error('Failed to record twitter share');
     }
   };
 
@@ -148,21 +180,9 @@ export default function InfluencerDashboardPage() {
     try {
       const link = `${window.location.origin}?ref=${analytics.referralCode}`;
       window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`, '_blank');
-
-      await fetch('/api/social-sharing/share', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          type: 'REFERRAL',
-          itemId: analytics.referralCode,
-          platform: 'facebook',
-        }),
-      });
-    } catch (err) {
-      console.error('Error recording facebook share:', err);
+      await recordReferralShare(analytics.referralCode, 'facebook');
+    } catch {
+      console.error('Failed to record facebook share');
     }
   };
 
@@ -295,6 +315,25 @@ export default function InfluencerDashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {refreshing && (
+          <div className="mb-4 flex items-center gap-2 text-sm text-hos-text-muted">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-hos-gold" />
+            Refreshing data…
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 flex items-center justify-between gap-4">
+            <p className="text-sm text-red-300">{error}</p>
+            <button
+              onClick={() => fetchData(!profile && !analytics)}
+              className="shrink-0 px-3 py-1.5 text-sm font-medium bg-red-500/20 text-red-200 rounded-lg hover:bg-red-500/30 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>

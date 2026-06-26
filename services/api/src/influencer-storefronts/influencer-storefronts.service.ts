@@ -1,6 +1,29 @@
-import { Injectable, NotFoundException, Logger, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { randomBytes } from 'crypto';
+import { Prisma } from '@prisma/client';
+import { UpdateStorefrontDto } from './dto/update-storefront.dto';
+
+const CONTENT_BLOCK_TYPES = new Set([
+  'hero',
+  'featured_products',
+  'text',
+  'image',
+  'video',
+  'testimonial',
+  'cta',
+]);
+
+const MAX_CONTENT_BLOCKS = 50;
+const MAX_TEXT_FIELD_LENGTH = 10000;
+const MAX_URL_FIELD_LENGTH = 2048;
+const MAX_SHORT_FIELD_LENGTH = 512;
 
 @Injectable()
 export class InfluencerStorefrontsService {
@@ -26,6 +49,11 @@ export class InfluencerStorefrontsService {
       if (!user || user.role !== 'INFLUENCER') {
         throw new NotFoundException('Influencer profile not found');
       }
+
+      const acceptedInvitation = await this.prisma.influencerInvitation.findFirst({
+        where: { email: user.email.toLowerCase(), status: 'ACCEPTED' },
+      });
+
       const displayName =
         [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email.split('@')[0];
       const slug = await this.uniqueSlug(displayName);
@@ -36,7 +64,7 @@ export class InfluencerStorefrontsService {
           displayName,
           slug,
           referralCode,
-          status: 'ACTIVE',
+          status: acceptedInvitation ? 'ACTIVE' : 'INACTIVE',
         },
         include: { storefront: true },
       });
@@ -93,6 +121,84 @@ export class InfluencerStorefrontsService {
     return `${slug}-${randomBytes(3).toString('hex')}`;
   }
 
+  private validateContentBlocks(contentBlocks: unknown): unknown[] {
+    if (!Array.isArray(contentBlocks)) {
+      throw new BadRequestException('contentBlocks must be an array');
+    }
+    if (contentBlocks.length > MAX_CONTENT_BLOCKS) {
+      throw new BadRequestException(`contentBlocks cannot exceed ${MAX_CONTENT_BLOCKS} items`);
+    }
+
+    const urlFields = new Set(['url', 'imageUrl', 'videoUrl', 'href', 'src', 'link']);
+    const shortFields = new Set(['title', 'subtitle', 'label', 'buttonText', 'author', 'name']);
+
+    for (let i = 0; i < contentBlocks.length; i++) {
+      const block = contentBlocks[i];
+      if (!block || typeof block !== 'object' || Array.isArray(block)) {
+        throw new BadRequestException(`contentBlocks[${i}] must be an object`);
+      }
+      const { type, data } = block as { type?: unknown; data?: unknown };
+      if (typeof type !== 'string' || !CONTENT_BLOCK_TYPES.has(type)) {
+        throw new BadRequestException(
+          `contentBlocks[${i}].type must be one of: ${[...CONTENT_BLOCK_TYPES].join(', ')}`,
+        );
+      }
+      if (data != null) {
+        if (typeof data !== 'object' || Array.isArray(data)) {
+          throw new BadRequestException(`contentBlocks[${i}].data must be an object`);
+        }
+        for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
+          if (typeof value === 'string') {
+            const maxLen = urlFields.has(key)
+              ? MAX_URL_FIELD_LENGTH
+              : shortFields.has(key)
+                ? MAX_SHORT_FIELD_LENGTH
+                : MAX_TEXT_FIELD_LENGTH;
+            if (value.length > maxLen) {
+              throw new BadRequestException(
+                `contentBlocks[${i}].data.${key} exceeds maximum length of ${maxLen}`,
+              );
+            }
+          }
+        }
+      }
+    }
+
+    return contentBlocks;
+  }
+
+  private toPublicStorefront(storefront: {
+    primaryColor: string;
+    secondaryColor: string;
+    backgroundColor: string;
+    textColor: string;
+    fontFamily: string;
+    layoutType: string;
+    showBanner: boolean;
+    showBio: boolean;
+    showSocialLinks: boolean;
+    contentBlocks: unknown;
+    featuredProductIds: string[];
+    metaTitle: string | null;
+    metaDescription: string | null;
+  }) {
+    return {
+      primaryColor: storefront.primaryColor,
+      secondaryColor: storefront.secondaryColor,
+      backgroundColor: storefront.backgroundColor,
+      textColor: storefront.textColor,
+      fontFamily: storefront.fontFamily,
+      layoutType: storefront.layoutType,
+      showBanner: storefront.showBanner,
+      showBio: storefront.showBio,
+      showSocialLinks: storefront.showSocialLinks,
+      contentBlocks: storefront.contentBlocks,
+      featuredProductIds: storefront.featuredProductIds,
+      metaTitle: storefront.metaTitle,
+      metaDescription: storefront.metaDescription,
+    };
+  }
+
   /**
    * Get storefront for influencer
    */
@@ -122,11 +228,11 @@ export class InfluencerStorefrontsService {
   /**
    * Update storefront settings
    */
-  async update(userId: string, dto: Record<string, unknown>) {
+  async update(userId: string, dto: UpdateStorefrontDto) {
     const data: Record<string, unknown> = {};
     for (const key of InfluencerStorefrontsService.STOREFRONT_UPDATE_KEYS) {
-      if (dto[key] !== undefined && dto[key] !== null) {
-        data[key] = dto[key];
+      if (dto[key as keyof UpdateStorefrontDto] !== undefined) {
+        data[key] = dto[key as keyof UpdateStorefrontDto];
       }
     }
 
@@ -150,21 +256,22 @@ export class InfluencerStorefrontsService {
   /**
    * Update content blocks
    */
-  async updateContentBlocks(userId: string, contentBlocks: any[]) {
+  async updateContentBlocks(userId: string, contentBlocks: unknown[]) {
+    const validated = this.validateContentBlocks(contentBlocks);
     const influencer = await this.ensureInfluencerProfile(userId);
 
     if (!influencer.storefront) {
       return this.prisma.influencerStorefront.create({
         data: {
           influencerId: influencer.id,
-          contentBlocks,
+          contentBlocks: validated as Prisma.InputJsonValue,
         },
       });
     }
 
     return this.prisma.influencerStorefront.update({
       where: { id: influencer.storefront.id },
-      data: { contentBlocks },
+      data: { contentBlocks: validated as Prisma.InputJsonValue },
     });
   }
 
@@ -210,13 +317,21 @@ export class InfluencerStorefrontsService {
       throw new NotFoundException('Storefront not found');
     }
 
-    // Get featured products (or fallback to recent ACTIVE products when none set)
-    let featuredProducts: any[] = [];
-    if (influencer.storefront?.featuredProductIds?.length) {
-      featuredProducts = await this.prisma.product.findMany({
+    let featuredProducts: {
+      id: string;
+      name: string;
+      slug: string;
+      price: unknown;
+      images: { url: string; alt: string | null }[];
+    }[] = [];
+
+    const featuredIds = influencer.storefront?.featuredProductIds ?? [];
+    if (featuredIds.length > 0) {
+      const products = await this.prisma.product.findMany({
         where: {
-          id: { in: influencer.storefront.featuredProductIds },
+          id: { in: featuredIds },
           status: 'ACTIVE',
+          stock: { gt: 0 },
         },
         select: {
           id: true,
@@ -226,20 +341,10 @@ export class InfluencerStorefrontsService {
           images: { take: 1, select: { url: true, alt: true } },
         },
       });
-    }
-    if (featuredProducts.length === 0) {
-      featuredProducts = await this.prisma.product.findMany({
-        where: { status: 'ACTIVE' },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          price: true,
-          images: { take: 1, select: { url: true, alt: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 12,
-      });
+      const byId = new Map(products.map((p) => [p.id, p]));
+      featuredProducts = featuredIds
+        .filter((id) => byId.has(id))
+        .map((id) => byId.get(id)!);
     }
 
     return {
@@ -252,7 +357,9 @@ export class InfluencerStorefrontsService {
         socialLinks: influencer.socialLinks,
         referralCode: influencer.referralCode,
       },
-      storefront: influencer.storefront,
+      storefront: influencer.storefront
+        ? this.toPublicStorefront(influencer.storefront)
+        : null,
       featuredProducts,
     };
   }

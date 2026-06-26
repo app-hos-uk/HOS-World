@@ -21,6 +21,7 @@ import { PosInventorySyncService } from '../pos/sync/inventory-sync.service';
 import { MarketingEventBus } from '../journeys/marketing-event.bus';
 import { RedisService } from '../cache/redis.service';
 import { IntegrationsService } from '../integrations/integrations.service';
+import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class PaymentsService {
@@ -430,12 +431,22 @@ export class PaymentsService {
       }
     }
 
-    // Activate influencer commissions for this order now that payment is confirmed
+    // Activate influencer commissions: PENDING -> APPROVED, then increment stats once
     try {
       const pendingCommissions = await this.prisma.influencerCommission.findMany({
         where: { orderId: order.id, status: 'PENDING' },
+        include: { referral: true },
       });
+
       for (const comm of pendingCommissions) {
+        const activated = await this.prisma.influencerCommission.updateMany({
+          where: { id: comm.id, status: 'PENDING' },
+          data: { status: 'APPROVED' },
+        });
+        if (activated.count === 0) {
+          continue;
+        }
+
         await this.prisma.influencer.update({
           where: { id: comm.influencerId },
           data: {
@@ -444,6 +455,25 @@ export class PaymentsService {
             totalCommission: { increment: comm.amount },
           },
         });
+
+        const meta = comm.metadata as {
+          campaignId?: string;
+          campaignAttributedSales?: string;
+        } | null;
+        const campaignId = meta?.campaignId ?? comm.referral?.campaignId ?? null;
+        if (campaignId) {
+          const campaignSales = meta?.campaignAttributedSales
+            ? new Decimal(meta.campaignAttributedSales)
+            : comm.orderTotal;
+
+          await this.prisma.influencerCampaign.update({
+            where: { id: campaignId },
+            data: {
+              totalConversions: { increment: 1 },
+              totalSales: { increment: campaignSales },
+            },
+          });
+        }
       }
     } catch (commErr: any) {
       this.logger.warn(`Influencer commission activation failed for order ${order.id}: ${commErr?.message}`);

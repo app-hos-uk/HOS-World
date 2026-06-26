@@ -4,7 +4,7 @@
  * How to run:
  * 1. Open the Google Sheet
  * 2. Extensions → Apps Script
- * 3. Paste this file contents into Code.gs
+ * 3. Paste this file contents into Code.gsa
  * 4. Run updateAssessmentStatuses() → Allow permissions
  */
 function updateAssessmentStatuses() {

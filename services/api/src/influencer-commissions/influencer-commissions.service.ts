@@ -8,8 +8,22 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { Decimal } from '@prisma/client/runtime/library';
+import { CommissionStatus } from '@prisma/client';
 import { AmbassadorService } from '../ambassador/ambassador.service';
+import { UpdateCommissionStatusDto } from './dto/update-commission-status.dto';
+
+function clampPage(page?: number): number {
+  return Math.max(1, parseInt(String(page), 10) || 1);
+}
+
+/** Allowed admin status transitions (PAID is only set via payout or ambassador conversion). */
+const ALLOWED_STATUS_TRANSITIONS: Record<CommissionStatus, CommissionStatus[]> = {
+  [CommissionStatus.PENDING]: [CommissionStatus.APPROVED, CommissionStatus.CANCELLED],
+  [CommissionStatus.APPROVED]: [CommissionStatus.CANCELLED, CommissionStatus.ADJUSTED],
+  [CommissionStatus.ADJUSTED]: [CommissionStatus.APPROVED, CommissionStatus.CANCELLED],
+  [CommissionStatus.PAID]: [],
+  [CommissionStatus.CANCELLED]: [],
+};
 
 @Injectable()
 export class InfluencerCommissionsService {
@@ -20,99 +34,6 @@ export class InfluencerCommissionsService {
     @Optional() @Inject(forwardRef(() => AmbassadorService))
     private ambassador?: AmbassadorService,
   ) {}
-
-  /**
-   * Calculate commission rate based on priority: Campaign > Category > Base
-   */
-  async calculateCommissionRate(
-    influencer: any,
-    order: any,
-    items: any[],
-  ): Promise<{ rate: Decimal; source: string }> {
-    const now = new Date();
-
-    // Check for active campaign
-    const activeCampaign = await this.prisma.influencerCampaign.findFirst({
-      where: {
-        influencerId: influencer.id,
-        status: 'ACTIVE',
-        startDate: { lte: now },
-        endDate: { gte: now },
-      },
-    });
-
-    if (activeCampaign?.overrideCommissionRate) {
-      return {
-        rate: activeCampaign.overrideCommissionRate,
-        source: 'CAMPAIGN',
-      };
-    }
-
-    // Check for category-specific rate (use highest if multiple categories)
-    if (influencer.categoryCommissions && items.length > 0) {
-      const categoryRates = influencer.categoryCommissions as Record<string, number>;
-      let highestCategoryRate = 0;
-
-      for (const item of items) {
-        const categoryId = item.product?.categoryId;
-        if (categoryId && categoryRates[categoryId]) {
-          highestCategoryRate = Math.max(highestCategoryRate, categoryRates[categoryId]);
-        }
-      }
-
-      if (highestCategoryRate > 0) {
-        return {
-          rate: new Decimal(highestCategoryRate),
-          source: 'CATEGORY',
-        };
-      }
-    }
-
-    // Default to base rate
-    return {
-      rate: influencer.baseCommissionRate,
-      source: 'BASE',
-    };
-  }
-
-  /**
-   * Create commission for an order
-   */
-  async create(data: {
-    influencerId: string;
-    referralId: string;
-    orderId: string;
-    orderTotal: Decimal;
-    rateSource: string;
-    rateApplied: Decimal;
-    amount: Decimal;
-    currency?: string;
-  }) {
-    const commission = await this.prisma.influencerCommission.create({
-      data: {
-        influencerId: data.influencerId,
-        referralId: data.referralId,
-        orderId: data.orderId,
-        orderTotal: data.orderTotal,
-        rateSource: data.rateSource,
-        rateApplied: data.rateApplied,
-        amount: data.amount,
-        currency: data.currency || 'USD',
-        status: 'PENDING',
-      },
-    });
-
-    // Update influencer total commission
-    await this.prisma.influencer.update({
-      where: { id: data.influencerId },
-      data: {
-        totalCommission: { increment: data.amount.toNumber() },
-        totalSalesAmount: { increment: data.orderTotal.toNumber() },
-      },
-    });
-
-    return commission;
-  }
 
   /**
    * Get commissions for influencer
@@ -129,7 +50,8 @@ export class InfluencerCommissionsService {
       throw new NotFoundException('Influencer profile not found');
     }
 
-    const { page = 1, limit = 20, status } = options || {};
+    const page = clampPage(options?.page);
+    const { limit = 20, status } = options || {};
 
     const where: any = { influencerId: influencer.id };
     if (status) where.status = status;
@@ -167,22 +89,29 @@ export class InfluencerCommissionsService {
       throw new NotFoundException('Influencer profile not found');
     }
 
-    const commissions = await this.prisma.influencerCommission.findMany({
+    const grouped = await this.prisma.influencerCommission.groupBy({
+      by: ['status'],
       where: { influencerId: influencer.id },
+      _sum: { amount: true },
     });
 
-    const pending = commissions
-      .filter((c) => c.status === 'PENDING')
-      .reduce((sum, c) => sum + Number(c.amount), 0);
-    const approved = commissions
-      .filter((c) => c.status === 'APPROVED')
-      .reduce((sum, c) => sum + Number(c.amount), 0);
-    const paid = commissions
-      .filter((c) => c.status === 'PAID')
-      .reduce((sum, c) => sum + Number(c.amount), 0);
-    const cancelled = commissions
-      .filter((c) => c.status === 'CANCELLED')
-      .reduce((sum, c) => sum + Number(c.amount), 0);
+    const sumByStatus = (status: CommissionStatus) =>
+      Number(grouped.find((g) => g.status === status)?._sum.amount ?? 0);
+
+    const pending = sumByStatus(CommissionStatus.PENDING);
+    const approved = sumByStatus(CommissionStatus.APPROVED);
+    const paid = sumByStatus(CommissionStatus.PAID);
+    const cancelled = sumByStatus(CommissionStatus.CANCELLED);
+
+    const availableAgg = await this.prisma.influencerCommission.aggregate({
+      where: {
+        influencerId: influencer.id,
+        status: CommissionStatus.APPROVED,
+        payoutId: null,
+      },
+      _sum: { amount: true },
+    });
+    const available = Number(availableAgg._sum.amount ?? 0);
 
     return {
       pending,
@@ -190,7 +119,7 @@ export class InfluencerCommissionsService {
       paid,
       cancelled,
       total: pending + approved + paid,
-      available: approved, // Ready to be paid
+      available,
     };
   }
 
@@ -203,7 +132,8 @@ export class InfluencerCommissionsService {
     status?: string;
     influencerId?: string;
   }) {
-    const { page = 1, limit = 20, status, influencerId } = options || {};
+    const page = clampPage(options?.page);
+    const { limit = 20, status, influencerId } = options || {};
 
     const where: any = {};
     if (status) where.status = status;
@@ -238,7 +168,7 @@ export class InfluencerCommissionsService {
   /**
    * Update commission status (admin)
    */
-  async updateStatus(id: string, status: string, notes?: string) {
+  async updateStatus(id: string, dto: UpdateCommissionStatusDto) {
     const commission = await this.prisma.influencerCommission.findUnique({
       where: { id },
     });
@@ -247,14 +177,35 @@ export class InfluencerCommissionsService {
       throw new NotFoundException('Commission not found');
     }
 
+    if (commission.payoutId) {
+      throw new BadRequestException(
+        'Cannot change status of a commission linked to a payout',
+      );
+    }
+
+    const { status, notes } = dto;
+
+    if (status === CommissionStatus.PAID) {
+      throw new BadRequestException(
+        'Commission status PAID can only be set via the payout or ambassador conversion flow',
+      );
+    }
+
+    const allowed = ALLOWED_STATUS_TRANSITIONS[commission.status as CommissionStatus] ?? [];
+    if (!allowed.includes(status)) {
+      throw new BadRequestException(
+        `Cannot transition commission from ${commission.status} to ${status}`,
+      );
+    }
+
     const updated = await this.prisma.influencerCommission.update({
       where: { id },
       data: {
-        status: status as any,
-        notes: notes || commission.notes,
+        status,
+        notes: notes ?? commission.notes,
       },
     });
-    if (status === 'APPROVED') {
+    if (status === CommissionStatus.APPROVED) {
       void this.ambassador?.tryAutoConvertCommission(id);
     }
     return updated;
@@ -264,6 +215,6 @@ export class InfluencerCommissionsService {
    * Approve commission (admin)
    */
   async approve(id: string) {
-    return this.updateStatus(id, 'APPROVED');
+    return this.updateStatus(id, { status: CommissionStatus.APPROVED });
   }
 }

@@ -1,6 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { Decimal } from '@prisma/client/runtime/library';
+import { CreateCampaignDto } from './dto/create-campaign.dto';
+import { UpdateCampaignDto } from './dto/update-campaign.dto';
+
+function clampPage(page?: number): number {
+  return Math.max(1, parseInt(String(page), 10) || 1);
+}
 
 @Injectable()
 export class InfluencerCampaignsService {
@@ -23,7 +29,8 @@ export class InfluencerCampaignsService {
       throw new NotFoundException('Influencer profile not found');
     }
 
-    const { page = 1, limit = 20, status } = options || {};
+    const page = clampPage(options?.page);
+    const { limit = 20, status } = options || {};
 
     const where: any = { influencerId: influencer.id };
     if (status) where.status = status;
@@ -58,7 +65,8 @@ export class InfluencerCampaignsService {
     status?: string;
     influencerId?: string;
   }) {
-    const { page = 1, limit = 20, status, influencerId } = options || {};
+    const page = clampPage(options?.page);
+    const { limit = 20, status, influencerId } = options || {};
 
     const where: any = {};
     if (status) where.status = status;
@@ -255,17 +263,7 @@ export class InfluencerCampaignsService {
   /**
    * Create campaign (admin)
    */
-  async create(data: {
-    influencerId: string;
-    name: string;
-    description?: string;
-    startDate: Date;
-    endDate: Date;
-    overrideCommissionRate?: number;
-    productIds?: string[];
-    categoryIds?: string[];
-    status?: 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED';
-  }) {
+  async create(data: CreateCampaignDto) {
     const influencer = await this.prisma.influencer.findUnique({
       where: { id: data.influencerId },
     });
@@ -279,8 +277,8 @@ export class InfluencerCampaignsService {
         influencerId: data.influencerId,
         name: data.name,
         description: data.description,
-        startDate: data.startDate,
-        endDate: data.endDate,
+        startDate: new Date(data.startDate),
+        endDate: new Date(data.endDate),
         overrideCommissionRate: data.overrideCommissionRate,
         productIds: data.productIds || [],
         categoryIds: data.categoryIds || [],
@@ -297,20 +295,7 @@ export class InfluencerCampaignsService {
   /**
    * Update campaign (admin)
    */
-  async update(
-    id: string,
-    data: {
-      name?: string;
-      description?: string;
-      startDate?: Date;
-      endDate?: Date;
-      /** Pass `null` to clear override and fall back to influencer default / rules */
-      overrideCommissionRate?: number | null;
-      productIds?: string[];
-      categoryIds?: string[];
-      status?: string;
-    },
-  ) {
+  async update(id: string, data: UpdateCampaignDto) {
     const campaign = await this.prisma.influencerCampaign.findUnique({
       where: { id },
     });
@@ -322,8 +307,8 @@ export class InfluencerCampaignsService {
     const patch: Record<string, unknown> = {};
     if (data.name !== undefined) patch.name = data.name;
     if (data.description !== undefined) patch.description = data.description;
-    if (data.startDate !== undefined) patch.startDate = data.startDate;
-    if (data.endDate !== undefined) patch.endDate = data.endDate;
+    if (data.startDate !== undefined) patch.startDate = new Date(data.startDate);
+    if (data.endDate !== undefined) patch.endDate = new Date(data.endDate);
     if (data.overrideCommissionRate !== undefined) {
       patch.overrideCommissionRate = data.overrideCommissionRate;
     }

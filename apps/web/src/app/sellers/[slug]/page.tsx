@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import SellerStorefrontClient from './SellerStorefrontClient';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://hos-marketplaceapi-production.up.railway.app';
@@ -6,7 +7,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hos-marketplaceweb
 
 async function fetchSeller(slug: string) {
   try {
-    const res = await fetch(`${API_BASE}/api/sellers/slug/${slug}`, {
+    const res = await fetch(`${API_BASE}/api/sellers/slug/${encodeURIComponent(slug)}`, {
       next: { revalidate: 600 },
     });
     if (!res.ok) return null;
@@ -20,9 +21,9 @@ async function fetchSeller(slug: string) {
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = params;
+  const { slug } = await params;
   const seller = await fetchSeller(slug);
   if (!seller) {
     return { title: 'Seller Not Found' };
@@ -45,6 +46,16 @@ export async function generateMetadata({
   };
 }
 
-export default function SellerStorefrontPage() {
+export default async function SellerStorefrontPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const seller = await fetchSeller(slug);
+  if (!seller) {
+    notFound();
+  }
+
   return <SellerStorefrontClient />;
 }

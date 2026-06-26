@@ -18,6 +18,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { InfluencerCommissionsService } from './influencer-commissions.service';
+import { UpdateCommissionStatusDto } from './dto/update-commission-status.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -115,9 +116,9 @@ export class InfluencerCommissionsController {
   @SwaggerApiResponse({ status: 200, description: 'Commission updated successfully' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { status?: string; notes?: string },
+    @Body() body: UpdateCommissionStatusDto,
   ): Promise<ApiResponse<any>> {
-    const commission = await this.commissionsService.updateStatus(id, body.status!, body.notes);
+    const commission = await this.commissionsService.updateStatus(id, body);
     return {
       data: commission,
       message: 'Commission updated successfully',

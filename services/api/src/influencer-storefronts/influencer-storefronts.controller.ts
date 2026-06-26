@@ -7,6 +7,8 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { InfluencerStorefrontsService } from './influencer-storefronts.service';
+import { UpdateStorefrontDto } from './dto/update-storefront.dto';
+import { UpdateContentBlocksDto } from './dto/update-content-blocks.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -37,7 +39,7 @@ export class InfluencerStorefrontsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update my storefront settings' })
   @SwaggerApiResponse({ status: 200, description: 'Storefront updated successfully' })
-  async updateMyStorefront(@Request() req: any, @Body() dto: any): Promise<ApiResponse<any>> {
+  async updateMyStorefront(@Request() req: any, @Body() dto: UpdateStorefrontDto): Promise<ApiResponse<any>> {
     const storefront = await this.storefrontsService.update(req.user.id, dto);
     return {
       data: storefront,
@@ -53,7 +55,7 @@ export class InfluencerStorefrontsController {
   @SwaggerApiResponse({ status: 200, description: 'Content blocks updated successfully' })
   async updateContentBlocks(
     @Request() req: any,
-    @Body() body: { contentBlocks: any[] },
+    @Body() body: UpdateContentBlocksDto,
   ): Promise<ApiResponse<any>> {
     const storefront = await this.storefrontsService.updateContentBlocks(
       req.user.id,

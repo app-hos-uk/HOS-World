@@ -13,6 +13,26 @@ import { AuthService } from '../auth/auth.service';
 import { CreateInfluencerInvitationDto } from './dto/create-invitation.dto';
 import { randomBytes } from 'crypto';
 
+function clampPage(page?: number): number {
+  return Math.max(1, parseInt(String(page), 10) || 1);
+}
+
+const INVITATION_ADMIN_SELECT = {
+  id: true,
+  email: true,
+  invitedBy: true,
+  status: true,
+  expiresAt: true,
+  acceptedAt: true,
+  message: true,
+  baseCommissionRate: true,
+  createdAt: true,
+  updatedAt: true,
+  user: {
+    select: { firstName: true, lastName: true, email: true },
+  },
+} as const;
+
 @Injectable()
 export class InfluencerInvitationsService {
   private readonly logger = new Logger(InfluencerInvitationsService.name);
@@ -94,7 +114,8 @@ export class InfluencerInvitationsService {
    * List all invitations (admin)
    */
   async findAll(options?: { status?: string; page?: number; limit?: number }) {
-    const { status, page = 1, limit = 20 } = options || {};
+    const page = clampPage(options?.page);
+    const { status, limit = 20 } = options || {};
 
     const where: any = {};
     if (status) {
@@ -104,11 +125,7 @@ export class InfluencerInvitationsService {
     const [invitations, total] = await Promise.all([
       this.prisma.influencerInvitation.findMany({
         where,
-        include: {
-          user: {
-            select: { firstName: true, lastName: true, email: true },
-          },
-        },
+        select: INVITATION_ADMIN_SELECT,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
@@ -133,11 +150,7 @@ export class InfluencerInvitationsService {
   async findOne(id: string) {
     const invitation = await this.prisma.influencerInvitation.findUnique({
       where: { id },
-      include: {
-        user: {
-          select: { firstName: true, lastName: true, email: true },
-        },
-      },
+      select: INVITATION_ADMIN_SELECT,
     });
 
     if (!invitation) {
@@ -297,18 +310,19 @@ export class InfluencerInvitationsService {
       throw new BadRequestException('Only pending invitations can be resent');
     }
 
-    // Extend expiry
+    // Rotate token and extend expiry
+    const newToken = randomBytes(32).toString('hex');
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     await this.prisma.influencerInvitation.update({
       where: { id },
-      data: { expiresAt },
+      data: { token: newToken, expiresAt },
     });
 
     try {
       const rendered = await this.templatesService.render('influencer_invitation', {
-        invitationLink: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/accept-invitation?token=${invitation.token}&type=influencer`,
+        invitationLink: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/accept-invitation?token=${newToken}&type=influencer`,
         personalMessage: (invitation as any).message ? `<p>${(invitation as any).message}</p>` : '',
         commissionRate: String((invitation as any).baseCommissionRate || 10),
       });
@@ -344,6 +358,10 @@ export class InfluencerInvitationsService {
       throw new NotFoundException('Invitation not found');
     }
 
+    // The token is a single-use bearer secret that was emailed to this exact
+    // address, so the holder is the legitimate invitee. Returning the real
+    // email lets the acceptance form display it (and avoids leaking it to
+    // anyone who doesn't already possess the token).
     return invitation;
   }
 

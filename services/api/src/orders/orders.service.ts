@@ -8,6 +8,7 @@ import {
   Logger,
   forwardRef,
 } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { canAccessAllOrders } from '../common/constants/order-access.constants';
@@ -26,6 +27,7 @@ import { AmbassadorService } from '../ambassador/ambassador.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ActivityService } from '../activity/activity.service';
 import { VendorLedgerService } from '../vendor-ledger/vendor-ledger.service';
+import { ReferralsService } from '../referrals/referrals.service';
 import type { PromotionApplicationResult } from '../promotions/types/promotion.types';
 import type { Order, OrderStatus, PaymentStatus } from '@hos-marketplace/shared-types';
 import {
@@ -105,6 +107,7 @@ export class OrdersService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    private moduleRef: ModuleRef,
     @Optional() @Inject(TaxService) private taxService?: TaxService,
     @Optional() private warehouseRoutingService?: WarehouseRoutingService,
     @Optional() private geocodingService?: GeocodingService,
@@ -119,6 +122,10 @@ export class OrdersService {
     @Optional() @Inject(forwardRef(() => VendorLedgerService)) private vendorLedgerService?: VendorLedgerService,
   ) {
     this.defaultCommissionRate = this.configService.get<number>('DEFAULT_COMMISSION_RATE', 0.1);
+  }
+
+  private getReferralsService(): ReferralsService {
+    return this.moduleRef.get(ReferralsService, { strict: false });
   }
 
   async create(userId: string, createOrderDto: CreateOrderDto): Promise<Order> {
@@ -943,6 +950,21 @@ export class OrdersService {
       return;
     }
 
+    if (!visitorId) {
+      this.logger.warn(
+        `Referral attribution rejected for order ${orderId}: missing visitorId (no tracked click)`,
+      );
+      return;
+    }
+
+    const trackedReferral = await this.getReferralsService().findActiveByVisitorId(visitorId);
+    if (!trackedReferral || trackedReferral.influencerId !== influencer.id) {
+      this.logger.warn(
+        `Referral attribution rejected for order ${orderId}: no unexpired tracked click for visitor ${visitorId} matching influencer ${influencer.id}`,
+      );
+      return;
+    }
+
     // Get order details with items
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
@@ -1039,49 +1061,16 @@ export class OrdersService {
     const orderTotal = order.total;
 
     await this.prisma.$transaction(async (tx) => {
-      let referral: { id: string } | null = null;
-
-      if (visitorId) {
-        const existing = await tx.referral.findFirst({
-          where: {
-            influencerId: influencer.id,
-            visitorId,
-            convertedAt: null,
-          },
-          orderBy: { createdAt: 'desc' },
-        });
-
-        if (existing) {
-          referral = await tx.referral.update({
-            where: { id: existing.id },
-            data: {
-              userId,
-              orderId,
-              orderTotal: order.total,
-              convertedAt: new Date(),
-              campaignId: campaignForAttribution?.id ?? existing.campaignId,
-            },
-          });
-        }
-      }
-
-      if (!referral) {
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + influencer.cookieDuration);
-
-        referral = await tx.referral.create({
-          data: {
-            influencerId: influencer.id,
-            visitorId,
-            userId,
-            orderId,
-            orderTotal: order.total,
-            convertedAt: new Date(),
-            expiresAt,
-            campaignId: campaignForAttribution?.id,
-          },
-        });
-      }
+      const referral = await tx.referral.update({
+        where: { id: trackedReferral.id },
+        data: {
+          userId,
+          orderId,
+          orderTotal: order.total,
+          convertedAt: new Date(),
+          campaignId: campaignForAttribution?.id ?? trackedReferral.campaignId,
+        },
+      });
 
       await tx.influencerCommission.create({
         data: {
@@ -1094,22 +1083,17 @@ export class OrdersService {
           amount: commissionAmount,
           status: 'PENDING',
           currency: order.currency,
+          metadata: campaignForAttribution
+            ? {
+                campaignId: campaignForAttribution.id,
+                campaignAttributedSales: campaignAttributedSales.toString(),
+              }
+            : undefined,
         },
       });
 
-      // Note: aggregate stats (totalConversions, totalSalesAmount, totalCommission) are
-      // incremented only after payment confirmation (in PaymentsService.markPaymentAsPaid)
-      // to avoid inflating stats for unpaid/abandoned orders.
-
-      if (campaignForAttribution?.id) {
-        await tx.influencerCampaign.update({
-          where: { id: campaignForAttribution.id },
-          data: {
-            totalConversions: { increment: 1 },
-            totalSales: { increment: campaignAttributedSales },
-          },
-        });
-      }
+      // Aggregate and campaign stats are incremented only after payment
+      // (PaymentsService.markPaymentAsPaid) to avoid inflating stats for unpaid orders.
     });
 
     void this.ambassadorService
@@ -1126,6 +1110,102 @@ export class OrdersService {
     this.logger.log(
       `Commission created for influencer ${influencer.id}: ${amountDisplay} (${rateSource} rate: ${ratePercent}%)`,
     );
+  }
+
+  /**
+   * Reverse influencer commissions and stats for a cancelled or refunded order.
+   * Idempotent: skips commissions already CANCELLED; decrements stats only for APPROVED
+   * commissions that were counted on payment (not PAID/payout-linked).
+   */
+  async reverseInfluencerAttribution(orderId: string): Promise<void> {
+    const commissions = await this.prisma.influencerCommission.findMany({
+      where: { orderId },
+      include: { referral: true },
+    });
+
+    if (commissions.length === 0) {
+      return;
+    }
+
+    let reversedCount = 0;
+
+    for (const comm of commissions) {
+      if (comm.status === 'CANCELLED') {
+        continue;
+      }
+
+      const isPaidOut = comm.status === 'PAID' || comm.payoutId != null;
+
+      if (isPaidOut) {
+        this.logger.warn(
+          `RECONCILIATION NEEDED: influencer commission ${comm.id} for order ${orderId} is ${comm.status} (payoutId=${comm.payoutId ?? 'none'}) — skipping stat decrement`,
+        );
+        await this.prisma.influencerCommission.update({
+          where: { id: comm.id },
+          data: { status: 'CANCELLED' },
+        });
+        reversedCount++;
+        continue;
+      }
+
+      if (comm.status === 'APPROVED') {
+        const influencer = await this.prisma.influencer.findUnique({
+          where: { id: comm.influencerId },
+        });
+        if (influencer) {
+          await this.prisma.influencer.update({
+            where: { id: comm.influencerId },
+            data: {
+              totalConversions: Math.max(0, influencer.totalConversions - 1),
+              totalSalesAmount: Decimal.max(
+                new Decimal(0),
+                influencer.totalSalesAmount.sub(comm.orderTotal),
+              ),
+              totalCommission: Decimal.max(
+                new Decimal(0),
+                influencer.totalCommission.sub(comm.amount),
+              ),
+            },
+          });
+        }
+
+        const meta = comm.metadata as {
+          campaignId?: string;
+          campaignAttributedSales?: string;
+        } | null;
+        const campaignId = meta?.campaignId ?? comm.referral?.campaignId ?? null;
+        if (campaignId) {
+          const campaignSales = meta?.campaignAttributedSales
+            ? new Decimal(meta.campaignAttributedSales)
+            : comm.orderTotal;
+
+          const campaign = await this.prisma.influencerCampaign.findUnique({
+            where: { id: campaignId },
+          });
+          if (campaign) {
+            await this.prisma.influencerCampaign.update({
+              where: { id: campaignId },
+              data: {
+                totalConversions: Math.max(0, campaign.totalConversions - 1),
+                totalSales: Decimal.max(new Decimal(0), campaign.totalSales.sub(campaignSales)),
+              },
+            });
+          }
+        }
+      }
+
+      await this.prisma.influencerCommission.update({
+        where: { id: comm.id },
+        data: { status: 'CANCELLED' },
+      });
+      reversedCount++;
+    }
+
+    if (reversedCount > 0) {
+      this.logger.log(
+        `Reversed influencer attribution for order ${orderId} (${reversedCount} commission(s))`,
+      );
+    }
   }
 
   async findAll(
@@ -1985,32 +2065,13 @@ export class OrdersService {
       }
     }
 
-    // Reverse influencer commission stats that were incremented on payment confirmation
-    if (order.paymentStatus === 'PAID') {
-      try {
-        const commissions = await this.prisma.influencerCommission.findMany({
-          where: { orderId: order.id },
-        });
-        for (const comm of commissions) {
-          await this.prisma.influencer.update({
-            where: { id: comm.influencerId },
-            data: {
-              totalConversions: { decrement: 1 },
-              totalSalesAmount: { decrement: comm.orderTotal },
-              totalCommission: { decrement: comm.amount },
-            },
-          });
-          await this.prisma.influencerCommission.update({
-            where: { id: comm.id },
-            data: { status: 'CANCELLED' },
-          });
-        }
-        if (commissions.length > 0) {
-          this.logger.log(`Reversed ${commissions.length} influencer commission(s) for order ${order.orderNumber}`);
-        }
-      } catch (commErr: any) {
-        this.logger.error(`Influencer commission reversal failed for order ${order.orderNumber}: ${commErr?.message}`);
-      }
+    // Reverse influencer commissions (PENDING cancelled without stat change; APPROVED decrements stats)
+    try {
+      await this.reverseInfluencerAttribution(order.id);
+    } catch (commErr: any) {
+      this.logger.error(
+        `Influencer commission reversal failed for order ${order.orderNumber}: ${commErr?.message}`,
+      );
     }
 
     this.logger.log(`Order ${order.orderNumber} cancelled by user ${userId} (role: ${role})`);

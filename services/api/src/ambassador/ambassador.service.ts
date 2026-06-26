@@ -690,6 +690,12 @@ export class AmbassadorService {
       where: { id: commissionId, influencerId: influencer.id },
     });
     if (!commission) throw new NotFoundException('Commission not found');
+    if (commission.payoutId) {
+      throw new BadRequestException('Commission is linked to a payout and cannot be converted');
+    }
+    if (commission.status === CommissionStatus.PAID) {
+      throw new BadRequestException('Commission has already been paid');
+    }
     if (commission.status !== CommissionStatus.APPROVED) {
       throw new BadRequestException('Only approved commissions can be converted');
     }

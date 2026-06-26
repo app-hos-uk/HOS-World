@@ -20,6 +20,8 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { InfluencerCampaignsService } from './influencer-campaigns.service';
+import { CreateCampaignDto } from './dto/create-campaign.dto';
+import { UpdateCampaignDto } from './dto/update-campaign.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -130,31 +132,8 @@ export class InfluencerCampaignsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create campaign' })
   @SwaggerApiResponse({ status: 201, description: 'Campaign created successfully' })
-  async create(
-    @Body()
-    body: {
-      influencerId: string;
-      name: string;
-      description?: string;
-      startDate: string;
-      endDate: string;
-      overrideCommissionRate?: number;
-      productIds?: string[];
-      categoryIds?: string[];
-      status?: 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED';
-    },
-  ): Promise<ApiResponse<any>> {
-    const campaign = await this.campaignsService.create({
-      influencerId: body.influencerId,
-      name: body.name,
-      description: body.description,
-      startDate: new Date(body.startDate),
-      endDate: new Date(body.endDate),
-      overrideCommissionRate: body.overrideCommissionRate,
-      productIds: body.productIds,
-      categoryIds: body.categoryIds,
-      status: body.status,
-    });
+  async create(@Body() body: CreateCampaignDto): Promise<ApiResponse<any>> {
+    const campaign = await this.campaignsService.create(body);
     return {
       data: campaign,
       message: 'Campaign created successfully',
@@ -170,30 +149,9 @@ export class InfluencerCampaignsController {
   @SwaggerApiResponse({ status: 200, description: 'Campaign updated successfully' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body()
-    body: {
-      name?: string;
-      description?: string;
-      startDate?: string;
-      endDate?: string;
-      /** Omit to leave unchanged; send `null` to clear campaign override */
-      overrideCommissionRate?: number | null;
-      productIds?: string[];
-      categoryIds?: string[];
-      status?: string;
-    },
+    @Body() body: UpdateCampaignDto,
   ): Promise<ApiResponse<any>> {
-    const campaign = await this.campaignsService.update(id, {
-      name: body.name,
-      description: body.description,
-      startDate: body.startDate ? new Date(body.startDate) : undefined,
-      endDate: body.endDate ? new Date(body.endDate) : undefined,
-      overrideCommissionRate:
-        body.overrideCommissionRate === undefined ? undefined : body.overrideCommissionRate,
-      productIds: body.productIds,
-      categoryIds: body.categoryIds,
-      status: body.status,
-    });
+    const campaign = await this.campaignsService.update(id, body);
     return {
       data: campaign,
       message: 'Campaign updated successfully',

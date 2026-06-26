@@ -39,6 +39,7 @@ export default function InfluencerProfilePage() {
   const [profileImage, setProfileImage] = useState('');
   const [bannerImage, setBannerImage] = useState('');
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({});
+  const [displayNameError, setDisplayNameError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -58,9 +59,9 @@ export default function InfluencerProfilePage() {
         setBannerImage(data.bannerImage ?? '');
         setSocialLinks(data.socialLinks ?? {});
       }
-    } catch (err: any) {
-      console.error('Error fetching profile:', err);
-      toast.error(err.message || 'Failed to load profile');
+    } catch {
+      console.error('Failed to load influencer profile');
+      toast.error('Failed to load profile');
     } finally {
       setLoading(false);
     }
@@ -79,6 +80,15 @@ export default function InfluencerProfilePage() {
   };
 
   const handleSave = async () => {
+    const trimmedName = displayName.trim();
+    if (!trimmedName) {
+      const msg = 'Display name is required';
+      setDisplayNameError(msg);
+      toast.error(msg);
+      return;
+    }
+    setDisplayNameError(null);
+
     const urlErr = validateInfluencerProfileUrls({
       profileImage,
       bannerImage,
@@ -92,7 +102,7 @@ export default function InfluencerProfilePage() {
     try {
       setSaving(true);
       await apiClient.updateMyInfluencerProfile({
-        displayName: displayName.trim() || undefined,
+        displayName: trimmedName,
         bio: bio.trim() || undefined,
         profileImage: profileImage.trim() || undefined,
         bannerImage: bannerImage.trim() || undefined,
@@ -145,10 +155,16 @@ export default function InfluencerProfilePage() {
                 <input
                   type="text"
                   value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
+                  onChange={(e) => {
+                    setDisplayName(e.target.value);
+                    if (displayNameError) setDisplayNameError(null);
+                  }}
                   className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
                   placeholder="Your name"
                 />
+                {displayNameError && (
+                  <p className="mt-1 text-sm text-red-400">{displayNameError}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Bio</label>

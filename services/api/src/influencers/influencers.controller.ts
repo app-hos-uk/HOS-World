@@ -28,6 +28,7 @@ import {
   CreateProductLinkDto,
 } from './dto/update-influencer.dto';
 import { CreateCommissionRuleDto, UpdateCommissionRuleDto } from './dto/commission-rule.dto';
+import { AdminUpdateInfluencerDto } from './dto/admin-update-influencer.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -299,7 +300,7 @@ export class InfluencersController {
   @SwaggerApiResponse({ status: 200, description: 'Influencer updated successfully' })
   async adminUpdate(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateInfluencerDto & { status?: string; tier?: string },
+    @Body() dto: AdminUpdateInfluencerDto,
   ): Promise<ApiResponse<any>> {
     const influencer = await this.influencersService.adminUpdate(id, dto);
     return {

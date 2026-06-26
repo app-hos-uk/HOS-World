@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { GoogleFontLink } from '@/components/GoogleFontLink';
@@ -20,7 +21,7 @@ interface Storefront {
   metaTitle?: string;
   metaDescription?: string;
   featuredProductIds: string[];
-  contentBlocks?: any[];
+  contentBlocks?: unknown[];
 }
 
 interface Influencer {
@@ -30,11 +31,44 @@ interface Influencer {
   bannerImage?: string;
 }
 
+interface CatalogProduct {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  images: Array<{ url: string }>;
+}
+
+const HEX_COLOR_REGEX = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/;
+
+function isValidHexColor(value: string): boolean {
+  return HEX_COLOR_REGEX.test(value.trim());
+}
+
+function validateStorefrontColors(storefront: Storefront): string | null {
+  const fields: Array<{ key: keyof Storefront; label: string }> = [
+    { key: 'primaryColor', label: 'Primary Color' },
+    { key: 'secondaryColor', label: 'Secondary Color' },
+    { key: 'backgroundColor', label: 'Background Color' },
+    { key: 'textColor', label: 'Text Color' },
+  ];
+  for (const { key, label } of fields) {
+    const value = storefront[key] as string;
+    if (!isValidHexColor(value)) {
+      return `${label} must be a valid hex color (e.g. #7C3AED or #FFF)`;
+    }
+  }
+  return null;
+}
+
 export default function InfluencerStorefrontPage() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Influencer | null>(null);
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [productSearch, setProductSearch] = useState('');
+  const [colorError, setColorError] = useState<string | null>(null);
   const [storefront, setStorefront] = useState<Storefront>({
     id: '',
     primaryColor: '#7C3AED',
@@ -57,44 +91,96 @@ export default function InfluencerStorefrontPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [profileRes, storefrontRes] = await Promise.all([
+      const [profileRes, storefrontRes, productsRes] = await Promise.all([
         apiClient.getMyInfluencerProfile(),
         apiClient.getMyStorefront(),
+        apiClient.getProducts({ status: 'ACTIVE', limit: 100 }),
       ]);
       setProfile(profileRes.data);
       if (storefrontRes.data) {
-        setStorefront({ ...storefront, ...storefrontRes.data });
+        setStorefront((prev) => ({
+          ...prev,
+          ...storefrontRes.data,
+          featuredProductIds: storefrontRes.data.featuredProductIds ?? [],
+        }));
       }
-    } catch (err: any) {
-      console.error('Error fetching storefront:', err);
+      const raw = productsRes.data;
+      const list = Array.isArray(raw) ? raw : (raw as { data?: CatalogProduct[] })?.data ?? [];
+      setProducts(list);
+    } catch {
+      console.error('Failed to load storefront settings');
+      toast.error('Failed to load storefront settings');
     } finally {
       setLoading(false);
     }
   };
 
+  const toggleFeaturedProduct = (productId: string) => {
+    setStorefront((prev) => {
+      const ids = prev.featuredProductIds;
+      if (ids.includes(productId)) {
+        return { ...prev, featuredProductIds: ids.filter((id) => id !== productId) };
+      }
+      return { ...prev, featuredProductIds: [...ids, productId] };
+    });
+  };
+
+  const moveFeaturedProduct = (index: number, direction: 'up' | 'down') => {
+    setStorefront((prev) => {
+      const ids = [...prev.featuredProductIds];
+      const swapIndex = direction === 'up' ? index - 1 : index + 1;
+      if (swapIndex < 0 || swapIndex >= ids.length) return prev;
+      [ids[index], ids[swapIndex]] = [ids[swapIndex], ids[index]];
+      return { ...prev, featuredProductIds: ids };
+    });
+  };
+
+  const handleColorChange = (field: keyof Pick<Storefront, 'primaryColor' | 'secondaryColor' | 'backgroundColor' | 'textColor'>, value: string) => {
+    setStorefront((prev) => ({ ...prev, [field]: value }));
+    setColorError(null);
+  };
+
   const handleSave = async () => {
+    const validationError = validateStorefrontColors(storefront);
+    if (validationError) {
+      setColorError(validationError);
+      toast.error(validationError);
+      return;
+    }
+    setColorError(null);
+
     try {
       setSaving(true);
-      await apiClient.updateMyStorefront({
-        primaryColor: storefront.primaryColor,
-        secondaryColor: storefront.secondaryColor,
-        backgroundColor: storefront.backgroundColor,
-        textColor: storefront.textColor,
-        fontFamily: storefront.fontFamily,
-        layoutType: storefront.layoutType,
-        showBanner: storefront.showBanner,
-        showBio: storefront.showBio,
-        showSocialLinks: storefront.showSocialLinks,
-        metaTitle: storefront.metaTitle,
-        metaDescription: storefront.metaDescription,
-      });
+      await Promise.all([
+        apiClient.updateMyStorefront({
+          primaryColor: storefront.primaryColor,
+          secondaryColor: storefront.secondaryColor,
+          backgroundColor: storefront.backgroundColor,
+          textColor: storefront.textColor,
+          fontFamily: storefront.fontFamily,
+          layoutType: storefront.layoutType,
+          showBanner: storefront.showBanner,
+          showBio: storefront.showBio,
+          showSocialLinks: storefront.showSocialLinks,
+          metaTitle: storefront.metaTitle,
+          metaDescription: storefront.metaDescription,
+        }),
+        apiClient.updateStorefrontFeaturedProducts(storefront.featuredProductIds),
+      ]);
       toast.success('Storefront settings saved successfully');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to save settings');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save settings';
+      toast.error(message);
     } finally {
       setSaving(false);
     }
   };
+
+
+  const filteredCatalogProducts = useMemo(() => {
+    const q = productSearch.toLowerCase();
+    return products.filter((p) => p.name.toLowerCase().includes(q));
+  }, [products, productSearch]);
 
   const fonts = [
     'Inter', 'Roboto', 'Open Sans', 'Lato', 'Poppins', 
@@ -149,6 +235,9 @@ export default function InfluencerStorefrontPage() {
             {/* Theme Colors */}
             <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Theme Colors</h2>
+              {colorError && (
+                <p className="mb-4 text-sm text-red-400">{colorError}</p>
+              )}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-hos-text-secondary mb-2">
@@ -158,13 +247,13 @@ export default function InfluencerStorefrontPage() {
                     <input
                       type="color"
                       value={storefront.primaryColor}
-                      onChange={(e) => setStorefront({ ...storefront, primaryColor: e.target.value })}
+                      onChange={(e) => handleColorChange('primaryColor', e.target.value)}
                       className="w-10 h-10 rounded border cursor-pointer"
                     />
                     <input
                       type="text"
                       value={storefront.primaryColor}
-                      onChange={(e) => setStorefront({ ...storefront, primaryColor: e.target.value })}
+                      onChange={(e) => handleColorChange('primaryColor', e.target.value)}
                       className="flex-1 px-3 py-2 border border-hos-border rounded-lg"
                     />
                   </div>
@@ -177,13 +266,13 @@ export default function InfluencerStorefrontPage() {
                     <input
                       type="color"
                       value={storefront.secondaryColor}
-                      onChange={(e) => setStorefront({ ...storefront, secondaryColor: e.target.value })}
+                      onChange={(e) => handleColorChange('secondaryColor', e.target.value)}
                       className="w-10 h-10 rounded border cursor-pointer"
                     />
                     <input
                       type="text"
                       value={storefront.secondaryColor}
-                      onChange={(e) => setStorefront({ ...storefront, secondaryColor: e.target.value })}
+                      onChange={(e) => handleColorChange('secondaryColor', e.target.value)}
                       className="flex-1 px-3 py-2 border border-hos-border rounded-lg"
                     />
                   </div>
@@ -196,13 +285,13 @@ export default function InfluencerStorefrontPage() {
                     <input
                       type="color"
                       value={storefront.backgroundColor}
-                      onChange={(e) => setStorefront({ ...storefront, backgroundColor: e.target.value })}
+                      onChange={(e) => handleColorChange('backgroundColor', e.target.value)}
                       className="w-10 h-10 rounded border cursor-pointer"
                     />
                     <input
                       type="text"
                       value={storefront.backgroundColor}
-                      onChange={(e) => setStorefront({ ...storefront, backgroundColor: e.target.value })}
+                      onChange={(e) => handleColorChange('backgroundColor', e.target.value)}
                       className="flex-1 px-3 py-2 border border-hos-border rounded-lg"
                     />
                   </div>
@@ -215,13 +304,13 @@ export default function InfluencerStorefrontPage() {
                     <input
                       type="color"
                       value={storefront.textColor}
-                      onChange={(e) => setStorefront({ ...storefront, textColor: e.target.value })}
+                      onChange={(e) => handleColorChange('textColor', e.target.value)}
                       className="w-10 h-10 rounded border cursor-pointer"
                     />
                     <input
                       type="text"
                       value={storefront.textColor}
-                      onChange={(e) => setStorefront({ ...storefront, textColor: e.target.value })}
+                      onChange={(e) => handleColorChange('textColor', e.target.value)}
                       className="flex-1 px-3 py-2 border border-hos-border rounded-lg"
                     />
                   </div>
@@ -261,6 +350,116 @@ export default function InfluencerStorefrontPage() {
                     <option value="masonry">Masonry</option>
                   </select>
                 </div>
+              </div>
+            </div>
+
+            {/* Featured Products */}
+            <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-hos-text-secondary mb-2">Featured Products</h2>
+              <p className="text-sm text-hos-text-muted mb-4">
+                Choose products to highlight on your public storefront. Drag order with the arrows.
+              </p>
+
+              {storefront.featuredProductIds.length > 0 && (
+                <div className="mb-4 space-y-2">
+                  <p className="text-xs font-medium text-hos-text-muted uppercase tracking-wide">Selected ({storefront.featuredProductIds.length})</p>
+                  {storefront.featuredProductIds.map((productId, index) => {
+                    const product = products.find((p) => p.id === productId);
+                    return (
+                      <div
+                        key={productId}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-hos-bg-tertiary border border-hos-border"
+                      >
+                        {product?.images?.[0] ? (
+                          <Image
+                            src={product.images[0].url}
+                            alt={product.name}
+                            width={40}
+                            height={40}
+                            className="object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-hos-bg-secondary rounded flex-shrink-0" />
+                        )}
+                        <span className="flex-1 text-sm font-medium text-hos-text-secondary truncate">
+                          {product?.name ?? productId}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => moveFeaturedProduct(index, 'up')}
+                            disabled={index === 0}
+                            className="p-1 text-hos-text-muted hover:text-hos-gold disabled:opacity-30"
+                            aria-label="Move up"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveFeaturedProduct(index, 'down')}
+                            disabled={index === storefront.featuredProductIds.length - 1}
+                            className="p-1 text-hos-text-muted hover:text-hos-gold disabled:opacity-30"
+                            aria-label="Move down"
+                          >
+                            ↓
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleFeaturedProduct(productId)}
+                            className="p-1 text-red-400 hover:text-red-300"
+                            aria-label="Remove"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <input
+                type="text"
+                placeholder="Search products to feature..."
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                className="w-full px-3 py-2 border border-hos-border rounded-lg mb-3"
+              />
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {filteredCatalogProducts.length === 0 ? (
+                  <p className="text-sm text-hos-text-muted text-center py-4">No products found</p>
+                ) : (
+                  filteredCatalogProducts.map((product) => {
+                    const isSelected = storefront.featuredProductIds.includes(product.id);
+                    return (
+                      <label
+                        key={product.id}
+                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                          isSelected ? 'bg-hos-gold/10 border border-hos-gold' : 'bg-hos-bg-tertiary hover:bg-hos-bg-secondary border border-transparent'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleFeaturedProduct(product.id)}
+                          className="w-4 h-4 text-hos-gold rounded"
+                        />
+                        {product.images?.[0] ? (
+                          <Image
+                            src={product.images[0].url}
+                            alt={product.name}
+                            width={40}
+                            height={40}
+                            className="object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-hos-bg-secondary rounded flex-shrink-0" />
+                        )}
+                        <span className="flex-1 text-sm text-hos-text-secondary truncate">{product.name}</span>
+                      </label>
+                    );
+                  })
+                )}
               </div>
             </div>
 

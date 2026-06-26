@@ -217,24 +217,44 @@ export class SellersService {
   }
 
   async findBySlug(slug: string) {
+    const publicSellerSelect = {
+      id: true,
+      storeName: true,
+      slug: true,
+      description: true,
+      logo: true,
+      country: true,
+      city: true,
+      region: true,
+      rating: true,
+      totalSales: true,
+      sellerType: true,
+      verified: true,
+      createdAt: true,
+      subDomain: true,
+      customDomain: true,
+      vendorStatus: true,
+      deletedAt: true,
+      user: {
+        select: {
+          firstName: true,
+          lastName: true,
+          avatar: true,
+        },
+      },
+      _count: {
+        select: {
+          products: {
+            where: { status: 'ACTIVE' },
+          },
+        },
+      },
+    } satisfies Prisma.SellerSelect;
+
     // First try exact slug match
     let seller = await this.prisma.seller.findUnique({
       where: { slug },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            role: true,
-            avatar: true,
-          },
-        },
-        _count: {
-          select: { products: true },
-        },
-      },
+      select: publicSellerSelect,
     });
 
     // Fallback: try matching by subDomain field (subdomain may differ from slug
@@ -242,47 +262,103 @@ export class SellersService {
     if (!seller) {
       seller = await this.prisma.seller.findFirst({
         where: { subDomain: slug },
-        include: {
-          user: {
-            select: {
-              id: true,
-              email: true,
-              firstName: true,
-              lastName: true,
-              role: true,
-              avatar: true,
-            },
-          },
-          _count: {
-            select: { products: true },
-          },
-        },
+        select: publicSellerSelect,
       });
     }
 
-    if (!seller) {
+    if (!seller || seller.vendorStatus !== 'ACTIVE' || seller.deletedAt) {
       throw new NotFoundException('Seller not found');
     }
 
-    // Return public-safe seller data (strip sensitive/internal fields)
-    const {
-      accountNumberEnc: _enc,
-      sortCodeEnc: _sc,
-      userId: _uid,
-      stripeConnectAccountId: _stripe,
-      commissionRate: _cr,
-      ...publicSeller
-    } = seller as any;
+    const theme = await this.resolvePublicSellerTheme(seller.id);
+
     return {
-      ...publicSeller,
-      user: publicSeller.user
-        ? {
-            firstName: publicSeller.user.firstName,
-            lastName: publicSeller.user.lastName,
-            avatar: publicSeller.user.avatar,
-            role: publicSeller.user.role,
-          }
-        : undefined,
+      id: seller.id,
+      storeName: seller.storeName,
+      slug: seller.slug,
+      description: seller.description,
+      logo: seller.logo,
+      country: seller.country,
+      city: seller.city,
+      region: seller.region,
+      rating: seller.rating,
+      totalSales: seller.totalSales,
+      sellerType: seller.sellerType,
+      verified: seller.verified,
+      createdAt: seller.createdAt,
+      subDomain: seller.subDomain,
+      customDomain: seller.customDomain,
+      user: seller.user ?? undefined,
+      _count: seller._count,
+      theme,
+    };
+  }
+
+  private async resolvePublicSellerTheme(sellerId: string) {
+    const publicThemeSelect = {
+      name: true,
+      type: true,
+      config: true,
+      assets: true,
+      previewImages: true,
+      versionString: true,
+      description: true,
+    } satisfies Prisma.ThemeSelect;
+
+    const themeSettings = await this.prisma.sellerThemeSettings.findUnique({
+      where: { sellerId },
+      select: {
+        customLogoUrl: true,
+        customFaviconUrl: true,
+        customColors: true,
+        theme: { select: publicThemeSelect },
+      },
+    });
+
+    if (!themeSettings) {
+      const defaultTheme = await this.prisma.theme.findFirst({
+        where: { type: 'HOS', isActive: true },
+        select: publicThemeSelect,
+      });
+
+      if (!defaultTheme) {
+        return null;
+      }
+
+      return {
+        theme: this.mapPublicTheme(defaultTheme),
+        customSettings: null,
+      };
+    }
+
+    return {
+      theme: themeSettings.theme ? this.mapPublicTheme(themeSettings.theme) : null,
+      customSettings: {
+        customLogoUrl: themeSettings.customLogoUrl,
+        customFaviconUrl: themeSettings.customFaviconUrl,
+        customColors: themeSettings.customColors,
+      },
+    };
+  }
+
+  private mapPublicTheme(theme: {
+    name: string;
+    type: string;
+    config: Prisma.JsonValue;
+    assets: Prisma.JsonValue | null;
+    previewImages: string[];
+    versionString: string | null;
+    description: string | null;
+  }) {
+    const typeStr = typeof theme.type === 'string' ? theme.type : String(theme.type ?? '');
+    return {
+      name: theme.name,
+      type: typeStr.toLowerCase(),
+      config: theme.config,
+      assets: theme.assets ?? undefined,
+      previewImages: Array.isArray(theme.previewImages) ? theme.previewImages : [],
+      description: theme.description ?? undefined,
+      versionString: theme.versionString ?? undefined,
     };
   }
 

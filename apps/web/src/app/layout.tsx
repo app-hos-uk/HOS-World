@@ -12,6 +12,7 @@ import { AnalyticsProvider } from '@/components/analytics/AnalyticsProvider';
 import { ConditionalSiteStructuredData } from '@/components/analytics/ConditionalSiteStructuredData';
 import { Toaster } from '@/components/Toaster';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ReferralCapture } from '@/components/ReferralCapture';
 import { Suspense } from 'react';
 import './globals.css';
 
@@ -99,6 +100,9 @@ export default function RootLayout({
             <CurrencyProvider>
               <CartProvider>
                 <ThemeProviderWrapper>
+                  <Suspense fallback={null}>
+                    <ReferralCapture />
+                  </Suspense>
                   <ErrorBoundary>
                     {children}
                   </ErrorBoundary>

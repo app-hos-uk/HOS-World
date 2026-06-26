@@ -10,18 +10,20 @@ import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { GoogleFontLink } from '@/components/GoogleFontLink';
 
-interface SellerThemeSettings {
-  theme: { config?: { colors?: Record<string, string>; fontFamily?: string } } | null;
+interface PublicSellerTheme {
+  theme: {
+    config?: { colors?: Record<string, string>; fontFamily?: string };
+  } | null;
   customSettings: {
     customLogoUrl?: string;
     customFaviconUrl?: string;
     customColors?: Record<string, string>;
+    fontFamily?: string;
   } | null;
 }
 
 interface SellerProfile {
   id: string;
-  userId: string;
   storeName: string;
   slug: string;
   description?: string;
@@ -34,9 +36,8 @@ interface SellerProfile {
   sellerType: string;
   verified?: boolean;
   createdAt: string;
-  user: {
-    id: string;
-    email: string;
+  theme?: PublicSellerTheme | null;
+  user?: {
     firstName?: string;
     lastName?: string;
     avatar?: string;
@@ -78,6 +79,24 @@ export default function SellerStorefrontClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
+  const applySellerTheme = (themePayload: PublicSellerTheme | null | undefined) => {
+    if (!themePayload) return;
+    const baseColors = (themePayload.theme?.config?.colors || {}) as Record<string, string>;
+    const custom = themePayload.customSettings?.customColors || {};
+    const merged: Record<string, string> = {};
+    if (custom.primary || baseColors.primary) merged['--storefront-primary'] = custom.primary || baseColors.primary!;
+    if (custom.secondary || baseColors.secondary) merged['--storefront-secondary'] = custom.secondary || baseColors.secondary!;
+    if (custom.accent || baseColors.accent) merged['--storefront-accent'] = custom.accent || baseColors.accent!;
+    if (custom.background || baseColors.background) merged['--storefront-bg'] = custom.background || baseColors.background!;
+    if (custom.text || baseColors.text) merged['--storefront-text'] = custom.text || baseColors.text!;
+    setThemeColors(merged);
+    const font =
+      themePayload.customSettings?.fontFamily ||
+      themePayload.theme?.config?.fontFamily ||
+      '';
+    setThemeFontFamily(font);
+  };
+
   const fetchSellerData = async () => {
     try {
       setLoading(true);
@@ -90,36 +109,16 @@ export default function SellerStorefrontClient() {
         return;
       }
 
-      const sellerData = sellerResponse.data;
+      const sellerData = sellerResponse.data as SellerProfile;
       setSeller(sellerData);
 
-      // Fetch seller's theme settings
-      try {
-        const themeRes = await apiClient.getSellerTheme(sellerData.userId);
-        const themeData = themeRes?.data as SellerThemeSettings | null;
-        if (themeData) {
-          const baseColors = (themeData.theme?.config?.colors || {}) as Record<string, string>;
-          const custom = themeData.customSettings?.customColors || {};
-          const merged: Record<string, string> = {};
-          if (custom.primary || baseColors.primary) merged['--storefront-primary'] = custom.primary || baseColors.primary;
-          if (custom.secondary || baseColors.secondary) merged['--storefront-secondary'] = custom.secondary || baseColors.secondary;
-          if (custom.accent || baseColors.accent) merged['--storefront-accent'] = custom.accent || baseColors.accent;
-          if (custom.background || baseColors.background) merged['--storefront-bg'] = custom.background || baseColors.background;
-          if (custom.text || baseColors.text) merged['--storefront-text'] = custom.text || baseColors.text;
-          setThemeColors(merged);
+      applySellerTheme(sellerData.theme);
 
-          const font = custom.fontFamily || themeData.theme?.config?.fontFamily || '';
-          setThemeFontFamily(font);
-        }
-      } catch {
-        // Non-critical: continue with default styling
-      }
-
-      // Fetch seller's active products
-      // Note: the products API expects userId as sellerId for filtering
+      // Fetch seller's active products. The public seller API no longer exposes
+      // userId; the products filter accepts the Seller.id directly.
       try {
         const productsResponse = await apiClient.getProducts({
-          sellerId: sellerData.userId,
+          sellerId: sellerData.id,
           status: 'ACTIVE',
           limit: 50,
         } as any);
@@ -218,7 +217,7 @@ export default function SellerStorefrontClient() {
                     height={96}
                     className="rounded-xl object-cover border-4 border-white/20"
                   />
-                ) : seller.user.avatar ? (
+                ) : seller.user?.avatar ? (
                   <Image
                     src={seller.user.avatar}
                     alt={seller.storeName}
@@ -323,7 +322,7 @@ export default function SellerStorefrontClient() {
               {sortedProducts.map((product) => (
                 <Link
                   key={product.id}
-                  href={`/products/${product.id}`}
+                  href={`/products/${product.slug || product.id}`}
                   className="group bg-hos-bg-secondary rounded-lg border border-hos-border overflow-hidden hover:shadow-lg transition-shadow"
                 >
                   {/* Product Image */}

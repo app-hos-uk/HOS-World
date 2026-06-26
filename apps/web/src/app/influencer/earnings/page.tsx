@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 
 interface Commission {
   id: string;
@@ -25,31 +26,52 @@ interface EarningsSummary {
 }
 
 export default function InfluencerEarningsPage() {
-  const [loading, setLoading] = useState(true);
+  const toast = useToast();
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [earnings, setEarnings] = useState<EarningsSummary | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const hasLoadedRef = useRef(false);
+  const fetchGenerationRef = useRef(0);
 
-  useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter]);
+  const fetchData = useCallback(async (isInitial: boolean) => {
+    const generation = ++fetchGenerationRef.current;
+    if (isInitial) {
+      setInitialLoading(true);
+    } else {
+      setRefreshing(true);
+    }
 
-  const fetchData = async () => {
     try {
-      setLoading(true);
       const [commissionsRes, earningsRes] = await Promise.all([
         apiClient.getMyCommissions({ status: statusFilter || undefined, limit: 100 }),
         apiClient.getMyEarnings(),
       ]);
+      if (generation !== fetchGenerationRef.current) return;
+
       setCommissions(commissionsRes.data || []);
       setEarnings(earningsRes.data);
-    } catch (err: any) {
-      console.error('Error fetching earnings:', err);
+      setError(null);
+      hasLoadedRef.current = true;
+    } catch (err: unknown) {
+      if (generation !== fetchGenerationRef.current) return;
+      console.error('Failed to load earnings');
+      const message = err instanceof Error ? err.message : 'Failed to load earnings';
+      setError(message);
+      toast.error(message);
     } finally {
-      setLoading(false);
+      if (generation === fetchGenerationRef.current) {
+        setInitialLoading(false);
+        setRefreshing(false);
+      }
     }
-  };
+  }, [statusFilter, toast]);
+
+  useEffect(() => {
+    fetchData(!hasLoadedRef.current);
+  }, [fetchData]);
 
   const formatCurrency = (amount: number, currency = 'USD') => {
     return new Intl.NumberFormat('en-US', {
@@ -77,7 +99,7 @@ export default function InfluencerEarningsPage() {
     return styles[status] || 'bg-hos-bg-tertiary text-hos-text-secondary';
   };
 
-  if (loading) {
+  if (initialLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
@@ -94,6 +116,18 @@ export default function InfluencerEarningsPage() {
             Track your commission earnings and payment status
           </p>
         </div>
+
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 flex items-center justify-between gap-4">
+            <p className="text-sm text-red-300">{error}</p>
+            <button
+              onClick={() => fetchData(false)}
+              className="shrink-0 px-3 py-1.5 text-sm font-medium bg-red-500/20 text-red-200 rounded-lg hover:bg-red-500/30 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         {/* Earnings Summary */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -138,8 +172,15 @@ export default function InfluencerEarningsPage() {
             <option value="PENDING">Pending</option>
             <option value="APPROVED">Approved</option>
             <option value="PAID">Paid</option>
+            <option value="ADJUSTED">Adjusted</option>
             <option value="CANCELLED">Cancelled</option>
           </select>
+          {refreshing && (
+            <div className="flex items-center gap-2 text-sm text-hos-text-muted">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-hos-gold" />
+              Updating…
+            </div>
+          )}
         </div>
 
         {/* Commission History */}

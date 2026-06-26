@@ -1,11 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { toSafeExternalHref } from '@/lib/httpUrlValidation';
+import {
+  getOrCreateVisitorId,
+  setInfluencerReferral,
+  getInfluencerReferral,
+  isValidInfluencerReferralCode,
+} from '@/lib/referralAttribution';
 import type {
   PublicInfluencerInfo,
   InfluencerStorefront,
@@ -13,20 +19,85 @@ import type {
 } from '@hos-marketplace/api-client';
 import { GoogleFontLink } from '@/components/GoogleFontLink';
 
+interface ContentBlock {
+  type: string;
+  order?: number;
+  data?: Record<string, unknown>;
+}
+
+function stripHtml(raw: string): string {
+  return raw.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+}
+
+function asString(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
+function productHref(product: PublicStorefrontProduct, referralCode: string): string {
+  const slugOrId = product.slug || product.id;
+  return `/products/${slugOrId}?ref=${encodeURIComponent(referralCode)}`;
+}
+
+function ContentBlocksSection({ blocks }: { blocks: ContentBlock[] }) {
+  const sorted = [...blocks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+  return (
+    <div className="mt-10 space-y-6">
+      {sorted.map((block, index) => {
+        const data = block.data || {};
+        switch (block.type) {
+          case 'heading': {
+            const text = stripHtml(asString(data.text) || asString(data.content));
+            if (!text) return null;
+            const level = Math.min(3, Math.max(1, Number(data.level) || 2));
+            const Tag = (`h${level}` as 'h1' | 'h2' | 'h3');
+            return (
+              <Tag key={index} className="text-2xl font-bold">
+                {text}
+              </Tag>
+            );
+          }
+          case 'text': {
+            const text = stripHtml(asString(data.text) || asString(data.content));
+            if (!text) return null;
+            return (
+              <p key={index} className="opacity-80 leading-relaxed whitespace-pre-wrap">
+                {text}
+              </p>
+            );
+          }
+          case 'image': {
+            const url = asString(data.url) || asString(data.src);
+            const safeUrl = toSafeExternalHref(url);
+            if (!safeUrl) return null;
+            const alt = stripHtml(asString(data.alt) || 'Storefront image');
+            return (
+              <div key={index} className="relative w-full aspect-[21/9] rounded-xl overflow-hidden">
+                <Image src={safeUrl} alt={alt} fill className="object-cover" sizes="(max-width: 768px) 100vw, 768px" />
+              </div>
+            );
+          }
+          default:
+            return null;
+        }
+      })}
+    </div>
+  );
+}
+
 export default function InfluencerStorefrontPage() {
   const params = useParams();
   const slug = params.slug as string;
   
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [notFoundTriggered, setNotFoundTriggered] = useState(false);
   const [influencer, setInfluencer] = useState<PublicInfluencerInfo | null>(null);
-  const [storefront, setStorefront] = useState<InfluencerStorefront | null>(null);
+  const [storefront, setStorefront] = useState<(InfluencerStorefront & { contentBlocks?: ContentBlock[] }) | null>(null);
   const [featuredProducts, setFeaturedProducts] = useState<PublicStorefrontProduct[]>([]);
 
   useEffect(() => {
     if (slug) {
-      fetchStorefront();
-      trackVisit();
+      void fetchStorefront();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
@@ -35,39 +106,48 @@ export default function InfluencerStorefrontPage() {
     try {
       setLoading(true);
       const response = await apiClient.getInfluencerStorefront(slug);
-      setInfluencer(response.data?.influencer ?? null);
-      setStorefront(response.data?.storefront ?? null);
-      setFeaturedProducts(response.data?.featuredProducts ?? []);
-    } catch (err: any) {
+      if (!response.data?.influencer) {
+        // notFound() only works during render, not inside an async effect —
+        // flag it so the render phase can trigger the 404 boundary.
+        setNotFoundTriggered(true);
+        return;
+      }
+      setInfluencer(response.data.influencer);
+      setStorefront(response.data.storefront ?? null);
+      setFeaturedProducts(response.data.featuredProducts ?? []);
+      await trackVisit(response.data.influencer.referralCode);
+    } catch (err: unknown) {
       console.error('Error fetching storefront:', err);
-      setError('Storefront not found');
+      setNotFoundTriggered(true);
     } finally {
       setLoading(false);
     }
   };
 
-  const trackVisit = async () => {
+  const trackVisit = async (referralCode: string) => {
     try {
-      // Get or create visitor ID
-      let visitorId = localStorage.getItem('visitor_id');
-      if (!visitorId) {
-        visitorId = 'v_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('visitor_id', visitorId);
+      // First-touch attribution wins: if the visitor arrived via an explicit
+      // ?ref= (e.g. /i/john?ref=alice), ReferralCapture already attributed it —
+      // don't overwrite it with this storefront owner's own code. Likewise, if a
+      // referral was already captured earlier, preserve it.
+      const urlRef =
+        typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('ref')?.trim()
+          : undefined;
+      if (urlRef && isValidInfluencerReferralCode(urlRef)) {
+        return;
+      }
+      if (getInfluencerReferral()) {
+        return;
       }
 
-      // Track the referral
-      const storedInfluencer = await apiClient.getInfluencerStorefront(slug);
-      if (storedInfluencer.data?.influencer?.referralCode) {
-        await apiClient.trackReferral({
-          referralCode: storedInfluencer.data.influencer.referralCode,
-          visitorId,
-          landingPage: `/i/${slug}`,
-        });
-
-        // Store referral info for checkout
-        localStorage.setItem('referral_code', storedInfluencer.data.influencer.referralCode);
-        localStorage.setItem('referral_expires', String(Date.now() + 30 * 24 * 60 * 60 * 1000)); // 30 days
-      }
+      const visitorId = getOrCreateVisitorId();
+      await apiClient.trackReferral({
+        referralCode,
+        visitorId,
+        landingPage: `/i/${slug}`,
+      });
+      setInfluencerReferral(referralCode);
     } catch (err) {
       console.error('Error tracking visit:', err);
     }
@@ -116,6 +196,12 @@ export default function InfluencerStorefrontPage() {
     return icons[platform] || icons.website;
   };
 
+  // Trigger the Next.js 404 boundary during render (notFound() must not be
+  // called from inside the async effect above).
+  if (notFoundTriggered) {
+    notFound();
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-hos-bg-secondary">
@@ -127,27 +213,8 @@ export default function InfluencerStorefrontPage() {
     );
   }
 
-  if (error || !influencer) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-hos-bg-secondary">
-        <div className="text-center">
-          <svg className="w-16 h-16 text-hos-text-muted mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h1 className="text-2xl font-bold text-hos-text-secondary mb-2">Storefront Not Found</h1>
-          <p className="text-hos-text-secondary mb-4">The influencer storefront you&apos;re looking for doesn&apos;t exist.</p>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-hos-gold hover:text-hos-gold-hover font-medium"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Home
-          </Link>
-        </div>
-      </div>
-    );
+  if (!influencer) {
+    return null;
   }
 
   const styles = {
@@ -239,6 +306,10 @@ export default function InfluencerStorefrontPage() {
               {influencer.bio}
             </p>
           )}
+
+          {Array.isArray(storefront?.contentBlocks) && storefront.contentBlocks.length > 0 && (
+            <ContentBlocksSection blocks={storefront.contentBlocks as ContentBlock[]} />
+          )}
         </div>
 
         {/* Featured Products */}
@@ -250,7 +321,7 @@ export default function InfluencerStorefrontPage() {
                 {featuredProducts.map((product) => (
                   <li key={product.id}>
                     <Link
-                      href={`/products/${product.slug}?ref=${influencer.referralCode}`}
+                      href={productHref(product, influencer.referralCode)}
                       className="group flex flex-row gap-4 sm:gap-6 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow text-left items-stretch"
                       style={{ backgroundColor: storefront?.secondaryColor || '#F3E8FF' }}
                     >
@@ -291,7 +362,7 @@ export default function InfluencerStorefrontPage() {
                 {featuredProducts.map((product, idx) => (
                   <div key={product.id} className="break-inside-avoid mb-4">
                     <Link
-                      href={`/products/${product.slug}?ref=${influencer.referralCode}`}
+                      href={productHref(product, influencer.referralCode)}
                       className="group rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow block"
                       style={{ backgroundColor: storefront?.secondaryColor || '#F3E8FF' }}
                     >
@@ -333,7 +404,7 @@ export default function InfluencerStorefrontPage() {
               {featuredProducts.map((product) => (
                 <Link
                   key={product.id}
-                  href={`/products/${product.slug}?ref=${influencer.referralCode}`}
+                  href={productHref(product, influencer.referralCode)}
                   className="group rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow"
                   style={{ backgroundColor: storefront?.secondaryColor || '#F3E8FF' }}
                 >

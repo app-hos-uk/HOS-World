@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { trackBeginCheckout } from '@/lib/analytics';
+import { getInfluencerReferral } from '@/lib/referralAttribution';
 
 interface StockIssue {
   productId: string;
@@ -456,13 +457,10 @@ export default function CheckoutPage() {
       setCreatingOrder(true);
       let referralCode: string | undefined;
       let visitorId: string | undefined;
-      if (typeof window !== 'undefined') {
-        const code = localStorage.getItem('referral_code');
-        const exp = localStorage.getItem('referral_expires');
-        if (code && exp && Date.now() <= parseInt(exp, 10)) {
-          referralCode = code;
-          visitorId = localStorage.getItem('visitor_id') || undefined;
-        }
+      const influencerRef = getInfluencerReferral();
+      if (influencerRef) {
+        referralCode = influencerRef.referralCode;
+        visitorId = influencerRef.visitorId;
       }
 
       const effectiveShipping = cart.promotionFreeShipping ? 0 : shippingCost;

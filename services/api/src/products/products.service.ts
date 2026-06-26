@@ -381,8 +381,12 @@ export class ProductsService {
     }
 
     if (searchDto.sellerId) {
-      const seller = await this.prisma.seller.findUnique({
-        where: { userId: searchDto.sellerId },
+      // Accept either the owner's userId (legacy callers) or the Seller.id
+      // (public storefront, which no longer exposes userId).
+      const seller = await this.prisma.seller.findFirst({
+        where: {
+          OR: [{ userId: searchDto.sellerId }, { id: searchDto.sellerId }],
+        },
       });
       if (seller) {
         where.sellerId = seller.id;
@@ -1022,7 +1026,7 @@ export class ProductsService {
       ean: product.ean || undefined,
       price: Number(product.price),
       tradePrice: isPublicContext ? undefined : (product.tradePrice ? Number(product.tradePrice) : undefined),
-      rrp: product.rrp ? Number(product.rrp) : undefined,
+      rrp: isPublicContext ? undefined : (product.rrp ? Number(product.rrp) : undefined),
       currency: product.currency,
       taxRate: Number(product.taxRate),
       stock: product.stock,

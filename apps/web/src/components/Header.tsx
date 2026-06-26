@@ -35,6 +35,8 @@ const ROLE_QUICK_LINKS: Record<string, Array<{ title: string; href: string; icon
     { title: 'Submit Product', href: '/wholesaler/submit-product', icon: '➕' },
   ],
   INFLUENCER: [
+    { title: 'Dashboard', href: '/influencer/dashboard', icon: '📊' },
+    { title: 'Profile', href: '/influencer/profile', icon: '👤' },
     { title: 'Earnings', href: '/influencer/earnings', icon: '💰' },
     { title: 'Product Links', href: '/influencer/product-links', icon: '🔗' },
     { title: 'Storefront', href: '/influencer/storefront', icon: '🛍️' },
