@@ -95,9 +95,10 @@ export class AppController {
       await this.prisma.$queryRaw`SELECT 1`;
       checks.database = { status: 'ok' };
     } catch (error: any) {
+      const isProduction = process.env.NODE_ENV === 'production';
       checks.database = {
         status: 'error',
-        message: error.message || 'Database connection failed',
+        message: isProduction ? 'Database connection failed' : (error.message || 'Database connection failed'),
       };
     }
 
@@ -109,9 +110,10 @@ export class AppController {
         message: isConnected ? 'Connected' : 'Not connected (using fallback)',
       };
     } catch (error: any) {
+      const isProduction = process.env.NODE_ENV === 'production';
       checks.redis = {
         status: 'error',
-        message: error.message || 'Redis check failed',
+        message: isProduction ? 'Redis check failed' : (error.message || 'Redis check failed'),
       };
     }
 

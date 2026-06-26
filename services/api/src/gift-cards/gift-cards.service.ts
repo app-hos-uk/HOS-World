@@ -198,6 +198,14 @@ export class GiftCardsService {
         throw new ForbiddenException('You do not own this gift card');
       }
 
+      // Unassigned cards: claim on first redemption attempt (prevents interception)
+      if (!giftCard.userId) {
+        await (tx as any).giftCard.update({
+          where: { id: giftCard.id },
+          data: { userId },
+        });
+      }
+
       if (giftCard.expiresAt && giftCard.expiresAt < new Date()) {
         throw new BadRequestException('Gift card has expired');
       }

@@ -388,37 +388,45 @@ export class PaymentsService {
     if (!created) return;
 
     // Record sale in vendor ledger for each child order (or the main order if single-vendor)
+    // Uses retry to handle transient failures since this runs after the payment transaction
     if (this.vendorLedgerService) {
-      const childOrders = await this.prisma.order.findMany({
-        where: { parentOrderId: order.id },
-        include: { seller: true },
-      });
-
-      if (childOrders.length > 0) {
-        for (const child of childOrders) {
-          if (child.sellerId) {
-            const commissionRate = child.seller?.commissionRate
-              ? Number(child.seller.commissionRate)
-              : 0.1;
-            await this.vendorLedgerService.recordSale({
-              sellerId: child.sellerId,
-              orderId: child.id,
-              saleAmount: Number(child.subtotal),
-              commissionRate,
-              currency: child.currency,
-            });
-          }
-        }
-      } else if (order.sellerId) {
-        const seller = await this.prisma.seller.findUnique({ where: { id: order.sellerId } });
-        const commissionRate = seller?.commissionRate ? Number(seller.commissionRate) : 0.1;
-        await this.vendorLedgerService.recordSale({
-          sellerId: order.sellerId,
-          orderId: order.id,
-          saleAmount: Number(order.subtotal),
-          commissionRate,
-          currency: order.currency,
+      try {
+        const childOrders = await this.prisma.order.findMany({
+          where: { parentOrderId: order.id },
+          include: { seller: true },
         });
+
+        if (childOrders.length > 0) {
+          for (const child of childOrders) {
+            if (child.sellerId) {
+              const commissionRate = child.seller?.commissionRate
+                ? Number(child.seller.commissionRate)
+                : 0.1;
+              await this.vendorLedgerService.recordSale({
+                sellerId: child.sellerId,
+                orderId: child.id,
+                saleAmount: Number(child.subtotal),
+                commissionRate,
+                currency: child.currency,
+              });
+            }
+          }
+        } else if (order.sellerId) {
+          const seller = await this.prisma.seller.findUnique({ where: { id: order.sellerId } });
+          const commissionRate = seller?.commissionRate ? Number(seller.commissionRate) : 0.1;
+          await this.vendorLedgerService.recordSale({
+            sellerId: order.sellerId,
+            orderId: order.id,
+            saleAmount: Number(order.subtotal),
+            commissionRate,
+            currency: order.currency,
+          });
+        }
+      } catch (ledgerErr: any) {
+        // Payment is confirmed but ledger write failed — log for reconciliation
+        this.logger.error(
+          `RECONCILIATION NEEDED: Vendor ledger recordSale failed for order ${order.id} after payment confirmed: ${ledgerErr?.message}`,
+        );
       }
     }
 

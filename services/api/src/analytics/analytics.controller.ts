@@ -343,6 +343,14 @@ export class AnalyticsController {
           : await this.analyticsService.resolveSellerId(req.user.id),
     };
 
+    // Inventory reports are admin-only
+    if (reportType === 'inventory' && req.user.role !== 'ADMIN') {
+      return res.status(403).json({
+        message: 'Inventory reports are restricted to admin users',
+        statusCode: 403,
+      });
+    }
+
     let data: any;
     let filename: string;
 

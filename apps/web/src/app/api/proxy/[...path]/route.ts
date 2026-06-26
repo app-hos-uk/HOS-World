@@ -26,6 +26,16 @@ const STRIP_HEADERS = new Set([
 ]);
 
 async function handler(req: NextRequest) {
+  // CSRF protection: state-changing requests must include X-Requested-With header
+  // (cannot be set by cross-origin form submissions or simple CORS requests)
+  const stateMutating = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
+  if (stateMutating && req.headers.get('x-requested-with') !== 'XMLHttpRequest') {
+    return NextResponse.json(
+      { message: 'Missing CSRF header (X-Requested-With)' },
+      { status: 403 },
+    );
+  }
+
   const path = req.nextUrl.pathname.replace(/^\/api\/proxy/, '');
   const search = req.nextUrl.search;
   const target = `${getBackendBase()}${path}${search}`;

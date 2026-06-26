@@ -1,12 +1,11 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { apiClient } from '@/lib/api';
+import { useSecureUrlToken } from '@/hooks/useSecureUrlToken';
 
 function UnsubscribeInner() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  const token = useSecureUrlToken();
   const [message, setMessage] = useState('Confirming…');
 
   useEffect(() => {

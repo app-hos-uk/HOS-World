@@ -36,3 +36,28 @@ export function sanitizeEmailPreviewHtml(html: string): string {
     allowedSchemes: ['http', 'https', 'mailto'],
   });
 }
+
+const BLOG_TAGS = [
+  'p', 'br', 'strong', 'em', 'b', 'i', 'u', 'ul', 'ol', 'li',
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+  'blockquote', 'a', 'code', 'pre', 'span', 'div', 'hr',
+  'table', 'thead', 'tbody', 'tr', 'td', 'th',
+  'img', 'figure', 'figcaption', 'video', 'source',
+  'iframe', 'section', 'article',
+];
+
+export function sanitizeBlogHtml(html: string): string {
+  return sanitizeHtmlLib(html, {
+    allowedTags: BLOG_TAGS,
+    allowedAttributes: {
+      a: ['href', 'title', 'target', 'rel'],
+      img: ['src', 'alt', 'width', 'height', 'loading'],
+      iframe: ['src', 'width', 'height', 'frameborder', 'allowfullscreen'],
+      video: ['src', 'controls', 'width', 'height'],
+      source: ['src', 'type'],
+      '*': ['class', 'id'],
+    },
+    allowedSchemes: ['http', 'https', 'mailto'],
+    allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
+  });
+}

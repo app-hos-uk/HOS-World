@@ -8,6 +8,7 @@ import { processBlogHeadings } from '@/lib/blogHeadings';
 import { RelatedPosts } from '@/components/blog/RelatedPosts';
 import { BlogStructuredData } from '@/components/blog/BlogStructuredData';
 import { getPostBySlug } from '@/lib/blog';
+import { sanitizeBlogHtml } from '@/lib/sanitizeHtml';
 import type { Metadata } from 'next';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hos-marketplaceweb-production.up.railway.app';
@@ -55,7 +56,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   if (!data?.post) notFound();
 
   const { post, related } = data;
-  const { html: contentWithIds, toc } = processBlogHeadings(post.contentHtml);
+  const sanitizedContent = sanitizeBlogHtml(post.contentHtml);
+  const { html: contentWithIds, toc } = processBlogHeadings(sanitizedContent);
   const publishedDate = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString('en-US', {
         year: 'numeric',

@@ -1,18 +1,18 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth, setFrontendSessionCookie } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useSecureUrlParam, useSecureUrlToken } from '@/hooks/useSecureUrlToken';
 
 type InvitationType = 'seller' | 'influencer';
 
 function AcceptInvitationForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const toast = useToast();
-  const token = searchParams.get('token');
-  const typeParam = searchParams.get('type');
+  const token = useSecureUrlToken();
+  const typeParam = useSecureUrlParam('type');
   const invitationType: InvitationType = typeParam === 'influencer' ? 'influencer' : 'seller';
 
   const [formData, setFormData] = useState({

@@ -61,9 +61,14 @@ export class InventoryController {
   @ApiQuery({ name: 'includeInactive', required: false, type: Boolean })
   @SwaggerApiResponse({ status: 200, description: 'Warehouses retrieved successfully' })
   async findAllWarehouses(
+    @Request() req: any,
     @Query('includeInactive') includeInactive?: string,
   ): Promise<ApiResponse<any[]>> {
-    const warehouses = await this.inventoryService.findAllWarehouses(includeInactive === 'true');
+    const warehouses = await this.inventoryService.findAllWarehouses(
+      includeInactive === 'true',
+      req.user?.id,
+      req.user?.role,
+    );
     return {
       data: warehouses,
       message: 'Warehouses retrieved successfully',

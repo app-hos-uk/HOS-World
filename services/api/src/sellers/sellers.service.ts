@@ -46,17 +46,34 @@ export class SellersService {
 
   private encryptField(value: string): string {
     const crypto = require('crypto');
-    const key = crypto.scryptSync(this.encryptionKey, 'salt', 32);
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    const salt = crypto.randomBytes(16);
+    const key = crypto.scryptSync(this.encryptionKey, salt, 32);
+    const iv = crypto.randomBytes(12); // 96-bit IV for GCM
+    const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
     let encrypted = cipher.update(value, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    return iv.toString('hex') + ':' + encrypted;
+    const authTag = cipher.getAuthTag().toString('hex');
+    // Format: gcm:<salt>:<iv>:<authTag>:<ciphertext>
+    return `gcm:${salt.toString('hex')}:${iv.toString('hex')}:${authTag}:${encrypted}`;
   }
 
   private decryptField(encrypted: string): string {
     try {
       const crypto = require('crypto');
+      if (encrypted.startsWith('gcm:')) {
+        const parts = encrypted.split(':');
+        if (parts.length !== 5) return encrypted;
+        const [, saltHex, ivHex, authTagHex, encData] = parts;
+        const salt = Buffer.from(saltHex, 'hex');
+        const key = crypto.scryptSync(this.encryptionKey, salt, 32);
+        const iv = Buffer.from(ivHex, 'hex');
+        const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+        decipher.setAuthTag(Buffer.from(authTagHex, 'hex'));
+        let decrypted = decipher.update(encData, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
+        return decrypted;
+      }
+      // Legacy CBC format: <iv>:<ciphertext> (backward compatible)
       const [ivHex, encData] = encrypted.split(':');
       if (!ivHex || !encData) return encrypted;
       const key = crypto.scryptSync(this.encryptionKey, 'salt', 32);
@@ -67,6 +84,31 @@ export class SellersService {
       return decrypted;
     } catch {
       return encrypted;
+    }
+  }
+
+  /**
+   * Transparently re-encrypts legacy CBC-encrypted fields to GCM on read.
+   * Call after loading a seller to migrate in-place without downtime.
+   */
+  private async migrateEncryptionIfNeeded(sellerId: string, fields: { accountNumberEnc?: string | null; sortCodeEnc?: string | null }) {
+    const updates: Record<string, string> = {};
+    if (fields.accountNumberEnc && !fields.accountNumberEnc.startsWith('gcm:')) {
+      const plaintext = this.decryptField(fields.accountNumberEnc);
+      if (plaintext !== fields.accountNumberEnc) {
+        updates.accountNumberEnc = this.encryptField(plaintext);
+      }
+    }
+    if (fields.sortCodeEnc && !fields.sortCodeEnc.startsWith('gcm:')) {
+      const plaintext = this.decryptField(fields.sortCodeEnc);
+      if (plaintext !== fields.sortCodeEnc) {
+        updates.sortCodeEnc = this.encryptField(plaintext);
+      }
+    }
+    if (Object.keys(updates).length > 0) {
+      await this.prisma.seller.update({ where: { id: sellerId }, data: updates }).catch((err) => {
+        this.logger.warn(`Encryption migration failed for seller ${sellerId}: ${err?.message}`);
+      });
     }
   }
 
@@ -123,6 +165,12 @@ export class SellersService {
     if (!seller) {
       throw new NotFoundException('Seller profile not found');
     }
+
+    // Transparently migrate legacy CBC-encrypted fields to GCM
+    this.migrateEncryptionIfNeeded(seller.id, {
+      accountNumberEnc: seller.accountNumberEnc,
+      sortCodeEnc: seller.sortCodeEnc,
+    }).catch(() => {});
 
     return {
       ...seller,

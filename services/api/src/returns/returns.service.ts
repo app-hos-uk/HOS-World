@@ -446,14 +446,29 @@ export class ReturnsService {
   private calculateReturnRefundAmount(returnRequest: any): number {
     const returnItems = returnRequest.items;
     if (returnItems && returnItems.length > 0) {
-      let total = 0;
+      let itemsTotal = 0;
+      let orderItemsTotal = 0;
+      const orderItems = returnRequest.order?.items || [];
+
       for (const ri of returnItems) {
-        const orderItem = returnRequest.order?.items?.find((oi: any) => oi.id === ri.orderItemId);
+        const orderItem = orderItems.find((oi: any) => oi.id === ri.orderItemId);
         if (orderItem) {
-          total += Number(orderItem.price) * (ri.quantity || 1);
+          itemsTotal += Number(orderItem.price) * (ri.quantity || 1);
         }
       }
-      if (total > 0) return total;
+      // Calculate total of all order items for proportion
+      for (const oi of orderItems) {
+        orderItemsTotal += Number(oi.price) * Number(oi.quantity || 1);
+      }
+
+      if (itemsTotal > 0 && orderItemsTotal > 0) {
+        // Add proportional tax and shipping
+        const proportion = itemsTotal / orderItemsTotal;
+        const tax = Number(returnRequest.order?.tax || 0) * proportion;
+        const shipping = Number(returnRequest.order?.shippingCost || 0) * proportion;
+        return Math.round((itemsTotal + tax + shipping) * 100) / 100;
+      }
+      if (itemsTotal > 0) return itemsTotal;
     }
     return Number(returnRequest.order?.total ?? 0);
   }

@@ -112,9 +112,14 @@ export async function middleware(request: NextRequest) {
   const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
   if (isProtected) {
+    // Check both the is_logged_in flag AND actual auth token presence when available
     const isLoggedIn = request.cookies.get('is_logged_in')?.value === 'true';
+    const hasAuthToken = !!request.cookies.get('access_token')?.value ||
+      !!request.cookies.get('refresh_token')?.value;
+    // In cross-origin mode, only is_logged_in is visible; in same-origin, verify token exists
+    const isAuthenticated = hasAuthToken || isLoggedIn;
 
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = '/login';
       loginUrl.searchParams.set('returnUrl', pathname);

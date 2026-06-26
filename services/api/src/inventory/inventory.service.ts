@@ -50,9 +50,20 @@ export class InventoryService {
   /**
    * Get all warehouses
    */
-  async findAllWarehouses(includeInactive = false) {
+  async findAllWarehouses(includeInactive = false, userId?: string, role?: string) {
+    const where: any = includeInactive ? {} : { isActive: true };
+
+    // Non-admin/non-fulfillment roles only see their own warehouses
+    const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
+    if (userId && role && sellerRoles.includes(role)) {
+      const seller = await this.prisma.seller.findUnique({ where: { userId } });
+      if (seller) {
+        where.sellerId = seller.id;
+      }
+    }
+
     return this.prisma.warehouse.findMany({
-      where: includeInactive ? {} : { isActive: true },
+      where,
       include: {
         inventory: {
           include: {

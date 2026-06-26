@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { apiClient } from '@/lib/api';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useSecureUrlToken } from '@/hooks/useSecureUrlToken';
+import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
-export default function VerifyEmailPage() {
-  const searchParams = useSearchParams();
+function VerifyEmailContent() {
   const router = useRouter();
-  const token = searchParams.get('token');
+  const token = useSecureUrlToken();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
 
@@ -22,7 +22,7 @@ export default function VerifyEmailPage() {
     const verify = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/auth/verify-email`,
+          `${getPublicApiBaseUrl()}/auth/verify-email`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -90,5 +90,19 @@ export default function VerifyEmailPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-hos-bg flex items-center justify-center">
+          <div className="w-12 h-12 border-4 border-hos-gold border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

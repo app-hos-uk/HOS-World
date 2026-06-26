@@ -1,16 +1,16 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useSecureUrlToken } from '@/hooks/useSecureUrlToken';
 import Link from 'next/link';
 
 function ResetPasswordForm() {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const toast = useToast();
-  const token = searchParams.get('token');
+  const token = useSecureUrlToken();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);

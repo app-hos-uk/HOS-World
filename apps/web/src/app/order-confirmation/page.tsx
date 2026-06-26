@@ -28,8 +28,9 @@ export default function OrderConfirmationPage() {
   const [loading, setLoading] = useState(true);
 
   const paidStatuses = ['paid', 'PAID'];
-  const confirmedStatuses = ['confirmed', 'CONFIRMED', 'processing', 'PROCESSING', 'fulfilled', 'FULFILLED', 'shipped', 'SHIPPED', 'delivered', 'DELIVERED'];
-  const isPaid = order ? (paidStatuses.includes(order.paymentStatus || '') || confirmedStatuses.includes(order.status)) : false;
+  // Payment confirmation is authoritative — order status alone is not sufficient
+  const isPaid = order ? paidStatuses.includes(order.paymentStatus || '') : false;
+  const isProcessing = order ? !isPaid && ['processing', 'PROCESSING', 'pending', 'PENDING'].includes(order.paymentStatus || '') : false;
 
   useEffect(() => {
     if (!orderId) {

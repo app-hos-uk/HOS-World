@@ -117,19 +117,45 @@ export class RefundsService {
     const cardRefundAmount = Math.round(data.amount * cardProportion * 100) / 100;
     const giftCardRefundAmount = data.amount - cardRefundAmount;
 
-    // Reverse gift-card portion back to cards
+    // Reverse gift-card portion back to cards (idempotent, transactional)
     if (giftCardRefundAmount > 0 && giftCardRedemptions.length > 0) {
-      let remaining = giftCardRefundAmount;
-      for (const redemption of giftCardRedemptions) {
-        if (remaining <= 0) break;
-        const reverseAmount = Math.min(remaining, Number(redemption.amount));
-        await this.prisma.giftCard.update({
-          where: { id: redemption.giftCardId },
-          data: { balance: { increment: reverseAmount } },
+      // Check if reversals already exist for this return to ensure idempotency
+      const existingReversals = await this.prisma.giftCardTransaction.count({
+        where: {
+          orderId: returnRequest.orderId,
+          type: 'REFUND',
+          notes: { contains: data.returnId },
+        },
+      });
+      if (existingReversals === 0) {
+        await this.prisma.$transaction(async (tx) => {
+          let remaining = giftCardRefundAmount;
+          for (const redemption of giftCardRedemptions) {
+            if (remaining <= 0) break;
+            const reverseAmount = Math.min(remaining, Number(redemption.amount));
+            const card = await tx.giftCard.findUnique({ where: { id: redemption.giftCardId } });
+            const newBalance = Number(card?.balance || 0) + reverseAmount;
+            await tx.giftCard.update({
+              where: { id: redemption.giftCardId },
+              data: { balance: { increment: reverseAmount } },
+            });
+            await tx.giftCardTransaction.create({
+              data: {
+                giftCardId: redemption.giftCardId,
+                orderId: returnRequest.orderId,
+                type: 'REFUND',
+                amount: reverseAmount,
+                balanceAfter: newBalance,
+                notes: `Return refund reversal (returnId: ${data.returnId})`,
+              },
+            });
+            remaining -= reverseAmount;
+          }
         });
-        remaining -= reverseAmount;
+        this.logger.log(`Reversed ${giftCardRefundAmount} to gift cards for return ${data.returnId}`);
+      } else {
+        this.logger.log(`Gift-card reversals already exist for return ${data.returnId}, skipping`);
       }
-      this.logger.log(`Reversed ${giftCardRefundAmount} to gift cards for return ${data.returnId}`);
     }
 
     const stripePaymentId = returnRequest.order.stripePaymentIntentId;

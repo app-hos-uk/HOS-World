@@ -771,6 +771,15 @@ export class OrdersService {
         this.logger.error(
           `CRITICAL: promotion/coupon usage not recorded for order ${result.id}: ${error?.message ?? error}`,
         );
+        // Create internal note for admin reconciliation
+        await this.prisma.orderNote.create({
+          data: {
+            orderId: result.id,
+            content: `[SYSTEM] Promotion/coupon usage recording failed: ${error?.message ?? 'unknown error'}. Manual reconciliation required.`,
+            internal: true,
+            createdBy: userId,
+          },
+        }).catch(() => {});
       }
     }
 

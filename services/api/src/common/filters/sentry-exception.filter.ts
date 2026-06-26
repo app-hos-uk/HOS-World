@@ -61,8 +61,14 @@ export class SentryExceptionFilter implements ExceptionFilter {
       );
     }
 
+    // In production, suppress internal details for 5xx errors
+    const isProduction = process.env.NODE_ENV === 'production';
+    const safeMessage = (isProduction && status >= 500)
+      ? { message: 'Internal server error', statusCode: status }
+      : { ...message, statusCode: status };
+
     response.status(status).json({
-      ...message,
+      ...safeMessage,
       timestamp: new Date().toISOString(),
       path: request?.url,
     });

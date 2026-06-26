@@ -59,8 +59,21 @@ export class PayoutsService {
       throw new BadRequestException('Payout has already been processed');
     }
 
+    // Verify vendor ledger balance covers the payout amount
+    if (transaction.sellerId) {
+      const lastEntry = await this.prisma.vendorLedgerEntry.findFirst({
+        where: { sellerId: transaction.sellerId },
+        orderBy: { createdAt: 'desc' },
+      });
+      const currentBalance = lastEntry ? Number(lastEntry.balance) : 0;
+      if (currentBalance < Number(transaction.amount)) {
+        throw new BadRequestException(
+          `Insufficient vendor ledger balance. Available: ${currentBalance.toFixed(2)}, payout amount: ${Number(transaction.amount).toFixed(2)}`,
+        );
+      }
+    }
+
     // Update transaction status to completed
-    // In a real implementation, this would integrate with payment gateway
     const updated = await this.transactionsService.updateTransactionStatus(
       transactionId,
       'COMPLETED',
