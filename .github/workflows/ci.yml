@@ -16,7 +16,7 @@ jobs:
       JWT_REFRESH_SECRET: 'test-refresh-secret-minimum-32-chars-for-ci'
       NEXT_PUBLIC_API_URL: 'https://hos-marketplaceapi-production.up.railway.app'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v2
         with:
