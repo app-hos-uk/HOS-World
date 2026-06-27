@@ -456,40 +456,46 @@ export class CreateTeamUsersController {
   async seedSuperAdmin(@Request() req: any): Promise<ApiResponse<any>> {
     this.guardSeedSecret(req);
 
-    const email = 'app@houseofspells.co.uk';
     const passwordHash = await bcrypt.hash(getSeedAdminPassword(), BCRYPT_PASSWORD_ROUNDS);
 
-    const existing = await this.prisma.user.findUnique({ where: { email } });
+    const superAdmins = [
+      { email: 'app@houseofspells.co.uk', firstName: 'Super', lastName: 'Admin' },
+      { email: 'mail@jsabu.com', firstName: 'Admin', lastName: 'User' },
+    ];
 
-    if (existing) {
-      await this.prisma.user.update({
-        where: { id: existing.id },
-        data: {
-          password: passwordHash,
-          role: UserRole.ADMIN,
-          firstName: 'Super',
-          lastName: 'Admin',
-        },
-      });
-      return {
-        data: { email, status: 'updated', role: UserRole.ADMIN },
-        message: 'Super admin password synced from SEED_ADMIN_PASSWORD',
-      };
+    const results = [];
+
+    for (const admin of superAdmins) {
+      const existing = await this.prisma.user.findUnique({ where: { email: admin.email } });
+
+      if (existing) {
+        await this.prisma.user.update({
+          where: { id: existing.id },
+          data: {
+            password: passwordHash,
+            role: UserRole.ADMIN,
+            firstName: admin.firstName,
+            lastName: admin.lastName,
+          },
+        });
+        results.push({ email: admin.email, status: 'updated', role: UserRole.ADMIN });
+      } else {
+        const user = await this.prisma.user.create({
+          data: {
+            email: admin.email,
+            password: passwordHash,
+            firstName: admin.firstName,
+            lastName: admin.lastName,
+            role: UserRole.ADMIN,
+          },
+        });
+        results.push({ email: admin.email, status: 'created', role: UserRole.ADMIN, id: user.id });
+      }
     }
 
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        password: passwordHash,
-        firstName: 'Super',
-        lastName: 'Admin',
-        role: UserRole.ADMIN,
-      },
-    });
-
     return {
-      data: { email, status: 'created', role: UserRole.ADMIN, id: user.id },
-      message: 'Super admin created from SEED_ADMIN_PASSWORD',
+      data: { admins: results },
+      message: 'Super admin passwords synced from SEED_ADMIN_PASSWORD',
     };
   }
 
