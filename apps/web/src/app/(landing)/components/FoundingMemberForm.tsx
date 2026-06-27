@@ -81,7 +81,7 @@ export function FoundingMemberForm() {
       setSelected(next);
       syncHint(next.size);
     }
-  }, [searchParams, syncHint]);
+  }, [searchParams, syncHint, FANDOMS]);
 
   const otherSelected = (() => {
     const idx = FANDOMS.findIndex((f) => f.n === OTHER_UNIVERSE_NAME);
