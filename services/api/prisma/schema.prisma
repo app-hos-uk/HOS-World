@@ -2059,6 +2059,21 @@ model WhatsAppTemplate {
   @@index([isActive])
 }
 
+model EmailTemplate {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  subject     String?
+  body        String   @db.Text
+  variables   String[]
+  description String?
+  isActive    Boolean  @default(true)
+  updatedBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+}
+
 enum ConversationStatus {
   ACTIVE
   ARCHIVED

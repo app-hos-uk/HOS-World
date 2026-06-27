@@ -10,6 +10,7 @@ export interface TemplateDefinition {
   body: string;
   variables: string[];
   description?: string;
+  isCustomized?: boolean;
 }
 
 /**
@@ -531,6 +532,139 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
     variables: ['firstName', 'eventTitle', 'ticketCode', 'startsAt', 'unsubscribeUrl'],
     body: `<p>Great news {{firstName}} — you're confirmed for {{eventTitle}}!</p><p>Ticket: {{ticketCode}}</p><p>{{startsAt}}</p><p><a href="{{unsubscribeUrl}}">Unsubscribe</a></p>`,
   },
+
+  // ─── Auth & onboarding ─────────────────────────────────────────────────
+  {
+    slug: 'email_verification',
+    channel: 'EMAIL',
+    subject: 'Verify Your Email — House of Spells',
+    description: 'Sent when a user requests email verification.',
+    variables: ['customerName', 'verifyLink'],
+    body: `<!DOCTYPE html>
+<html><head><style>
+  body{font-family:Arial,sans-serif;line-height:1.6;color:#333}
+  .container{max-width:600px;margin:0 auto;padding:20px}
+  .header{background:#553c9a;color:#fff;padding:20px;text-align:center}
+  .content{padding:20px;background:#f7fafc}
+  .cta{display:inline-block;padding:12px 24px;background:#553c9a;color:#fff;text-decoration:none;border-radius:6px;margin:16px 0}
+  .footer{text-align:center;padding:20px;color:#718096;font-size:12px}
+</style></head><body>
+<div class="container">
+  <div class="header"><h1>Verify Your Email</h1></div>
+  <div class="content">
+    <p>Hi {{customerName}},</p>
+    <p>Please verify your email address to complete your House of Spells account setup.</p>
+    <p><a class="cta" href="{{verifyLink}}">Verify Email</a></p>
+    <p style="word-break:break-all;color:#4299e1;">{{verifyLink}}</p>
+    <p>If you didn't create an account, you can safely ignore this email.</p>
+  </div>
+  <div class="footer"><p>House of Spells Marketplace</p></div>
+</div></body></html>`,
+  },
+  {
+    slug: 'founding_member_confirmation',
+    channel: 'EMAIL',
+    subject: "You're on the Founding Members List — House of Spells",
+    description: 'Sent when someone registers as a founding member.',
+    variables: ['firstName', 'email'],
+    body: `<!DOCTYPE html>
+<html><head><style>
+  body{font-family:Arial,sans-serif;line-height:1.6;color:#333}
+  .container{max-width:600px;margin:0 auto;padding:20px}
+  .header{background:#553c9a;color:#fff;padding:20px;text-align:center}
+  .content{padding:20px;background:#f7fafc}
+  .footer{text-align:center;padding:20px;color:#718096;font-size:12px}
+</style></head><body>
+<div class="container">
+  <div class="header"><h1>Welcome, Founding Member</h1></div>
+  <div class="content">
+    <p>Hi {{firstName}},</p>
+    <p>Thank you for joining the House of Spells founding members list. We've registered <strong>{{email}}</strong> and will keep you updated as we launch.</p>
+    <p>You're among the first to help shape our enchanted marketplace — we'll be in touch soon with exclusive early access details.</p>
+  </div>
+  <div class="footer"><p>House of Spells Marketplace</p></div>
+</div></body></html>`,
+  },
+
+  // ─── Phase 7 — Ambassador programme ───────────────────────────────────
+  {
+    slug: 'ambassador_welcome',
+    channel: 'EMAIL',
+    subject: 'Welcome to the House of Spells Ambassador Programme',
+    description: 'Sent when a user is enrolled as an ambassador.',
+    variables: ['firstName'],
+    body: `<p>Hi {{firstName}}, welcome to the House of Spells Ambassador Programme! Share your fandom passion and earn rewards.</p>`,
+  },
+  {
+    slug: 'ambassador_submit_ugc',
+    channel: 'EMAIL',
+    subject: 'Share Your First Ambassador Content',
+    description: 'Nudge ambassadors to submit UGC after onboarding.',
+    variables: ['firstName'],
+    body: `<p>Hi {{firstName}}, we'd love to see your first piece of ambassador content. Submit a photo or video in the app to unlock your welcome bonus.</p>`,
+  },
+  {
+    slug: 'ambassador_ugc_reminder',
+    channel: 'EMAIL',
+    subject: 'Reminder: Submit Your Ambassador Content',
+    description: 'Reminder for ambassadors who have not yet submitted UGC.',
+    variables: ['firstName'],
+    body: `<p>Hi {{firstName}}, you haven't submitted your ambassador content yet. Share your fandom story to complete onboarding.</p>`,
+  },
+  {
+    slug: 'ambassador_great_job',
+    channel: 'EMAIL',
+    subject: 'Great Job, Ambassador!',
+    description: 'Congratulatory email after ambassador submits UGC.',
+    variables: ['firstName'],
+    body: `<p>Great job {{firstName}}! Your ambassador content has been received. Keep sharing and earning rewards.</p>`,
+  },
+
+  // ─── Phase 8 — Brand partnerships ─────────────────────────────────────
+  {
+    slug: 'brand_campaign_started',
+    channel: 'EMAIL',
+    subject: 'New Campaign: {{campaignName}}',
+    description: 'Sent when a brand partnership campaign starts.',
+    variables: ['firstName', 'campaignName'],
+    body: `<p>Hi {{firstName}}, a new brand campaign <strong>{{campaignName}}</strong> has started. Check the app for exclusive offers and bonus points.</p>`,
+  },
+  {
+    slug: 'brand_campaign_reminder',
+    channel: 'PUSH',
+    subject: 'Campaign reminder',
+    description: 'Push reminder for an active brand campaign.',
+    variables: ['campaignName'],
+    body: `Don't miss out: {{campaignName}} is still running!`,
+  },
+
+  // ─── Phase 10 — Click & collect ───────────────────────────────────────
+  {
+    slug: 'click_collect_ready',
+    channel: 'EMAIL',
+    subject: 'Your Order Is Ready for Pickup — {{orderNumber}}',
+    description: 'Sent when a click-and-collect order is ready.',
+    variables: ['firstName', 'orderNumber', 'storeName', 'pickupCode'],
+    body: `<!DOCTYPE html>
+<html><head><style>
+  body{font-family:Arial,sans-serif;line-height:1.6;color:#333}
+  .container{max-width:600px;margin:0 auto;padding:20px}
+  .header{background:#48bb78;color:#fff;padding:20px;text-align:center}
+  .content{padding:20px;background:#f7fafc}
+  .code{background:#edf2f7;padding:15px;border-radius:4px;margin:20px 0;font-size:20px;font-weight:bold;text-align:center}
+  .footer{text-align:center;padding:20px;color:#718096;font-size:12px}
+</style></head><body>
+<div class="container">
+  <div class="header"><h1>Ready for Pickup</h1></div>
+  <div class="content">
+    <p>Hi {{firstName}},</p>
+    <p>Your order <strong>{{orderNumber}}</strong> is ready for collection at <strong>{{storeName}}</strong>.</p>
+    <div class="code">Pickup code: {{pickupCode}}</div>
+    <p>Please bring this code when you collect your order.</p>
+  </div>
+  <div class="footer"><p>House of Spells Marketplace</p></div>
+</div></body></html>`,
+  },
 ];
 
 @Injectable()
@@ -592,11 +726,34 @@ export class TemplatesService {
   }
 
   /**
-   * Resolve a template: check DB override (WhatsApp table for WHATSAPP slugs),
+   * Resolve a template: check DB overrides (EmailTemplate / WhatsAppTemplate),
    * then fall back to built-in defaults.
    */
   private async resolve(slug: string): Promise<TemplateDefinition> {
     const builtIn = BUILT_IN_TEMPLATES.find((t) => t.slug === slug);
+
+    if (builtIn?.channel === 'EMAIL') {
+      try {
+        const emailOverride = await this.prisma.emailTemplate.findUnique({
+          where: { slug },
+        });
+
+        if (emailOverride?.isActive) {
+          return {
+            slug: emailOverride.slug,
+            channel: 'EMAIL',
+            subject: emailOverride.subject ?? builtIn.subject,
+            body: emailOverride.body,
+            variables: emailOverride.variables.length
+              ? emailOverride.variables
+              : builtIn.variables,
+            description: emailOverride.description ?? builtIn.description,
+          };
+        }
+      } catch {
+        // Table may not exist yet; fall through to built-in
+      }
+    }
 
     if (builtIn?.channel === 'WHATSAPP' || slug.startsWith('whatsapp_')) {
       try {
@@ -629,6 +786,56 @@ export class TemplatesService {
    */
   async listTemplates(channel?: TemplateChannel): Promise<TemplateDefinition[]> {
     let templates = [...BUILT_IN_TEMPLATES];
+
+    try {
+      const emailOverrides = await this.prisma.emailTemplate.findMany({
+        where: { isActive: true },
+      });
+      for (const override of emailOverrides) {
+        const idx = templates.findIndex((t) => t.slug === override.slug);
+        const merged: TemplateDefinition = {
+          slug: override.slug,
+          channel: 'EMAIL',
+          subject: override.subject ?? templates[idx]?.subject,
+          body: override.body,
+          variables: override.variables.length
+            ? override.variables
+            : templates[idx]?.variables ?? [],
+          description: override.description ?? templates[idx]?.description,
+          isCustomized: true,
+        };
+        if (idx >= 0) {
+          templates[idx] = merged;
+        } else {
+          templates.push(merged);
+        }
+      }
+    } catch {
+      // EmailTemplate table may not exist yet
+    }
+
+    try {
+      const whatsappOverrides = await this.prisma.whatsAppTemplate.findMany({
+        where: { isActive: true },
+      });
+      for (const override of whatsappOverrides) {
+        const idx = templates.findIndex((t) => t.slug === override.name);
+        const merged: TemplateDefinition = {
+          slug: override.name,
+          channel: 'WHATSAPP',
+          body: override.content,
+          variables: override.variables,
+        };
+        if (idx >= 0) {
+          templates[idx] = merged;
+        } else {
+          templates.push(merged);
+        }
+      }
+    } catch {
+      // WhatsAppTemplate table may not exist yet
+    }
+
     if (channel) {
       templates = templates.filter((t) => t.channel === channel);
     }
@@ -659,14 +866,44 @@ export class TemplatesService {
   }
 
   /**
-   * Create a custom DB-backed template override.
+   * Create or update a DB-backed template override.
    */
   async createTemplate(data: {
     name: string;
     category: string;
+    channel?: TemplateChannel;
+    subject?: string;
     content: string;
     variables?: string[];
+    description?: string;
+    updatedBy?: string;
   }) {
+    const channel = data.channel ?? 'WHATSAPP';
+
+    if (channel === 'EMAIL') {
+      return this.prisma.emailTemplate.upsert({
+        where: { slug: data.name },
+        create: {
+          slug: data.name,
+          subject: data.subject,
+          body: data.content,
+          variables: data.variables ?? [],
+          description: data.description,
+          updatedBy: data.updatedBy,
+          isActive: true,
+        },
+        update: {
+          subject: data.subject,
+          body: data.content,
+          variables: data.variables ?? [],
+          description: data.description,
+          updatedBy: data.updatedBy,
+          isActive: true,
+          updatedAt: new Date(),
+        },
+      });
+    }
+
     return this.prisma.whatsAppTemplate.create({
       data: {
         name: data.name,
@@ -683,8 +920,54 @@ export class TemplatesService {
    */
   async updateTemplate(
     slug: string,
-    data: { content?: string; variables?: string[]; isActive?: boolean },
+    data: {
+      channel?: TemplateChannel;
+      subject?: string;
+      content?: string;
+      variables?: string[];
+      description?: string;
+      isActive?: boolean;
+      updatedBy?: string;
+    },
   ) {
+    const builtIn = BUILT_IN_TEMPLATES.find((t) => t.slug === slug);
+    const channel = data.channel ?? builtIn?.channel ?? 'WHATSAPP';
+
+    if (channel === 'EMAIL') {
+      const existing = await this.prisma.emailTemplate.findUnique({ where: { slug } });
+
+      if (existing) {
+        return this.prisma.emailTemplate.update({
+          where: { slug },
+          data: {
+            ...(data.subject !== undefined && { subject: data.subject }),
+            ...(data.content !== undefined && { body: data.content }),
+            ...(data.variables !== undefined && { variables: data.variables }),
+            ...(data.description !== undefined && { description: data.description }),
+            ...(data.isActive !== undefined && { isActive: data.isActive }),
+            ...(data.updatedBy !== undefined && { updatedBy: data.updatedBy }),
+            updatedAt: new Date(),
+          },
+        });
+      }
+
+      if (!builtIn || builtIn.channel !== 'EMAIL') {
+        throw new NotFoundException(`Email template "${slug}" not found`);
+      }
+
+      return this.prisma.emailTemplate.create({
+        data: {
+          slug,
+          subject: data.subject ?? builtIn.subject,
+          body: data.content ?? builtIn.body,
+          variables: data.variables ?? builtIn.variables,
+          description: data.description ?? builtIn.description,
+          updatedBy: data.updatedBy,
+          isActive: data.isActive ?? true,
+        },
+      });
+    }
+
     return this.prisma.whatsAppTemplate.update({
       where: { name: slug },
       data: {
@@ -694,6 +977,30 @@ export class TemplatesService {
         updatedAt: new Date(),
       },
     });
+  }
+
+  /**
+   * Reset an email template override back to the built-in default.
+   */
+  async resetEmailTemplate(slug: string): Promise<void> {
+    const builtIn = BUILT_IN_TEMPLATES.find((t) => t.slug === slug && t.channel === 'EMAIL');
+    if (!builtIn) {
+      throw new NotFoundException(`Built-in email template "${slug}" not found`);
+    }
+
+    await this.prisma.emailTemplate.deleteMany({ where: { slug } });
+  }
+
+  /**
+   * Check whether an email template has an active DB override in use.
+   */
+  async hasEmailOverride(slug: string): Promise<boolean> {
+    try {
+      const row = await this.prisma.emailTemplate.findUnique({ where: { slug } });
+      return !!row?.isActive;
+    } catch {
+      return false;
+    }
   }
 
   private getSampleValue(variable: string): string {
@@ -716,6 +1023,24 @@ export class TemplatesService {
       bodyContent: '<p>A new product has been submitted for review.</p>',
       productName: 'Marauder\'s Map Replica',
       reason: 'Image quality does not meet requirements.',
+      firstName: 'Jane',
+      verifyLink: 'https://hos-marketplace.com/auth/verify-email?token=example',
+      email: 'jane@example.com',
+      campaignName: 'Double Points on Harry Potter Wands',
+      storeName: 'House of Spells — London',
+      pickupCode: 'CC-482910',
+      tierName: 'Apprentice',
+      cartTotal: '$59.99',
+      newTier: 'Enchanter',
+      oldTier: 'Apprentice',
+      bonusPoints: '100',
+      expiringPoints: '250',
+      expiryDate: '2026-07-15',
+      eventTitle: 'Wizarding World Quiz Night',
+      ticketCode: 'EVT-001',
+      startsAt: 'Saturday, 15 July 2026 at 7:00 PM',
+      unsubscribeUrl: 'https://hos-marketplace.com/unsubscribe?token=example',
+      loyaltyPointsEarned: '50',
     };
     return samples[variable] || `[${variable}]`;
   }

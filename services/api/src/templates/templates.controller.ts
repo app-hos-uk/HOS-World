@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -59,7 +59,11 @@ export class TemplatesController {
   @SwaggerApiResponse({ status: 200, description: 'Template returned' })
   async getTemplate(@Param('slug') slug: string): Promise<ApiResponse<any>> {
     const template = await this.templatesService.getTemplate(slug);
-    return { data: template, message: 'Template retrieved' };
+    const isCustomized =
+      template.channel === 'EMAIL'
+        ? await this.templatesService.hasEmailOverride(slug)
+        : false;
+    return { data: { ...template, isCustomized }, message: 'Template retrieved' };
   }
 
   @Post()
@@ -70,11 +74,18 @@ export class TemplatesController {
     body: {
       name: string;
       category: string;
+      channel?: TemplateChannel;
+      subject?: string;
       content: string;
       variables?: string[];
+      description?: string;
     },
+    @Request() req: { user?: { id?: string } },
   ): Promise<ApiResponse<any>> {
-    const template = await this.templatesService.createTemplate(body);
+    const template = await this.templatesService.createTemplate({
+      ...body,
+      updatedBy: req.user?.id,
+    });
     return { data: template, message: 'Template created' };
   }
 
@@ -86,13 +97,30 @@ export class TemplatesController {
     @Param('slug') slug: string,
     @Body()
     body: {
+      channel?: TemplateChannel;
+      subject?: string;
       content?: string;
       variables?: string[];
+      description?: string;
       isActive?: boolean;
     },
+    @Request() req: { user?: { id?: string } },
   ): Promise<ApiResponse<any>> {
-    const template = await this.templatesService.updateTemplate(slug, body);
+    const template = await this.templatesService.updateTemplate(slug, {
+      ...body,
+      updatedBy: req.user?.id,
+    });
     return { data: template, message: 'Template updated' };
+  }
+
+  @Delete(':slug/override')
+  @ApiOperation({ summary: 'Reset an email template to its built-in default' })
+  @ApiParam({ name: 'slug', description: 'Template slug' })
+  @SwaggerApiResponse({ status: 200, description: 'Template override removed' })
+  async resetTemplate(@Param('slug') slug: string): Promise<ApiResponse<any>> {
+    await this.templatesService.resetEmailTemplate(slug);
+    const template = await this.templatesService.getTemplate(slug);
+    return { data: template, message: 'Template reset to built-in default' };
   }
 
   @Put(':slug/activate')

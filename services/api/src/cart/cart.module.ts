@@ -7,7 +7,6 @@ import { CartSchedulerService } from './cart-scheduler.service';
 import { PromotionsModule } from '../promotions/promotions.module';
 import { ShippingModule } from '../shipping/shipping.module';
 import { TaxModule } from '../tax/tax.module';
-import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -15,7 +14,6 @@ import { NotificationsModule } from '../notifications/notifications.module';
     forwardRef(() => ShippingModule),
     forwardRef(() => LoyaltyModule),
     TaxModule,
-    NotificationsModule,
   ],
   controllers: [CartController, GuestCartController],
   providers: [CartService, CartSchedulerService],

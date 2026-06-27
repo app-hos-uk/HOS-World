@@ -347,6 +347,15 @@ export class AuthService {
     // Generate tokens
     const tokens = await this.generateTokens(user);
 
+    // Best-effort verification email for new accounts
+    try {
+      await this.sendVerificationEmail(user.id);
+    } catch (err: unknown) {
+      this.logger.warn(
+        `Verification email failed during registration for ${user.email}: ${err instanceof Error ? err.message : 'unknown'}`,
+      );
+    }
+
     return {
       user: user as User,
       token: tokens.accessToken,

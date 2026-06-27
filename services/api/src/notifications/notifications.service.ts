@@ -340,6 +340,19 @@ export class NotificationsService implements OnModuleInit {
     this.logger.log(`Seller invitation queued for ${email} (${sellerTypeName})`);
   }
 
+  async sendFoundingMemberConfirmation(
+    email: string,
+    data: { firstName: string },
+  ): Promise<void> {
+    const rendered = await this.templatesService.render('founding_member_confirmation', {
+      firstName: data.firstName,
+      email,
+    });
+
+    await this.queueNotification(email, rendered.subject, rendered.body);
+    this.logger.log(`Founding member confirmation queued for ${email}`);
+  }
+
   async sendOrderConfirmation(orderId: string): Promise<void> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },

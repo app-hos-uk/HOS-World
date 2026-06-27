@@ -6270,18 +6270,40 @@ export class ApiClient {
     });
   }
 
-  async createTemplate(data: { name: string; category: string; content: string; variables?: string[] }): Promise<ApiResponse<any>> {
+  async createTemplate(data: {
+    name: string;
+    category: string;
+    channel?: string;
+    subject?: string;
+    content: string;
+    variables?: string[];
+    description?: string;
+  }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/templates', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async updateTemplate(slug: string, data: { content?: string; variables?: string[]; isActive?: boolean }): Promise<ApiResponse<any>> {
+  async updateTemplate(
+    slug: string,
+    data: {
+      channel?: string;
+      subject?: string;
+      content?: string;
+      variables?: string[];
+      description?: string;
+      isActive?: boolean;
+    },
+  ): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/templates/${slug}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
+  }
+
+  async resetTemplateOverride(slug: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/templates/${slug}/override`, { method: 'DELETE' });
   }
 
   async activateTemplate(slug: string): Promise<ApiResponse<any>> {
@@ -6290,6 +6312,86 @@ export class ApiClient {
 
   async deactivateTemplate(slug: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/templates/${slug}/deactivate`, { method: 'PUT' });
+  }
+
+  // ===== Founding Members =====
+  async getFoundingMembers(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams();
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    if (params?.search) query.set('search', params.search);
+    const qs = query.toString();
+    return this.request<ApiResponse<any>>(`/founding-members${qs ? `?${qs}` : ''}`);
+  }
+
+  async getFoundingMemberStats(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/founding-members/stats');
+  }
+
+  async previewFoundingMembersImport(data: {
+    members: Array<{
+      email: string;
+      firstName: string;
+      lastName?: string;
+      phone?: string;
+      country?: string;
+      fandoms?: string[];
+      otherFranchises?: string;
+      source?: string;
+      spendBracket?: string;
+      registeredAt?: string;
+    }>;
+    defaultSource?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/founding-members/import/preview', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async importFoundingMembers(data: {
+    members: Array<{
+      email: string;
+      firstName: string;
+      lastName?: string;
+      phone?: string;
+      country?: string;
+      fandoms?: string[];
+      otherFranchises?: string;
+      source?: string;
+      spendBracket?: string;
+      registeredAt?: string;
+    }>;
+    skipDuplicates?: boolean;
+    sendConfirmationEmail?: boolean;
+    defaultSource?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/founding-members/import', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async createFoundingMemberAdmin(data: {
+    email: string;
+    firstName: string;
+    lastName?: string;
+    phone?: string;
+    country?: string;
+    fandoms: string[];
+    otherFranchises?: string;
+    source?: string;
+    spendBracket?: string;
+    sendConfirmationEmail?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/founding-members/admin', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
 }

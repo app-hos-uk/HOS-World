@@ -13,6 +13,7 @@ interface TemplateDefinition {
   body: string;
   variables: string[];
   description?: string;
+  isCustomized?: boolean;
 }
 
 const CHANNEL_COLORS: Record<string, string> = {
@@ -39,6 +40,12 @@ export default function AdminTemplatesPage() {
   const [testVars, setTestVars] = useState<Record<string, string>>({});
   const [testResult, setTestResult] = useState<{ subject: string; body: string } | null>(null);
   const [testLoading, setTestLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editSubject, setEditSubject] = useState('');
+  const [editBody, setEditBody] = useState('');
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -69,14 +76,88 @@ export default function AdminTemplatesPage() {
     }
   };
 
-  const handleSelectTemplate = (t: TemplateDefinition) => {
+  const handleSelectTemplate = async (t: TemplateDefinition) => {
     setSelectedTemplate(t);
     setPreviewHtml(null);
     setTestResult(null);
+    setIsEditing(false);
+    setSaveMessage(null);
+    setSaveError(null);
     const vars: Record<string, string> = {};
     t.variables.forEach((v) => (vars[v] = ''));
     setTestVars(vars);
+    setEditSubject(t.subject || '');
+    setEditBody(t.body);
+
+    try {
+      const res = await apiClient.getTemplate(t.slug);
+      const full = res.data as TemplateDefinition;
+      setSelectedTemplate(full);
+      setEditSubject(full.subject || '');
+      setEditBody(full.body);
+    } catch {
+      // keep list item data
+    }
+
     handlePreview(t.slug);
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!selectedTemplate || selectedTemplate.channel !== 'EMAIL') return;
+    setSaveLoading(true);
+    setSaveMessage(null);
+    setSaveError(null);
+    try {
+      await apiClient.updateTemplate(selectedTemplate.slug, {
+        channel: 'EMAIL',
+        subject: editSubject,
+        content: editBody,
+        variables: selectedTemplate.variables,
+        description: selectedTemplate.description,
+      });
+      setSaveMessage('Template saved. Changes apply to future emails.');
+      setIsEditing(false);
+      const updated: TemplateDefinition = {
+        ...selectedTemplate,
+        subject: editSubject,
+        body: editBody,
+        isCustomized: true,
+      };
+      setSelectedTemplate(updated);
+      setTemplates((prev) =>
+        prev.map((t) => (t.slug === updated.slug ? { ...t, ...updated } : t)),
+      );
+      await handlePreview(selectedTemplate.slug);
+    } catch {
+      setSaveError('Failed to save template. Please try again.');
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  const handleResetTemplate = async () => {
+    if (!selectedTemplate || selectedTemplate.channel !== 'EMAIL') return;
+    if (!window.confirm('Reset this template to the built-in default? Your custom changes will be removed.')) {
+      return;
+    }
+    setSaveLoading(true);
+    setSaveMessage(null);
+    setSaveError(null);
+    try {
+      const res = await apiClient.resetTemplateOverride(selectedTemplate.slug);
+      const reset = res.data as TemplateDefinition;
+      setSelectedTemplate({ ...reset, isCustomized: false });
+      setEditSubject(reset.subject || '');
+      setEditBody(reset.body);
+      setIsEditing(false);
+      setSaveMessage('Template reset to built-in default.');
+      await fetchTemplates();
+      await handlePreview(selectedTemplate.slug);
+    } catch {
+      setSaveError('Failed to reset template.');
+    } finally {
+      setSaveLoading(false);
+    }
   };
 
   const handleTestRender = async () => {
@@ -108,7 +189,7 @@ export default function AdminTemplatesPage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Notification Templates</h1>
             <p className="text-hos-text-secondary mt-1">
-              Manage email, WhatsApp, SMS, and in-app notification templates
+              Preview and customize email, WhatsApp, SMS, and in-app notification templates
             </p>
           </div>
         </div>
@@ -156,13 +237,20 @@ export default function AdminTemplatesPage() {
                       <span className="font-medium text-sm text-hos-text-secondary">
                         {t.slug.replace(/_/g, ' ')}
                       </span>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          CHANNEL_COLORS[t.channel]
-                        }`}
-                      >
-                        {t.channel}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        {t.isCustomized && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300">
+                            Custom
+                          </span>
+                        )}
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            CHANNEL_COLORS[t.channel]
+                          }`}
+                        >
+                          {t.channel}
+                        </span>
+                      </div>
                     </div>
                     {t.description && (
                       <p className="text-xs text-hos-text-muted line-clamp-2">{t.description}</p>
@@ -192,14 +280,70 @@ export default function AdminTemplatesPage() {
                     <h2 className="text-lg font-bold text-hos-text-secondary">
                       {selectedTemplate.slug.replace(/_/g, ' ')}
                     </h2>
-                    <span
-                      className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                        CHANNEL_COLORS[selectedTemplate.channel]
-                      }`}
-                    >
-                      {CHANNEL_ICONS[selectedTemplate.channel]} {selectedTemplate.channel}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {selectedTemplate.isCustomized && (
+                        <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-amber-500/15 text-amber-300">
+                          Customized
+                        </span>
+                      )}
+                      <span
+                        className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                          CHANNEL_COLORS[selectedTemplate.channel]
+                        }`}
+                      >
+                        {CHANNEL_ICONS[selectedTemplate.channel]} {selectedTemplate.channel}
+                      </span>
+                    </div>
                   </div>
+
+                  {selectedTemplate.channel === 'EMAIL' && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {!isEditing ? (
+                        <button
+                          onClick={() => setIsEditing(true)}
+                          className="px-3 py-1.5 text-sm rounded-lg border border-hos-border hover:border-hos-gold text-hos-text-secondary"
+                        >
+                          Edit Template
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={handleSaveTemplate}
+                            disabled={saveLoading}
+                            className="px-3 py-1.5 text-sm rounded-lg bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover disabled:opacity-50"
+                          >
+                            {saveLoading ? 'Saving...' : 'Save Changes'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsEditing(false);
+                              setEditSubject(selectedTemplate.subject || '');
+                              setEditBody(selectedTemplate.body);
+                            }}
+                            className="px-3 py-1.5 text-sm rounded-lg border border-hos-border text-hos-text-secondary"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      )}
+                      {selectedTemplate.isCustomized && !isEditing && (
+                        <button
+                          onClick={handleResetTemplate}
+                          disabled={saveLoading}
+                          className="px-3 py-1.5 text-sm rounded-lg border border-red-500/40 text-red-300 hover:bg-red-500/10 disabled:opacity-50"
+                        >
+                          Reset to Default
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {saveMessage && (
+                    <p className="text-sm text-green-400 mb-3">{saveMessage}</p>
+                  )}
+                  {saveError && (
+                    <p className="text-sm text-red-400 mb-3">{saveError}</p>
+                  )}
 
                   {selectedTemplate.description && (
                     <p className="text-sm text-hos-text-secondary mb-3">{selectedTemplate.description}</p>
@@ -210,9 +354,18 @@ export default function AdminTemplatesPage() {
                       <label className="block text-xs font-medium text-hos-text-muted mb-1">
                         Subject Line
                       </label>
-                      <div className="bg-hos-bg-secondary rounded-lg px-3 py-2 text-sm font-mono text-hos-text-secondary">
-                        {selectedTemplate.subject}
-                      </div>
+                      {isEditing && selectedTemplate.channel === 'EMAIL' ? (
+                        <input
+                          type="text"
+                          value={editSubject}
+                          onChange={(e) => setEditSubject(e.target.value)}
+                          className="w-full bg-hos-bg-secondary rounded-lg px-3 py-2 text-sm font-mono text-hos-text-secondary border border-hos-border focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
+                        />
+                      ) : (
+                        <div className="bg-hos-bg-secondary rounded-lg px-3 py-2 text-sm font-mono text-hos-text-secondary">
+                          {selectedTemplate.subject}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -319,14 +472,23 @@ export default function AdminTemplatesPage() {
                 </div>
 
                 {/* Raw template body */}
-                <details className="bg-hos-bg-secondary rounded-xl border border-hos-border overflow-hidden">
+                <details className="bg-hos-bg-secondary rounded-xl border border-hos-border overflow-hidden" open={isEditing}>
                   <summary className="px-5 py-3 cursor-pointer text-sm font-medium text-hos-text-secondary hover:bg-hos-bg-tertiary">
-                    View Raw Template Source
+                    {isEditing ? 'Edit Template Body' : 'View Raw Template Source'}
                   </summary>
                   <div className="p-4 border-t border-hos-border">
-                    <pre className="text-xs bg-hos-bg-secondary rounded-lg p-4 overflow-x-auto max-h-[300px] whitespace-pre-wrap">
-                      {selectedTemplate.body}
-                    </pre>
+                    {isEditing && selectedTemplate.channel === 'EMAIL' ? (
+                      <textarea
+                        value={editBody}
+                        onChange={(e) => setEditBody(e.target.value)}
+                        rows={16}
+                        className="w-full text-xs bg-hos-bg-secondary rounded-lg p-4 border border-hos-border font-mono text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
+                      />
+                    ) : (
+                      <pre className="text-xs bg-hos-bg-secondary rounded-lg p-4 overflow-x-auto max-h-[300px] whitespace-pre-wrap">
+                        {selectedTemplate.body}
+                      </pre>
+                    )}
                   </div>
                 </details>
               </div>
