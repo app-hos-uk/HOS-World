@@ -49,6 +49,7 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 appuser
 RUN chown -R appuser:nodejs /app
 
 WORKDIR /app/services/api
+RUN chmod +x docker-entrypoint.sh docker-migrate.sh
 USER appuser
 EXPOSE 3001
-CMD ["sh", "-c", "npx prisma migrate resolve --applied 20260219100000_convert_gbp_to_usd 2>/dev/null || true; npx prisma migrate deploy && exec node dist/main.js"]
+CMD ["./docker-entrypoint.sh"]

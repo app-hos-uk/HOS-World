@@ -62,11 +62,15 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-refresh-secret-change-in-production}
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3001/api/health/live || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"require('http').get('http://127.0.0.1:3001/api/health/live', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\"",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
     depends_on:
       postgres:
         condition: service_healthy

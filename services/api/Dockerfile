@@ -24,7 +24,7 @@ RUN (pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile) \
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 appuser
 
 WORKDIR /app/services/api
-RUN chmod +x docker-entrypoint.sh && chown -R appuser:nodejs /app
+RUN chmod +x docker-entrypoint.sh docker-migrate.sh && chown -R appuser:nodejs /app
 USER appuser
 EXPOSE 3001
 CMD ["./docker-entrypoint.sh"]
