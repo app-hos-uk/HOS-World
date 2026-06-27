@@ -442,8 +442,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 placeholder="Search... (⌘K)"
                 value={searchQuery}
                 onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setShowSearchResults(true);
+                  const val = e.target.value;
+                  setSearchQuery(val);
+                  if (blurTimeoutRef.current) {
+                    clearTimeout(blurTimeoutRef.current);
+                  }
+                  setShowSearchResults(val.trim().length > 0);
                 }}
                 onFocus={() => setShowSearchResults(true)}
                 onBlur={() => {
@@ -475,6 +479,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 {searchResults.map((item) => (
                   <button
                     key={item.href}
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => handleSearchSelect(item.href)}
                     className="w-full px-3 py-2 text-left hover:bg-hos-gold/10 flex items-center gap-2 text-sm"
                   >

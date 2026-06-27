@@ -852,7 +852,7 @@ export default function CustomerDashboardPage() {
                               cy="45%"
                               innerRadius="42%"
                               outerRadius="72%"
-                              paddingAngle={4}
+                              paddingAngle={spendingAnalytics.categoryBreakdown.length > 1 ? 2 : 0}
                               dataKey="value"
                               nameKey="name"
                               labelLine={false}

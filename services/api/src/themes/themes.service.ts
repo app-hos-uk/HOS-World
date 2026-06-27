@@ -134,10 +134,30 @@ export class ThemesService {
       throw new NotFoundException('Theme not found');
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      await tx.sellerThemeSettings.deleteMany({ where: { themeId: id } });
-      await tx.theme.delete({ where: { id } });
+    const usageCount = await this.prisma.sellerThemeSettings.count({
+      where: { themeId: id },
     });
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        if (usageCount > 0) {
+          await tx.sellerThemeSettings.deleteMany({ where: { themeId: id } });
+        }
+        await tx.seller.updateMany({
+          where: { themeId: id },
+          data: { themeId: null },
+        });
+        await tx.theme.delete({ where: { id } });
+      });
+    } catch (err: any) {
+      if (err?.code === 'P2003' || err?.code === 'P2014') {
+        throw new BadRequestException(
+          `Cannot delete theme "${theme.name}" because it is still referenced by other records. ` +
+            'Please reassign sellers first.',
+        );
+      }
+      throw err;
+    }
   }
 
   /** Clone a theme row for admin duplication (inactive copy). */

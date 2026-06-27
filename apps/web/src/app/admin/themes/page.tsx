@@ -117,9 +117,9 @@ export default function AdminThemesPage() {
 
     setStats({
       total: themeList.length,
-      hos: themeList.filter(t => t.type === 'HOS').length,
-      seller: themeList.filter(t => t.type === 'SELLER').length,
-      customer: themeList.filter(t => t.type === 'CUSTOMER').length,
+      hos: themeList.filter(t => t.type?.toUpperCase() === 'HOS').length,
+      seller: themeList.filter(t => t.type?.toUpperCase() === 'SELLER').length,
+      customer: themeList.filter(t => t.type?.toUpperCase() === 'CUSTOMER').length,
       active: themeList.filter(t => t.isActive).length,
       inactive: themeList.filter(t => !t.isActive).length,
       mostUsed,
@@ -145,7 +145,7 @@ export default function AdminThemesPage() {
 
     // Type filter
     if (filter !== 'ALL') {
-      result = result.filter(t => t.type === filter);
+      result = result.filter(t => t.type?.toUpperCase() === filter);
     }
 
     // Status filter

@@ -487,6 +487,7 @@ export default function CheckoutPage() {
         } else {
           toast.success('Order created successfully!', { id: 'order-created' });
         }
+        setFrontendSessionCookie();
         router.push(`/payment?orderId=${orderResponse.data.id}`);
         orderNavTimeoutRef.current = setTimeout(() => {
           setCreatingOrder(false);

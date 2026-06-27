@@ -122,7 +122,7 @@ export async function middleware(request: NextRequest) {
     if (!isAuthenticated) {
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = '/login';
-      loginUrl.searchParams.set('returnUrl', pathname);
+      loginUrl.searchParams.set('returnUrl', pathname + request.nextUrl.search);
       return NextResponse.redirect(loginUrl);
     }
   }

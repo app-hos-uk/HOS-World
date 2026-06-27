@@ -331,7 +331,7 @@ export default function AdminDashboardPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={topProductsData}
-                    layout="horizontal"
+                    layout="vertical"
                     margin={{ top: 10, right: 12, left: 8, bottom: 8 }}
                     barCategoryGap="20%"
                   >

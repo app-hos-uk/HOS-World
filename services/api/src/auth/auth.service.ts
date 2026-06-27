@@ -1149,7 +1149,7 @@ export class AuthService {
     });
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
-    const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+    const resetLink = `${frontendUrl}/auth/reset-password?token=${resetToken}`;
     const customerName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'there';
 
     try {

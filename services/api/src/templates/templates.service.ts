@@ -211,6 +211,30 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
     <p>This link will expire in {{expiresInMinutes}} minutes. If you didn't request this, please ignore this email.</p>
   </div>
   <div class="footer"><p>House of Spells Marketplace</p></div>
+  </div></body></html>`,
+  },
+  {
+    slug: 'newsletter_subscription_confirmation',
+    channel: 'EMAIL',
+    subject: 'Welcome to the House of Spells Newsletter',
+    description: 'Sent when a user subscribes to the newsletter.',
+    variables: ['email', 'unsubscribeUrl'],
+    body: `<!DOCTYPE html>
+<html><head><style>
+  body{font-family:Arial,sans-serif;line-height:1.6;color:#333}
+  .container{max-width:600px;margin:0 auto;padding:20px}
+  .header{background:#4a5568;color:#fff;padding:20px;text-align:center}
+  .content{padding:20px;background:#f7fafc}
+  .footer{text-align:center;padding:20px;color:#718096;font-size:12px}
+</style></head><body>
+<div class="container">
+  <div class="header"><h1>You're Subscribed!</h1></div>
+  <div class="content">
+    <p>Thank you for subscribing to the House of Spells newsletter.</p>
+    <p>We'll send updates on new collections, vendor spotlights, and exclusive offers to <strong>{{email}}</strong>.</p>
+    <p>If you no longer wish to receive these emails, you can <a href="{{unsubscribeUrl}}">unsubscribe here</a>.</p>
+  </div>
+  <div class="footer"><p>House of Spells Marketplace</p></div>
 </div></body></html>`,
   },
   {

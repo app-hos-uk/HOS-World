@@ -190,6 +190,7 @@ function ProductsContent() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [priceDraft, setPriceDraft] = useState({ min: '', max: '' });
   const priceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipScrollOnMountRef = useRef(true);
 
   const [state, setState] = useState<SearchState>(() => initialState);
 
@@ -334,12 +335,13 @@ function ProductsContent() {
           if (cancelled) return;
           if (fallback?.data) {
             const d = fallback.data as any;
-            const prods = d.items || d.data || [];
+            const prods = Array.isArray(d.data) ? d.data : (d.items || []);
+            const pagination = d.pagination || {};
+            const fbTotal = Number(pagination.total ?? d.total) || 0;
             setProducts(prods);
-            const fbTotal = Number(d.total) || 0;
             setTotalHits(fbTotal);
             const fbPages = Math.max(1, Math.ceil(fbTotal / ITEMS_PER_PAGE));
-            const fbApi = Number(d.totalPages);
+            const fbApi = Number(pagination.totalPages ?? d.totalPages);
             const resolvedPages =
               Number.isFinite(fbApi) && fbApi > 0 ? Math.max(fbApi, fbPages) : fbPages;
             setTotalPages(resolvedPages);
@@ -372,6 +374,14 @@ function ProductsContent() {
       updateState({ page: totalPages });
     }
   }, [totalPages, state.page, updateState]);
+
+  useEffect(() => {
+    if (skipScrollOnMountRef.current) {
+      skipScrollOnMountRef.current = false;
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [state.page]);
 
   const toggleArrayFilter = useCallback((key: 'categories' | 'fandoms', value: string) => {
     updateState(prev => {
@@ -425,7 +435,7 @@ function ProductsContent() {
     return pages;
   }, [totalPages, state.page]);
 
-  const FilterPanel = () => (
+  const filterPanelContent = (
     <div className="space-y-6">
       {/* Active filter count + clear */}
       {activeFilterCount > 0 && (
@@ -611,7 +621,7 @@ function ProductsContent() {
           {/* Desktop sidebar */}
           <aside className="hidden lg:block w-64 shrink-0">
             <div className="sticky top-24 bg-hos-bg-secondary rounded-xl shadow-sm border border-hos-border p-5">
-              <FilterPanel />
+              {filterPanelContent}
             </div>
           </aside>
 
@@ -649,7 +659,7 @@ function ProductsContent() {
                     </svg>
                   </button>
                 </div>
-                <FilterPanel />
+                {filterPanelContent}
               </div>
             </div>
           )}

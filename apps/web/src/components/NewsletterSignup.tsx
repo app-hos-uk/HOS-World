@@ -37,7 +37,7 @@ export default function NewsletterSignup() {
         {status === 'success' ? (
           <div className="bg-hos-new-green/20 border border-hos-new-green text-hos-new-green rounded-lg px-6 py-4 max-w-md mx-auto">
             <p className="font-semibold">You&apos;re subscribed!</p>
-            <p className="text-sm mt-1 opacity-80">Check your inbox to confirm your subscription.</p>
+            <p className="text-sm mt-1 opacity-80">Thank you! A confirmation email is on its way.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>

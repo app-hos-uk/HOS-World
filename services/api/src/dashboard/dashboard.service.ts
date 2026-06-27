@@ -154,6 +154,30 @@ export class DashboardService {
       .slice(0, 10); // Top 10
   }
 
+  private calculateTopProductsByUnits(
+    orders: any[],
+  ): Array<{ name: string; sales: number; revenue: number }> {
+    const productSales = new Map<string, { name: string; sales: number; revenue: number }>();
+
+    orders.forEach((order) => {
+      order.items?.forEach((item: any) => {
+        const productName = item.product?.name || 'Unknown product';
+        const existing = productSales.get(item.productId) || {
+          name: productName,
+          sales: 0,
+          revenue: 0,
+        };
+        existing.sales += Number(item.quantity) || 0;
+        existing.revenue += Number(item.price) * (Number(item.quantity) || 0);
+        productSales.set(item.productId, existing);
+      });
+    });
+
+    return Array.from(productSales.values())
+      .sort((a, b) => b.sales - a.sales)
+      .slice(0, 10);
+  }
+
   // Wholesaler Dashboard
   async getWholesalerDashboard(userId: string) {
     const seller = await this.prisma.seller.findUnique({
@@ -717,6 +741,7 @@ export class DashboardService {
       ordersByStatus,
       revenueResult,
       salesTrends,
+      paidOrders,
     ] = await Promise.all([
       this.prisma.product.count({ where: { deletedAt: null } }),
       this.prisma.order.count({ where: { parentOrderId: null, deletedAt: null } }),
@@ -742,9 +767,26 @@ export class DashboardService {
         _sum: { total: true },
       }),
       this.buildAdminSalesTrendsLastSixMonths(),
+      this.prisma.order.findMany({
+        where: {
+          parentOrderId: null,
+          deletedAt: null,
+          paymentStatus: 'PAID',
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 500,
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      }),
     ]);
 
     const totalRevenue = Number(revenueResult._sum?.total || 0);
+    const topProducts = this.calculateTopProductsByUnits(paidOrders);
 
     // Align with Admin → Activity (ActivityLog); submissions are surfaced under Submissions, not Activity
     const recentActivityLogs = await this.prisma.activityLog.findMany({
@@ -792,6 +834,7 @@ export class DashboardService {
       submissionsByStatus,
       ordersByStatus,
       salesTrends,
+      topProducts,
       recentActivity,
     };
   }

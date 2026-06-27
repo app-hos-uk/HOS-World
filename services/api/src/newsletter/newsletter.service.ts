@@ -1,27 +1,40 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  Logger,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { CreateNewsletterSubscriptionDto } from './dto/create-newsletter-subscription.dto';
 import { SendNewsletterCampaignDto } from './dto/send-newsletter-campaign.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { TemplatesService } from '../templates/templates.service';
 
 @Injectable()
 export class NewsletterService {
+  private readonly logger = new Logger(NewsletterService.name);
+
   constructor(
     private prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly templatesService: TemplatesService,
+    private readonly configService: ConfigService,
   ) {}
 
   async subscribe(dto: CreateNewsletterSubscriptionDto, userId?: string): Promise<any> {
+    const email = dto.email.toLowerCase().trim();
     const existing = await this.prisma.newsletterSubscription.findUnique({
-      where: { email: dto.email.toLowerCase().trim() },
+      where: { email },
     });
 
+    let subscription;
     if (existing) {
       if (existing.status === 'subscribed') {
         throw new ConflictException('Email is already subscribed');
       }
-      return this.prisma.newsletterSubscription.update({
-        where: { email: dto.email.toLowerCase().trim() },
+      subscription = await this.prisma.newsletterSubscription.update({
+        where: { email },
         data: {
           status: 'subscribed',
           subscribedAt: new Date(),
@@ -31,17 +44,37 @@ export class NewsletterService {
           tags: dto.tags ? { ...((existing.tags as object) || {}), ...dto.tags } : existing.tags,
         },
       });
+    } else {
+      subscription = await this.prisma.newsletterSubscription.create({
+        data: {
+          email,
+          userId: userId ?? undefined,
+          status: 'subscribed',
+          source: dto.source || 'website',
+          tags: dto.tags ?? undefined,
+        },
+      });
     }
 
-    return this.prisma.newsletterSubscription.create({
-      data: {
-        email: dto.email.toLowerCase().trim(),
-        userId: userId ?? undefined,
-        status: 'subscribed',
-        source: dto.source || 'website',
-        tags: dto.tags ?? undefined,
-      },
-    });
+    await this.sendSubscriptionConfirmationEmail(email);
+    return subscription;
+  }
+
+  private async sendSubscriptionConfirmationEmail(email: string): Promise<void> {
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const unsubscribeUrl = `${frontendUrl}/shop#newsletter`;
+
+    try {
+      const rendered = await this.templatesService.render('newsletter_subscription_confirmation', {
+        email,
+        unsubscribeUrl,
+      });
+      await this.notificationsService.queueNotification(email, rendered.subject, rendered.body);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Failed to queue newsletter confirmation email for ${email}: ${message}`);
+    }
   }
 
   async unsubscribe(email: string): Promise<void> {

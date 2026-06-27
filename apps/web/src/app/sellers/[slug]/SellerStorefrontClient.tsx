@@ -81,14 +81,22 @@ export default function SellerStorefrontClient() {
 
   const applySellerTheme = (themePayload: PublicSellerTheme | null | undefined) => {
     if (!themePayload) return;
-    const baseColors = (themePayload.theme?.config?.colors || {}) as Record<string, string>;
+    const baseColors = (themePayload.theme?.config?.colors || {}) as Record<string, unknown>;
     const custom = themePayload.customSettings?.customColors || {};
+    const resolveTextColor = (text: unknown): string | undefined => {
+      if (typeof text === 'string') return text;
+      if (text && typeof text === 'object' && 'primary' in text) {
+        return (text as { primary?: string }).primary;
+      }
+      return undefined;
+    };
     const merged: Record<string, string> = {};
-    if (custom.primary || baseColors.primary) merged['--storefront-primary'] = custom.primary || baseColors.primary!;
-    if (custom.secondary || baseColors.secondary) merged['--storefront-secondary'] = custom.secondary || baseColors.secondary!;
-    if (custom.accent || baseColors.accent) merged['--storefront-accent'] = custom.accent || baseColors.accent!;
-    if (custom.background || baseColors.background) merged['--storefront-bg'] = custom.background || baseColors.background!;
-    if (custom.text || baseColors.text) merged['--storefront-text'] = custom.text || baseColors.text!;
+    if (custom.primary || baseColors.primary) merged['--storefront-primary'] = custom.primary || String(baseColors.primary);
+    if (custom.secondary || baseColors.secondary) merged['--storefront-secondary'] = custom.secondary || String(baseColors.secondary);
+    if (custom.accent || baseColors.accent) merged['--storefront-accent'] = custom.accent || String(baseColors.accent);
+    if (custom.background || baseColors.background) merged['--storefront-bg'] = custom.background || String(baseColors.background);
+    const textColor = custom.text || resolveTextColor(baseColors.text);
+    if (textColor) merged['--storefront-text'] = textColor;
     setThemeColors(merged);
     const font =
       themePayload.customSettings?.fontFamily ||

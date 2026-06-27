@@ -17,6 +17,11 @@ const defaultSettings = {
   requireEmailVerification: false,
   shopEnabled: false,
   
+  // Social Media URLs
+  socialFacebookUrl: '',
+  socialInstagramUrl: '',
+  socialXUrl: '',
+  
   // Email Settings
   smtpHost: '',
   smtpPort: 587,
@@ -309,6 +314,52 @@ export default function AdminSettingsPage() {
                       <label htmlFor="requireEmailVerification" className="text-sm font-medium text-hos-text-secondary">
                         Require Email Verification
                       </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Social Media URLs */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-1">Social Media URLs</h3>
+                  <p className="text-sm text-hos-text-muted mb-4">
+                    These links appear in the footer social icons. Leave blank to use the default House of Spells profiles.
+                  </p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
+                        Facebook URL
+                      </label>
+                      <input
+                        type="url"
+                        value={settings.socialFacebookUrl}
+                        onChange={(e) => updateSetting('socialFacebookUrl', e.target.value)}
+                        placeholder="https://www.facebook.com/houseofspellsuk"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
+                        Instagram URL
+                      </label>
+                      <input
+                        type="url"
+                        value={settings.socialInstagramUrl}
+                        onChange={(e) => updateSetting('socialInstagramUrl', e.target.value)}
+                        placeholder="https://www.instagram.com/houseofspells"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
+                        X (Twitter) URL
+                      </label>
+                      <input
+                        type="url"
+                        value={settings.socialXUrl}
+                        onChange={(e) => updateSetting('socialXUrl', e.target.value)}
+                        placeholder="https://x.com/houseofspells"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                      />
                     </div>
                   </div>
                 </div>
