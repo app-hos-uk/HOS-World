@@ -138,6 +138,34 @@ export class CMSController {
     return this.cmsService.deletePage(id);
   }
 
+  @Post('pages/:id/publish')
+  @ApiOperation({
+    summary: 'Publish page',
+    description: 'Publishes a CMS page in Strapi. CMS Editor/Admin access required.',
+  })
+  @ApiParam({ name: 'id', description: 'Page ID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Page published successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - CMS Editor/Admin access required' })
+  @SwaggerApiResponse({ status: 404, description: 'Page not found' })
+  async publishPage(@Param('id') id: string): Promise<ApiResponse<any>> {
+    return this.cmsService.publishPage(id);
+  }
+
+  @Post('pages/:id/unpublish')
+  @ApiOperation({
+    summary: 'Unpublish page',
+    description: 'Unpublishes a CMS page in Strapi. CMS Editor/Admin access required.',
+  })
+  @ApiParam({ name: 'id', description: 'Page ID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Page unpublished successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - CMS Editor/Admin access required' })
+  @SwaggerApiResponse({ status: 404, description: 'Page not found' })
+  async unpublishPage(@Param('id') id: string): Promise<ApiResponse<any>> {
+    return this.cmsService.unpublishPage(id);
+  }
+
   // Banners
   @Get('banners')
   @ApiOperation({

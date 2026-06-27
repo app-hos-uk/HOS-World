@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 
 const ALLOWED_REVALIDATE_PREFIXES = [
   '/shop',
+  '/pages',
   '/products',
   '/fandoms',
   '/collections',

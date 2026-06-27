@@ -1,6 +1,12 @@
-import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+import {
+  normalizeBannerRecord,
+  normalizePageRecord,
+  normalizeStrapiCollection,
+  normalizeStrapiEntity,
+} from './strapi-utils';
 
 @Injectable()
 export class CMSService {
@@ -76,12 +82,21 @@ export class CMSService {
     throw new HttpException(userMessage, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
+  private mapPage(raw: Record<string, unknown>) {
+    return normalizePageRecord(normalizeStrapiEntity(raw) ?? raw);
+  }
+
+  private mapBanner(raw: Record<string, unknown>) {
+    const flat = normalizeStrapiEntity(raw) ?? raw;
+    return normalizeBannerRecord(flat, this.strapiUrl);
+  }
+
   // Pages
   async getPages(): Promise<ApiResponse<any[]>> {
     try {
-      const data = await this.strapiRequest<any>(`/pages?populate=*`);
+      const data = await this.strapiRequest<any>(`/pages?populate=*&sort=updatedAt:desc`);
       return {
-        data: data.data || [],
+        data: normalizeStrapiCollection(data.data).map((p) => this.mapPage(p)),
         message: 'Pages retrieved successfully',
       };
     } catch (error: unknown) {
@@ -92,12 +107,50 @@ export class CMSService {
   async getPage(id: string): Promise<ApiResponse<any>> {
     try {
       const data = await this.strapiRequest<any>(`/pages/${id}?populate=*`);
+      const page = data.data ? this.mapPage(data.data) : null;
       return {
-        data: data.data || null,
+        data: page,
         message: 'Page retrieved successfully',
       };
     } catch (error: unknown) {
       this.rethrowAsClientSafe(error, 'Page could not be loaded.');
+    }
+  }
+
+  async getPageBySlug(slug: string): Promise<ApiResponse<any>> {
+    try {
+      const data = await this.strapiRequest<any>(
+        `/pages?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`,
+      );
+      const page = normalizeStrapiCollection(data.data)[0];
+      if (!page?.publishedAt) {
+        throw new NotFoundException('Page not found');
+      }
+      return {
+        data: this.mapPage(page),
+        message: 'Page retrieved successfully',
+      };
+    } catch (error: unknown) {
+      if (error instanceof NotFoundException) throw error;
+      this.rethrowAsClientSafe(error, 'Page could not be loaded.');
+    }
+  }
+
+  async publishPage(id: string): Promise<ApiResponse<any>> {
+    try {
+      await this.strapiRequest<any>(`/pages/${id}/actions/publish`, { method: 'POST' });
+      return this.getPage(id);
+    } catch (error: unknown) {
+      this.rethrowAsClientSafe(error, 'Page could not be published.');
+    }
+  }
+
+  async unpublishPage(id: string): Promise<ApiResponse<any>> {
+    try {
+      await this.strapiRequest<any>(`/pages/${id}/actions/unpublish`, { method: 'POST' });
+      return this.getPage(id);
+    } catch (error: unknown) {
+      this.rethrowAsClientSafe(error, 'Page could not be unpublished.');
     }
   }
 
@@ -125,8 +178,9 @@ export class CMSService {
           },
         }),
       });
+      const created = data.data ? this.mapPage(data.data) : null;
       return {
-        data: data.data || null,
+        data: created,
         message: 'Page created successfully',
       };
     } catch (error: unknown) {
@@ -163,8 +217,9 @@ export class CMSService {
           },
         }),
       });
+      const updated = data.data ? this.mapPage(data.data) : null;
       return {
-        data: data.data || null,
+        data: updated,
         message: 'Page updated successfully',
       };
     } catch (error: unknown) {
@@ -189,10 +244,13 @@ export class CMSService {
   // Banners
   async getBanners(type?: 'hero' | 'promotional' | 'sidebar'): Promise<ApiResponse<any[]>> {
     try {
-      const filter = type ? `?filters[type][$eq]=${type}&populate=*` : '?populate=*';
-      const data = await this.strapiRequest<any>(`/banners${filter}`);
+      const params = new URLSearchParams();
+      params.set('populate', '*');
+      params.set('sort', 'displayOrder:asc');
+      if (type) params.set('filters[type][$eq]', type);
+      const data = await this.strapiRequest<any>(`/banners?${params.toString()}`);
       return {
-        data: data.data || [],
+        data: normalizeStrapiCollection(data.data).map((b) => this.mapBanner(b)),
         message: 'Banners retrieved successfully',
       };
     } catch (error: unknown) {
@@ -203,8 +261,9 @@ export class CMSService {
   async getBanner(id: string): Promise<ApiResponse<any>> {
     try {
       const data = await this.strapiRequest<any>(`/banners/${id}?populate=*`);
+      const banner = data.data ? this.mapBanner(data.data) : null;
       return {
-        data: data.data || null,
+        data: banner,
         message: 'Banner retrieved successfully',
       };
     } catch (error: unknown) {
@@ -234,8 +293,19 @@ export class CMSService {
           },
         }),
       });
+      const createdId = data.data?.id;
+      if (createdId != null) {
+        try {
+          await this.strapiRequest<any>(`/banners/${createdId}/actions/publish`, { method: 'POST' });
+        } catch (publishErr: unknown) {
+          const detail = publishErr instanceof Error ? publishErr.message : String(publishErr);
+          this.logger.warn(`Banner ${createdId} created but publish failed: ${detail}`);
+        }
+        return this.getBanner(String(createdId));
+      }
+      const created = data.data ? this.mapBanner(data.data) : null;
       return {
-        data: data.data || null,
+        data: created,
         message: 'Banner created successfully',
       };
     } catch (error: unknown) {
@@ -268,12 +338,22 @@ export class CMSService {
           },
         }),
       });
+      const updated = data.data ? this.mapBanner(data.data) : null;
       return {
-        data: data.data || null,
+        data: updated,
         message: 'Banner updated successfully',
       };
     } catch (error: unknown) {
       this.rethrowAsClientSafe(error, 'Banner could not be updated.');
+    }
+  }
+
+  async publishBanner(id: string): Promise<ApiResponse<any>> {
+    try {
+      await this.strapiRequest<any>(`/banners/${id}/actions/publish`, { method: 'POST' });
+      return this.getBanner(id);
+    } catch (error: unknown) {
+      this.rethrowAsClientSafe(error, 'Banner could not be published.');
     }
   }
 
