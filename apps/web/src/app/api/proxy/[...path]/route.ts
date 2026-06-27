@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const BACKEND_URL =
   process.env.API_INTERNAL_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
-  'https://hos-marketplaceapi-production.up.railway.app';
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001');
 
 function getBackendBase(): string {
   let base = BACKEND_URL.trim().replace(/\/+$/, '');
@@ -26,6 +26,13 @@ const STRIP_HEADERS = new Set([
 ]);
 
 async function handler(req: NextRequest) {
+  if (!BACKEND_URL.trim()) {
+    return NextResponse.json(
+      { message: 'API backend URL is not configured (set API_INTERNAL_URL or NEXT_PUBLIC_API_URL)' },
+      { status: 503 },
+    );
+  }
+
   // CSRF protection: state-changing requests must include X-Requested-With header
   // (cannot be set by cross-origin form submissions or simple CORS requests)
   const stateMutating = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);

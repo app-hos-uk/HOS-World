@@ -17,6 +17,7 @@ import PaymentIcons from '@/components/PaymentIcons';
 import NewsletterSignup from '@/components/NewsletterSignup';
 import { Footer } from '@/components/Footer';
 import type { CmsCarouselBanner, CmsFeatureBanner, CmsHeroSlide } from '@/lib/cms';
+import { getSiteUrl } from '@/lib/siteUrls';
 
 interface ShopHomeContentProps {
   heroSlides: CmsHeroSlide[];
@@ -29,6 +30,7 @@ export function ShopHomeContent({
   promotionalBanners,
   sidebarBanners,
 }: ShopHomeContentProps) {
+  const siteUrl = getSiteUrl();
   return (
     <div className="min-h-screen bg-hos-bg">
       <script
@@ -38,8 +40,8 @@ export function ShopHomeContent({
             '@context': 'https://schema.org',
             '@type': 'Organization',
             name: 'House of Spells',
-            url: 'https://hos-marketplaceweb-production.up.railway.app',
-            logo: 'https://hos-marketplaceweb-production.up.railway.app/logo.png',
+            url: siteUrl,
+            logo: `${siteUrl}/logo.png`,
             description: 'Magical merchandise marketplace for fandom collectibles',
             sameAs: [],
           }),

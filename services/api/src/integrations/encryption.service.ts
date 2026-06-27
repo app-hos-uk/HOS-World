@@ -29,19 +29,20 @@ export class EncryptionService implements OnModuleInit {
     const keyHex = this.configService.get<string>('INTEGRATION_ENCRYPTION_KEY');
 
     if (!keyHex) {
-      if (this.configService.get<string>('NODE_ENV') === 'production') {
-        throw new Error('INTEGRATION_ENCRYPTION_KEY is required in production');
+      const nodeEnv = this.configService.get<string>('NODE_ENV') || 'development';
+      if (nodeEnv === 'production' || nodeEnv === 'staging') {
+        throw new Error('INTEGRATION_ENCRYPTION_KEY is required in production/staging');
       }
       this.logger.warn(
-        'INTEGRATION_ENCRYPTION_KEY not set. Generating a temporary key for development. ' +
-          'Set this environment variable in production!',
+        'INTEGRATION_ENCRYPTION_KEY not set. Using deterministic development key so encrypted ' +
+          'credentials survive restarts. Set INTEGRATION_ENCRYPTION_KEY in production/staging!',
       );
-      // Generate a deterministic key for development (NOT secure for production)
-      const devKey = crypto
+      // Dev-only: stable per NODE_ENV so locally stored integration credentials remain decryptable
+      // after restarts. Not used in production/staging (those require INTEGRATION_ENCRYPTION_KEY).
+      this.encryptionKey = crypto
         .createHash('sha256')
-        .update('hos-marketplace-dev-key-' + (this.configService.get('NODE_ENV') || 'development'))
+        .update(`hos-marketplace-dev-key-${nodeEnv}`)
         .digest();
-      this.encryptionKey = devKey;
       return;
     }
 

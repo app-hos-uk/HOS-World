@@ -11,7 +11,9 @@ import { getPostBySlug } from '@/lib/blog';
 import { sanitizeBlogHtml } from '@/lib/sanitizeHtml';
 import type { Metadata } from 'next';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hos-marketplaceweb-production.up.railway.app';
+import { getSiteUrl } from '@/lib/siteUrls';
+
+const SITE_URL = getSiteUrl();
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;

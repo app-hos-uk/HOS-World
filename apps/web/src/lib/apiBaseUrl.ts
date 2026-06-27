@@ -46,12 +46,11 @@ export function normalizeApiBaseUrl(raw: string | undefined): string {
  */
 export function getDirectApiBaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
-  const fallback =
-    process.env.NODE_ENV === 'production'
-      ? 'https://hos-marketplaceapi-production.up.railway.app/api'
-      : 'http://localhost:3001/api';
-  const normalized = normalizeApiBaseUrl(envUrl || fallback);
-  return normalized || fallback;
+  if (envUrl) {
+    const normalized = normalizeApiBaseUrl(envUrl);
+    if (normalized) return normalized;
+  }
+  return normalizeApiBaseUrl('http://localhost:3001/api') || 'http://localhost:3001/api';
 }
 
 /**

@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
+import { resolvePlatformFeeRate } from '../common/platform-config';
 import { PrismaService } from '../database/prisma.service';
 import { canAccessAllOrders } from '../common/constants/order-access.constants';
 import { TaxService } from '../tax/tax.service';
@@ -121,7 +122,10 @@ export class OrdersService {
     @Optional() private activityService?: ActivityService,
     @Optional() @Inject(forwardRef(() => VendorLedgerService)) private vendorLedgerService?: VendorLedgerService,
   ) {
-    this.defaultCommissionRate = this.configService.get<number>('DEFAULT_COMMISSION_RATE', 0.1);
+    this.defaultCommissionRate = this.configService.get<number>(
+      'DEFAULT_COMMISSION_RATE',
+      resolvePlatformFeeRate(this.configService),
+    );
   }
 
   private getReferralsService(): ReferralsService {

@@ -1,6 +1,6 @@
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  'https://hos-marketplaceweb-production.up.railway.app';
+import { getSiteUrl } from '@/lib/siteUrls';
+
+const SITE_URL = getSiteUrl();
 
 export function SiteStructuredData() {
   const organization = {

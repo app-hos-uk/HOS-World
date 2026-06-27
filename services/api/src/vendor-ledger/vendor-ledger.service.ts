@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { DEFAULT_PLATFORM_FEE_RATE } from '../common/platform-config';
 // Decimal is used via Prisma's auto-coercion at the DB layer
 import { Prisma } from '@prisma/client';
 
@@ -74,7 +75,7 @@ export class VendorLedgerService {
     commissionRate?: number;
     currency?: string;
   }) {
-    const { sellerId, orderId, refundAmount, commissionRate = 0.1, currency = 'USD' } = params;
+    const { sellerId, orderId, refundAmount, commissionRate = DEFAULT_PLATFORM_FEE_RATE, currency = 'USD' } = params;
 
     // Adjust refund to account for commission: vendor only gets debited the net portion
     const commissionRefund = +(refundAmount * commissionRate).toFixed(2);

@@ -451,23 +451,17 @@ export class CreateTeamUsersController {
   @Public()
   @Post('seed-test-users')
   @ApiOperation({
-    summary: 'Seed test users (production-safe)',
+    summary: 'Seed test users (development only)',
     description:
-      'Seeds admin, seller, wholesaler, and customer test users. Requires PROD_SEED_SECRET header.',
+      'Seeds admin, seller, wholesaler, and customer test users. Disabled in production. Requires DEV_SEED_SECRET header.',
   })
   @SwaggerApiResponse({ status: 201, description: 'Test users seeded successfully' })
   async seedTestUsers(@Request() req: any): Promise<ApiResponse<any>> {
-    const expected = this.configService.get<string>('PROD_SEED_SECRET');
-    if (!expected) {
-      throw new ForbiddenException('PROD_SEED_SECRET is not configured');
-    }
-    const provided = req.headers?.['x-prod-seed-secret'];
-    const value = Array.isArray(provided) ? provided[0] : provided;
-    if (value !== expected) {
-      throw new ForbiddenException('Invalid production seed secret');
-    }
+    this.guardDevSeedSecret(req);
 
-    const password = 'Test123!';
+    const password =
+      this.configService.get<string>('TEST_SEED_PASSWORD') ||
+      randomBytes(16).toString('base64url');
     const passwordHash = await bcrypt.hash(password, BCRYPT_PASSWORD_ROUNDS);
 
     const testUsers = [

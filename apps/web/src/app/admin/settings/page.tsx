@@ -26,14 +26,14 @@ const defaultSettings = {
   smtpHost: '',
   smtpPort: 587,
   smtpUser: '',
-  smtpFrom: 'noreply@hos-marketplace.com',
+  smtpFrom: 'noreply@houseofspells.com',
   emailNotifications: true,
   
   // Payment Settings
   stripeEnabled: false,
   stripeTestMode: true,
   defaultCurrency: 'USD',
-  platformFee: 5.0,
+  platformFee: 15.0,
   
   // Fulfillment Settings
   autoCreateShipments: false,

@@ -19,6 +19,7 @@ export default function AdminFinancePage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [payouts, setPayouts] = useState<any[]>([]);
   const [refunds, setRefunds] = useState<any[]>([]);
+  const [platformFeeRate, setPlatformFeeRate] = useState(0.15);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState('30d');
 
@@ -43,15 +44,20 @@ export default function AdminFinancePage() {
   const fetchAllData = useCallback(async () => {
     try {
       setLoading(true);
-      const [txRes, payoutRes, refundRes] = await Promise.all([
+      const [txRes, payoutRes, refundRes, settingsRes] = await Promise.all([
         apiClient.getTransactions().catch(() => ({ data: [] })),
         apiClient.getPayouts().catch(() => ({ data: [] })),
         apiClient.getRefunds().catch(() => ({ data: [] })),
+        apiClient.getSystemSettings().catch(() => null),
       ]);
       
       setTransactions(extractData(txRes));
       setPayouts(extractData(payoutRes));
       setRefunds(extractData(refundRes));
+      const rate = settingsRes?.data?.platformFeeRate;
+      if (typeof rate === 'number' && rate >= 0 && rate <= 1) {
+        setPlatformFeeRate(rate);
+      }
     } catch (err: any) {
       toast.error('Failed to load financial data');
     } finally {
@@ -110,7 +116,7 @@ export default function AdminFinancePage() {
     const totalPayouts = safePayouts.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
     const totalRefunds = safeRefunds.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
     const netRevenue = totalRevenue - totalRefunds;
-    const platformFees = totalRevenue * 0.05; // 5% platform fee
+    const platformFees = totalRevenue * platformFeeRate;
 
     return {
       totalRevenue,
@@ -122,7 +128,7 @@ export default function AdminFinancePage() {
       transactionCount: safeTransactions.length,
       avgTransactionValue: completedTx.length > 0 ? totalRevenue / completedTx.length : 0,
     };
-  }, [safeTransactions, safePayouts, safeRefunds]);
+  }, [safeTransactions, safePayouts, safeRefunds, platformFeeRate]);
 
   // Helper to format date as YYYY-MM-DD in LOCAL time (not UTC)
   const formatLocalDate = (d: Date): string => {

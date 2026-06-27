@@ -10,6 +10,7 @@ import { PrismaService } from '../database/prisma.service';
 import { CreateSettlementDto, ProcessSettlementDto } from './dto/create-settlement.dto';
 import { SettlementStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { resolvePlatformFeeRate } from '../common/platform-config';
 import { CurrencyService } from '../currency/currency.service';
 import { StripeConnectService } from '../payments/stripe-connect/stripe-connect.service';
 
@@ -25,7 +26,7 @@ export class SettlementsService {
     private configService: ConfigService,
     @Optional() private stripeConnectService?: StripeConnectService,
   ) {
-    this.defaultFeeRate = this.configService.get<number>('PLATFORM_FEE_RATE', 0.1);
+    this.defaultFeeRate = resolvePlatformFeeRate(this.configService);
   }
 
   async calculateSettlement(sellerId: string, periodStart: Date, periodEnd: Date) {

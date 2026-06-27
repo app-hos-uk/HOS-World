@@ -5,6 +5,7 @@ import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 import { isProtectedAdminEmail, isSuperAdminEmail } from '../config/protected-admin-emails';
 import { randomBytes } from 'crypto';
 import { UserRole } from '@prisma/client';
+import { DEFAULT_PLATFORM_FEE_RATE } from '../common/platform-config';
 
 @Injectable()
 export class AdminService {
@@ -700,7 +701,7 @@ export class AdminService {
       maintenanceMode: process.env.MAINTENANCE_MODE === 'true',
       allowRegistration: process.env.ALLOW_REGISTRATION !== 'false',
       requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === 'true',
-      platformFeeRate: parseFloat(process.env.PLATFORM_FEE_RATE || '0.15'),
+      platformFeeRate: parseFloat(process.env.PLATFORM_FEE_RATE || String(DEFAULT_PLATFORM_FEE_RATE)),
       currency: process.env.DEFAULT_CURRENCY || 'USD',
       maxUploadSize: parseInt(process.env.MAX_UPLOAD_SIZE || '10485760', 10),
       enableOAuth: process.env.ENABLE_OAUTH !== 'false',

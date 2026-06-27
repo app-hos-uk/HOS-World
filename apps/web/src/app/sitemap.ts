@@ -1,12 +1,11 @@
 import { MetadataRoute } from 'next';
+import { getApiBaseForServer, getSiteUrl } from '@/lib/siteUrls';
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ||
-  'https://hos-marketplaceapi-production.up.railway.app';
+const API_BASE = getApiBaseForServer();
 
 async function fetchBlogSlugs(): Promise<string[]> {
   try {
-    const res = await fetch(`${API_BASE}/api/blog/posts?limit=500`, {
+    const res = await fetch(`${API_BASE}/blog/posts?limit=500`, {
       next: { revalidate: 3600 },
     });
     if (!res.ok) return [];
@@ -23,7 +22,7 @@ async function fetchBlogSlugs(): Promise<string[]> {
 
 async function fetchBlogCategorySlugs(): Promise<string[]> {
   try {
-    const res = await fetch(`${API_BASE}/api/blog/categories`, {
+    const res = await fetch(`${API_BASE}/blog/categories`, {
       next: { revalidate: 3600 },
     });
     if (!res.ok) return [];
@@ -40,7 +39,7 @@ async function fetchBlogCategorySlugs(): Promise<string[]> {
 
 async function fetchSlugs(endpoint: string, field: string): Promise<string[]> {
   try {
-    const res = await fetch(`${API_BASE}/api/${endpoint}`, {
+    const res = await fetch(`${API_BASE}/${endpoint}`, {
       next: { revalidate: 3600 },
     });
     if (!res.ok) return [];
@@ -57,9 +56,7 @@ async function fetchSlugs(endpoint: string, field: string): Promise<string[]> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    'https://hos-marketplaceweb-production.up.railway.app';
+  const baseUrl = getSiteUrl();
 
   const landingPages: Array<{ path: string; priority: number; changeFrequency: 'daily' | 'weekly' }> = [
     { path: '', priority: 1, changeFrequency: 'daily' },

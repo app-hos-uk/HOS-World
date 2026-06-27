@@ -100,17 +100,14 @@ async function bootstrap() {
 
   let allowedOrigins: string[] = [
     process.env.FRONTEND_URL,
-    'https://hos-marketplaceweb-production.up.railway.app',
-    'https://hos-marketplace-web.vercel.app',
-    'https://hos-world-web.vercel.app',
     ...envExtraOrigins,
     ...(isProduction ? [] : ['http://localhost:3000', 'http://localhost:3001']),
   ]
     .filter(Boolean)
     .map((o) => normalizeOrigin(o as string))
     .filter(Boolean) as string[];
-  if (!allowedOrigins.length) {
-    allowedOrigins = ['https://hos-marketplaceweb-production.up.railway.app'];
+  if (!allowedOrigins.length && !isProduction) {
+    allowedOrigins = ['http://localhost:3000'];
   }
 
   // Reconstruct origin when behind a proxy that strips Origin (e.g. Railway). Defined here so both OPTIONS handler and CORS safety-net middleware can use it.
@@ -244,7 +241,7 @@ async function bootstrap() {
       });
 
       // Add security headers (helmet + additional hardening)
-      const frontendUrl = process.env.FRONTEND_URL || 'https://hos-world-web.vercel.app';
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
       app.use(
         helmet({
           contentSecurityPolicy: {
@@ -434,11 +431,14 @@ async function bootstrap() {
       .addTag('admin', 'Admin operations')
       .addTag('sellers', 'Seller operations')
       .addTag('health', 'Health check endpoints')
-      .addServer('https://hos-marketplaceapi-production.up.railway.app/api/v1', 'Production')
-      .addServer('https://hos-marketplaceapi-production.up.railway.app/api', 'Production (legacy)');
+    const apiPublicUrl = process.env.API_URL || process.env.API_PUBLIC_URL;
+    if (apiPublicUrl) {
+      const base = apiPublicUrl.replace(/\/+$/, '');
+      configBuilder.addServer(`${base}/api`, 'API');
+    }
 
     if (!isProduction) {
-      configBuilder.addServer('http://localhost:3001/api/v1', 'Local Development');
+      configBuilder.addServer('http://localhost:3001/api', 'Local Development');
     }
 
     const swaggerConfig = configBuilder.build();

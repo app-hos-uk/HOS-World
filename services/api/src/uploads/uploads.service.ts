@@ -57,10 +57,10 @@ export class UploadsService implements OnModuleInit {
       this.apiBaseUrl = apiUrl.endsWith('/api') ? apiUrl : `${apiUrl}/api`;
     } else {
       const port = this.configService.get<string>('PORT') || '3001';
-      const host =
-        process.env.RAILWAY_PUBLIC_DOMAIN || process.env.RAILWAY_ENVIRONMENT_NAME
-          ? `https://hos-marketplaceapi-production.up.railway.app`
-          : `http://localhost:${port}`;
+      const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN?.trim();
+      const host = railwayDomain
+        ? `https://${railwayDomain.replace(/^https?:\/\//, '')}`
+        : `http://localhost:${port}`;
       this.apiBaseUrl = `${host}/api`;
     }
   }

@@ -9,6 +9,7 @@ import { PrismaService } from '../database/prisma.service';
 import { TransactionsService } from './transactions.service';
 import { PaymentProviderService } from '../payments/payment-provider.service';
 import { VendorLedgerService } from '../vendor-ledger/vendor-ledger.service';
+import { DEFAULT_PLATFORM_FEE_RATE } from '../common/platform-config';
 
 @Injectable()
 export class RefundsService {
@@ -202,7 +203,7 @@ export class RefundsService {
       try {
         const commissionRate = returnRequest.order.seller?.commissionRate
           ? Number(returnRequest.order.seller.commissionRate)
-          : 0.1;
+          : DEFAULT_PLATFORM_FEE_RATE;
         await this.vendorLedgerService.recordRefund({
           sellerId: returnRequest.order.sellerId,
           orderId: returnRequest.orderId,

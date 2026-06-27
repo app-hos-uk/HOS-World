@@ -21,6 +21,7 @@ import { PosInventorySyncService } from '../pos/sync/inventory-sync.service';
 import { MarketingEventBus } from '../journeys/marketing-event.bus';
 import { RedisService } from '../cache/redis.service';
 import { IntegrationsService } from '../integrations/integrations.service';
+import { DEFAULT_PLATFORM_FEE_RATE } from '../common/platform-config';
 import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
@@ -402,7 +403,7 @@ export class PaymentsService {
             if (child.sellerId) {
               const commissionRate = child.seller?.commissionRate
                 ? Number(child.seller.commissionRate)
-                : 0.1;
+                : DEFAULT_PLATFORM_FEE_RATE;
               await this.vendorLedgerService.recordSale({
                 sellerId: child.sellerId,
                 orderId: child.id,
@@ -414,7 +415,7 @@ export class PaymentsService {
           }
         } else if (order.sellerId) {
           const seller = await this.prisma.seller.findUnique({ where: { id: order.sellerId } });
-          const commissionRate = seller?.commissionRate ? Number(seller.commissionRate) : 0.1;
+          const commissionRate = seller?.commissionRate ? Number(seller.commissionRate) : DEFAULT_PLATFORM_FEE_RATE;
           await this.vendorLedgerService.recordSale({
             sellerId: order.sellerId,
             orderId: order.id,

@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import SellerStorefrontClient from './SellerStorefrontClient';
+import { getApiBaseForServer, getSiteUrl } from '@/lib/siteUrls';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://hos-marketplaceapi-production.up.railway.app';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://hos-marketplaceweb-production.up.railway.app';
+const API_BASE = getApiBaseForServer();
+const SITE_URL = getSiteUrl();
 
 async function fetchSeller(slug: string) {
   try {
-    const res = await fetch(`${API_BASE}/api/sellers/slug/${encodeURIComponent(slug)}`, {
+    const res = await fetch(`${API_BASE}/sellers/slug/${encodeURIComponent(slug)}`, {
       next: { revalidate: 600 },
     });
     if (!res.ok) return null;

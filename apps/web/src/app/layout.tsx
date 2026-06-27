@@ -14,6 +14,7 @@ import { Toaster } from '@/components/Toaster';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ReferralCapture } from '@/components/ReferralCapture';
 import { Suspense } from 'react';
+import { getSiteUrl } from '@/lib/siteUrls';
 import './globals.css';
 
 // Cormorant Garamond — display headings & body (reference storefront)
@@ -50,7 +51,7 @@ export const metadata: Metadata = {
   keywords: ['Harry Potter', 'merchandise', 'collectibles', 'magical', 'fandoms', 'spells', 'marketplace'],
   authors: [{ name: 'House of Spells' }],
   creator: 'House of Spells',
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://hos-marketplaceweb-production.up.railway.app'),
+  metadataBase: new URL(getSiteUrl()),
   icons: {
     icon: [
       { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },

@@ -55,7 +55,7 @@ function LoginPageInner() {
   const oauthFacebookEnabled = process.env.NEXT_PUBLIC_OAUTH_FACEBOOK_ENABLED === 'true';
   const oauthAppleEnabled = process.env.NEXT_PUBLIC_OAUTH_APPLE_ENABLED === 'true';
   const anyOAuthEnabled = oauthGoogleEnabled || oauthFacebookEnabled || oauthAppleEnabled;
-  const oauthBaseUrl = getDirectApiBaseUrl() || 'https://hos-marketplaceapi-production.up.railway.app/api';
+  const oauthBaseUrl = getDirectApiBaseUrl();
 
   // Set mounted state after hydration to prevent server/client mismatch
   useEffect(() => {
