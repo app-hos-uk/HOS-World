@@ -1,0 +1,11 @@
+[allowlist]
+  description = "Allow known non-secret patterns"
+
+  paths = [
+    '''docs/archive/.*''',
+    '''\.env\.example''',
+    '''services/api/\.env\.example''',
+    '''apps/web/\.env\.example''',
+    '''apps/landing/\.env\.example''',
+    '''services/strapi/\.env\.example''',
+  ]

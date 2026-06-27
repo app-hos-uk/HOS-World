@@ -46,15 +46,9 @@ services/api/update-env.sh
 services/api/start-server-with-env.sh
 services/api/ENV_SETUP_INSTRUCTIONS.md
 services/api/create-jsabu-admin.js
-TEST_LOGIN.md
-RUN_MIGRATION_NOW.md
-RAILWAY_ENV_SETUP_COMPLETE.md
-GEMINI_AND_RATE_LIMIT_SETUP.md
-FINAL_MIGRATION_SOLUTION.md
-CREATE_PRODUCT_FOR_TESTING.md
-APPLY_MIGRATION_COMMAND.md
-APPLY_MIGRATION_NOW.md
-APPLY_ALL_PHASE3_MIGRATIONS.md
+
+# Auto-generated status / debug docs — keep repo root clean
+docs/archive/
 
 # Vercel
 .vercel

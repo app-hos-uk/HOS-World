@@ -31,7 +31,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Security audit
-        run: pnpm audit --audit-level=high || echo "::warning::Security vulnerabilities found - review pnpm audit output"
+        run: pnpm audit --audit-level=high
 
       - name: Generate Prisma client
         run: cd services/api && npx prisma generate
@@ -54,8 +54,24 @@ jobs:
           wait $PID_API || exit 1
           wait $PID_WEB || exit 1
 
-      - name: Run API tests
-        run: cd services/api && npx jest --passWithNoTests
+      - name: Run API tests with coverage
+        run: cd services/api && npx jest --coverage --coverageReporters=text --coverageReporters=json-summary
+
+      - name: Check coverage threshold
+        run: |
+          COVERAGE_FILE="services/api/coverage/coverage-summary.json"
+          if [ ! -f "$COVERAGE_FILE" ]; then
+            echo "::error::Coverage report not found"
+            exit 1
+          fi
+          LINES=$(node -e "const c=require('./$COVERAGE_FILE');console.log(c.total.lines.pct)")
+          echo "Line coverage: ${LINES}%"
+          THRESHOLD=40
+          PASS=$(node -e "console.log(Number($LINES)>=$THRESHOLD?'yes':'no')")
+          if [ "$PASS" != "yes" ]; then
+            echo "::error::Line coverage ${LINES}% is below threshold ${THRESHOLD}%"
+            exit 1
+          fi
 
       - name: Build API & Web (parallel)
         run: |

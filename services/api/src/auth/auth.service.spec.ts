@@ -13,6 +13,8 @@ import { PrismaService } from '../database/prisma.service';
 import { GeolocationService } from '../geolocation/geolocation.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TemplatesService } from '../templates/templates.service';
+import { CartService } from '../cart/cart.service';
+import { AddressesService } from '../addresses/addresses.service';
 import { RegisterDto, RegisterRole } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
@@ -30,13 +32,16 @@ describe('AuthService', () => {
     user: {
       create: jest.fn(),
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
     },
     customer: {
       create: jest.fn(),
+      upsert: jest.fn(),
     },
     seller: {
       create: jest.fn(),
+      findUnique: jest.fn(),
     },
     refreshToken: {
       create: jest.fn().mockResolvedValue({}),
@@ -56,8 +61,26 @@ describe('AuthService', () => {
     tenantMembership: {
       create: jest.fn().mockResolvedValue({}),
     },
+    tenantUser: {
+      create: jest.fn().mockResolvedValue({}),
+    },
     tenant: {
-      findFirst: jest.fn().mockResolvedValue({ id: 'tenant-1' }),
+      findFirst: jest.fn().mockResolvedValue({ id: 'platform' }),
+      findUnique: jest.fn().mockResolvedValue({ id: 'platform' }),
+      create: jest.fn().mockResolvedValue({ id: 'platform', name: 'Platform', subdomain: 'platform', isActive: true }),
+    },
+    sellerInvitation: {
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+    character: {
+      findUnique: jest.fn(),
+    },
+    badge: {
+      findUnique: jest.fn(),
+    },
+    userBadge: {
+      create: jest.fn(),
     },
   };
 
@@ -90,6 +113,14 @@ describe('AuthService', () => {
     render: jest.fn().mockResolvedValue({ subject: 'Test', body: '<p>Test</p>' }),
   };
 
+  const mockCartService = {
+    mergeGuestCart: jest.fn().mockResolvedValue(undefined),
+  };
+
+  const mockAddressesService = {
+    create: jest.fn().mockResolvedValue({ id: 'addr-1' }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -117,6 +148,14 @@ describe('AuthService', () => {
         {
           provide: TemplatesService,
           useValue: mockTemplatesService,
+        },
+        {
+          provide: CartService,
+          useValue: mockCartService,
+        },
+        {
+          provide: AddressesService,
+          useValue: mockAddressesService,
         },
       ],
     }).compile();

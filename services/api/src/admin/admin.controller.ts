@@ -23,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { ReviewsService } from '../reviews/reviews.service';
+import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
 import { CreateAdminUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -40,7 +41,35 @@ export class AdminController {
   constructor(
     private readonly adminService: AdminService,
     private readonly reviewsService: ReviewsService,
+    private readonly featureFlagsService: FeatureFlagsService,
   ) {}
+
+  @Get('feature-flags')
+  @ApiOperation({ summary: 'Get all feature flags' })
+  async getFeatureFlags(): Promise<ApiResponse<Record<string, boolean>>> {
+    return {
+      data: this.featureFlagsService.getAll(),
+      message: 'Feature flags retrieved',
+    };
+  }
+
+  @Put('feature-flags/:flag')
+  @ApiOperation({ summary: 'Toggle a feature flag' })
+  @ApiParam({ name: 'flag', description: 'Feature flag name' })
+  @ApiBody({ schema: { type: 'object', properties: { enabled: { type: 'boolean' } } } })
+  async setFeatureFlag(
+    @Param('flag') flag: string,
+    @Body() body: { enabled: boolean },
+  ): Promise<ApiResponse<{ flag: string; enabled: boolean }>> {
+    if (!Object.values(FeatureFlag).includes(flag as FeatureFlag)) {
+      return { data: { flag, enabled: false }, message: `Unknown feature flag: ${flag}` };
+    }
+    this.featureFlagsService.setFlag(flag as FeatureFlag, body.enabled);
+    return {
+      data: { flag, enabled: body.enabled },
+      message: `Feature flag ${flag} set to ${body.enabled}`,
+    };
+  }
 
   @Get('dashboard')
   @ApiOperation({

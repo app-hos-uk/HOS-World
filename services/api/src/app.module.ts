@@ -101,6 +101,7 @@ import { VendorProductsModule } from './vendor-products/vendor-products.module';
 import { VendorLedgerModule } from './vendor-ledger/vendor-ledger.module';
 import { InvoicesModule } from './invoices/invoices.module';
 import { FoundingMembersModule } from './founding-members/founding-members.module';
+import { FeatureFlagsModule } from './config/feature-flags.module';
 import { validateEnvironmentVariables } from './config/env.validation';
 import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 
@@ -117,6 +118,7 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     }),
     LoggerModule,
     ScheduleModule.forRoot(),
+    FeatureFlagsModule,
     DatabaseModule,
     CacheModule,
     RateLimitModule,
