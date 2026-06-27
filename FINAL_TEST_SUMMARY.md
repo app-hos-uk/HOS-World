@@ -17,7 +17,7 @@ All 4 business users created and verified:
 - ✅ `wholesaler@hos.test` (WHOLESALER)
 - ✅ `customer@hos.test` (CUSTOMER)
 
-**Password**: `Test123!` (same for all users)
+**Password**: ``$TEST_SEED_PASSWORD` (env)` (same for all users)
 
 ---
 
@@ -117,7 +117,7 @@ All login redirects working correctly:
 
 ## 📝 Test Credentials
 
-### Team Roles (Password: `Test123!`)
+### Team Roles (Password: ``$TEST_SEED_PASSWORD` (env)`)
 - Admin: `admin@hos.test`
 - Procurement: `procurement@hos.test`
 - Fulfillment: `fulfillment@hos.test`
@@ -126,7 +126,7 @@ All login redirects working correctly:
 - Finance: `finance@hos.test`
 - CMS Editor: `cms@hos.test`
 
-### Business Roles (Password: `Test123!`)
+### Business Roles (Password: ``$TEST_SEED_PASSWORD` (env)`)
 - Seller: `seller@hos.test`
 - B2C Seller: `b2c-seller@hos.test`
 - Wholesaler: `wholesaler@hos.test`

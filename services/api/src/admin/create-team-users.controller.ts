@@ -7,6 +7,7 @@ import { UserRole } from '@prisma/client';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
+import { getSeedAdminPassword, getSeedTestPassword } from '../config/seed-password';
 import { randomBytes } from 'crypto';
 
 const teamUsers = [
@@ -62,23 +63,19 @@ export class CreateTeamUsersController {
     private configService: ConfigService,
   ) {}
 
-  private guardDevelopmentOnly() {
-    const env = this.configService.get('NODE_ENV');
-    if (env === 'production') {
-      throw new ForbiddenException('This endpoint is disabled in production');
-    }
-  }
-
-  private guardDevSeedSecret(req: { headers?: Record<string, string | string[] | undefined> }) {
-    this.guardDevelopmentOnly();
-    const expected = this.configService.get<string>('DEV_SEED_SECRET');
+  /** Dev: DEV_SEED_SECRET + x-dev-seed-secret. Production: PROD_SEED_SECRET + x-prod-seed-secret. */
+  private guardSeedSecret(req: { headers?: Record<string, string | string[] | undefined> }) {
+    const isProd = this.configService.get('NODE_ENV') === 'production';
+    const secretKey = isProd ? 'PROD_SEED_SECRET' : 'DEV_SEED_SECRET';
+    const headerName = isProd ? 'x-prod-seed-secret' : 'x-dev-seed-secret';
+    const expected = this.configService.get<string>(secretKey)?.trim();
     if (!expected) {
-      throw new ForbiddenException('DEV_SEED_SECRET is not configured');
+      throw new ForbiddenException(`${secretKey} is not configured`);
     }
-    const provided = req.headers?.['x-dev-seed-secret'];
+    const provided = req.headers?.[headerName];
     const value = Array.isArray(provided) ? provided[0] : provided;
     if (value !== expected) {
-      throw new ForbiddenException('Invalid dev seed secret');
+      throw new ForbiddenException('Invalid seed secret');
     }
   }
 
@@ -91,10 +88,10 @@ export class CreateTeamUsersController {
   })
   @SwaggerApiResponse({ status: 201, description: 'Team users created/updated successfully' })
   async createTeamUsers(@Request() req: any): Promise<ApiResponse<any>> {
-    this.guardDevSeedSecret(req);
+    this.guardSeedSecret(req);
 
-    // Generate password hash for "Test123!"
-    const password = 'Test123!';
+    // Hash from TEST_SEED_PASSWORD env (never logged in response)
+    const password = getSeedTestPassword();
     const passwordHash = await bcrypt.hash(password, BCRYPT_PASSWORD_ROUNDS);
 
     const results = [];
@@ -152,10 +149,10 @@ export class CreateTeamUsersController {
   })
   @SwaggerApiResponse({ status: 201, description: 'Business users created/updated successfully' })
   async createBusinessUsers(@Request() req: any): Promise<ApiResponse<any>> {
-    this.guardDevSeedSecret(req);
+    this.guardSeedSecret(req);
 
-    // Generate password hash for "Test123!"
-    const password = 'Test123!';
+    // Hash from TEST_SEED_PASSWORD env (never logged in response)
+    const password = getSeedTestPassword();
     const passwordHash = await bcrypt.hash(password, BCRYPT_PASSWORD_ROUNDS);
 
     const businessUsers = [
@@ -319,14 +316,14 @@ export class CreateTeamUsersController {
   @ApiOperation({
     summary: 'Create influencer test user',
     description:
-      'Creates or updates influencer@hos.test with password Test!123 and influencer profile. Public endpoint for development/testing.',
+      'Creates or updates influencer@hos.test with TEST_SEED_PASSWORD and influencer profile. Public endpoint for development/testing.',
   })
   @SwaggerApiResponse({ status: 201, description: 'Influencer test user created/updated' })
   async createInfluencerTestUser(@Request() req: any): Promise<ApiResponse<any>> {
-    this.guardDevSeedSecret(req);
+    this.guardSeedSecret(req);
 
     const email = 'influencer@hos.test';
-    const password = 'Test!123';
+    const password = getSeedTestPassword();
     const passwordHash = await bcrypt.hash(password, BCRYPT_PASSWORD_ROUNDS);
     const displayName = 'Test Influencer';
 
@@ -381,7 +378,7 @@ export class CreateTeamUsersController {
       }
       return {
         data: { email, status: 'updated', role: 'INFLUENCER', profileCreated, slug, referralCode },
-        message: 'Influencer test user updated. Login: influencer@hos.test / Test!123',
+        message: 'Influencer test user updated. Login: influencer@hos.test (password from TEST_SEED_PASSWORD env)',
       };
     }
 
@@ -418,7 +415,7 @@ export class CreateTeamUsersController {
     return {
       data: { email, status: 'created', role: 'INFLUENCER', profileCreated, slug, referralCode },
       message: profileCreated
-        ? 'Influencer test user created. Login: influencer@hos.test / Test!123'
+        ? 'Influencer test user created. Login: influencer@hos.test (password from TEST_SEED_PASSWORD env)'
         : 'Influencer test user created (login only). Run DB migrations and call this endpoint again to create influencer profile.',
     };
   }
@@ -449,19 +446,65 @@ export class CreateTeamUsersController {
   }
 
   @Public()
+  @Post('seed-super-admin')
+  @ApiOperation({
+    summary: 'Sync super admin password',
+    description:
+      'Creates or updates app@houseofspells.co.uk from SEED_ADMIN_PASSWORD. Requires seed secret header.',
+  })
+  @SwaggerApiResponse({ status: 201, description: 'Super admin synced' })
+  async seedSuperAdmin(@Request() req: any): Promise<ApiResponse<any>> {
+    this.guardSeedSecret(req);
+
+    const email = 'app@houseofspells.co.uk';
+    const passwordHash = await bcrypt.hash(getSeedAdminPassword(), BCRYPT_PASSWORD_ROUNDS);
+
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+
+    if (existing) {
+      await this.prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          password: passwordHash,
+          role: UserRole.ADMIN,
+          firstName: 'Super',
+          lastName: 'Admin',
+        },
+      });
+      return {
+        data: { email, status: 'updated', role: UserRole.ADMIN },
+        message: 'Super admin password synced from SEED_ADMIN_PASSWORD',
+      };
+    }
+
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        password: passwordHash,
+        firstName: 'Super',
+        lastName: 'Admin',
+        role: UserRole.ADMIN,
+      },
+    });
+
+    return {
+      data: { email, status: 'created', role: UserRole.ADMIN, id: user.id },
+      message: 'Super admin created from SEED_ADMIN_PASSWORD',
+    };
+  }
+
+  @Public()
   @Post('seed-test-users')
   @ApiOperation({
-    summary: 'Seed test users (development only)',
+    summary: 'Seed test users',
     description:
-      'Seeds admin, seller, wholesaler, and customer test users. Disabled in production. Requires DEV_SEED_SECRET header.',
+      'Seeds admin, seller, wholesaler, and customer test users. Requires seed secret header (DEV_SEED_SECRET or PROD_SEED_SECRET).',
   })
   @SwaggerApiResponse({ status: 201, description: 'Test users seeded successfully' })
   async seedTestUsers(@Request() req: any): Promise<ApiResponse<any>> {
-    this.guardDevSeedSecret(req);
+    this.guardSeedSecret(req);
 
-    const password =
-      this.configService.get<string>('TEST_SEED_PASSWORD') ||
-      randomBytes(16).toString('base64url');
+    const password = getSeedTestPassword();
     const passwordHash = await bcrypt.hash(password, BCRYPT_PASSWORD_ROUNDS);
 
     const testUsers = [

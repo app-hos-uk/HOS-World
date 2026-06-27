@@ -28,7 +28,7 @@
 - ✅ `wholesaler@hos.test` - WHOLESALER
 - ✅ `seller@hos.test` - B2C_SELLER
 
-**Password for all:** `Test123!`
+**Password for all:** ``$TEST_SEED_PASSWORD` (env)`
 
 ### Ready to Create (7 users):
 SQL script ready: `scripts/create-team-role-users.sql`
@@ -152,7 +152,7 @@ Then:
 2. Click "Add record" (+)
 3. Fill in:
    - **email:** (from table above)
-   - **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+   - **password:** `[bcrypt-hash-redacted]`
    - **role:** UPPERCASE (e.g., `ADMIN`, `PROCUREMENT`)
    - **firstName:** (from table)
    - **lastName:** (from table)
@@ -163,16 +163,16 @@ Then:
 
 | Email | Password | Role | Dashboard |
 |-------|----------|------|-----------|
-| customer@hos.test | Test123! | CUSTOMER | `/` |
-| wholesaler@hos.test | Test123! | WHOLESALER | `/wholesaler/dashboard` |
-| seller@hos.test | Test123! | B2C_SELLER | `/seller/dashboard` |
-| admin@hos.test | Test123! | ADMIN | `/admin/dashboard` ⏳ |
-| procurement@hos.test | Test123! | PROCUREMENT | `/procurement/dashboard` ⏳ |
-| fulfillment@hos.test | Test123! | FULFILLMENT | `/fulfillment/dashboard` ⏳ |
-| catalog@hos.test | Test123! | CATALOG | `/catalog/dashboard` ⏳ |
-| marketing@hos.test | Test123! | MARKETING | `/marketing/dashboard` ⏳ |
-| finance@hos.test | Test123! | FINANCE | `/finance/dashboard` ⏳ |
-| cms@hos.test | Test123! | CMS_EDITOR | `/` ⏳ |
+| customer@hos.test | `$TEST_SEED_PASSWORD` (env) | CUSTOMER | `/` |
+| wholesaler@hos.test | `$TEST_SEED_PASSWORD` (env) | WHOLESALER | `/wholesaler/dashboard` |
+| seller@hos.test | `$TEST_SEED_PASSWORD` (env) | B2C_SELLER | `/seller/dashboard` |
+| admin@hos.test | `$TEST_SEED_PASSWORD` (env) | ADMIN | `/admin/dashboard` ⏳ |
+| procurement@hos.test | `$TEST_SEED_PASSWORD` (env) | PROCUREMENT | `/procurement/dashboard` ⏳ |
+| fulfillment@hos.test | `$TEST_SEED_PASSWORD` (env) | FULFILLMENT | `/fulfillment/dashboard` ⏳ |
+| catalog@hos.test | `$TEST_SEED_PASSWORD` (env) | CATALOG | `/catalog/dashboard` ⏳ |
+| marketing@hos.test | `$TEST_SEED_PASSWORD` (env) | MARKETING | `/marketing/dashboard` ⏳ |
+| finance@hos.test | `$TEST_SEED_PASSWORD` (env) | FINANCE | `/finance/dashboard` ⏳ |
+| cms@hos.test | `$TEST_SEED_PASSWORD` (env) | CMS_EDITOR | `/` ⏳ |
 
 ---
 

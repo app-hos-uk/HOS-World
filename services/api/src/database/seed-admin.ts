@@ -1,12 +1,13 @@
 import { PrismaClient, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
+import { getSeedAdminPassword } from '../config/seed-password';
 
 const prisma = new PrismaClient();
 
 async function seedAdmin() {
   const adminEmail = 'app@houseofspells.co.uk';
-  const adminPassword = 'Admin123';
+  const adminPassword = getSeedAdminPassword();
 
   try {
     // Check if admin already exists

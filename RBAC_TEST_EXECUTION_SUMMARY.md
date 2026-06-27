@@ -8,7 +8,7 @@ Using browser automation to test the RBAC system with mock users for all roles.
 
 ## 📋 Test Users (To Be Created)
 
-All users use password: **`Test123!`**
+All users use password: **``$TEST_SEED_PASSWORD` (env)`**
 
 | Role | Email | Expected Dashboard |
 |------|-------|-------------------|

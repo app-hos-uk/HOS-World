@@ -138,7 +138,7 @@ curl -X POST http://localhost:3001/api/admin/create-team-users
 # Login as admin
 curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"Test123!"}'
+  -d '{"email":"admin@example.com","password":"`$TEST_SEED_PASSWORD` (env)"}'
 ```
 
 **Save the token**, then test protected endpoints:

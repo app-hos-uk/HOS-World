@@ -707,6 +707,23 @@ export class AdminService {
       enableOAuth: process.env.ENABLE_OAUTH !== 'false',
       enableStripe: process.env.STRIPE_SECRET_KEY ? true : false,
       shopEnabled: process.env.NEXT_PUBLIC_SHOP_ENABLED === 'true',
+      contactEmail:
+        process.env.CONTACT_EMAIL ||
+        process.env.NEXT_PUBLIC_CONTACT_EMAIL ||
+        'info@houseofspells.com',
+      contactPhone:
+        process.env.CONTACT_PHONE || process.env.NEXT_PUBLIC_FOOTER_PHONE || '+1 (212) 555-0100',
+      contactAddress:
+        process.env.CONTACT_ADDRESS ||
+        process.env.NEXT_PUBLIC_CONTACT_ADDRESS ||
+        '123 Broadway, New York, NY 10007',
+      footerAbout:
+        process.env.FOOTER_ABOUT ||
+        'An immersive fandom experience — franchises, collectibles, and unforgettable finds online and in our stores.',
+      socialFacebookUrl: process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK_URL || '',
+      socialInstagramUrl: process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL || '',
+      socialXUrl:
+        process.env.NEXT_PUBLIC_SOCIAL_X_URL || process.env.NEXT_PUBLIC_SOCIAL_TWITTER_URL || '',
     };
 
     try {
@@ -725,6 +742,21 @@ export class AdminService {
     }
   }
 
+  async getPublicSiteSettings() {
+    const settings = await this.getSystemSettings();
+    return {
+      platformName: settings.platformName,
+      platformUrl: settings.platformUrl,
+      contactEmail: settings.contactEmail,
+      contactPhone: settings.contactPhone,
+      contactAddress: settings.contactAddress,
+      footerAbout: settings.footerAbout,
+      socialFacebookUrl: settings.socialFacebookUrl,
+      socialInstagramUrl: settings.socialInstagramUrl,
+      socialXUrl: settings.socialXUrl,
+    };
+  }
+
   async updateSystemSettings(settings: any) {
     try {
       const allowed: Record<string, (v: any) => any> = {
@@ -740,6 +772,13 @@ export class AdminService {
         },
         currency: (v) => String(v).toUpperCase(),
         maxUploadSize: (v) => parseInt(v, 10),
+        contactEmail: (v) => String(v).trim(),
+        contactPhone: (v) => String(v).trim(),
+        contactAddress: (v) => String(v).trim(),
+        footerAbout: (v) => String(v).trim(),
+        socialFacebookUrl: (v) => String(v).trim(),
+        socialInstagramUrl: (v) => String(v).trim(),
+        socialXUrl: (v) => String(v).trim(),
       };
 
       const validSettings: Record<string, any> = {};

@@ -4,7 +4,7 @@
 
 **Problem**: Login was failing with "Invalid credentials" error (401 Unauthorized)
 
-**Root Cause**: The password hash stored in the database didn't match "Test123!"
+**Root Cause**: The password hash stored in the database didn't match "`$TEST_SEED_PASSWORD` (env)"
 
 **Solution**: Updated the `create-team-users.controller.ts` to generate password hashes at runtime using bcrypt, ensuring correct password matching.
 
@@ -29,7 +29,7 @@
 
 ## 🔑 Test Credentials
 
-**All users use the same password**: `Test123!`
+**All users use the same password**: ``$TEST_SEED_PASSWORD` (env)`
 
 ### Team Users:
 1. `admin@hos.test` → ADMIN
@@ -55,7 +55,7 @@
 
 3. **Login with Admin Credentials**:
    - Email: `admin@hos.test`
-   - Password: `Test123!`
+   - Password: ``$TEST_SEED_PASSWORD` (env)`
 
 4. **Expected Result**:
    - ✅ Successful login
@@ -75,7 +75,7 @@ If you still get 401 errors after the fix:
 
 2. **Verify Request Format**:
    - Should be: `POST /api/auth/login`
-   - Body: `{"email":"admin@hos.test","password":"Test123!"}`
+   - Body: `{"email":"admin@hos.test","password":"`$TEST_SEED_PASSWORD` (env)"}`
    - Headers: `Content-Type: application/json`
 
 3. **Check CORS**:
@@ -94,7 +94,7 @@ If you still get 401 errors after the fix:
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@hos.test","password":"Test123!"}'
+  -d '{"email":"admin@hos.test","password":"`$TEST_SEED_PASSWORD` (env)"}'
 
 # Response: ✅ Success with JWT token
 ```

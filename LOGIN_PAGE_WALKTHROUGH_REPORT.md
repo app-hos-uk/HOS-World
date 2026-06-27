@@ -35,7 +35,7 @@ https://hos-marketplaceweb-production.up.railway.app/login
 ### Step 3: Form Field Interaction ✅
 - **Action**: Entered admin credentials
   - Email: `app@houseofspells.co.uk`
-  - Password: `Admin123`
+  - Password: ``$SEED_ADMIN_PASSWORD` (env)`
 - **Result**: Fields accepted input
 - **Status**: ✅ Form fields working
 
@@ -89,7 +89,7 @@ https://hos-marketplaceweb-production.up.railway.app/login
 1. Open browser DevTools (F12)
 2. Go to Network tab
 3. Navigate to login page
-4. Enter credentials: `app@houseofspells.co.uk` / `Admin123`
+4. Enter credentials: `app@houseofspells.co.uk` / ``$SEED_ADMIN_PASSWORD` (env)`
 5. Click Login button
 6. Observe:
    - Network request to `/api/auth/login`

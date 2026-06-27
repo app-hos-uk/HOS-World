@@ -70,7 +70,7 @@ Once users are created, we can:
 
 ## 📋 Test Users
 
-**All use password: `Test123!`**
+**All use password: ``$TEST_SEED_PASSWORD` (env)`**
 
 - `customer@hos.test` → CUSTOMER
 - `wholesaler@hos.test` → WHOLESALER

@@ -23,7 +23,7 @@
 }
 ```
 
-**Password for all users**: `Test123!`
+**Password for all users**: ``$TEST_SEED_PASSWORD` (env)`
 
 ### 2. API Endpoint Working ✅
 - **Endpoint**: `POST /api/admin/create-team-users`
@@ -48,7 +48,7 @@ All users are ready for login testing. Here's how to test:
 #### Test Admin Login:
 1. Navigate to: https://hos-marketplaceweb-production.up.railway.app/login
 2. Email: `admin@hos.test`
-3. Password: `Test123!`
+3. Password: ``$TEST_SEED_PASSWORD` (env)`
 4. Expected: Redirect to `/admin/dashboard`
 5. Verify: Dashboard displays admin statistics and data
 
@@ -114,7 +114,7 @@ The create-team-users endpoint is currently **public** (no authentication requir
 - Or removing after initial setup
 
 ### User Passwords
-All team users have the same default password: `Test123!`
+All team users have the same default password: ``$TEST_SEED_PASSWORD` (env)`
 - **Recommended**: Have users change passwords on first login
 - **Production**: Use stronger password policy
 
@@ -141,7 +141,7 @@ All infrastructure is in place:
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@hos.test","password":"Test123!"}'
+  -d '{"email":"admin@hos.test","password":"`$TEST_SEED_PASSWORD` (env)"}'
 ```
 
 ### Web Application:

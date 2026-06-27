@@ -42,7 +42,7 @@ WHERE email = 'app@houseofspells.co.uk';
 -- Complete fix - sets everything correctly
 UPDATE users
 SET 
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '[bcrypt-hash-redacted]',
   role = 'ADMIN',
   "firstName" = 'Super',
   "lastName" = 'Admin',
@@ -66,18 +66,18 @@ If the hash still doesn't work, generate a fresh one:
 **Option A: Using Node.js on Railway**
 ```bash
 cd services/api
-railway run node -e "const bcrypt = require('bcrypt'); bcrypt.hash('Admin123', 10).then(hash => console.log('New hash:', hash));"
+railway run node -e "const bcrypt = require('bcrypt'); bcrypt.hash('`$SEED_ADMIN_PASSWORD` (env)', 10).then(hash => console.log('New hash:', hash));"
 ```
 
 **Option B: Using Online Tool**
 - Visit: https://bcrypt-generator.com/
 - Rounds: `10`
-- Password: `Admin123`
+- Password: ``$SEED_ADMIN_PASSWORD` (env)`
 - Copy the generated hash
 
 **Option C: Using Local Node.js**
 ```bash
-node -e "const bcrypt = require('bcrypt'); bcrypt.hash('Admin123', 10).then(hash => console.log(hash));"
+node -e "const bcrypt = require('bcrypt'); bcrypt.hash('`$SEED_ADMIN_PASSWORD` (env)', 10).then(hash => console.log(hash));"
 ```
 
 ### Step 4: Update with Fresh Hash
@@ -127,7 +127,7 @@ INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdA
 VALUES (
   gen_random_uuid(),
   'app@houseofspells.co.uk',
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  '[bcrypt-hash-redacted]',
   'Super',
   'Admin',
   'ADMIN',
@@ -148,7 +148,7 @@ WHERE email = 'app@houseofspells.co.uk';
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}' \
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}' \
   -v
 ```
 

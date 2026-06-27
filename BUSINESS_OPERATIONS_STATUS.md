@@ -147,37 +147,37 @@ async seedSampleData() {
 ### Complete Workflow Test
 
 1. **Product Submission**
-   - Login as seller: `seller-test@hos.test` / `Test123!`
+   - Login as seller: `seller-test@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
    - Go to `/seller/submit-product`
    - Submit a new product
    - Verify submission appears in procurement
 
 2. **Procurement Review**
-   - Login as procurement: `procurement@hos.test` / `Test123!`
+   - Login as procurement: `procurement@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
    - Go to `/procurement/submissions`
    - Review and approve submission
    - Set quantity if needed
 
 3. **Fulfillment Verification**
-   - Login as fulfillment: `fulfillment@hos.test` / `Test123!`
+   - Login as fulfillment: `fulfillment@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
    - Go to `/fulfillment/shipments`
    - Verify incoming shipment
    - Update tracking number
 
 4. **Catalog Entry Creation**
-   - Login as catalog: `catalog@hos.test` / `Test123!`
+   - Login as catalog: `catalog@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
    - Go to `/catalog/entries`
    - Create marketplace listing
    - Add SEO keywords and images
 
 5. **Marketing Materials**
-   - Login as marketing: `marketing@hos.test` / `Test123!`
+   - Login as marketing: `marketing@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
    - Go to `/marketing/materials`
    - Create marketing material
    - View materials library
 
 6. **Finance Pricing Approval**
-   - Login as finance: `finance@hos.test` / `Test123!`
+   - Login as finance: `finance@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
    - Go to `/finance/pricing`
    - Review and approve pricing
    - Set margin and visibility

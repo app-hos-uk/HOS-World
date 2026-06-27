@@ -4,6 +4,7 @@ import { ThemeProviderWrapper } from '@/components/ThemeProviderWrapper';
 import { AuthProviderWrapper } from '@/components/AuthProviderWrapper';
 import { QueryProvider } from '@/components/QueryProvider';
 import { CurrencyProvider } from '@/contexts/CurrencyContext';
+import { SiteSettingsProvider } from '@/contexts/SiteSettingsContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { GDPRConsentBanner } from '@/components/GDPRConsentBanner';
 import { GoogleTags } from '@/components/analytics/GoogleTags';
@@ -15,6 +16,8 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ReferralCapture } from '@/components/ReferralCapture';
 import { Suspense } from 'react';
 import { getSiteUrl } from '@/lib/siteUrls';
+import { fetchServerSiteSettings } from '@/lib/fetchServerSiteSettings';
+import { brandDisplayName } from '@/lib/siteSettingsDefaults';
 import './globals.css';
 
 // Cormorant Garamond — display headings & body (reference storefront)
@@ -42,46 +45,51 @@ const inter = Inter({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: 'House of Spells — Fandom Marketplace | Collectables & Merchandise',
-    template: '%s | House of Spells',
-  },
-  description: 'House of Spells marketplace: wizarding-world collectibles, multi-franchise fandom merch, and gifts from trusted US vendors — one checkout, tracked delivery.',
-  keywords: ['Harry Potter', 'merchandise', 'collectibles', 'magical', 'fandoms', 'spells', 'marketplace'],
-  authors: [{ name: 'House of Spells' }],
-  creator: 'House of Spells',
-  metadataBase: new URL(getSiteUrl()),
-  icons: {
-    icon: [
-      { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/favicon-192.png', sizes: '192x192', type: 'image/png' },
-    ],
-    shortcut: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
-  },
-  openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    siteName: 'House of Spells',
-    title: 'House of Spells - Magical Marketplace',
-    description: 'Discover magical merchandise, collectibles, and enchanted items from your favorite fandoms.',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'House of Spells Marketplace' }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'House of Spells - Magical Marketplace',
-    description: 'Discover magical merchandise and collectibles.',
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large', 'max-snippet': -1 },
-  },
-  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
-    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
-    : undefined,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const site = await fetchServerSiteSettings();
+  const brand = brandDisplayName(site.platformName);
+
+  return {
+    title: {
+      default: `${brand} — Fandom Marketplace | Collectables & Merchandise`,
+      template: `%s | ${brand}`,
+    },
+    description: `${brand} marketplace: wizarding-world collectibles, multi-franchise fandom merch, and gifts from trusted US vendors — one checkout, tracked delivery.`,
+    keywords: ['Harry Potter', 'merchandise', 'collectibles', 'magical', 'fandoms', 'spells', 'marketplace'],
+    authors: [{ name: brand }],
+    creator: brand,
+    metadataBase: new URL(getSiteUrl()),
+    icons: {
+      icon: [
+        { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
+        { url: '/favicon-192.png', sizes: '192x192', type: 'image/png' },
+      ],
+      shortcut: '/favicon.ico',
+      apple: '/apple-touch-icon.png',
+    },
+    openGraph: {
+      type: 'website',
+      locale: 'en_US',
+      siteName: brand,
+      title: `${brand} - Magical Marketplace`,
+      description: 'Discover magical merchandise, collectibles, and enchanted items from your favorite fandoms.',
+      images: [{ url: '/og-image.png', width: 1200, height: 630, alt: `${brand} Marketplace` }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${brand} - Magical Marketplace`,
+      description: 'Discover magical merchandise and collectibles.',
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large', 'max-snippet': -1 },
+    },
+    verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+      ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+      : undefined,
+  };
+}
 
 export default function RootLayout({
   children,
@@ -99,6 +107,7 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProviderWrapper>
             <CurrencyProvider>
+              <SiteSettingsProvider>
               <CartProvider>
                 <ThemeProviderWrapper>
                   <Suspense fallback={null}>
@@ -114,6 +123,7 @@ export default function RootLayout({
                   <Toaster />
                 </ThemeProviderWrapper>
               </CartProvider>
+              </SiteSettingsProvider>
             </CurrencyProvider>
           </AuthProviderWrapper>
         </QueryProvider>

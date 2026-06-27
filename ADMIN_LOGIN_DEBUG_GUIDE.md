@@ -29,13 +29,13 @@ The favicon 404 is harmless. Look for:
 ### Step 3: Verify Admin Credentials
 **Expected Credentials:**
 - Email: `app@houseofspells.co.uk`
-- Password: `Admin123`
+- Password: ``$SEED_ADMIN_PASSWORD` (env)`
 
 **Test API Directly:**
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
 ```
 
 ### Step 4: Check Console Logs
@@ -135,7 +135,7 @@ fetch('https://hos-marketplaceapi-production.up.railway.app/api/auth/login', {
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     email: 'app@houseofspells.co.uk',
-    password: 'Admin123'
+    password: '`$SEED_ADMIN_PASSWORD` (env)'
   })
 })
 .then(r => r.json())

@@ -3,7 +3,7 @@
 ## Issues Resolved
 
 ### Issue 1: Password Hash Mismatch ✅
-- **Problem**: Password hash stored didn't match "Test123!"
+- **Problem**: Password hash stored didn't match "`$TEST_SEED_PASSWORD` (env)"
 - **Solution**: Updated `create-team-users.controller.ts` to generate password hash at runtime using bcrypt
 - **Commit**: `b007174`
 
@@ -30,7 +30,7 @@
 
 ## Test Credentials
 
-**All users use password**: `Test123!`
+**All users use password**: ``$TEST_SEED_PASSWORD` (env)`
 
 1. ✅ `admin@hos.test` - ADMIN
 2. ⏳ `procurement@hos.test` - PROCUREMENT

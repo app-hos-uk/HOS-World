@@ -3,7 +3,7 @@
 ## ✅ Status: Admin User is Now Functional!
 
 **Update Successful:**
-- ✅ Password hash: Correctly set to `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- ✅ Password hash: Correctly set to `[bcrypt-hash-redacted]`
 - ✅ Role: `ADMIN`
 - ✅ Name: Super Admin
 - ✅ Email: `app@houseofspells.co.uk`
@@ -15,7 +15,7 @@
 | Field | Value |
 |-------|-------|
 | **Email** | `app@houseofspells.co.uk` |
-| **Password** | `Admin123` |
+| **Password** | ``$SEED_ADMIN_PASSWORD` (env)` |
 | **Role** | `ADMIN` |
 | **Name** | Super Admin |
 
@@ -37,7 +37,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
   -H "Content-Type: application/json" \
   -d '{
     "email": "app@houseofspells.co.uk",
-    "password": "Admin123"
+    "password": "`$SEED_ADMIN_PASSWORD` (env)"
   }'
 ```
 
@@ -75,7 +75,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
 
 **Step 2: Enter Credentials**
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 
 **Step 3: Click "Login" Button**
 
@@ -101,7 +101,7 @@ Content-Type: application/json
 ```json
 {
   "email": "app@houseofspells.co.uk",
-  "password": "Admin123"
+  "password": "`$SEED_ADMIN_PASSWORD` (env)"
 }
 ```
 
@@ -160,7 +160,7 @@ With `ADMIN` role, you can:
 
 ### ⚠️ Important: Change Password
 
-The default password `Admin123` is **not secure** for production:
+The default password ``$SEED_ADMIN_PASSWORD` (env)` is **not secure** for production:
 
 1. **Login immediately** after first use
 2. **Change password** to a strong password:
@@ -176,7 +176,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/chang
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "currentPassword": "Admin123",
+    "currentPassword": "`$SEED_ADMIN_PASSWORD` (env)",
     "newPassword": "YourNewStrongPassword123!"
   }'
 ```
@@ -188,7 +188,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/chang
 ### Issue: Still Getting 401 Unauthorized
 
 **Check:**
-1. ✅ Password is exactly `Admin123` (case-sensitive)
+1. ✅ Password is exactly ``$SEED_ADMIN_PASSWORD` (env)` (case-sensitive)
 2. ✅ Email is exactly `app@houseofspells.co.uk`
 3. ✅ No extra spaces in credentials
 4. ✅ API endpoint is correct

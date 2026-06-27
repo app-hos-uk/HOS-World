@@ -12,7 +12,7 @@ When creating a new admin user in Railway Dashboard → PostgreSQL → Data → 
 |-------|-------|-------|
 | **id** | *(leave empty)* | Will auto-generate UUID |
 | **email** | `app@houseofspells.co.uk` | Must be unique |
-| **password** | `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` | Exact hash, 60 characters, starts with `$2b$10$` |
+| **password** | `[bcrypt-hash-redacted]` | Exact hash, 60 characters, starts with `$2b$10$` |
 | **role** | `ADMIN` | Must be exactly `ADMIN` (all caps, no quotes) |
 | **firstName** | `Super` | |
 | **lastName** | `Admin` | |
@@ -50,7 +50,7 @@ When creating a new admin user in Railway Dashboard → PostgreSQL → Data → 
 **password:**
 - Copy and paste exactly (no spaces):
   ```
-  $2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+  [bcrypt-hash-redacted]
   ```
 
 **firstName:**
@@ -96,7 +96,7 @@ When creating a new admin user in Railway Dashboard → PostgreSQL → Data → 
 ```
 id: [EMPTY - auto-generates]
 email: app@houseofspells.co.uk
-password: $2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+password: [bcrypt-hash-redacted]
 firstName: Super
 lastName: Admin
 phone: [EMPTY or null]
@@ -115,7 +115,7 @@ cartId: [EMPTY or null]
 
 **Password Hash (Copy Exactly):**
 ```
-$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+[bcrypt-hash-redacted]
 ```
 
 **Role (Must be exact):**
@@ -142,7 +142,7 @@ ADMIN
    ```bash
    curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
      -H "Content-Type: application/json" \
-     -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+     -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
    ```
 
 ---
@@ -156,7 +156,7 @@ app@houseofspells.co.uk
 
 **Password Hash:**
 ```
-$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+[bcrypt-hash-redacted]
 ```
 
 **First Name:**

@@ -2,7 +2,7 @@
 
 ## Test Users Created
 
-All users have password: `Test123!`
+All users have password: ``$TEST_SEED_PASSWORD` (env)`
 
 ### Team Role Users:
 1. **admin@hos.test** - ADMIN
@@ -33,7 +33,7 @@ For each user role:
 
 #### 2.1 ADMIN User
 - [ ] Navigate to `/login`
-- [ ] Enter: `admin@hos.test` / `Test123!`
+- [ ] Enter: `admin@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - [ ] Submit login
 - [ ] Verify redirect to `/admin/dashboard`
 - [ ] Verify dashboard displays admin-specific data
@@ -42,7 +42,7 @@ For each user role:
 
 #### 2.2 PROCUREMENT User
 - [ ] Navigate to `/login`
-- [ ] Enter: `procurement@hos.test` / `Test123!`
+- [ ] Enter: `procurement@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - [ ] Submit login
 - [ ] Verify redirect to `/procurement/dashboard`
 - [ ] Verify dashboard displays procurement-specific data
@@ -50,35 +50,35 @@ For each user role:
 
 #### 2.3 FULFILLMENT User
 - [ ] Navigate to `/login`
-- [ ] Enter: `fulfillment@hos.test` / `Test123!`
+- [ ] Enter: `fulfillment@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - [ ] Submit login
 - [ ] Verify redirect to `/fulfillment/dashboard`
 - [ ] Verify dashboard displays fulfillment-specific data
 
 #### 2.4 CATALOG User
 - [ ] Navigate to `/login`
-- [ ] Enter: `catalog@hos.test` / `Test123!`
+- [ ] Enter: `catalog@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - [ ] Submit login
 - [ ] Verify redirect to `/catalog/dashboard`
 - [ ] Verify dashboard displays catalog-specific data
 
 #### 2.5 MARKETING User
 - [ ] Navigate to `/login`
-- [ ] Enter: `marketing@hos.test` / `Test123!`
+- [ ] Enter: `marketing@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - [ ] Submit login
 - [ ] Verify redirect to `/marketing/dashboard`
 - [ ] Verify dashboard displays marketing-specific data
 
 #### 2.6 FINANCE User
 - [ ] Navigate to `/login`
-- [ ] Enter: `finance@hos.test` / `Test123!`
+- [ ] Enter: `finance@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - [ ] Submit login
 - [ ] Verify redirect to `/finance/dashboard`
 - [ ] Verify dashboard displays finance-specific data
 
 #### 2.7 CMS_EDITOR User
 - [ ] Navigate to `/login`
-- [ ] Enter: `cms@hos.test` / `Test123!`
+- [ ] Enter: `cms@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - [ ] Submit login
 - [ ] Verify redirect to appropriate dashboard (or home)
 - [ ] Verify access permissions

@@ -90,7 +90,7 @@ Successfully created via API:
 
 ## 📋 Test Users
 
-**Password for all: `Test123!`**
+**Password for all: ``$TEST_SEED_PASSWORD` (env)`**
 
 | Email | Status | Role |
 |-------|--------|------|

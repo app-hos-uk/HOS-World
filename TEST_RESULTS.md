@@ -26,7 +26,7 @@ Started: Browser Automation Testing
 1. ✅ Navigated to homepage
 2. ✅ Clicked Login link
 3. ✅ Entered email: `admin@hos.test`
-4. ✅ Entered password: `Test123!`
+4. ✅ Entered password: ``$TEST_SEED_PASSWORD` (env)`
 5. ✅ Clicked Login button
 
 ### Result:

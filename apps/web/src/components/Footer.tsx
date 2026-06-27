@@ -5,14 +5,14 @@ import { useMemo, useState } from 'react';
 import { apiClient } from '@/lib/api';
 import { BrandLogo } from '@/components/BrandLogo';
 import {
-  FOOTER_ABOUT,
-  FOOTER_CONTACT,
   FOOTER_POLICY_LINKS,
   FOOTER_SHOP_LINKS,
   SOCIAL_LINKS,
   resolveSocialHref,
   type SocialPlatform,
 } from '@/lib/storefrontNavigation';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
+import { brandDisplayName } from '@/lib/siteSettingsDefaults';
 
 type SocialEntry = { platform: SocialPlatform; label: string; ariaLabel: string; href: string };
 
@@ -76,7 +76,7 @@ function FooterNavColumn({
   );
 }
 
-function FooterNewsletter() {
+function FooterNewsletter({ brandName }: { brandName: string }) {
   const [email, setEmail] = useState('');
   const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -146,7 +146,7 @@ function FooterNewsletter() {
               className="mt-0.5 accent-hos-gold w-4 h-4 shrink-0"
             />
             <span className="text-hos-text-muted text-xs leading-snug">
-              I agree to receive marketing communications from House of Spells.
+              I agree to receive marketing communications from {brandName}.
             </span>
           </label>
 
@@ -160,10 +160,22 @@ function FooterNewsletter() {
 }
 
 export function Footer() {
+  const site = useSiteSettings();
+  const brandName = brandDisplayName(site.platformName);
+
   const socialEntries = useMemo(() => {
+    const settingsHref: Record<SocialPlatform, string> = {
+      facebook: site.socialFacebookUrl,
+      instagram: site.socialInstagramUrl,
+      x: site.socialXUrl,
+    };
     const out: SocialEntry[] = [];
     for (const social of SOCIAL_LINKS) {
-      const href = resolveSocialHref(social.envKey, social.fallbackEnvKey, social.defaultHref);
+      const fromSettings = settingsHref[social.platform]?.trim();
+      const href =
+        fromSettings && /^https?:\/\/.+/i.test(fromSettings)
+          ? fromSettings
+          : resolveSocialHref(social.envKey, social.fallbackEnvKey, social.defaultHref);
       if (href) {
         out.push({
           platform: social.platform,
@@ -174,9 +186,9 @@ export function Footer() {
       }
     }
     return out;
-  }, []);
+  }, [site.socialFacebookUrl, site.socialInstagramUrl, site.socialXUrl]);
 
-  const phoneHref = FOOTER_CONTACT.phone.replace(/[^\d+]/g, '');
+  const phoneHref = site.contactPhone.replace(/[^\d+]/g, '');
 
   return (
     <footer className="w-full bg-hos-bg border-t border-hos-border" role="contentinfo">
@@ -185,7 +197,7 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-10 lg:gap-x-14 items-start [&>div]:min-w-0">
           <div className="flex flex-col">
             <BrandLogo variant="stacked" linked href="/shop" />
-            <p className="text-hos-text-muted text-[13px] leading-relaxed mt-4">{FOOTER_ABOUT}</p>
+            <p className="text-hos-text-muted text-[13px] leading-relaxed mt-4">{site.footerAbout}</p>
 
             <div className="flex flex-wrap gap-3 mt-4 text-hos-text-muted">
               {socialEntries.map(({ platform, ariaLabel, href, label }) => (
@@ -216,13 +228,13 @@ export function Footer() {
             links={FOOTER_POLICY_LINKS}
           />
 
-          <FooterNewsletter />
+          <FooterNewsletter brandName={brandName} />
         </div>
 
         {/* Row 2: contact details in a single line */}
         <div className="border-t border-hos-border mt-10 pt-6">
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-hos-text-muted text-[13px] text-center">
-            <span>{FOOTER_CONTACT.address}</span>
+            <span>{site.contactAddress}</span>
             <span className="hidden sm:inline text-hos-border" aria-hidden>
               |
             </span>
@@ -230,16 +242,16 @@ export function Footer() {
               href={`tel:${phoneHref}`}
               className="hover:text-hos-gold transition-colors duration-200"
             >
-              {FOOTER_CONTACT.phone}
+              {site.contactPhone}
             </a>
             <span className="hidden sm:inline text-hos-border" aria-hidden>
               |
             </span>
             <a
-              href={`mailto:${FOOTER_CONTACT.email}`}
+              href={`mailto:${site.contactEmail}`}
               className="hover:text-hos-gold transition-colors duration-200"
             >
-              {FOOTER_CONTACT.email}
+              {site.contactEmail}
             </a>
           </div>
         </div>
@@ -247,7 +259,7 @@ export function Footer() {
         {/* Subfooter */}
         <div className="border-t border-hos-border mt-6 pt-5">
           <p className="text-hos-text-muted text-[11px] text-center">
-            © {new Date().getFullYear()} House of Spells. All rights reserved.
+            © {new Date().getFullYear()} {brandName}. All rights reserved.
           </p>
         </div>
       </div>

@@ -50,49 +50,49 @@ For each user, click "User" model → "Add record" → Fill in:
 
 **User 1: ADMIN**
 - email: `admin@hos.test`
-- password: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- password: `[bcrypt-hash-redacted]`
 - firstName: `Admin`
 - lastName: `User`
 - role: `ADMIN` (UPPERCASE)
 
 **User 2: PROCUREMENT**
 - email: `procurement@hos.test`
-- password: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- password: `[bcrypt-hash-redacted]`
 - firstName: `Procurement`
 - lastName: `Manager`
 - role: `PROCUREMENT`
 
 **User 3: FULFILLMENT**
 - email: `fulfillment@hos.test`
-- password: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- password: `[bcrypt-hash-redacted]`
 - firstName: `Fulfillment`
 - lastName: `Staff`
 - role: `FULFILLMENT`
 
 **User 4: CATALOG**
 - email: `catalog@hos.test`
-- password: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- password: `[bcrypt-hash-redacted]`
 - firstName: `Catalog`
 - lastName: `Editor`
 - role: `CATALOG`
 
 **User 5: MARKETING**
 - email: `marketing@hos.test`
-- password: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- password: `[bcrypt-hash-redacted]`
 - firstName: `Marketing`
 - lastName: `Manager`
 - role: `MARKETING`
 
 **User 6: FINANCE**
 - email: `finance@hos.test`
-- password: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- password: `[bcrypt-hash-redacted]`
 - firstName: `Finance`
 - lastName: `Manager`
 - role: `FINANCE`
 
 **User 7: CMS_EDITOR**
 - email: `cms@hos.test`
-- password: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- password: `[bcrypt-hash-redacted]`
 - firstName: `CMS`
 - lastName: `Editor`
 - role: `CMS_EDITOR`
@@ -139,7 +139,7 @@ psql "$DATABASE_URL" -f scripts/create-team-role-users.sql
 
 ## 📋 Quick Reference: Password Hash
 
-**For all users:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+**For all users:** `[bcrypt-hash-redacted]`
 
-**Password:** `Test123!`
+**Password:** ``$TEST_SEED_PASSWORD` (env)`
 

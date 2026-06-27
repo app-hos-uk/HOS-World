@@ -12,7 +12,7 @@ This guide will walk you through testing the deployed House of Spells Marketplac
 - [ ] Backend API URL is accessible
 - [ ] Admin credentials ready:
   - Email: `app@houseofspells.co.uk`
-  - Password: `Admin123`
+  - Password: ``$SEED_ADMIN_PASSWORD` (env)`
 
 ---
 
@@ -41,7 +41,7 @@ Open the URL in your browser to start testing.
 
 2. **Enter Credentials**
    - Email: `app@houseofspells.co.uk`
-   - Password: `Admin123`
+   - Password: ``$SEED_ADMIN_PASSWORD` (env)`
 
 3. **Click Login**
    - Should redirect to dashboard or home page

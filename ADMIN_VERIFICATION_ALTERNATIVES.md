@@ -55,7 +55,7 @@ The Railway CLI verification script encountered a database connection issue. Her
      -H "Content-Type: application/json" \
      -d '{
        "email": "app@houseofspells.co.uk",
-       "password": "Admin123"
+       "password": "`$SEED_ADMIN_PASSWORD` (env)"
      }'
    ```
 
@@ -132,7 +132,7 @@ INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdA
 VALUES (
   gen_random_uuid(),
   'app@houseofspells.co.uk',
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  '[bcrypt-hash-redacted]',
   'Super',
   'Admin',
   'ADMIN',
@@ -142,7 +142,7 @@ VALUES (
 ON CONFLICT (email) 
 DO UPDATE SET 
   role = 'ADMIN',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+  password = '[bcrypt-hash-redacted]';
 ```
 
 ---
@@ -150,10 +150,10 @@ DO UPDATE SET
 ## 📋 Admin User Details
 
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 - **Role:** `ADMIN`
 - **Name:** Super Admin
-- **Password Hash:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- **Password Hash:** `[bcrypt-hash-redacted]`
 
 ---
 

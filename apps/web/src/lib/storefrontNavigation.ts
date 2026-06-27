@@ -32,7 +32,7 @@ export function expandDepartmentCategories(slugs: string[]): string[] {
   return [...expanded];
 }
 
-/** Primary storefront nav — shared by header and footer */
+/** Primary storefront nav — shared by header and footer (structure is static; labels editable here). */
 export const STOREFRONT_NAV_LINKS: NavLink[] = [
   { label: 'Deals of the day', href: '/products?sortBy=price_asc' },
   { label: 'Blog', href: '/blog' },
@@ -65,16 +65,8 @@ export const FOOTER_POLICY_LINKS: NavLink[] = [
   { label: 'FAQs', href: '/help#faqs' },
 ];
 
+/** @deprecated Contact details come from admin site settings / GET /config/site — see siteSettingsDefaults.ts */
 export const FOOTER_CONTACT_EMAIL = 'info@houseofspells.com';
-
-export const FOOTER_CONTACT = {
-  address: '123 Broadway, New York, NY 10007',
-  phone: process.env.NEXT_PUBLIC_FOOTER_PHONE?.trim() || '+1 (212) 555-0100',
-  email: FOOTER_CONTACT_EMAIL,
-} as const;
-
-export const FOOTER_ABOUT =
-  'An immersive fandom experience — franchises, collectibles, and unforgettable finds online and in our stores.';
 
 export type SocialPlatform = 'facebook' | 'instagram' | 'x';
 

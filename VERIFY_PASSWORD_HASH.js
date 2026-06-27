@@ -1,29 +1,26 @@
-// Quick script to verify password hash
+/**
+ * Verify a bcrypt hash against SEED_ADMIN_PASSWORD (dev utility).
+ * Usage: SEED_ADMIN_PASSWORD='your-password' node VERIFY_PASSWORD_HASH.js [hash]
+ */
 const bcrypt = require('bcrypt');
 
-const password = 'Admin123';
-const correctHash = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
-
-async function verify() {
-  console.log('🔍 Verifying password hash...\n');
-  console.log('Password:', password);
-  console.log('Correct Hash:', correctHash);
-  console.log('Hash Length:', correctHash.length, 'characters\n');
-  
-  const isValid = await bcrypt.compare(password, correctHash);
-  console.log('✅ Hash verification:', isValid ? 'PASSED' : 'FAILED');
-  
-  if (isValid) {
-    console.log('\n✅ The password hash is CORRECT!');
-    console.log('If login still fails, check:');
-    console.log('1. Did you save the changes in Railway?');
-    console.log('2. Is the hash in database exactly this (no extra spaces)?');
-    console.log('3. Wait a few seconds and try login again (cache might need to clear)');
-  } else {
-    console.log('\n❌ The password hash is INCORRECT!');
-    console.log('Please update the password field in Railway with the hash above.');
+async function main() {
+  const password = process.env.SEED_ADMIN_PASSWORD?.trim();
+  if (!password) {
+    console.error('Set SEED_ADMIN_PASSWORD env var to verify.');
+    process.exit(1);
   }
+  const hash = process.argv[2]?.trim();
+  if (!hash) {
+    console.error('Usage: SEED_ADMIN_PASSWORD=... node VERIFY_PASSWORD_HASH.js <bcrypt-hash>');
+    process.exit(1);
+  }
+  const ok = await bcrypt.compare(password, hash);
+  console.log(ok ? '✅ Password matches hash' : '❌ Password does not match hash');
+  process.exit(ok ? 0 : 1);
 }
 
-verify().catch(console.error);
-
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

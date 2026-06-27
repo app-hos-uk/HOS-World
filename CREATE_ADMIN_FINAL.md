@@ -11,7 +11,7 @@ Fill in these **exact** values:
 
 1. **id:** `1c069d31-7026-47ba-a447-e8faeee08f95` (or generate new UUID)
 2. **email:** `app@houseofspells.co.uk`
-3. **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+3. **password:** `[bcrypt-hash-redacted]`
 4. **firstName:** `Super`
 5. **lastName:** `Admin`
 6. **role:** `ADMIN` (type exactly `ADMIN` in all caps, no quotes)
@@ -52,7 +52,7 @@ INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdA
 VALUES (
   gen_random_uuid(),
   'app@houseofspells.co.uk',
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  '[bcrypt-hash-redacted]',
   'Super',
   'Admin',
   'ADMIN',
@@ -62,7 +62,7 @@ VALUES (
 ON CONFLICT (email) 
 DO UPDATE SET 
   role = 'ADMIN',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '[bcrypt-hash-redacted]',
   "updatedAt" = NOW();
 ```
 

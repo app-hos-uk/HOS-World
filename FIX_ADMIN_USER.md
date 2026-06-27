@@ -32,7 +32,7 @@ WHERE email = 'app@houseofspells.co.uk';
 UPDATE users
 SET 
   role = 'ADMIN',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '[bcrypt-hash-redacted]',
   "firstName" = COALESCE("firstName", 'Super'),
   "lastName" = COALESCE("lastName", 'Admin'),
   "updatedAt" = NOW()
@@ -46,7 +46,7 @@ WHERE email = 'app@houseofspells.co.uk';
 
 ### What This Does:
 - ✅ Sets `role` to `ADMIN` (required for admin access)
-- ✅ Sets correct password hash for `Admin123`
+- ✅ Sets correct password hash for ``$SEED_ADMIN_PASSWORD` (env)`
 - ✅ Sets `firstName` to `Super` if missing
 - ✅ Sets `lastName` to `Admin` if missing
 - ✅ Updates `updatedAt` timestamp
@@ -61,7 +61,7 @@ If the user is missing `createdAt` or other fields:
 UPDATE users
 SET 
   role = 'ADMIN',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '[bcrypt-hash-redacted]',
   "firstName" = COALESCE("firstName", 'Super'),
   "lastName" = COALESCE("lastName", 'Admin'),
   "createdAt" = COALESCE("createdAt", NOW()),
@@ -93,7 +93,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
   -H "Content-Type: application/json" \
   -d '{
     "email": "app@houseofspells.co.uk",
-    "password": "Admin123"
+    "password": "`$SEED_ADMIN_PASSWORD` (env)"
   }'
 ```
 
@@ -107,10 +107,10 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
 ## 📋 Admin User Details
 
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 - **Role:** `ADMIN` (must be exactly this)
 - **Name:** Super Admin
-- **Password Hash:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- **Password Hash:** `[bcrypt-hash-redacted]`
 
 ---
 
@@ -120,7 +120,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
 **Fix:** Run the UPDATE SQL above to set `role = 'ADMIN'`
 
 ### Issue 2: Password Hash is Wrong
-**Fix:** The UPDATE SQL sets the correct hash for `Admin123`
+**Fix:** The UPDATE SQL sets the correct hash for ``$SEED_ADMIN_PASSWORD` (env)`
 
 ### Issue 3: Missing Timestamps
 **Fix:** The UPDATE SQL sets `updatedAt = NOW()` and uses `COALESCE` for `createdAt`
@@ -142,7 +142,7 @@ Copy and paste this into Railway's SQL Query tab:
 UPDATE users
 SET 
   role = 'ADMIN',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '[bcrypt-hash-redacted]',
   "firstName" = COALESCE("firstName", 'Super'),
   "lastName" = COALESCE("lastName", 'Admin'),
   "updatedAt" = NOW()

@@ -1,50 +1,55 @@
 /**
  * Browser Automation Test Script for Login Flow
  * Tests all team role users and dashboard access
- * 
- * To run: This will be executed via browser automation tools
+ *
+ * Requires TEST_SEED_PASSWORD env var (same as API seed scripts).
  */
+
+const testPassword = process.env.TEST_SEED_PASSWORD?.trim();
+if (!testPassword) {
+  throw new Error('Set TEST_SEED_PASSWORD env var before running login automation tests.');
+}
 
 const testUsers = [
   {
     email: 'admin@hos.test',
-    password: 'Test123!',
+    password: testPassword,
     role: 'ADMIN',
     expectedDashboard: '/admin/dashboard',
   },
   {
     email: 'procurement@hos.test',
-    password: 'Test123!',
+    password: testPassword,
     role: 'PROCUREMENT',
     expectedDashboard: '/procurement/dashboard',
   },
   {
     email: 'fulfillment@hos.test',
-    password: 'Test123!',
+    password: testPassword,
     role: 'FULFILLMENT',
     expectedDashboard: '/fulfillment/dashboard',
   },
   {
     email: 'catalog@hos.test',
-    password: 'Test123!',
+    password: testPassword,
     role: 'CATALOG',
     expectedDashboard: '/catalog/dashboard',
   },
   {
     email: 'marketing@hos.test',
-    password: 'Test123!',
+    password: testPassword,
     role: 'MARKETING',
     expectedDashboard: '/marketing/dashboard',
   },
   {
     email: 'finance@hos.test',
-    password: 'Test123!',
+    password: testPassword,
     role: 'FINANCE',
     expectedDashboard: '/finance/dashboard',
   },
   {
     email: 'cms@hos.test',
-    password: 'Test123!',
+    password: testPassword,
     role: 'CMS_EDITOR',
     expectedDashboard: '/',
   },
@@ -56,4 +61,3 @@ module.exports = {
   testUsers,
   baseUrl,
 };
-

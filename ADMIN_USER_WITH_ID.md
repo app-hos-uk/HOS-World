@@ -12,7 +12,7 @@ The `id` field cannot be null. You need to provide a UUID value.
 |-------|-------|
 | **id** | `1c069d31-7026-47ba-a447-e8faeee08f95` *(or generate new UUID)* |
 | **email** | `app@houseofspells.co.uk` |
-| **password** | `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` |
+| **password** | `[bcrypt-hash-redacted]` |
 | **firstName** | `Super` |
 | **lastName** | `Admin` |
 | **phone** | *(leave empty or `null`)* |
@@ -63,7 +63,7 @@ The `id` field cannot be null. You need to provide a UUID value.
 **password:**
 - Copy exactly (no spaces):
   ```
-  $2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+  [bcrypt-hash-redacted]
   ```
 
 **firstName:**
@@ -116,7 +116,7 @@ app@houseofspells.co.uk
 
 **Password Hash:**
 ```
-$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+[bcrypt-hash-redacted]
 ```
 
 **First Name:**
@@ -155,7 +155,7 @@ ADMIN
    ```bash
    curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
      -H "Content-Type: application/json" \
-     -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+     -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
    ```
 
 ---

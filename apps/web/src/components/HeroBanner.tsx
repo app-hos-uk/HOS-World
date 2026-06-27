@@ -8,7 +8,7 @@ import { REFERENCE_ASSETS } from '@/lib/referenceAssets';
 interface HeroSlide {
   id: number;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   description?: string;
   image: string;
   link: string;
@@ -42,38 +42,7 @@ const TRUST_STRIP_ITEMS = [
   },
 ];
 
-const defaultSlides: HeroSlide[] = [
-  {
-    id: 1,
-    title: 'Welcome to the Magical World',
-    subtitle: 'House of Spells',
-    description: 'Discover authentic wands, collectibles, and magical items from your favorite fandoms',
-    image: HERO_FALLBACK_IMAGE,
-    link: '/fandoms/harry-potter',
-    buttonText: 'Explore Harry Potter',
-    fandom: 'Harry Potter',
-  },
-  {
-    id: 2,
-    title: 'Journey to Middle-earth',
-    subtitle: 'Lord of the Rings',
-    description: 'Authentic replicas and collectibles from the epic fantasy world',
-    image: HERO_FALLBACK_IMAGE,
-    link: '/fandoms/lord-of-the-rings',
-    buttonText: 'Discover Middle-earth',
-    fandom: 'Lord of the Rings',
-  },
-  {
-    id: 3,
-    title: 'Enter the Game of Thrones',
-    subtitle: 'Westeros Collection',
-    description: 'Premium collectibles and merchandise from the Seven Kingdoms',
-    image: HERO_FALLBACK_IMAGE,
-    link: '/fandoms/game-of-thrones',
-    buttonText: 'Enter Westeros',
-    fandom: 'Game of Thrones',
-  },
-];
+const defaultSlides: HeroSlide[] = [];
 
 export function HeroBanner({
   slides = defaultSlides,
@@ -83,6 +52,8 @@ export function HeroBanner({
   showIndicators = true,
   showArrows = true,
 }: HeroBannerProps) {
+  const activeSlides = slides ?? defaultSlides;
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -121,22 +92,22 @@ export function HeroBanner({
       setCurrentSlide((prev) => {
         setIsAnimating(true);
         schedule(() => setIsAnimating(false), 300);
-        return (prev + 1) % slides.length;
+        return (prev + 1) % activeSlides.length;
       });
     }, autoPlayInterval);
 
     return () => clearInterval(interval);
-  }, [autoPlay, autoPlayInterval, slides.length, schedule, isPaused, prefersReducedMotion]);
+  }, [autoPlay, autoPlayInterval, activeSlides.length, schedule, isPaused, prefersReducedMotion]);
 
   const nextSlide = () => {
     setIsAnimating(true);
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    setCurrentSlide((prev) => (prev + 1) % activeSlides.length);
     schedule(() => setIsAnimating(false), 300);
   };
 
   const prevSlide = () => {
     setIsAnimating(true);
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+    setCurrentSlide((prev) => (prev - 1 + activeSlides.length) % activeSlides.length);
     schedule(() => setIsAnimating(false), 300);
   };
 
@@ -160,7 +131,11 @@ export function HeroBanner({
     }
   };
 
-  const currentSlideData = slides[currentSlide];
+  const currentSlideData = activeSlides[currentSlide];
+
+  if (activeSlides.length === 0) {
+    return null;
+  }
   const heroBackgroundImage = currentSlideData.image || HERO_FALLBACK_IMAGE;
 
   return (
@@ -187,9 +162,11 @@ export function HeroBanner({
             aria-live="polite"
             aria-atomic="true"
           >
-            <p className="text-hos-gold text-xs tracking-[0.2em] uppercase font-ui font-semibold mb-3">
-              {currentSlideData.subtitle}
-            </p>
+            {currentSlideData.subtitle && (
+              <p className="text-hos-gold text-xs tracking-[0.2em] uppercase font-ui font-semibold mb-3">
+                {currentSlideData.subtitle}
+              </p>
+            )}
 
             <h1 className="font-display text-hos-gold-hover text-4xl md:text-5xl leading-tight mb-4 drop-shadow-[0_2px_24px_rgba(0,0,0,0.6)]">
               {currentSlideData.title}
@@ -242,7 +219,7 @@ export function HeroBanner({
         {showIndicators && (
           <div className="absolute bottom-5 left-0 right-0 z-20 flex justify-center pointer-events-none">
             <div className="flex gap-2 pointer-events-auto" role="tablist" aria-label="Hero slides">
-              {slides.map((slide, index) => (
+              {activeSlides.map((slide, index) => (
                 <button
                   key={slide.id}
                   type="button"

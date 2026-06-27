@@ -74,12 +74,12 @@ railway run pnpm db:studio
 
 Run this to generate the hash:
 ```bash
-node -e "const bcrypt = require('bcrypt'); bcrypt.hash('Admin123', 10).then(hash => console.log(hash))"
+node -e "const bcrypt = require('bcrypt'); bcrypt.hash('`$SEED_ADMIN_PASSWORD` (env)', 10).then(hash => console.log(hash))"
 ```
 
 Or use this pre-generated hash:
 ```
-$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+[bcrypt-hash-redacted]
 ```
 
 ---
@@ -93,7 +93,7 @@ curl -X POST https://your-api-url.railway.app/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "app@houseofspells.co.uk",
-    "password": "Admin123",
+    "password": "`$SEED_ADMIN_PASSWORD` (env)",
     "firstName": "Super",
     "lastName": "Admin",
     "role": "admin"
@@ -110,13 +110,13 @@ If you have database access:
 
 ```sql
 -- First, generate password hash using Node.js:
--- node -e "const bcrypt = require('bcrypt'); bcrypt.hash('Admin123', 10).then(hash => console.log(hash))"
+-- node -e "const bcrypt = require('bcrypt'); bcrypt.hash('`$SEED_ADMIN_PASSWORD` (env)', 10).then(hash => console.log(hash))"
 
 INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdAt", "updatedAt")
 VALUES (
   gen_random_uuid(),
   'app@houseofspells.co.uk',
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  '[bcrypt-hash-redacted]',
   'Super',
   'Admin',
   'ADMIN',
@@ -126,7 +126,7 @@ VALUES (
 ON CONFLICT (email) 
 DO UPDATE SET 
   role = 'ADMIN',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+  password = '[bcrypt-hash-redacted]';
 ```
 
 ---
@@ -134,13 +134,13 @@ DO UPDATE SET
 ## ✅ Admin User Details
 
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 - **Role:** `ADMIN`
 - **Name:** Super Admin
 
 **Password Hash (bcrypt, 10 rounds):**
 ```
-$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+[bcrypt-hash-redacted]
 ```
 
 ---
@@ -154,7 +154,7 @@ curl -X POST https://your-api-url.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "app@houseofspells.co.uk",
-    "password": "Admin123"
+    "password": "`$SEED_ADMIN_PASSWORD` (env)"
   }'
 ```
 
@@ -180,9 +180,9 @@ curl -X POST https://your-api-url.railway.app/api/auth/login \
 2. Or use Prisma Studio: `railway run pnpm db:studio`
 3. Or use the pre-generated hash in SQL
 
-**Password Hash for "Admin123":**
+**Password Hash for "`$SEED_ADMIN_PASSWORD` (env)":**
 ```
-$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+[bcrypt-hash-redacted]
 ```
 
 ---

@@ -74,17 +74,17 @@ All RBAC (Role-Based Access Control) features have been successfully implemented
 
 1. **CUSTOMER**
    - Email: `customer@hos.test`
-   - Password: `Test123!`
+   - Password: ``$TEST_SEED_PASSWORD` (env)`
    - Status: ✅ Created successfully
 
 2. **WHOLESALER**
    - Email: `wholesaler@hos.test`
-   - Password: `Test123!`
+   - Password: ``$TEST_SEED_PASSWORD` (env)`
    - Status: ✅ Created successfully
 
 3. **B2C_SELLER**
    - Email: `seller@hos.test`
-   - Password: `Test123!`
+   - Password: ``$TEST_SEED_PASSWORD` (env)`
    - Status: ✅ Created successfully
 
 ### ⏳ Need to Create (7 users)
@@ -99,8 +99,8 @@ For team roles, use Prisma Studio or SQL (see `MOCK_USERS_CREATION_GUIDE.md`):
 - `finance@hos.test` - FINANCE
 - `cms@hos.test` - CMS_EDITOR
 
-**Password for all:** `Test123!`  
-**Password hash:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+**Password for all:** ``$TEST_SEED_PASSWORD` (env)`  
+**Password hash:** `[bcrypt-hash-redacted]`
 
 ---
 
@@ -172,7 +172,7 @@ railway run pnpm db:studio
 
 Then create users with:
 - Email: (from table above)
-- Password: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- Password: `[bcrypt-hash-redacted]`
 - Role: UPPERCASE (e.g., `ADMIN`, `PROCUREMENT`)
 
 **Option B: SQL Direct**

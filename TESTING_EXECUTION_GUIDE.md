@@ -24,8 +24,8 @@
 
 ### Test Users
 The test scripts expect these users to exist:
-- **Admin**: `admin@hos.com` / `Test123!`
-- **Customer**: `customer@hos.com` / `Test123!`
+- **Admin**: `admin@hos.com` / ``$TEST_SEED_PASSWORD` (env)`
+- **Customer**: `customer@hos.com` / ``$TEST_SEED_PASSWORD` (env)`
 
 Create them if needed:
 ```bash
@@ -177,7 +177,7 @@ pnpm exec playwright test phase1-phase2-e2e.spec.ts
 # Login
 TOKEN=$(curl -s -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@hos.com","password":"Test123!"}' | \
+  -d '{"email":"admin@hos.com","password":"`$TEST_SEED_PASSWORD` (env)"}' | \
   jq -r '.data.token')
 
 # Create Promotion

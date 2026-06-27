@@ -7,7 +7,7 @@
 
 ## 🔄 Current: Test Login for All Roles
 
-### Team Role Users (Password: `Test123!`)
+### Team Role Users (Password: ``$TEST_SEED_PASSWORD` (env)`)
 
 1. ✅ **Admin** - `admin@hos.test` → `/admin/dashboard`
    - Status: Working

@@ -14,7 +14,7 @@
 ### Step 1: Create Second Warehouse (Required for Transfers)
 
 ```bash
-TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiZTQ3MzA3YS0yYWZjLTRkODMtYjQ0YS1iYTQ3M2YwOTQ1OGIiLCJlbWFpbCI6ImFwcEBob3VzZW9mc3BlbGxzLmNvLnVrIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzY3OTg5NDQ0LCJleHAiOjE3Njc5OTAzNDR9.SG1dSBMfm9fFV5MZwqY8dNKiplV1NVR3S1laeMZqN80"
+TOKEN="[jwt-redacted]"
 
 # Create Manchester Warehouse
 curl -s -X POST http://localhost:3001/api/v1/inventory/warehouses \
@@ -196,14 +196,14 @@ curl -s -X GET "http://localhost:3001/api/v1/inventory/movements?movementType=OU
 - Code: WH-LON-01
 
 **Token:**
-- `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiZTQ3MzA3YS0yYWZjLTRkODMtYjQ0YS1iYTQ3M2YwOTQ1OGIiLCJlbWFpbCI6ImFwcEBob3VzZW9mc3BlbGxzLmNvLnVrIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzY3OTg5NDQ0LCJleHAiOjE3Njc5OTAzNDR9.SG1dSBMfm9fFV5MZwqY8dNKiplV1NVR3S1laeMZqN80`
+- `[jwt-redacted]`
 
 ---
 
 ## Test Admin UI
 
 1. Open browser: `http://localhost:3000`
-2. Login with: `app@houseofspells.co.uk` / `Admin123`
+2. Login with: `app@houseofspells.co.uk` / ``$SEED_ADMIN_PASSWORD` (env)`
 3. Go to `/admin/warehouses` - you should see your London Warehouse
 4. Click "+ Add Warehouse" to create more via UI
 5. Go to `/admin/warehouses/transfers` to manage transfers

@@ -35,7 +35,7 @@
    VALUES (
      gen_random_uuid(),
      'app@houseofspells.co.uk',
-     '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+     '[bcrypt-hash-redacted]',
      'Super',
      'Admin',
      'ADMIN',
@@ -45,7 +45,7 @@
    ON CONFLICT (email) 
    DO UPDATE SET 
      role = 'ADMIN',
-     password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+     password = '[bcrypt-hash-redacted]',
      "updatedAt" = NOW();
    ```
 
@@ -88,7 +88,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
   -H "Content-Type: application/json" \
   -d '{
     "email": "app@houseofspells.co.uk",
-    "password": "Admin123"
+    "password": "`$SEED_ADMIN_PASSWORD` (env)"
   }'
 ```
 
@@ -134,10 +134,10 @@ Even though `railway run` is supposed to execute in Railway's environment, it so
 ## 📋 Admin User Details
 
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 - **Role:** `ADMIN`
 - **Name:** Super Admin
-- **Password Hash:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- **Password Hash:** `[bcrypt-hash-redacted]`
 
 ---
 
@@ -160,12 +160,12 @@ This bypasses all network issues because you're executing SQL directly on the da
    ```bash
    curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
      -H "Content-Type: application/json" \
-     -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+     -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
    ```
 
 2. **Change Password:**
    - Login via frontend or API
-   - Change password from `Admin123` to a strong password
+   - Change password from ``$SEED_ADMIN_PASSWORD` (env)` to a strong password
    - This is important for security!
 
 ---

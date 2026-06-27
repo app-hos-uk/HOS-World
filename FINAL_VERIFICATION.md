@@ -15,7 +15,7 @@
 
 **It should be EXACTLY:**
 ```
-$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+[bcrypt-hash-redacted]
 ```
 
 **Check:**
@@ -73,7 +73,7 @@ $2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
 ```
 
 ---
@@ -102,12 +102,12 @@ If login still fails, try creating a new admin user with a different password:
 1. **Delete existing user** in database
 2. **Create new user** with:
    - Email: `admin@houseofspells.co.uk`
-   - Password: `Test123!`
+   - Password: ``$TEST_SEED_PASSWORD` (env)`
    - Role: `ADMIN`
 
-3. **Generate hash for `Test123!`:**
+3. **Generate hash for ``$TEST_SEED_PASSWORD` (env)`:**
    - Use: https://bcrypt-generator.com/
-   - Or run: `node -e "const bcrypt = require('bcrypt'); bcrypt.hash('Test123!', 10).then(hash => console.log(hash));"`
+   - Or run: `node -e "const bcrypt = require('bcrypt'); bcrypt.hash('`$TEST_SEED_PASSWORD` (env)', 10).then(hash => console.log(hash));"`
 
 4. **Test login with new credentials**
 
@@ -115,7 +115,7 @@ If login still fails, try creating a new admin user with a different password:
 
 ## 📋 Verification Checklist
 
-- [ ] Password hash in database is exactly `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- [ ] Password hash in database is exactly `[bcrypt-hash-redacted]`
 - [ ] Password hash is 60 characters long
 - [ ] Password hash starts with `$2b$10$`
 - [ ] `NEXT_PUBLIC_API_URL` = `https://hos-marketplaceapi-production.up.railway.app/api`

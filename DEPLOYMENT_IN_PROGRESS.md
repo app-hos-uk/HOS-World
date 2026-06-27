@@ -69,7 +69,7 @@ Railway detected your git push and started a new deployment. The build is now ru
 
 3. **Try to Login:**
    - Email: `app@houseofspells.co.uk`
-   - Password: `Admin123`
+   - Password: ``$SEED_ADMIN_PASSWORD` (env)`
    - Click "Login"
 
 4. **Check Console:**

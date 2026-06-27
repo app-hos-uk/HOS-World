@@ -42,7 +42,7 @@ export API_URL="https://hos-marketplaceapi-production.up.railway.app/api"
 # Or manually:
 curl -X POST $API_URL/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email": "customer@hos.test", "password": "Test123!", "firstName": "John", "lastName": "Customer", "role": "customer"}'
+  -d '{"email": "customer@hos.test", "password": "`$TEST_SEED_PASSWORD` (env)", "firstName": "John", "lastName": "Customer", "role": "customer"}'
 ```
 
 **Option B: Use Prisma Studio (For All Roles)**
@@ -53,7 +53,7 @@ railway run pnpm db:studio
 ```
 
 Then create users manually with:
-- Password hash: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` (for "Test123!")
+- Password hash: `[bcrypt-hash-redacted]` (for "`$TEST_SEED_PASSWORD` (env)")
 - Roles in UPPERCASE (e.g., `ADMIN`, `CUSTOMER`, etc.)
 
 **Option C: SQL Direct Insert**
@@ -68,7 +68,7 @@ I'll now execute browser automation tests to verify RBAC works correctly.
 
 ## 📋 Test Users List
 
-**Password for all: `Test123!`**
+**Password for all: ``$TEST_SEED_PASSWORD` (env)`**
 
 | Email | Role | Dashboard |
 |-------|------|-----------|

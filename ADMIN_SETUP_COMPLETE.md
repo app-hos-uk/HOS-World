@@ -9,9 +9,9 @@
 
 ### 1. Admin User Created in Database ✅
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 - **Role:** `ADMIN`
-- **Password Hash:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` ✅
+- **Password Hash:** `[bcrypt-hash-redacted]` ✅
 - **All fields:** Correctly set
 
 ### 2. Frontend Environment Variables Updated ✅
@@ -31,7 +31,7 @@
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
 ```
 
 **Expected Response:**
@@ -57,7 +57,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
 1. Go to: `https://hos-marketplaceweb-production.up.railway.app/login`
 2. Enter credentials:
    - **Email:** `app@houseofspells.co.uk`
-   - **Password:** `Admin123`
+   - **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 3. Click "Login"
 4. Should redirect to dashboard (no CORS errors)
 
@@ -101,7 +101,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
 
 **⚠️ IMPORTANT:** Change the default password after first login:
 
-1. Login with: `Admin123`
+1. Login with: ``$SEED_ADMIN_PASSWORD` (env)`
 2. Navigate to account settings
 3. Change password to a strong password
 4. Use password manager for secure storage
@@ -125,7 +125,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
 
 1. **Test API Login** - Run the curl command above
 2. **Test Frontend Login** - Try logging in via the web interface
-3. **Change Password** - Update from default `Admin123`
+3. **Change Password** - Update from default ``$SEED_ADMIN_PASSWORD` (env)`
 4. **Explore Admin Features** - Test admin-only endpoints
 
 ---

@@ -83,7 +83,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/admin/crea
 - finance@hos.test (FINANCE)
 - cms@hos.test (CMS_EDITOR)
 
-**Password for all:** `Test123!`
+**Password for all:** ``$TEST_SEED_PASSWORD` (env)`
 
 ---
 

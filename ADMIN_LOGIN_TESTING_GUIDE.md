@@ -6,7 +6,7 @@ This guide covers creating, verifying, and testing the super admin user login fu
 ## Super Admin Credentials
 
 **Email:** `app@houseofspells.co.uk`  
-**Password:** `Admin123`  
+**Password:** ``$SEED_ADMIN_PASSWORD` (env)`  
 **Role:** `ADMIN`
 
 ## Step 1: Create/Verify Super Admin User
@@ -29,7 +29,7 @@ This script will:
 - Check if admin user exists
 - Create admin if it doesn't exist
 - Update role to ADMIN if needed
-- Set password to `Admin123` (pre-hashed)
+- Set password to ``$SEED_ADMIN_PASSWORD` (env)` (pre-hashed)
 
 ### Option B: Verify Existing Admin
 
@@ -64,14 +64,14 @@ Expected output:
 ```bash
 curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
 ```
 
 #### Production (Railway)
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
 ```
 
 **Expected Success Response:**
@@ -115,7 +115,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
 
 3. Enter credentials:
    - **Email:** `app@houseofspells.co.uk`
-   - **Password:** `Admin123`
+   - **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 
 4. Click "Login"
 
@@ -129,7 +129,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
 
 2. Enter credentials:
    - **Email:** `app@houseofspells.co.uk`
-   - **Password:** `Admin123`
+   - **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 
 3. Click "Login"
 
@@ -218,7 +218,7 @@ pnpm db:fix-admin
 Or manually update in database:
 ```sql
 UPDATE users 
-SET password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+SET password = '[bcrypt-hash-redacted]',
     role = 'ADMIN',
     "updatedAt" = NOW()
 WHERE email = 'app@houseofspells.co.uk';
@@ -254,7 +254,7 @@ Redirect to home page (/)
   ```json
   {
     "email": "app@houseofspells.co.uk",
-    "password": "Admin123"
+    "password": "`$SEED_ADMIN_PASSWORD` (env)"
   }
   ```
 - **Response:**
@@ -310,7 +310,7 @@ pnpm db:fix-admin
 # Test login via API
 curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
 ```
 
 ## Environment Variables Required

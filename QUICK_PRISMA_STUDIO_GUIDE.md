@@ -29,7 +29,7 @@ Prisma Studio will open automatically in your browser at `http://localhost:5555`
 
 ### User 1: ADMIN
 - **email:** `admin@hos.test`
-- **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- **password:** `[bcrypt-hash-redacted]`
 - **firstName:** `Admin`
 - **lastName:** `User`
 - **role:** Select `ADMIN` (must be UPPERCASE)
@@ -39,7 +39,7 @@ Prisma Studio will open automatically in your browser at `http://localhost:5555`
 
 ### User 2: PROCUREMENT
 - **email:** `procurement@hos.test`
-- **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- **password:** `[bcrypt-hash-redacted]`
 - **firstName:** `Procurement`
 - **lastName:** `Manager`
 - **role:** `PROCUREMENT`
@@ -47,7 +47,7 @@ Prisma Studio will open automatically in your browser at `http://localhost:5555`
 
 ### User 3: FULFILLMENT
 - **email:** `fulfillment@hos.test`
-- **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- **password:** `[bcrypt-hash-redacted]`
 - **firstName:** `Fulfillment`
 - **lastName:** `Staff`
 - **role:** `FULFILLMENT`
@@ -55,7 +55,7 @@ Prisma Studio will open automatically in your browser at `http://localhost:5555`
 
 ### User 4: CATALOG
 - **email:** `catalog@hos.test`
-- **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- **password:** `[bcrypt-hash-redacted]`
 - **firstName:** `Catalog`
 - **lastName:** `Editor`
 - **role:** `CATALOG`
@@ -63,7 +63,7 @@ Prisma Studio will open automatically in your browser at `http://localhost:5555`
 
 ### User 5: MARKETING
 - **email:** `marketing@hos.test`
-- **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- **password:** `[bcrypt-hash-redacted]`
 - **firstName:** `Marketing`
 - **lastName:** `Manager`
 - **role:** `MARKETING`
@@ -71,7 +71,7 @@ Prisma Studio will open automatically in your browser at `http://localhost:5555`
 
 ### User 6: FINANCE
 - **email:** `finance@hos.test`
-- **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- **password:** `[bcrypt-hash-redacted]`
 - **firstName:** `Finance`
 - **lastName:** `Manager`
 - **role:** `FINANCE`
@@ -79,7 +79,7 @@ Prisma Studio will open automatically in your browser at `http://localhost:5555`
 
 ### User 7: CMS_EDITOR
 - **email:** `cms@hos.test`
-- **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- **password:** `[bcrypt-hash-redacted]`
 - **firstName:** `CMS`
 - **lastName:** `Editor`
 - **role:** `CMS_EDITOR`
@@ -100,10 +100,10 @@ In Prisma Studio:
 
 **Password Hash (same for all):**
 ```
-$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+[bcrypt-hash-redacted]
 ```
 
-**Password:** `Test123!`
+**Password:** ``$TEST_SEED_PASSWORD` (env)`
 
 ---
 

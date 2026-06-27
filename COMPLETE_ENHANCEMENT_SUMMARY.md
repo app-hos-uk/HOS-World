@@ -296,35 +296,35 @@ All 8 dashboards have been comprehensively enhanced with consistent navigation, 
 ### 1. Access Dashboards
 
 **Admin:**
-- Login as: `admin@hos.test` / `Test123!`
+- Login as: `admin@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - Access: `/admin/dashboard`
 
 **Procurement:**
-- Login as: `procurement@hos.test` / `Test123!`
+- Login as: `procurement@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - Access: `/procurement/dashboard`
 
 **Fulfillment:**
-- Login as: `fulfillment@hos.test` / `Test123!`
+- Login as: `fulfillment@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - Access: `/fulfillment/dashboard`
 
 **Catalog:**
-- Login as: `catalog@hos.test` / `Test123!`
+- Login as: `catalog@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - Access: `/catalog/dashboard`
 
 **Marketing:**
-- Login as: `marketing@hos.test` / `Test123!`
+- Login as: `marketing@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - Access: `/marketing/dashboard`
 
 **Finance:**
-- Login as: `finance@hos.test` / `Test123!`
+- Login as: `finance@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - Access: `/finance/dashboard`
 
 **Seller:**
-- Login as: `seller@hos.test` / `Test123!`
+- Login as: `seller@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - Access: `/seller/dashboard`
 
 **Wholesaler:**
-- Login as: `wholesaler@hos.test` / `Test123!`
+- Login as: `wholesaler@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 - Access: `/wholesaler/dashboard`
 
 ### 2. Test Business Operations

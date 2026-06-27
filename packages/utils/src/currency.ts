@@ -1,29 +1,26 @@
 /**
- * Currency conversion rates (USD base - should come from API in production)
+ * Currency conversion helpers.
+ * Rates must be supplied by the caller (e.g. CurrencyContext via GET /currency/rates).
+ * No static production rates are embedded here.
  */
-const CURRENCY_RATES: Record<string, number> = {
-  USD: 1, // Base currency
-  EUR: 0.92, // Approximate
-  AED: 3.67, // Approximate
-  CAD: 1.36, // Approximate
-  AUD: 1.53, // Approximate
-  JPY: 149.5, // Approximate
-};
 
-/**
- * Convert amount from one currency to another (USD base)
- */
 export function convertCurrency(
   amount: number,
   fromCurrency: string,
   toCurrency: string,
-  rates: Record<string, number> = CURRENCY_RATES
+  rates: Record<string, number>,
 ): number {
   if (fromCurrency === toCurrency) return amount;
-  
-  const fromRate = rates[fromCurrency] || 1;
-  const toRate = rates[toCurrency] || 1;
-  
+  if (!rates || Object.keys(rates).length === 0) {
+    return amount;
+  }
+
+  const fromRate = rates[fromCurrency];
+  const toRate = rates[toCurrency];
+  if (!fromRate || !toRate) {
+    return amount;
+  }
+
   const baseAmount = amount / fromRate;
   return baseAmount * toRate;
 }
@@ -35,10 +32,12 @@ export function getCurrencySymbol(currency: string): string {
   const symbols: Record<string, string> = {
     USD: '$',
     EUR: '€',
+    GBP: '£',
     AED: 'د.إ',
     JPY: '¥',
     CAD: 'C$',
     AUD: 'A$',
+    SGD: 'S$',
   };
   return symbols[currency] || currency;
 }
@@ -56,5 +55,3 @@ export function calculateTax(amount: number, taxRate: number): number {
 export function calculateTotalWithTax(amount: number, taxRate: number): number {
   return amount + calculateTax(amount, taxRate);
 }
-
-

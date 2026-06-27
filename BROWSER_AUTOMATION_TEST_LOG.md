@@ -11,7 +11,7 @@
 
 ### Steps:
 1. ✅ Navigated to login page
-2. ⏳ Enter credentials: `customer@hos.test` / `Test123!`
+2. ⏳ Enter credentials: `customer@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 3. ⏳ Click login button
 4. ⏳ Verify redirect to home page
 5. ⏳ Verify header shows user email

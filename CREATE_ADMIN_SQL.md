@@ -21,7 +21,7 @@ INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdA
 VALUES (
   gen_random_uuid(),
   'app@houseofspells.co.uk',
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  '[bcrypt-hash-redacted]',
   'Super',
   'Admin',
   'ADMIN',
@@ -31,7 +31,7 @@ VALUES (
 ON CONFLICT (email) 
 DO UPDATE SET 
   role = 'ADMIN',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+  password = '[bcrypt-hash-redacted]';
 ```
 
 ### Step 3: Execute
@@ -61,7 +61,7 @@ You should see:
 ## 🔑 Admin Credentials
 
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 - **Role:** `ADMIN`
 
 ---
@@ -75,7 +75,7 @@ If Railway has a table editor (not just SQL console):
 3. Click **Add Row** or **New Record**
 4. Fill in:
    - email: `app@houseofspells.co.uk`
-   - password: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+   - password: `[bcrypt-hash-redacted]`
    - role: `ADMIN`
    - firstName: `Super`
    - lastName: `Admin`

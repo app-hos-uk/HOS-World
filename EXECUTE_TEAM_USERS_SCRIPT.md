@@ -64,7 +64,7 @@ For each user:
 2. Click **"Add record"** (+)
 3. Fill in:
    - **email:** (from table below)
-   - **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+   - **password:** `[bcrypt-hash-redacted]`
    - **firstName:** (from table)
    - **lastName:** (from table)
    - **role:** UPPERCASE (e.g., `ADMIN`)
@@ -76,7 +76,7 @@ For each user:
 
 | Email | Role | First Name | Last Name | Password Hash |
 |-------|------|------------|-----------|---------------|
-| admin@hos.test | ADMIN | Admin | User | `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` |
+| admin@hos.test | ADMIN | Admin | User | `[bcrypt-hash-redacted]` |
 | procurement@hos.test | PROCUREMENT | Procurement | Manager | Same hash |
 | fulfillment@hos.test | FULFILLMENT | Fulfillment | Staff | Same hash |
 | catalog@hos.test | CATALOG | Catalog | Editor | Same hash |
@@ -84,7 +84,7 @@ For each user:
 | finance@hos.test | FINANCE | Finance | Manager | Same hash |
 | cms@hos.test | CMS_EDITOR | CMS | Editor | Same hash |
 
-**Password for all:** `Test123!`
+**Password for all:** ``$TEST_SEED_PASSWORD` (env)`
 
 ---
 
@@ -104,7 +104,7 @@ ORDER BY role;
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "admin@hos.test", "password": "Test123!"}'
+  -d '{"email": "admin@hos.test", "password": "`$TEST_SEED_PASSWORD` (env)"}'
 ```
 
 Should return a JWT token with `"role": "ADMIN"`.

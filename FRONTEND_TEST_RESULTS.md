@@ -13,13 +13,13 @@ All business users created successfully:
 - ✅ `wholesaler@hos.test` (WHOLESALER) - Status: updated
 - ✅ `customer@hos.test` (CUSTOMER) - Status: updated
 
-**Password**: `Test123!` (same for all users)
+**Password**: ``$TEST_SEED_PASSWORD` (env)` (same for all users)
 
 ---
 
 ## 🔄 Frontend Login Testing
 
-### Team Role Users (Password: `Test123!`)
+### Team Role Users (Password: ``$TEST_SEED_PASSWORD` (env)`)
 
 #### 1. Admin User
 - **Email**: `admin@hos.test`

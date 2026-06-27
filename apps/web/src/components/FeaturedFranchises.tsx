@@ -1,10 +1,19 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { apiClient } from '@/lib/api';
 import { REFERENCE_ASSETS } from '@/lib/referenceAssets';
 
-const FRANCHISES = [
+type FranchiseCard = {
+  name: string;
+  slug: string;
+  description: string;
+  image: string;
+};
+
+const STATIC_FRANCHISES: FranchiseCard[] = [
   {
     name: 'Harry Potter',
     slug: 'harry-potter',
@@ -26,6 +35,40 @@ const FRANCHISES = [
 ];
 
 export default function FeaturedFranchises() {
+  const [franchises, setFranchises] = useState<FranchiseCard[]>(STATIC_FRANCHISES);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiClient.getFandoms();
+        const list = res?.data as Array<{
+          name: string;
+          slug: string;
+          description?: string;
+          image?: string;
+        }>;
+        if (!Array.isArray(list) || list.length === 0 || cancelled) return;
+        setFranchises(
+          list.slice(0, 3).map((f) => ({
+            name: f.name,
+            slug: f.slug,
+            description: f.description || 'Explore collectibles and merch from this universe.',
+            image:
+              f.image ||
+              REFERENCE_ASSETS.franchiseBanners[f.slug as keyof typeof REFERENCE_ASSETS.franchiseBanners] ||
+              REFERENCE_ASSETS.heroBanner,
+          })),
+        );
+      } catch {
+        // keep static fallback
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <section className="max-w-7xl mx-auto px-4 py-12">
       <div className="mb-8 section-head">
@@ -38,7 +81,7 @@ export default function FeaturedFranchises() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {FRANCHISES.map((franchise) => (
+        {franchises.map((franchise) => (
           <Link
             key={franchise.slug}
             href={`/fandoms/${franchise.slug}`}
@@ -60,9 +103,6 @@ export default function FeaturedFranchises() {
               <p className="text-hos-text-muted text-sm mt-1 line-clamp-2 font-body">
                 {franchise.description}
               </p>
-              <span className="inline-block mt-3 font-ui text-sm font-bold text-hos-gold group-hover:text-hos-gold-hover transition-colors">
-                Shop now →
-              </span>
             </div>
           </Link>
         ))}

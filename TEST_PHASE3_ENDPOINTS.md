@@ -13,7 +13,7 @@ You now have:
 
 ```bash
 # Save your token to a variable
-TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiZTQ3MzA3YS0yYWZjLTRkODMtYjQ0YS1iYTQ3M2YwOTQ1OGIiLCJlbWFpbCI6ImFwcEBob3VzZW9mc3BlbGxzLmNvLnVrIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzY3OTg5NDQ0LCJleHAiOjE3Njc5OTAzNDR9.SG1dSBMfm9fFV5MZwqY8dNKiplV1NVR3S1laeMZqN80"
+TOKEN="[jwt-redacted]"
 
 # Now use $TOKEN in all requests
 ```
@@ -126,7 +126,7 @@ Here's a complete test flow:
 
 ```bash
 # 1. Save token
-TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiZTQ3MzA3YS0yYWZjLTRkODMtYjQ0YS1iYTQ3M2YwOTQ1OGIiLCJlbWFpbCI6ImFwcEBob3VzZW9mc3BlbGxzLmNvLnVrIiwicm9sZSI6IkFETUlOIiwiaWF0IjoxNzY3OTg5NDQ0LCJleHAiOjE3Njc5OTAzNDR9.SG1dSBMfm9fFV5MZwqY8dNKiplV1NVR3S1laeMZqN80"
+TOKEN="[jwt-redacted]"
 
 # 2. Get warehouses
 echo "📦 Getting warehouses..."
@@ -174,7 +174,7 @@ Now that you're logged in, test the admin UI pages:
 1. **Open browser**: `http://localhost:3000`
 2. **Login** with the same credentials:
    - Email: `app@houseofspells.co.uk`
-   - Password: `Admin123`
+   - Password: ``$SEED_ADMIN_PASSWORD` (env)`
 3. **Navigate to**:
    - `/admin/warehouses` - Manage warehouses
    - `/admin/warehouses/transfers` - Stock transfers

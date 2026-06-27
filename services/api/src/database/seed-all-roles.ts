@@ -1,15 +1,24 @@
 import { PrismaClient, UserRole, SellerType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
+import { getSeedTestPassword } from '../config/seed-password';
 import { slugify } from '@hos-marketplace/utils';
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const dotenv = require('dotenv');
+  const path = require('path');
+  dotenv.config({ path: path.join(__dirname, '../../.env') });
+} catch {
+  // dotenv optional
+}
 
 const prisma = new PrismaClient();
 
-// Mock users for all roles
+// Mock users for all roles (password from TEST_SEED_PASSWORD env)
 const mockUsers = [
   {
     email: 'customer@hos.test',
-    password: 'Test123!',
     firstName: 'John',
     lastName: 'Customer',
     role: UserRole.CUSTOMER,
@@ -17,7 +26,6 @@ const mockUsers = [
   },
   {
     email: 'wholesaler@hos.test',
-    password: 'Test123!',
     firstName: 'Sarah',
     lastName: 'Wholesaler',
     role: UserRole.WHOLESALER,
@@ -27,7 +35,6 @@ const mockUsers = [
   },
   {
     email: 'seller@hos.test',
-    password: 'Test123!',
     firstName: 'Mike',
     lastName: 'Seller',
     role: UserRole.B2C_SELLER,
@@ -37,49 +44,42 @@ const mockUsers = [
   },
   {
     email: 'admin@hos.test',
-    password: 'Test123!',
     firstName: 'Admin',
     lastName: 'User',
     role: UserRole.ADMIN,
   },
   {
     email: 'procurement@hos.test',
-    password: 'Test123!',
     firstName: 'Procurement',
     lastName: 'Manager',
     role: UserRole.PROCUREMENT,
   },
   {
     email: 'fulfillment@hos.test',
-    password: 'Test123!',
     firstName: 'Fulfillment',
     lastName: 'Staff',
     role: UserRole.FULFILLMENT,
   },
   {
     email: 'catalog@hos.test',
-    password: 'Test123!',
     firstName: 'Catalog',
     lastName: 'Editor',
     role: UserRole.CATALOG,
   },
   {
     email: 'marketing@hos.test',
-    password: 'Test123!',
     firstName: 'Marketing',
     lastName: 'Manager',
     role: UserRole.MARKETING,
   },
   {
     email: 'finance@hos.test',
-    password: 'Test123!',
     firstName: 'Finance',
     lastName: 'Manager',
     role: UserRole.FINANCE,
   },
   {
     email: 'cms@hos.test',
-    password: 'Test123!',
     firstName: 'CMS',
     lastName: 'Editor',
     role: UserRole.CMS_EDITOR,
@@ -87,7 +87,7 @@ const mockUsers = [
 ];
 
 async function seedAllRoles() {
-  const defaultPassword = 'Test123!';
+  const defaultPassword = getSeedTestPassword();
   const hashedPassword = await bcrypt.hash(defaultPassword, BCRYPT_PASSWORD_ROUNDS);
 
   console.log('🌱 Starting to seed mock users for all roles...\n');

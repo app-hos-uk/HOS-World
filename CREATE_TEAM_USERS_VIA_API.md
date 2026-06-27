@@ -49,7 +49,7 @@ Check the response - it will show which users were created/updated:
    # Login first to get token
    TOKEN=$(curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
      -H "Content-Type: application/json" \
-     -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}' \
+     -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}' \
      | jq -r '.data.token')
    
    # Then create team users
@@ -64,13 +64,13 @@ Check the response - it will show which users were created/updated:
 
 | Email | Role | Password |
 |-------|------|----------|
-| admin@hos.test | ADMIN | Test123! |
-| procurement@hos.test | PROCUREMENT | Test123! |
-| fulfillment@hos.test | FULFILLMENT | Test123! |
-| catalog@hos.test | CATALOG | Test123! |
-| marketing@hos.test | MARKETING | Test123! |
-| finance@hos.test | FINANCE | Test123! |
-| cms@hos.test | CMS_EDITOR | Test123! |
+| admin@hos.test | ADMIN | `$TEST_SEED_PASSWORD` (env) |
+| procurement@hos.test | PROCUREMENT | `$TEST_SEED_PASSWORD` (env) |
+| fulfillment@hos.test | FULFILLMENT | `$TEST_SEED_PASSWORD` (env) |
+| catalog@hos.test | CATALOG | `$TEST_SEED_PASSWORD` (env) |
+| marketing@hos.test | MARKETING | `$TEST_SEED_PASSWORD` (env) |
+| finance@hos.test | FINANCE | `$TEST_SEED_PASSWORD` (env) |
+| cms@hos.test | CMS_EDITOR | `$TEST_SEED_PASSWORD` (env) |
 
 ---
 

@@ -114,7 +114,7 @@ useEffect(() => {
 1. Go to login page
 2. Enter credentials:
    - Email: `app@houseofspells.co.uk`
-   - Password: `Admin123`
+   - Password: ``$SEED_ADMIN_PASSWORD` (env)`
 3. Click "Login"
 4. **Expected:** 
    - Immediate redirect to home page

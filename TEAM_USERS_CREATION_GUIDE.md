@@ -12,7 +12,7 @@ All team role users need to be created manually since they cannot be registered 
 - ✅ `wholesaler@hos.test` - WHOLESALER  
 - ✅ `seller@hos.test` - B2C_SELLER
 
-**Password:** `Test123!`
+**Password:** ``$TEST_SEED_PASSWORD` (env)`
 
 ---
 
@@ -28,8 +28,8 @@ All team role users need to be created manually since they cannot be registered 
 | finance@hos.test | FINANCE | Finance | Manager |
 | cms@hos.test | CMS_EDITOR | CMS | Editor |
 
-**Password for all:** `Test123!`  
-**Password Hash:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+**Password for all:** ``$TEST_SEED_PASSWORD` (env)`  
+**Password Hash:** `[bcrypt-hash-redacted]`
 
 ---
 
@@ -83,7 +83,7 @@ For each user in the table above:
 3. Fill in the form:
    - **id:** Leave empty (auto-generated)
    - **email:** (use from table)
-   - **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+   - **password:** `[bcrypt-hash-redacted]`
    - **firstName:** (use from table)
    - **lastName:** (use from table)
    - **role:** Select from dropdown (UPPERCASE, e.g., `ADMIN`)
@@ -112,7 +112,7 @@ Or test login via API:
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "admin@hos.test", "password": "Test123!"}'
+  -d '{"email": "admin@hos.test", "password": "`$TEST_SEED_PASSWORD` (env)"}'
 ```
 
 Should return a JWT token and user data with correct role.
@@ -124,7 +124,7 @@ Should return a JWT token and user data with correct role.
 **SQL Script Location:** `scripts/create-team-role-users.sql`
 
 **Password Hash (for manual creation):**  
-`$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+`[bcrypt-hash-redacted]`
 
 **All roles must be UPPERCASE:**
 - `ADMIN` (not `admin`)

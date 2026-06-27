@@ -59,7 +59,7 @@ Once users are created, we need to test:
 ### 1. User Creation Verification
 - [ ] Verify all 7 team users exist
 - [ ] Test login API endpoint directly for each user
-- [ ] Verify password: `Test123!` works for all users
+- [ ] Verify password: ``$TEST_SEED_PASSWORD` (env)` works for all users
 
 ### 2. Login Flow Tests (Browser Automation)
 For each user:
@@ -122,7 +122,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/admin/crea
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@hos.test","password":"Test123!"}'
+  -d '{"email":"admin@hos.test","password":"`$TEST_SEED_PASSWORD` (env)"}'
 ```
 
 ### Check Deployment Status

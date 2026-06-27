@@ -16,16 +16,18 @@ import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-const SAMPLE_PASSWORDS = {
-  seller: 'Test123!',
-  wholesaler: 'Test123!',
-  customer: 'Test123!',
-};
+const BCRYPT_PASSWORD_ROUNDS = Math.min(
+  15,
+  Math.max(10, parseInt(process.env.BCRYPT_SALT_ROUNDS || '12', 10) || 12),
+);
 
-const BCRYPT_PASSWORD_ROUNDS = Math.min(15, Math.max(10, parseInt(process.env.BCRYPT_SALT_ROUNDS || '12', 10) || 12));
+const SAMPLE_PASSWORD = process.env.TEST_SEED_PASSWORD?.trim();
+if (!SAMPLE_PASSWORD) {
+  throw new Error('Set TEST_SEED_PASSWORD env var before running sample data seed.');
+}
 
-async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, BCRYPT_PASSWORD_ROUNDS);
+async function hashPassword(): Promise<string> {
+  return bcrypt.hash(SAMPLE_PASSWORD, BCRYPT_PASSWORD_ROUNDS);
 }
 
 async function seedSampleData() {
@@ -40,7 +42,7 @@ async function seedSampleData() {
       update: {},
       create: {
         email: 'seller-test@hos.test',
-        password: await hashPassword(SAMPLE_PASSWORDS.seller),
+        password: await hashPassword(),
         role: 'SELLER',
         firstName: 'Test',
         lastName: 'Seller',
@@ -61,7 +63,7 @@ async function seedSampleData() {
       update: {},
       create: {
         email: 'wholesaler-test@hos.test',
-        password: await hashPassword(SAMPLE_PASSWORDS.wholesaler),
+        password: await hashPassword(),
         role: 'WHOLESALER',
         firstName: 'Test',
         lastName: 'Wholesaler',
@@ -267,7 +269,7 @@ async function seedSampleData() {
       update: {},
       create: {
         email: 'customer-test@hos.test',
-        password: await hashPassword(SAMPLE_PASSWORDS.customer),
+        password: await hashPassword(),
         role: 'CUSTOMER',
         firstName: 'Test',
         lastName: 'Customer',
@@ -290,10 +292,10 @@ async function seedSampleData() {
     console.log(`- Product pricing: 1`);
     console.log(`- Customer: 1`);
 
-    console.log('\n🔑 Test Credentials:');
-    console.log(`Seller: seller-test@hos.test / ${SAMPLE_PASSWORDS.seller}`);
-    console.log(`Wholesaler: wholesaler-test@hos.test / ${SAMPLE_PASSWORDS.wholesaler}`);
-    console.log(`Customer: customer-test@hos.test / ${SAMPLE_PASSWORDS.customer}`);
+    console.log('\n🔑 Test Credentials (password from TEST_SEED_PASSWORD env):');
+    console.log('Seller: seller-test@hos.test');
+    console.log('Wholesaler: wholesaler-test@hos.test');
+    console.log('Customer: customer-test@hos.test');
 
   } catch (error) {
     console.error('❌ Error seeding data:', error);

@@ -38,7 +38,7 @@
   - `b2c-seller@hos.test` (B2C_SELLER)
   - `wholesaler@hos.test` (WHOLESALER)
   - `customer@hos.test` (CUSTOMER)
-- **Password**: `Test123!` (same as team users)
+- **Password**: ``$TEST_SEED_PASSWORD` (env)` (same as team users)
 
 ### 2. Frontend Testing
 - **Status**: Login redirect logic updated

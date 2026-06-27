@@ -5,7 +5,7 @@ try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const dotenv = require('dotenv');
   const path = require('path');
-  dotenv.config({ path: path.join(__dirname, '../../../.env') });
+  dotenv.config({ path: path.join(__dirname, '../../.env') });
 } catch {
   // dotenv not available, use environment variables directly
   // DATABASE_URL should be set in environment

@@ -11,7 +11,7 @@ The super admin user has been successfully created in PostgreSQL database!
 
 ### User Details:
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 - **Role:** `ADMIN`
 - **Name:** Super Admin
 - **ID:** `be47307a-2afc-4d83-b44a-ba473f09458b`
@@ -36,7 +36,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
   -H "Content-Type: application/json" \
   -d '{
     "email": "app@houseofspells.co.uk",
-    "password": "Admin123"
+    "password": "`$SEED_ADMIN_PASSWORD` (env)"
   }'
 ```
 
@@ -96,7 +96,7 @@ With `ADMIN` role, you can:
 
 ### ⚠️ IMPORTANT: Change Password
 
-The default password `Admin123` is **not secure** for production:
+The default password ``$SEED_ADMIN_PASSWORD` (env)` is **not secure** for production:
 
 1. **Login immediately** using the credentials above
 2. **Change password** to a strong password:
@@ -112,7 +112,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/chang
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "currentPassword": "Admin123",
+    "currentPassword": "`$SEED_ADMIN_PASSWORD` (env)",
     "newPassword": "YourNewStrongPassword123!"
   }'
 ```

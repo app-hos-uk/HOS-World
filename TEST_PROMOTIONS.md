@@ -117,7 +117,7 @@ To test these endpoints properly, you'll need to create a promotion and coupon f
 # First, get a token by logging in
 TOKEN=$(curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"Test123!"}' \
+  -d '{"email":"admin@example.com","password":"`$TEST_SEED_PASSWORD` (env)"}' \
   | jq -r '.data.accessToken')
 
 # Then create promotion

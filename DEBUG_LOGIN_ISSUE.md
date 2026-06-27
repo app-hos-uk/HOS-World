@@ -33,7 +33,7 @@ The frontend might be sending the request in a different format.
 ```json
 {
   "email": "admin@hos.test",
-  "password": "Test123!"
+  "password": "`$TEST_SEED_PASSWORD` (env)"
 }
 ```
 
@@ -64,7 +64,7 @@ The global JWT guard might not be properly checking the @Public decorator.
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@hos.test","password":"Test123!"}'
+  -d '{"email":"admin@hos.test","password":"`$TEST_SEED_PASSWORD` (env)"}'
 ```
 
 **Expected**: 200 OK with JWT token

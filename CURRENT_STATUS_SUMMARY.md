@@ -73,7 +73,7 @@ railway run pnpm db:studio
 
 ## 🧪 Test Users to Create
 
-All users use password: `Test123!`
+All users use password: ``$TEST_SEED_PASSWORD` (env)`
 
 1. `admin@hos.test` → ADMIN → `/admin/dashboard`
 2. `procurement@hos.test` → PROCUREMENT → `/procurement/dashboard`

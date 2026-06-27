@@ -133,7 +133,7 @@ https://hos-marketplaceapi-production.up.railway.app/api
 1. Go to: `https://hos-marketplaceweb-production.up.railway.app/login`
 2. Enter:
    - Email: `app@houseofspells.co.uk`
-   - Password: `Admin123`
+   - Password: ``$SEED_ADMIN_PASSWORD` (env)`
 3. Click Login
 4. Should work without CORS errors!
 
@@ -141,7 +141,7 @@ https://hos-marketplaceapi-production.up.railway.app/api
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
 ```
 
 ---

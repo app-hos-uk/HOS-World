@@ -11,7 +11,7 @@
 | Parameter | Value |
 |-----------|-------|
 | **Email** | `app@houseofspells.co.uk` |
-| **Password** | `Admin123` |
+| **Password** | ``$SEED_ADMIN_PASSWORD` (env)` |
 | **Expected Role** | `ADMIN` |
 | **Expected Status** | `200 OK` |
 
@@ -27,7 +27,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
   -H "Content-Type: application/json" \
   -d '{
     "email": "app@houseofspells.co.uk",
-    "password": "Admin123"
+    "password": "`$SEED_ADMIN_PASSWORD` (env)"
   }'
 ```
 
@@ -129,7 +129,7 @@ curl -X GET https://hos-marketplaceapi-production.up.railway.app/api/users/me \
 
 1. **Save the token** for future authenticated requests
 2. **Test admin endpoints** with the token
-3. **Change password** from default `Admin123`
+3. **Change password** from default ``$SEED_ADMIN_PASSWORD` (env)`
 4. **Verify admin dashboard** access (if frontend available)
 5. **Test admin-only features**
 

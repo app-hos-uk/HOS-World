@@ -4,9 +4,9 @@
 
 I've successfully created 3 test users via API:
 
-1. ✅ **CUSTOMER** - `customer@hos.test` / `Test123!`
-2. ✅ **WHOLESALER** - `wholesaler@hos.test` / `Test123!`
-3. ✅ **B2C_SELLER** - `seller@hos.test` / `Test123!`
+1. ✅ **CUSTOMER** - `customer@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
+2. ✅ **WHOLESALER** - `wholesaler@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
+3. ✅ **B2C_SELLER** - `seller@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 
 **Note:** Team roles (ADMIN, PROCUREMENT, etc.) need to be created manually via Prisma Studio or SQL.
 
@@ -24,7 +24,7 @@ I've successfully created 3 test users via API:
 
 2. **Enter Credentials**
    - Email: `customer@hos.test`
-   - Password: `Test123!`
+   - Password: ``$TEST_SEED_PASSWORD` (env)`
    - Click "Login" button
 
 3. **Expected Result:**
@@ -47,7 +47,7 @@ I've successfully created 3 test users via API:
 2. **Navigate to Login Page**
 3. **Login as Wholesaler**
    - Email: `wholesaler@hos.test`
-   - Password: `Test123!`
+   - Password: ``$TEST_SEED_PASSWORD` (env)`
 
 4. **Expected Result:**
    - ✅ Redirects to `/wholesaler/dashboard`
@@ -67,7 +67,7 @@ I've successfully created 3 test users via API:
 1. **Logout**
 2. **Login as Seller**
    - Email: `seller@hos.test`
-   - Password: `Test123!`
+   - Password: ``$TEST_SEED_PASSWORD` (env)`
 
 3. **Expected Result:**
    - ✅ Redirects to `/seller/dashboard`

@@ -2394,6 +2394,12 @@ export class ApiClient {
     });
   }
 
+  async getPublicSiteSettings(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/config/site', {
+      method: 'GET',
+    });
+  }
+
   async updateSystemSettings(settings: any): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/admin/settings', {
       method: 'PUT',

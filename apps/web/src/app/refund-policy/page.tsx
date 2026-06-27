@@ -1,8 +1,9 @@
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import Link from 'next/link';
+import { ResolveLegalPage } from '@/components/legal/ResolveLegalPage';
 
-export default function RefundPolicyPage() {
+function RefundPolicyStatic() {
   return (
     <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
@@ -57,5 +58,13 @@ export default function RefundPolicyPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default async function RefundPolicyPage() {
+  return (
+    <ResolveLegalPage slug="refund-policy" fallbackTitle="Refund Policy">
+      <RefundPolicyStatic />
+    </ResolveLegalPage>
   );
 }

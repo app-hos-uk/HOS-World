@@ -33,7 +33,7 @@ This suggests the API service might need to be restarted or there's a caching is
    ```bash
    curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
      -H "Content-Type: application/json" \
-     -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+     -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
    ```
 
 ---
@@ -62,7 +62,7 @@ If the hash doesn't start with `$2b$10$`, update it again:
 ```sql
 UPDATE users
 SET 
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '[bcrypt-hash-redacted]',
   "updatedAt" = NOW()
 WHERE email = 'app@houseofspells.co.uk';
 ```
@@ -86,7 +86,7 @@ WHERE email = 'app@houseofspells.co.uk';
 The password hash must be **exactly** this (no spaces, no truncation):
 
 ```
-$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+[bcrypt-hash-redacted]
 ```
 
 **Check:**
@@ -104,7 +104,7 @@ If you have access to run Node.js on Railway:
 ```bash
 # Via Railway CLI
 cd services/api
-railway run node -e "const bcrypt = require('bcrypt'); const hash = '\$2b\$10\$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'; bcrypt.compare('Admin123', hash).then(result => console.log('Match:', result));"
+railway run node -e "const bcrypt = require('bcrypt'); const hash = '\$2b\$10\$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy'; bcrypt.compare('`$SEED_ADMIN_PASSWORD` (env)', hash).then(result => console.log('Match:', result));"
 ```
 
 This will verify if the hash matches the password.

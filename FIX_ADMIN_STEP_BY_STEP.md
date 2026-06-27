@@ -26,7 +26,7 @@ You're in Railway Dashboard → PostgreSQL → Database → **Data** tab
 In the edit form, make sure these fields are set:
 
 - **email:** `app@houseofspells.co.uk` (should already be correct)
-- **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- **password:** `[bcrypt-hash-redacted]`
 - **role:** `ADMIN` (⚠️ **IMPORTANT:** Must be exactly `ADMIN` in all caps, no quotes)
 - **firstName:** `Super`
 - **lastName:** `Admin`
@@ -74,7 +74,7 @@ In the edit form, make sure these fields are set:
    UPDATE users
    SET 
      role = 'ADMIN',
-     password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+     password = '[bcrypt-hash-redacted]',
      "firstName" = COALESCE("firstName", 'Super'),
      "lastName" = COALESCE("lastName", 'Admin'),
      "updatedAt" = NOW()
@@ -117,7 +117,7 @@ If Railway's table editor allows direct editing:
 3. **Click on the `role` column** for that row
 4. **Change it to:** `ADMIN` (all caps, no quotes)
 5. **Click on the `password` column**
-6. **Change it to:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+6. **Change it to:** `[bcrypt-hash-redacted]`
 7. **Click Save** (or the changes might auto-save)
 
 ---
@@ -147,7 +147,7 @@ After making changes, verify:
    ```bash
    curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
      -H "Content-Type: application/json" \
-     -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+     -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
    ```
 
    Should return `200 OK` with a token!

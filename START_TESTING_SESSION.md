@@ -40,7 +40,7 @@ I'll guide you through:
 ## 📋 Admin Credentials
 
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 - **Role:** `ADMIN`
 
 ---

@@ -41,7 +41,7 @@ export interface CMSBlogPost {
 export interface CmsHeroSlide {
   id: number;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   description?: string;
   image: string;
   link: string;
@@ -212,7 +212,6 @@ export function mapHeroSlides(banners: CMSBanner[]): CmsHeroSlide[] {
     return {
       id: parseBannerNumericId(banner.id, index + 1),
       title: banner.title,
-      subtitle: 'House of Spells',
       description: description || undefined,
       image: banner.image,
       link: banner.link || '/products',

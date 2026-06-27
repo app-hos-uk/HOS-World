@@ -30,7 +30,7 @@ pnpm db:seed-admin
 - Checks if admin user exists
 - Creates new admin if doesn't exist
 - Updates existing user to ADMIN role if needed
-- Sets password to `Admin123`
+- Sets password to ``$SEED_ADMIN_PASSWORD` (env)`
 
 ### 2. Verify Admin Status (NEW)
 ```bash
@@ -54,10 +54,10 @@ railway run pnpm db:seed-admin
 ## 👤 Admin User Details
 
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 - **Role:** `ADMIN`
 - **Name:** Super Admin
-- **Password Hash:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- **Password Hash:** `[bcrypt-hash-redacted]`
 
 ---
 
@@ -95,7 +95,7 @@ curl -X POST https://your-api-url.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "app@houseofspells.co.uk",
-    "password": "Admin123"
+    "password": "`$SEED_ADMIN_PASSWORD` (env)"
   }'
 ```
 
@@ -165,7 +165,7 @@ It will:
 ## ⚠️ Important Notes
 
 1. **Password Security:**
-   - Default password `Admin123` should be changed after first login
+   - Default password ``$SEED_ADMIN_PASSWORD` (env)` should be changed after first login
    - Use strong password in production
    - Consider enabling 2FA
 

@@ -19,7 +19,7 @@ function toV1ApiUrl(apiUrl: string): string {
   return trimmed;
 }
 
-const API_V1_URL = toV1ApiUrl(API_URL);
+const TEST_PASSWORD = process.env.TEST_SEED_PASSWORD || 'Test@1234';
 const WEB_URL = process.env.NEXT_PUBLIC_WEB_URL || 'http://localhost:3000';
 
 test.describe('Phase 1 & Phase 2 E2E Tests', () => {
@@ -77,14 +77,14 @@ test.describe('Phase 1 & Phase 2 E2E Tests', () => {
     // In production-like environments, the test users may not exist yet.
     // The API includes public seed endpoints (upsert semantics) used for testing/dev.
     // Try login first; if it fails, seed and retry.
-    authToken = await login('admin@hos.test', 'Test123!');
-    customerToken = await login('customer@hos.test', 'Test123!');
+    authToken = await login('admin@hos.test', TEST_PASSWORD);
+    customerToken = await login('customer@hos.test', TEST_PASSWORD);
 
     if (!authToken || !customerToken) {
       await request.post(`${API_V1_URL}/admin/create-team-users`);
       await request.post(`${API_V1_URL}/admin/create-business-users`);
-      authToken = authToken || (await login('admin@hos.test', 'Test123!'));
-      customerToken = customerToken || (await login('customer@hos.test', 'Test123!'));
+      authToken = authToken || (await login('admin@hos.test', TEST_PASSWORD));
+      customerToken = customerToken || (await login('customer@hos.test', TEST_PASSWORD));
     }
   });
 

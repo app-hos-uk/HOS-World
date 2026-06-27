@@ -56,19 +56,19 @@ All 4 business users created successfully:
 ## 🔍 Test Credentials
 
 ### Team Roles
-- Admin: `admin@hos.test` / `Test123!`
-- Procurement: `procurement@hos.test` / `Test123!`
-- Fulfillment: `fulfillment@hos.test` / `Test123!`
-- Catalog: `catalog@hos.test` / `Test123!`
-- Marketing: `marketing@hos.test` / `Test123!`
-- Finance: `finance@hos.test` / `Test123!`
-- CMS Editor: `cms@hos.test` / `Test123!`
+- Admin: `admin@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
+- Procurement: `procurement@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
+- Fulfillment: `fulfillment@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
+- Catalog: `catalog@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
+- Marketing: `marketing@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
+- Finance: `finance@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
+- CMS Editor: `cms@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 
 ### Business Roles
-- Seller: `seller@hos.test` / `Test123!`
-- B2C Seller: `b2c-seller@hos.test` / `Test123!`
-- Wholesaler: `wholesaler@hos.test` / `Test123!`
-- Customer: `customer@hos.test` / `Test123!`
+- Seller: `seller@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
+- B2C Seller: `b2c-seller@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
+- Wholesaler: `wholesaler@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
+- Customer: `customer@hos.test` / ``$TEST_SEED_PASSWORD` (env)`
 
 ---
 

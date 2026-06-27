@@ -12,6 +12,14 @@ import { AdminService } from './admin.service';
 export class PublicConfigController {
   constructor(private readonly adminService: AdminService) {}
 
+  @Get('site')
+  @ApiOperation({ summary: 'Public site branding and contact settings' })
+  @Header('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
+  async getSiteSettings() {
+    const data = await this.adminService.getPublicSiteSettings();
+    return { data, message: 'Site settings retrieved successfully' };
+  }
+
   @Get('shop-enabled')
   @ApiOperation({ summary: 'Check if the online shop is enabled (public)' })
   @Header('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=120')

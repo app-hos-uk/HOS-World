@@ -8,7 +8,7 @@ This document outlines the automated testing plan for the RBAC (Role-Based Acces
 
 ## 📋 Test Users Created
 
-All test users have password: **`Test123!`**
+All test users have password: **``$TEST_SEED_PASSWORD` (env)`**
 
 | Role | Email | Dashboard URL |
 |------|-------|---------------|

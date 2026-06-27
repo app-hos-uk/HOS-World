@@ -6,7 +6,7 @@
 
 You can create users via the registration endpoint. Here are the credentials for all roles:
 
-**Password for all users: `Test123!`**
+**Password for all users: ``$TEST_SEED_PASSWORD` (env)`**
 
 ```bash
 # Set your API URL
@@ -18,7 +18,7 @@ curl -X POST $API_URL/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "customer@hos.test",
-    "password": "Test123!",
+    "password": "`$TEST_SEED_PASSWORD` (env)",
     "firstName": "John",
     "lastName": "Customer",
     "role": "customer"
@@ -29,7 +29,7 @@ curl -X POST $API_URL/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "wholesaler@hos.test",
-    "password": "Test123!",
+    "password": "`$TEST_SEED_PASSWORD` (env)",
     "firstName": "Sarah",
     "lastName": "Wholesaler",
     "role": "wholesaler",
@@ -41,7 +41,7 @@ curl -X POST $API_URL/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "seller@hos.test",
-    "password": "Test123!",
+    "password": "`$TEST_SEED_PASSWORD` (env)",
     "firstName": "Mike",
     "lastName": "Seller",
     "role": "b2c_seller",
@@ -72,7 +72,7 @@ curl -X POST $API_URL/auth/register \
    - Click on "User" model
    - Click "Add record"
    - Fill in details (see table below)
-   - For password, use this hash: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` (for "Test123!")
+   - For password, use this hash: `[bcrypt-hash-redacted]` (for "`$TEST_SEED_PASSWORD` (env)")
    - Set role to uppercase (e.g., `ADMIN`, `CUSTOMER`, etc.)
 
 ### Option 3: SQL Direct Insert
@@ -80,17 +80,17 @@ curl -X POST $API_URL/auth/register \
 If you have database access:
 
 ```sql
--- Password hash for "Test123!"
+-- Password hash for "`$TEST_SEED_PASSWORD` (env)"
 INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdAt", "updatedAt")
 VALUES 
-  (gen_random_uuid(), 'customer@hos.test', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'John', 'Customer', 'CUSTOMER', NOW(), NOW()),
-  (gen_random_uuid(), 'admin@hos.test', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Admin', 'User', 'ADMIN', NOW(), NOW()),
-  (gen_random_uuid(), 'procurement@hos.test', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Procurement', 'Manager', 'PROCUREMENT', NOW(), NOW()),
-  (gen_random_uuid(), 'fulfillment@hos.test', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Fulfillment', 'Staff', 'FULFILLMENT', NOW(), NOW()),
-  (gen_random_uuid(), 'catalog@hos.test', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Catalog', 'Editor', 'CATALOG', NOW(), NOW()),
-  (gen_random_uuid(), 'marketing@hos.test', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Marketing', 'Manager', 'MARKETING', NOW(), NOW()),
-  (gen_random_uuid(), 'finance@hos.test', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Finance', 'Manager', 'FINANCE', NOW(), NOW()),
-  (gen_random_uuid(), 'cms@hos.test', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'CMS', 'Editor', 'CMS_EDITOR', NOW(), NOW())
+  (gen_random_uuid(), 'customer@hos.test', '[bcrypt-hash-redacted]', 'John', 'Customer', 'CUSTOMER', NOW(), NOW()),
+  (gen_random_uuid(), 'admin@hos.test', '[bcrypt-hash-redacted]', 'Admin', 'User', 'ADMIN', NOW(), NOW()),
+  (gen_random_uuid(), 'procurement@hos.test', '[bcrypt-hash-redacted]', 'Procurement', 'Manager', 'PROCUREMENT', NOW(), NOW()),
+  (gen_random_uuid(), 'fulfillment@hos.test', '[bcrypt-hash-redacted]', 'Fulfillment', 'Staff', 'FULFILLMENT', NOW(), NOW()),
+  (gen_random_uuid(), 'catalog@hos.test', '[bcrypt-hash-redacted]', 'Catalog', 'Editor', 'CATALOG', NOW(), NOW()),
+  (gen_random_uuid(), 'marketing@hos.test', '[bcrypt-hash-redacted]', 'Marketing', 'Manager', 'MARKETING', NOW(), NOW()),
+  (gen_random_uuid(), 'finance@hos.test', '[bcrypt-hash-redacted]', 'Finance', 'Manager', 'FINANCE', NOW(), NOW()),
+  (gen_random_uuid(), 'cms@hos.test', '[bcrypt-hash-redacted]', 'CMS', 'Editor', 'CMS_EDITOR', NOW(), NOW())
 ON CONFLICT (email) DO UPDATE SET 
   role = EXCLUDED.role,
   password = EXCLUDED.password;
@@ -104,19 +104,19 @@ ON CONFLICT (email) DO UPDATE SET
 
 | Email | Password | Role | Dashboard |
 |-------|----------|------|-----------|
-| customer@hos.test | Test123! | CUSTOMER | `/` |
-| wholesaler@hos.test | Test123! | WHOLESALER | `/wholesaler/dashboard` |
-| seller@hos.test | Test123! | B2C_SELLER | `/seller/dashboard` |
-| admin@hos.test | Test123! | ADMIN | `/admin/dashboard` |
-| procurement@hos.test | Test123! | PROCUREMENT | `/procurement/dashboard` |
-| fulfillment@hos.test | Test123! | FULFILLMENT | `/fulfillment/dashboard` |
-| catalog@hos.test | Test123! | CATALOG | `/catalog/dashboard` |
-| marketing@hos.test | Test123! | MARKETING | `/marketing/dashboard` |
-| finance@hos.test | Test123! | FINANCE | `/finance/dashboard` |
-| cms@hos.test | Test123! | CMS_EDITOR | `/` |
+| customer@hos.test | `$TEST_SEED_PASSWORD` (env) | CUSTOMER | `/` |
+| wholesaler@hos.test | `$TEST_SEED_PASSWORD` (env) | WHOLESALER | `/wholesaler/dashboard` |
+| seller@hos.test | `$TEST_SEED_PASSWORD` (env) | B2C_SELLER | `/seller/dashboard` |
+| admin@hos.test | `$TEST_SEED_PASSWORD` (env) | ADMIN | `/admin/dashboard` |
+| procurement@hos.test | `$TEST_SEED_PASSWORD` (env) | PROCUREMENT | `/procurement/dashboard` |
+| fulfillment@hos.test | `$TEST_SEED_PASSWORD` (env) | FULFILLMENT | `/fulfillment/dashboard` |
+| catalog@hos.test | `$TEST_SEED_PASSWORD` (env) | CATALOG | `/catalog/dashboard` |
+| marketing@hos.test | `$TEST_SEED_PASSWORD` (env) | MARKETING | `/marketing/dashboard` |
+| finance@hos.test | `$TEST_SEED_PASSWORD` (env) | FINANCE | `/finance/dashboard` |
+| cms@hos.test | `$TEST_SEED_PASSWORD` (env) | CMS_EDITOR | `/` |
 
 **Password Hash (for direct DB insert):**  
-`$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+`[bcrypt-hash-redacted]`
 
 ---
 
@@ -138,7 +138,7 @@ curl -X POST $API_URL/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@hos.test",
-    "password": "Test123!"
+    "password": "`$TEST_SEED_PASSWORD` (env)"
   }'
 ```
 

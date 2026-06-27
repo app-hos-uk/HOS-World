@@ -22,7 +22,7 @@
    ```bash
    curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
      -H "Content-Type: application/json" \
-     -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+     -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
    ```
 6. **Watch the logs** for:
    - Database queries
@@ -47,7 +47,7 @@
 3. **Select the ENTIRE password field value**
 4. **Copy it exactly**
 5. **Paste it here or verify:**
-   - Should be: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+   - Should be: `[bcrypt-hash-redacted]`
    - Must start with: `$2b$10$`
    - Must be exactly 60 characters
    - No spaces before or after
@@ -67,13 +67,13 @@
 1. **Delete existing user** in database
 2. **Create new user** with:
    - Email: `admin@houseofspells.co.uk`
-   - Password: `Test123!`
+   - Password: ``$TEST_SEED_PASSWORD` (env)`
    - Role: `ADMIN`
 
-3. **Generate hash for `Test123!`:**
+3. **Generate hash for ``$TEST_SEED_PASSWORD` (env)`:**
    - Use: https://bcrypt-generator.com/
    - Rounds: 10
-   - Password: `Test123!`
+   - Password: ``$TEST_SEED_PASSWORD` (env)`
    - Copy the generated hash
 
 4. **Update user in database** with the new hash
@@ -82,7 +82,7 @@
    ```bash
    curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
      -H "Content-Type: application/json" \
-     -d '{"email": "admin@houseofspells.co.uk", "password": "Test123!"}'
+     -d '{"email": "admin@houseofspells.co.uk", "password": "`$TEST_SEED_PASSWORD` (env)"}'
    ```
 
 ---
@@ -95,7 +95,7 @@
 2. **Delete ALL content** in the password field
 3. **Type the hash fresh:**
    ```
-   $2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+   [bcrypt-hash-redacted]
    ```
 4. **Save**
 

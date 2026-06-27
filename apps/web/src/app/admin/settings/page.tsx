@@ -21,6 +21,13 @@ const defaultSettings = {
   socialFacebookUrl: '',
   socialInstagramUrl: '',
   socialXUrl: '',
+
+  // Storefront contact (footer, structured data)
+  contactEmail: 'info@houseofspells.com',
+  contactPhone: '+1 (212) 555-0100',
+  contactAddress: '123 Broadway, New York, NY 10007',
+  footerAbout:
+    'An immersive fandom experience — franchises, collectibles, and unforgettable finds online and in our stores.',
   
   // Email Settings
   smtpHost: '',
@@ -359,6 +366,52 @@ export default function AdminSettingsPage() {
                         onChange={(e) => updateSetting('socialXUrl', e.target.value)}
                         placeholder="https://x.com/houseofspells"
                         className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Storefront contact */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-1">Storefront Contact</h3>
+                  <p className="text-sm text-hos-text-muted mb-4">
+                    Shown in the site footer and contact blocks. Update here instead of redeploying for address or phone changes.
+                  </p>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Contact email</label>
+                      <input
+                        type="email"
+                        value={settings.contactEmail}
+                        onChange={(e) => updateSetting('contactEmail', e.target.value)}
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Phone</label>
+                      <input
+                        type="text"
+                        value={settings.contactPhone}
+                        onChange={(e) => updateSetting('contactPhone', e.target.value)}
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Address</label>
+                      <input
+                        type="text"
+                        value={settings.contactAddress}
+                        onChange={(e) => updateSetting('contactAddress', e.target.value)}
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Footer about text</label>
+                      <textarea
+                        rows={3}
+                        value={settings.footerAbout}
+                        onChange={(e) => updateSetting('footerAbout', e.target.value)}
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary"
                       />
                     </div>
                   </div>

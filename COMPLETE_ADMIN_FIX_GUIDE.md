@@ -36,7 +36,7 @@ This guide will fix the admin login issue once and for all.
 |-------|-------|
 | **id** | (leave empty - will auto-generate) |
 | **email** | `app@houseofspells.co.uk` |
-| **password** | `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` |
+| **password** | `[bcrypt-hash-redacted]` |
 | **firstName** | `Super` |
 | **lastName** | `Admin` |
 | **phone** | (leave empty or `null`) |
@@ -49,7 +49,7 @@ This guide will fix the admin login issue once and for all.
 
 3. **IMPORTANT:** Copy the password hash exactly:
    ```
-   $2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+   [bcrypt-hash-redacted]
    ```
    - Must start with `$2b$`
    - Must be exactly 60 characters
@@ -68,7 +68,7 @@ This guide will fix the admin login issue once and for all.
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
 ```
 
 ---
@@ -82,7 +82,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/regis
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@houseofspells.co.uk",
-    "password": "Admin123!",
+    "password": "`$SEED_ADMIN_PASSWORD` (env)",
     "firstName": "Super",
     "lastName": "Admin"
   }'
@@ -107,7 +107,7 @@ const prisma = new PrismaClient();
 
 async function fixAdmin() {
   const email = 'app@houseofspells.co.uk';
-  const password = 'Admin123';
+  const password = '`$SEED_ADMIN_PASSWORD` (env)';
 
   try {
     console.log('🔧 Fixing admin user...');
@@ -199,8 +199,8 @@ railway run pnpm db:fix-admin
 
 ## 📋 Password Hash Reference
 
-**Password:** `Admin123`  
-**Hash:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+**Password:** ``$SEED_ADMIN_PASSWORD` (env)`  
+**Hash:** `[bcrypt-hash-redacted]`
 
 **Verification:**
 - Starts with: `$2b$10$`
@@ -220,7 +220,7 @@ railway run pnpm db:fix-admin
    ```bash
    curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
      -H "Content-Type: application/json" \
-     -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+     -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
    ```
 
 3. **Expected Response:**
@@ -241,7 +241,7 @@ railway run pnpm db:fix-admin
 ## 🆘 If Still Not Working
 
 1. **Check API Logs** - Look for specific error messages
-2. **Try Different Password** - Create user with password `Test123!` and hash it fresh
+2. **Try Different Password** - Create user with password ``$TEST_SEED_PASSWORD` (env)` and hash it fresh
 3. **Check Database Connection** - Verify API can connect to database
 4. **Verify bcrypt Version** - Make sure API uses same bcrypt version
 

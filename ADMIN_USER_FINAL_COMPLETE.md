@@ -6,7 +6,7 @@
 |-------|-------|-------|
 | **id** | `be47307a-2afc-4d83-b44a-ba473f09458b` | UUID (required) |
 | **email** | `app@houseofspells.co.uk` | Required |
-| **password** | `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` | Required |
+| **password** | `[bcrypt-hash-redacted]` | Required |
 | **firstName** | `Super` | Required |
 | **lastName** | `Admin` | Required |
 | **phone** | *(leave empty)* | Optional |
@@ -53,7 +53,7 @@ app@houseofspells.co.uk
 
 **password:**
 ```
-$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+[bcrypt-hash-redacted]
 ```
 
 **firstName:**
@@ -119,7 +119,7 @@ app@houseofspells.co.uk
 
 **Password:**
 ```
-$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+[bcrypt-hash-redacted]
 ```
 
 **First Name:**
@@ -203,7 +203,7 @@ If you want to use the current time:
    ```bash
    curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
      -H "Content-Type: application/json" \
-     -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+     -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
    ```
 
 ---

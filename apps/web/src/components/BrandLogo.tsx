@@ -1,5 +1,9 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
+import { brandDisplayName } from '@/lib/siteSettingsDefaults';
 import { BRAND_LOGOS } from '@/lib/referenceAssets';
 
 export type BrandLogoVariant = 'horizontal' | 'stacked' | 'emblem';
@@ -43,6 +47,8 @@ export function BrandLogo({
   priority = false,
   className = '',
 }: BrandLogoProps) {
+  const site = useSiteSettings();
+  const altText = brandDisplayName(site.platformName);
   const sizes = VARIANT_SIZES[variant];
 
   const content =
@@ -59,7 +65,7 @@ export function BrandLogo({
         />
         <Image
           src={BRAND_LOGOS.wordmark}
-          alt="House of Spells"
+          alt={altText}
           width={sizes.wordmark!.w}
           height={sizes.wordmark!.h}
           className={sizes.wordmark!.class}

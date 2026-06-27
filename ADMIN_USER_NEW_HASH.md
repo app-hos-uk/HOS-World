@@ -8,7 +8,7 @@
 ## ✅ New User Details
 
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 - **Role:** `ADMIN`
 - **Password Hash:** `$2a$10$2YKFhZOgs2M2SySxzHH8Pu2vqUcu6SXgSn3bmg0WA0AtAIHt1oKuq`
 - **Hash Type:** `$2a$` (bcrypt variant, valid)
@@ -33,7 +33,7 @@
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
 ```
 
 **Expected Success:**
@@ -84,12 +84,12 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
 ## 📋 Hash Comparison
 
 **Old Hash (didn't work):**
-- `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- `[bcrypt-hash-redacted]`
 
 **New Hash (testing):**
 - `$2a$10$2YKFhZOgs2M2SySxzHH8Pu2vqUcu6SXgSn3bmg0WA0AtAIHt1oKuq`
 
-**Both are valid bcrypt hashes for password "Admin123"**
+**Both are valid bcrypt hashes for password "`$SEED_ADMIN_PASSWORD` (env)"**
 
 ---
 

@@ -50,13 +50,13 @@
 **Option A: Use Online Tool**
 1. Go to: https://bcrypt-generator.com/
 2. Rounds: `10`
-3. Password: `Admin123`
+3. Password: ``$SEED_ADMIN_PASSWORD` (env)`
 4. Click "Generate"
 5. Copy the hash
 
 **Option B: Use Node.js (if available)**
 ```bash
-node -e "const bcrypt = require('bcrypt'); bcrypt.hash('Admin123', 10).then(hash => console.log(hash));"
+node -e "const bcrypt = require('bcrypt'); bcrypt.hash('`$SEED_ADMIN_PASSWORD` (env)', 10).then(hash => console.log(hash));"
 ```
 
 ### Step 3: Create New User with Fresh Hash
@@ -91,7 +91,7 @@ node -e "const bcrypt = require('bcrypt'); bcrypt.hash('Admin123', 10).then(hash
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
 ```
 
 ---

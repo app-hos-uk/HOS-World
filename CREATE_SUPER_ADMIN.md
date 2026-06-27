@@ -4,7 +4,7 @@
 
 This guide will help you create a super admin user with:
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 - **Role:** `ADMIN`
 
 ---
@@ -59,7 +59,7 @@ pnpm db:studio
 You need to hash the password first. Run this in Node.js:
 
 ```bash
-node -e "const bcrypt = require('bcrypt'); bcrypt.hash('Admin123', 10).then(hash => console.log(hash))"
+node -e "const bcrypt = require('bcrypt'); bcrypt.hash('`$SEED_ADMIN_PASSWORD` (env)', 10).then(hash => console.log(hash))"
 ```
 
 Copy the hashed password and use it in Prisma Studio.
@@ -75,7 +75,7 @@ curl -X POST https://your-api-url.railway.app/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "app@houseofspells.co.uk",
-    "password": "Admin123",
+    "password": "`$SEED_ADMIN_PASSWORD` (env)",
     "firstName": "Super",
     "lastName": "Admin",
     "role": "admin"
@@ -92,7 +92,7 @@ curl -X POST https://your-api-url.railway.app/api/auth/register \
 
 ```sql
 -- Hash password first (use bcrypt with salt rounds 10)
--- Password: Admin123
+-- Password: `$SEED_ADMIN_PASSWORD` (env)
 -- You'll need to generate the hash using Node.js or bcrypt tool
 
 INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdAt", "updatedAt")
@@ -130,7 +130,7 @@ curl -X POST https://your-api-url.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "app@houseofspells.co.uk",
-    "password": "Admin123"
+    "password": "`$SEED_ADMIN_PASSWORD` (env)"
   }'
 ```
 
@@ -175,7 +175,7 @@ curl -X POST https://your-api-url.railway.app/api/auth/login \
 ## 📝 Admin User Details
 
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 - **Role:** `ADMIN`
 - **Name:** Super Admin
 

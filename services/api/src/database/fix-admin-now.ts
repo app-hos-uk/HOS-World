@@ -1,44 +1,31 @@
 import { PrismaClient, UserRole } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
+import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
+import { getSeedAdminPassword } from '../config/seed-password';
 
-// Try to load .env file if dotenv is available (optional)
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const dotenv = require('dotenv');
   const path = require('path');
-  dotenv.config({ path: path.join(__dirname, '../../../.env') });
+  dotenv.config({ path: path.join(__dirname, '../../.env') });
 } catch {
-  // dotenv not available, use environment variables directly
+  // dotenv optional
 }
 
 const prisma = new PrismaClient();
 
-// Pre-hashed password for "Admin123" using bcrypt with 10 salt rounds
-// This hash was generated using: bcrypt.hash('Admin123', 10)
-const ADMIN_PASSWORD_HASH = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
-
 async function fixAdmin() {
   const email = 'app@houseofspells.co.uk';
-  const password = 'Admin123';
+  const password = getSeedAdminPassword();
 
   try {
     console.log('🔧 Fixing admin user...');
     console.log(`   Email: ${email}`);
-    console.log(`   Password: ${password}\n`);
 
-    // Delete existing user (if exists)
-    const deleted = await prisma.user.deleteMany({
-      where: { email },
-    });
-    console.log(`✅ Deleted ${deleted.count} existing user(s)`);
+    await prisma.user.deleteMany({ where: { email } });
 
-    // Use pre-hashed password (reliable, no bcrypt native module needed)
-    console.log('🔄 Using pre-hashed password...');
-    const hash = ADMIN_PASSWORD_HASH;
-    console.log(`✅ Hash: ${hash.substring(0, 20)}...`);
-    console.log(`   Hash length: ${hash.length} characters\n`);
+    const hash = await bcrypt.hash(password, BCRYPT_PASSWORD_ROUNDS);
 
-    // Create new admin user
-    console.log('🔄 Creating admin user...');
     const admin = await prisma.user.create({
       data: {
         email,
@@ -49,25 +36,11 @@ async function fixAdmin() {
       },
     });
 
-    console.log('\n✅ Admin user created successfully!');
-    console.log('   ID:', admin.id);
-    console.log('   Email:', admin.email);
-    console.log('   Role:', admin.role);
-    console.log('   Name:', admin.firstName, admin.lastName);
-    console.log('\n📋 Login Credentials:');
-    console.log('   Email:', email);
-    console.log('   Password:', password);
-    console.log('\n🧪 Test login with:');
-    console.log(
-      `   curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \\`,
-    );
-    console.log(`     -H "Content-Type: application/json" \\`);
-    console.log(`     -d '{"email": "${email}", "password": "${password}"}'`);
+    console.log(`✅ Admin recreated: ${admin.email} (${admin.id})`);
+    const apiUrl = process.env.API_URL || process.env.API_PUBLIC_URL || 'http://localhost:3001';
+    console.log(`   Login: POST ${apiUrl.replace(/\/+$/, '')}/api/auth/login`);
   } catch (error) {
-    console.error('\n❌ Error fixing admin user:', error);
-    if (error instanceof Error) {
-      console.error('   Message:', error.message);
-    }
+    console.error('❌ Error:', error);
     throw error;
   } finally {
     await prisma.$disconnect();
@@ -75,11 +48,5 @@ async function fixAdmin() {
 }
 
 fixAdmin()
-  .then(() => {
-    console.log('\n✅ Fix completed successfully!');
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('\n❌ Fix failed:', error);
-    process.exit(1);
-  });
+  .then(() => process.exit(0))
+  .catch(() => process.exit(1));

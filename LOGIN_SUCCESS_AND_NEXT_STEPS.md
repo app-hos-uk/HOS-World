@@ -19,7 +19,7 @@ Admin login is now working without console errors! All fixes are complete:
 
 ### 🔄 Next: Test All User Roles
 
-#### 1. Team Role Users (All use password: `Test123!`)
+#### 1. Team Role Users (All use password: ``$TEST_SEED_PASSWORD` (env)`)
 
 **✅ Admin** - `admin@hos.test` → `/admin/dashboard`
 - [x] Login successful
@@ -99,32 +99,32 @@ For each role, verify:
 # Procurement
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"procurement@hos.test","password":"Test123!"}'
+  -d '{"email":"procurement@hos.test","password":"`$TEST_SEED_PASSWORD` (env)"}'
 
 # Fulfillment
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"fulfillment@hos.test","password":"Test123!"}'
+  -d '{"email":"fulfillment@hos.test","password":"`$TEST_SEED_PASSWORD` (env)"}'
 
 # Catalog
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"catalog@hos.test","password":"Test123!"}'
+  -d '{"email":"catalog@hos.test","password":"`$TEST_SEED_PASSWORD` (env)"}'
 
 # Marketing
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"marketing@hos.test","password":"Test123!"}'
+  -d '{"email":"marketing@hos.test","password":"`$TEST_SEED_PASSWORD` (env)"}'
 
 # Finance
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"finance@hos.test","password":"Test123!"}'
+  -d '{"email":"finance@hos.test","password":"`$TEST_SEED_PASSWORD` (env)"}'
 
 # CMS Editor
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"cms@hos.test","password":"Test123!"}'
+  -d '{"email":"cms@hos.test","password":"`$TEST_SEED_PASSWORD` (env)"}'
 ```
 
 ---

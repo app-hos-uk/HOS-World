@@ -138,7 +138,7 @@ curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@example.com",
-    "password": "Test123!"
+    "password": "`$TEST_SEED_PASSWORD` (env)"
   }'
 ```
 
@@ -192,7 +192,7 @@ curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "customer@example.com",
-    "password": "Test123!"
+    "password": "`$TEST_SEED_PASSWORD` (env)"
   }'
 
 # Apply coupon

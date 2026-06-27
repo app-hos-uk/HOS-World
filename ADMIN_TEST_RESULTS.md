@@ -14,7 +14,7 @@ Content-Type: application/json
 
 {
   "email": "app@houseofspells.co.uk",
-  "password": "Admin123"
+  "password": "`$SEED_ADMIN_PASSWORD` (env)"
 }
 ```
 

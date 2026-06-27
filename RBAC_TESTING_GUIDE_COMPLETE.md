@@ -32,17 +32,17 @@ API_URL="https://hos-marketplaceapi-production.up.railway.app/api"
 # CUSTOMER
 curl -X POST $API_URL/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email": "customer@hos.test", "password": "Test123!", "firstName": "John", "lastName": "Customer", "role": "customer"}'
+  -d '{"email": "customer@hos.test", "password": "`$TEST_SEED_PASSWORD` (env)", "firstName": "John", "lastName": "Customer", "role": "customer"}'
 
 # WHOLESALER
 curl -X POST $API_URL/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email": "wholesaler@hos.test", "password": "Test123!", "firstName": "Sarah", "lastName": "Wholesaler", "role": "wholesaler", "storeName": "Wholesale Magic Supplies"}'
+  -d '{"email": "wholesaler@hos.test", "password": "`$TEST_SEED_PASSWORD` (env)", "firstName": "Sarah", "lastName": "Wholesaler", "role": "wholesaler", "storeName": "Wholesale Magic Supplies"}'
 
 # B2C_SELLER
 curl -X POST $API_URL/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email": "seller@hos.test", "password": "Test123!", "firstName": "Mike", "lastName": "Seller", "role": "b2c_seller", "storeName": "B2C Magic Store"}'
+  -d '{"email": "seller@hos.test", "password": "`$TEST_SEED_PASSWORD` (env)", "firstName": "Mike", "lastName": "Seller", "role": "b2c_seller", "storeName": "B2C Magic Store"}'
 ```
 
 #### Method 2: Prisma Studio (Visual - For All Roles)
@@ -57,7 +57,7 @@ Then:
 2. Click "Add record" (+)
 3. Fill in:
    - **email:** (use emails from table below)
-   - **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` (hash for "Test123!")
+   - **password:** `[bcrypt-hash-redacted]` (hash for "`$TEST_SEED_PASSWORD` (env)")
    - **role:** UPPERCASE (e.g., `ADMIN`, `CUSTOMER`)
    - **firstName:** (use from table)
    - **lastName:** (use from table)
@@ -70,23 +70,23 @@ See `MOCK_USERS_CREATION_GUIDE.md` for SQL scripts.
 
 ## 📋 Complete Test Users List
 
-**Password for ALL users: `Test123!`**
+**Password for ALL users: ``$TEST_SEED_PASSWORD` (env)`**
 
 | Email | Password | Role | First Name | Last Name | Dashboard URL |
 |-------|----------|------|------------|-----------|---------------|
-| customer@hos.test | Test123! | CUSTOMER | John | Customer | `/` |
-| wholesaler@hos.test | Test123! | WHOLESALER | Sarah | Wholesaler | `/wholesaler/dashboard` |
-| seller@hos.test | Test123! | B2C_SELLER | Mike | Seller | `/seller/dashboard` |
-| admin@hos.test | Test123! | ADMIN | Admin | User | `/admin/dashboard` |
-| procurement@hos.test | Test123! | PROCUREMENT | Procurement | Manager | `/procurement/dashboard` |
-| fulfillment@hos.test | Test123! | FULFILLMENT | Fulfillment | Staff | `/fulfillment/dashboard` |
-| catalog@hos.test | Test123! | CATALOG | Catalog | Editor | `/catalog/dashboard` |
-| marketing@hos.test | Test123! | MARKETING | Marketing | Manager | `/marketing/dashboard` |
-| finance@hos.test | Test123! | FINANCE | Finance | Manager | `/finance/dashboard` |
-| cms@hos.test | Test123! | CMS_EDITOR | CMS | Editor | `/` |
+| customer@hos.test | `$TEST_SEED_PASSWORD` (env) | CUSTOMER | John | Customer | `/` |
+| wholesaler@hos.test | `$TEST_SEED_PASSWORD` (env) | WHOLESALER | Sarah | Wholesaler | `/wholesaler/dashboard` |
+| seller@hos.test | `$TEST_SEED_PASSWORD` (env) | B2C_SELLER | Mike | Seller | `/seller/dashboard` |
+| admin@hos.test | `$TEST_SEED_PASSWORD` (env) | ADMIN | Admin | User | `/admin/dashboard` |
+| procurement@hos.test | `$TEST_SEED_PASSWORD` (env) | PROCUREMENT | Procurement | Manager | `/procurement/dashboard` |
+| fulfillment@hos.test | `$TEST_SEED_PASSWORD` (env) | FULFILLMENT | Fulfillment | Staff | `/fulfillment/dashboard` |
+| catalog@hos.test | `$TEST_SEED_PASSWORD` (env) | CATALOG | Catalog | Editor | `/catalog/dashboard` |
+| marketing@hos.test | `$TEST_SEED_PASSWORD` (env) | MARKETING | Marketing | Manager | `/marketing/dashboard` |
+| finance@hos.test | `$TEST_SEED_PASSWORD` (env) | FINANCE | Finance | Manager | `/finance/dashboard` |
+| cms@hos.test | `$TEST_SEED_PASSWORD` (env) | CMS_EDITOR | CMS | Editor | `/` |
 
 **Password Hash (for Prisma Studio/SQL):**  
-`$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+`[bcrypt-hash-redacted]`
 
 ---
 

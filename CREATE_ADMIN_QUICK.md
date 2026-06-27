@@ -3,7 +3,7 @@
 ## Admin User Details
 
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 - **Role:** `ADMIN`
 
 ---
@@ -45,7 +45,7 @@ railway run pnpm db:studio
 3. Click **"Add record"** (+)
 4. Fill in:
    - **email:** `app@houseofspells.co.uk`
-   - **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+   - **password:** `[bcrypt-hash-redacted]`
    - **role:** `ADMIN`
    - **firstName:** `Super`
    - **lastName:** `Admin`
@@ -66,7 +66,7 @@ INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdA
 VALUES (
   gen_random_uuid(),
   'app@houseofspells.co.uk',
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  '[bcrypt-hash-redacted]',
   'Super',
   'Admin',
   'ADMIN',
@@ -76,7 +76,7 @@ VALUES (
 ON CONFLICT (email) 
 DO UPDATE SET 
   role = 'ADMIN',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+  password = '[bcrypt-hash-redacted]';
 ```
 
 ---
@@ -89,7 +89,7 @@ curl -X POST https://your-api-url.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "app@houseofspells.co.uk",
-    "password": "Admin123"
+    "password": "`$SEED_ADMIN_PASSWORD` (env)"
   }'
 ```
 
@@ -101,8 +101,8 @@ curl -X POST https://your-api-url.railway.app/api/auth/login \
 
 ## 📝 Password Hash
 
-**Password:** `Admin123`  
-**Hash:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+**Password:** ``$SEED_ADMIN_PASSWORD` (env)`  
+**Hash:** `[bcrypt-hash-redacted]`
 
 This hash is pre-generated and ready to use.
 

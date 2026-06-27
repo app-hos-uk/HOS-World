@@ -17,7 +17,7 @@ Verify `NEXT_PUBLIC_API_URL` is set in Railway frontend service:
 4. Navigate to: `https://hos-marketplaceweb-production.up.railway.app/login`
 5. Enter credentials:
    - Email: `app@houseofspells.co.uk`
-   - Password: `Admin123`
+   - Password: ``$SEED_ADMIN_PASSWORD` (env)`
 6. Click "Login" button
 7. Check:
    - **Console**: Any JavaScript errors?
@@ -31,7 +31,7 @@ The form should have `onSubmit={handleLogin}` attached.
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
 ```
 
 ### 5. Check Browser Console

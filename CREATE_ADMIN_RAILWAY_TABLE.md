@@ -21,7 +21,7 @@ In Railway's table editor for the `users` table:
 
 1. **ID field:** Paste the generated UUID (or use the one below)
 2. **email:** `app@houseofspells.co.uk`
-3. **password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+3. **password:** `[bcrypt-hash-redacted]`
 4. **firstName:** `Super`
 5. **lastName:** `Admin`
 6. **role:** `ADMIN` (select from dropdown if available)
@@ -64,7 +64,7 @@ railway run psql $DATABASE_URL -c "INSERT INTO users (id, email, password, \"fir
 
 **ID:** `550e8400-e29b-41d4-a716-446655440000` (or generate new one)  
 **email:** `app@houseofspells.co.uk`  
-**password:** `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`  
+**password:** `[bcrypt-hash-redacted]`  
 **firstName:** `Super`  
 **lastName:** `Admin`  
 **role:** `ADMIN`  

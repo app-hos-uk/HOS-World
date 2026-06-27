@@ -61,7 +61,7 @@
 
 5. **Enter Credentials**:
    - Email: `app@houseofspells.co.uk`
-   - Password: `Admin123`
+   - Password: ``$SEED_ADMIN_PASSWORD` (env)`
 
 6. **Click Login Button**
 

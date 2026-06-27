@@ -15,7 +15,7 @@ Then create the test user:
 curl -X POST "https://hos-marketplaceapi-production.up.railway.app/api/admin/create-influencer-test-user" -H "Content-Type: application/json"
 ```
 
-Then log in with **influencer@hos.test** / **Test!123**.
+Then log in with **influencer@hos.test** / **`$TEST_SEED_PASSWORD` (env)**.
 
 ## 2. Fix immediately without redeploy (manual SQL)
 
@@ -47,4 +47,4 @@ If you need the influencer user **before** the next deploy:
    curl -X POST "https://hos-marketplaceapi-production.up.railway.app/api/admin/create-influencer-test-user" -H "Content-Type: application/json"
    ```
 
-3. **Log in** with **influencer@hos.test** / **Test!123**.
+3. **Log in** with **influencer@hos.test** / **`$TEST_SEED_PASSWORD` (env)**.

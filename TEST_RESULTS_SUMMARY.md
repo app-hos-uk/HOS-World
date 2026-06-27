@@ -12,13 +12,13 @@ Date: December 5, 2025
 
 | Role | Email | Password | Status | Notes |
 |------|-------|----------|--------|-------|
-| Admin | admin@hos.test | Test123! | ✅ Working | Successfully logs in |
-| Procurement | procurement@hos.test | Test123! | ✅ Working | Successfully logs in |
-| Fulfillment | fulfillment@hos.test | Test123! | ✅ Working | Successfully logs in |
-| Catalog | catalog@hos.test | Test123! | ✅ Working | Successfully logs in |
-| Marketing | marketing@hos.test | Test123! | ✅ Working | Successfully logs in |
-| Finance | finance@hos.test | Test123! | ✅ Working | Successfully logs in |
-| CMS Editor | cms@hos.test | Test123! | ✅ Working | Successfully logs in |
+| Admin | admin@hos.test | `$TEST_SEED_PASSWORD` (env) | ✅ Working | Successfully logs in |
+| Procurement | procurement@hos.test | `$TEST_SEED_PASSWORD` (env) | ✅ Working | Successfully logs in |
+| Fulfillment | fulfillment@hos.test | `$TEST_SEED_PASSWORD` (env) | ✅ Working | Successfully logs in |
+| Catalog | catalog@hos.test | `$TEST_SEED_PASSWORD` (env) | ✅ Working | Successfully logs in |
+| Marketing | marketing@hos.test | `$TEST_SEED_PASSWORD` (env) | ✅ Working | Successfully logs in |
+| Finance | finance@hos.test | `$TEST_SEED_PASSWORD` (env) | ✅ Working | Successfully logs in |
+| CMS Editor | cms@hos.test | `$TEST_SEED_PASSWORD` (env) | ✅ Working | Successfully logs in |
 
 **Result**: All 7 team role users can successfully authenticate via API.
 

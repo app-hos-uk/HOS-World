@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { FANDOMS, OTHER_UNIVERSE_NAME } from '../lib/fandoms';
+import { OTHER_UNIVERSE_NAME } from '../lib/fandoms';
+import { useCatalogFandoms } from '@/hooks/useCatalogFandoms';
 import { REG_GOOGLE_SCRIPT_URL } from '../lib/constants';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
@@ -49,6 +50,7 @@ async function postRegistrationPayload(data: Record<string, unknown>) {
 }
 
 export function FoundingMemberForm() {
+  const { fandoms: FANDOMS } = useCatalogFandoms();
   const searchParams = useSearchParams();
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [hint, setHint] = useState('Select at least one universe ↑');

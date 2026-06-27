@@ -60,7 +60,7 @@ When you're ready to test, these guides are ready:
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:3001/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"app@houseofspells.co.uk","password":"Admin123"}' \
+  -d '{"email":"app@houseofspells.co.uk","password":"`$SEED_ADMIN_PASSWORD` (env)"}' \
   | grep -o '"token":"[^"]*' | cut -d'"' -f4)
 ```
 
@@ -87,7 +87,7 @@ TOKEN=$(curl -s -X POST http://localhost:3001/api/v1/auth/login \
 
 - ✅ **Admin User:**
   - Email: `app@houseofspells.co.uk`
-  - Password: `Admin123`
+  - Password: ``$SEED_ADMIN_PASSWORD` (env)`
 
 ---
 

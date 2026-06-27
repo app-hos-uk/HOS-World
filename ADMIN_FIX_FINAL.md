@@ -12,7 +12,7 @@
 4. In the **password** field, replace with this EXACT value:
 
 ```
-$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+[bcrypt-hash-redacted]
 ```
 
 **Important:**
@@ -57,7 +57,7 @@ Access to fetch at 'http://localhost:3001/api/auth/login' from origin 'https://h
 2. Edit user: `app@houseofspells.co.uk`
 3. Update password field to:
    ```
-   $2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+   [bcrypt-hash-redacted]
    ```
 4. Save
 
@@ -83,7 +83,7 @@ Access to fetch at 'http://localhost:3001/api/auth/login' from origin 'https://h
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
 ```
 
 **Via Frontend (should work after Step 2):**
@@ -96,7 +96,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
 
 **Copy this EXACTLY (no spaces):**
 ```
-$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+[bcrypt-hash-redacted]
 ```
 
 **Verification:**

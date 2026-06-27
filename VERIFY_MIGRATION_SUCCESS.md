@@ -51,7 +51,7 @@ or
 2. Go to: `https://hos-marketplaceweb-production.up.railway.app/login`
 3. Try logging in with:
    - Email: `app@houseofspells.co.uk`
-   - Password: `Admin123`
+   - Password: ``$SEED_ADMIN_PASSWORD` (env)`
 4. Check the browser console (F12 → Console tab)
    - Should see NO 500 errors for `/api/characters` or `/api/fandoms`
    - Should see successful API calls

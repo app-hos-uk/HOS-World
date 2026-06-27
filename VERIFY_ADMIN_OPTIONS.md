@@ -35,7 +35,7 @@ WHERE email = 'app@houseofspells.co.uk';
 **Expected Result:**
 - Email: `app@houseofspells.co.uk`
 - Role: `ADMIN`
-- Password should start with: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+- Password should start with: `[bcrypt-hash-redacted]`
 
 ## Option 3: Test Login Directly
 
@@ -45,7 +45,7 @@ Test if admin login works via API:
 # Test production API
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
 ```
 
 If login succeeds, admin exists and is configured correctly!

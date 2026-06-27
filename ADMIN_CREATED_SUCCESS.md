@@ -3,7 +3,7 @@
 ## Admin User Details
 
 - **Email:** `app@houseofspells.co.uk`
-- **Password:** `Admin123`
+- **Password:** ``$SEED_ADMIN_PASSWORD` (env)`
 - **Role:** `ADMIN`
 - **Name:** Super Admin
 
@@ -18,7 +18,7 @@ curl -X POST https://your-api-url.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "app@houseofspells.co.uk",
-    "password": "Admin123"
+    "password": "`$SEED_ADMIN_PASSWORD` (env)"
   }'
 ```
 
@@ -45,7 +45,7 @@ curl -X POST https://your-api-url.railway.app/api/auth/login \
 
 ### 1. Change Password After First Login
 
-⚠️ **Important:** The default password `Admin123` is not secure for production.
+⚠️ **Important:** The default password ``$SEED_ADMIN_PASSWORD` (env)` is not secure for production.
 
 Change it immediately after first login:
 - Use a strong password (min 12 characters, mixed case, numbers, symbols)

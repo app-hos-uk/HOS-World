@@ -9,9 +9,9 @@
 
 1. ✅ **Admin User Created** in PostgreSQL database
    - Email: `app@houseofspells.co.uk`
-   - Password: `Admin123`
+   - Password: ``$SEED_ADMIN_PASSWORD` (env)`
    - Role: `ADMIN`
-   - Password Hash: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy` ✅
+   - Password Hash: `[bcrypt-hash-redacted]` ✅
 
 2. ✅ **Frontend Variables Updated**
    - `NEXT_PUBLIC_API_URL` configured
@@ -34,7 +34,7 @@
 ```bash
 curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "app@houseofspells.co.uk", "password": "Admin123"}'
+  -d '{"email": "app@houseofspells.co.uk", "password": "`$SEED_ADMIN_PASSWORD` (env)"}'
 ```
 
 **Expected Success Response:**
@@ -70,7 +70,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
 
 2. **Enter Credentials:**
    - Email: `app@houseofspells.co.uk`
-   - Password: `Admin123`
+   - Password: ``$SEED_ADMIN_PASSWORD` (env)`
 
 3. **Click "Login"**
 
@@ -125,14 +125,14 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login
 1. **Test API Login** - Run the curl command above
 2. **Test Frontend Login** - Try logging in via web interface
 3. **Verify No CORS Errors** - Check browser console
-4. **Change Password** - Update from default `Admin123` for security
+4. **Change Password** - Update from default ``$SEED_ADMIN_PASSWORD` (env)` for security
 
 ---
 
 ## 🔒 Security Reminder
 
 **⚠️ IMPORTANT:** After successful login:
-1. Change password from `Admin123` to a strong password
+1. Change password from ``$SEED_ADMIN_PASSWORD` (env)` to a strong password
 2. Use password manager for secure storage
 3. Enable 2FA if available
 

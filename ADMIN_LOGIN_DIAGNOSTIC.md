@@ -35,7 +35,7 @@ In Railway Dashboard → PostgreSQL → Data → users table:
    - Verify `password` starts with `$2b$10$`
 
 2. **Check password hash:**
-   - Should be exactly: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+   - Should be exactly: `[bcrypt-hash-redacted]`
    - Length: 60 characters
    - No spaces before or after
 
@@ -76,7 +76,7 @@ Check if API can connect to database:
 ```
 id: be47307a-2afc-4d83-b44a-ba473f09458b
 email: app@houseofspells.co.uk
-password: $2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+password: [bcrypt-hash-redacted]
 firstName: Super
 lastName: Admin
 phone: null
@@ -102,7 +102,7 @@ curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/regis
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin2@houseofspells.co.uk",
-    "password": "Admin123",
+    "password": "`$SEED_ADMIN_PASSWORD` (env)",
     "firstName": "Super",
     "lastName": "Admin"
   }'
@@ -142,7 +142,7 @@ Then update role to ADMIN in database.
 
 1. **Check API Logs** - Look for specific error messages
 2. **Verify Database** - Confirm user exists and fields are correct
-3. **Try Different Password** - Create user with password `Test123!` and hash it fresh
+3. **Try Different Password** - Create user with password ``$TEST_SEED_PASSWORD` (env)` and hash it fresh
 4. **Check bcrypt Version** - Ensure API uses compatible bcrypt version
 5. **Database Connection** - Verify API can connect to database
 

@@ -38,8 +38,8 @@ pnpm db:create-team-users
 ```
 
 This creates:
-- Admin: `admin@hos.com` / `Test123!`
-- Customer: `customer@hos.com` / `Test123!`
+- Admin: `admin@hos.com` / ``$TEST_SEED_PASSWORD` (env)`
+- Customer: `customer@hos.com` / ``$TEST_SEED_PASSWORD` (env)`
 
 ### Step 3: Run the Tests
 ```bash

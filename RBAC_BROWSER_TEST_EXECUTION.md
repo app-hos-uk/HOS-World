@@ -19,22 +19,22 @@ API_URL="https://hos-marketplaceapi-production.up.railway.app/api"
 # Create CUSTOMER
 curl -X POST $API_URL/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email": "customer@hos.test", "password": "Test123!", "firstName": "John", "lastName": "Customer", "role": "customer"}'
+  -d '{"email": "customer@hos.test", "password": "`$TEST_SEED_PASSWORD` (env)", "firstName": "John", "lastName": "Customer", "role": "customer"}'
 
 # Create WHOLESALER
 curl -X POST $API_URL/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email": "wholesaler@hos.test", "password": "Test123!", "firstName": "Sarah", "lastName": "Wholesaler", "role": "wholesaler", "storeName": "Wholesale Magic Supplies"}'
+  -d '{"email": "wholesaler@hos.test", "password": "`$TEST_SEED_PASSWORD` (env)", "firstName": "Sarah", "lastName": "Wholesaler", "role": "wholesaler", "storeName": "Wholesale Magic Supplies"}'
 
 # Create B2C_SELLER
 curl -X POST $API_URL/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email": "seller@hos.test", "password": "Test123!", "firstName": "Mike", "lastName": "Seller", "role": "b2c_seller", "storeName": "B2C Magic Store"}'
+  -d '{"email": "seller@hos.test", "password": "`$TEST_SEED_PASSWORD` (env)", "firstName": "Mike", "lastName": "Seller", "role": "b2c_seller", "storeName": "B2C Magic Store"}'
 ```
 
 **Option B: Use Prisma Studio**
 1. Run: `cd services/api && railway run pnpm db:studio`
-2. Create users manually with password hash: `$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy`
+2. Create users manually with password hash: `[bcrypt-hash-redacted]`
 
 **Option C: SQL Direct Insert** (see MOCK_USERS_CREATION_GUIDE.md)
 
@@ -42,15 +42,15 @@ curl -X POST $API_URL/auth/register \
 
 | Email | Password | Role | Dashboard |
 |-------|----------|------|-----------|
-| customer@hos.test | Test123! | CUSTOMER | `/` |
-| wholesaler@hos.test | Test123! | WHOLESALER | `/wholesaler/dashboard` |
-| seller@hos.test | Test123! | B2C_SELLER | `/seller/dashboard` |
-| admin@hos.test | Test123! | ADMIN | `/admin/dashboard` |
-| procurement@hos.test | Test123! | PROCUREMENT | `/procurement/dashboard` |
-| fulfillment@hos.test | Test123! | FULFILLMENT | `/fulfillment/dashboard` |
-| catalog@hos.test | Test123! | CATALOG | `/catalog/dashboard` |
-| marketing@hos.test | Test123! | MARKETING | `/marketing/dashboard` |
-| finance@hos.test | Test123! | FINANCE | `/finance/dashboard` |
+| customer@hos.test | `$TEST_SEED_PASSWORD` (env) | CUSTOMER | `/` |
+| wholesaler@hos.test | `$TEST_SEED_PASSWORD` (env) | WHOLESALER | `/wholesaler/dashboard` |
+| seller@hos.test | `$TEST_SEED_PASSWORD` (env) | B2C_SELLER | `/seller/dashboard` |
+| admin@hos.test | `$TEST_SEED_PASSWORD` (env) | ADMIN | `/admin/dashboard` |
+| procurement@hos.test | `$TEST_SEED_PASSWORD` (env) | PROCUREMENT | `/procurement/dashboard` |
+| fulfillment@hos.test | `$TEST_SEED_PASSWORD` (env) | FULFILLMENT | `/fulfillment/dashboard` |
+| catalog@hos.test | `$TEST_SEED_PASSWORD` (env) | CATALOG | `/catalog/dashboard` |
+| marketing@hos.test | `$TEST_SEED_PASSWORD` (env) | MARKETING | `/marketing/dashboard` |
+| finance@hos.test | `$TEST_SEED_PASSWORD` (env) | FINANCE | `/finance/dashboard` |
 
 ---
 
@@ -61,7 +61,7 @@ curl -X POST $API_URL/auth/register \
 **Steps:**
 1. Navigate to `/login`
 2. Enter email: `customer@hos.test`
-3. Enter password: `Test123!`
+3. Enter password: ``$TEST_SEED_PASSWORD` (env)`
 4. Click Login
 5. **Expected:** Redirect to `/` (home page)
 6. **Verify:** Header shows email and "Dashboard" link
@@ -78,7 +78,7 @@ curl -X POST $API_URL/auth/register \
 1. Logout (if logged in)
 2. Navigate to `/login`
 3. Enter email: `admin@hos.test`
-4. Enter password: `Test123!`
+4. Enter password: ``$TEST_SEED_PASSWORD` (env)`
 5. Click Login
 6. **Expected:** Redirect to `/admin/dashboard`
 7. **Verify:** Dashboard loads with admin content

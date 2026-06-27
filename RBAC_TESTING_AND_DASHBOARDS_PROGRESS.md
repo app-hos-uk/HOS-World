@@ -58,7 +58,7 @@ Use one of these methods:
 cd services/api
 railway run pnpm db:studio
 # Create users manually with password hash:
-# $2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+# [bcrypt-hash-redacted]
 ```
 
 **Users to Create:**
