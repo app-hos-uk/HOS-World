@@ -1,7 +1,13 @@
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL || '';
-const INTERNAL_API_URL = process.env.NEXT_PUBLIC_API_URL
-  ? `${process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '')}/api`
-  : 'https://hos-marketplaceapi-production.up.railway.app/api';
+
+function resolveInternalApiUrl(): string {
+  const raw = (process.env.NEXT_PUBLIC_API_URL || '').trim().replace(/\/+$/, '');
+  if (!raw) return '';
+  // If the URL already ends with /api, use as-is; otherwise append /api
+  return raw.endsWith('/api') ? raw : `${raw}/api`;
+}
+
+const INTERNAL_API_URL = resolveInternalApiUrl();
 
 export interface StrapiBlogPost {
   id: number;
@@ -76,6 +82,7 @@ async function strapiFetch<T>(endpoint: string, options?: RequestInit): Promise<
 
 // Internal API fetcher (PostgreSQL blog system)
 async function internalFetch<T>(path: string): Promise<T | null> {
+  if (!INTERNAL_API_URL) return null;
   try {
     const res = await fetch(`${INTERNAL_API_URL}${path}`, {
       next: { revalidate: 60 },
