@@ -1,17 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const BACKEND_URL =
-  process.env.API_INTERNAL_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001');
-
-function getBackendBase(): string {
-  let base = BACKEND_URL.trim().replace(/\/+$/, '');
-  if (!base.endsWith('/api')) {
-    base += '/api';
-  }
-  return base;
-}
+import { normalizeApiBaseUrl } from '@/lib/apiBaseUrl';
 
 const STRIP_HEADERS = new Set([
   'connection',
@@ -25,8 +13,29 @@ const STRIP_HEADERS = new Set([
   'host',
 ]);
 
+/** Resolve backend base URL at request time so Railway runtime env vars apply. */
+function resolveBackendBases(): string[] {
+  const candidates = [
+    process.env.API_INTERNAL_URL,
+    process.env.NEXT_PUBLIC_API_URL,
+    process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3001',
+  ];
+
+  const seen = new Set<string>();
+  const bases: string[] = [];
+  for (const raw of candidates) {
+    const base = normalizeApiBaseUrl(raw);
+    if (base && !seen.has(base)) {
+      seen.add(base);
+      bases.push(base);
+    }
+  }
+  return bases;
+}
+
 async function handler(req: NextRequest) {
-  if (!BACKEND_URL.trim()) {
+  const backendBases = resolveBackendBases();
+  if (backendBases.length === 0) {
     return NextResponse.json(
       { message: 'API backend URL is not configured (set API_INTERNAL_URL or NEXT_PUBLIC_API_URL)' },
       { status: 503 },
@@ -45,7 +54,6 @@ async function handler(req: NextRequest) {
 
   const path = req.nextUrl.pathname.replace(/^\/api\/proxy/, '');
   const search = req.nextUrl.search;
-  const target = `${getBackendBase()}${path}${search}`;
 
   const headers = new Headers();
   req.headers.forEach((value, key) => {
@@ -60,13 +68,35 @@ async function handler(req: NextRequest) {
   const hasBody = req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'DELETE';
   const body = hasBody ? await req.arrayBuffer() : undefined;
 
-  const upstream = await fetch(target, {
-    method: req.method,
-    headers,
-    body,
-    redirect: 'manual',
-    ...(hasBody ? { duplex: 'half' } : {}),
-  });
+  let upstream: Response | null = null;
+  let lastError: unknown;
+
+  for (const base of backendBases) {
+    const target = `${base}${path}${search}`;
+    try {
+      upstream = await fetch(target, {
+        method: req.method,
+        headers,
+        body,
+        redirect: 'manual',
+        // Required by Node.js fetch when a body is present (DELETE is excluded via hasBody).
+        ...(hasBody ? { duplex: 'half' as const } : {}),
+      });
+      break;
+    } catch (error) {
+      lastError = error;
+      console.error(`[api/proxy] fetch failed for ${target}:`, error);
+    }
+  }
+
+  if (!upstream) {
+    const message =
+      lastError instanceof Error ? lastError.message : 'Unable to reach API backend';
+    return NextResponse.json(
+      { message: `API proxy error: ${message}` },
+      { status: 502 },
+    );
+  }
 
   const resHeaders = new Headers();
   upstream.headers.forEach((value, key) => {
@@ -107,4 +137,5 @@ export const PATCH = handler;
 export const HEAD = handler;
 export const OPTIONS = handler;
 
-export const runtime = 'edge';
+// Node.js runtime: reliable outbound fetch on Railway (edge runtime cannot use private networking).
+export const runtime = 'nodejs';

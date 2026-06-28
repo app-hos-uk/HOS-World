@@ -50,9 +50,16 @@ FROM node:18-slim
 
 WORKDIR /app
 
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_CMS_URL
+ARG NEXT_PUBLIC_FRONTEND_URL
+
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_CMS_URL=$NEXT_PUBLIC_CMS_URL
+ENV NEXT_PUBLIC_FRONTEND_URL=$NEXT_PUBLIC_FRONTEND_URL
 
 # Standalone output bundles a minimal node_modules + server.js.
 # Static assets and public/ are not included by the tracer — copy them in.
