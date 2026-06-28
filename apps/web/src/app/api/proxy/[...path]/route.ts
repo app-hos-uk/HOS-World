@@ -13,6 +13,14 @@ const STRIP_HEADERS = new Set([
   'host',
 ]);
 
+// Node fetch decompresses gzip/br bodies but may leave Content-Encoding set — browsers
+// then fail with ERR_CONTENT_DECODING_FAILED if we forward those headers as-is.
+const STRIP_RESPONSE_HEADERS = new Set([
+  ...STRIP_HEADERS,
+  'content-encoding',
+  'content-length',
+]);
+
 /** Resolve backend base URL at request time so Railway runtime env vars apply. */
 function resolveBackendBases(): string[] {
   const candidates = [
@@ -101,7 +109,7 @@ async function handler(req: NextRequest) {
   const resHeaders = new Headers();
   upstream.headers.forEach((value, key) => {
     const lower = key.toLowerCase();
-    if (STRIP_HEADERS.has(lower)) return;
+    if (STRIP_RESPONSE_HEADERS.has(lower)) return;
     // Rewrite Set-Cookie to be on the frontend domain (first-party)
     if (lower === 'set-cookie') {
       const rewritten = rewriteSetCookie(value);

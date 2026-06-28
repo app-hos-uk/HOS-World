@@ -1,6 +1,7 @@
 import { Controller, Get, Header } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
+import { Public } from '../common/decorators/public.decorator';
 
 /**
  * Lightweight public controller that exposes the shopEnabled flag.
@@ -9,6 +10,7 @@ import { AdminService } from './admin.service';
  */
 @ApiTags('config')
 @Controller('config')
+@Public()
 export class PublicConfigController {
   constructor(private readonly adminService: AdminService) {}
 

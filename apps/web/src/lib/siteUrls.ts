@@ -19,9 +19,15 @@ export function getSiteUrl(): string {
     return `https://${trimUrl(railwayDomain.replace(/^https?:\/\//, ''))}`;
   }
 
-  // Build-time fallback when NEXT_PUBLIC_SITE_URL is not injected but FRONTEND_URL is set
-  const frontendUrl = process.env.FRONTEND_URL?.trim();
-  if (frontendUrl) return trimUrl(frontendUrl);
+  // Other public URL env vars set on Railway / Docker (may be baked at build time)
+  for (const key of [
+    'NEXT_PUBLIC_FRONTEND_URL',
+    'NEXT_PUBLIC_APP_URL',
+    'FRONTEND_URL',
+  ] as const) {
+    const url = process.env[key]?.trim();
+    if (url) return trimUrl(url);
+  }
 
   if (process.env.NODE_ENV === 'production') {
     console.warn(
