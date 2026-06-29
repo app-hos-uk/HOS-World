@@ -5910,6 +5910,10 @@ export class ApiClient {
     return this.request<ApiResponse<any>>(`/finance/transactions/export?${params.toString()}`, { method: 'GET' });
   }
 
+  async backfillTransactions(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/finance/transactions/backfill', { method: 'POST' });
+  }
+
   // ===== Meilisearch / Search =====
   async searchProducts(query: string, filters?: {
     categoryId?: string; category?: string; categories?: string[];

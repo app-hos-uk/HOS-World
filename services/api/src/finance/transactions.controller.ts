@@ -233,6 +233,24 @@ export class TransactionsController {
     };
   }
 
+  @Post('backfill')
+  @Roles('ADMIN')
+  @ApiOperation({
+    summary: 'Backfill transactions from paid orders',
+    description:
+      'Creates PAYMENT transaction records for all paid orders that lack them. Admin only. Idempotent.',
+  })
+  @SwaggerApiResponse({ status: 201, description: 'Backfill completed' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  async backfillTransactions(): Promise<ApiResponse<any>> {
+    const result = await this.transactionsService.backfillFromOrders();
+    return {
+      data: result,
+      message: `Backfill complete: ${result.created} transactions created, ${result.skipped} skipped`,
+    };
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Get transaction by ID',

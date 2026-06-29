@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 const ALLOWED_TRANSACTION_TYPES = ['PAYMENT', 'PAYOUT', 'REFUND', 'FEE', 'ADJUSTMENT'] as const;
@@ -7,8 +7,22 @@ type TransactionType = (typeof ALLOWED_TRANSACTION_TYPES)[number];
 const ALLOWED_CURRENCIES = ['USD', 'EUR', 'AED'] as const;
 
 @Injectable()
-export class TransactionsService {
+export class TransactionsService implements OnModuleInit {
+  private readonly logger = new Logger(TransactionsService.name);
+
   constructor(private prisma: PrismaService) {}
+
+  async onModuleInit() {
+    // Auto-backfill on startup: create Transaction records for paid orders that lack them
+    try {
+      const result = await this.backfillFromOrders();
+      if (result.created > 0) {
+        this.logger.log(`Auto-backfill: ${result.created} transactions created from paid orders`);
+      }
+    } catch (err: any) {
+      this.logger.warn(`Auto-backfill failed: ${err?.message}`);
+    }
+  }
 
   async createTransaction(data: {
     type: TransactionType;
@@ -474,5 +488,81 @@ export class TransactionsService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  /**
+   * Backfill Transaction records for paid orders that were processed before
+   * the transaction-creation logic was added to markPaymentAsPaid.
+   */
+  async backfillFromOrders(): Promise<{ created: number; skipped: number }> {
+    const existingOrderIds = await this.prisma.transaction.findMany({
+      where: { type: 'PAYMENT', orderId: { not: null } },
+      select: { orderId: true },
+    });
+    const existingSet = new Set(existingOrderIds.map((t) => t.orderId));
+
+    const paidOrders = await this.prisma.order.findMany({
+      where: {
+        paymentStatus: 'PAID',
+        parentOrderId: null,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        userId: true,
+        sellerId: true,
+        orderNumber: true,
+        total: true,
+        currency: true,
+        createdAt: true,
+        payments: {
+          where: { status: 'PAID' },
+          select: { stripePaymentId: true, amount: true, currency: true },
+          take: 1,
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    let created = 0;
+    let skipped = 0;
+
+    for (const order of paidOrders) {
+      if (existingSet.has(order.id)) {
+        skipped++;
+        continue;
+      }
+
+      const payment = order.payments[0];
+      const amount = payment ? Number(payment.amount) : Number(order.total);
+      const currency = payment?.currency || order.currency || 'USD';
+
+      try {
+        await this.prisma.transaction.create({
+          data: {
+            type: 'PAYMENT',
+            amount,
+            currency,
+            status: 'COMPLETED',
+            customerId: order.userId,
+            sellerId: order.sellerId || undefined,
+            orderId: order.id,
+            description: `Payment for order ${order.orderNumber || order.id}`,
+            metadata: {
+              backfilled: true,
+              stripePaymentId: payment?.stripePaymentId || null,
+            },
+            createdAt: order.createdAt,
+          },
+        });
+        created++;
+      } catch (err: any) {
+        this.logger.warn(`Backfill failed for order ${order.id}: ${err?.message}`);
+        skipped++;
+      }
+    }
+
+    this.logger.log(`Backfill complete: ${created} created, ${skipped} skipped`);
+    return { created, skipped };
   }
 }
