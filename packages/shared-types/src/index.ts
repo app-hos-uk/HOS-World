@@ -250,6 +250,7 @@ export type OrderStatus =
   | 'fulfilled' 
   | 'shipped' 
   | 'delivered' 
+  | 'cancellation_requested'
   | 'cancelled' 
   | 'refunded';
 

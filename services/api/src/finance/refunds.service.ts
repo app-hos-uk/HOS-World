@@ -218,6 +218,51 @@ export class RefundsService {
     return transaction;
   }
 
+  async recordOrderCancellationRefund(data: {
+    orderId: string;
+    customerId: string;
+    amount: number;
+    currency?: string;
+    cancellationRequestId?: string;
+    stripeRefundSucceeded: boolean;
+  }) {
+    if (data.amount <= 0) {
+      return null;
+    }
+
+    const existing = await this.transactionsService.getTransactions({
+      orderId: data.orderId,
+      type: 'REFUND',
+    });
+    const duplicate = (existing?.transactions || []).some(
+      (tx: any) =>
+        tx.metadata?.cancellationRequestId === data.cancellationRequestId ||
+        (tx.metadata?.source === 'order_cancellation' && !data.cancellationRequestId),
+    );
+    if (duplicate) {
+      this.logger.log(`Cancellation refund transaction already recorded for order ${data.orderId}`);
+      return null;
+    }
+
+    const transaction = await this.transactionsService.createTransaction({
+      type: 'REFUND',
+      amount: data.amount,
+      currency: data.currency || 'USD',
+      customerId: data.customerId,
+      orderId: data.orderId,
+      description: data.cancellationRequestId
+        ? `Refund for approved cancellation ${data.cancellationRequestId}`
+        : `Refund for order cancellation ${data.orderId}`,
+      status: data.stripeRefundSucceeded ? 'COMPLETED' : 'FAILED',
+      metadata: {
+        source: 'order_cancellation',
+        cancellationRequestId: data.cancellationRequestId,
+      },
+    });
+
+    return transaction;
+  }
+
   async getRefunds(filters?: {
     customerId?: string;
     orderId?: string;

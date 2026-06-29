@@ -162,6 +162,11 @@ model User {
   // Soft delete
   deletedAt DateTime?
 
+  cancellationRequests       CancellationRequest[] @relation("CancellationRequestedBy")
+  cancellationSellerReviews  CancellationRequest[] @relation("CancellationSellerReviewer")
+  cancellationFinanceReviews   CancellationRequest[] @relation("CancellationFinanceReviewer")
+  cancellationResolutions    CancellationRequest[] @relation("CancellationResolver")
+
   @@index([deletedAt])
   @@map("users")
 }
@@ -890,6 +895,8 @@ model Order {
 
   clickCollect ClickCollectOrder?
 
+  cancellationRequests CancellationRequest[]
+
   loyaltyPointsEarned      Int      @default(0)
   loyaltyPointsRedeemed    Int      @default(0)
   loyaltyDiscountAmount    Decimal? @db.Decimal(10, 2)
@@ -925,8 +932,59 @@ enum OrderStatus {
   FULFILLED
   SHIPPED
   DELIVERED
+  CANCELLATION_REQUESTED
   CANCELLED
   REFUNDED
+}
+
+enum CancellationStatus {
+  PENDING_SELLER
+  SELLER_APPROVED
+  PENDING_FINANCE
+  FINANCE_APPROVED
+  APPROVED
+  REJECTED
+  ESCALATED
+  AUTO_APPROVED
+}
+
+model CancellationRequest {
+  id              String             @id @default(uuid())
+  orderId         String
+  order           Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  requestedById   String
+  requestedBy     User               @relation("CancellationRequestedBy", fields: [requestedById], references: [id])
+  reason          String?            @db.Text
+  status          CancellationStatus @default(PENDING_SELLER)
+  previousStatus  OrderStatus
+
+  sellerReviewedById  String?
+  sellerReviewedBy    User?         @relation("CancellationSellerReviewer", fields: [sellerReviewedById], references: [id])
+  sellerReviewedAt    DateTime?
+  sellerNotes         String?       @db.Text
+
+  financeReviewedById String?
+  financeReviewedBy   User?         @relation("CancellationFinanceReviewer", fields: [financeReviewedById], references: [id])
+  financeReviewedAt   DateTime?
+  financeNotes        String?       @db.Text
+
+  escalatedAt         DateTime?
+  escalationReason    String?       @db.Text
+  resolvedById        String?
+  resolvedBy          User?         @relation("CancellationResolver", fields: [resolvedById], references: [id])
+  resolvedAt          DateTime?
+  adminNotes          String?       @db.Text
+
+  autoApproved        Boolean       @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([orderId])
+  @@index([requestedById])
+  @@index([status])
+  @@index([createdAt])
+  @@map("cancellation_requests")
 }
 
 enum PaymentStatus {
@@ -1174,6 +1232,11 @@ enum NotificationType {
   ORDER_SHIPPED
   ORDER_DELIVERED
   ORDER_CANCELLED
+  CANCELLATION_REQUESTED
+  CANCELLATION_SELLER_APPROVED
+  CANCELLATION_APPROVED
+  CANCELLATION_REJECTED
+  CANCELLATION_ESCALATED
   PAYMENT_RECEIVED
   PAYMENT_FAILED
   RETURN_REQUESTED

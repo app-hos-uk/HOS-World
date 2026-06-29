@@ -28,6 +28,7 @@ import { AmbassadorService } from '../ambassador/ambassador.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ActivityService } from '../activity/activity.service';
 import { VendorLedgerService } from '../vendor-ledger/vendor-ledger.service';
+import { RefundsService } from '../finance/refunds.service';
 import { ReferralsService } from '../referrals/referrals.service';
 import type { PromotionApplicationResult } from '../promotions/types/promotion.types';
 import type { Order, OrderStatus, PaymentStatus } from '@hos-marketplace/shared-types';
@@ -44,14 +45,15 @@ export class OrdersService {
   private readonly defaultCommissionRate: number;
 
   private readonly ALLOWED_TRANSITIONS: Record<string, string[]> = {
-    PENDING: ['ACCEPTED', 'REJECTED', 'CONFIRMED', 'CANCELLED'],
-    ACCEPTED: ['CONFIRMED', 'CANCELLED'],
+    PENDING: ['ACCEPTED', 'REJECTED', 'CONFIRMED', 'CANCELLED', 'CANCELLATION_REQUESTED'],
+    ACCEPTED: ['CONFIRMED', 'CANCELLED', 'CANCELLATION_REQUESTED'],
     REJECTED: [],
-    CONFIRMED: ['PROCESSING', 'CANCELLED'],
-    PROCESSING: ['FULFILLED', 'CANCELLED'],
-    FULFILLED: ['SHIPPED', 'CANCELLED'],
+    CONFIRMED: ['PROCESSING', 'CANCELLED', 'CANCELLATION_REQUESTED'],
+    PROCESSING: ['FULFILLED', 'CANCELLED', 'CANCELLATION_REQUESTED'],
+    FULFILLED: ['SHIPPED', 'CANCELLED', 'CANCELLATION_REQUESTED'],
     SHIPPED: ['DELIVERED'],
     DELIVERED: ['REFUNDED'],
+    CANCELLATION_REQUESTED: ['CANCELLED', 'PENDING', 'ACCEPTED', 'CONFIRMED', 'PROCESSING', 'FULFILLED'],
     CANCELLED: [],
     REFUNDED: [],
   };
@@ -121,6 +123,7 @@ export class OrdersService {
     @Optional() @Inject(forwardRef(() => NotificationsService)) private notificationsService?: NotificationsService,
     @Optional() private activityService?: ActivityService,
     @Optional() @Inject(forwardRef(() => VendorLedgerService)) private vendorLedgerService?: VendorLedgerService,
+    @Optional() private refundsService?: RefundsService,
   ) {
     this.defaultCommissionRate = this.configService.get<number>(
       'DEFAULT_COMMISSION_RATE',
@@ -1806,10 +1809,19 @@ export class OrdersService {
 
   /**
    * Cancel an order and restore stock.
-   * Customers can only cancel orders in PENDING or CONFIRMED status.
-   * Sellers and admins can cancel orders in any non-final status.
+   * Customers can only cancel orders in PENDING or CONFIRMED status (unpaid).
+   * Paid customer cancellations require approval via CancellationsService unless skipApproval is set.
    */
-  async cancel(id: string, userId: string, role: string): Promise<Order> {
+  async cancel(
+    id: string,
+    userId: string,
+    role: string,
+    options?: {
+      skipApproval?: boolean;
+      recordTransaction?: boolean;
+      cancellationRequestId?: string;
+    },
+  ): Promise<Order> {
     const order = await this.prisma.order.findUnique({
       where: { id },
       include: {
@@ -1821,6 +1833,17 @@ export class OrdersService {
 
     if (!order) {
       throw new NotFoundException('Order not found');
+    }
+
+    // Paid customer cancellations must go through the approval workflow
+    if (
+      role === 'CUSTOMER' &&
+      order.paymentStatus === 'PAID' &&
+      !options?.skipApproval
+    ) {
+      throw new BadRequestException(
+        'Paid orders require cancellation approval. Use POST /cancellations/request or POST /orders/:id/cancel with a reason to submit a cancellation request.',
+      );
     }
 
     // Customers can only cancel parent orders, not child orders directly
@@ -1860,8 +1883,8 @@ export class OrdersService {
 
     this.validateStatusTransition(order.status, 'CANCELLED');
 
-    const customerCancellableStatuses = ['PENDING', 'CONFIRMED'];
-    if (role === 'CUSTOMER' && !customerCancellableStatuses.includes(order.status)) {
+    const customerCancellableStatuses = ['PENDING', 'CONFIRMED', 'CANCELLATION_REQUESTED'];
+    if (role === 'CUSTOMER' && !options?.skipApproval && !customerCancellableStatuses.includes(order.status)) {
       throw new BadRequestException(
         `Customers can only cancel orders that are PENDING or CONFIRMED. Current status: ${order.status}`,
       );
@@ -1957,6 +1980,7 @@ export class OrdersService {
 
     // Issue actual Stripe refund for paid orders — only refund the card portion (not gift-card covered amount).
     // Two-phase: attempt Stripe refund first; roll back paymentStatus if it fails.
+    let stripeRefundSucceeded = order.paymentStatus !== 'PAID';
     if (order.paymentStatus === 'PAID' && order.stripePaymentIntentId) {
       const giftCardRedemptions = await this.prisma.giftCardTransaction.findMany({
         where: { orderId: order.id, type: 'REDEMPTION' },
@@ -1968,7 +1992,7 @@ export class OrdersService {
       );
       const cardRefundAmount = Math.max(0, Number(order.total) - giftCardTotal);
 
-      let stripeRefundSucceeded = false;
+      stripeRefundSucceeded = false;
       if (cardRefundAmount > 0 && this.paymentProviderService?.isProviderAvailable('stripe')) {
         try {
           const provider = this.paymentProviderService.getProvider('stripe');
@@ -2045,6 +2069,30 @@ export class OrdersService {
         } else {
           this.logger.log(`Gift-card reversals already exist for order ${order.orderNumber}, skipping`);
         }
+      }
+    } else if (order.paymentStatus === 'PAID' && !order.stripePaymentIntentId) {
+      stripeRefundSucceeded = true;
+    }
+
+    // Record finance audit trail for approved cancellation refunds
+    if (
+      options?.recordTransaction &&
+      order.paymentStatus === 'PAID' &&
+      this.refundsService
+    ) {
+      try {
+        await this.refundsService.recordOrderCancellationRefund({
+          orderId: order.id,
+          customerId: order.userId,
+          amount: Number(order.total),
+          currency: order.currency,
+          cancellationRequestId: options.cancellationRequestId,
+          stripeRefundSucceeded,
+        });
+      } catch (txErr: any) {
+        this.logger.error(
+          `Failed to record cancellation refund transaction for order ${order.orderNumber}: ${txErr?.message}`,
+        );
       }
     }
 

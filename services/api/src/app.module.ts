@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
+import { CancellationsModule } from './cancellations/cancellations.module';
 import { CartModule } from './cart/cart.module';
 import { ThemesModule } from './themes/themes.module';
 import { UsersModule } from './users/users.module';
@@ -126,6 +127,7 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     UsersModule,
     ProductsModule,
     OrdersModule,
+    CancellationsModule,
     CartModule,
     ThemesModule,
     AddressesModule,

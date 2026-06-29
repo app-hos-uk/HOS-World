@@ -22,6 +22,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
+import { CancellationsService } from '../cancellations/cancellations.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AddOrderNoteDto } from './dto/add-order-note.dto';
@@ -36,7 +37,10 @@ import type { ApiResponse, Order } from '@hos-marketplace/shared-types';
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly cancellationsService: CancellationsService,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -234,8 +238,29 @@ export class OrdersController {
   async cancel(
     @Request() req: any,
     @Param('id', ParseUUIDPipe) id: string,
+    @Body() body?: { reason?: string },
   ): Promise<ApiResponse<Order>> {
-    const order = await this.ordersService.cancel(id, req.user.id, req.user.role);
+    if (req.user.role === 'CUSTOMER') {
+      const order = await this.ordersService.findOne(id, req.user.id, req.user.role);
+      if (order.paymentStatus?.toUpperCase() === 'PAID') {
+        await this.cancellationsService.requestCancellation(req.user.id, {
+          orderId: id,
+          reason: body?.reason,
+        });
+        const updatedOrder = await this.ordersService.findOne(id, req.user.id, req.user.role);
+        const isCancelled = updatedOrder.status?.toUpperCase() === 'CANCELLED';
+        return {
+          data: updatedOrder,
+          message: isCancelled
+            ? 'Order cancelled successfully'
+            : 'Cancellation request submitted for review',
+        };
+      }
+    }
+
+    const order = await this.ordersService.cancel(id, req.user.id, req.user.role, {
+      skipApproval: true,
+    });
     return {
       data: order,
       message: 'Order cancelled successfully',

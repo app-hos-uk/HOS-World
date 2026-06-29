@@ -10,9 +10,11 @@ import { CartModule } from '../cart/cart.module';
 import { PaymentProviderModule } from '../payments/payment-provider.module';
 import { ShippingModule } from '../shipping/shipping.module';
 import { PromotionsModule } from '../promotions/promotions.module';
+import { FinanceModule } from '../finance/finance.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ActivityModule } from '../activity/activity.module';
 import { VendorLedgerModule } from '../vendor-ledger/vendor-ledger.module';
+import { CancellationsModule } from '../cancellations/cancellations.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { VendorLedgerModule } from '../vendor-ledger/vendor-ledger.module';
     forwardRef(() => NotificationsModule),
     ActivityModule,
     VendorLedgerModule,
+    FinanceModule,
+    forwardRef(() => CancellationsModule),
   ],
   controllers: [OrdersController],
   providers: [OrdersService],

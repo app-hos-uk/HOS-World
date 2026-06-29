@@ -724,6 +724,10 @@ export class AdminService {
       socialInstagramUrl: process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL || '',
       socialXUrl:
         process.env.NEXT_PUBLIC_SOCIAL_X_URL || process.env.NEXT_PUBLIC_SOCIAL_TWITTER_URL || '',
+      cancellationAutoApprovalWindowMinutes: parseInt(
+        process.env.CANCELLATION_AUTO_APPROVAL_WINDOW_MINUTES || '30',
+        10,
+      ),
     };
 
     try {
@@ -733,7 +737,11 @@ export class AdminService {
 
       const dbOverrides: Record<string, any> = {};
       for (const row of rows) {
-        dbOverrides[row.key] = row.value;
+        if (row.key === 'cancellation_auto_approval_window_minutes') {
+          dbOverrides.cancellationAutoApprovalWindowMinutes = Number(row.value);
+        } else {
+          dbOverrides[row.key] = row.value;
+        }
       }
 
       return { ...envDefaults, ...dbOverrides };
@@ -779,6 +787,10 @@ export class AdminService {
         socialFacebookUrl: (v) => String(v).trim(),
         socialInstagramUrl: (v) => String(v).trim(),
         socialXUrl: (v) => String(v).trim(),
+        cancellationAutoApprovalWindowMinutes: (v) => {
+          const minutes = parseInt(v, 10);
+          return Number.isFinite(minutes) && minutes >= 0 ? minutes : undefined;
+        },
       };
 
       const validSettings: Record<string, any> = {};
@@ -794,7 +806,11 @@ export class AdminService {
 
       // Persist each setting to the Config table
       for (const [key, value] of Object.entries(validSettings)) {
-        await this.setPlatformConfig(key, value);
+        if (key === 'cancellationAutoApprovalWindowMinutes') {
+          await this.setPlatformConfig('cancellation_auto_approval_window_minutes', value);
+        } else {
+          await this.setPlatformConfig(key, value);
+        }
       }
 
       // Audit trail

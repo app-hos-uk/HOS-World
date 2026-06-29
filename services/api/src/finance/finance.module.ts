@@ -12,9 +12,10 @@ import { ReportsService } from './reports.service';
 import { DatabaseModule } from '../database/database.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PaymentProviderModule } from '../payments/payment-provider.module';
+import { VendorLedgerModule } from '../vendor-ledger/vendor-ledger.module';
 
 @Module({
-  imports: [DatabaseModule, NotificationsModule, PaymentProviderModule],
+  imports: [DatabaseModule, NotificationsModule, PaymentProviderModule, VendorLedgerModule],
   controllers: [
     FinanceController,
     TransactionsController,

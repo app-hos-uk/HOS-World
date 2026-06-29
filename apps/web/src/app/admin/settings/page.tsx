@@ -41,6 +41,7 @@ const defaultSettings = {
   stripeTestMode: true,
   defaultCurrency: 'USD',
   platformFee: 15.0,
+  cancellationAutoApprovalWindowMinutes: 30,
   
   // Fulfillment Settings
   autoCreateShipments: false,
@@ -543,6 +544,27 @@ export default function AdminSettingsPage() {
                         max="100"
                         className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">
+                        Cancellation Auto-Approval Window (minutes)
+                      </label>
+                      <input
+                        type="number"
+                        value={settings.cancellationAutoApprovalWindowMinutes}
+                        onChange={(e) =>
+                          updateSetting(
+                            'cancellationAutoApprovalWindowMinutes',
+                            parseInt(e.target.value, 10) || 0,
+                          )
+                        }
+                        min="0"
+                        max="1440"
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                      />
+                      <p className="text-xs text-hos-text-muted mt-1">
+                        Paid orders cancelled within this window are auto-approved without seller/finance review. Set to 0 to disable.
+                      </p>
                     </div>
                   </div>
                 </div>

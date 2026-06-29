@@ -70,6 +70,9 @@ export default function SellerOrdersPage() {
   const [trackingNumber, setTrackingNumber] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [deepLinkId, setDeepLinkId] = useState<string | null>(null);
+  const [cancellationRequests, setCancellationRequests] = useState<any[]>([]);
+  const [orderCancellationRequest, setOrderCancellationRequest] = useState<any | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
 
   const menuItems = getSellerMenuItems(false);
 
@@ -139,7 +142,17 @@ export default function SellerOrdersPage() {
   // Fetch all orders once on mount for stats calculation
   useEffect(() => {
     fetchAllOrders();
+    fetchCancellationRequests();
   }, [fetchAllOrders]);
+
+  const fetchCancellationRequests = useCallback(async () => {
+    try {
+      const response = await apiClient.getCancellationRequests({ status: 'PENDING_SELLER' });
+      setCancellationRequests(Array.isArray(response?.data) ? response.data : []);
+    } catch (err) {
+      console.error('Error fetching cancellation requests:', err);
+    }
+  }, []);
 
   // Fetch filtered orders when statusFilter changes
   useEffect(() => {
@@ -189,10 +202,42 @@ export default function SellerOrdersPage() {
     );
   }, [orders, searchTerm]);
 
-  const openOrderDetails = (order: Order) => {
+  const openOrderDetails = async (order: Order) => {
     setSelectedOrder(order);
     setTrackingNumber(order.trackingNumber || order.trackingCode || '');
+    setRejectionReason('');
     setShowDetailsModal(true);
+    try {
+      const response = await apiClient.getCancellationRequestByOrder(order.id);
+      setOrderCancellationRequest(response?.data || null);
+    } catch {
+      setOrderCancellationRequest(null);
+    }
+  };
+
+  const handleReviewCancellation = async (approved: boolean) => {
+    if (!orderCancellationRequest?.id) return;
+    if (!approved && !rejectionReason.trim()) {
+      toast.error('Rejection reason is required');
+      return;
+    }
+    try {
+      setUpdatingStatus(true);
+      await apiClient.reviewCancellationSeller(orderCancellationRequest.id, {
+        approved,
+        notes: approved ? undefined : rejectionReason.trim(),
+      });
+      toast.success(approved ? 'Cancellation forwarded to finance' : 'Cancellation rejected');
+      setRejectionReason('');
+      setOrderCancellationRequest(null);
+      fetchCancellationRequests();
+      fetchOrders(statusFilter);
+      fetchAllOrders();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to review cancellation');
+    } finally {
+      setUpdatingStatus(false);
+    }
   };
 
   const handleStatusUpdate = async (newStatus: string) => {
@@ -306,6 +351,44 @@ export default function SellerOrdersPage() {
               <p className="text-2xl font-bold text-green-400 mt-1">${stats.totalRevenue.toFixed(2)}</p>
             </div>
           </div>
+
+          {/* Pending Cancellation Requests */}
+          {cancellationRequests.length > 0 && (
+            <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
+              <h2 className="text-lg font-semibold text-orange-200 mb-3">
+                Pending Cancellation Requests ({cancellationRequests.length})
+              </h2>
+              <div className="space-y-3">
+                {cancellationRequests.map((request) => (
+                  <div
+                    key={request.id}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-hos-bg-secondary rounded-lg p-4 border border-hos-border"
+                  >
+                    <div>
+                      <p className="font-medium text-hos-text-secondary">
+                        Order #{request.order?.orderNumber || request.orderId.slice(0, 8)}
+                      </p>
+                      <p className="text-sm text-hos-text-muted mt-1">
+                        {request.reason || 'No reason provided'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = allOrders.find((o) => o.id === request.orderId);
+                        if (target) {
+                          openOrderDetails(target);
+                        }
+                      }}
+                      className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover text-sm font-medium"
+                    >
+                      Review
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Search */}
           <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
@@ -533,6 +616,42 @@ export default function SellerOrdersPage() {
                     )}
                   </div>
                 </div>
+
+                {orderCancellationRequest?.status?.toUpperCase?.() === 'PENDING_SELLER' && (
+                  <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
+                    <h3 className="font-medium text-orange-200 mb-2">Customer Cancellation Request</h3>
+                    <p className="text-sm text-hos-text-secondary mb-3">
+                      {orderCancellationRequest.reason || 'No reason provided'}
+                    </p>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">
+                      Rejection reason <span className="text-red-400">*</span>
+                    </label>
+                    <textarea
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                      placeholder="Required if rejecting — explain why the cancellation cannot be approved"
+                      className="w-full px-3 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-sm mb-3"
+                      rows={3}
+                      required
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleReviewCancellation(true)}
+                        disabled={updatingStatus}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleReviewCancellation(false)}
+                        disabled={updatingStatus || !rejectionReason.trim()}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Customer Info */}
                 <div className="bg-hos-bg-secondary rounded-lg p-4">

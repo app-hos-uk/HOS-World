@@ -1697,9 +1697,75 @@ export class ApiClient {
     });
   }
 
-  async cancelOrder(id: string): Promise<ApiResponse<Order>> {
+  async cancelOrder(id: string, reason?: string): Promise<ApiResponse<Order>> {
     return this.request<ApiResponse<Order>>(`/orders/${id}/cancel`, {
       method: 'POST',
+      body: JSON.stringify(reason ? { reason } : {}),
+    });
+  }
+
+  async requestCancellation(data: { orderId: string; reason?: string }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/cancellations/request', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getCancellationRequests(params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any[]>> {
+    const searchParams = new URLSearchParams();
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    const query = searchParams.toString();
+    return this.request<ApiResponse<any[]>>(`/cancellations${query ? `?${query}` : ''}`);
+  }
+
+  async getCancellationRequest(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cancellations/${id}`);
+  }
+
+  async getCancellationRequestByOrder(orderId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cancellations/order/${orderId}`);
+  }
+
+  async reviewCancellationSeller(
+    id: string,
+    data: { approved: boolean; notes?: string },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cancellations/${id}/seller-review`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async reviewCancellationFinance(
+    id: string,
+    data: { approved: boolean; notes?: string },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cancellations/${id}/finance-review`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async escalateCancellation(id: string, reason?: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cancellations/${id}/escalate`, {
+      method: 'PUT',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  async resolveCancellationAdmin(
+    id: string,
+    data: { approved: boolean; notes?: string },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/cancellations/${id}/admin-resolve`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
     });
   }
 

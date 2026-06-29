@@ -82,8 +82,12 @@ export default function OrderDetailPage() {
   const { formatPrice } = useCurrency();
   const orderId = params.id as string;
   const [order, setOrder] = useState<Order | null>(null);
+  const [cancellationRequest, setCancellationRequest] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [showCancelForm, setShowCancelForm] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -99,6 +103,12 @@ export default function OrderDetailPage() {
       const response = await apiClient.getOrder(orderId);
       if (response?.data) {
         setOrder(response.data);
+        try {
+          const cancellationRes = await apiClient.getCancellationRequestByOrder(orderId);
+          setCancellationRequest(cancellationRes?.data || null);
+        } catch {
+          setCancellationRequest(null);
+        }
       } else {
         setError('Order not found');
       }
@@ -127,6 +137,8 @@ export default function OrderDetailPage() {
       case 'CANCELLED':
       case 'REFUNDED':
         return 'bg-red-500/15 text-red-300';
+      case 'CANCELLATION_REQUESTED':
+        return 'bg-orange-500/15 text-orange-300';
       default:
         return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
@@ -148,6 +160,72 @@ export default function OrderDetailPage() {
       address.country,
     ].filter(Boolean);
     return parts.join(', ');
+  };
+
+  const getCancellationStatusLabel = (status?: string) => {
+    switch (status?.toUpperCase()) {
+      case 'PENDING_SELLER':
+        return 'Awaiting seller review';
+      case 'PENDING_FINANCE':
+        return 'Awaiting finance approval';
+      case 'ESCALATED':
+        return 'Escalated to admin';
+      case 'REJECTED':
+        return 'Rejected';
+      case 'APPROVED':
+      case 'AUTO_APPROVED':
+        return 'Approved';
+      default:
+        return status || 'Unknown';
+    }
+  };
+
+  const isPaidOrder = order?.paymentStatus?.toUpperCase() === 'PAID';
+  const canRequestCancellation =
+    !!order &&
+    ['PENDING', 'ACCEPTED', 'CONFIRMED', 'PROCESSING', 'FULFILLED'].includes(order.status.toUpperCase()) &&
+    !['CANCELLED', 'REFUNDED', 'CANCELLATION_REQUESTED'].includes(order.status.toUpperCase()) &&
+    (!cancellationRequest?.status ||
+      cancellationRequest.status?.toUpperCase?.() === 'REJECTED');
+  const hasPendingCancellation =
+    cancellationRequest &&
+    ['PENDING_SELLER', 'PENDING_FINANCE', 'ESCALATED', 'SELLER_APPROVED', 'FINANCE_APPROVED'].includes(
+      cancellationRequest.status?.toUpperCase?.() || '',
+    );
+
+  const handleCancelOrder = async () => {
+    if (!order) return;
+    if (isPaidOrder && !cancelReason.trim()) {
+      toast.error('Please provide a reason for cancellation');
+      return;
+    }
+    if (!confirm(isPaidOrder ? 'Submit cancellation request for this order?' : 'Are you sure you want to cancel this order?')) {
+      return;
+    }
+    try {
+      setCancelling(true);
+      const response = await apiClient.cancelOrder(orderId, isPaidOrder ? cancelReason : undefined);
+      toast.success(response?.message || 'Request submitted');
+      setShowCancelForm(false);
+      setCancelReason('');
+      await fetchOrder();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to cancel order');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleEscalate = async () => {
+    if (!cancellationRequest?.id) return;
+    const reason = window.prompt('Why are you escalating this cancellation?') || '';
+    try {
+      await apiClient.escalateCancellation(cancellationRequest.id, reason);
+      toast.success('Cancellation escalated to admin');
+      await fetchOrder();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to escalate cancellation');
+    }
   };
 
   if (loading) {
@@ -426,6 +504,37 @@ export default function OrderDetailPage() {
               {/* Actions */}
               <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
                 <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Actions</h2>
+
+                {(hasPendingCancellation || order.status.toUpperCase() === 'CANCELLATION_REQUESTED') && (
+                  <div className="mb-4 rounded-lg border border-orange-500/30 bg-orange-500/10 p-4 text-sm text-orange-200">
+                    <p className="font-medium">Cancellation request in progress</p>
+                    <p className="mt-1">
+                      Status: {getCancellationStatusLabel(cancellationRequest?.status || 'PENDING_SELLER')}
+                    </p>
+                    {cancellationRequest?.reason && (
+                      <p className="mt-1 text-orange-100/80">Reason: {cancellationRequest.reason}</p>
+                    )}
+                  </div>
+                )}
+
+                {cancellationRequest?.status?.toUpperCase?.() === 'REJECTED' && (
+                  <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+                    <p className="font-medium">Cancellation request rejected</p>
+                    {cancellationRequest.sellerNotes && (
+                      <p className="mt-1">Seller: {cancellationRequest.sellerNotes}</p>
+                    )}
+                    {cancellationRequest.financeNotes && (
+                      <p className="mt-1">Finance: {cancellationRequest.financeNotes}</p>
+                    )}
+                    <button
+                      onClick={handleEscalate}
+                      className="mt-3 w-full px-4 py-2 border border-orange-500/40 text-orange-300 rounded-lg hover:bg-orange-500/10 font-medium transition-colors"
+                    >
+                      Escalate to Admin
+                    </button>
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   {(order.trackingNumber || order.trackingCode) && (
                     <Link
@@ -497,22 +606,37 @@ export default function OrderDetailPage() {
                       </button>
                     </>
                   )}
-                  {['PENDING', 'CONFIRMED'].includes(order.status.toUpperCase()) && (
-                    <button
-                      onClick={async () => {
-                        if (!confirm('Are you sure you want to cancel this order?')) return;
-                        try {
-                          await api.cancelOrder(orderId);
-                          toast.success('Order cancelled successfully');
-                          fetchOrder(); // Refresh order details
-                        } catch (err: any) {
-                          toast.error(err.message || 'Failed to cancel order');
-                        }
-                      }}
-                      className="w-full px-4 py-2 border border-red-500/40 text-red-400 rounded-lg hover:bg-red-500/10 font-medium transition-colors"
-                    >
-                      Cancel Order
-                    </button>
+                  {canRequestCancellation && !hasPendingCancellation && (
+                    <>
+                      {isPaidOrder && showCancelForm && (
+                        <textarea
+                          value={cancelReason}
+                          onChange={(e) => setCancelReason(e.target.value)}
+                          placeholder="Reason for cancellation (required for paid orders)"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg bg-hos-bg-tertiary text-hos-text-secondary text-sm"
+                          rows={3}
+                        />
+                      )}
+                      <button
+                        onClick={() => {
+                          if (isPaidOrder && !showCancelForm) {
+                            setShowCancelForm(true);
+                            return;
+                          }
+                          handleCancelOrder();
+                        }}
+                        disabled={cancelling}
+                        className="w-full px-4 py-2 border border-red-500/40 text-red-400 rounded-lg hover:bg-red-500/10 font-medium transition-colors disabled:opacity-50"
+                      >
+                        {cancelling
+                          ? 'Submitting...'
+                          : isPaidOrder
+                            ? showCancelForm
+                              ? 'Submit Cancellation Request'
+                              : 'Request Cancellation'
+                            : 'Cancel Order'}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
