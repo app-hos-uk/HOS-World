@@ -35,7 +35,7 @@ export class AgingService {
       const maxDays = ranges[i].maxDays;
       for (const tx of pendingTransactions) {
         const ageDays = Math.floor((now.getTime() - tx.createdAt.getTime()) / (1000 * 60 * 60 * 24));
-        if (ageDays >= prevMax && (maxDays === Infinity ? true : ageDays < maxDays)) {
+        if (ageDays >= prevMax && (maxDays === Infinity ? true : ageDays <= maxDays)) {
           buckets[i].count++;
           buckets[i].totalAmount += Number(tx.amount);
           if (buckets[i].items.length < 20) {
@@ -49,7 +49,7 @@ export class AgingService {
           }
         }
       }
-      prevMax = maxDays === Infinity ? prevMax : maxDays;
+      prevMax = maxDays === Infinity ? prevMax : maxDays + 1;
     }
 
     const totalCount = pendingTransactions.length;
@@ -81,7 +81,7 @@ export class AgingService {
       const maxDays = ranges[i].maxDays;
       for (const s of pendingSettlements) {
         const ageDays = Math.floor((now.getTime() - s.createdAt.getTime()) / (1000 * 60 * 60 * 24));
-        if (ageDays >= prevMax && (maxDays === Infinity ? true : ageDays < maxDays)) {
+        if (ageDays >= prevMax && (maxDays === Infinity ? true : ageDays <= maxDays)) {
           buckets[i].count++;
           buckets[i].totalAmount += Number(s.netAmount);
           if (buckets[i].items.length < 20) {
@@ -95,7 +95,7 @@ export class AgingService {
           }
         }
       }
-      prevMax = maxDays === Infinity ? prevMax : maxDays;
+      prevMax = maxDays === Infinity ? prevMax : maxDays + 1;
     }
 
     const totalCount = pendingSettlements.length;
@@ -127,7 +127,7 @@ export class AgingService {
       const maxDays = ranges[i].maxDays;
       for (const d of openDisputes) {
         const ageDays = Math.floor((now.getTime() - d.createdAt.getTime()) / (1000 * 60 * 60 * 24));
-        if (ageDays >= prevMax && (maxDays === Infinity ? true : ageDays < maxDays)) {
+        if (ageDays >= prevMax && (maxDays === Infinity ? true : ageDays <= maxDays)) {
           buckets[i].count++;
           buckets[i].totalAmount += Number(d.amount);
           if (buckets[i].items.length < 20) {
@@ -141,7 +141,7 @@ export class AgingService {
           }
         }
       }
-      prevMax = maxDays === Infinity ? prevMax : maxDays;
+      prevMax = maxDays === Infinity ? prevMax : maxDays + 1;
     }
 
     const totalCount = openDisputes.length;
