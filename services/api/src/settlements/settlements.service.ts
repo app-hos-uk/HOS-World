@@ -351,7 +351,7 @@ export class SettlementsService {
       }
     }
 
-    return this.prisma.settlement.update({
+    const updated = await this.prisma.settlement.update({
       where: { id },
       data: {
         status: processDto.status,
@@ -369,5 +369,31 @@ export class SettlementsService {
         },
       },
     });
+
+    // Record payout transaction for finance dashboard when settlement is paid
+    if (processDto.status === 'PAID') {
+      try {
+        await this.prisma.transaction.create({
+          data: {
+            type: 'PAYOUT',
+            amount: Number(settlement.netAmount),
+            currency: settlement.currency,
+            status: 'COMPLETED',
+            sellerId: settlement.sellerId,
+            settlementId: id,
+            description: `Settlement payout to ${updated.seller?.storeName || 'vendor'}`,
+            metadata: {
+              paymentMethod: processDto.paymentMethod,
+              grossAmount: Number(settlement.totalSales),
+              platformFee: Number(settlement.platformFee),
+            },
+          },
+        });
+      } catch (txErr: any) {
+        this.logger.warn(`Finance transaction record failed for settlement ${id}: ${txErr?.message}`);
+      }
+    }
+
+    return updated;
   }
 }

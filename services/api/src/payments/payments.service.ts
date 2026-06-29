@@ -432,6 +432,31 @@ export class PaymentsService {
       }
     }
 
+    // Record transaction for finance dashboard visibility
+    try {
+      await this.prisma.transaction.create({
+        data: {
+          type: 'PAYMENT',
+          amount: paymentAmountBase,
+          currency: this.BASE_CURRENCY,
+          status: 'COMPLETED',
+          customerId: order.userId,
+          sellerId: order.sellerId || undefined,
+          orderId: order.id,
+          description: `Payment for order ${order.orderNumber || order.id}`,
+          metadata: {
+            stripePaymentId,
+            originalCurrency: order.currency,
+            originalAmount: Number(order.total).toFixed(2),
+          },
+        },
+      });
+    } catch (txErr: any) {
+      this.logger.warn(
+        `Finance transaction record failed for order ${order.id}: ${txErr?.message}`,
+      );
+    }
+
     // Activate influencer commissions: PENDING -> APPROVED, then increment stats once
     try {
       const pendingCommissions = await this.prisma.influencerCommission.findMany({
