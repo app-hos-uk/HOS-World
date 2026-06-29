@@ -1312,12 +1312,9 @@ export class AuthService {
         customerName,
         verifyLink,
       });
-      await this.notificationsService.sendNotificationToUser(
-        user.id,
-        'SYSTEM',
-        rendered?.subject || 'Verify your email — House of Spells',
-        rendered?.body || `<p>Hi ${customerName},</p><p>Please verify your email by clicking <a href="${verifyLink}">here</a>.</p>`,
-      );
+      const subject = rendered?.subject || 'Verify your email — House of Spells';
+      const html = rendered?.body || `<p>Hi ${customerName},</p><p>Please verify your email by clicking <a href="${verifyLink}">here</a>.</p>`;
+      await this.notificationsService.queueNotification(user.email, subject, html);
     } catch (err: any) {
       this.logger.warn(`Failed to send verification email to ${user.email}: ${err?.message}`);
     }

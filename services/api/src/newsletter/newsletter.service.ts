@@ -172,8 +172,12 @@ export class NewsletterService {
 
     let queued = 0;
     for (const { email } of filtered) {
-      await this.notificationsService.queueNotification(email, dto.subject, dto.body);
-      queued++;
+      try {
+        await this.notificationsService.queueNotification(email, dto.subject, dto.body);
+        queued++;
+      } catch (err: any) {
+        this.logger.warn(`Newsletter campaign queue failed for ${email}: ${err?.message}`);
+      }
     }
 
     return { queued };

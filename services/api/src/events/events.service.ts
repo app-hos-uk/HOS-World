@@ -385,13 +385,25 @@ export class EventsService {
         startsAt: event.startsAt.toISOString(),
         unsubscribeUrl: this.unsubscribeLink(),
       });
-      await this.notifications.sendNotificationToUser(
-        userId,
-        'EVENT_INVITATION',
-        rendered.subject || 'Your event RSVP',
-        rendered.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
-        { eventId: event.id, ticketCode },
-      );
+      const subject = rendered.subject || 'Your event RSVP';
+      const userRecord = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+      });
+      if (userRecord?.email) {
+        const notification = await this.prisma.notification.create({
+          data: {
+            userId,
+            type: 'GENERAL' as any,
+            subject,
+            content: `You're confirmed for ${event.title}. Ticket: ${ticketCode}`,
+            email: userRecord.email,
+            status: 'PENDING' as any,
+            metadata: { eventId: event.id, ticketCode } as any,
+          },
+        });
+        await this.notifications.queueNotification(userRecord.email, subject, rendered.body, notification.id);
+      }
     } catch (err) {
       this.logger.warn(`RSVP notification failed: ${(err as Error).message}`);
     }
@@ -455,13 +467,25 @@ export class EventsService {
           startsAt: event.startsAt.toISOString(),
           unsubscribeUrl: this.unsubscribeLink(),
         });
-        await this.notifications.sendNotificationToUser(
-          next.userId,
-          'GENERAL',
-          rendered.subject || "You're in!",
-          rendered.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
-          { eventId: event.id },
-        );
+        const subject = rendered.subject || "You're in!";
+        const userRecord = await this.prisma.user.findUnique({
+          where: { id: next.userId },
+          select: { email: true },
+        });
+        if (userRecord?.email) {
+          const notification = await this.prisma.notification.create({
+            data: {
+              userId: next.userId,
+              type: 'GENERAL' as any,
+              subject,
+              content: `You're confirmed for ${event.title} from the waitlist.`,
+              email: userRecord.email,
+              status: 'PENDING' as any,
+              metadata: { eventId: event.id } as any,
+            },
+          });
+          await this.notifications.queueNotification(userRecord.email, subject, rendered.body, notification.id);
+        }
       } catch (e) {
         this.logger.warn(`Waitlist promotion notify failed: ${(e as Error).message}`);
       }
@@ -761,13 +785,25 @@ export class EventsService {
           reason: reason || 'Please check our site for updates.',
           unsubscribeUrl: this.unsubscribeLink(),
         });
-        await this.notifications.sendNotificationToUser(
-          r.userId,
-          'GENERAL',
-          rendered.subject || 'Event cancelled',
-          rendered.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
-          { eventId: id },
-        );
+        const subject = rendered.subject || 'Event cancelled';
+        const userRecord = await this.prisma.user.findUnique({
+          where: { id: r.userId },
+          select: { email: true },
+        });
+        if (userRecord?.email) {
+          const notification = await this.prisma.notification.create({
+            data: {
+              userId: r.userId,
+              type: 'GENERAL' as any,
+              subject,
+              content: `${e.title} has been cancelled.`,
+              email: userRecord.email,
+              status: 'PENDING' as any,
+              metadata: { eventId: id } as any,
+            },
+          });
+          await this.notifications.queueNotification(userRecord.email, subject, rendered.body, notification.id);
+        }
       } catch (err) {
         this.logger.warn(`Cancel notify failed: ${(err as Error).message}`);
       }
@@ -910,13 +946,25 @@ export class EventsService {
           startsAt: event.startsAt.toISOString(),
           unsubscribeUrl: this.unsubscribeLink(),
         });
-        await this.notifications.sendNotificationToUser(
-          m.userId,
-          'EVENT_INVITATION',
-          `You're invited: ${event.title}`,
-          rendered.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
-          { eventId: event.id },
-        );
+        const subject = `You're invited: ${event.title}`;
+        const userRecord = await this.prisma.user.findUnique({
+          where: { id: m.userId },
+          select: { email: true },
+        });
+        if (userRecord?.email) {
+          const notification = await this.prisma.notification.create({
+            data: {
+              userId: m.userId,
+              type: 'GENERAL' as any,
+              subject,
+              content: `You're invited to ${event.title}.`,
+              email: userRecord.email,
+              status: 'PENDING' as any,
+              metadata: { eventId: event.id } as any,
+            },
+          });
+          await this.notifications.queueNotification(userRecord.email, subject, rendered.body, notification.id);
+        }
         invited++;
       } catch (e) {
         this.logger.warn(`Invite failed for ${m.userId}: ${(e as Error).message}`);
@@ -960,13 +1008,25 @@ export class EventsService {
             startsAt: ev.startsAt.toISOString(),
             unsubscribeUrl: this.unsubscribeLink(),
           });
-          await this.notifications.sendNotificationToUser(
-            r.userId,
-            'EVENT_REMINDER',
-            rendered.subject || 'Event tomorrow',
-            rendered.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
-            { eventId: ev.id },
-          );
+          const subject = rendered.subject || 'Event tomorrow';
+          const userRecord = await this.prisma.user.findUnique({
+            where: { id: r.userId },
+            select: { email: true },
+          });
+          if (userRecord?.email) {
+            const notification = await this.prisma.notification.create({
+              data: {
+                userId: r.userId,
+                type: 'GENERAL' as any,
+                subject,
+                content: `Reminder: ${ev.title} is tomorrow.`,
+                email: userRecord.email,
+                status: 'PENDING' as any,
+                metadata: { eventId: ev.id } as any,
+              },
+            });
+            await this.notifications.queueNotification(userRecord.email, subject, rendered.body, notification.id);
+          }
           await this.prisma.eventRSVP.update({
             where: { id: r.id },
             data: { metadata: { ...meta, reminded24h: true } as Prisma.InputJsonValue },
@@ -997,13 +1057,25 @@ export class EventsService {
             eventTitle: ev.title,
             unsubscribeUrl: this.unsubscribeLink(),
           });
-          await this.notifications.sendNotificationToUser(
-            r.userId,
-            'EVENT_REMINDER',
-            rendered.subject || 'Starting soon',
-            rendered.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
-            { eventId: ev.id },
-          );
+          const subject = rendered.subject || 'Starting soon';
+          const userRecord = await this.prisma.user.findUnique({
+            where: { id: r.userId },
+            select: { email: true },
+          });
+          if (userRecord?.email) {
+            const notification = await this.prisma.notification.create({
+              data: {
+                userId: r.userId,
+                type: 'GENERAL' as any,
+                subject,
+                content: `${ev.title} is starting soon.`,
+                email: userRecord.email,
+                status: 'PENDING' as any,
+                metadata: { eventId: ev.id } as any,
+              },
+            });
+            await this.notifications.queueNotification(userRecord.email, subject, rendered.body, notification.id);
+          }
           await this.prisma.eventRSVP.update({
             where: { id: r.id },
             data: { metadata: { ...meta, reminded2h: true } as Prisma.InputJsonValue },
