@@ -100,38 +100,6 @@ export class SettlementsController {
     };
   }
 
-  @Roles('ADMIN', 'FINANCE', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Get settlement by ID',
-    description:
-      'Retrieves a specific settlement by ID. Sellers can only view their own settlements.',
-  })
-  @ApiParam({ name: 'id', description: 'Settlement UUID', type: String })
-  @SwaggerApiResponse({ status: 200, description: 'Settlement retrieved successfully' })
-  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Cannot access this settlement' })
-  @SwaggerApiResponse({ status: 404, description: 'Settlement not found' })
-  async findOne(
-    @Request() req: any,
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<any>> {
-    const settlement = await this.settlementsService.findOne(id);
-
-    const sellerRoles = ['WHOLESALER', 'B2C_SELLER', 'SELLER'];
-    if (sellerRoles.includes(req.user.role)) {
-      const callerSellerId = await this.settlementsService.getSellerIdByUserId(req.user.id);
-      if (!callerSellerId || settlement.seller?.id !== callerSellerId) {
-        throw new ForbiddenException('You do not have permission to view this settlement');
-      }
-    }
-
-    return {
-      data: settlement,
-      message: 'Settlement retrieved successfully',
-    };
-  }
-
   @Roles('ADMIN', 'FINANCE')
   @Put(':id/process')
   @ApiOperation({
@@ -262,6 +230,38 @@ export class SettlementsController {
     return {
       data: status,
       message: 'Automation status retrieved',
+    };
+  }
+
+  @Roles('ADMIN', 'FINANCE', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get settlement by ID',
+    description:
+      'Retrieves a specific settlement by ID. Sellers can only view their own settlements.',
+  })
+  @ApiParam({ name: 'id', description: 'Settlement UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Settlement retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Cannot access this settlement' })
+  @SwaggerApiResponse({ status: 404, description: 'Settlement not found' })
+  async findOne(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiResponse<any>> {
+    const settlement = await this.settlementsService.findOne(id);
+
+    const sellerRoles = ['WHOLESALER', 'B2C_SELLER', 'SELLER'];
+    if (sellerRoles.includes(req.user.role)) {
+      const callerSellerId = await this.settlementsService.getSellerIdByUserId(req.user.id);
+      if (!callerSellerId || settlement.seller?.id !== callerSellerId) {
+        throw new ForbiddenException('You do not have permission to view this settlement');
+      }
+    }
+
+    return {
+      data: settlement,
+      message: 'Settlement retrieved successfully',
     };
   }
 }

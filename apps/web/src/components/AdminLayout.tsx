@@ -79,6 +79,11 @@ const menuItems: MenuItem[] = [
       { title: 'Finance Dashboard', href: '/admin/finance', icon: '💳' },
       { title: 'Cancellation Queue', href: '/admin/cancellations', icon: '❌' },
       { title: 'Settlements', href: '/admin/settlements', icon: '💸' },
+      { title: 'Reconciliation', href: '/admin/finance/reconciliation', icon: '🔄' },
+      { title: 'Disputes', href: '/admin/finance/disputes', icon: '⚠️' },
+      { title: 'Period Close', href: '/admin/finance/periods', icon: '📅' },
+      { title: 'Aging Analysis', href: '/admin/finance/aging', icon: '⏳' },
+      { title: 'Revenue Recognition', href: '/admin/finance/revenue', icon: '📈' },
     ],
   },
   {
@@ -284,6 +289,11 @@ const TEAM_ADMIN_SHELL_MENUS: Record<string, MenuItem[]> = {
     { title: 'Loyalty Overview', href: '/admin/loyalty', icon: '💎' },
     { title: 'Redemption Options', href: '/admin/loyalty/redemption-options', icon: '🎁' },
     { title: 'Loyalty Transactions', href: '/admin/loyalty/transactions', icon: '💳' },
+    { title: 'Reconciliation', href: '/admin/finance/reconciliation', icon: '🔄' },
+    { title: 'Disputes', href: '/admin/finance/disputes', icon: '⚠️' },
+    { title: 'Period Close', href: '/admin/finance/periods', icon: '📅' },
+    { title: 'Aging Analysis', href: '/admin/finance/aging', icon: '⏳' },
+    { title: 'Revenue Recognition', href: '/admin/finance/revenue', icon: '📈' },
   ],
 };
 

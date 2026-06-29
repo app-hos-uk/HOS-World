@@ -23,6 +23,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+import { SchedulePayoutDto } from './dto/schedule-payout.dto';
 
 @ApiTags('finance')
 @ApiBearerAuth('JWT-auth')
@@ -60,17 +61,7 @@ export class PayoutsController {
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Seller not found' })
-  async schedulePayout(
-    @Body()
-    body: {
-      sellerId: string;
-      amount: number;
-      currency?: string;
-      paymentMethod?: string;
-      scheduledDate?: string;
-      description?: string;
-    },
-  ): Promise<ApiResponse<any>> {
+  async schedulePayout(@Body() body: SchedulePayoutDto): Promise<ApiResponse<any>> {
     const payout = await this.payoutsService.schedulePayout({
       ...body,
       scheduledDate: body.scheduledDate ? new Date(body.scheduledDate) : undefined,

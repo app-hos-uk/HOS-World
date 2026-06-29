@@ -3234,6 +3234,138 @@ export class ApiClient {
     return this.request<ApiResponse<any>>(`/finance/reports/revenue${query ? `?${query}` : ''}`);
   }
 
+  // Reconciliation
+  async startReconciliation(data: { periodStart: string; periodEnd: string }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/finance/reconciliation/run', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getReconciliationRuns(params?: { status?: string; page?: number; limit?: number }): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return this.request<ApiResponse<any>>(`/finance/reconciliation/runs${qs ? `?${qs}` : ''}`);
+  }
+
+  async getReconciliationRunDetails(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/finance/reconciliation/runs/${id}`);
+  }
+
+  async resolveReconciliationItem(id: string, resolution: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/finance/reconciliation/items/${id}/resolve`, {
+      method: 'PUT',
+      body: JSON.stringify({ resolution }),
+    });
+  }
+
+  async ignoreReconciliationItem(id: string, reason: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/finance/reconciliation/items/${id}/ignore`, {
+      method: 'PUT',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  // Disputes
+  async getDisputes(params?: { status?: string; sellerId?: string; page?: number; limit?: number }): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
+    if (params?.sellerId) query.set('sellerId', params.sellerId);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return this.request<ApiResponse<any>>(`/finance/disputes${qs ? `?${qs}` : ''}`);
+  }
+
+  async getDisputeById(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/finance/disputes/${id}`);
+  }
+
+  async updateDisputeStatus(id: string, status: string, notes?: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/finance/disputes/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status, notes }),
+    });
+  }
+
+  async markDisputeEvidenceSubmitted(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/finance/disputes/${id}/evidence-submitted`, {
+      method: 'PUT',
+    });
+  }
+
+  async getSellerChargebackRate(sellerId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/finance/disputes/seller/${sellerId}/chargeback-rate`);
+  }
+
+  // Financial Periods
+  async getFinancialPeriods(params?: { year?: number; status?: string }): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams();
+    if (params?.year) query.set('year', String(params.year));
+    if (params?.status) query.set('status', params.status);
+    const qs = query.toString();
+    return this.request<ApiResponse<any>>(`/finance/periods${qs ? `?${qs}` : ''}`);
+  }
+
+  async closeFinancialPeriod(year: number, month: number, notes?: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/finance/periods/close', {
+      method: 'POST',
+      body: JSON.stringify({ year, month, notes }),
+    });
+  }
+
+  async reopenFinancialPeriod(year: number, month: number): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/finance/periods/reopen', {
+      method: 'PUT',
+      body: JSON.stringify({ year, month }),
+    });
+  }
+
+  // Aging Analysis
+  async getAgingReport(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/finance/aging');
+  }
+
+  async getTransactionAging(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/finance/aging/transactions');
+  }
+
+  async getSettlementAging(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/finance/aging/settlements');
+  }
+
+  async getDisputeAging(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/finance/aging/disputes');
+  }
+
+  // Revenue Recognition
+  async getRevenueBreakdown(startDate?: string, endDate?: string): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams();
+    if (startDate) query.set('startDate', startDate);
+    if (endDate) query.set('endDate', endDate);
+    const qs = query.toString();
+    return this.request<ApiResponse<any>>(`/finance/revenue-recognition/breakdown${qs ? `?${qs}` : ''}`);
+  }
+
+  async getMonthlyRevRecognition(year?: number, month?: number): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams();
+    if (year) query.set('year', String(year));
+    if (month) query.set('month', String(month));
+    const qs = query.toString();
+    return this.request<ApiResponse<any>>(`/finance/revenue-recognition/monthly${qs ? `?${qs}` : ''}`);
+  }
+
+  async getDeferredRevenue(page?: number, limit?: number): Promise<ApiResponse<any>> {
+    const query = new URLSearchParams();
+    if (page) query.set('page', String(page));
+    if (limit) query.set('limit', String(limit));
+    const qs = query.toString();
+    return this.request<ApiResponse<any>>(`/finance/revenue-recognition/deferred${qs ? `?${qs}` : ''}`);
+  }
+
   // Newsletter (public subscribe/unsubscribe; admin/marketing/cms list)
   async newsletterSubscribe(data: { email: string; source?: string; tags?: Record<string, string> }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/newsletter/subscribe', {

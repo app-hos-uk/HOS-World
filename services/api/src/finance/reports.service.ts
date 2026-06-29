@@ -55,6 +55,13 @@ export class ReportsService {
     const totalRevenue = transactions.reduce((sum, tx) => sum + Number(tx.amount), 0);
     const totalTransactions = transactions.length;
 
+    const [platformFees, sellerPayouts, refunds] = await Promise.all([
+      this.sumTransactionsByType(filters, 'FEE'),
+      this.sumTransactionsByType(filters, 'PAYOUT'),
+      this.sumTransactionsByType(filters, 'REFUND'),
+    ]);
+    const netRevenue = totalRevenue - refunds;
+
     // Group by period if specified
     const groupedData: any = {};
     if (filters?.period) {
@@ -84,6 +91,17 @@ export class ReportsService {
       totalRevenue,
       totalTransactions,
       averageTransactionValue: totalTransactions > 0 ? totalRevenue / totalTransactions : 0,
+      platformFees,
+      sellerPayouts,
+      refunds,
+      netRevenue,
+      breakdown: {
+        totalRevenue,
+        platformFees,
+        sellerPayouts,
+        refunds,
+        netRevenue,
+      },
       groupedData: Object.keys(groupedData).length > 0 ? groupedData : undefined,
       transactions: transactions.slice(0, 100), // Limit to 100 most recent
     };
@@ -300,6 +318,46 @@ export class ReportsService {
       totalTransactions: transactions.length,
       bySeller: Object.values(bySeller),
     };
+  }
+
+  private buildTransactionFilter(
+    filters?: { startDate?: Date; endDate?: Date; sellerId?: string },
+    type?: string,
+  ) {
+    const where: any = {
+      status: 'COMPLETED',
+    };
+
+    if (type) {
+      where.type = type;
+    }
+
+    if (filters?.startDate || filters?.endDate) {
+      where.createdAt = {};
+      if (filters.startDate) {
+        where.createdAt.gte = filters.startDate;
+      }
+      if (filters.endDate) {
+        where.createdAt.lte = filters.endDate;
+      }
+    }
+
+    if (filters?.sellerId) {
+      where.sellerId = filters.sellerId;
+    }
+
+    return where;
+  }
+
+  private async sumTransactionsByType(
+    filters: { startDate?: Date; endDate?: Date; sellerId?: string } | undefined,
+    type: string,
+  ): Promise<number> {
+    const result = await this.prisma.transaction.aggregate({
+      where: this.buildTransactionFilter(filters, type),
+      _sum: { amount: true },
+    });
+    return Number(result._sum.amount ?? 0);
   }
 
   private getWeekNumber(date: Date): number {

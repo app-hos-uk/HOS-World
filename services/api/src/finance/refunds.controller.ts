@@ -23,6 +23,8 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+import { CreateRefundDto } from './dto/create-refund.dto';
+import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto';
 
 @ApiTags('finance')
 @ApiBearerAuth('JWT-auth')
@@ -54,15 +56,7 @@ export class RefundsController {
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Return request not found' })
-  async processRefund(
-    @Body()
-    body: {
-      returnId: string;
-      amount: number;
-      currency?: string;
-      description?: string;
-    },
-  ): Promise<ApiResponse<any>> {
+  async processRefund(@Body() body: CreateRefundDto): Promise<ApiResponse<any>> {
     const refund = await this.refundsService.processRefund(body);
     return {
       data: refund,
@@ -157,7 +151,7 @@ export class RefundsController {
   @SwaggerApiResponse({ status: 404, description: 'Refund not found' })
   async updateRefundStatus(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' },
+    @Body() body: UpdateTransactionStatusDto,
   ): Promise<ApiResponse<any>> {
     const refund = await this.refundsService.updateRefundStatus(id, body.status);
     return {

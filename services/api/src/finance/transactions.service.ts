@@ -4,7 +4,8 @@ import { PrismaService } from '../database/prisma.service';
 const ALLOWED_TRANSACTION_TYPES = ['PAYMENT', 'PAYOUT', 'REFUND', 'FEE', 'ADJUSTMENT'] as const;
 type TransactionType = (typeof ALLOWED_TRANSACTION_TYPES)[number];
 
-const ALLOWED_CURRENCIES = ['USD', 'EUR', 'AED'] as const;
+// Must stay aligned with CurrencyService.DEFAULT_SUPPORTED and GLOBAL_SUPPORTED_CURRENCIES env
+const ALLOWED_CURRENCIES = ['USD', 'EUR', 'GBP', 'AED', 'JPY', 'AUD', 'CAD', 'SGD'] as const;
 
 @Injectable()
 export class TransactionsService implements OnModuleInit {
@@ -325,6 +326,7 @@ export class TransactionsService implements OnModuleInit {
   async updateTransactionStatus(
     id: string,
     status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED',
+    options?: { changedById?: string; reason?: string },
   ) {
     const transaction = await this.prisma.transaction.findUnique({
       where: { id },
@@ -334,7 +336,9 @@ export class TransactionsService implements OnModuleInit {
       throw new NotFoundException('Transaction not found');
     }
 
-    return this.prisma.transaction.update({
+    const previousStatus = transaction.status;
+
+    const updated = await this.prisma.transaction.update({
       where: { id },
       data: { status },
       include: {
@@ -355,6 +359,18 @@ export class TransactionsService implements OnModuleInit {
         },
       },
     });
+
+    await this.prisma.transactionAuditLog.create({
+      data: {
+        transactionId: id,
+        previousStatus,
+        newStatus: status,
+        changedById: options?.changedById,
+        reason: options?.reason,
+      },
+    });
+
+    return updated;
   }
 
   private async calculateBalances(transactions: any[]) {

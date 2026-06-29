@@ -23,6 +23,8 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto';
 
 @ApiTags('finance')
 @ApiBearerAuth('JWT-auth')
@@ -66,22 +68,7 @@ export class TransactionsController {
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
-  async createTransaction(
-    @Body()
-    body: {
-      type: 'PAYMENT' | 'PAYOUT' | 'REFUND' | 'FEE' | 'ADJUSTMENT';
-      amount: number;
-      currency?: string;
-      sellerId?: string;
-      customerId?: string;
-      orderId?: string;
-      settlementId?: string;
-      returnId?: string;
-      description?: string;
-      metadata?: any;
-      status?: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-    },
-  ): Promise<ApiResponse<any>> {
+  async createTransaction(@Body() body: CreateTransactionDto): Promise<ApiResponse<any>> {
     const transaction = await this.transactionsService.createTransaction(body);
     return {
       data: transaction,
@@ -294,7 +281,7 @@ export class TransactionsController {
   @SwaggerApiResponse({ status: 404, description: 'Transaction not found' })
   async updateTransactionStatus(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: { status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED' },
+    @Body() body: UpdateTransactionStatusDto,
   ): Promise<ApiResponse<any>> {
     const transaction = await this.transactionsService.updateTransactionStatus(id, body.status);
     return {

@@ -8,7 +8,6 @@ export enum JobType {
   PRODUCT_INDEXING = 'product-indexing',
   PRODUCT_CACHE_WARMUP = 'product-cache-warmup',
   REPORT_GENERATION = 'report-generation',
-  SETTLEMENT_CALCULATION = 'settlement-calculation',
   ORDER_CONFIRMATION = 'order-confirmation',
   INVENTORY_SYNC = 'inventory-sync',
   ANALYTICS_UPDATE = 'analytics-update',

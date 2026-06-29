@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../database/prisma.service';
 import { SettlementsService } from './settlements.service';
 
@@ -29,10 +30,8 @@ export class SettlementSchedulerService {
   /**
    * Create settlements for all active sellers for the previous week
    * Run weekly on Monday at midnight
-   *
-   * If using @nestjs/schedule, uncomment:
-   * @Cron('0 0 * * 1') // Every Monday at midnight
    */
+  @Cron('0 0 * * 1')
   async createWeeklySettlements(): Promise<{
     created: number;
     failed: number;
@@ -164,10 +163,8 @@ export class SettlementSchedulerService {
   /**
    * Clean up expired stock reservations
    * Run every hour
-   *
-   * If using @nestjs/schedule, uncomment:
-   * @Cron('0 * * * *') // Every hour
    */
+  @Cron('0 * * * *')
   async cleanupExpiredReservations(): Promise<{ cleaned: number }> {
     try {
       this.logger.log('Cleaning up expired stock reservations...');
@@ -220,10 +217,8 @@ export class SettlementSchedulerService {
   /**
    * Send settlement reminders for pending settlements older than 7 days
    * Run daily at 9 AM
-   *
-   * If using @nestjs/schedule, uncomment:
-   * @Cron('0 9 * * *') // Every day at 9 AM
    */
+  @Cron('0 9 * * *')
   async sendSettlementReminders(): Promise<{ sent: number }> {
     try {
       this.logger.log('Checking for pending settlement reminders...');

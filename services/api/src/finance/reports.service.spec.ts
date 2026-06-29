@@ -9,6 +9,7 @@ describe('ReportsService', () => {
   const mockPrismaService = {
     transaction: {
       findMany: jest.fn(),
+      aggregate: jest.fn().mockResolvedValue({ _sum: { amount: 0 } }),
     },
   };
 
@@ -37,14 +38,27 @@ describe('ReportsService', () => {
       ];
 
       mockPrismaService.transaction.findMany.mockResolvedValue(mockTransactions);
+      mockPrismaService.transaction.aggregate
+        .mockResolvedValueOnce({ _sum: { amount: 15 } }) // platformFees
+        .mockResolvedValueOnce({ _sum: { amount: 80 } }) // sellerPayouts
+        .mockResolvedValueOnce({ _sum: { amount: 10 } }); // refunds
 
       const result = await service.getRevenueReport();
 
       expect(result).toHaveProperty('totalRevenue');
       expect(result).toHaveProperty('totalTransactions');
       expect(result).toHaveProperty('averageTransactionValue');
+      expect(result).toHaveProperty('platformFees');
+      expect(result).toHaveProperty('sellerPayouts');
+      expect(result).toHaveProperty('refunds');
+      expect(result).toHaveProperty('netRevenue');
+      expect(result).toHaveProperty('breakdown');
       expect(result.totalRevenue).toBe(300);
       expect(result.totalTransactions).toBe(2);
+      expect(result.platformFees).toBe(15);
+      expect(result.sellerPayouts).toBe(80);
+      expect(result.refunds).toBe(10);
+      expect(result.netRevenue).toBe(290);
     });
 
     it('should filter by date range', async () => {
