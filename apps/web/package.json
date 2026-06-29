@@ -50,7 +50,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "14.2.35",
+    "@next/bundle-analyzer": "16.2.9",
     "@playwright/test": "^1.57.0",
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.46",
