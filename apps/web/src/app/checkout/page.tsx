@@ -44,6 +44,16 @@ export default function CheckoutPage() {
   /**1=Address, 2=Shipping, 3=Review items, 4=Confirm & place order */
   const [checkoutStep, setCheckoutStep] = useState(1);
   const checkoutTrackedRef = useRef(false);
+  const [isGift, setIsGift] = useState(false);
+  const [giftDetails, setGiftDetails] = useState({
+    recipientName: '',
+    recipientEmail: '',
+    recipientPhone: '',
+    giftMessage: '',
+    giftWrapping: false,
+    hidePrice: true,
+    senderName: '',
+  });
   const [guestCartLoading, setGuestCartLoading] = useState(true);
   const [guestSubmitting, setGuestSubmitting] = useState(false);
   const [guestError, setGuestError] = useState<string | null>(null);
@@ -125,6 +135,16 @@ export default function CheckoutPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cart, shippingCost, shippingAddressId]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const giftFlag = sessionStorage.getItem('checkout_gift_mode');
+      if (giftFlag === 'true') {
+        setIsGift(true);
+        sessionStorage.removeItem('checkout_gift_mode');
+      }
+    }
+  }, []);
 
   const loadCheckoutData = async () => {
     try {
@@ -359,6 +379,10 @@ export default function CheckoutPage() {
       toast.error('Please resolve stock issues before continuing');
       return;
     }
+    if (checkoutStep === 3 && isGift && !giftDetails.recipientName.trim()) {
+      toast.error('Please enter the recipient name for your gift');
+      return;
+    }
     setCheckoutStep((s) => Math.min(4, s + 1));
   };
 
@@ -472,6 +496,20 @@ export default function CheckoutPage() {
         referralCode,
         visitorId,
         idempotencyKey: idempotencyKeyRef.current,
+        ...(isGift
+          ? {
+              isGift: true,
+              giftDetails: {
+                recipientName: giftDetails.recipientName,
+                recipientEmail: giftDetails.recipientEmail || undefined,
+                recipientPhone: giftDetails.recipientPhone || undefined,
+                giftMessage: giftDetails.giftMessage || undefined,
+                giftWrapping: giftDetails.giftWrapping,
+                hidePrice: giftDetails.hidePrice,
+                senderName: giftDetails.senderName || undefined,
+              },
+            }
+          : {}),
       });
 
       if (orderResponse?.data) {
@@ -1025,6 +1063,116 @@ export default function CheckoutPage() {
                 })}
               </div>
             </section>
+            )}
+
+            {/* Gifting Option - shown at Review step */}
+            {checkoutStep === 3 && (
+              <section aria-label="Gift Options" className="bg-hos-bg-secondary rounded-lg shadow-sm border border-hos-border p-4 sm:p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isGift}
+                      onChange={(e) => setIsGift(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-hos-bg-tertiary peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-hos-gold/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-hos-gold"></div>
+                  </label>
+                  <div>
+                    <span className="font-medium text-hos-text-primary">🎁 Sending as a Gift</span>
+                    <p className="text-xs text-hos-text-muted">Send this order to a friend or loved one</p>
+                  </div>
+                </div>
+
+                {isGift && (
+                  <div className="space-y-4 border-t border-hos-border pt-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">
+                          Recipient Name <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={giftDetails.recipientName}
+                          onChange={(e) => setGiftDetails((prev) => ({ ...prev, recipientName: e.target.value }))}
+                          placeholder="Enter recipient's name"
+                          className="w-full px-3 py-2 bg-hos-bg-tertiary border border-hos-border rounded-lg text-hos-text-primary placeholder-hos-text-muted focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">
+                          Your Name (Sender)
+                        </label>
+                        <input
+                          type="text"
+                          value={giftDetails.senderName}
+                          onChange={(e) => setGiftDetails((prev) => ({ ...prev, senderName: e.target.value }))}
+                          placeholder="From..."
+                          className="w-full px-3 py-2 bg-hos-bg-tertiary border border-hos-border rounded-lg text-hos-text-primary placeholder-hos-text-muted focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Recipient Email</label>
+                        <input
+                          type="email"
+                          value={giftDetails.recipientEmail}
+                          onChange={(e) => setGiftDetails((prev) => ({ ...prev, recipientEmail: e.target.value }))}
+                          placeholder="recipient@email.com"
+                          className="w-full px-3 py-2 bg-hos-bg-tertiary border border-hos-border rounded-lg text-hos-text-primary placeholder-hos-text-muted focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Recipient Phone</label>
+                        <input
+                          type="tel"
+                          value={giftDetails.recipientPhone}
+                          onChange={(e) => setGiftDetails((prev) => ({ ...prev, recipientPhone: e.target.value }))}
+                          placeholder="+971 xxx xxx xxxx"
+                          className="w-full px-3 py-2 bg-hos-bg-tertiary border border-hos-border rounded-lg text-hos-text-primary placeholder-hos-text-muted focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Gift Message</label>
+                      <textarea
+                        value={giftDetails.giftMessage}
+                        onChange={(e) => setGiftDetails((prev) => ({ ...prev, giftMessage: e.target.value }))}
+                        placeholder="Write a personal message for the recipient..."
+                        rows={3}
+                        maxLength={500}
+                        className="w-full px-3 py-2 bg-hos-bg-tertiary border border-hos-border rounded-lg text-hos-text-primary placeholder-hos-text-muted focus:outline-none focus:ring-2 focus:ring-hos-gold/50 resize-none"
+                      />
+                      <p className="text-xs text-hos-text-muted mt-1">{giftDetails.giftMessage.length}/500</p>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={giftDetails.hidePrice}
+                          onChange={(e) => setGiftDetails((prev) => ({ ...prev, hidePrice: e.target.checked }))}
+                          className="w-4 h-4 rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
+                        />
+                        <span className="text-sm text-hos-text-secondary">Hide price from recipient</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={giftDetails.giftWrapping}
+                          onChange={(e) => setGiftDetails((prev) => ({ ...prev, giftWrapping: e.target.checked }))}
+                          className="w-4 h-4 rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
+                        />
+                        <span className="text-sm text-hos-text-secondary">Add gift wrapping</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </section>
             )}
 
             {checkoutStep < 4 && (

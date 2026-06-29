@@ -808,23 +808,27 @@ model CartItem {
 
 // Address model
 model Address {
-  id         String   @id @default(uuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  label      String?
-  firstName  String
-  lastName   String
-  street     String
-  city       String
-  state      String?
-  postalCode String
-  country    String
-  phone      String?
-  latitude   Float? // For geo-based routing
-  longitude  Float? // For geo-based routing
-  isDefault  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id                   String   @id @default(uuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label                String?
+  firstName            String
+  lastName             String
+  street               String
+  addressLine2         String?
+  company              String?
+  city                 String
+  state                String?
+  postalCode           String
+  country              String
+  phone                String?
+  landmark             String?
+  deliveryInstructions String?  @db.Text
+  latitude             Float?
+  longitude            Float?
+  isDefault            Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   // Relations for orders
   shippingOrders Order[] @relation("ShippingAddress")
@@ -897,6 +901,10 @@ model Order {
 
   cancellationRequests CancellationRequest[]
 
+  // Gifting
+  isGift      Boolean      @default(false)
+  giftDetails GiftDetails?
+
   loyaltyPointsEarned      Int      @default(0)
   loyaltyPointsRedeemed    Int      @default(0)
   loyaltyDiscountAmount    Decimal? @db.Decimal(10, 2)
@@ -921,6 +929,24 @@ model Order {
   @@index([deletedAt])
   @@index([parentOrderId])
   @@map("orders")
+}
+
+model GiftDetails {
+  id                 String  @id @default(uuid())
+  orderId            String  @unique
+  order              Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  recipientName      String
+  recipientEmail     String?
+  recipientPhone     String?
+  giftMessage        String? @db.Text
+  giftWrapping       Boolean @default(false)
+  hidePrice          Boolean @default(true)
+  senderName         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("gift_details")
 }
 
 enum OrderStatus {

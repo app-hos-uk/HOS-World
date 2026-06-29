@@ -601,6 +601,25 @@ export default function ProductDetailClient() {
               </button>
             </div>
 
+            {/* Send as Gift */}
+            <button
+              onClick={() => {
+                handleAddToCart();
+                sessionStorage.setItem('checkout_gift_mode', 'true');
+                router.push('/checkout');
+              }}
+              disabled={
+                addingToCart ||
+                (product.stock !== undefined && product.stock === 0) ||
+                (product.variations?.length
+                  ? !(product.variations as any[]).every((v: any) => selectedVariations[v.name])
+                  : false)
+              }
+              className="w-full mb-4 px-6 py-3 border-2 border-hos-gold/50 text-hos-gold rounded-lg hover:bg-hos-gold/10 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <span>🎁</span> Send as Gift
+            </button>
+
             {/* Social Share */}
             <div className="mb-6">
               <SocialShare

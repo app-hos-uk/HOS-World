@@ -37,6 +37,16 @@ export class CreateAddressDto {
   @IsNotEmpty()
   street: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  addressLine2?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  company?: string;
+
   @IsString()
   @IsNotEmpty()
   @MaxLength(80)
@@ -74,6 +84,16 @@ export class CreateAddressDto {
     message: 'Phone may only contain digits, spaces, hyphens, parentheses, and an optional leading +',
   })
   phone?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  landmark?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  deliveryInstructions?: string;
 
   @IsOptional()
   @IsBoolean()

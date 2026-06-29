@@ -1784,6 +1784,16 @@ export class ApiClient {
     referralCode?: string;
     visitorId?: string;
     idempotencyKey?: string;
+    isGift?: boolean;
+    giftDetails?: {
+      recipientName: string;
+      recipientEmail?: string;
+      recipientPhone?: string;
+      giftMessage?: string;
+      giftWrapping?: boolean;
+      hidePrice?: boolean;
+      senderName?: string;
+    };
   }): Promise<ApiResponse<Order>> {
     return this.request<ApiResponse<Order>>('/orders', {
       method: 'POST',
@@ -5058,10 +5068,14 @@ export class ApiClient {
     lastName: string;
     phone?: string;
     street: string;
+    addressLine2?: string;
+    company?: string;
     city: string;
     state?: string;
     postalCode: string;
     country: string;
+    landmark?: string;
+    deliveryInstructions?: string;
     latitude?: number;
     longitude?: number;
     isDefault?: boolean;
@@ -5078,10 +5092,14 @@ export class ApiClient {
     lastName?: string;
     phone?: string;
     street?: string;
+    addressLine2?: string;
+    company?: string;
     city?: string;
     state?: string;
     postalCode?: string;
     country?: string;
+    landmark?: string;
+    deliveryInstructions?: string;
     latitude?: number;
     longitude?: number;
     isDefault?: boolean;

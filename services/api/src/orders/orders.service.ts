@@ -548,6 +548,22 @@ export class OrdersService {
           billingAddressId: createOrderDto.billingAddressId,
           paymentMethod: createOrderDto.paymentMethod,
           idempotencyKey: createOrderDto.idempotencyKey || null,
+          isGift: createOrderDto.isGift || false,
+          ...(createOrderDto.isGift && createOrderDto.giftDetails
+            ? {
+                giftDetails: {
+                  create: {
+                    recipientName: createOrderDto.giftDetails.recipientName,
+                    recipientEmail: createOrderDto.giftDetails.recipientEmail,
+                    recipientPhone: createOrderDto.giftDetails.recipientPhone,
+                    giftMessage: createOrderDto.giftDetails.giftMessage,
+                    giftWrapping: createOrderDto.giftDetails.giftWrapping ?? false,
+                    hidePrice: createOrderDto.giftDetails.hidePrice ?? true,
+                    senderName: createOrderDto.giftDetails.senderName,
+                  },
+                },
+              }
+            : {}),
           items: {
             create: cart.items.map((item) => ({
               productId: item.productId,
@@ -570,6 +586,7 @@ export class OrdersService {
           shippingAddress: true,
           billingAddress: true,
           seller: { select: { id: true, storeName: true, slug: true } },
+          giftDetails: true,
         },
       });
 
@@ -2074,19 +2091,15 @@ export class OrdersService {
       stripeRefundSucceeded = true;
     }
 
-    // Record finance audit trail for approved cancellation refunds
-    if (
-      options?.recordTransaction &&
-      order.paymentStatus === 'PAID' &&
-      this.refundsService
-    ) {
+    // Record finance audit trail for all paid order cancellations
+    if (order.paymentStatus === 'PAID' && this.refundsService) {
       try {
         await this.refundsService.recordOrderCancellationRefund({
           orderId: order.id,
           customerId: order.userId,
           amount: Number(order.total),
           currency: order.currency,
-          cancellationRequestId: options.cancellationRequestId,
+          cancellationRequestId: options?.cancellationRequestId,
           stripeRefundSucceeded,
         });
       } catch (txErr: any) {

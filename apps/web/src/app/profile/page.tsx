@@ -115,10 +115,14 @@ function ProfilePageContent() {
     lastName: '',
     phone: '',
     street: '',
+    addressLine2: '',
+    company: '',
     city: '',
     state: '',
     postalCode: '',
     country: '',
+    landmark: '',
+    deliveryInstructions: '',
     isDefault: false,
     latitude: undefined as number | undefined,
     longitude: undefined as number | undefined,
@@ -332,10 +336,14 @@ function ProfilePageContent() {
         lastName: '',
         phone: '',
         street: '',
+        addressLine2: '',
+        company: '',
         city: '',
         state: '',
         postalCode: '',
         country: '',
+        landmark: '',
+        deliveryInstructions: '',
         isDefault: false,
         latitude: undefined,
         longitude: undefined,
@@ -728,10 +736,14 @@ function ProfilePageContent() {
                         lastName: '',
                         phone: '',
                         street: '',
+                        addressLine2: '',
+                        company: '',
                         city: '',
                         state: '',
                         postalCode: '',
                         country: '',
+                        landmark: '',
+                        deliveryInstructions: '',
                         isDefault: false,
                         latitude: undefined,
                         longitude: undefined,
@@ -831,6 +843,26 @@ function ProfilePageContent() {
                           />
                         </div>
                         <div>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Apt / Suite / Unit</label>
+                          <input
+                            type="text"
+                            value={addressForm.addressLine2}
+                            onChange={(e) => setAddressForm({ ...addressForm, addressLine2: e.target.value })}
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                            placeholder="Apartment, suite, unit, etc."
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Company</label>
+                          <input
+                            type="text"
+                            value={addressForm.company}
+                            onChange={(e) => setAddressForm({ ...addressForm, company: e.target.value })}
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                            placeholder="Company name (optional)"
+                          />
+                        </div>
+                        <div>
                           <label className="block text-sm font-medium text-hos-text-secondary mb-1">City *</label>
                           <input
                             type="text"
@@ -897,6 +929,31 @@ function ProfilePageContent() {
                           </select>
                         </div>
                       </div>
+
+                      {/* Additional Address Fields */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Landmark / Nearby Reference</label>
+                          <input
+                            type="text"
+                            value={addressForm.landmark}
+                            onChange={(e) => setAddressForm({ ...addressForm, landmark: e.target.value })}
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                            placeholder="Near mall, mosque, etc."
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Delivery Instructions</label>
+                          <input
+                            type="text"
+                            value={addressForm.deliveryInstructions}
+                            onChange={(e) => setAddressForm({ ...addressForm, deliveryInstructions: e.target.value })}
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                            placeholder="Ring doorbell, leave at reception, etc."
+                          />
+                        </div>
+                      </div>
+
                       <div className="flex items-center">
                         <input
                           type="checkbox"
@@ -1003,10 +1060,14 @@ function ProfilePageContent() {
                                   lastName: address.lastName || '',
                                   phone: address.phone || '',
                                   street: address.street,
+                                  addressLine2: address.addressLine2 || '',
+                                  company: address.company || '',
                                   city: address.city,
                                   state: address.state || '',
                                   postalCode: address.postalCode,
                                   country: address.country,
+                                  landmark: address.landmark || '',
+                                  deliveryInstructions: address.deliveryInstructions || '',
                                   isDefault: address.isDefault,
                                   latitude: address.latitude,
                                   longitude: address.longitude,
