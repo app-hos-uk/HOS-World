@@ -77,6 +77,7 @@ const menuItems: MenuItem[] = [
     icon: '💰',
     children: [
       { title: 'Finance Dashboard', href: '/admin/finance', icon: '💳' },
+      { title: 'Cancellation Queue', href: '/admin/cancellations', icon: '❌' },
       { title: 'Settlements', href: '/admin/settlements', icon: '💸' },
     ],
   },
@@ -277,6 +278,7 @@ const TEAM_ADMIN_SHELL_MENUS: Record<string, MenuItem[]> = {
   ],
   FINANCE: [
     { title: 'Finance Dashboard', href: '/finance/dashboard', icon: '📊' },
+    { title: 'Cancellation Queue', href: '/admin/cancellations', icon: '❌' },
     { title: 'Pricing workflow', href: '/finance/pricing', icon: '💵' },
     { title: 'Product pricing', href: '/admin/products/pricing', icon: '💰' },
     { title: 'Loyalty Overview', href: '/admin/loyalty', icon: '💎' },
