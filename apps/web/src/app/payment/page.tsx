@@ -579,7 +579,6 @@ function PaymentForm({ order }: { order: any }) {
               const zeroResponse = await apiClient.createPaymentIntent({
                 orderId: order.id,
                 paymentMethod: selectedProvider || 'stripe',
-                amount: 0,
                 currency: order.currency || 'USD',
               });
               if (zeroResponse?.data?.paid) {
@@ -631,7 +630,6 @@ function PaymentForm({ order }: { order: any }) {
           const response = await apiClient.createPaymentIntent({
             orderId: order.id,
             paymentMethod: selectedProvider,
-            amount: finalAmount,
             currency: order.currency || 'USD',
           });
 
@@ -687,7 +685,6 @@ function PaymentForm({ order }: { order: any }) {
           const zeroResponse = await apiClient.createPaymentIntent({
             orderId: order.id,
             paymentMethod: selectedProvider || 'stripe',
-            amount: 0,
             currency: order.currency || 'USD',
           });
           if (zeroResponse?.data?.paid) {

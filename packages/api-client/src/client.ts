@@ -1728,20 +1728,18 @@ export class ApiClient {
   // Payment endpoints
   /**
    * Create a payment intent for an order.
+   * The payable amount is computed server-side from the order (accounting for gift card redemptions).
    * 
    * @param data - Payment intent data (MUST use named properties, not positional arguments)
    * @param data.orderId - Order ID (required)
    * @param data.paymentMethod - Payment provider name, e.g., 'stripe' (optional)
-   * @param data.amount - Payment amount (required, critical for accurate processing after gift card redemptions)
-   * @param data.currency - Payment currency, e.g., 'USD' (required, critical for currency conversion)
+   * @param data.currency - Payment currency, e.g., 'USD' (optional, informational)
    * 
    * @example
    * ```typescript
-   * // ✅ CORRECT: Use named properties
    * await apiClient.createPaymentIntent({
    *   orderId: 'order-123',
    *   paymentMethod: 'stripe',
-   *   amount: 100.50,
    *   currency: 'USD'
    * });
    * ```
@@ -1749,8 +1747,7 @@ export class ApiClient {
   async createPaymentIntent(data: {
     orderId: string;
     paymentMethod?: string;
-    amount: number; // Required: critical for accurate payment processing, especially after gift card redemptions
-    currency: string; // Required: critical for currency conversion and payment processing
+    currency?: string;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/payments/intent', {
       method: 'POST',

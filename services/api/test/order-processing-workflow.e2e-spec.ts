@@ -131,7 +131,8 @@ describe('Order Processing Workflow E2E', () => {
         .post('/api/payments/intent')
         .set('Authorization', `Bearer ${customerToken}`)
         .send({
-          amount: 159.98, // 2 * 79.99
+          orderId,
+          paymentMethod: 'stripe',
           currency: 'USD',
         });
 
