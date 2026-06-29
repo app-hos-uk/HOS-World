@@ -665,6 +665,14 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
   <div class="footer"><p>House of Spells Marketplace</p></div>
 </div></body></html>`,
   },
+  {
+    slug: 'click_collect_reminder',
+    channel: 'PUSH',
+    subject: 'Pickup reminder',
+    description: 'Push reminder for click-and-collect orders not yet picked up.',
+    variables: ['orderNumber', 'storeName'],
+    body: `Your order {{orderNumber}} is still waiting at {{storeName}}. Don't forget to collect it!`,
+  },
 ];
 
 @Injectable()

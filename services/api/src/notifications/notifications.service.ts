@@ -376,6 +376,21 @@ export class NotificationsService implements OnModuleInit {
       return;
     }
 
+    // Idempotent: skip if confirmation was already sent (prevents duplicates when
+    // both payment success and order status → CONFIRMED trigger this method)
+    const alreadySent = await this.prisma.notification.findFirst({
+      where: {
+        userId: order.userId,
+        type: 'ORDER_CONFIRMATION',
+        content: { contains: order.orderNumber },
+      },
+      select: { id: true },
+    });
+    if (alreadySent) {
+      this.logger.debug(`Order confirmation already sent for ${order.orderNumber} — skipping`);
+      return;
+    }
+
     const customerName = [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || 'Customer';
 
     const itemsTable = `<table><thead><tr><th>Product</th><th>Quantity</th><th>Price</th><th>Total</th></tr></thead><tbody>${order.items.map((item: any) => `<tr><td>${escapeHtml(item.product.name)}</td><td>${item.quantity}</td><td>$${Number(item.price).toFixed(2)}</td><td>$${(Number(item.price) * item.quantity).toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
