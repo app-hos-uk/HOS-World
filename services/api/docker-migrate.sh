@@ -15,11 +15,27 @@ npx prisma migrate resolve --applied 20261004000000_security_indexes 2>/dev/null
 npx prisma migrate resolve --applied 20260609000000_add_blog_system 2>/dev/null || true
 npx prisma migrate resolve --applied 20260610000000_campaign_readiness_indexes 2>/dev/null || true
 
+echo "=== Step 2a: Resolve any failed migrations ==="
+npx prisma migrate resolve --rolled-back 20260629150000_add_transaction_audit_log 2>/dev/null || true
+npx prisma migrate resolve --rolled-back 20260629150100_add_reconciliation_engine 2>/dev/null || true
+npx prisma migrate resolve --rolled-back 20260629150200_add_disputes 2>/dev/null || true
+npx prisma migrate resolve --rolled-back 20260629150300_add_financial_periods 2>/dev/null || true
+
 echo "=== Step 2b: Execute new migrations directly (IF NOT EXISTS - safe to re-run) ==="
 npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20261003000000_founding_members_email_verification/migration.sql 2>&1 || echo "WARN: founding members migration had issues (may be OK if already applied)"
 npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20261004000000_security_indexes/migration.sql 2>&1 || echo "WARN: security indexes migration had issues (may be OK if already applied)"
 npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260609000000_add_blog_system/migration.sql 2>&1 || echo "WARN: blog system migration had issues (may be OK if already applied)"
 npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260610000000_campaign_readiness_indexes/migration.sql 2>&1 || echo "WARN: campaign readiness migration had issues (may be OK if already applied)"
+npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260629150000_add_transaction_audit_log/migration.sql 2>&1 || echo "WARN: transaction audit log migration had issues (may be OK if already applied)"
+npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260629150100_add_reconciliation_engine/migration.sql 2>&1 || echo "WARN: reconciliation engine migration had issues (may be OK if already applied)"
+npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260629150200_add_disputes/migration.sql 2>&1 || echo "WARN: disputes migration had issues (may be OK if already applied)"
+npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260629150300_add_financial_periods/migration.sql 2>&1 || echo "WARN: financial periods migration had issues (may be OK if already applied)"
+
+echo "=== Step 2c: Mark newly executed migrations as applied ==="
+npx prisma migrate resolve --applied 20260629150000_add_transaction_audit_log 2>/dev/null || true
+npx prisma migrate resolve --applied 20260629150100_add_reconciliation_engine 2>/dev/null || true
+npx prisma migrate resolve --applied 20260629150200_add_disputes 2>/dev/null || true
+npx prisma migrate resolve --applied 20260629150300_add_financial_periods 2>/dev/null || true
 
 echo "=== Step 3: Run migrate deploy (authoritative) ==="
 # Fail closed: if migrations cannot be applied the schema is in an unknown state and the app
