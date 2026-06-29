@@ -8,10 +8,10 @@
   "scripts": {
     "build": "pnpm db:generate && nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "sh scripts/pre-migrate.sh && node dist/main.js",
+    "start": "sh docker-migrate.sh && node dist/main.js",
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "sh scripts/pre-migrate.sh && node dist/main.js",
+    "start:prod": "sh docker-migrate.sh && node dist/main.js",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "pretest": "prisma generate",
     "test": "jest",
