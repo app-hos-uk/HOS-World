@@ -109,6 +109,7 @@ export default function AdminMediaLibraryPage() {
         fetch(`${getPublicApiBaseUrl() || 'http://localhost:3001/api'}/uploads/single`, {
           method: 'POST',
           credentials: 'include',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
           body: formData,
         }).then((res) => {
           if (!res.ok) throw new Error('Upload failed');

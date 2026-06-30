@@ -4281,7 +4281,9 @@ export class ApiClient {
     
     // Use the uploads endpoint instead of non-existent /cms/media
     const token = this.getToken();
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      'X-Requested-With': 'XMLHttpRequest',
+    };
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -4295,6 +4297,7 @@ export class ApiClient {
           method: 'POST',
           headers,
           body: formData,
+          credentials: 'include',
         },
         120000,
       );
@@ -4368,7 +4371,9 @@ export class ApiClient {
     }
     
     const token = this.getToken();
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      'X-Requested-With': 'XMLHttpRequest',
+    };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
     const formData = new FormData();
@@ -4378,7 +4383,7 @@ export class ApiClient {
     const url = `${this.baseUrl}/uploads/single`;
     const response = await this.fetchWithTimeout(
       url,
-      { method: 'POST', headers, body: formData },
+      { method: 'POST', headers, body: formData, credentials: 'include' },
       120000,
     );
 
@@ -4402,7 +4407,9 @@ export class ApiClient {
     }
     
     const token = this.getToken();
-    const headers: Record<string, string> = {};
+    const headers: Record<string, string> = {
+      'X-Requested-With': 'XMLHttpRequest',
+    };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
     const formData = new FormData();
@@ -4412,7 +4419,7 @@ export class ApiClient {
     const url = `${this.baseUrl}/uploads/multiple`;
     const response = await this.fetchWithTimeout(
       url,
-      { method: 'POST', headers, body: formData },
+      { method: 'POST', headers, body: formData, credentials: 'include' },
       180000,
     );
 
