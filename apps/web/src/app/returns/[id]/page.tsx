@@ -10,7 +10,9 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 
-const RETURN_ROLES = ['CUSTOMER', 'ADMIN', 'FINANCE', 'SELLER', 'B2C_SELLER', 'WHOLESALER'];
+import type { UserRole } from '@hos-marketplace/shared-types';
+
+const RETURN_ROLES: UserRole[] = ['CUSTOMER', 'ADMIN', 'FINANCE', 'SELLER', 'B2C_SELLER', 'WHOLESALER'];
 
 function resolveBackHref(from: string | null): string {
   switch (from) {

@@ -42,6 +42,7 @@ interface DashboardOrder {
   id: string;
   orderNumber?: string;
   status: string;
+  paymentStatus?: string;
   total: number;
   createdAt: string | Date;
   items?: any[];

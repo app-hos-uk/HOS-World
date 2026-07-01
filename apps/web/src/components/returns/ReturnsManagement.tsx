@@ -258,8 +258,9 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
         </div>
       )}
 
-      <Modal isOpen={showRejectModal} onClose={() => setShowRejectModal(false)} title="Reject Return">
+      <Modal open={showRejectModal} onClose={() => setShowRejectModal(false)} titleId="reject-return-modal">
         <div className="space-y-4">
+          <h2 id="reject-return-modal" className="text-lg font-bold text-hos-text-secondary">Reject Return</h2>
           <p className="text-sm text-hos-text-secondary">
             Provide a reason for rejecting this return request.
           </p>

@@ -9,6 +9,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
+  title?: string;
 }
 
 interface MenuItem {

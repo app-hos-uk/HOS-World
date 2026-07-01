@@ -807,8 +807,9 @@ export default function SellerOrdersPage() {
           )}
         </Modal>
 
-        <Modal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)} title="Cancel Order">
+        <Modal open={showCancelModal} onClose={() => setShowCancelModal(false)} titleId="cancel-order-modal">
           <div className="space-y-4">
+            <h2 id="cancel-order-modal" className="text-lg font-bold text-hos-text-secondary">Cancel Order</h2>
             <p className="text-sm text-hos-text-secondary">
               Please provide a reason for cancelling this order. This will be recorded on the order.
             </p>
