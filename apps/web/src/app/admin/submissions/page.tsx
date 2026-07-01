@@ -712,26 +712,70 @@ export default function AdminSubmissionsPage() {
                 </table>
               </div>
               {filteredSubmissions.length > PAGE_SIZE && (
-                <div className="flex items-center justify-between px-4 py-3 border-t border-hos-border">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3 border-t border-hos-border">
                   <p className="text-sm text-hos-text-muted">
-                    Page {currentPage} of {totalPages}
+                    Showing {(currentPage - 1) * PAGE_SIZE + 1}–
+                    {Math.min(currentPage * PAGE_SIZE, filteredSubmissions.length)} of {filteredSubmissions.length}
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-2 text-sm font-medium border border-hos-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hos-bg-tertiary"
+                    >
+                      First
+                    </button>
                     <button
                       type="button"
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="px-4 py-2 text-sm font-medium border border-hos-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hos-bg-tertiary"
+                      className="px-3 py-2 text-sm font-medium border border-hos-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hos-bg-tertiary"
                     >
                       Previous
                     </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+                      .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+                        if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
+                        acc.push(p);
+                        return acc;
+                      }, [])
+                      .map((item, idx) =>
+                        item === 'ellipsis' ? (
+                          <span key={`e-${idx}`} className="px-1 text-hos-text-muted">
+                            …
+                          </span>
+                        ) : (
+                          <button
+                            key={item}
+                            type="button"
+                            onClick={() => setCurrentPage(item)}
+                            className={`min-w-[2.25rem] px-3 py-2 text-sm font-medium border rounded-md ${
+                              currentPage === item
+                                ? 'border-hos-gold bg-hos-gold/10 text-hos-gold'
+                                : 'border-hos-border hover:bg-hos-bg-tertiary text-hos-text-secondary'
+                            }`}
+                          >
+                            {item}
+                          </button>
+                        ),
+                      )}
                     <button
                       type="button"
                       onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-4 py-2 text-sm font-medium border border-hos-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hos-bg-tertiary"
+                      className="px-3 py-2 text-sm font-medium border border-hos-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hos-bg-tertiary"
                     >
                       Next
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-2 text-sm font-medium border border-hos-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hos-bg-tertiary"
+                    >
+                      Last
                     </button>
                   </div>
                 </div>

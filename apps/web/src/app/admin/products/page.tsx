@@ -1029,7 +1029,7 @@ function AdminProductsContent() {
                           </div>
                         </td>
                         <td className="px-4 py-3 align-middle text-right text-sm text-hos-text-secondary tabular-nums whitespace-nowrap">
-                          {formatPrice(product.price)}
+                          {formatPrice(Number(product.price) || 0, product.currency || 'USD')}
                         </td>
                         <td className="px-4 py-3 align-middle text-center">{getStockBadge(product.stock)}</td>
                         <td className="px-4 py-3 align-middle">

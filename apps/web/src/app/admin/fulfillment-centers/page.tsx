@@ -513,7 +513,7 @@ export default function AdminFulfillmentCentersPage() {
                         <button
                           type="submit"
                           disabled={submitting}
-                          className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
+                          className="px-4 py-2 text-sm font-semibold text-[#1a1406] bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                         >
                           {submitting ? 'Saving...' : editingCenter ? 'Save changes' : 'Create Center'}
                         </button>

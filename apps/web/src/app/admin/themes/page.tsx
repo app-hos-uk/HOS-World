@@ -185,6 +185,15 @@ export default function AdminThemesPage() {
     })).filter(d => d.value > 0);
   }, [themes]);
 
+  const resetUploadForm = () => {
+    setUploadForm({ file: null, name: '', description: '', type: 'SELLER' });
+  };
+
+  const closeUploadModal = () => {
+    setShowUploadModal(false);
+    resetUploadForm();
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setUploadForm({ ...uploadForm, file: e.target.files[0] });
@@ -209,6 +218,7 @@ export default function AdminThemesPage() {
         fetch(`${getPublicApiBaseUrl() || 'http://localhost:3001/api'}/themes/upload`, {
           method: 'POST',
           credentials: 'include',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
           body: formData,
         }).then((res) => {
           if (!res.ok) throw new Error('Upload failed');
@@ -221,8 +231,7 @@ export default function AdminThemesPage() {
         }
       );
 
-      setShowUploadModal(false);
-      setUploadForm({ file: null, name: '', description: '', type: 'SELLER' });
+      closeUploadModal();
       await fetchThemes();
     } catch (err: any) {
       console.error('Error uploading theme:', err);
@@ -705,7 +714,7 @@ export default function AdminThemesPage() {
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 className="text-xl font-bold">Upload Theme</h2>
-                    <button onClick={() => setShowUploadModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
+                    <button onClick={closeUploadModal} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
 
                   <div className="space-y-4">
@@ -764,7 +773,7 @@ export default function AdminThemesPage() {
                         {uploading ? 'Uploading...' : 'Upload Theme'}
                       </button>
                       <button
-                        onClick={() => setShowUploadModal(false)}
+                        onClick={closeUploadModal}
                         className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
                       >
                         Cancel

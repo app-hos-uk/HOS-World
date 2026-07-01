@@ -125,6 +125,33 @@ export default function OrdersPage() {
     return orders.filter(o => normalizeStatus(o.status) === statusFilter.toLowerCase());
   }, [orders, statusFilter]);
 
+  const getPaymentBadge = (order: Order) => {
+    const ps = (order.paymentStatus || '').toUpperCase();
+    if (ps === 'PAID') return null;
+    if (ps === 'PENDING' || !ps) {
+      return (
+        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-orange-500/15 text-orange-300">
+          Payment pending
+        </span>
+      );
+    }
+    if (ps === 'REFUNDED') {
+      return (
+        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-500/15 text-red-300">
+          Refunded
+        </span>
+      );
+    }
+    return (
+      <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-hos-bg-tertiary text-hos-text-secondary">
+        {order.paymentStatus}
+      </span>
+    );
+  };
+
+  const isUnpaidOrder = (order: Order) =>
+    !order.paymentStatus || order.paymentStatus.toUpperCase() !== 'PAID';
+
   const getStatusColor = (status: string) => {
     switch (normalizeStatus(status)) {
       case 'pending': return 'bg-yellow-500/15 text-yellow-300';
@@ -249,13 +276,14 @@ export default function OrdersPage() {
                   <div className="p-4 sm:p-6 border-b border-hos-border">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-wrap">
                           <h3 className="text-lg font-semibold text-hos-text-secondary">
                             Order #{order.orderNumber || order.id.slice(0, 8)}
                           </h3>
                           <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
                             {order.status}
                           </span>
+                          {getPaymentBadge(order)}
                         </div>
                         <p className="text-sm text-hos-text-muted mt-1">
                           Placed on {new Date(order.createdAt).toLocaleDateString('en-US', {
@@ -315,9 +343,8 @@ export default function OrdersPage() {
                     >
                       View Details
                     </button>
-                    {normalizeStatus(order.status) === 'pending' &&
-                      order.paymentStatus &&
-                      order.paymentStatus.toUpperCase() !== 'PAID' && (
+                    {isUnpaidOrder(order) &&
+                      !['cancelled', 'refunded'].includes(normalizeStatus(order.status)) && (
                       <Link
                         href={`/payment?orderId=${order.id}`}
                         className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium text-sm"

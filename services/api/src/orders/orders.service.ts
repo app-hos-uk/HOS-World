@@ -67,6 +67,78 @@ export class OrdersService {
     }
   }
 
+  private static readonly SELLER_ROLES = new Set(['SELLER', 'B2C_SELLER', 'WHOLESALER']);
+
+  /** Status changes that move an order into fulfillment — require successful payment first. */
+  private static readonly FULFILLMENT_STATUSES = new Set([
+    'ACCEPTED',
+    'CONFIRMED',
+    'PROCESSING',
+    'FULFILLED',
+    'SHIPPED',
+    'DELIVERED',
+  ]);
+
+  private assertSellerCanFulfill(
+    order: { paymentStatus: string },
+    role: string,
+    context: { newStatus?: string; updatingTracking?: boolean },
+  ): void {
+    if (!OrdersService.SELLER_ROLES.has(role)) return;
+    if (String(order.paymentStatus).toUpperCase() === 'PAID') return;
+
+    const movingToFulfillment =
+      !!context.newStatus && OrdersService.FULFILLMENT_STATUSES.has(context.newStatus);
+
+    if (movingToFulfillment || context.updatingTracking) {
+      throw new BadRequestException(
+        'This order has not been paid yet. Fulfillment actions are blocked until payment is completed.',
+      );
+    }
+  }
+
+  /**
+   * Cancel checkout orders that were never paid within the configured TTL.
+   * Restores stock via the standard cancel() path.
+   */
+  async expireUnpaidOrders(): Promise<number> {
+    const ttlMinutes = Number(this.configService.get<string>('UNPAID_ORDER_TTL_MINUTES') || 60);
+    const cutoff = new Date(Date.now() - ttlMinutes * 60 * 1000);
+
+    const stale = await this.prisma.order.findMany({
+      where: {
+        parentOrderId: null,
+        deletedAt: null,
+        paymentStatus: 'PENDING',
+        status: { in: ['PENDING', 'CONFIRMED'] },
+        createdAt: { lt: cutoff },
+      },
+      select: { id: true, userId: true },
+      take: 50,
+      orderBy: { createdAt: 'asc' },
+    });
+
+    let expired = 0;
+    for (const row of stale) {
+      try {
+        await this.cancel(row.id, row.userId, 'ADMIN', {
+          skipApproval: true,
+          reason: 'Automatically cancelled — payment was not completed within the allowed time.',
+        });
+        expired++;
+      } catch (err) {
+        this.logger.warn(
+          `Failed to expire unpaid order ${row.id}: ${(err as Error).message}`,
+        );
+      }
+    }
+
+    if (expired > 0) {
+      this.logger.log(`Expired ${expired} unpaid order(s) older than ${ttlMinutes} minutes`);
+    }
+    return expired;
+  }
+
   private async triggerOrderStatusNotification(
     orderId: string,
     orderUserId: string,
@@ -1257,6 +1329,11 @@ export class OrdersService {
         where: { userId },
       });
       if (seller) {
+        // Sellers only see paid orders — unpaid checkout attempts must not appear in fulfillment queue
+        where.AND = [
+          ...(Array.isArray(where.AND) ? where.AND : where.AND ? [where.AND] : []),
+          { paymentStatus: { in: ['PAID', 'REFUNDED', 'DISPUTED'] } },
+        ];
         // Show orders directly assigned to this seller OR parent orders that
         // have a child order assigned to them (multi-vendor marketplace).
         where.OR = [
@@ -1517,7 +1594,12 @@ export class OrdersService {
       this.validateStatusTransition(order.status, normalizedStatus);
     }
 
-    // paymentStatus must never be set by sellers, and may never be set to PAID via this
+    this.assertSellerCanFulfill(order, role, {
+      newStatus: normalizedStatus,
+      updatingTracking: updateOrderDto.trackingCode != null && updateOrderDto.trackingCode !== '',
+    });
+
+    // paymentStatus must never be set by sellers
     // generic update endpoint. PAID is only ever set by the verified payment flow
     // (PaymentsService.markPaymentAsPaid / Stripe webhook). Admins may still set
     // non-PAID statuses (e.g. REFUNDED/CANCELLED) for manual reconciliation.
@@ -1694,6 +1776,11 @@ export class OrdersService {
     if (!order.parentOrderId) {
       throw new BadRequestException('Only child orders (vendor splits) can be accepted');
     }
+    if (String(order.paymentStatus).toUpperCase() !== 'PAID') {
+      throw new BadRequestException(
+        'This order has not been paid yet. Accept is blocked until the customer completes payment.',
+      );
+    }
     this.validateStatusTransition(order.status, 'ACCEPTED');
 
     await this.prisma.order.update({
@@ -1837,6 +1924,7 @@ export class OrdersService {
       skipApproval?: boolean;
       recordTransaction?: boolean;
       cancellationRequestId?: string;
+      reason?: string;
     },
   ): Promise<Order> {
     const order = await this.prisma.order.findUnique({
@@ -1971,6 +2059,17 @@ export class OrdersService {
             }
           }
         }
+      }
+
+      if (options?.reason?.trim()) {
+        await tx.orderNote.create({
+          data: {
+            orderId: id,
+            content: `Cancellation reason: ${options.reason.trim()}`,
+            internal: false,
+            createdBy: userId,
+          },
+        });
       }
 
       return tx.order.update({

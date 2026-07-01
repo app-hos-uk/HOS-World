@@ -163,13 +163,13 @@ export default function AdminInfluencersPage() {
           <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
             <p className="text-sm text-hos-text-muted">Total Sales</p>
             <p className="text-2xl font-bold text-hos-text-secondary">
-              {formatCurrency(influencers.reduce((sum, i) => sum + i.totalSalesAmount, 0))}
+              {formatCurrency(influencers.reduce((sum, i) => sum + Number(i.totalSalesAmount || 0), 0))}
             </p>
           </div>
           <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
             <p className="text-sm text-hos-text-muted">Total Commissions</p>
             <p className="text-2xl font-bold text-hos-gold">
-              {formatCurrency(influencers.reduce((sum, i) => sum + i.totalCommission, 0))}
+              {formatCurrency(influencers.reduce((sum, i) => sum + Number(i.totalCommission || 0), 0))}
             </p>
           </div>
         </div>

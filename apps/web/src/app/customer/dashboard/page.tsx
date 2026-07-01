@@ -52,7 +52,7 @@ type TabType = 'overview' | 'orders' | 'analytics' | 'activity';
 export default function CustomerDashboardPage() {
   const router = useRouter();
   const toast = useToast();
-  const { user } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const { formatPrice } = useCurrency();
   const [loading, setLoading] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -70,9 +70,14 @@ export default function CustomerDashboardPage() {
   const [recommendedProducts, setRecommendedProducts] = useState<any[]>([]);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      router.push('/login?redirect=/customer/dashboard');
+      return;
+    }
     fetchDashboardData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authLoading, isAuthenticated]);
 
   useEffect(() => {
     const onVisibilityChange = () => {
@@ -92,16 +97,34 @@ export default function CustomerDashboardPage() {
       if (!hasLoadedOnceRef.current) setLoading(true);
       setError(null);
 
-      // Fetch orders
-      const ordersResponse = await apiClient.getOrders().catch(() => ({ data: [] }));
+      const [
+        ordersResponse,
+        wishlistResponse,
+        cartResponse,
+        gamificationResponse,
+        loyaltyRes,
+        loyaltyProgressRes,
+        recommendationsRes,
+      ] = await Promise.all([
+        apiClient.getOrders().catch(() => ({ data: [] })),
+        apiClient.getWishlist({ limit: 8 }).catch(() => ({ data: [] })),
+        apiClient.getCart().catch(() => ({ data: { items: [] } })),
+        apiClient.getGamificationStats().catch(() => null),
+        apiClient.getLoyaltyMembership().catch(() => null),
+        apiClient.getLoyaltyTierProgress().catch(() => null),
+        apiClient.getAIRecommendations().catch(() => null),
+      ]);
+
       const orders: DashboardOrder[] = Array.isArray(ordersResponse?.data) ? ordersResponse.data : [];
       setAllOrders(orders);
       
       // Calculate stats
       const totalOrders = orders.length;
-      const pendingOrders = orders.filter((o) => 
-        ['PENDING', 'PROCESSING', 'SHIPPED'].includes(o.status?.toUpperCase())
-      ).length;
+      const pendingOrders = orders.filter((o) => {
+        const status = o.status?.toUpperCase();
+        const paid = o.paymentStatus?.toUpperCase() === 'PAID';
+        return paid && ['PENDING', 'PROCESSING', 'SHIPPED'].includes(status);
+      }).length;
       const completedOrders = orders.filter((o) => 
         ['DELIVERED', 'COMPLETED', 'PAID'].includes(o.status?.toUpperCase())
       ).length;
@@ -110,7 +133,6 @@ export default function CustomerDashboardPage() {
         .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
 
       // Fetch wishlist — request a separate count call for the true total
-      const wishlistResponse = await apiClient.getWishlist({ limit: 8 }).catch(() => ({ data: [] }));
       const wishlistData = wishlistResponse?.data as any;
       const wishlistArray: any[] = Array.isArray(wishlistData)
         ? wishlistData
@@ -124,25 +146,15 @@ export default function CustomerDashboardPage() {
       const wishlistItemsCount = paginationTotal ?? wishlistArray.length;
       setRecentWishlist(wishlistArray.slice(0, 4));
 
-      // Fetch cart
-      const cartResponse = await apiClient.getCart().catch(() => ({ data: { items: [] } }));
       const cartItems = cartResponse?.data?.items?.length || 0;
 
-      // Fetch gamification stats
-      const gamificationResponse = await apiClient.getGamificationStats().catch(() => null);
       if (gamificationResponse?.data) {
         setProfileStats(gamificationResponse.data);
       }
 
-      // Fetch loyalty program data
-      const [loyaltyRes, loyaltyProgressRes] = await Promise.all([
-        apiClient.getLoyaltyMembership().catch(() => null),
-        apiClient.getLoyaltyTierProgress().catch(() => null),
-      ]);
       setLoyaltyMembership(loyaltyRes?.data ?? null);
       setLoyaltyProgress(loyaltyProgressRes?.data ?? null);
 
-      const recommendationsRes = await apiClient.getAIRecommendations().catch(() => null);
       const recs = recommendationsRes?.data;
       setRecommendedProducts(Array.isArray(recs) ? recs.slice(0, 8) : []);
 

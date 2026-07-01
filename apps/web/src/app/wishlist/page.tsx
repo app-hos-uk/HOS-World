@@ -121,7 +121,14 @@ export default function WishlistPage() {
     setRemovingItem(productId);
     try {
       await apiClient.removeFromWishlist(productId);
-      setWishlistItems(items => items.filter(item => item.productId !== productId));
+      setWishlistItems(items =>
+        items.filter(
+          (item) =>
+            item.productId !== productId &&
+            item.product?.id !== productId &&
+            item.id !== productId,
+        ),
+      );
       toast.success('Removed from wishlist');
     } catch (err: any) {
       toast.error(err.message || 'Failed to remove from wishlist');
@@ -362,7 +369,8 @@ export default function WishlistPage() {
                             )}
                           </button>
                           <button
-                            onClick={() => handleRemoveFromWishlist(item.productId)}
+                            type="button"
+                            onClick={() => handleRemoveFromWishlist(item.productId || item.product?.id || item.id)}
                             disabled={isRemoving}
                             className="px-3 py-2 border border-hos-border rounded-lg hover:bg-red-500/10 hover:border-red-500/40 transition-colors text-sm flex items-center justify-center"
                             title="Remove from wishlist"

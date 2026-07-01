@@ -1044,7 +1044,7 @@ export class ProductsService {
         product.variations?.map((v: any) => ({
           id: v.id,
           name: v.name,
-          options: Array.isArray(v.options) ? v.options : [],
+          options: this.normalizeVariationOptions(v.options),
         })) || [],
       fandom: product.fandom || undefined,
       category: product.category || undefined, // Backward compatibility
@@ -1246,5 +1246,27 @@ export class ProductsService {
     await this.cacheHook.onProductCreated(bundle.id);
 
     return this.mapToProductType(bundle, false, true, false);
+  }
+
+  /** Normalize variation options stored as array, object map, or JSON string */
+  private normalizeVariationOptions(options: unknown): unknown[] {
+    if (options == null) return [];
+    if (Array.isArray(options)) return options;
+    if (typeof options === 'object') {
+      return Object.values(options as Record<string, unknown>);
+    }
+    if (typeof options === 'string') {
+      const trimmed = options.trim();
+      if (!trimmed) return [];
+      if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+        try {
+          return this.normalizeVariationOptions(JSON.parse(trimmed));
+        } catch {
+          /* fall through */
+        }
+      }
+      return trimmed.split(',').map((v) => v.trim()).filter(Boolean);
+    }
+    return [];
   }
 }

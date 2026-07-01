@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { AdminLayout } from '@/components/AdminLayout';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
-import { sanitizeEmailPreviewHtml } from '@/lib/sanitizeHtml';
+import { sanitizeEmailPreviewHtml, wrapEmailPreviewDocument } from '@/lib/sanitizeHtml';
+import { TipTapEditor } from '@/components/cms/TipTapEditor';
 
 interface TemplateDefinition {
   slug: string;
@@ -436,9 +437,9 @@ export default function AdminTemplatesPage() {
                     ) : testResult ? (
                       selectedTemplate.channel === 'EMAIL' ? (
                         <iframe
-                          srcDoc={sanitizeEmailPreviewHtml(testResult.body)}
+                          srcDoc={wrapEmailPreviewDocument(testResult.body)}
                           sandbox=""
-                          className="w-full h-[400px] border-0 rounded-lg"
+                          className="w-full h-[400px] border border-hos-border rounded-lg bg-white"
                           title="Custom render"
                         />
                       ) : (
@@ -451,9 +452,9 @@ export default function AdminTemplatesPage() {
                     ) : previewHtml ? (
                       selectedTemplate.channel === 'EMAIL' ? (
                         <iframe
-                          srcDoc={sanitizeEmailPreviewHtml(previewHtml.body)}
+                          srcDoc={wrapEmailPreviewDocument(previewHtml.body)}
                           sandbox=""
-                          className="w-full h-[400px] border-0 rounded-lg"
+                          className="w-full h-[400px] border border-hos-border rounded-lg bg-white"
                           title="Email preview"
                         />
                       ) : (
@@ -478,11 +479,10 @@ export default function AdminTemplatesPage() {
                   </summary>
                   <div className="p-4 border-t border-hos-border">
                     {isEditing && selectedTemplate.channel === 'EMAIL' ? (
-                      <textarea
-                        value={editBody}
-                        onChange={(e) => setEditBody(e.target.value)}
-                        rows={16}
-                        className="w-full text-xs bg-hos-bg-secondary rounded-lg p-4 border border-hos-border font-mono text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
+                      <TipTapEditor
+                        content={editBody}
+                        onChange={setEditBody}
+                        placeholder="Edit email body — use the toolbar for formatting. Template variables like {{orderNumber}} can be typed directly."
                       />
                     ) : (
                       <pre className="text-xs bg-hos-bg-secondary rounded-lg p-4 overflow-x-auto max-h-[300px] whitespace-pre-wrap">

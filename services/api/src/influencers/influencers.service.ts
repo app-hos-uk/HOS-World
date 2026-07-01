@@ -472,7 +472,11 @@ export class InfluencersService {
     ]);
 
     return {
-      data: influencers,
+      data: influencers.map((inf) => ({
+        ...inf,
+        totalSalesAmount: Number(inf.totalSalesAmount ?? 0),
+        totalCommission: Number(inf.totalCommission ?? 0),
+      })),
       pagination: {
         total,
         page,

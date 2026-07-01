@@ -323,10 +323,8 @@ function ProfilePageContent() {
       setSavingAddress(true);
       if (editingAddress) {
         await apiClient.updateAddress(editingAddress.id, addressForm);
-        if (!returnUrl) toast.success('Address updated successfully!');
       } else {
         await apiClient.createAddress(addressForm);
-        if (!returnUrl) toast.success('Address added successfully!');
       }
       setShowAddressForm(false);
       setEditingAddress(null);
@@ -351,8 +349,15 @@ function ProfilePageContent() {
       fetchAddresses();
 
       if (returnUrl) {
-        toast.success(editingAddress ? 'Address updated! Returning to checkout...' : 'Address added! Returning to checkout...');
+        toast.success(
+          editingAddress ? 'Address updated! Returning to checkout...' : 'Address added! Returning to checkout...',
+          { id: 'address-save' },
+        );
         setTimeout(() => router.push(returnUrl), 1000);
+      } else {
+        toast.success(editingAddress ? 'Address updated successfully!' : 'Address added successfully!', {
+          id: 'address-save',
+        });
       }
     } catch (err: any) {
       toast.error(err.message || 'Failed to save address');

@@ -241,7 +241,7 @@ export default function AdminWarehousesPage() {
               <p className="mt-4 text-hos-text-secondary">Loading warehouses...</p>
             </div>
           ) : (
-            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden overflow-x-auto">
               <table className="min-w-full divide-y divide-hos-border">
                 <thead className="bg-hos-bg-secondary">
                   <tr>

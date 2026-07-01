@@ -316,7 +316,7 @@ export class ThemesController {
   @SwaggerApiResponse({ status: 404, description: 'Template not found' })
   async createFromTemplate(
     @Request() req: any,
-    @Param('templateId', ParseUUIDPipe) templateId: string,
+    @Param('templateId') templateId: string,
     @Body() body: { name?: string },
   ): Promise<ApiResponse<any>> {
     const theme = await this.themesService.createThemeFromTemplate(

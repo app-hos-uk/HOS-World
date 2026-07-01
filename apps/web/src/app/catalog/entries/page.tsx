@@ -67,6 +67,16 @@ function CatalogEntriesContent() {
   const [uploadingImages, setUploadingImages] = useState(false);
   const toast = useToast();
 
+  const pendingImageUrlInvalid =
+    newImageUrl.trim() !== '' && !isValidCatalogImageUrl(newImageUrl.trim());
+  const hasInvalidStoredImages = images.some((u) => !isValidCatalogImageUrl(u));
+  const canSubmitEntry =
+    !!title.trim() &&
+    !!description.trim() &&
+    images.length > 0 &&
+    !hasInvalidStoredImages &&
+    !pendingImageUrlInvalid;
+
   const catalogImageInputId = 'catalog-entry-image-upload';
 
   useEffect(() => {
@@ -622,10 +632,16 @@ function CatalogEntriesContent() {
                           className="flex-1 px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                           placeholder="https://..."
                         />
+                        {pendingImageUrlInvalid && (
+                          <p className="text-xs text-red-400 mt-1">
+                            Enter a valid URL starting with http:// or https://
+                          </p>
+                        )}
                         <button
                           type="button"
                           onClick={addImage}
-                          className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
+                          disabled={pendingImageUrlInvalid || !newImageUrl.trim()}
+                          className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50"
                         >
                           Add URL
                         </button>
@@ -656,7 +672,7 @@ function CatalogEntriesContent() {
                     <div className="flex gap-3 pt-4">
                       <button
                         onClick={handleSubmit}
-                        disabled={actionLoading || !title.trim() || !description.trim() || images.length === 0}
+                        disabled={actionLoading || !canSubmitEntry}
                         className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                       >
                         {actionLoading ? 'Creating...' : 'Create Entry'}

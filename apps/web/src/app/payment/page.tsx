@@ -863,6 +863,11 @@ function PaymentForm({ order }: { order: any }) {
           <p className="text-sm text-red-400 text-center font-medium">
             No payment methods available. Please contact support or refresh the page.
           </p>
+          {!stripePublishableKey && (
+            <p className="text-xs text-red-300/90 text-center mt-2">
+              Stripe is not configured — set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY and ensure payment providers are enabled on the API.
+            </p>
+          )}
         </div>
       )}
 
@@ -932,25 +937,39 @@ function PaymentForm({ order }: { order: any }) {
   );
 }
 
+function PaymentPageGate() {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get('orderId');
+  const redirectTarget = orderId ? `/payment?orderId=${orderId}` : '/payment';
+  const redirectTo = `/login?redirect=${encodeURIComponent(redirectTarget)}`;
+
+  return (
+    <RouteGuard
+      allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}
+      redirectTo={redirectTo}
+    >
+      <PaymentContent />
+    </RouteGuard>
+  );
+}
+
 export default function PaymentPage() {
   return (
-    <RouteGuard allowedRoles={['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'INFLUENCER']}>
-      <Suspense fallback={
-        <div className="min-h-screen bg-hos-bg-secondary">
-          <Header />
-          <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
-                <p className="text-sm sm:text-base text-hos-text-secondary">Loading...</p>
-              </div>
+    <Suspense fallback={
+      <div className="min-h-screen bg-hos-bg-secondary">
+        <Header />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
+              <p className="text-sm sm:text-base text-hos-text-secondary">Loading...</p>
             </div>
-          </main>
-          <Footer />
-        </div>
-      }>
-        <PaymentContent />
-      </Suspense>
-    </RouteGuard>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <PaymentPageGate />
+    </Suspense>
   );
 }

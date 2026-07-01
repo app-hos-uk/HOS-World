@@ -260,6 +260,7 @@ export class OrdersController {
 
     const order = await this.ordersService.cancel(id, req.user.id, req.user.role, {
       skipApproval: true,
+      reason: body?.reason,
     });
     return {
       data: order,

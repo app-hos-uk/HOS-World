@@ -185,13 +185,12 @@ export default function AdminDashboardPage() {
             </SectionCard>
 
             {/* Main Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
               <StatCard
                 label="Total Revenue"
                 value={`$${(stats.totalRevenue || 0).toLocaleString()}`}
                 icon={<span className="text-lg">💰</span>}
                 iconBgColor="bg-green-500/10"
-                trend={{ value: 0, label: 'from API', isPositive: true }}
               />
               <StatCard
                 label="Total Products"
@@ -283,7 +282,7 @@ export default function AdminDashboardPage() {
                     <Pie
                       data={orderStatusData}
                       cx="50%"
-                      cy="45%"
+                      cy="50%"
                       innerRadius={60}
                       outerRadius={85}
                       fill="#8884d8"
@@ -352,7 +351,7 @@ export default function AdminDashboardPage() {
                       fontSize={10}
                       tickLine={false}
                       axisLine={{ stroke: DARK_CHART_GRID }}
-                      width={120}
+                      width={140}
                       tickFormatter={(name: string) =>
                         name.length > 14 ? `${name.slice(0, 12)}…` : name
                       }

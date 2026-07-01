@@ -160,7 +160,7 @@ export default function WholesalerSubmissionsPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Submitted
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -208,8 +208,8 @@ export default function WholesalerSubmissionsPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {new Date(submission.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
-                          <div className="flex flex-wrap items-center justify-end gap-3">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex flex-wrap items-center gap-3">
                             <Link
                               href={`/wholesaler/submit-product?id=${submission.id}`}
                               className="text-hos-gold hover:text-hos-gold"

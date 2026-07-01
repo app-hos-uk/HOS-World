@@ -4,6 +4,7 @@ import { AmbassadorModule } from '../ambassador/ambassador.module';
 import { ConfigModule } from '@nestjs/config';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
+import { OrdersSchedulerService } from './orders-scheduler.service';
 import { TaxModule } from '../tax/tax.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { CartModule } from '../cart/cart.module';
@@ -34,7 +35,7 @@ import { CancellationsModule } from '../cancellations/cancellations.module';
     forwardRef(() => CancellationsModule),
   ],
   controllers: [OrdersController],
-  providers: [OrdersService],
+  providers: [OrdersService, OrdersSchedulerService],
   exports: [OrdersService],
 })
 export class OrdersModule {}

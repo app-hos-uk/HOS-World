@@ -193,12 +193,20 @@ export default function WholesalerProductsPage() {
                       { label: 'Created', value: new Date(product.createdAt).toLocaleDateString() },
                     ]}
                     actions={
-                      <Link
-                        href={`/products/${product.slug || product.id}`}
-                        className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium"
-                      >
-                        View
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        <Link
+                          href={`/seller/products/${product.id}/pricing`}
+                          className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium"
+                        >
+                          Pricing tiers
+                        </Link>
+                        <Link
+                          href={`/products/${product.slug || product.id}`}
+                          className="text-hos-text-muted hover:text-hos-gold text-sm font-medium"
+                        >
+                          View
+                        </Link>
+                      </div>
                     }
                   />
                 ))}
@@ -276,12 +284,20 @@ export default function WholesalerProductsPage() {
                           {new Date(product.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <Link
-                            href={`/products/${product.slug || product.id}`}
-                            className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium"
-                          >
-                            View
-                          </Link>
+                          <div className="flex items-center gap-3">
+                            <Link
+                              href={`/seller/products/${product.id}/pricing`}
+                              className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium"
+                            >
+                              Pricing tiers
+                            </Link>
+                            <Link
+                              href={`/products/${product.slug || product.id}`}
+                              className="text-hos-text-muted hover:text-hos-gold text-sm font-medium"
+                            >
+                              View
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     ))}

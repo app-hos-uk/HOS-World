@@ -73,6 +73,8 @@ export default function SellerOrdersPage() {
   const [cancellationRequests, setCancellationRequests] = useState<any[]>([]);
   const [orderCancellationRequest, setOrderCancellationRequest] = useState<any | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
 
   const menuItems = getSellerMenuItems(false);
 
@@ -259,13 +261,18 @@ export default function SellerOrdersPage() {
 
   const handleCancelOrder = async () => {
     if (!selectedOrder) return;
-    if (!window.confirm('Are you sure you want to cancel this order? This action cannot be undone.')) return;
-    
+    if (!cancelReason.trim()) {
+      toast.error('Please provide a cancellation reason');
+      return;
+    }
+
     try {
       setUpdatingStatus(true);
-      await apiClient.cancelOrder(selectedOrder.id);
+      await apiClient.cancelOrder(selectedOrder.id, cancelReason.trim());
       toast.success('Order cancelled');
       setSelectedOrder({ ...selectedOrder, status: 'cancelled' });
+      setShowCancelModal(false);
+      setCancelReason('');
       fetchOrders(statusFilter);
       fetchAllOrders();
     } catch (err: any) {
@@ -607,7 +614,10 @@ export default function SellerOrdersPage() {
                     )}
                     {['pending', 'accepted', 'confirmed', 'processing'].includes(selectedOrder.status) && (
                       <button
-                        onClick={handleCancelOrder}
+                        onClick={() => {
+                          setCancelReason('');
+                          setShowCancelModal(true);
+                        }}
                         disabled={updatingStatus}
                         className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm"
                       >
@@ -795,6 +805,39 @@ export default function SellerOrdersPage() {
               </div>
             </>
           )}
+        </Modal>
+
+        <Modal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)} title="Cancel Order">
+          <div className="space-y-4">
+            <p className="text-sm text-hos-text-secondary">
+              Please provide a reason for cancelling this order. This will be recorded on the order.
+            </p>
+            <textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Reason for cancellation (required)"
+              className="w-full px-3 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-sm"
+              rows={4}
+              required
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowCancelModal(false)}
+                className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary"
+              >
+                Keep Order
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelOrder}
+                disabled={updatingStatus || !cancelReason.trim()}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm"
+              >
+                Confirm Cancellation
+              </button>
+            </div>
+          </div>
         </Modal>
       </DashboardLayout>
     </RouteGuard>

@@ -264,12 +264,21 @@ function ProductsContent() {
     });
   }, [updateState]);
 
+  const prevFilterKeyRef = useRef(filterDepsKey);
+  const prevPageRef = useRef(state.page);
+
   // Fetch products
   useEffect(() => {
     let cancelled = false;
+    const filtersChanged = prevFilterKeyRef.current !== filterDepsKey;
+    prevFilterKeyRef.current = filterDepsKey;
+    prevPageRef.current = state.page;
 
     const fetchProducts = async () => {
-      setLoading(true);
+      // Page-only navigation: keep sidebar filters mounted, dim grid only
+      if (filtersChanged || products.length === 0) {
+        setLoading(true);
+      }
       setFetchError(null);
       try {
         const filters: Record<string, any> = {
@@ -380,8 +389,9 @@ function ProductsContent() {
       skipScrollOnMountRef.current = false;
       return;
     }
+    if (loading) return;
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [state.page]);
+  }, [state.page, loading]);
 
   const toggleArrayFilter = useCallback((key: 'categories' | 'fandoms', value: string) => {
     updateState(prev => {

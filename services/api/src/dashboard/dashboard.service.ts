@@ -772,6 +772,7 @@ export class DashboardService {
           parentOrderId: null,
           deletedAt: null,
           paymentStatus: 'PAID',
+          status: { notIn: ['CANCELLED'] },
         },
         orderBy: { createdAt: 'desc' },
         take: 500,

@@ -182,6 +182,16 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
+    title: 'Fulfillment',
+    icon: '🚚',
+    children: [
+      { title: 'Shipments', href: '/fulfillment/shipments', icon: '📦' },
+      { title: 'Fulfillment Centers', href: '/admin/fulfillment-centers', icon: '🏭' },
+      { title: 'Warehouses', href: '/admin/warehouses', icon: '🏬' },
+      { title: 'Inventory', href: '/admin/inventory', icon: '📊' },
+    ],
+  },
+  {
     title: 'Support',
     icon: '🎧',
     children: [
@@ -669,7 +679,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
 
         {/* Page Content */}
-        <main className="p-4 sm:p-6 lg:p-8 bg-hos-bg-secondary/30 min-h-[calc(100vh-7rem)]">
+        <main className="p-4 sm:p-6 lg:p-8 bg-hos-bg-secondary/30 min-h-[calc(100vh-7rem)] overflow-x-auto">
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>

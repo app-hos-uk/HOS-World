@@ -21,6 +21,7 @@ describe('OrdersService - Phase 1 Tests', () => {
     cart: {
       findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
     cartItem: {
       findMany: jest.fn(),
@@ -35,6 +36,7 @@ describe('OrdersService - Phase 1 Tests', () => {
     },
     seller: {
       findUnique: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     orderNote: {
       create: jest.fn().mockResolvedValue({}),
@@ -89,11 +91,15 @@ describe('OrdersService - Phase 1 Tests', () => {
         ...mockPrismaService,
         product: {
           findUnique: mockPrismaService.product.findUnique,
+          findMany: jest.fn().mockResolvedValue([{ id: 'product-id', stock: 100, name: 'Test Product' }]),
           update: jest.fn().mockResolvedValue({ id: 'product-id', stock: 98 }),
+          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
         },
         vendorProduct: {
           findFirst: jest.fn().mockResolvedValue(null),
+          findMany: jest.fn().mockResolvedValue([]),
           update: jest.fn().mockResolvedValue({}),
+          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
         },
         order: {
           create: jest.fn().mockResolvedValue(mockOrder),
@@ -203,6 +209,9 @@ describe('OrdersService - Phase 1 Tests', () => {
         id: 'seller-id',
         userId: 'seller-user-id',
       });
+      mockPrismaService.seller.findMany.mockResolvedValue([
+        { id: 'seller-id', commissionRate: null },
+      ]);
       mockPrismaService.product.findUnique.mockResolvedValue({ id: 'product-id', stock: 100 });
       mockPrismaService.order.create.mockResolvedValue(mockOrder);
       mockPrismaService.cartItem.deleteMany.mockResolvedValue({ count: 1 });
@@ -487,6 +496,21 @@ describe('OrdersService - Phase 1 Tests', () => {
       });
 
       expect(result).toHaveProperty('status');
+    });
+
+    it('should block seller fulfillment when order is unpaid', async () => {
+      mockPrismaService.order.findUnique.mockResolvedValue({
+        id: orderId,
+        sellerId: 'seller-id',
+        status: 'CONFIRMED',
+        paymentStatus: 'PENDING',
+        childOrders: [],
+      });
+      mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-id', userId: sellerId });
+
+      await expect(
+        service.update(orderId, sellerId, 'SELLER', { status: 'PROCESSING' }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

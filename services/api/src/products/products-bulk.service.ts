@@ -220,7 +220,7 @@ export class ProductsBulkService implements OnModuleInit {
           stock: Number(productData.stock) || 0,
           fandom: productData.fandom,
           category: productData.category,
-          tags: productData.tags ? productData.tags.split(',').map((t: string) => t.trim()) : [],
+          tags: this.normalizeTags(productData.tags),
           status: (productData.status as ProductStatus) || ProductStatus.DRAFT,
           images: productData.images
             ? (typeof productData.images === 'string'
@@ -262,5 +262,28 @@ export class ProductsBulkService implements OnModuleInit {
     }
 
     return { success, failed, errors, failedRows };
+  }
+
+  /** CSV tags may arrive as comma-separated string or JSON array */
+  private normalizeTags(tags: unknown): string[] {
+    if (tags == null || tags === '') return [];
+    if (Array.isArray(tags)) {
+      return tags.map((t) => String(t).trim()).filter(Boolean);
+    }
+    if (typeof tags === 'string') {
+      const trimmed = tags.trim();
+      if (trimmed.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            return parsed.map((t) => String(t).trim()).filter(Boolean);
+          }
+        } catch {
+          /* fall through to comma split */
+        }
+      }
+      return trimmed.split(',').map((t) => t.trim()).filter(Boolean);
+    }
+    return [];
   }
 }

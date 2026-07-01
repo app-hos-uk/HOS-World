@@ -10,7 +10,7 @@
   --font-display: var(--font-cormorant), Georgia, 'Times New Roman', serif;
   --font-body: var(--font-cormorant);
   --font-ui: var(--font-figtree);
-  /* Sticky storefront header — utility bar (lg) + main row */
+  /* Sticky storefront header — utility bar (lg) + main row + nav row */
   --header-height: 3.75rem;
   /* Legacy aliases */
   --font-cinzel: var(--font-display);
@@ -111,6 +111,13 @@
   --color-success: var(--color-new-green);
   --color-warning: var(--color-accent-gold);
   --font-family-primary: var(--font-body);
+}
+
+@media (min-width: 1024px) {
+  :root {
+    /* utility bar (h-8) + main row (py-3) + nav row (py-2.5) */
+    --header-height: 8.75rem;
+  }
 }
 
 .storefront-theme {

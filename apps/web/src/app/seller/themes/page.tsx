@@ -608,7 +608,7 @@ export default function SellerThemesPage() {
                             disabled={actionLoading}
                             className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm disabled:opacity-50"
                           >
-                            {actionLoading ? 'Installing...' : 'Install'}
+                            {actionLoading ? 'Applying...' : 'Apply Theme'}
                           </button>
                           <button
                             onClick={() => setPreviewTheme(theme)}
@@ -760,7 +760,7 @@ export default function SellerThemesPage() {
                       disabled={actionLoading}
                       className="flex-1 px-6 py-3 bg-hos-gold text-[#1a1406] rounded-xl hover:bg-hos-gold-hover transition-colors font-semibold disabled:opacity-50"
                     >
-                      {actionLoading ? 'Installing...' : `Install ${previewTheme.metadata?.isPaid ? `· $${previewTheme.metadata.price}` : '· Free'}`}
+                      {actionLoading ? 'Applying...' : `Apply Theme${previewTheme.metadata?.isPaid ? ` · $${previewTheme.metadata.price}` : ' · Free'}`}
                     </button>
                   )}
                   <button

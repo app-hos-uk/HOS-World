@@ -386,7 +386,7 @@ export default function AdminSupportPage() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold"></div>
             </div>
           ) : (
-            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden overflow-x-auto">
               <table className="min-w-full divide-y divide-hos-border">
                 <thead className="bg-hos-bg-secondary">
                   <tr>

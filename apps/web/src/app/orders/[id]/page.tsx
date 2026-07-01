@@ -181,6 +181,8 @@ export default function OrderDetailPage() {
   };
 
   const isPaidOrder = order?.paymentStatus?.toUpperCase() === 'PAID';
+  const isUnpaidOrder = (o: Order) =>
+    !o.paymentStatus || o.paymentStatus.toUpperCase() !== 'PAID';
   const canRequestCancellation =
     !!order &&
     ['PENDING', 'ACCEPTED', 'CONFIRMED', 'PROCESSING', 'FULFILLED'].includes(order.status.toUpperCase()) &&
@@ -304,6 +306,24 @@ export default function OrderDetailPage() {
               </span>
             </div>
           </div>
+
+          {order && isUnpaidOrder(order) &&
+            !['CANCELLED', 'REFUNDED'].includes(order.status.toUpperCase()) && (
+            <div className="mb-6 rounded-lg border border-orange-500/40 bg-orange-500/10 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p className="font-medium text-orange-200">Payment required</p>
+                <p className="text-sm text-orange-100/90 mt-1">
+                  This order is not paid yet. Complete payment to confirm it — unpaid orders are automatically cancelled after 60 minutes.
+                </p>
+              </div>
+              <Link
+                href={`/payment?orderId=${order.id}`}
+                className="inline-flex justify-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium text-sm shrink-0"
+              >
+                Complete Payment
+              </Link>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Content */}

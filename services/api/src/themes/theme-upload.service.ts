@@ -69,7 +69,7 @@ export class ThemeUploadService {
         previewImages: themePackage.previewImages,
         uploadedBy: userId,
         uploadedAt: new Date(),
-        isActive: false, // Require admin activation
+        isActive: false, // Uploaded themes require admin activation via the Themes page
       },
     });
 

@@ -317,9 +317,10 @@ export default function AdminTagsPage() {
         category: tag.category,
         description: tag.description,
         synonyms: tag.synonyms,
-        isActive: false,
+        isActive: tag.isActive,
       });
       toast.success('Tag duplicated');
+      if (!tag.isActive) setShowInactive(true);
       fetchTags();
     } catch (err: any) {
       toast.error(err.message || 'Failed to duplicate');
