@@ -612,7 +612,11 @@ h6 {
 }
 
 .admin-pagination-btn-primary {
-  @apply border-hos-gold/40 text-hos-gold hover:bg-hos-gold/10;
+  @apply text-hos-gold;
+  border-color: rgba(201, 162, 39, 0.4);
+}
+.admin-pagination-btn-primary:hover {
+  background-color: rgba(201, 162, 39, 0.1);
 }
 
 .admin-metric-label {
@@ -632,7 +636,8 @@ h6 {
 }
 
 .admin-stat-card-active {
-  @apply ring-2 ring-hos-gold/50;
+  ring-width: 2px;
+  --tw-ring-color: rgba(201, 162, 39, 0.5);
 }
 
 .admin-stat-card-urgent {
