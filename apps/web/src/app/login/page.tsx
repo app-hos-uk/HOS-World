@@ -528,7 +528,11 @@ function LoginPageInner() {
 
             {isLogin && safeReturnUrl && (
               <p className="mb-4 rounded-lg border border-hos-border bg-hos-bg-tertiary px-3 py-2 text-center text-xs text-hos-text-muted" role="status">
-                Sign in to continue where you left off.
+                {safeReturnUrl.startsWith('/wishlist')
+                  ? 'Sign in to view and manage your wishlist.'
+                  : safeReturnUrl.startsWith('/checkout')
+                    ? 'Sign in to continue checkout with your saved details.'
+                    : 'Sign in to continue where you left off.'}
               </p>
             )}
 

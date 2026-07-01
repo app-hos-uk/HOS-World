@@ -656,6 +656,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </button>
             </div>
             <div className="flex items-center gap-3 ml-auto">
+              <Link
+                href="/admin/dashboard"
+                className="hidden md:inline-flex items-center text-sm text-hos-text-muted hover:text-hos-gold transition-colors"
+              >
+                Dashboard
+              </Link>
               {user && (
                 <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-hos-bg-secondary rounded-lg">
                   <div className="w-7 h-7 bg-hos-gold/20 rounded-full flex items-center justify-center">
@@ -670,7 +676,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               )}
               <button
                 onClick={handleLogout}
-                className="px-3 py-1.5 text-sm text-red-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors font-medium"
+                className="px-3 py-1.5 text-sm text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-tertiary rounded-lg transition-colors font-medium border border-hos-border"
               >
                 Logout
               </button>

@@ -1,7 +1,7 @@
 'use client';
 
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
+import { MinimalCheckoutHeader } from '@/components/storefront/MinimalCheckoutHeader';
+import { MinimalCheckoutFooter } from '@/components/storefront/MinimalCheckoutFooter';
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient, getOrCreateGuestCartSessionId } from '@/lib/api';
@@ -367,20 +367,24 @@ export default function CartPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-hos-bg-secondary">
-        <Header />
-        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <p className="text-sm sm:text-base">Loading cart...</p>
+      <div className="min-h-screen bg-hos-bg-secondary flex flex-col">
+        <MinimalCheckoutHeader />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 flex-1">
+          <div className="animate-pulse space-y-4 max-w-4xl">
+            <div className="h-8 bg-hos-bg-tertiary rounded w-48" />
+            <div className="h-24 bg-hos-bg-tertiary rounded-xl" />
+            <div className="h-24 bg-hos-bg-tertiary rounded-xl" />
+          </div>
         </main>
-        <Footer />
+        <MinimalCheckoutFooter />
       </div>
     );
   }
 
   if (!cart || !cart.items || cart.items.length === 0) {
     return (
-      <div className="min-h-screen bg-hos-bg-secondary">
-        <Header />
+      <div className="min-h-screen bg-hos-bg-secondary flex flex-col">
+        <MinimalCheckoutHeader />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 font-primary text-hos-gold">Shopping Cart</h1>
           <div className="bg-hos-bg-secondary rounded-lg p-6 sm:p-8 text-center">
@@ -393,7 +397,7 @@ export default function CartPage() {
             </Link>
           </div>
         </main>
-        <Footer />
+        <MinimalCheckoutFooter />
       </div>
     );
   }
@@ -405,9 +409,9 @@ export default function CartPage() {
   const total = Math.max(0, subtotal - discount + shipping + tax);
 
   return (
-    <div className="min-h-screen bg-hos-bg-secondary">
-      <Header />
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+    <div className="min-h-screen bg-hos-bg-secondary flex flex-col">
+      <MinimalCheckoutHeader backHref="/products" />
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 flex-1">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8 font-primary text-hos-gold">Shopping Cart</h1>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
@@ -681,7 +685,7 @@ export default function CartPage() {
           </div>
         </div>
       </main>
-      <Footer />
+      <MinimalCheckoutFooter />
     </div>
   );
 }

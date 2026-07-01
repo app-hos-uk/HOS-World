@@ -32,16 +32,27 @@ export function expandDepartmentCategories(slugs: string[]): string[] {
   return [...expanded];
 }
 
-/** Primary storefront nav — shared by header and footer (structure is static; labels editable here). */
-export const STOREFRONT_NAV_LINKS: NavLink[] = [
+/** Primary storefront nav — always visible in header */
+export const STOREFRONT_NAV_PRIMARY: NavLink[] = [
   { label: 'Deals of the day', href: '/products?sortBy=price_asc' },
-  { label: 'Blog', href: '/blog' },
   { label: 'Shop by franchise', href: '/fandoms' },
-  { label: 'Collectibles & replicas', href: '/products?category=collectibles' },
+  { label: 'Collectibles', href: '/products?category=collectibles' },
+  { label: 'Blog', href: '/blog' },
+];
+
+/** Secondary links — shown in "More" dropdown */
+export const STOREFRONT_NAV_MORE: NavLink[] = [
   { label: 'Apparel & robes', href: '/products?category=apparel' },
   { label: 'Home & gifts', href: '/products?category=home-gifts' },
   { label: 'Marketplace vendors', href: '/sellers' },
+  { label: 'All products', href: '/products' },
+  { label: 'Gift cards', href: '/gift-cards' },
 ];
+
+/** @deprecated Use STOREFRONT_NAV_PRIMARY + STOREFRONT_NAV_MORE */
+export const STOREFRONT_NAV_LINKS: NavLink[] = [...STOREFRONT_NAV_PRIMARY, ...STOREFRONT_NAV_MORE.filter(
+  (link) => !STOREFRONT_NAV_PRIMARY.some((p) => p.href === link.href),
+)];
 
 /** Footer column: main shop / navigation links */
 export const FOOTER_SHOP_LINKS: NavLink[] = [

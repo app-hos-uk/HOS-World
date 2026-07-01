@@ -11,6 +11,7 @@ import { REFERENCE_ASSETS, REFERENCE_FRANCHISE_ORDER } from '@/lib/referenceAsse
 interface FandomCollectionProps {
   limit?: number;
   showAllPage?: boolean;
+  searchQuery?: string;
 }
 
 interface FandomItem {
@@ -53,7 +54,7 @@ function buildFranchiseList(apiFandoms: Array<{ slug?: string; id?: string; imag
   return limit != null ? items.slice(0, limit) : items;
 }
 
-export function FandomCollection({ limit, showAllPage = false }: FandomCollectionProps) {
+export function FandomCollection({ limit, showAllPage = false, searchQuery }: FandomCollectionProps) {
   const [fandoms, setFandoms] = useState<FandomItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [usingReference, setUsingReference] = useState(false);
@@ -83,6 +84,10 @@ export function FandomCollection({ limit, showAllPage = false }: FandomCollectio
     ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5'
     : 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5';
 
+  const visibleFandoms = searchQuery
+    ? fandoms.filter((f) => f.name.toLowerCase().includes(searchQuery) || f.slug.includes(searchQuery))
+    : fandoms;
+
   return (
     <section className={showAllPage ? undefined : 'max-w-7xl mx-auto px-4 py-12'}>
       {!showAllPage && (
@@ -111,9 +116,11 @@ export function FandomCollection({ limit, showAllPage = false }: FandomCollectio
             <div key={`skeleton-${i}`} className="aspect-square rounded-full bg-hos-bg-secondary border border-hos-border animate-pulse" />
           ))}
         </div>
+      ) : visibleFandoms.length === 0 ? (
+        <p className="text-center text-hos-text-muted py-10">No franchises match your search.</p>
       ) : (
         <div className={gridClass}>
-          {fandoms.map((fandom) => {
+          {visibleFandoms.map((fandom) => {
             const logoSrc = fandom.logo || fandom.image;
             const fandomHref = fandom.hasProducts === false
               ? `/coming-soon?franchise=${encodeURIComponent(fandom.name)}`

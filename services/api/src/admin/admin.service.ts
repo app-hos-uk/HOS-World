@@ -712,18 +712,20 @@ export class AdminService {
         process.env.NEXT_PUBLIC_CONTACT_EMAIL ||
         'info@houseofspells.com',
       contactPhone:
-        process.env.CONTACT_PHONE || process.env.NEXT_PUBLIC_FOOTER_PHONE || '+1 (212) 555-0100',
+        process.env.CONTACT_PHONE || process.env.NEXT_PUBLIC_FOOTER_PHONE || '+1 (212) 555-0199',
       contactAddress:
         process.env.CONTACT_ADDRESS ||
         process.env.NEXT_PUBLIC_CONTACT_ADDRESS ||
-        '123 Broadway, New York, NY 10007',
+        '1564 Broadway, Times Square, New York, NY 10036',
       footerAbout:
         process.env.FOOTER_ABOUT ||
         'An immersive fandom experience — franchises, collectibles, and unforgettable finds online and in our stores.',
-      socialFacebookUrl: process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK_URL || '',
-      socialInstagramUrl: process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL || '',
+      socialFacebookUrl: process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK_URL || 'https://www.facebook.com/houseofspellsuk',
+      socialInstagramUrl: process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL || 'https://www.instagram.com/houseofspells',
       socialXUrl:
-        process.env.NEXT_PUBLIC_SOCIAL_X_URL || process.env.NEXT_PUBLIC_SOCIAL_TWITTER_URL || '',
+        process.env.NEXT_PUBLIC_SOCIAL_X_URL ||
+        process.env.NEXT_PUBLIC_SOCIAL_TWITTER_URL ||
+        'https://x.com/houseofspells',
       cancellationAutoApprovalWindowMinutes: parseInt(
         process.env.CANCELLATION_AUTO_APPROVAL_WINDOW_MINUTES || '30',
         10,

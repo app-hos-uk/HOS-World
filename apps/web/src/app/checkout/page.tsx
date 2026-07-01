@@ -1,7 +1,7 @@
 'use client';
 
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
+import { MinimalCheckoutHeader } from '@/components/storefront/MinimalCheckoutHeader';
+import { MinimalCheckoutFooter } from '@/components/storefront/MinimalCheckoutFooter';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient, getOrCreateGuestCartSessionId, clearGuestCartSessionId, markLoginSuccess, setFrontendSessionCookie, GUEST_CHECKOUT_ACCOUNT_KEY } from '@/lib/api';
@@ -549,11 +549,11 @@ export default function CheckoutPage() {
   if (authLoading || (isAuthenticated && loading) || (!isAuthenticated && guestCartLoading)) {
     return (
       <div className="min-h-screen bg-hos-bg-secondary">
-        <Header />
+        <MinimalCheckoutHeader />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <p className="text-sm sm:text-base">Loading checkout...</p>
         </main>
-        <Footer />
+        <MinimalCheckoutFooter />
       </div>
     );
   }
@@ -571,7 +571,7 @@ export default function CheckoutPage() {
 
     return (
       <div className="min-h-screen bg-hos-bg-secondary">
-        <Header />
+        <MinimalCheckoutHeader />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
@@ -827,7 +827,7 @@ export default function CheckoutPage() {
             </Link>
           </div>
         </main>
-        <Footer />
+        <MinimalCheckoutFooter />
       </div>
     );
   }
@@ -835,7 +835,7 @@ export default function CheckoutPage() {
   if (!cart || !cart.items || cart.items.length === 0) {
     return (
       <div className="min-h-screen bg-hos-bg-secondary">
-        <Header />
+        <MinimalCheckoutHeader />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-6 sm:mb-8">Checkout</h1>
           <div className="bg-hos-bg-secondary rounded-lg p-6 sm:p-8 text-center">
@@ -848,7 +848,7 @@ export default function CheckoutPage() {
             </Link>
           </div>
         </main>
-        <Footer />
+        <MinimalCheckoutFooter />
       </div>
     );
   }
@@ -860,7 +860,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-hos-bg-secondary">
-      <Header />
+      <MinimalCheckoutHeader />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6 font-primary text-hos-gold">Checkout</h1>
 
@@ -1379,7 +1379,7 @@ export default function CheckoutPage() {
           </div>
         </div>
       </main>
-      <Footer />
+      <MinimalCheckoutFooter />
     </div>
   );
 }

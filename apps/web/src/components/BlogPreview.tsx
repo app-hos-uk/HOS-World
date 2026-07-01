@@ -4,16 +4,19 @@ import Link from 'next/link';
 
 const POSTS = [
   {
+    slug: 'how-to-light-display-case',
     date: 'February 18, 2026',
     category: 'Collecting',
     title: 'How to light your display case without damaging delicate paints',
   },
   {
+    slug: 'convention-checklist',
     date: 'February 4, 2026',
     category: 'Events',
     title: 'Convention checklist: packing prints, pins, and panic-free backups',
   },
   {
+    slug: 'starter-lines-gift-list',
     date: 'January 22, 2026',
     category: 'Franchises',
     title: 'Starter lines for every fandom on your gift list this term',
@@ -34,7 +37,7 @@ export default function BlogPreview() {
             </p>
           </div>
           <Link
-            href="/help"
+            href="/blog"
             className="text-hos-gold text-sm font-ui font-semibold hover:text-hos-gold-hover transition-colors shrink-0"
           >
             View all stories →
@@ -53,7 +56,7 @@ export default function BlogPreview() {
                   {post.category}
                 </span>
               </div>
-              <Link href="/help">
+              <Link href={`/blog/${post.slug}`}>
                 <h3 className="text-hos-text-secondary text-base font-semibold font-ui mt-2 hover:text-hos-gold transition-colors duration-200 cursor-pointer">
                   {post.title}
                 </h3>

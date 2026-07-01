@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
+import { StorefrontBreadcrumbs } from '@/components/storefront/StorefrontBreadcrumbs';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { ProductCard } from '@/components/ProductCard';
 import { expandDepartmentCategories } from '@/lib/storefrontNavigation';
@@ -618,6 +619,13 @@ function ProductsContent() {
     <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <StorefrontBreadcrumbs
+          className="mb-4"
+          items={[
+            { label: 'Shop', href: '/shop' },
+            { label: state.query ? 'Search' : 'All Products' },
+          ]}
+        />
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">
             {state.query ? `Search results for "${state.query}"` : 'All Products'}

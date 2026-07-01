@@ -7,6 +7,12 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DataExport } from '@/components/DataExport';
+import { formatAdminPrice } from '@/lib/adminFormat';
+import {
+  AdminColumnToggle,
+  useAdminColumnVisibility,
+  type AdminColumnDef,
+} from '@/components/ui/AdminColumnToggle';
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -87,7 +93,7 @@ interface Stats {
 }
 
 const STATUSES = [
-  { value: 'SUBMITTED', label: 'Submitted', color: 'bg-hos-bg-tertiary text-hos-text-secondary', chartColor: '#9ca3af' },
+  { value: 'SUBMITTED', label: 'Submitted', color: 'bg-amber-500/15 text-amber-300', chartColor: '#f59e0b' },
   { value: 'UNDER_REVIEW', label: 'Under Review', color: 'bg-yellow-500/15 text-yellow-300', chartColor: '#fbbf24' },
   { value: 'PROCUREMENT_APPROVED', label: 'Procurement Approved', color: 'bg-hos-gold/20 text-hos-gold', chartColor: '#3b82f6' },
   { value: 'PROCUREMENT_REJECTED', label: 'Procurement Rejected', color: 'bg-red-500/15 text-red-300', chartColor: '#ef4444' },
@@ -103,6 +109,15 @@ const STATUSES = [
   { value: 'FINANCE_APPROVED', label: 'Finance Approved', color: 'bg-cyan-500/15 text-cyan-300', chartColor: '#06b6d4' },
   { value: 'PUBLISHED', label: 'Published', color: 'bg-green-500/15 text-green-300', chartColor: '#10b981' },
   { value: 'REJECTED', label: 'Rejected', color: 'bg-red-500/15 text-red-300', chartColor: '#ef4444' },
+];
+
+const SUBMISSION_TABLE_COLUMNS: AdminColumnDef[] = [
+  { id: 'product', label: 'Product' },
+  { id: 'seller', label: 'Seller' },
+  { id: 'price', label: 'Price' },
+  { id: 'status', label: 'Status' },
+  { id: 'submitted', label: 'Submitted' },
+  { id: 'actions', label: 'Actions' },
 ];
 
 export default function AdminSubmissionsPage() {
@@ -130,6 +145,12 @@ export default function AdminSubmissionsPage() {
   const [actionNotes, setActionNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const [publishLoading, setPublishLoading] = useState<string | null>(null);
+  const {
+    visibleIds: submissionVisibleColumnIds,
+    isVisible: isSubmissionColumnVisible,
+    toggleColumn: toggleSubmissionColumn,
+    resetColumns: resetSubmissionColumns,
+  } = useAdminColumnVisibility('admin-submissions', SUBMISSION_TABLE_COLUMNS);
 
   const fetchSubmissions = useCallback(async () => {
     try {
@@ -349,7 +370,7 @@ export default function AdminSubmissionsPage() {
     { key: 'seller', header: 'Seller', format: (v: any) => v?.storeName || v?.email || '' },
     { key: 'status', header: 'Status' },
     { key: 'createdAt', header: 'Submitted', format: (v: string) => new Date(v).toLocaleDateString() },
-    { key: 'productData', header: 'Price', format: (v: any) => v?.price ? `${v.currency || 'USD'} ${Number(v.price).toFixed(2)}` : '' },
+    { key: 'productData', header: 'Price', format: (v: any) => (v?.price ? formatAdminPrice(v.price, v.currency || 'USD') : '') },
   ];
 
   return (
@@ -376,7 +397,7 @@ export default function AdminSubmissionsPage() {
 
           {/* Stats Cards */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 xl:grid-cols-11 gap-3">
               <button
                 onClick={() => setStatusFilter('ALL')}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
@@ -538,7 +559,7 @@ export default function AdminSubmissionsPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Product, seller..."
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="input"
                 />
               </div>
               <div>
@@ -546,7 +567,7 @@ export default function AdminSubmissionsPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="select w-full"
                 >
                   <option value="ALL">All Status</option>
                   {STATUSES.map(s => (
@@ -559,7 +580,7 @@ export default function AdminSubmissionsPage() {
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="select w-full"
                 >
                   <option value="ALL">All Time</option>
                   <option value="7d">Last 7 Days</option>
@@ -576,7 +597,7 @@ export default function AdminSubmissionsPage() {
                     setSortBy(field as any);
                     setSortOrder(order as any);
                   }}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="select w-full"
                 >
                   <option value="date-desc">Newest First</option>
                   <option value="date-asc">Oldest First</option>
@@ -585,6 +606,21 @@ export default function AdminSubmissionsPage() {
                 </select>
               </div>
             </div>
+            {(searchTerm || statusFilter !== 'ALL' || dateFilter !== 'ALL') && (
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setStatusFilter('ALL');
+                    setDateFilter('ALL');
+                  }}
+                  className="text-sm text-hos-gold hover:text-hos-gold-hover"
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Submissions Table */}
@@ -594,31 +630,50 @@ export default function AdminSubmissionsPage() {
             </div>
           ) : (
             <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
-              <div className="p-4 border-b">
+              <div className="p-4 border-b flex justify-between items-center gap-4">
                 <h2 className="text-lg font-semibold">Submissions ({filteredSubmissions.length})</h2>
+                <AdminColumnToggle
+                  columns={SUBMISSION_TABLE_COLUMNS}
+                  visibleIds={submissionVisibleColumnIds}
+                  onToggle={toggleSubmissionColumn}
+                  onReset={resetSubmissionColumns}
+                />
               </div>
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-hos-border">
+                <table className="admin-table min-w-full divide-y divide-hos-border">
                   <thead className="bg-hos-bg-secondary">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Product</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Seller</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Price</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Submitted</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
+                      {isSubmissionColumnVisible('product') && <th className="px-4 py-3 text-left">Product</th>}
+                      {isSubmissionColumnVisible('seller') && <th className="px-4 py-3 text-left">Seller</th>}
+                      {isSubmissionColumnVisible('price') && <th className="px-4 py-3 text-left">Price</th>}
+                      {isSubmissionColumnVisible('status') && <th className="px-4 py-3 text-left">Status</th>}
+                      {isSubmissionColumnVisible('submitted') && <th className="px-4 py-3 text-left">Submitted</th>}
+                      {isSubmissionColumnVisible('actions') && <th className="px-4 py-3 text-right">Actions</th>}
                     </tr>
                   </thead>
                   <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     {filteredSubmissions.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-hos-text-muted">
-                          No submissions found
+                        <td colSpan={submissionVisibleColumnIds.size} className="px-6 py-8 text-center">
+                          <div className={submissions.length > 0 ? 'admin-empty-filtered' : ''}>
+                            <span className="text-4xl block mb-2" aria-hidden>📋</span>
+                            <p className="text-sm font-medium text-hos-text-secondary">
+                              {submissions.length > 0 ? 'No submissions match your filters' : 'No submissions found'}
+                            </p>
+                            {submissions.length > 0 && (
+                              <p className="mt-1 text-xs text-hos-text-muted">Try clearing filters or broadening your search.</p>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ) : (
                       paginatedSubmissions.map((submission) => (
-                        <tr key={submission.id} className="hover:bg-hos-bg-tertiary">
+                        <tr
+                          key={submission.id}
+                          className="admin-table-row-clickable"
+                          onClick={() => handleViewDetails(submission)}
+                        >
+                          {isSubmissionColumnVisible('product') && (
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
                               {(() => {
@@ -627,9 +682,9 @@ export default function AdminSubmissionsPage() {
                                   <SafeImage
                                     src={thumbUrl}
                                     alt=""
-                                    width={40}
-                                    height={40}
-                                    className="rounded object-cover bg-hos-bg-tertiary"
+                                    width={48}
+                                    height={48}
+                                    className="h-12 w-12 rounded object-cover bg-hos-bg-tertiary border border-hos-border"
                                   />
                                 ) : (
                                   <div className="h-10 w-10 rounded bg-hos-bg-tertiary flex items-center justify-center text-hos-text-muted text-xs">No img</div>
@@ -657,38 +712,51 @@ export default function AdminSubmissionsPage() {
                               </div>
                             </div>
                           </td>
+                          )}
+                          {isSubmissionColumnVisible('seller') && (
                           <td className="px-4 py-3">
                             <p className="text-sm font-medium text-hos-text-secondary">{submission.seller?.storeName || 'Unknown'}</p>
-                            <p className="text-xs text-hos-text-muted">{submission.seller?.email || submission.user?.email}</p>
+                            <p className="text-xs text-hos-text-muted truncate max-w-[180px]">{submission.seller?.email || submission.user?.email}</p>
                           </td>
+                          )}
+                          {isSubmissionColumnVisible('price') && (
                           <td className="px-4 py-3 text-sm text-hos-text-secondary">
-                            {submission.productData?.price 
-                              ? `${submission.productData.currency || 'USD'} ${Number(submission.productData.price).toFixed(2)}`
+                            {submission.productData?.price
+                              ? formatAdminPrice(submission.productData.price, submission.productData.currency || 'USD')
                               : 'N/A'}
                           </td>
+                          )}
+                          {isSubmissionColumnVisible('status') && (
                           <td className="px-4 py-3">{getStatusBadge(submission.status)}</td>
+                          )}
+                          {isSubmissionColumnVisible('submitted') && (
                           <td className="px-4 py-3 text-sm text-hos-text-muted">
                             {new Date(submission.createdAt).toLocaleDateString()}
                           </td>
-                          <td className="px-4 py-3 text-right">
+                          )}
+                          {isSubmissionColumnVisible('actions') && (
+                          <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex justify-end gap-1">
                               <button
+                                type="button"
                                 onClick={() => handleViewDetails(submission)}
-                                className="px-2 py-1 text-sm text-hos-text-secondary hover:bg-hos-bg-tertiary rounded"
+                                className="admin-table-action"
                               >
                                 View
                               </button>
                               {['SUBMITTED', 'UNDER_REVIEW'].includes(submission.status) && (
                                 <>
                                   <button
+                                    type="button"
                                     onClick={() => handleAction(submission, 'approve')}
-                                    className="px-2 py-1 text-sm text-green-400 hover:bg-green-500/10 rounded"
+                                    className="admin-table-action-success"
                                   >
                                     Approve
                                   </button>
                                   <button
+                                    type="button"
                                     onClick={() => handleAction(submission, 'reject')}
-                                    className="px-2 py-1 text-sm text-red-400 hover:bg-red-500/10 rounded"
+                                    className="admin-table-action-danger"
                                   >
                                     Reject
                                   </button>
@@ -696,15 +764,17 @@ export default function AdminSubmissionsPage() {
                               )}
                               {submission.status === 'FINANCE_APPROVED' && (
                                 <button
+                                  type="button"
                                   onClick={() => handlePublish(submission)}
                                   disabled={publishLoading === submission.id}
-                                  className="px-2 py-1 text-sm text-hos-text-secondary bg-green-600 hover:bg-green-700 rounded disabled:opacity-50"
+                                  className="admin-table-action-success disabled:opacity-50"
                                 >
                                   {publishLoading === submission.id ? 'Publishing...' : 'Publish'}
                                 </button>
                               )}
                             </div>
                           </td>
+                          )}
                         </tr>
                       ))
                     )}
@@ -712,7 +782,7 @@ export default function AdminSubmissionsPage() {
                 </table>
               </div>
               {filteredSubmissions.length > PAGE_SIZE && (
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3 border-t border-hos-border">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3 border-t border-hos-border bg-hos-bg-secondary/80">
                   <p className="text-sm text-hos-text-muted">
                     Showing {(currentPage - 1) * PAGE_SIZE + 1}–
                     {Math.min(currentPage * PAGE_SIZE, filteredSubmissions.length)} of {filteredSubmissions.length}
@@ -722,7 +792,7 @@ export default function AdminSubmissionsPage() {
                       type="button"
                       onClick={() => setCurrentPage(1)}
                       disabled={currentPage === 1}
-                      className="px-3 py-2 text-sm font-medium border border-hos-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hos-bg-tertiary"
+                      className="admin-pagination-btn"
                     >
                       First
                     </button>
@@ -730,7 +800,7 @@ export default function AdminSubmissionsPage() {
                       type="button"
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="px-3 py-2 text-sm font-medium border border-hos-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hos-bg-tertiary"
+                      className="admin-pagination-btn"
                     >
                       Previous
                     </button>
@@ -765,7 +835,7 @@ export default function AdminSubmissionsPage() {
                       type="button"
                       onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-2 text-sm font-medium border border-hos-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hos-bg-tertiary"
+                      className="admin-pagination-btn admin-pagination-btn-primary"
                     >
                       Next
                     </button>
@@ -773,7 +843,7 @@ export default function AdminSubmissionsPage() {
                       type="button"
                       onClick={() => setCurrentPage(totalPages)}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-2 text-sm font-medium border border-hos-border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hos-bg-tertiary"
+                      className="admin-pagination-btn"
                     >
                       Last
                     </button>
@@ -846,7 +916,7 @@ export default function AdminSubmissionsPage() {
                             <p className="text-hos-text-muted">Price</p>
                             <p className="font-medium">
                               {selectedSubmission.productData?.price 
-                                ? `${selectedSubmission.productData.currency || 'USD'} ${Number(selectedSubmission.productData.price).toFixed(2)}`
+                                ? formatAdminPrice(selectedSubmission.productData.price, selectedSubmission.productData.currency || 'USD')
                                 : 'Not set'}
                             </p>
                           </div>

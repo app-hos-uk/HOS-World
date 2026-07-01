@@ -7,7 +7,7 @@ const DEPARTMENTS = [
     id: 'collectables',
     meta: '2.4k+ listings · props & figures',
     title: 'Collectables & replicas',
-    description: 'Wands, statuettes, prop replicas, pins, and glass‑cabinet pieces from rated sellers.',
+    description: 'Wands, statuettes, and prop replicas from rated sellers.',
     cta: 'Shop collectables',
     href: '/products?category=collectibles',
     icon: (
@@ -20,7 +20,7 @@ const DEPARTMENTS = [
     id: 'apparel',
     meta: 'Robes, tees, scarves & layers',
     title: 'Apparel & robes',
-    description: 'House colors, con‑ready cosplay basics, and cozy layers for everyday fan flex.',
+    description: 'House colors, cosplay basics, and cozy fan layers.',
     cta: 'Shop apparel',
     href: '/products?category=apparel',
     icon: (
@@ -34,7 +34,7 @@ const DEPARTMENTS = [
     id: 'home',
     meta: 'Gifts, décor & tableware',
     title: 'Home & gifts',
-    description: 'Mugs, lamps, wall art, and bundle‑ready sets when you need a present yesterday.',
+    description: 'Mugs, lamps, and gift-ready sets for any occasion.',
     cta: 'Shop home & gifts',
     href: '/products?category=home-gifts',
     icon: (

@@ -13,6 +13,7 @@ import { useCart } from '@/contexts/CartContext';
 import { SafeImage } from '@/components/SafeImage';
 import { ProductImageGallery } from '@/components/products/ProductImageGallery';
 import Link from 'next/link';
+import { StorefrontBreadcrumbs } from '@/components/storefront/StorefrontBreadcrumbs';
 import { trackViewItem, trackAddToCart } from '@/lib/analytics';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -88,7 +89,6 @@ export default function ProductDetailClient() {
           : await apiClient.getProductBySlug(productIdOrSlug);
         if (!cancelled && response?.data) {
           setProduct(response.data);
-          setSelectedImageIndex(0);
         }
       } catch (err: any) {
         if (!cancelled) {
@@ -394,10 +394,21 @@ export default function ProductDetailClient() {
     <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+        <StorefrontBreadcrumbs
+          className="mb-4"
+          items={[
+            { label: 'Shop', href: '/shop' },
+            { label: 'Products', href: '/products' },
+            ...(product.fandom
+              ? [{ label: String(product.fandom), href: `/fandoms/${product.fandom}` }]
+              : []),
+            { label: product.name },
+          ]}
+        />
         <div className="mb-6">
           <button
             onClick={handleGoBack}
-            className="text-hos-gold hover:text-hos-gold-hover mb-4 inline-flex items-center gap-1 hover:gap-2 transition-all"
+            className="text-hos-gold hover:text-hos-gold-hover inline-flex items-center gap-1 hover:gap-2 transition-all text-sm"
           >
             <span>←</span>
             <span>Go Back</span>

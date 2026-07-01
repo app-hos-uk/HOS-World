@@ -3,8 +3,8 @@ export const DEFAULT_SITE_SETTINGS = {
   platformName: 'House of Spells Marketplace',
   platformUrl: '',
   contactEmail: 'info@houseofspells.com',
-  contactPhone: '+1 (212) 555-0100',
-  contactAddress: '123 Broadway, New York, NY 10007',
+  contactPhone: '+1 (212) 555-0199',
+  contactAddress: '1564 Broadway, Times Square, New York, NY 10036',
   footerAbout:
     'An immersive fandom experience — franchises, collectibles, and unforgettable finds online and in our stores.',
   socialFacebookUrl: 'https://www.facebook.com/houseofspellsuk',

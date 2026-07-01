@@ -10,6 +10,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { isProtectedAdminEmail, isSuperAdminEmail } from '@/lib/protectedAdminEmails';
 import { DataExport } from '@/components/DataExport';
 import { VirtualizedTableBody } from '@/components/VirtualizedTableBody';
+import { avatarColorClass } from '@/lib/adminFormat';
+import {
+  AdminColumnToggle,
+  useAdminColumnVisibility,
+  type AdminColumnDef,
+} from '@/components/ui/AdminColumnToggle';
 
 interface User {
   id: string;
@@ -38,6 +44,15 @@ interface Stats {
   active: number;
   inactive: number;
 }
+
+const USER_TABLE_COLUMNS: AdminColumnDef[] = [
+  { id: 'select', label: 'Select' },
+  { id: 'user', label: 'User' },
+  { id: 'role', label: 'Role' },
+  { id: 'status', label: 'Status' },
+  { id: 'created', label: 'Created' },
+  { id: 'actions', label: 'Actions' },
+];
 
 const ROLES = [
   'CUSTOMER',
@@ -94,6 +109,12 @@ export default function AdminUsersPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [permissionRoles, setPermissionRoles] = useState<string[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const {
+    visibleIds: userVisibleColumnIds,
+    isVisible: isUserColumnVisible,
+    toggleColumn: toggleUserColumn,
+    resetColumns: resetUserColumns,
+  } = useAdminColumnVisibility('admin-users', USER_TABLE_COLUMNS);
 
   // Create form state with role-specific fields
   const [createForm, setCreateForm] = useState({
@@ -601,12 +622,12 @@ export default function AdminUsersPage() {
 
           {/* Stats Cards */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9 gap-3">
               <button
                 onClick={() => { setRoleFilter('ALL'); setStatusFilter('ALL'); setShowNewThisMonth(false); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow ${roleFilter === 'ALL' && statusFilter === 'ALL' && !showNewThisMonth ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
-                <p className="text-xs text-hos-text-muted">Total</p>
+                <p className="admin-metric-label">Total</p>
                 <p className="text-xl font-bold text-hos-text-secondary">{stats.total}</p>
               </button>
               <button
@@ -692,7 +713,7 @@ export default function AdminUsersPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Name, email, or store..."
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="input"
                 />
               </div>
               <div>
@@ -700,7 +721,7 @@ export default function AdminUsersPage() {
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="select w-full"
                 >
                   <option value="ALL">All Roles</option>
                   <option value="SELLERS">All Sellers</option>
@@ -715,7 +736,7 @@ export default function AdminUsersPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="select w-full"
                 >
                   <option value="ALL">All Status</option>
                   <option value="ACTIVE">Active</option>
@@ -733,7 +754,7 @@ export default function AdminUsersPage() {
                     setSortBy(field as any);
                     setSortOrder(order as any);
                   }}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="select w-full"
                 >
                   <option value="date-desc">Newest First</option>
                   <option value="date-asc">Oldest First</option>
@@ -744,6 +765,23 @@ export default function AdminUsersPage() {
                 </select>
               </div>
             </div>
+
+            {(searchTerm || roleFilter !== 'ALL' || statusFilter !== 'ALL' || showNewThisMonth) && (
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchTerm('');
+                    setRoleFilter('ALL');
+                    setStatusFilter('ALL');
+                    setShowNewThisMonth(false);
+                  }}
+                  className="text-sm text-hos-gold hover:text-hos-gold-hover"
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
 
             {/* Bulk Actions */}
             {selectedUsers.size > 0 && (
@@ -801,52 +839,69 @@ export default function AdminUsersPage() {
                     </p>
                   )}
                 </div>
-                <button onClick={selectAll} className="text-sm text-hos-gold hover:text-hos-gold-hover shrink-0">
-                  {selectedUsers.size === filteredUsers.length ? 'Deselect All' : 'Select All'}
-                </button>
+                <div className="flex items-center gap-3 shrink-0">
+                  <AdminColumnToggle
+                    columns={USER_TABLE_COLUMNS}
+                    visibleIds={userVisibleColumnIds}
+                    onToggle={toggleUserColumn}
+                    onReset={resetUserColumns}
+                  />
+                  <button onClick={selectAll} className="text-sm text-hos-gold hover:text-hos-gold-hover">
+                    {selectedUsers.size === filteredUsers.length ? 'Deselect All' : 'Select All'}
+                  </button>
+                </div>
               </div>
               <div ref={tableScrollRef} className="overflow-auto max-h-[500px] overflow-x-auto">
-                <table className="min-w-full divide-y divide-hos-border">
+                <table className="admin-table min-w-full divide-y divide-hos-border">
                   <thead className="bg-hos-bg-secondary sticky top-0 z-10">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">
-                        <input
-                          type="checkbox"
-                          checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
-                          onChange={selectAll}
-                          className="rounded border-hos-border text-hos-gold"
-                          aria-label="Select all users"
-                        />
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">User</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Role</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Created</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
+                      {isUserColumnVisible('select') && (
+                        <th className="px-4 py-3 text-left">
+                          <input
+                            type="checkbox"
+                            checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
+                            onChange={selectAll}
+                            className="rounded border-hos-border text-hos-gold"
+                            aria-label="Select all users"
+                          />
+                        </th>
+                      )}
+                      {isUserColumnVisible('user') && <th className="px-4 py-3 text-left">User</th>}
+                      {isUserColumnVisible('role') && <th className="px-4 py-3 text-left">Role</th>}
+                      {isUserColumnVisible('status') && <th className="px-4 py-3 text-left">Status</th>}
+                      {isUserColumnVisible('created') && <th className="px-4 py-3 text-left">Created</th>}
+                      {isUserColumnVisible('actions') && <th className="px-4 py-3 text-right">Actions</th>}
                     </tr>
                   </thead>
                   <VirtualizedTableBody
                     items={filteredUsers}
                     scrollRef={tableScrollRef}
-                    getRowClassName={(user) => `hover:bg-hos-bg-tertiary ${selectedUsers.has(user.id) ? 'bg-hos-gold/10' : ''}`}
+                    getRowClassName={(user) =>
+                      `admin-table-row-clickable ${selectedUsers.has(user.id) ? 'bg-hos-gold/10' : ''}`
+                    }
+                    onRowClick={(user) => handleViewDetails(user)}
                     renderRow={(user) => (
                       <>
+                        {isUserColumnVisible('select') && (
                         <td className="px-4 py-3">
                           <input
                             type="checkbox"
                             checked={selectedUsers.has(user.id)}
                             onChange={() => toggleSelection(user.id)}
+                            onClick={(e) => e.stopPropagation()}
                             className="rounded border-hos-border text-hos-gold"
                             aria-label={`Select ${user.email}`}
                           />
                         </td>
+                        )}
+                        {isUserColumnVisible('user') && (
                         <td className="px-4 py-3">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
                               {user.avatar ? (
                                 <SafeImage width={40} height={40} className="h-10 w-10 rounded-full object-cover" src={user.avatar} alt={`${user.firstName || user.email} avatar`} fallback="👤" />
                               ) : (
-                                <div className="h-10 w-10 rounded-full bg-hos-gold/20 flex items-center justify-center">
+                                <div className={`h-10 w-10 rounded-full flex items-center justify-center ${avatarColorClass(user.email)}`}>
                                   <span className="text-hos-gold font-medium text-sm">
                                     {user.firstName?.[0] || user.email[0].toUpperCase()}
                                   </span>
@@ -857,16 +912,20 @@ export default function AdminUsersPage() {
                               <p className="text-sm font-medium text-hos-text-secondary">
                                 {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'No Name'}
                               </p>
-                              <p className="text-xs text-hos-text-muted">{user.email}</p>
+                              <p className="text-xs text-hos-text-muted truncate max-w-[180px]">{user.email}</p>
                               {user.storeName && <p className="text-xs text-hos-gold">{user.storeName}</p>}
                             </div>
                           </div>
                         </td>
+                        )}
+                        {isUserColumnVisible('role') && (
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 text-xs rounded-full ${getRoleBadgeColor(user.role)}`}>
                             {user.role}
                           </span>
                         </td>
+                        )}
+                        {isUserColumnVisible('status') && (
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-1">
                             <span className={`px-2 py-0.5 text-xs rounded-full w-fit ${user.isActive !== false ? 'bg-green-500/15 text-green-300' : 'bg-red-500/15 text-red-300'}`}>
@@ -877,27 +936,31 @@ export default function AdminUsersPage() {
                             )}
                           </div>
                         </td>
+                        )}
+                        {isUserColumnVisible('created') && (
                         <td className="px-4 py-3 text-sm text-hos-text-muted">
                           {new Date(user.createdAt).toLocaleDateString()}
                         </td>
+                        )}
+                        {isUserColumnVisible('actions') && (
                         <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-1">
                             <button
-                              onClick={() => handleViewDetails(user)}
-                              className="px-2 py-1 text-sm text-hos-text-secondary hover:bg-hos-bg-tertiary rounded"
+                              onClick={(e) => { e.stopPropagation(); handleViewDetails(user); }}
+                              className="admin-table-action"
                             >
                               View
                             </button>
                             <button
-                              onClick={() => handleEdit(user)}
-                              className="px-2 py-1 text-sm text-hos-gold hover:bg-hos-gold/10 rounded"
+                              onClick={(e) => { e.stopPropagation(); handleEdit(user); }}
+                              className="admin-table-action"
                             >
                               Edit
                             </button>
                             {isSuperAdmin && (
                               <button
-                                onClick={() => handleResetPassword(user)}
-                                className="px-2 py-1 text-sm text-orange-400 hover:bg-orange-500/10 rounded"
+                                onClick={(e) => { e.stopPropagation(); handleResetPassword(user); }}
+                                className="admin-table-action"
                               >
                                 Reset Pwd
                               </button>
@@ -905,14 +968,14 @@ export default function AdminUsersPage() {
                             {!isProtectedAdminEmail(user.email) && (
                               <>
                                 <button
-                                  onClick={() => handleToggleStatus(user)}
-                                  className={`px-2 py-1 text-sm rounded ${user.isActive !== false ? 'text-yellow-400 hover:bg-yellow-500/10' : 'text-green-400 hover:bg-green-500/10'}`}
+                                  onClick={(e) => { e.stopPropagation(); handleToggleStatus(user); }}
+                                  className="admin-table-action"
                                 >
                                   {user.isActive !== false ? 'Deactivate' : 'Activate'}
                                 </button>
                                 <button
-                                  onClick={() => handleDelete(user)}
-                                  className="px-2 py-1 text-sm text-red-400 hover:bg-red-500/10 rounded"
+                                  onClick={(e) => { e.stopPropagation(); handleDelete(user); }}
+                                  className="admin-table-action-danger"
                                 >
                                   Delete
                                 </button>
@@ -920,13 +983,14 @@ export default function AdminUsersPage() {
                             )}
                           </div>
                         </td>
+                        )}
                       </>
                     )}
                   />
                 </table>
               </div>
               {showPagination && (
-                <div className="flex items-center justify-between px-4 py-3 border-t text-sm">
+                <div className="flex items-center justify-between px-4 py-3 border-t border-hos-border text-sm bg-hos-bg-secondary/80">
                   <span className="text-hos-text-muted">
                     Page {currentPage} of {totalPages} ({totalUsers} matching)
                   </span>
@@ -935,7 +999,7 @@ export default function AdminUsersPage() {
                       type="button"
                       disabled={currentPage <= 1}
                       onClick={() => fetchUsers(currentPage - 1)}
-                      className="px-3 py-1 rounded border text-hos-text-secondary disabled:opacity-40"
+                      className="admin-pagination-btn"
                     >
                       Previous
                     </button>
@@ -943,7 +1007,7 @@ export default function AdminUsersPage() {
                       type="button"
                       disabled={currentPage >= totalPages}
                       onClick={() => fetchUsers(currentPage + 1)}
-                      className="px-3 py-1 rounded border text-hos-text-secondary disabled:opacity-40"
+                      className="admin-pagination-btn admin-pagination-btn-primary"
                     >
                       Next
                     </button>
@@ -1070,7 +1134,7 @@ export default function AdminUsersPage() {
                           type="text"
                           value={editForm.firstName}
                           onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                          className="input"
                         />
                       </div>
                       <div>
@@ -1079,7 +1143,7 @@ export default function AdminUsersPage() {
                           type="text"
                           value={editForm.lastName}
                           onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                          className="input"
                         />
                       </div>
                     </div>
@@ -1091,7 +1155,7 @@ export default function AdminUsersPage() {
                         value={editForm.email}
                         onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                         disabled={isProtectedAdminEmail(selectedUser.email)}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 disabled:bg-hos-bg-tertiary"
+                        className="input disabled:opacity-60"
                       />
                     </div>
 
@@ -1101,7 +1165,7 @@ export default function AdminUsersPage() {
                         value={editForm.role}
                         onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
                         disabled={isProtectedAdminEmail(selectedUser.email)}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 disabled:bg-hos-bg-tertiary"
+                        className="select w-full disabled:opacity-60"
                       >
                         {ROLES.map((role) => (
                           <option key={role} value={role}>{role}</option>
@@ -1166,7 +1230,7 @@ export default function AdminUsersPage() {
                           type="text"
                           value={createForm.firstName}
                           onChange={(e) => setCreateForm({ ...createForm, firstName: e.target.value })}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                          className="input"
                         />
                       </div>
                       <div>
@@ -1175,7 +1239,7 @@ export default function AdminUsersPage() {
                           type="text"
                           value={createForm.lastName}
                           onChange={(e) => setCreateForm({ ...createForm, lastName: e.target.value })}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                          className="input"
                         />
                       </div>
                     </div>
@@ -1186,7 +1250,7 @@ export default function AdminUsersPage() {
                         type="email"
                         value={createForm.email}
                         onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                        className="input"
                         placeholder="user@example.com"
                         required
                       />
@@ -1198,7 +1262,7 @@ export default function AdminUsersPage() {
                         type="tel"
                         value={createForm.phone}
                         onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                        className="input"
                         placeholder="+1234567890"
                       />
                     </div>
@@ -1210,7 +1274,7 @@ export default function AdminUsersPage() {
                           type="password"
                           value={createForm.password}
                           onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                          className="input"
                           placeholder="Min 8 characters"
                           minLength={8}
                           required
@@ -1222,7 +1286,7 @@ export default function AdminUsersPage() {
                           type="password"
                           value={createForm.confirmPassword}
                           onChange={(e) => setCreateForm({ ...createForm, confirmPassword: e.target.value })}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                          className="input"
                           placeholder="Confirm password"
                           minLength={8}
                           required
@@ -1235,7 +1299,7 @@ export default function AdminUsersPage() {
                       <select
                         value={createForm.role}
                         onChange={(e) => setCreateForm({ ...createForm, role: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                        className="select w-full"
                       >
                         {ROLES.map((role) => (
                           <option key={role} value={role}>{role}</option>
@@ -1253,7 +1317,7 @@ export default function AdminUsersPage() {
                           <select
                             value={createForm.permissionRoleName}
                             onChange={(e) => setCreateForm({ ...createForm, permissionRoleName: e.target.value })}
-                            className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                            className="select w-full"
                           >
                             <option value="">Full Admin (no restrictions)</option>
                             {permissionRoles.map((r) => (
@@ -1275,7 +1339,7 @@ export default function AdminUsersPage() {
                               type="text"
                               value={createForm.storeName}
                               onChange={(e) => setCreateForm({ ...createForm, storeName: e.target.value })}
-                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                              className="input"
                               placeholder="Your store name"
                               required
                             />
@@ -1286,7 +1350,7 @@ export default function AdminUsersPage() {
                               type="text"
                               value={createForm.companyName}
                               onChange={(e) => setCreateForm({ ...createForm, companyName: e.target.value })}
-                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                              className="input"
                               placeholder="Legal company name"
                             />
                           </div>
@@ -1298,7 +1362,7 @@ export default function AdminUsersPage() {
                               type="text"
                               value={createForm.vatNumber}
                               onChange={(e) => setCreateForm({ ...createForm, vatNumber: e.target.value })}
-                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                              className="input"
                               placeholder="GB123456789"
                             />
                           </div>
@@ -1308,7 +1372,7 @@ export default function AdminUsersPage() {
                               <select
                                 value={createForm.businessType}
                                 onChange={(e) => setCreateForm({ ...createForm, businessType: e.target.value })}
-                                className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                                className="select w-full"
                               >
                                 <option value="">Select type</option>
                                 <option value="RETAIL">Retail</option>
@@ -1331,7 +1395,7 @@ export default function AdminUsersPage() {
                             <select
                               value={createForm.department}
                               onChange={(e) => setCreateForm({ ...createForm, department: e.target.value })}
-                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                              className="select w-full"
                             >
                               <option value="">Select department</option>
                               <option value="OPERATIONS">Operations</option>
@@ -1348,7 +1412,7 @@ export default function AdminUsersPage() {
                               type="text"
                               value={createForm.employeeId}
                               onChange={(e) => setCreateForm({ ...createForm, employeeId: e.target.value })}
-                              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                              className="input"
                               placeholder="EMP-001"
                             />
                           </div>
@@ -1438,7 +1502,7 @@ export default function AdminUsersPage() {
                         type="password"
                         value={resetPasswordForm.newPassword}
                         onChange={(e) => setResetPasswordForm({ ...resetPasswordForm, newPassword: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                        className="input"
                         placeholder="Min 8 characters"
                         minLength={8}
                       />
@@ -1449,7 +1513,7 @@ export default function AdminUsersPage() {
                         type="password"
                         value={resetPasswordForm.confirmPassword}
                         onChange={(e) => setResetPasswordForm({ ...resetPasswordForm, confirmPassword: e.target.value })}
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                        className="input"
                         placeholder="Confirm new password"
                         minLength={8}
                       />

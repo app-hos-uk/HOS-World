@@ -12,6 +12,8 @@ interface VirtualizedTableBodyProps {
   scrollRef?: React.RefObject<HTMLElement | null>;
   /** Optional class name for each row. Receives (item, index). */
   getRowClassName?: (item: any, index: number) => string;
+  /** Optional row click handler (e.g. navigate to detail). */
+  onRowClick?: (item: any, index: number) => void;
 }
 
 /**
@@ -25,6 +27,7 @@ export function VirtualizedTableBody({
   overscan = 5,
   scrollRef,
   getRowClassName,
+  onRowClick,
 }: VirtualizedTableBodyProps) {
   const virtualizer = useVirtualizer({
     count: items.length,
@@ -52,7 +55,22 @@ export function VirtualizedTableBody({
     return (
       <tbody>
         {items.map((item, index) => (
-          <tr key={(item as { id?: string }).id ?? index} className={getRowClassName?.(item, index)}>
+          <tr
+            key={(item as { id?: string }).id ?? index}
+            className={getRowClassName?.(item, index)}
+            onClick={onRowClick ? () => onRowClick(item, index) : undefined}
+            tabIndex={onRowClick ? 0 : undefined}
+            onKeyDown={
+              onRowClick
+                ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onRowClick(item, index);
+                    }
+                  }
+                : undefined
+            }
+          >
             {renderRow(item, index)}
           </tr>
         ))}
@@ -78,6 +96,18 @@ export function VirtualizedTableBody({
             data-index={virtualRow.index}
             ref={virtualizer.measureElement}
             className={getRowClassName?.(item, virtualRow.index)}
+            onClick={onRowClick ? () => onRowClick(item, virtualRow.index) : undefined}
+            tabIndex={onRowClick ? 0 : undefined}
+            onKeyDown={
+              onRowClick
+                ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onRowClick(item, virtualRow.index);
+                    }
+                  }
+                : undefined
+            }
             style={{
               position: 'absolute',
               top: 0,

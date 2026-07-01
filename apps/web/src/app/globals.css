@@ -281,8 +281,8 @@ h6 {
   }
   
   .admin-table th {
-    @apply px-4 py-3 text-left text-[11px] font-semibold text-hos-text-muted 
-           uppercase tracking-wider;
+    @apply px-4 py-3 text-left text-xs font-semibold text-hos-text-secondary 
+           uppercase tracking-wide;
   }
   
   .admin-table tbody {
@@ -290,11 +290,19 @@ h6 {
   }
   
   .admin-table tbody tr {
-    @apply hover:bg-hos-bg-tertiary-half transition-colors;
+    @apply hover:bg-hos-bg-tertiary transition-colors;
+  }
+
+  .admin-table tbody tr:nth-child(even) {
+    @apply bg-hos-bg-tertiary/40;
+  }
+
+  .admin-table tbody tr.admin-table-row-clickable {
+    @apply cursor-pointer;
   }
   
   .admin-table td {
-    @apply px-4 py-3.5 text-sm text-white;
+    @apply px-4 py-3.5 text-sm;
   }
   
   /* Button Hierarchy */
@@ -375,7 +383,7 @@ h6 {
            focus:outline-none focus:ring-2 focus:ring-hos-gold-ring focus:border-transparent
            transition-shadow cursor-pointer;
   }
-  
+
   /* Quick Action Button */
   .quick-action {
     @apply flex flex-col items-center justify-center p-4 rounded-xl 
@@ -473,7 +481,8 @@ h6 {
   .btn-storefront-ghost {
     @apply inline-flex items-center justify-center gap-2 font-ui font-semibold text-sm px-6 py-3.5 rounded-full
            border border-hos-border text-hos-text-primary bg-black/35
-           hover:border-hos-gold-dim hover:text-hos-text-primary hover:bg-black/50 transition-all duration-200;
+           hover:border-hos-gold hover:text-hos-gold-hover hover:bg-black/60 transition-all duration-200
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hos-gold-ring focus-visible:ring-offset-2 focus-visible:ring-offset-hos-bg;
   }
 
   .dept-card {
@@ -576,3 +585,56 @@ h6 {
 .prose table { @apply w-full border-collapse my-4 text-sm; }
 .prose th, .prose td { @apply border border-hos-border px-3 py-2 text-left; }
 .prose th { @apply bg-hos-bg-tertiary text-hos-text-secondary; }
+
+/* Global keyboard focus — visible on tab, hidden on mouse click where supported */
+:focus-visible {
+  outline: 2px solid var(--color-accent-gold-ring);
+  outline-offset: 2px;
+}
+
+/* Admin action buttons & pagination */
+.admin-table-action {
+  @apply inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md border border-hos-border
+         text-hos-text-secondary hover:bg-hos-bg-tertiary hover:border-hos-border-accent transition-colors;
+}
+
+.admin-table-action-danger {
+  @apply admin-table-action border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50;
+}
+
+.admin-table-action-success {
+  @apply admin-table-action border-green-500/30 text-green-400 hover:bg-green-500/10 hover:border-green-500/50;
+}
+
+.admin-pagination-btn {
+  @apply px-3 py-1.5 text-sm font-medium rounded-lg border border-hos-border text-hos-text-secondary
+         bg-hos-bg-secondary hover:bg-hos-bg-tertiary disabled:opacity-40 disabled:cursor-not-allowed transition-colors;
+}
+
+.admin-pagination-btn-primary {
+  @apply border-hos-gold/40 text-hos-gold hover:bg-hos-gold/10;
+}
+
+.admin-metric-label {
+  @apply text-xs font-medium text-hos-text-secondary uppercase tracking-wide;
+}
+
+.admin-filter-bar {
+  @apply bg-hos-bg-secondary rounded-lg shadow p-4;
+}
+
+.admin-empty-filtered {
+  @apply text-center py-12 px-4 text-hos-text-muted;
+}
+
+.admin-stat-card {
+  @apply bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md transition-shadow;
+}
+
+.admin-stat-card-active {
+  @apply ring-2 ring-hos-gold/50;
+}
+
+.admin-stat-card-urgent {
+  @apply ring-2 ring-amber-500/60 bg-amber-500/5;
+}

@@ -14,7 +14,6 @@ import Testimonials from '@/components/Testimonials';
 import VendorCTA from '@/components/VendorCTA';
 import BlogPreview from '@/components/BlogPreview';
 import PaymentIcons from '@/components/PaymentIcons';
-import NewsletterSignup from '@/components/NewsletterSignup';
 import { Footer } from '@/components/Footer';
 import type { CmsCarouselBanner, CmsFeatureBanner, CmsHeroSlide } from '@/lib/cms';
 import { getSiteUrl } from '@/lib/siteUrls';
@@ -103,8 +102,6 @@ export function ShopHomeContent({
         <BlogPreview />
 
         <PaymentIcons />
-
-        <NewsletterSignup />
       </main>
 
       <Footer />

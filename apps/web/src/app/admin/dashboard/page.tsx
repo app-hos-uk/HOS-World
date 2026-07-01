@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { StatCard } from '@/components/ui/StatCard';
 import { SectionCard, ChartCard, ActivityItem, EmptyState } from '@/components/ui/SectionCard';
 import { StatusBadge } from '@/components/ui/Badge';
+import { formatActivityDescription, formatActivityTitle } from '@/lib/adminFormat';
 import {
   LineChart,
   Line,
@@ -47,7 +48,7 @@ interface AdminDashboardData {
   topProducts?: Array<{ name: string; sales: number; revenue: number }>;
 }
 
-const COLORS = ['#a855f7', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899'];
+const COLORS = ['#c9a227', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#94a3b8'];
 
 const DARK_CHART_TOOLTIP = {
   backgroundColor: '#14141a',
@@ -61,12 +62,12 @@ const DARK_CHART_GRID = 'rgba(201, 162, 39, 0.12)';
 const DARK_CHART_AXIS = '#9a958a';
 
 const quickActions = [
-  { title: 'Create Product', href: '/admin/products/create', icon: '➕', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
-  { title: 'View Orders', href: '/admin/orders', icon: '🛒', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
-  { title: 'Submissions', href: '/admin/submissions', icon: '📋', bgColor: 'bg-amber-500/10 hover:bg-amber-500/15', iconColor: 'text-amber-400' },
-  { title: 'Invite Seller', href: '/admin/sellers', icon: '👤', bgColor: 'bg-emerald-500/10 hover:bg-emerald-500/15', iconColor: 'text-emerald-400' },
-  { title: 'View Reports', href: '/admin/reports/sales', icon: '📊', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
-  { title: 'Settings', href: '/admin/settings', icon: '⚙️', bgColor: 'bg-hos-bg-secondary hover:bg-hos-bg-tertiary', iconColor: 'text-hos-text-secondary' },
+  { title: 'Create Product', subtitle: 'Add catalog item', href: '/admin/products/create', icon: '➕', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
+  { title: 'View Orders', subtitle: 'Fulfillment queue', href: '/admin/orders', icon: '🛒', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
+  { title: 'Submissions', subtitle: 'Review pipeline', href: '/admin/submissions', icon: '📋', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
+  { title: 'Invite Seller', subtitle: 'Onboard vendor', href: '/admin/sellers', icon: '👤', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
+  { title: 'View Reports', subtitle: 'Sales analytics', href: '/admin/reports/sales', icon: '📊', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
+  { title: 'Settings', subtitle: 'Platform config', href: '/admin/settings', icon: '⚙️', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
 ];
 
 export default function AdminDashboardPage() {
@@ -179,6 +180,7 @@ export default function AdminDashboardPage() {
                   >
                     <span className={`quick-action-icon ${action.iconColor}`}>{action.icon}</span>
                     <span className="quick-action-label">{action.title}</span>
+                    <span className="text-[11px] text-hos-text-muted mt-1">{action.subtitle}</span>
                   </Link>
                 ))}
               </div>
@@ -191,30 +193,38 @@ export default function AdminDashboardPage() {
                 value={`$${(stats.totalRevenue || 0).toLocaleString()}`}
                 icon={<span className="text-lg">💰</span>}
                 iconBgColor="bg-green-500/10"
+                trend={{
+                  value: 0,
+                  label: `$${(stats.monthlyRevenue || 0).toLocaleString()} this month`,
+                }}
               />
               <StatCard
                 label="Total Products"
                 value={stats.totalProducts}
                 icon={<span className="text-lg">📦</span>}
                 iconBgColor="bg-hos-gold/10"
+                trend={{ value: 0, label: 'Active catalog' }}
               />
               <StatCard
                 label="Total Orders"
                 value={stats.totalOrders}
                 icon={<span className="text-lg">🛒</span>}
                 iconBgColor="bg-hos-gold/10"
+                trend={{ value: 0, label: 'All time' }}
               />
               <StatCard
                 label="Total Sellers"
                 value={stats.totalSellers}
                 icon={<span className="text-lg">🏪</span>}
                 iconBgColor="bg-amber-500/10"
+                trend={{ value: 0, label: 'Marketplace vendors' }}
               />
               <StatCard
                 label="Total Users"
                 value={stats.totalUsers || (stats.totalCustomers + stats.totalSellers)}
                 icon={<span className="text-lg">👥</span>}
                 iconBgColor="bg-hos-gold/10"
+                trend={{ value: 0, label: `${stats.totalCustomers} customers` }}
               />
               <StatCard
                 label="Pending Approvals"
@@ -222,6 +232,8 @@ export default function AdminDashboardPage() {
                 icon={<span className="text-lg">⏳</span>}
                 iconBgColor="bg-orange-500/10"
                 valueColor={pendingApprovals > 0 ? 'text-orange-400' : 'text-hos-text-secondary'}
+                trend={{ value: 0, label: 'Awaiting review' }}
+                className={pendingApprovals > 0 ? 'admin-stat-card-urgent ring-2 ring-amber-500/60' : ''}
                 onClick={pendingApprovals > 0 ? () => window.location.href = '/admin/submissions' : undefined}
               />
             </div>
@@ -246,6 +258,10 @@ export default function AdminDashboardPage() {
                         fontSize={12}
                         tickLine={false}
                         axisLine={false}
+                        domain={[
+                          (dataMin: number) => Math.max(0, Math.floor(dataMin * 0.85)),
+                          'auto',
+                        ]}
                         tickFormatter={(value: number) =>
                           Math.abs(value) >= 1000
                             ? `$${(value / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })}k`
@@ -259,10 +275,10 @@ export default function AdminDashboardPage() {
                       <Line 
                         type="monotone" 
                         dataKey="revenue" 
-                        stroke="#a855f7" 
+                        stroke="#c9a227" 
                         strokeWidth={2.5}
-                        dot={{ fill: '#a855f7', strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6, stroke: '#a855f7', strokeWidth: 2 }}
+                        dot={{ fill: '#c9a227', strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6, stroke: '#c9a227', strokeWidth: 2 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -362,7 +378,7 @@ export default function AdminDashboardPage() {
                     />
                     <Bar
                       dataKey="sales"
-                      fill="#a855f7"
+                      fill="#c9a227"
                       radius={[0, 6, 6, 0]}
                       name="Sales"
                       maxBarSize={48}
@@ -371,9 +387,10 @@ export default function AdminDashboardPage() {
                   </BarChart>
                 </ResponsiveContainer>
                 ) : (
-                  <div className="flex h-full flex-col items-center justify-center px-4 text-center text-hos-text-muted">
+                  <div className="flex h-full flex-col items-center justify-center px-4 text-center">
+                    <span className="text-4xl mb-3" aria-hidden>📊</span>
                     <p className="text-sm font-medium text-hos-text-secondary">No sales data yet</p>
-                    <p className="mt-1 text-xs">Top products will appear after sales are recorded.</p>
+                    <p className="mt-1 text-xs text-hos-text-muted">Top products will appear after sales are recorded.</p>
                   </div>
                 )}
               </ChartCard>
@@ -390,13 +407,8 @@ export default function AdminDashboardPage() {
                         key={activity.id || index}
                         icon={<span className="text-sm">📝</span>}
                         iconBg="bg-hos-gold/20"
-                        title={activity.seller?.storeName || activity.user?.email || 'System Activity'}
-                        subtitle={
-                          typeof activity.description === 'string' && activity.description.trim()
-                            ? `${(activity.description as string).length > 100 ? `${(activity.description as string).slice(0, 100)}…` : activity.description}`
-                            : `${activity.status || ''}${activity.status && activity.action ? ' · ' : ''}${activity.action || ''}`.trim() ||
-                              '—'
-                        }
+                        title={formatActivityTitle(activity)}
+                        subtitle={formatActivityDescription(activity)}
                         timestamp={activity.createdAt ? new Date(activity.createdAt).toLocaleString() : 'Recently'}
                       />
                     ))}

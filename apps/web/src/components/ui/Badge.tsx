@@ -88,6 +88,13 @@ const statusMap: Record<string, { variant: BadgeVariant; label?: string }> = {
   REJECTED: { variant: 'error' },
   SUBMITTED: { variant: 'warning' },
   UNDER_REVIEW: { variant: 'warning', label: 'Under Review' },
+  PROCUREMENT_APPROVED: { variant: 'info', label: 'Procurement Approved' },
+  PROCUREMENT_REJECTED: { variant: 'error', label: 'Procurement Rejected' },
+  CATALOG_COMPLETED: { variant: 'info', label: 'Catalog Completed' },
+  MARKETING_COMPLETED: { variant: 'info', label: 'Marketing Completed' },
+  CONTENT_COMPLETED: { variant: 'success', label: 'Content Completed' },
+  FINANCE_APPROVED: { variant: 'success', label: 'Finance Approved' },
+  FC_REJECTED: { variant: 'error', label: 'FC Rejected' },
   
   // Default
   DEFAULT: { variant: 'gray' },

@@ -8,6 +8,12 @@ import { useToast } from '@/hooks/useToast';
 import { DataExport } from '@/components/DataExport';
 import { Modal } from '@/components/ui/Modal';
 import { PortalMobileCard } from '@/components/ui/PortalMobileCard';
+import { formatAdminPrice } from '@/lib/adminFormat';
+import {
+  AdminColumnToggle,
+  useAdminColumnVisibility,
+  type AdminColumnDef,
+} from '@/components/ui/AdminColumnToggle';
 
 /** API returns lowercase; normalize so stats/filters work if casing differs */
 function normalizeOrderStatus(status: string | undefined): string {
@@ -91,11 +97,20 @@ const STATUS_COLORS: Record<string, string> = {
   confirmed: 'bg-hos-gold/20 text-hos-gold',
   processing: 'bg-hos-gold/20 text-hos-gold',
   fulfilled: 'bg-violet-500/15 text-violet-300',
-  shipped: 'bg-hos-gold/20 text-hos-gold',
+  shipped: 'bg-cyan-500/15 text-cyan-300',
   delivered: 'bg-green-500/15 text-green-300',
   cancelled: 'bg-red-500/15 text-red-300',
   refunded: 'bg-hos-bg-tertiary text-hos-text-secondary',
 };
+
+const ORDER_TABLE_COLUMNS: AdminColumnDef[] = [
+  { id: 'order', label: 'Order' },
+  { id: 'customer', label: 'Customer' },
+  { id: 'total', label: 'Total' },
+  { id: 'status', label: 'Status' },
+  { id: 'date', label: 'Date' },
+  { id: 'actions', label: 'Actions' },
+];
 
 export default function AdminOrdersPage() {
   const toast = useToast();
@@ -112,6 +127,12 @@ export default function AdminOrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 20;
   const [confirmDialog, setConfirmDialog] = useState<{ orderId: string; orderNumber: string; currentStatus: string; newStatus: string } | null>(null);
+  const {
+    visibleIds: orderVisibleColumnIds,
+    isVisible: isOrderColumnVisible,
+    toggleColumn: toggleOrderColumn,
+    resetColumns: resetOrderColumns,
+  } = useAdminColumnVisibility('admin-orders', ORDER_TABLE_COLUMNS);
 
   // Stats (counts may use pagination.total for "Total orders"; per-status from loaded rows)
   const [stats, setStats] = useState({
@@ -277,7 +298,7 @@ export default function AdminOrdersPage() {
   const exportColumns = [
     { key: 'orderNumber', header: 'Order #', format: (v: string, o: Order) => o.orderNumber || o.id.slice(0, 8) },
     { key: 'user', header: 'Customer', format: (v: any, o: Order) => o.user?.email || o.customer?.email || 'N/A' },
-    { key: 'total', header: 'Total', format: (v: number, o: Order) => `${o.currency || 'USD'} ${Number(v || 0).toFixed(2)}` },
+    { key: 'total', header: 'Total', format: (v: number, o: Order) => formatAdminPrice(v || 0, o.currency || 'USD') },
     { key: 'status', header: 'Status' },
     { key: 'paymentStatus', header: 'Payment Status' },
     { key: 'createdAt', header: 'Date', format: (v: string) => new Date(v).toLocaleDateString() },
@@ -302,19 +323,19 @@ export default function AdminOrdersPage() {
           {/* Stats Cards — counts use normalized status; Confirmed / Processing are separate */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8 gap-4">
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total Orders</h3>
+              <h3 className="admin-metric-label">Total Orders</h3>
               <p className="text-2xl font-bold text-hos-text-secondary mt-1">{stats.total}</p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Revenue</h3>
-              <p className="text-2xl font-bold text-green-400 mt-1">${stats.totalRevenue.toFixed(2)}</p>
+              <h3 className="admin-metric-label">Revenue</h3>
+              <p className="text-2xl font-bold text-hos-gold mt-1">${stats.totalRevenue.toFixed(2)}</p>
             </div>
             <button
               type="button"
               onClick={() => setStatusFilter(statusFilter === 'pending' ? 'ALL' : 'pending')}
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'pending' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Pending</h3>
+              <h3 className="admin-metric-label">Pending</h3>
               <p className="text-2xl font-bold text-yellow-400 mt-1">{stats.pending}</p>
             </button>
             <button
@@ -322,7 +343,7 @@ export default function AdminOrdersPage() {
               onClick={() => setStatusFilter(statusFilter === 'confirmed' ? 'ALL' : 'confirmed')}
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'confirmed' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Confirmed</h3>
+              <h3 className="admin-metric-label">Confirmed</h3>
               <p className="text-2xl font-bold text-sky-400 mt-1">{stats.confirmed}</p>
             </button>
             <button
@@ -331,7 +352,7 @@ export default function AdminOrdersPage() {
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'PROCESSING' ? 'ring-2 ring-hos-gold/50' : ''}`}
               title="Confirmed + actively processing"
             >
-              <h3 className="text-xs font-medium text-hos-text-muted uppercase">In progress</h3>
+              <h3 className="admin-metric-label">In progress</h3>
               <p className="text-2xl font-bold text-hos-gold mt-1">{stats.confirmed + stats.processing}</p>
             </button>
             <button
@@ -339,15 +360,15 @@ export default function AdminOrdersPage() {
               onClick={() => setStatusFilter(statusFilter === 'shipped' ? 'ALL' : 'shipped')}
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'shipped' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Shipped</h3>
-              <p className="text-2xl font-bold text-hos-gold mt-1">{stats.shipped}</p>
+              <h3 className="admin-metric-label">Shipped</h3>
+              <p className="text-2xl font-bold text-cyan-400 mt-1">{stats.shipped}</p>
             </button>
             <button
               type="button"
               onClick={() => setStatusFilter(statusFilter === 'COMPLETED' ? 'ALL' : 'COMPLETED')}
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'COMPLETED' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Completed</h3>
+              <h3 className="admin-metric-label">Completed</h3>
               <p className="text-2xl font-bold text-green-400 mt-1">{stats.completed}</p>
             </button>
             <button
@@ -355,7 +376,7 @@ export default function AdminOrdersPage() {
               onClick={() => setStatusFilter(statusFilter === 'CANCELLED' ? 'ALL' : 'CANCELLED')}
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left ${statusFilter === 'CANCELLED' ? 'ring-2 ring-hos-gold/50' : ''}`}
             >
-              <h3 className="text-xs font-medium text-hos-text-muted uppercase">Cancelled</h3>
+              <h3 className="admin-metric-label">Cancelled</h3>
               <p className="text-2xl font-bold text-red-400 mt-1">{stats.cancelled}</p>
             </button>
           </div>
@@ -370,7 +391,7 @@ export default function AdminOrdersPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Order ID, customer email..."
-                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="input"
                 />
               </div>
               <div>
@@ -378,7 +399,7 @@ export default function AdminOrdersPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="select w-full"
                 >
                   <option value="ALL">All Statuses</option>
                   <option value="PROCESSING">In progress (confirmed + processing)</option>
@@ -397,7 +418,7 @@ export default function AdminOrdersPage() {
                   type="date"
                   value={dateRange.start}
                   onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="input"
                 />
               </div>
               <div>
@@ -406,7 +427,7 @@ export default function AdminOrdersPage() {
                   type="date"
                   value={dateRange.end}
                   onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                  className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="input"
                 />
               </div>
             </div>
@@ -421,7 +442,7 @@ export default function AdminOrdersPage() {
                     setStatusFilter('ALL');
                     setDateRange({ start: '', end: '' });
                   }}
-                  className="text-sm text-hos-gold hover:underline"
+                  className="text-sm text-hos-gold hover:text-hos-gold-hover"
                 >
                   Clear filters
                 </button>
@@ -465,7 +486,7 @@ export default function AdminOrdersPage() {
                         },
                         {
                           label: 'Total',
-                          value: `${order.currency || 'USD'} ${Number(order.total || 0).toFixed(2)}`,
+                          value: formatAdminPrice(order.total || 0, order.currency || 'USD'),
                         },
                         { label: 'Status', value: order.status },
                         { label: 'Date', value: new Date(order.createdAt).toLocaleDateString() },
@@ -483,47 +504,56 @@ export default function AdminOrdersPage() {
                   ))}
                 </div>
               )}
+              <div className="hidden md:block p-4 border-b flex justify-end">
+                <AdminColumnToggle
+                  columns={ORDER_TABLE_COLUMNS}
+                  visibleIds={orderVisibleColumnIds}
+                  onToggle={toggleOrderColumn}
+                  onReset={resetOrderColumns}
+                />
+              </div>
               <div className="hidden md:block overflow-x-auto">
-                <table className="min-w-full divide-y divide-hos-border">
+                <table className="admin-table min-w-full divide-y divide-hos-border">
                   <thead className="bg-hos-bg-secondary">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
-                        Order
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
-                        Customer
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
-                        Total
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">
-                        Actions
-                      </th>
+                      {isOrderColumnVisible('order') && <th className="px-6 py-3 text-left">Order</th>}
+                      {isOrderColumnVisible('customer') && <th className="px-6 py-3 text-left">Customer</th>}
+                      {isOrderColumnVisible('total') && <th className="px-6 py-3 text-left">Total</th>}
+                      {isOrderColumnVisible('status') && <th className="px-6 py-3 text-left">Status</th>}
+                      {isOrderColumnVisible('date') && <th className="px-6 py-3 text-left">Date</th>}
+                      {isOrderColumnVisible('actions') && <th className="px-6 py-3 text-right">Actions</th>}
                     </tr>
                   </thead>
                   <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     {paginatedOrders.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-hos-text-muted">
-                          <span className="text-4xl block mb-2">📦</span>
-                          <p>No orders found</p>
+                        <td colSpan={orderVisibleColumnIds.size} className="px-6 py-12 text-center">
+                          <div className={orders.length > 0 ? 'admin-empty-filtered' : ''}>
+                            <span className="text-4xl block mb-2" aria-hidden>📦</span>
+                            <p className="text-sm font-medium text-hos-text-secondary">
+                              {orders.length > 0 ? 'No orders match your filters' : 'No orders found'}
+                            </p>
+                            {orders.length > 0 && (
+                              <p className="mt-1 text-xs text-hos-text-muted">Try adjusting search or date range.</p>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ) : (
                       paginatedOrders.map((order) => (
-                        <tr key={order.id} className="hover:bg-hos-bg-tertiary">
+                        <tr
+                          key={order.id}
+                          className="admin-table-row-clickable"
+                          onClick={() => openOrderDetails(order)}
+                        >
+                          {isOrderColumnVisible('order') && (
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-hos-text-secondary">
                               #{order.orderNumber || order.id.substring(0, 8)}
                             </div>
-                            <div className="text-xs text-hos-text-muted">{order.id.substring(0, 12)}...</div>
                           </td>
+                          )}
+                          {isOrderColumnVisible('customer') && (
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-hos-text-secondary">
                               {(order.user?.firstName || order.user?.lastName)
@@ -531,15 +561,19 @@ export default function AdminOrdersPage() {
                                 : order.user?.email || order.customer?.email || 'Guest'}
                             </div>
                             {(order.user?.firstName || order.user?.lastName) && (
-                              <div className="text-xs text-hos-text-muted">
+                              <div className="text-xs text-hos-text-muted truncate max-w-[200px]">
                                 {order.user?.email || order.customer?.email || ''}
                               </div>
                             )}
                           </td>
+                          )}
+                          {isOrderColumnVisible('total') && (
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
-                            {order.currency || 'USD'} {Number(order.total || 0).toFixed(2)}
+                            {formatAdminPrice(order.total || 0, order.currency || 'USD')}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          )}
+                          {isOrderColumnVisible('status') && (
+                          <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             <select
                               value={order.status}
                               onChange={(e) => handleStatusChange(order.id, e.target.value, order.orderNumber || order.id.substring(0, 8), order.status)}
@@ -553,17 +587,23 @@ export default function AdminOrdersPage() {
                               ))}
                             </select>
                           </td>
+                          )}
+                          {isOrderColumnVisible('date') && (
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                             {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          )}
+                          {isOrderColumnVisible('actions') && (
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
                             <button
+                              type="button"
                               onClick={() => openOrderDetails(order)}
-                              className="text-hos-gold hover:text-hos-gold"
+                              className="admin-table-action"
                             >
-                              View Details
+                              View
                             </button>
                           </td>
+                          )}
                         </tr>
                       ))
                     )}
@@ -575,15 +615,16 @@ export default function AdminOrdersPage() {
 
           {/* Pagination */}
           {!loading && !error && totalPages > 1 && (
-            <div className="flex items-center justify-between bg-hos-bg-secondary rounded-lg shadow px-6 py-3">
+            <div className="flex items-center justify-between bg-hos-bg-secondary rounded-lg shadow px-6 py-3 border border-hos-border">
               <p className="text-sm text-hos-text-secondary">
                 Showing {((currentPage - 1) * pageSize) + 1}–{Math.min(currentPage * pageSize, filteredOrders.length)} of {filteredOrders.length} orders
               </p>
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage <= 1}
-                  className="px-3 py-1.5 border border-hos-border rounded text-sm disabled:opacity-50 hover:bg-hos-bg-tertiary"
+                  className="admin-pagination-btn"
                 >
                   Previous
                 </button>
@@ -591,9 +632,10 @@ export default function AdminOrdersPage() {
                   Page {currentPage} of {totalPages}
                 </span>
                 <button
+                  type="button"
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage >= totalPages}
-                  className="px-3 py-1.5 border border-hos-border rounded text-sm disabled:opacity-50 hover:bg-hos-bg-tertiary"
+                  className="admin-pagination-btn admin-pagination-btn-primary"
                 >
                   Next
                 </button>
@@ -805,8 +847,26 @@ export default function AdminOrdersPage() {
                     </div>
                   </div>
 
-                  <div className="mt-6 flex justify-end">
+                  <div className="mt-6 flex flex-wrap justify-between items-center gap-3">
+                    <div className="flex flex-wrap gap-2">
+                      {(selectedOrder.user?.email || selectedOrder.customer?.email) && (
+                        <a
+                          href={`mailto:${selectedOrder.user?.email || selectedOrder.customer?.email}?subject=${encodeURIComponent(`Regarding order #${selectedOrder.orderNumber || selectedOrder.id.substring(0, 8)}`)}`}
+                          className="admin-table-action"
+                        >
+                          Contact customer
+                        </a>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => window.print()}
+                        className="admin-table-action"
+                      >
+                        Print
+                      </button>
+                    </div>
                     <button
+                      type="button"
                       onClick={() => setShowDetailsModal(false)}
                       className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                     >

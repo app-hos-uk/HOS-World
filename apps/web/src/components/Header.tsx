@@ -11,7 +11,8 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { SearchBar } from '@/components/SearchBar';
 import type { UserRole } from '@hos-marketplace/shared-types';
 import { BrandLogo } from '@/components/BrandLogo';
-import { STOREFRONT_NAV_LINKS } from '@/lib/storefrontNavigation';
+import { STOREFRONT_NAV_PRIMARY, STOREFRONT_NAV_MORE } from '@/lib/storefrontNavigation';
+import { StorefrontNavMore } from '@/components/storefront/StorefrontNavMore';
 
 const ROLE_QUICK_LINKS: Record<string, Array<{ title: string; href: string; icon: string }>> = {
   ADMIN: [
@@ -149,17 +150,17 @@ export function Header() {
       {showCustomerNav && !isDashboardPage && (
         <div className="hidden lg:block w-full bg-gradient-to-b from-[#121218] to-[#0a0a0d] border-b border-hos-border h-8">
           <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
-            <p className="text-hos-gold text-xs truncate">
+            <p className="text-hos-gold text-sm truncate">
               Marketplace: Shop multiple vendors · Secure checkout · US shipping
             </p>
             <div className="flex items-center gap-5 shrink-0">
-              <Link href="/sellers" className="text-hos-text-muted text-xs hover:text-hos-gold transition-colors duration-200">
+              <Link href="/sellers" className="text-hos-text-muted text-sm hover:text-hos-gold transition-colors duration-200">
                 Store locations
               </Link>
               <Link href="/seller/onboarding" className="text-hos-text-muted text-xs hover:text-hos-gold transition-colors duration-200">
                 Sell with us
               </Link>
-              <Link href="/help" className="text-hos-text-muted text-xs hover:text-hos-gold transition-colors duration-200">
+              <Link href="/help" className="text-hos-text-muted text-sm hover:text-hos-gold transition-colors duration-200">
                 Help Center
               </Link>
             </div>
@@ -187,7 +188,7 @@ export function Header() {
             <div className="hidden lg:flex items-center gap-4 xl:gap-6 shrink-0">
               {showAuthCustomerNav && !isDashboardPage && <CurrencySelector />}
               {isAuthenticated && user && <NotificationBell />}
-              <Link href={accountHref} className="flex flex-col items-center gap-1 group">
+              <Link href={accountHref} className="flex flex-col items-center gap-1 group" aria-label={accountLabel}>
                 <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
@@ -202,13 +203,13 @@ export function Header() {
                   <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">Profile</span>
                 </Link>
               )}
-              <Link href="/wishlist" className="flex flex-col items-center gap-1 group">
+              <Link href="/wishlist" className="flex flex-col items-center gap-1 group" aria-label="Wishlist">
                 <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
                 <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">Wishlist</span>
               </Link>
-              <Link href="/cart" className="relative flex flex-col items-center gap-1 group">
+              <Link href="/cart" className="relative flex flex-col items-center gap-1 group" aria-label={`Basket${cartItemCount > 0 ? `, ${cartItemCount} items` : ''}`}>
                 <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
@@ -386,7 +387,7 @@ export function Header() {
             <nav className="flex items-center justify-start gap-x-4 xl:gap-x-6 gap-y-2 py-2.5 overflow-x-auto scrollbar-thin px-1" role="navigation" aria-label="Main navigation">
               {showCustomerNav && (
                 <>
-                  {STOREFRONT_NAV_LINKS.map((item) => (
+                  {STOREFRONT_NAV_PRIMARY.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
@@ -395,6 +396,7 @@ export function Header() {
                       {item.label}
                     </Link>
                   ))}
+                  <StorefrontNavMore />
                 </>
               )}
               {showAuthCustomerNav && (
@@ -434,8 +436,11 @@ export function Header() {
                     <SearchBar compact />
                   </Suspense>
                 </div>
-                {STOREFRONT_NAV_LINKS.map((item) => (
+                {STOREFRONT_NAV_PRIMARY.map((item) => (
                   <MobileNavLink key={item.href} href={item.href} icon="·" label={item.label} onClick={() => setIsMobileMenuOpen(false)} />
+                ))}
+                {STOREFRONT_NAV_MORE.map((item) => (
+                  <MobileNavLink key={`more-${item.href}`} href={item.href} icon="·" label={item.label} onClick={() => setIsMobileMenuOpen(false)} />
                 ))}
               </>
             )}
