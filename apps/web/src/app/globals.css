@@ -294,7 +294,7 @@ h6 {
   }
 
   .admin-table tbody tr:nth-child(even) {
-    @apply bg-hos-bg-tertiary/40;
+    background-color: rgba(20, 20, 26, 0.4);
   }
 
   .admin-table tbody tr.admin-table-row-clickable {
