@@ -522,6 +522,8 @@ export default function CheckoutPage() {
         if (isGuestCheckoutAccount) {
           sessionStorage.removeItem(GUEST_CHECKOUT_ACCOUNT_KEY);
           toast.success('Account created — check your email to set a password and track orders anytime.', { id: 'guest-account-created' });
+        } else {
+          toast.success('Order placed! Redirecting to payment...', { id: 'order-created' });
         }
         setFrontendSessionCookie();
         router.push(`/payment?orderId=${orderResponse.data.id}`);
