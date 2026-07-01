@@ -424,6 +424,7 @@ model Seller {
   webhooks              Webhook[]
   returnPolicies        ReturnPolicy[]
   vendorLedgerEntries   VendorLedgerEntry[]
+  verificationDocuments SellerVerificationDocument[]
 
   stores           Store[]
   posConnections   POSConnection[]
@@ -439,6 +440,31 @@ model Seller {
   @@index([vendorStatus])
   @@index([stripeConnectAccountId])
   @@map("sellers")
+}
+
+model SellerVerificationDocument {
+  id           String                  @id @default(uuid())
+  sellerId     String
+  seller       Seller                  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  documentType String
+  fileUrl      String
+  fileName     String?
+  status       VerificationDocStatus   @default(PENDING)
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  reviewNotes  String?                 @db.Text
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  @@index([sellerId])
+  @@index([status])
+  @@map("seller_verification_documents")
+}
+
+enum VerificationDocStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 // Theme model

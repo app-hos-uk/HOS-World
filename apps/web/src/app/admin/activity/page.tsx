@@ -92,7 +92,35 @@ export default function AdminActivityPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getActivityLogs();
+
+      const filters: Parameters<typeof apiClient.getActivityLogs>[0] = {
+        page,
+        limit: pageSize,
+      };
+      if (actionFilter !== 'ALL') filters.action = actionFilter;
+      if (entityFilter !== 'ALL') filters.entityType = entityFilter;
+
+      if (dateFilter !== 'ALL') {
+        const now = new Date();
+        let start: Date;
+        switch (dateFilter) {
+          case '1d':
+            start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            break;
+          case '7d':
+            start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case '30d':
+            start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          default:
+            start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        }
+        filters.startDate = start.toISOString();
+        filters.endDate = now.toISOString();
+      }
+
+      const response = await apiClient.getActivityLogs(filters);
       let logData: ActivityLog[] = [];
       if (response && 'data' in response) {
         const responseData = response.data as any;
@@ -116,7 +144,7 @@ export default function AdminActivityPage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dateFilter, actionFilter, entityFilter, page]);
 
   const calculateStats = (logData: ActivityLog[]) => {
     const now = new Date();

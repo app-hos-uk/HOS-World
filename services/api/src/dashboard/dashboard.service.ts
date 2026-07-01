@@ -12,6 +12,8 @@ interface DashboardStats {
   recentOrders: any[];
   submissions?: any[];
   submissionsByStatus?: any[];
+  lowStockCount?: number;
+  lowStockProducts?: Array<{ id: string; name: string; stock: number }>;
 }
 
 @Injectable()
@@ -109,6 +111,27 @@ export class DashboardService {
       _count: true,
     });
 
+    const LOW_STOCK_THRESHOLD = 5;
+    const [lowStockCount, lowStockProducts] = await Promise.all([
+      this.prisma.product.count({
+        where: {
+          sellerId: seller.id,
+          status: 'ACTIVE',
+          stock: { gt: 0, lte: LOW_STOCK_THRESHOLD },
+        },
+      }),
+      this.prisma.product.findMany({
+        where: {
+          sellerId: seller.id,
+          status: 'ACTIVE',
+          stock: { gt: 0, lte: LOW_STOCK_THRESHOLD },
+        },
+        select: { id: true, name: true, stock: true },
+        orderBy: { stock: 'asc' },
+        take: 10,
+      }),
+    ]);
+
     return {
       totalSales,
       totalOrders,
@@ -119,6 +142,8 @@ export class DashboardService {
       recentOrders,
       submissions,
       submissionsByStatus,
+      lowStockCount,
+      lowStockProducts,
     };
   }
 

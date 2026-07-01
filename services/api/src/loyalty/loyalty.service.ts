@@ -66,10 +66,7 @@ export class LoyaltyService {
     const existing = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (existing) throw new ConflictException('Already enrolled');
 
-    const initiate = await this.prisma.loyaltyTier.findFirst({
-      where: { slug: 'initiate', isActive: true },
-    });
-    if (!initiate) throw new BadRequestException('Loyalty tiers not configured');
+    const tier = await this.ensureInitiateTier();
 
     const prefix = this.config.get<string>('LOYALTY_CARD_PREFIX', 'HOS');
     const cardNumber = `${prefix}-${randomBytes(4).toString('hex').toUpperCase()}-${randomBytes(2).toString('hex').toUpperCase()}`;
@@ -77,7 +74,7 @@ export class LoyaltyService {
     const membership = await this.prisma.loyaltyMembership.create({
       data: {
         userId,
-        tierId: initiate.id,
+        tierId: tier.id,
         regionCode: dto?.regionCode || user.country || 'GB',
         preferredCurrency: dto?.preferredCurrency || user.currencyPreference || 'USD',
         enrollmentChannel: dto?.enrollmentChannel || 'WEB',
@@ -86,13 +83,13 @@ export class LoyaltyService {
       include: { tier: true },
     });
 
-    this.events.onWelcome(userId, initiate.name).catch((e: unknown) => {
+    this.events.onWelcome(userId, tier.name).catch((e: unknown) => {
       this.logger.warn(`Welcome event failed for ${userId}: ${e instanceof Error ? e.message : 'unknown'}`);
     });
 
     void this.marketingBus
       ?.emit('LOYALTY_WELCOME', userId, {
-        tierName: initiate.name,
+        tierName: tier.name,
         firstName: user.firstName || '',
       })
       .catch((e: unknown) => {
@@ -114,6 +111,7 @@ export class LoyaltyService {
   }
 
   async getMembership(userId: string) {
+    await this.ensureInitiateTier();
     return this.prisma.loyaltyMembership.findUnique({
       where: { userId },
       include: { tier: true },
@@ -587,5 +585,38 @@ export class LoyaltyService {
 
     await this.tiers.recalculateTier(membership.id);
     return this.getMembership(userId);
+  }
+
+  /** Ensure the Initiate tier exists; safe under concurrent enrollment. */
+  private async ensureInitiateTier() {
+    const existing = await this.prisma.loyaltyTier.findFirst({
+      where: { slug: 'initiate', isActive: true },
+    });
+    if (existing) return existing;
+
+    try {
+      return await this.prisma.loyaltyTier.create({
+        data: {
+          name: 'Initiate',
+          slug: 'initiate',
+          level: 1,
+          pointsThreshold: 0,
+          multiplier: new Decimal(1),
+          benefits: { freeShipping: false, earlyAccessHours: 0 },
+          isActive: true,
+        },
+      });
+    } catch {
+      const tier = await this.prisma.loyaltyTier.findFirst({
+        where: { slug: 'initiate', isActive: true },
+      });
+      if (tier) return tier;
+      throw new BadRequestException('Loyalty tiers not configured');
+    }
+  }
+
+  /** Bootstrap default tiers when none exist (dev/staging safety net). */
+  private async ensureDefaultTiers(): Promise<void> {
+    await this.ensureInitiateTier();
   }
 }

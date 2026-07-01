@@ -68,6 +68,24 @@ export class ShippingController {
     };
   }
 
+  @Get('admin/methods')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'FINANCE')
+  @ApiBearerAuth('JWT-auth')
+  async findAllShippingMethodsAdmin(): Promise<ApiResponse<any[]>> {
+    const methods = await this.shippingService.findAllShippingMethodsAdmin();
+    return { data: methods, message: 'Shipping methods retrieved successfully' };
+  }
+
+  @Post('admin/seed-defaults')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  async seedDefaultShipping(): Promise<ApiResponse<{ created: number }>> {
+    const created = await this.shippingService.ensurePlatformShippingDefaults();
+    return { data: { created }, message: created ? 'Default shipping methods created' : 'Methods already exist' };
+  }
+
   @Get('methods/:id')
   @Public()
   @ApiOperation({

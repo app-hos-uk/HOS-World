@@ -352,6 +352,27 @@ export default function OrdersPage() {
                         Complete Payment
                       </Link>
                     )}
+                    {order.paymentStatus?.toUpperCase() === 'PAID' && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const blob = await apiClient.downloadInvoice(order.id);
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `invoice-${order.orderNumber || order.id}.pdf`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          } catch (err: any) {
+                            toast.error(err.message || 'Failed to download invoice');
+                          }
+                        }}
+                        className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
+                      >
+                        Download Invoice
+                      </button>
+                    )}
                     {(order.trackingNumber || order.trackingCode) && (
                       <Link
                         href={`/track-order?orderNumber=${order.orderNumber || order.id}`}

@@ -143,11 +143,43 @@ export class MonitoringJobsService implements OnModuleInit {
       }
     }
 
+    // Unpaid orders in fulfillment — payment/orchestration mismatch
+    const unpaidFulfilled = await this.prisma.order.findMany({
+      where: {
+        paymentStatus: { not: 'PAID' },
+        status: { in: ['PROCESSING', 'SHIPPED', 'DELIVERED', 'ACCEPTED', 'CONFIRMED'] },
+      },
+      select: { id: true, orderNumber: true, sellerId: true, paymentStatus: true, status: true },
+      take: 50,
+    });
+
+    for (const order of unpaidFulfilled) {
+      try {
+        const existing = await this.prisma.discrepancy.findFirst({
+          where: { orderId: order.id, type: 'ORDER_FULFILLMENT', status: 'OPEN' },
+        });
+        if (!existing) {
+          await this.discrepanciesService.createDiscrepancy({
+            type: 'ORDER_FULFILLMENT',
+            orderId: order.id,
+            sellerId: order.sellerId || undefined,
+            severity: 'CRITICAL',
+            expectedValue: { paymentStatus: 'PAID' },
+            actualValue: { paymentStatus: order.paymentStatus, status: order.status },
+            description: `Order ${order.orderNumber} is in ${order.status} but payment is ${order.paymentStatus}`,
+          });
+          detected++;
+        }
+      } catch (e) {
+        this.logger.warn(`Payment discrepancy scan failed for order ${order.id}: ${(e as Error).message}`);
+      }
+    }
+
     this.activityService.createLog({
       action: 'DISCREPANCY_SCAN_COMPLETED',
       entityType: 'System',
-      description: `Discrepancy scan completed: ${detected} new discrepancies detected (${negativeStockProducts.length} negative stock, ${stuckOrders.length} stuck orders)`,
-      metadata: { detected, negativeStock: negativeStockProducts.length, stuckOrders: stuckOrders.length },
+      description: `Discrepancy scan completed: ${detected} new discrepancies detected (${negativeStockProducts.length} negative stock, ${stuckOrders.length} stuck orders, ${unpaidFulfilled.length} unpaid fulfilled)`,
+      metadata: { detected, negativeStock: negativeStockProducts.length, stuckOrders: stuckOrders.length, unpaidFulfilled: unpaidFulfilled.length },
     }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
     this.logger.log(`Discrepancy scan complete: ${detected} new discrepancies detected`);

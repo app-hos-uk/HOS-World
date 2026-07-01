@@ -130,7 +130,7 @@ export class ReconciliationService {
         }
       }
 
-      // Find internal transactions with no Stripe match
+      // Find internal PAYMENT transactions with no Stripe match
       for (const [stripeId, tx] of internalByStripeId.entries()) {
         if (!stripeProcessed.has(stripeId)) {
           missingStripe++;
@@ -141,6 +141,62 @@ export class ReconciliationService {
             internalAmount: Number(tx.amount),
             currency: tx.currency,
           });
+        }
+      }
+
+      // Reconcile REFUND transactions (internal ledger vs returns)
+      const internalRefunds = await this.prisma.transaction.findMany({
+        where: {
+          type: 'REFUND',
+          status: 'COMPLETED',
+          createdAt: { gte: params.periodStart, lt: params.periodEnd },
+        },
+        include: {
+          returnRequest: { select: { id: true, refundAmount: true, status: true } },
+        },
+      });
+
+      for (const refundTx of internalRefunds) {
+        const expected = refundTx.returnRequest?.refundAmount
+          ? Number(refundTx.returnRequest.refundAmount)
+          : Number(refundTx.amount);
+        const actual = Number(refundTx.amount);
+        const diff = Math.abs(expected - actual);
+        if (diff < 0.02) {
+          matched++;
+          items.push({
+            runId: run.id,
+            type: 'REFUND_MATCHED',
+            transactionId: refundTx.id,
+            internalAmount: actual,
+            currency: refundTx.currency,
+          });
+        } else {
+          mismatched++;
+          items.push({
+            runId: run.id,
+            type: 'REFUND_MISMATCH',
+            transactionId: refundTx.id,
+            internalAmount: actual,
+            stripeAmount: expected,
+            currency: refundTx.currency,
+            discrepancyAmount: actual - expected,
+          });
+        }
+      }
+
+      // When Stripe is unavailable, record internal-only summary so runs aren't empty
+      if (stripeCharges.length === 0 && internalTransactions.length > 0) {
+        for (const tx of internalTransactions) {
+          if (!items.some((i) => i.transactionId === tx.id && i.type === 'MATCHED')) {
+            items.push({
+              runId: run.id,
+              type: 'INTERNAL_ONLY',
+              transactionId: tx.id,
+              internalAmount: Number(tx.amount),
+              currency: tx.currency,
+            });
+          }
         }
       }
 

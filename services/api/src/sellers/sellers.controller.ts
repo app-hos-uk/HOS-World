@@ -296,4 +296,35 @@ export class SellersController {
     const result = await this.sellersService.getVendorDashboardStats(req.user.id);
     return { data: result, message: 'Dashboard stats retrieved' };
   }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
+  @Post('verification/documents')
+  async submitVerificationDocument(
+    @Request() req: any,
+    @Body() body: { documentType: string; fileUrl: string; fileName?: string },
+  ): Promise<ApiResponse<any>> {
+    const doc = await this.sellersService.submitVerificationDocument(req.user.id, body);
+    return { data: doc, message: 'Verification document submitted' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'FINANCE')
+  @Get('verification/documents')
+  async listVerificationDocuments(@Request() req: any): Promise<ApiResponse<any[]>> {
+    const docs = await this.sellersService.listVerificationDocuments(req.user.id, req.user.role);
+    return { data: docs, message: 'Verification documents retrieved' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'FINANCE')
+  @Put('verification/documents/:id/review')
+  async reviewVerificationDocument(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { status: 'APPROVED' | 'REJECTED'; reviewNotes?: string },
+  ): Promise<ApiResponse<any>> {
+    const doc = await this.sellersService.reviewVerificationDocument(id, req.user.id, body);
+    return { data: doc, message: 'Document reviewed' };
+  }
 }

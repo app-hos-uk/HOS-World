@@ -341,7 +341,9 @@ export class SettlementsService {
             );
           } catch (error) {
             this.logger.error(`Stripe transfer failed for settlement ${id}:`, error);
-            throw new BadRequestException('Stripe payout transfer failed. Settlement not processed.');
+            throw new BadRequestException(
+              'Stripe payout transfer failed. Mark the settlement as paid manually if funds were sent outside Stripe, or complete Stripe Connect onboarding for this seller.',
+            );
           }
         } else {
           this.logger.log(

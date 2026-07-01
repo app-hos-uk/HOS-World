@@ -1217,6 +1217,23 @@ export default function CheckoutPage() {
                 ) : null;
               })()}
 
+              {/* Selected Shipping Method */}
+              {selectedShippingMethod && shippingOptions.length > 0 && (() => {
+                const selected = shippingOptions.find((o: any) => o.id === selectedShippingMethod || o.methodId === selectedShippingMethod);
+                return selected ? (
+                  <div className="mb-4 p-3 bg-hos-bg-secondary rounded-lg border border-hos-border">
+                    <p className="text-xs font-medium text-hos-text-muted uppercase tracking-wide mb-1">Shipping</p>
+                    <p className="text-sm font-medium text-hos-text-secondary">{selected.name || selected.label || 'Selected method'}</p>
+                    {selected.estimatedDays && (
+                      <p className="text-xs text-hos-text-muted mt-0.5">{selected.estimatedDays} business days</p>
+                    )}
+                    <p className="text-xs text-hos-gold mt-1">
+                      {effectiveShippingCost > 0 ? formatPrice(effectiveShippingCost) : 'Free'}
+                    </p>
+                  </div>
+                ) : null;
+              })()}
+
               {/* Cart Items Summary */}
               <div className="mb-4">
                 <p className="text-xs font-medium text-hos-text-muted uppercase tracking-wide mb-2">

@@ -38,7 +38,9 @@ const menuItems: MenuItem[] = [
       { title: 'Procurement Dashboard', href: '/procurement/dashboard', icon: '📊' },
       { title: 'Review Submissions', href: '/procurement/submissions', icon: '✅' },
       { title: 'Orders', href: '/admin/orders', icon: '🛒' },
+      { title: 'Returns', href: '/admin/returns', icon: '↩️' },
       { title: 'Shipments', href: '/admin/shipments', icon: '🚚' },
+      { title: 'Shipping Methods', href: '/admin/shipping', icon: '📦' },
       { title: 'Catalog Admin Queue', href: '/admin/catalog', icon: '📚' },
       { title: 'Catalog Dashboard', href: '/catalog/dashboard', icon: '📊' },
       { title: 'Catalog Team Workflow', href: '/catalog/entries', icon: '📝' },
@@ -57,6 +59,7 @@ const menuItems: MenuItem[] = [
     children: [
       { title: 'All Sellers', href: '/admin/sellers', icon: '👤' },
       { title: 'Seller Applications', href: '/admin/seller-applications', icon: '📝' },
+      { title: 'Verification Queue', href: '/admin/seller-verifications', icon: '🪪' },
       { title: 'Vendor Products', href: '/admin/vendor-products', icon: '📋' },
       { title: 'Seller Analytics', href: '/admin/seller-analytics', icon: '📈' },
     ],
@@ -79,6 +82,7 @@ const menuItems: MenuItem[] = [
       { title: 'Finance Dashboard', href: '/admin/finance', icon: '💳' },
       { title: 'Cancellation Queue', href: '/admin/cancellations', icon: '❌' },
       { title: 'Settlements', href: '/admin/settlements', icon: '💸' },
+      { title: 'Returns', href: '/admin/returns', icon: '↩️' },
       { title: 'Reconciliation', href: '/admin/finance/reconciliation', icon: '🔄' },
       { title: 'Disputes', href: '/admin/finance/disputes', icon: '⚠️' },
       { title: 'Period Close', href: '/admin/finance/periods', icon: '📅' },
@@ -97,6 +101,7 @@ const menuItems: MenuItem[] = [
     children: [
       { title: 'Journeys', href: '/admin/journeys', icon: '🗺️' },
       { title: 'Message logs', href: '/admin/messaging', icon: '📨' },
+      { title: 'Delivery dashboard', href: '/admin/notifications/delivery', icon: '📡' },
       { title: 'Messaging stats', href: '/admin/messaging/stats', icon: '📈' },
     ],
   },

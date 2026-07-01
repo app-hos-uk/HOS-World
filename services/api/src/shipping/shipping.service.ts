@@ -405,4 +405,69 @@ export class ShippingService {
       },
     });
   }
+
+  /** Admin: list all platform shipping methods including inactive */
+  async findAllShippingMethodsAdmin() {
+    return this.prisma.shippingMethod.findMany({
+      where: { sellerId: null },
+      include: {
+        rules: { orderBy: { priority: 'desc' } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /** Seed default platform shipping options when none exist */
+  async ensurePlatformShippingDefaults(): Promise<number> {
+    const existing = await this.prisma.shippingMethod.count({
+      where: { sellerId: null, isActive: true },
+    });
+    if (existing > 0) return 0;
+
+    const standard = await this.prisma.shippingMethod.create({
+      data: {
+        name: 'Standard Delivery',
+        description: '5–7 business days',
+        type: 'FLAT_RATE',
+        isActive: true,
+        sellerId: null,
+      },
+    });
+    await this.prisma.shippingRule.create({
+      data: {
+        shippingMethodId: standard.id,
+        name: 'Standard US',
+        priority: 10,
+        rate: new Decimal(5.99),
+        freeShippingThreshold: new Decimal(75),
+        estimatedDays: 7,
+        conditions: { country: 'US' } as any,
+        isActive: true,
+      },
+    });
+
+    const express = await this.prisma.shippingMethod.create({
+      data: {
+        name: 'Express Delivery',
+        description: '2–3 business days',
+        type: 'FLAT_RATE',
+        isActive: true,
+        sellerId: null,
+      },
+    });
+    await this.prisma.shippingRule.create({
+      data: {
+        shippingMethodId: express.id,
+        name: 'Express US',
+        priority: 20,
+        rate: new Decimal(12.99),
+        estimatedDays: 3,
+        conditions: { country: 'US' } as any,
+        isActive: true,
+      },
+    });
+
+    this.logger.log('Seeded default platform shipping methods');
+    return 2;
+  }
 }

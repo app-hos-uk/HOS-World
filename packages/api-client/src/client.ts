@@ -3536,11 +3536,25 @@ export class ApiClient {
   }
 
   // Activity Logs
-  async getActivityLogs(filters?: { sellerId?: string; userId?: string; action?: string }): Promise<ApiResponse<any[]>> {
+  async getActivityLogs(filters?: {
+    sellerId?: string;
+    userId?: string;
+    action?: string;
+    entityType?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any[]>> {
     const params = new URLSearchParams();
     if (filters?.sellerId) params.append('sellerId', filters.sellerId);
     if (filters?.userId) params.append('userId', filters.userId);
     if (filters?.action) params.append('action', filters.action);
+    if (filters?.entityType) params.append('entityType', filters.entityType);
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.page) params.append('page', String(filters.page));
+    if (filters?.limit) params.append('limit', String(filters.limit));
     const query = params.toString();
     return this.request<ApiResponse<any[]>>(`/activity/logs${query ? `?${query}` : ''}`);
   }
@@ -4583,6 +4597,72 @@ export class ApiClient {
     return this.request<ApiResponse<any[]>>(`/shipping/methods${query}`);
   }
 
+  async getAdminShippingMethods(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/shipping/admin/methods');
+  }
+
+  async seedDefaultShippingMethods(): Promise<ApiResponse<{ created: number }>> {
+    return this.request<ApiResponse<{ created: number }>>('/shipping/admin/seed-defaults', {
+      method: 'POST',
+    });
+  }
+
+  async createShippingMethod(data: {
+    name: string;
+    description?: string;
+    type: string;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/shipping/methods', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async createShippingRule(data: {
+    shippingMethodId: string;
+    name: string;
+    rate: number;
+    priority?: number;
+    estimatedDays?: number;
+    freeShippingThreshold?: number;
+    conditions?: Record<string, unknown>;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/shipping/rules', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getVerificationDocuments(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/sellers/verification/documents');
+  }
+
+  async submitVerificationDocument(data: {
+    documentType: string;
+    fileUrl: string;
+    fileName?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/sellers/verification/documents', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async reviewVerificationDocument(
+    id: string,
+    data: { status: 'APPROVED' | 'REJECTED'; reviewNotes?: string },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/sellers/verification/documents/${id}/review`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getNotificationDeliveryStats(): Promise<ApiResponse<any>> {
+    return this.getNotificationChannelHealth();
+  }
+
   async getShippingOptions(data: {
     cartItems: Array<{ productId: string; quantity: number; price: number }>;
     cartValue: number;
@@ -5491,9 +5571,8 @@ export class ApiClient {
     });
   }
 
-  async getSellerSettlements(sellerId?: string): Promise<ApiResponse<any[]>> {
-    const query = sellerId ? `?sellerId=${sellerId}` : '';
-    return this.request<ApiResponse<any[]>>(`/settlements/seller${query}`);
+  async getSellerSettlements(_sellerId?: string): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/settlements');
   }
 
   async getSettlementsSummary(filters?: {

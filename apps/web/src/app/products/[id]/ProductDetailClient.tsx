@@ -11,6 +11,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { SafeImage } from '@/components/SafeImage';
+import { ProductImageGallery } from '@/components/products/ProductImageGallery';
 import Link from 'next/link';
 import { trackViewItem, trackAddToCart } from '@/lib/analytics';
 
@@ -54,8 +55,6 @@ export default function ProductDetailClient() {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', title: '' });
   /** Selected variation per dimension (e.g. { Size: 'M', Color: 'Red' }) for add-to-cart */
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
   const [deliveryEstimate, setDeliveryEstimate] = useState<string | null>(null);
@@ -406,60 +405,7 @@ export default function ProductDetailClient() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Product Images */}
-          <div>
-            {product.images && product.images.length > 0 ? (
-              <button
-                type="button"
-                onClick={() => setLightboxOpen(true)}
-                className="relative w-full aspect-square mb-4 bg-hos-bg-secondary rounded-lg overflow-hidden cursor-zoom-in group"
-                aria-label="Zoom product image"
-              >
-                <SafeImage
-                  src={typeof product.images[selectedImageIndex] === 'string' ? product.images[selectedImageIndex] : product.images[selectedImageIndex]?.url || product.images[selectedImageIndex]}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-contain rounded-lg transition-transform group-hover:scale-[1.02]"
-                />
-                <span className="absolute bottom-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                  Click to zoom
-                </span>
-              </button>
-            ) : (
-              <div className="w-full aspect-square bg-hos-bg-tertiary rounded-lg flex items-center justify-center">
-                <span className="text-hos-text-muted">No Image</span>
-              </div>
-            )}
-            {product.images && product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {product.images.slice(0, 5).map((image: any, index: number) => {
-                  const imageUrl = typeof image === 'string' ? image : image?.url || image;
-                  const isSelected = index === selectedImageIndex;
-                  return (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => setSelectedImageIndex(index)}
-                      aria-label={`View image ${index + 1}`}
-                      aria-pressed={isSelected}
-                      className={`relative w-full h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                        isSelected ? 'border-hos-gold' : 'border-transparent hover:border-hos-border'
-                      }`}
-                    >
-                      <SafeImage
-                        src={imageUrl}
-                        alt={`${product.name} ${index + 1}`}
-                        fill
-                        sizes="96px"
-                        className="object-cover"
-                      />
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <ProductImageGallery images={product.images} productName={product.name} />
 
           {/* Product Details */}
           <div>
@@ -838,65 +784,6 @@ export default function ProductDetailClient() {
           )}
         </div>
       </main>
-
-      {/* Image lightbox */}
-      {lightboxOpen && product.images && product.images.length > 0 && (
-        <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setLightboxOpen(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Product image zoom"
-        >
-          <button
-            type="button"
-            onClick={() => setLightboxOpen(false)}
-            className="absolute top-4 right-4 text-white text-2xl hover:text-hos-gold z-10"
-            aria-label="Close zoom"
-          >
-            ✕
-          </button>
-          {product.images.length > 1 && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedImageIndex((i) => (i > 0 ? i - 1 : product.images.length - 1));
-              }}
-              className="absolute left-4 text-white text-3xl hover:text-hos-gold z-10"
-              aria-label="Previous image"
-            >
-              ‹
-            </button>
-          )}
-          <div className="relative w-full max-w-4xl aspect-square" onClick={(e) => e.stopPropagation()}>
-            <SafeImage
-              src={
-                typeof product.images[selectedImageIndex] === 'string'
-                  ? product.images[selectedImageIndex]
-                  : product.images[selectedImageIndex]?.url || product.images[selectedImageIndex]
-              }
-              alt={product.name}
-              fill
-              sizes="90vw"
-              className="object-contain"
-            />
-          </div>
-          {product.images.length > 1 && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedImageIndex((i) => (i < product.images.length - 1 ? i + 1 : 0));
-              }}
-              className="absolute right-4 text-white text-3xl hover:text-hos-gold z-10"
-              aria-label="Next image"
-            >
-              ›
-            </button>
-          )}
-        </div>
-      )}
 
       <Footer />
     </div>

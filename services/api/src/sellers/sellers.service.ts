@@ -784,4 +784,76 @@ export class SellersService {
       totalSales: seller.totalSales,
     };
   }
+
+  async submitVerificationDocument(
+    userId: string,
+    data: { documentType: string; fileUrl: string; fileName?: string },
+  ) {
+    const seller = await this.prisma.seller.findUnique({ where: { userId } });
+    if (!seller) throw new NotFoundException('Seller profile not found');
+
+    return this.prisma.sellerVerificationDocument.create({
+      data: {
+        sellerId: seller.id,
+        documentType: data.documentType,
+        fileUrl: data.fileUrl,
+        fileName: data.fileName,
+        status: 'PENDING',
+      },
+    });
+  }
+
+  async listVerificationDocuments(userId: string, role: string) {
+    if (role === 'ADMIN' || role === 'FINANCE') {
+      return this.prisma.sellerVerificationDocument.findMany({
+        include: {
+          seller: { select: { id: true, storeName: true, vendorStatus: true, sellerType: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+      });
+    }
+    const seller = await this.prisma.seller.findUnique({ where: { userId } });
+    if (!seller) throw new NotFoundException('Seller profile not found');
+    return this.prisma.sellerVerificationDocument.findMany({
+      where: { sellerId: seller.id },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async reviewVerificationDocument(
+    documentId: string,
+    reviewerId: string,
+    data: { status: 'APPROVED' | 'REJECTED'; reviewNotes?: string },
+  ) {
+    const doc = await this.prisma.sellerVerificationDocument.findUnique({
+      where: { id: documentId },
+      include: { seller: true },
+    });
+    if (!doc) throw new NotFoundException('Document not found');
+
+    const updated = await this.prisma.sellerVerificationDocument.update({
+      where: { id: documentId },
+      data: {
+        status: data.status,
+        reviewedBy: reviewerId,
+        reviewedAt: new Date(),
+        reviewNotes: data.reviewNotes,
+      },
+    });
+
+    if (data.status === 'APPROVED') {
+      const approvedCount = await this.prisma.sellerVerificationDocument.count({
+        where: { sellerId: doc.sellerId, status: 'APPROVED' },
+      });
+      if (approvedCount >= 1) {
+        await this.prisma.seller.update({
+          where: { id: doc.sellerId },
+          data: { vendorStatus: 'APPROVED', verified: true, approvedAt: new Date(), approvedBy: reviewerId },
+        });
+      }
+    }
+
+    return updated;
+  }
 }

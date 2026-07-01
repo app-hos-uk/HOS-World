@@ -1,10 +1,38 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import * as PDFDocument from 'pdfkit';
 
 @Injectable()
 export class InvoicesService {
-  constructor(private prisma: PrismaService) {}
+  private readonly companyName: string;
+  private readonly companyLegal: string;
+  private readonly companyAddress: string;
+  private readonly companyCity: string;
+  private readonly companyCountry: string;
+  private readonly companyPostal: string;
+  private readonly companyVat: string;
+  private readonly companyReg: string;
+  private readonly companyEmail: string;
+  private readonly companyPhone: string;
+  private readonly companyWebsite: string;
+
+  constructor(
+    private prisma: PrismaService,
+    private config: ConfigService,
+  ) {
+    this.companyName = this.config.get<string>('INVOICE_COMPANY_NAME', 'House of Spells');
+    this.companyLegal = this.config.get<string>('INVOICE_COMPANY_LEGAL', 'House of Spells Ltd.');
+    this.companyAddress = this.config.get<string>('INVOICE_COMPANY_ADDRESS', '42 Diagon Passage');
+    this.companyCity = this.config.get<string>('INVOICE_COMPANY_CITY', 'London');
+    this.companyCountry = this.config.get<string>('INVOICE_COMPANY_COUNTRY', 'United Kingdom');
+    this.companyPostal = this.config.get<string>('INVOICE_COMPANY_POSTAL', 'EC2A 4BX');
+    this.companyVat = this.config.get<string>('INVOICE_COMPANY_VAT', 'GB123456789');
+    this.companyReg = this.config.get<string>('INVOICE_COMPANY_REG', '12345678');
+    this.companyEmail = this.config.get<string>('INVOICE_COMPANY_EMAIL', 'support@houseofspells.co.uk');
+    this.companyPhone = this.config.get<string>('INVOICE_COMPANY_PHONE', '+44 20 7946 0958');
+    this.companyWebsite = this.config.get<string>('INVOICE_COMPANY_WEBSITE', 'https://houseofspells.co.uk');
+  }
 
   async generateInvoicePdf(orderId: string): Promise<Buffer> {
     const order = await this.prisma.order.findUnique({
@@ -13,6 +41,8 @@ export class InvoicesService {
         id: true,
         orderNumber: true,
         status: true,
+        paymentStatus: true,
+        paymentMethod: true,
         currency: true,
         subtotal: true,
         tax: true,
@@ -21,7 +51,7 @@ export class InvoicesService {
         discountAmount: true,
         createdAt: true,
         user: {
-          select: { firstName: true, lastName: true, email: true },
+          select: { firstName: true, lastName: true, email: true, phone: true },
         },
         items: {
           include: {
@@ -77,126 +107,170 @@ export class InvoicesService {
 
       const currency = order.currency || 'USD';
       const currencySymbol =
-        currency === 'USD' ? '$' : currency === 'EUR' ? '€' : currency;
+        currency === 'GBP' ? '£' : currency === 'EUR' ? '€' : currency === 'USD' ? '$' : `${currency} `;
 
-      // Header — HoS branding
-      doc.fontSize(24).font('Helvetica-Bold').text('House of Spells', 50, 50);
-      doc
-        .fontSize(10)
-        .font('Helvetica')
-        .fillColor('#666666')
-        .text('Centralised Multi-Vendor Fandom Ecommerce Platform', 50, 78);
-
-      doc
-        .fontSize(18)
-        .fillColor('#000000')
-        .font('Helvetica-Bold')
-        .text('INVOICE', 400, 50, { align: 'right' });
-
-      // Invoice details
+      const invoiceNumber = `INV-${order.orderNumber}`;
       const invoiceDate = order.createdAt
-        ? new Date(order.createdAt).toLocaleDateString('en-US', {
+        ? new Date(order.createdAt).toLocaleDateString('en-GB', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
           })
         : '';
 
+      // ─── HEADER: Company branding ───
+      doc.fontSize(22).font('Helvetica-Bold').fillColor('#1a1a2e').text(this.companyName, 50, 50);
       doc
-        .fontSize(10)
+        .fontSize(8)
         .font('Helvetica')
-        .fillColor('#333333')
-        .text(`Invoice #: ${order.orderNumber}`, 400, 75, { align: 'right' })
-        .text(`Date: ${invoiceDate}`, 400, 90, { align: 'right' })
-        .text(`Status: ${order.status}`, 400, 105, { align: 'right' });
+        .fillColor('#555555')
+        .text(this.companyLegal, 50, 76)
+        .text(`${this.companyAddress}, ${this.companyCity}, ${this.companyPostal}`, 50, 87)
+        .text(this.companyCountry, 50, 98)
+        .text(`VAT: ${this.companyVat}  |  Reg: ${this.companyReg}`, 50, 109);
 
-      // Divider
-      doc.moveTo(50, 130).lineTo(545, 130).strokeColor('#cccccc').stroke();
+      // ─── HEADER: Invoice title + meta (right-aligned) ───
+      doc
+        .fontSize(20)
+        .fillColor('#1a1a2e')
+        .font('Helvetica-Bold')
+        .text('INVOICE', 400, 50, { align: 'right' });
 
-      // Bill To
-      let yPos = 145;
-      doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000').text('Bill To:', 50, yPos);
-      yPos += 15;
-      const billing = order.billingAddress;
-      if (billing) {
-        doc.font('Helvetica').text(`${billing.firstName} ${billing.lastName}`, 50, yPos);
-        yPos += 13;
-        doc.text(billing.street, 50, yPos);
-        yPos += 13;
-        doc.text(`${billing.city}, ${billing.state || ''} ${billing.postalCode || ''}`, 50, yPos);
-        yPos += 13;
-        doc.text(billing.country, 50, yPos);
-      }
-
-      // Ship To
-      yPos = 145;
-      doc.font('Helvetica-Bold').text('Ship To:', 300, yPos);
-      yPos += 15;
-      const shipping = order.shippingAddress;
-      if (shipping) {
-        doc.font('Helvetica').text(`${shipping.firstName} ${shipping.lastName}`, 300, yPos);
-        yPos += 13;
-        doc.text(shipping.street, 300, yPos);
-        yPos += 13;
-        doc.text(
-          `${shipping.city}, ${shipping.state || ''} ${shipping.postalCode || ''}`,
-          300,
-          yPos,
-        );
-        yPos += 13;
-        doc.text(shipping.country, 300, yPos);
-      }
-
-      // Items table header
-      yPos = Math.max(yPos + 30, 250);
-      doc.moveTo(50, yPos).lineTo(545, yPos).strokeColor('#333333').stroke();
-      yPos += 8;
-
+      const isPaid = (order.paymentStatus || '').toUpperCase() === 'PAID';
       doc
         .fontSize(9)
-        .font('Helvetica-Bold')
-        .text('Item', 50, yPos, { width: 230 })
-        .text('SKU', 280, yPos, { width: 80 })
-        .text('Qty', 360, yPos, { width: 40, align: 'right' })
-        .text('Price', 410, yPos, { width: 60, align: 'right' })
-        .text('Total', 480, yPos, { width: 65, align: 'right' });
+        .font('Helvetica')
+        .fillColor('#333333')
+        .text(`Invoice No: ${invoiceNumber}`, 350, 76, { align: 'right' })
+        .text(`Date: ${invoiceDate}`, 350, 89, { align: 'right' })
+        .text(`Payment: ${order.paymentMethod || 'Card'}`, 350, 102, { align: 'right' });
 
-      yPos += 15;
-      doc.moveTo(50, yPos).lineTo(545, yPos).strokeColor('#cccccc').stroke();
+      if (isPaid) {
+        doc
+          .fontSize(10)
+          .font('Helvetica-Bold')
+          .fillColor('#16a34a')
+          .text('PAID', 350, 116, { align: 'right' });
+      } else {
+        doc
+          .fontSize(10)
+          .font('Helvetica-Bold')
+          .fillColor('#dc2626')
+          .text(order.paymentStatus || 'UNPAID', 350, 116, { align: 'right' });
+      }
+
+      // ─── Divider ───
+      doc.moveTo(50, 135).lineTo(545, 135).strokeColor('#e0e0e0').stroke();
+
+      // ─── Bill To / Ship To ───
+      let yPos = 150;
+
+      doc.fontSize(9).font('Helvetica-Bold').fillColor('#1a1a2e').text('BILL TO', 50, yPos);
+      doc.text('SHIP TO', 300, yPos);
+      yPos += 14;
+
+      doc.font('Helvetica').fillColor('#333333').fontSize(9);
+
+      const billing = order.billingAddress;
+      if (billing) {
+        doc.text(`${billing.firstName} ${billing.lastName}`, 50, yPos);
+        yPos += 12;
+        if (billing.company) {
+          doc.text(billing.company, 50, yPos);
+          yPos += 12;
+        }
+        doc.text(billing.street, 50, yPos);
+        yPos += 12;
+        if (billing.addressLine2) {
+          doc.text(billing.addressLine2, 50, yPos);
+          yPos += 12;
+        }
+        doc.text(`${billing.city}, ${billing.state || ''} ${billing.postalCode || ''}`.trim(), 50, yPos);
+        yPos += 12;
+        doc.text(billing.country, 50, yPos);
+        yPos += 12;
+        if (billing.phone) {
+          doc.text(`Tel: ${billing.phone}`, 50, yPos);
+          yPos += 12;
+        }
+      }
+
+      // Customer email
+      if (order.user?.email) {
+        doc.text(`Email: ${order.user.email}`, 50, yPos);
+        yPos += 12;
+      }
+
+      // Ship To column
+      let yShip = 164;
+      const shipping = order.shippingAddress;
+      if (shipping) {
+        doc.text(`${shipping.firstName} ${shipping.lastName}`, 300, yShip);
+        yShip += 12;
+        if (shipping.company) {
+          doc.text(shipping.company, 300, yShip);
+          yShip += 12;
+        }
+        doc.text(shipping.street, 300, yShip);
+        yShip += 12;
+        if (shipping.addressLine2) {
+          doc.text(shipping.addressLine2, 300, yShip);
+          yShip += 12;
+        }
+        doc.text(`${shipping.city}, ${shipping.state || ''} ${shipping.postalCode || ''}`.trim(), 300, yShip);
+        yShip += 12;
+        doc.text(shipping.country, 300, yShip);
+        yShip += 12;
+        if (shipping.phone) {
+          doc.text(`Tel: ${shipping.phone}`, 300, yShip);
+        }
+      }
+
+      // ─── Items table ───
+      yPos = Math.max(yPos, yShip) + 20;
+      doc.moveTo(50, yPos).lineTo(545, yPos).strokeColor('#1a1a2e').lineWidth(0.75).stroke();
       yPos += 8;
 
-      // Items — handle missing/deleted products gracefully
-      doc.font('Helvetica').fontSize(9);
+      doc
+        .fontSize(8)
+        .font('Helvetica-Bold')
+        .fillColor('#1a1a2e')
+        .text('ITEM', 50, yPos, { width: 210 })
+        .text('SKU', 260, yPos, { width: 70 })
+        .text('QTY', 340, yPos, { width: 40, align: 'right' })
+        .text('UNIT PRICE', 390, yPos, { width: 70, align: 'right' })
+        .text('AMOUNT', 470, yPos, { width: 75, align: 'right' });
+
+      yPos += 14;
+      doc.moveTo(50, yPos).lineTo(545, yPos).strokeColor('#cccccc').lineWidth(0.5).stroke();
+      yPos += 8;
+
+      doc.font('Helvetica').fontSize(9).fillColor('#333333');
+
       for (const item of order.items || []) {
         const itemPrice = Number(item.price) || 0;
         const itemQty = Number(item.quantity) || 0;
         const lineTotal = itemPrice * itemQty;
-        const productName = item.product?.name || item.productName || 'Deleted Product';
+        const productName = item.product?.name || item.productName || 'Product';
         const productSku = item.product?.sku || '—';
 
         doc
-          .text(productName, 50, yPos, { width: 230 })
-          .text(productSku, 280, yPos, { width: 80 })
-          .text(String(itemQty), 360, yPos, { width: 40, align: 'right' })
-          .text(`${currencySymbol}${itemPrice.toFixed(2)}`, 410, yPos, {
-            width: 60,
-            align: 'right',
-          })
-          .text(`${currencySymbol}${lineTotal.toFixed(2)}`, 480, yPos, {
-            width: 65,
-            align: 'right',
-          });
+          .text(productName, 50, yPos, { width: 210 })
+          .text(productSku, 260, yPos, { width: 70 })
+          .text(String(itemQty), 340, yPos, { width: 40, align: 'right' })
+          .text(`${currencySymbol}${itemPrice.toFixed(2)}`, 390, yPos, { width: 70, align: 'right' })
+          .text(`${currencySymbol}${lineTotal.toFixed(2)}`, 470, yPos, { width: 75, align: 'right' });
         yPos += 18;
 
-        if (yPos > 700) {
+        if (yPos > 690) {
           doc.addPage();
           yPos = 50;
         }
       }
 
-      // Totals
+      // ─── Totals ───
       yPos += 10;
-      doc.moveTo(350, yPos).lineTo(545, yPos).strokeColor('#cccccc').stroke();
+      doc.moveTo(340, yPos).lineTo(545, yPos).strokeColor('#cccccc').lineWidth(0.5).stroke();
       yPos += 10;
 
       const subtotal = Number(order.subtotal) || 0;
@@ -204,72 +278,57 @@ export class InvoicesService {
       const discountAmt = Number(order.discountAmount) || 0;
       const taxAmt = Number(order.tax) || 0;
       const totalAmt = Number(order.total) || 0;
+      const taxRate = subtotal > 0 ? ((taxAmt / subtotal) * 100).toFixed(1) : '0.0';
 
+      doc.font('Helvetica').fontSize(9).fillColor('#333333');
       doc
-        .font('Helvetica')
-        .text('Subtotal:', 350, yPos, { width: 120, align: 'right' })
-        .text(`${currencySymbol}${subtotal.toFixed(2)}`, 480, yPos, {
-          width: 65,
-          align: 'right',
-        });
+        .text('Subtotal:', 340, yPos, { width: 120, align: 'right' })
+        .text(`${currencySymbol}${subtotal.toFixed(2)}`, 470, yPos, { width: 75, align: 'right' });
       yPos += 15;
 
       if (shippingAmt > 0) {
         doc
-          .text('Shipping:', 350, yPos, { width: 120, align: 'right' })
-          .text(`${currencySymbol}${shippingAmt.toFixed(2)}`, 480, yPos, {
-            width: 65,
-            align: 'right',
-          });
+          .text('Shipping:', 340, yPos, { width: 120, align: 'right' })
+          .text(`${currencySymbol}${shippingAmt.toFixed(2)}`, 470, yPos, { width: 75, align: 'right' });
         yPos += 15;
       }
 
       if (discountAmt > 0) {
         doc
-          .text('Discount:', 350, yPos, { width: 120, align: 'right' })
-          .text(`-${currencySymbol}${discountAmt.toFixed(2)}`, 480, yPos, {
-            width: 65,
-            align: 'right',
-          });
+          .fillColor('#16a34a')
+          .text('Discount:', 340, yPos, { width: 120, align: 'right' })
+          .text(`-${currencySymbol}${discountAmt.toFixed(2)}`, 470, yPos, { width: 75, align: 'right' });
         yPos += 15;
+        doc.fillColor('#333333');
       }
 
       doc
-        .text('Tax:', 350, yPos, { width: 120, align: 'right' })
-        .text(`${currencySymbol}${taxAmt.toFixed(2)}`, 480, yPos, {
-          width: 65,
-          align: 'right',
-        });
+        .text(`Tax (${taxRate}%):`, 340, yPos, { width: 120, align: 'right' })
+        .text(`${currencySymbol}${taxAmt.toFixed(2)}`, 470, yPos, { width: 75, align: 'right' });
       yPos += 18;
 
-      doc.moveTo(350, yPos).lineTo(545, yPos).strokeColor('#333333').stroke();
+      doc.moveTo(340, yPos).lineTo(545, yPos).strokeColor('#1a1a2e').lineWidth(0.75).stroke();
       yPos += 8;
 
       doc
         .font('Helvetica-Bold')
         .fontSize(11)
-        .text('Total:', 350, yPos, { width: 120, align: 'right' })
-        .text(`${currencySymbol}${totalAmt.toFixed(2)}`, 480, yPos, {
-          width: 65,
-          align: 'right',
-        });
+        .fillColor('#1a1a2e')
+        .text('TOTAL:', 340, yPos, { width: 120, align: 'right' })
+        .text(`${currencySymbol}${totalAmt.toFixed(2)}`, 470, yPos, { width: 75, align: 'right' });
 
-      // Vendor details (visible on invoice per spec — vendors hidden on storefront but shown here)
+      // ─── Vendor details ───
       if (order.childOrders?.length > 0) {
-        yPos += 40;
+        yPos += 35;
         if (yPos > 650) {
           doc.addPage();
           yPos = 50;
         }
 
-        doc
-          .fontSize(10)
-          .font('Helvetica-Bold')
-          .fillColor('#000000')
-          .text('Fulfilled By:', 50, yPos);
-        yPos += 15;
+        doc.fontSize(9).font('Helvetica-Bold').fillColor('#1a1a2e').text('Fulfilled By:', 50, yPos);
+        yPos += 14;
 
-        doc.font('Helvetica').fontSize(9);
+        doc.font('Helvetica').fontSize(8).fillColor('#333333');
         for (const child of order.childOrders) {
           if (child.seller) {
             const vendorName = child.seller.legalBusinessName || child.seller.storeName;
@@ -278,34 +337,62 @@ export class InvoicesService {
                 ? ` (Tax ID: ${child.seller.vatNumber || child.seller.taxId})`
                 : '';
             doc.text(`• ${vendorName}${taxRef}`, 60, yPos);
-            yPos += 13;
+            yPos += 12;
           }
         }
       } else if (order.seller) {
-        yPos += 40;
-        doc.fontSize(10).font('Helvetica-Bold').text('Fulfilled By:', 50, yPos);
-        yPos += 15;
+        yPos += 35;
+        doc.fontSize(9).font('Helvetica-Bold').fillColor('#1a1a2e').text('Fulfilled By:', 50, yPos);
+        yPos += 14;
+        const sellerTax = order.seller.vatNumber || order.seller.taxId;
         doc
           .font('Helvetica')
-          .fontSize(9)
+          .fontSize(8)
+          .fillColor('#333333')
           .text(
-            `${order.seller.legalBusinessName || order.seller.storeName}${
-              order.seller.vatNumber ? ` (VAT: ${order.seller.vatNumber})` : ''
-            }`,
+            `${order.seller.legalBusinessName || order.seller.storeName}${sellerTax ? ` (VAT: ${sellerTax})` : ''}`,
             60,
             yPos,
           );
       }
 
-      // Footer
+      // ─── Footer: Legal & contact ───
+      const footerY = 735;
       doc
-        .fontSize(8)
+        .moveTo(50, footerY)
+        .lineTo(545, footerY)
+        .strokeColor('#e0e0e0')
+        .lineWidth(0.5)
+        .stroke();
+
+      doc
+        .fontSize(7)
         .font('Helvetica')
-        .fillColor('#999999')
-        .text('House of Spells Ltd. — Thank you for your purchase!', 50, 760, {
-          align: 'center',
-          width: 495,
-        });
+        .fillColor('#888888')
+        .text(
+          `${this.companyLegal}  •  Registered in England & Wales No. ${this.companyReg}  •  VAT No. ${this.companyVat}`,
+          50,
+          footerY + 6,
+          { align: 'center', width: 495 },
+        )
+        .text(
+          `${this.companyAddress}, ${this.companyCity}, ${this.companyPostal}, ${this.companyCountry}`,
+          50,
+          footerY + 16,
+          { align: 'center', width: 495 },
+        )
+        .text(
+          `${this.companyEmail}  •  ${this.companyPhone}  •  ${this.companyWebsite}`,
+          50,
+          footerY + 26,
+          { align: 'center', width: 495 },
+        )
+        .text(
+          'Thank you for your purchase! Returns accepted within 30 days — see our Returns Policy for details.',
+          50,
+          footerY + 40,
+          { align: 'center', width: 495 },
+        );
 
       doc.end();
     });

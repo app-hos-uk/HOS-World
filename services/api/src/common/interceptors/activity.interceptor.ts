@@ -116,7 +116,21 @@ export class ActivityInterceptor implements NestInterceptor {
   ): string {
     const action = method === 'POST' ? 'created' : method === 'DELETE' ? 'deleted' : 'updated';
     const idPart = entityId ? ` (ID: ${entityId})` : '';
-    const namePart = body?.name || body?.storeName || body?.title || '';
+
+    const entity = String(entityType).toLowerCase();
+    if (entity.includes('user')) {
+      const email = body?.email || body?.userEmail;
+      const role = body?.role;
+      if (method === 'DELETE') {
+        return `User account${email ? ` ${email}` : ''}${idPart} was deactivated/deleted`;
+      }
+      if (body?.isActive === false || body?.status === 'INACTIVE') {
+        return `User account${email ? ` ${email}` : ''}${idPart} was deactivated`;
+      }
+      return `User account${email ? ` ${email}` : ''}${role ? ` [${role}]` : ''}${idPart} was ${action}`;
+    }
+
+    const namePart = body?.name || body?.storeName || body?.title || body?.orderNumber || '';
     const nameStr = namePart ? ` "${namePart}"` : '';
     return `${entityType}${nameStr}${idPart} was ${action}`;
   }

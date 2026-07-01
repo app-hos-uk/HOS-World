@@ -15,6 +15,13 @@ import { ActivityService } from '../activity/activity.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { OrdersService } from '../orders/orders.service';
 
+interface ReturnTimelineStep {
+  step: string;
+  label: string;
+  at?: Date;
+  completed: boolean;
+}
+
 interface ReturnRequest {
   id: string;
   orderId: string;
@@ -27,6 +34,28 @@ interface ReturnRequest {
   processedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  order?: {
+    id: string;
+    orderNumber?: string;
+    total?: number;
+    currency?: string;
+    paymentStatus?: string;
+  };
+  items?: Array<{
+    id: string;
+    quantity: number;
+    reason?: string;
+    productName?: string;
+  }>;
+  refundTransactions?: Array<{
+    id: string;
+    amount: number;
+    status: string;
+    currency?: string;
+    createdAt: Date;
+    stripeRefundId?: string;
+  }>;
+  timeline?: ReturnTimelineStep[];
 }
 
 @Injectable()
@@ -180,12 +209,16 @@ export class ReturnsService {
     if (role === 'CUSTOMER') {
       where.userId = userId;
     } else if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
-      // Sellers should only see returns for orders assigned to them
       const seller = await this.prisma.seller.findUnique({ where: { userId } });
       if (seller) {
-        where.order = { sellerId: seller.id };
+        where.order = {
+          OR: [
+            { sellerId: seller.id },
+            { childOrders: { some: { sellerId: seller.id } } },
+          ],
+        };
       } else {
-        where.userId = userId; // Fallback: show nothing meaningful
+        where.userId = userId;
       }
     }
     // ADMIN and FINANCE see all returns (no filter)
@@ -231,7 +264,17 @@ export class ReturnsService {
     const returnRequest = await this.prisma.returnRequest.findUnique({
       where: { id },
       include: {
-        order: true,
+        order: {
+          select: {
+            id: true,
+            orderNumber: true,
+            total: true,
+            currency: true,
+            paymentStatus: true,
+            sellerId: true,
+            parentOrderId: true,
+          },
+        },
         items: {
           include: {
             orderItem: {
@@ -247,6 +290,18 @@ export class ReturnsService {
             },
           },
         },
+        transactions: {
+          where: { type: 'REFUND' },
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+            currency: true,
+            createdAt: true,
+            metadata: true,
+          },
+        },
       },
     });
 
@@ -259,7 +314,16 @@ export class ReturnsService {
       throw new ForbiddenException('You do not have permission to view this return');
     } else if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
       const seller = await this.prisma.seller.findUnique({ where: { userId } });
-      if (!seller || returnRequest.order?.sellerId !== seller.id) {
+      const order = returnRequest.order;
+      const isDirectSeller = seller && order?.sellerId === seller.id;
+      let hasChildOrder = false;
+      if (seller && order?.id && !isDirectSeller) {
+        hasChildOrder =
+          (await this.prisma.order.count({
+            where: { parentOrderId: order.id, sellerId: seller.id },
+          })) > 0;
+      }
+      if (!seller || (!isDirectSeller && !hasChildOrder)) {
         throw new ForbiddenException('You do not have permission to view this return');
       }
     }
@@ -488,7 +552,61 @@ export class ReturnsService {
     return Number(returnRequest.order?.total ?? 0);
   }
 
+  private buildReturnTimeline(returnRequest: any): ReturnTimelineStep[] {
+    const status = String(returnRequest.status || '').toUpperCase();
+    const refundTx = returnRequest.transactions?.find(
+      (t: any) => String(t.status).toUpperCase() === 'COMPLETED',
+    );
+    const steps: ReturnTimelineStep[] = [
+      {
+        step: 'REQUESTED',
+        label: 'Return requested',
+        at: returnRequest.createdAt,
+        completed: true,
+      },
+      {
+        step: 'REVIEW',
+        label: 'Under review',
+        at: returnRequest.createdAt,
+        completed: !['PENDING'].includes(status),
+      },
+      {
+        step: 'APPROVED',
+        label: status === 'REJECTED' ? 'Return rejected' : 'Return approved',
+        at: ['APPROVED', 'PROCESSING', 'COMPLETED', 'REFUNDED'].includes(status)
+          ? returnRequest.updatedAt
+          : undefined,
+        completed: ['APPROVED', 'PROCESSING', 'COMPLETED', 'REFUNDED', 'REJECTED'].includes(status),
+      },
+      {
+        step: 'REFUND',
+        label: refundTx ? 'Refund processed' : 'Refund pending',
+        at: refundTx?.createdAt,
+        completed: !!refundTx || status === 'REFUNDED' || status === 'COMPLETED',
+      },
+      {
+        step: 'COMPLETED',
+        label: 'Return completed',
+        at: returnRequest.processedAt || undefined,
+        completed: ['COMPLETED', 'REFUNDED'].includes(status),
+      },
+    ];
+    return steps;
+  }
+
   private mapToReturnType(returnRequest: any): ReturnRequest {
+    const refundTransactions = (returnRequest.transactions || []).map((t: any) => ({
+      id: t.id,
+      amount: Number(t.amount),
+      status: t.status,
+      currency: t.currency,
+      createdAt: t.createdAt,
+      stripeRefundId:
+        (t.metadata as any)?.stripeRefundId ||
+        (t.metadata as any)?.refundId ||
+        undefined,
+    }));
+
     return {
       id: returnRequest.id,
       orderId: returnRequest.orderId,
@@ -501,6 +619,23 @@ export class ReturnsService {
       processedAt: returnRequest.processedAt || undefined,
       createdAt: returnRequest.createdAt,
       updatedAt: returnRequest.updatedAt,
+      order: returnRequest.order
+        ? {
+            id: returnRequest.order.id,
+            orderNumber: returnRequest.order.orderNumber,
+            total: returnRequest.order.total != null ? Number(returnRequest.order.total) : undefined,
+            currency: returnRequest.order.currency,
+            paymentStatus: returnRequest.order.paymentStatus,
+          }
+        : undefined,
+      items: returnRequest.items?.map((ri: any) => ({
+        id: ri.id,
+        quantity: ri.quantity,
+        reason: ri.reason,
+        productName: ri.orderItem?.product?.name,
+      })),
+      refundTransactions,
+      timeline: this.buildReturnTimeline(returnRequest),
     };
   }
 }

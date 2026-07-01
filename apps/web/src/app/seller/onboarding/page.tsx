@@ -9,7 +9,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Image from 'next/image';
 
-type OnboardingStep = 'store-info' | 'location' | 'theme' | 'payment' | 'complete';
+type OnboardingStep = 'store-info' | 'location' | 'theme' | 'verification' | 'payment' | 'complete';
 
 export default function SellerOnboardingPage() {
   const router = useRouter();
@@ -45,6 +45,12 @@ export default function SellerOnboardingPage() {
 
   const [payment, setPayment] = useState({
     stripeConnected: false,
+  });
+
+  const [verification, setVerification] = useState({
+    documentType: 'BUSINESS_LICENSE',
+    fileUrl: '',
+    fileName: '',
   });
 
   useEffect(() => {
@@ -189,9 +195,30 @@ export default function SellerOnboardingPage() {
       setLoading(true);
       await apiClient.updateSellerTheme({ themeId: theme.themeId });
       toast.success('Theme selected');
-      setCurrentStep('payment');
+      setCurrentStep(userRole === 'WHOLESALER' ? 'verification' : 'payment');
     } catch (err: any) {
       toast.error(err?.message || 'Failed to save theme');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerificationSubmit = async () => {
+    if (!verification.fileUrl.trim()) {
+      toast.error('Please provide a document URL');
+      return;
+    }
+    try {
+      setLoading(true);
+      await apiClient.submitVerificationDocument({
+        documentType: verification.documentType,
+        fileUrl: verification.fileUrl.trim(),
+        fileName: verification.fileName.trim() || undefined,
+      });
+      toast.success('Verification document submitted for review');
+      setCurrentStep('payment');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to submit document');
     } finally {
       setLoading(false);
     }
@@ -206,13 +233,19 @@ export default function SellerOnboardingPage() {
     }, 2000);
   };
 
-  const steps: { key: OnboardingStep; title: string; description: string }[] = [
+  const baseSteps: { key: OnboardingStep; title: string; description: string }[] = [
     { key: 'store-info', title: 'Store Information', description: 'Set up your store details' },
     { key: 'location', title: 'Location', description: 'Add your business location' },
     { key: 'theme', title: 'Theme', description: 'Choose your store theme' },
+  ];
+  const wholesalerSteps = userRole === 'WHOLESALER'
+    ? [{ key: 'verification' as const, title: 'Verification', description: 'Upload business documents' }]
+    : [];
+  const tailSteps: { key: OnboardingStep; title: string; description: string }[] = [
     { key: 'payment', title: 'Payment Setup', description: 'Connect payment methods' },
     { key: 'complete', title: 'Complete', description: 'You\'re all set!' },
   ];
+  const steps = [...baseSteps, ...wholesalerSteps, ...tailSteps];
 
   const currentStepIndex = steps.findIndex((s) => s.key === currentStep);
 
@@ -470,6 +503,78 @@ export default function SellerOnboardingPage() {
                 </div>
               )}
 
+              {currentStep === 'verification' && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-2">Business Verification</h2>
+                    <p className="text-hos-text-secondary">
+                      Upload a business license or registration document for admin review
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Document type</label>
+                      <select
+                        value={verification.documentType}
+                        onChange={(e) => setVerification({ ...verification, documentType: e.target.value })}
+                        className="w-full px-4 py-2 bg-hos-bg-tertiary border border-hos-border rounded-lg text-hos-text-secondary"
+                      >
+                        <option value="BUSINESS_LICENSE">Business License</option>
+                        <option value="TAX_REGISTRATION">Tax Registration</option>
+                        <option value="IDENTITY_PROOF">Identity Proof</option>
+                        <option value="OTHER">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">Document URL</label>
+                      <input
+                        type="url"
+                        value={verification.fileUrl}
+                        onChange={(e) => setVerification({ ...verification, fileUrl: e.target.value })}
+                        placeholder="https://example.com/your-document.pdf"
+                        className="w-full px-4 py-2 bg-hos-bg-tertiary border border-hos-border rounded-lg text-hos-text-secondary"
+                      />
+                      <p className="text-xs text-hos-text-muted mt-1">Upload your file to cloud storage and paste the public URL here</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-hos-text-secondary mb-1">File name (optional)</label>
+                      <input
+                        type="text"
+                        value={verification.fileName}
+                        onChange={(e) => setVerification({ ...verification, fileName: e.target.value })}
+                        placeholder="business-license.pdf"
+                        className="w-full px-4 py-2 bg-hos-bg-tertiary border border-hos-border rounded-lg text-hos-text-secondary"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <button
+                      onClick={() => setCurrentStep('theme')}
+                      className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
+                    >
+                      Back
+                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setCurrentStep('payment')}
+                        className="px-6 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
+                      >
+                        Skip for now
+                      </button>
+                      <button
+                        onClick={handleVerificationSubmit}
+                        disabled={loading || !verification.fileUrl.trim()}
+                        className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
+                      >
+                        {loading ? 'Submitting...' : 'Submit & Continue'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {currentStep === 'payment' && (
                 <div className="space-y-6">
                   <div>
@@ -495,7 +600,7 @@ export default function SellerOnboardingPage() {
 
                   <div className="flex justify-between">
                     <button
-                      onClick={() => setCurrentStep('theme')}
+                      onClick={() => setCurrentStep(userRole === 'WHOLESALER' ? 'verification' : 'theme')}
                       className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
                     >
                       Back

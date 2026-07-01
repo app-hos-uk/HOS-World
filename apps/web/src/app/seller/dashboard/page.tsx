@@ -27,6 +27,8 @@ interface SellerDashboardData {
   submissions?: any[];
   submissionsByStatus?: Array<{ status: string; _count: number }>;
   recentOrders?: any[];
+  lowStockCount?: number;
+  lowStockProducts?: Array<{ id: string; name: string; stock: number }>;
 }
 
 export default function SellerDashboardPage() {
@@ -212,39 +214,61 @@ export default function SellerDashboardPage() {
               </div>
             </div>
 
-            {(dashboardData?.salesByMonth?.length || dashboardData?.topProducts?.length) && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                {dashboardData?.salesByMonth && dashboardData.salesByMonth.length > 0 && (
-                  <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
-                    <h2 className="text-xl font-semibold mb-4">Revenue Trends</h2>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <LineChart data={dashboardData.salesByMonth}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                        <YAxis tick={{ fontSize: 11 }} />
-                        <Tooltip formatter={(v: number) => formatPrice(v)} />
-                        <Line type="monotone" dataKey="sales" stroke="#d4a853" strokeWidth={2} dot={false} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-                {dashboardData?.topProducts && dashboardData.topProducts.length > 0 && (
-                  <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
-                    <h2 className="text-xl font-semibold mb-4">Top Products</h2>
-                    <ul className="space-y-3">
-                      {dashboardData.topProducts.slice(0, 5).map((p, i) => (
-                        <li key={p.id} className="flex justify-between items-center text-sm">
-                          <span className="text-hos-text-secondary truncate pr-4">
-                            {i + 1}. {p.name}
-                          </span>
-                          <span className="text-hos-gold font-medium shrink-0">{formatPrice(p.sales)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+            {(dashboardData?.lowStockCount ?? 0) > 0 && (
+              <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <p className="font-medium text-orange-300">
+                    {dashboardData?.lowStockCount} product{(dashboardData?.lowStockCount ?? 0) !== 1 ? 's' : ''} running low on stock
+                  </p>
+                  <p className="text-sm text-hos-text-muted mt-1">
+                    {dashboardData?.lowStockProducts?.slice(0, 3).map((p) => p.name).join(', ')}
+                    {(dashboardData?.lowStockCount ?? 0) > 3 ? '…' : ''}
+                  </p>
+                </div>
+                <Link
+                  href="/seller/products"
+                  className="px-4 py-2 bg-orange-500/20 text-orange-300 rounded-lg hover:bg-orange-500/30 text-sm font-medium shrink-0"
+                >
+                  Manage inventory →
+                </Link>
               </div>
             )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
+                <h2 className="text-xl font-semibold mb-4">Revenue Trends</h2>
+                {dashboardData?.salesByMonth && dashboardData.salesByMonth.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <LineChart data={dashboardData.salesByMonth}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip formatter={(v: number) => formatPrice(v)} />
+                      <Line type="monotone" dataKey="sales" stroke="#d4a853" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-hos-text-muted text-sm py-8 text-center">No sales data yet. Revenue trends will appear after your first paid orders.</p>
+                )}
+              </div>
+              <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
+                <h2 className="text-xl font-semibold mb-4">Top Products</h2>
+                {dashboardData?.topProducts && dashboardData.topProducts.length > 0 ? (
+                  <ul className="space-y-3">
+                    {dashboardData.topProducts.slice(0, 5).map((p, i) => (
+                      <li key={p.id} className="flex justify-between items-center text-sm">
+                        <span className="text-hos-text-secondary truncate pr-4">
+                          {i + 1}. {p.name}
+                        </span>
+                        <span className="text-hos-gold font-medium shrink-0">{formatPrice(p.sales)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-hos-text-muted text-sm py-8 text-center">No product sales yet.</p>
+                )}
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
