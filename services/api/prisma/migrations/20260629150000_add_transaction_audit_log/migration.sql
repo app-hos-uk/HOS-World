@@ -16,7 +16,7 @@ CREATE INDEX IF NOT EXISTS "transaction_audit_logs_createdAt_idx" ON "transactio
 
 ALTER TABLE "transaction_audit_logs"
   ADD CONSTRAINT "transaction_audit_logs_transactionId_fkey"
-  FOREIGN KEY ("transactionId") REFERENCES "transactions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  FOREIGN KEY ("transactionId") REFERENCES "Transaction"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "transaction_audit_logs"
   ADD CONSTRAINT "transaction_audit_logs_changedById_fkey"
