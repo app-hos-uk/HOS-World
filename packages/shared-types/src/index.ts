@@ -229,6 +229,9 @@ export interface Order {
   paymentMethod: string;
   paymentStatus: PaymentStatus;
   trackingCode?: string;
+  carrier?: string;
+  trackingUrl?: string;
+  estimatedDelivery?: Date | string;
   notes?: OrderNote[];
   createdAt: Date;
   updatedAt: Date;

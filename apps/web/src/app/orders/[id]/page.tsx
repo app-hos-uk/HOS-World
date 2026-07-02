@@ -71,6 +71,8 @@ interface Order {
   items?: OrderItem[];
   trackingNumber?: string;
   trackingCode?: string;
+  carrier?: string;
+  trackingUrl?: string;
   estimatedDelivery?: string | Date;
   notes?: OrderNote[];
 }
@@ -388,12 +390,30 @@ export default function OrderDetailPage() {
               {(order.trackingNumber || order.trackingCode) && (
                 <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
                   <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Tracking Information</h2>
-                  <div className="bg-hos-gold/10 rounded-lg p-4">
-                    <p className="text-sm text-hos-text-secondary mb-1">Tracking Number</p>
-                    <p className="font-mono text-lg font-semibold text-hos-gold">{order.trackingNumber || order.trackingCode}</p>
+                  <div className="bg-hos-gold/10 rounded-lg p-4 space-y-3">
+                    {order.carrier && (
+                      <div>
+                        <p className="text-sm text-hos-text-secondary mb-1">Carrier</p>
+                        <p className="font-medium text-hos-text-secondary">{order.carrier}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm text-hos-text-secondary mb-1">Tracking Number</p>
+                      <p className="font-mono text-lg font-semibold text-hos-gold">{order.trackingNumber || order.trackingCode}</p>
+                    </div>
+                    {order.trackingUrl && (
+                      <a
+                        href={order.trackingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block text-sm text-hos-gold hover:text-hos-gold-hover underline"
+                      >
+                        Track shipment
+                      </a>
+                    )}
                     {order.estimatedDelivery && (
-                      <>
-                        <p className="text-sm text-hos-text-secondary mt-3 mb-1">Estimated Delivery</p>
+                      <div>
+                        <p className="text-sm text-hos-text-secondary mb-1">Estimated Delivery</p>
                         <p className="text-hos-text-secondary">
                           {new Date(order.estimatedDelivery).toLocaleDateString('en-US', {
                             day: 'numeric',
@@ -401,11 +421,11 @@ export default function OrderDetailPage() {
                             year: 'numeric',
                           })}
                         </p>
-                      </>
+                      </div>
                     )}
                     <Link
                       href={`/track-order?orderNumber=${order.orderNumber || order.id}`}
-                      className="inline-block mt-4 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors text-sm font-medium"
+                      className="inline-block mt-2 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors text-sm font-medium"
                     >
                       Track Order
                     </Link>

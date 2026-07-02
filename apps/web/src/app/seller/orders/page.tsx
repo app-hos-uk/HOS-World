@@ -54,6 +54,33 @@ interface Order {
   };
   items?: OrderItem[];
   trackingNumber?: string;
+  carrier?: string;
+  trackingUrl?: string;
+  estimatedDelivery?: string;
+}
+
+const SHIPPING_CARRIERS = [
+  'USPS',
+  'UPS',
+  'FedEx',
+  'DHL',
+  'Royal Mail',
+  'Canada Post',
+  'Australia Post',
+  'Other',
+] as const;
+
+function applyShippingFromOrder(order: Order) {
+  const knownCarrier = SHIPPING_CARRIERS.includes((order.carrier || '') as (typeof SHIPPING_CARRIERS)[number]);
+  return {
+    trackingNumber: order.trackingNumber || order.trackingCode || '',
+    carrier: knownCarrier ? order.carrier || '' : order.carrier ? 'Other' : '',
+    customCarrier: knownCarrier ? '' : order.carrier || '',
+    trackingUrl: order.trackingUrl || '',
+    estimatedDelivery: order.estimatedDelivery
+      ? String(order.estimatedDelivery).slice(0, 10)
+      : '',
+  };
 }
 
 export default function SellerOrdersPage() {
@@ -68,6 +95,10 @@ export default function SellerOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState('');
+  const [shippingCarrier, setShippingCarrier] = useState('');
+  const [customCarrier, setCustomCarrier] = useState('');
+  const [trackingUrl, setTrackingUrl] = useState('');
+  const [estimatedDelivery, setEstimatedDelivery] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [deepLinkId, setDeepLinkId] = useState<string | null>(null);
   const [cancellationRequests, setCancellationRequests] = useState<any[]>([]);
@@ -75,6 +106,35 @@ export default function SellerOrdersPage() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+
+  const resolveCarrier = () =>
+    shippingCarrier === 'Other' ? customCarrier.trim() : shippingCarrier.trim();
+
+  const buildShippingPayload = () => {
+    const payload: {
+      trackingCode: string;
+      carrier: string;
+      trackingUrl: string;
+      estimatedDeliveryAt?: string;
+    } = {
+      trackingCode: trackingNumber.trim(),
+      carrier: resolveCarrier(),
+      trackingUrl: trackingUrl.trim(),
+    };
+    if (estimatedDelivery) {
+      payload.estimatedDeliveryAt = `${estimatedDelivery}T12:00:00.000Z`;
+    }
+    return payload;
+  };
+
+  const syncShippingState = (order: Order) => {
+    const shipping = applyShippingFromOrder(order);
+    setTrackingNumber(shipping.trackingNumber);
+    setShippingCarrier(shipping.carrier);
+    setCustomCarrier(shipping.customCarrier);
+    setTrackingUrl(shipping.trackingUrl);
+    setEstimatedDelivery(shipping.estimatedDelivery);
+  };
 
   const menuItems = getSellerMenuItems(false);
 
@@ -167,7 +227,7 @@ export default function SellerOrdersPage() {
       const target = allOrders.find(o => o.id === deepLinkId);
       if (target) {
         setSelectedOrder(target);
-        setTrackingNumber(target.trackingNumber || target.trackingCode || '');
+        syncShippingState(target);
         setShowDetailsModal(true);
         setDeepLinkId(null);
       }
@@ -206,7 +266,7 @@ export default function SellerOrdersPage() {
 
   const openOrderDetails = async (order: Order) => {
     setSelectedOrder(order);
-    setTrackingNumber(order.trackingNumber || order.trackingCode || '');
+    syncShippingState(order);
     setRejectionReason('');
     setShowDetailsModal(true);
     try {
@@ -242,6 +302,39 @@ export default function SellerOrdersPage() {
     }
   };
 
+  const handleSaveShippingDetails = async () => {
+    if (!selectedOrder) return;
+    if (!trackingNumber.trim()) {
+      toast.error('Please enter a tracking number');
+      return;
+    }
+    if (shippingCarrier === 'Other' && !customCarrier.trim()) {
+      toast.error('Please enter the carrier name');
+      return;
+    }
+
+    try {
+      setUpdatingStatus(true);
+      const shipping = buildShippingPayload();
+      await apiClient.updateOrderStatus(selectedOrder.id, selectedOrder.status, shipping);
+      toast.success('Shipping details saved');
+      setSelectedOrder({
+        ...selectedOrder,
+        trackingNumber: shipping.trackingCode,
+        trackingCode: shipping.trackingCode,
+        carrier: shipping.carrier,
+        trackingUrl: shipping.trackingUrl,
+        estimatedDelivery: shipping.estimatedDeliveryAt || undefined,
+      });
+      fetchOrders(statusFilter);
+      fetchAllOrders();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save shipping details');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   const handleStatusUpdate = async (newStatus: string) => {
     if (!selectedOrder) return;
 
@@ -254,12 +347,25 @@ export default function SellerOrdersPage() {
       toast.error('Please enter a tracking number before marking as shipped');
       return;
     }
+    if (normalized === 'SHIPPED' && shippingCarrier === 'Other' && !customCarrier.trim()) {
+      toast.error('Please enter the carrier name before marking as shipped');
+      return;
+    }
     
     try {
       setUpdatingStatus(true);
-      await apiClient.updateOrderStatus(selectedOrder.id, newStatus, trackingNumber || undefined);
+      const shipping = buildShippingPayload();
+      await apiClient.updateOrderStatus(selectedOrder.id, newStatus, shipping);
       toast.success(`Order status updated to ${newStatus}`);
-      setSelectedOrder({ ...selectedOrder, status: newStatus.toLowerCase(), trackingNumber: trackingNumber || selectedOrder.trackingNumber });
+      setSelectedOrder({
+        ...selectedOrder,
+        status: newStatus.toLowerCase(),
+        trackingNumber: shipping.trackingCode,
+        trackingCode: shipping.trackingCode,
+        carrier: shipping.carrier,
+        trackingUrl: shipping.trackingUrl,
+        estimatedDelivery: shipping.estimatedDeliveryAt || undefined,
+      });
       fetchOrders(statusFilter);
       fetchAllOrders();
     } catch (err: any) {
@@ -771,41 +877,89 @@ export default function SellerOrdersPage() {
                   </div>
                 </div>
 
-                {/* Tracking Number */}
-                {(['processing', 'fulfilled', 'shipped', 'delivered', 'confirmed'].includes(selectedOrder.status) || selectedOrder.trackingNumber || selectedOrder.trackingCode) && (
-                  <div className="bg-hos-gold/10 rounded-lg p-4">
-                    <h3 className="font-medium text-hos-text-secondary mb-2">Tracking Information</h3>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={trackingNumber}
-                        onChange={(e) => setTrackingNumber(e.target.value)}
-                        placeholder="Enter tracking number"
-                        className="flex-1 px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
-                      />
-                      <button
-                        onClick={async () => {
-                          if (!trackingNumber.trim()) {
-                            toast.error('Please enter a tracking number');
-                            return;
-                          }
-                          try {
-                            setUpdatingStatus(true);
-                            await apiClient.updateOrderStatus(selectedOrder.id, selectedOrder.status, trackingNumber);
-                            setSelectedOrder({ ...selectedOrder, trackingNumber });
-                            toast.success('Tracking number saved');
-                          } catch (err: any) {
-                            toast.error(err.message || 'Failed to save tracking number');
-                          } finally {
-                            setUpdatingStatus(false);
-                          }
-                        }}
-                        disabled={updatingStatus}
-                        className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm"
-                      >
-                        Save
-                      </button>
+                {/* Shipping details */}
+                {(['processing', 'fulfilled', 'shipped', 'delivered', 'confirmed'].includes(selectedOrder.status) ||
+                  selectedOrder.trackingNumber ||
+                  selectedOrder.trackingCode ||
+                  selectedOrder.carrier) && (
+                  <div className="bg-hos-gold/10 rounded-lg p-4 space-y-4">
+                    <h3 className="font-medium text-hos-text-secondary">Shipping Details</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-hos-text-muted mb-1">
+                          Carrier
+                        </label>
+                        <select
+                          value={shippingCarrier}
+                          onChange={(e) => setShippingCarrier(e.target.value)}
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
+                        >
+                          <option value="">Select carrier</option>
+                          {SHIPPING_CARRIERS.map((carrier) => (
+                            <option key={carrier} value={carrier}>
+                              {carrier}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {shippingCarrier === 'Other' && (
+                        <div>
+                          <label className="block text-xs font-medium text-hos-text-muted mb-1">
+                            Carrier name
+                          </label>
+                          <input
+                            type="text"
+                            value={customCarrier}
+                            onChange={(e) => setCustomCarrier(e.target.value)}
+                            placeholder="Enter carrier name"
+                            className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
+                          />
+                        </div>
+                      )}
+                      <div>
+                        <label className="block text-xs font-medium text-hos-text-muted mb-1">
+                          Tracking number
+                        </label>
+                        <input
+                          type="text"
+                          value={trackingNumber}
+                          onChange={(e) => setTrackingNumber(e.target.value)}
+                          placeholder="Enter tracking number"
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-hos-text-muted mb-1">
+                          Tracking URL (optional)
+                        </label>
+                        <input
+                          type="url"
+                          value={trackingUrl}
+                          onChange={(e) => setTrackingUrl(e.target.value)}
+                          placeholder="https://carrier.com/track/..."
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-hos-text-muted mb-1">
+                          Estimated delivery (optional)
+                        </label>
+                        <input
+                          type="date"
+                          value={estimatedDelivery}
+                          onChange={(e) => setEstimatedDelivery(e.target.value)}
+                          className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
+                        />
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={handleSaveShippingDetails}
+                      disabled={updatingStatus}
+                      className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm"
+                    >
+                      Save shipping details
+                    </button>
                   </div>
                 )}
               </div>

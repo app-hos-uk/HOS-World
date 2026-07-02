@@ -47,6 +47,8 @@ interface Order {
   items?: OrderItem[];
   trackingNumber?: string;
   trackingCode?: string;
+  carrier?: string;
+  trackingUrl?: string;
   estimatedDelivery?: string | Date;
 }
 
@@ -445,13 +447,28 @@ export default function OrdersPage() {
 
                 {/* Tracking Info */}
                 {(selectedOrder.trackingNumber || selectedOrder.trackingCode) && (
-                  <div className="bg-hos-gold/10 rounded-lg p-4">
+                  <div className="bg-hos-gold/10 rounded-lg p-4 space-y-2">
                     <h3 className="font-medium text-hos-text-secondary mb-2">Tracking Information</h3>
+                    {selectedOrder.carrier && (
+                      <p className="text-sm text-hos-text-secondary">
+                        Carrier: <span className="font-medium">{selectedOrder.carrier}</span>
+                      </p>
+                    )}
                     <p className="text-sm text-hos-text-secondary">
                       Tracking Number: <span className="font-mono">{selectedOrder.trackingNumber || selectedOrder.trackingCode}</span>
                     </p>
+                    {selectedOrder.trackingUrl && (
+                      <a
+                        href={selectedOrder.trackingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-hos-gold hover:text-hos-gold-hover underline inline-block"
+                      >
+                        Track shipment
+                      </a>
+                    )}
                     {selectedOrder.estimatedDelivery && (
-                      <p className="text-sm text-hos-text-secondary mt-1">
+                      <p className="text-sm text-hos-text-secondary">
                         Estimated Delivery: {new Date(selectedOrder.estimatedDelivery).toLocaleDateString()}
                       </p>
                     )}

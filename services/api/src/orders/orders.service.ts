@@ -82,7 +82,7 @@ export class OrdersService {
   private assertSellerCanFulfill(
     order: { paymentStatus: string },
     role: string,
-    context: { newStatus?: string; updatingTracking?: boolean },
+    context: { newStatus?: string; updatingShippingDetails?: boolean },
   ): void {
     if (!OrdersService.SELLER_ROLES.has(role)) return;
     if (String(order.paymentStatus).toUpperCase() === 'PAID') return;
@@ -90,7 +90,7 @@ export class OrdersService {
     const movingToFulfillment =
       !!context.newStatus && OrdersService.FULFILLMENT_STATUSES.has(context.newStatus);
 
-    if (movingToFulfillment || context.updatingTracking) {
+    if (movingToFulfillment || context.updatingShippingDetails) {
       throw new BadRequestException(
         'This order has not been paid yet. Fulfillment actions are blocked until payment is completed.',
       );
@@ -145,12 +145,17 @@ export class OrdersService {
     newStatus: string,
     orderNumber: string,
     trackingCode?: string,
+    carrier?: string,
   ): Promise<void> {
     if (!this.notificationsService) return;
 
     switch (newStatus) {
       case 'SHIPPED':
-        await this.notificationsService.sendOrderShipped(orderId, trackingCode || '', 'Carrier');
+        await this.notificationsService.sendOrderShipped(
+          orderId,
+          trackingCode || '',
+          carrier || 'Carrier',
+        );
         break;
       case 'DELIVERED':
         await this.notificationsService.sendOrderDelivered(orderId);
@@ -1456,6 +1461,9 @@ export class OrdersService {
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
       trackingCode: order.trackingCode ?? undefined,
+      carrier: order.carrier ?? undefined,
+      trackingUrl: order.trackingUrl ?? undefined,
+      estimatedDelivery: order.estimatedDeliveryAt ?? undefined,
       storeName: order.seller?.storeName,
       storeSlug: order.seller?.slug,
       items: (order.items || []).map((item: any) => ({
@@ -1608,7 +1616,11 @@ export class OrdersService {
 
     this.assertSellerCanFulfill(order, role, {
       newStatus: normalizedStatus,
-      updatingTracking: updateOrderDto.trackingCode != null && updateOrderDto.trackingCode !== '',
+      updatingShippingDetails:
+        updateOrderDto.trackingCode !== undefined ||
+        updateOrderDto.carrier !== undefined ||
+        updateOrderDto.trackingUrl !== undefined ||
+        updateOrderDto.estimatedDeliveryAt !== undefined,
     });
 
     // paymentStatus must never be set by sellers
@@ -1634,7 +1646,22 @@ export class OrdersService {
       data: {
         status: (normalizedStatus || undefined) as PrismaOrderStatus,
         paymentStatus: paymentStatusUpdate,
-        trackingCode: updateOrderDto.trackingCode,
+        ...(updateOrderDto.trackingCode !== undefined
+          ? { trackingCode: updateOrderDto.trackingCode?.trim() || null }
+          : {}),
+        ...(updateOrderDto.carrier !== undefined
+          ? { carrier: updateOrderDto.carrier?.trim() || null }
+          : {}),
+        ...(updateOrderDto.trackingUrl !== undefined
+          ? { trackingUrl: updateOrderDto.trackingUrl?.trim() || null }
+          : {}),
+        ...(updateOrderDto.estimatedDeliveryAt !== undefined
+          ? {
+              estimatedDeliveryAt: updateOrderDto.estimatedDeliveryAt
+                ? new Date(updateOrderDto.estimatedDeliveryAt)
+                : null,
+            }
+          : {}),
         ...(normalizedStatus === 'DELIVERED' ? { deliveredAt: new Date() } : {}),
       },
       include: {
@@ -1682,7 +1709,8 @@ export class OrdersService {
         order.userId,
         normalizedStatus,
         updated.orderNumber,
-        updateOrderDto.trackingCode || updated.trackingCode || undefined,
+        updateOrderDto.trackingCode ?? updated.trackingCode ?? undefined,
+        updateOrderDto.carrier ?? updated.carrier ?? undefined,
       ).catch((e) => {
         this.logger.warn(`Order status notification failed: ${(e as Error).message}`);
       });
@@ -2481,6 +2509,9 @@ export class OrdersService {
       paymentMethod: order.paymentMethod || undefined,
       paymentStatus: order.paymentStatus.toLowerCase() as PaymentStatus,
       trackingCode: order.trackingCode || undefined,
+      carrier: order.carrier || undefined,
+      trackingUrl: order.trackingUrl || undefined,
+      estimatedDelivery: order.estimatedDeliveryAt || undefined,
       notes:
         (order.notes || [])
           .filter((note: any) => role !== 'CUSTOMER' || !note.internal)

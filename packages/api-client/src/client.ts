@@ -1688,9 +1688,23 @@ export class ApiClient {
     return this.request<ApiResponse<Order>>(`/orders/track/${encodeURIComponent(orderNumber)}`);
   }
 
-  async updateOrderStatus(id: string, status: string, trackingNumber?: string): Promise<ApiResponse<Order>> {
+  async updateOrderStatus(
+    id: string,
+    status: string,
+    shipping?: {
+      trackingCode?: string;
+      carrier?: string;
+      trackingUrl?: string;
+      estimatedDeliveryAt?: string;
+    },
+  ): Promise<ApiResponse<Order>> {
     const body: Record<string, string> = { status: status.toUpperCase() };
-    if (trackingNumber) body.trackingCode = trackingNumber;
+    if (shipping?.trackingCode !== undefined) body.trackingCode = shipping.trackingCode;
+    if (shipping?.carrier !== undefined) body.carrier = shipping.carrier;
+    if (shipping?.trackingUrl !== undefined) body.trackingUrl = shipping.trackingUrl;
+    if (shipping?.estimatedDeliveryAt) {
+      body.estimatedDeliveryAt = shipping.estimatedDeliveryAt;
+    }
     return this.request<ApiResponse<Order>>(`/orders/${id}`, {
       method: 'PUT',
       body: JSON.stringify(body),

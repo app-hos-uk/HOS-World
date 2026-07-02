@@ -138,10 +138,12 @@ export default function AdminShipmentsPage() {
               lastName: o.user?.lastName,
             },
           },
-          carrier: o.carrier || 'Seller',
+          carrier: o.carrier || undefined,
           trackingNumber: o.trackingCode || o.trackingNumber,
+          trackingUrl: o.trackingUrl,
           status: mapStatus(o.status),
           createdAt: o.createdAt,
+          estimatedDelivery: o.estimatedDeliveryAt || o.estimatedDelivery,
           actualDelivery: o.deliveredAt || (String(o.status).toUpperCase() === 'DELIVERED' ? o.updatedAt : undefined),
           updatedAt: o.updatedAt,
         }));

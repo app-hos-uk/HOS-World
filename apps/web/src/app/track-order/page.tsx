@@ -26,6 +26,8 @@ interface Order {
   createdAt: string | Date;
   trackingNumber?: string;
   trackingCode?: string;
+  carrier?: string;
+  trackingUrl?: string;
   estimatedDelivery?: string | Date;
   shippingAddress?: {
     street?: string;
@@ -103,6 +105,9 @@ function TrackOrderContent() {
           currency?: string;
           createdAt: string | Date;
           trackingCode?: string;
+          carrier?: string;
+          trackingUrl?: string;
+          estimatedDelivery?: string | Date;
           items?: Array<{ quantity: number; productName?: string }>;
         };
         setOrder({
@@ -113,6 +118,9 @@ function TrackOrderContent() {
           currency: raw.currency,
           createdAt: raw.createdAt,
           trackingCode: raw.trackingCode,
+          carrier: raw.carrier,
+          trackingUrl: raw.trackingUrl,
+          estimatedDelivery: raw.estimatedDelivery,
           items: (raw.items || []).map((it, idx) => ({
             id: `${raw.orderNumber}-item-${idx}-${it.productName || 'unknown'}`,
             quantity: it.quantity,
@@ -306,7 +314,13 @@ function TrackOrderContent() {
 
             {/* Tracking Number */}
             {(order.trackingNumber || order.trackingCode) && (
-              <div className="bg-hos-gold/10 rounded-lg shadow p-6">
+              <div className="bg-hos-gold/10 rounded-lg shadow p-6 space-y-3">
+                {order.carrier && (
+                  <div>
+                    <h3 className="font-semibold text-hos-text-secondary">Carrier</h3>
+                    <p className="text-hos-text-secondary mt-1">{order.carrier}</p>
+                  </div>
+                )}
                 <div className="flex items-center justify-between flex-wrap gap-4">
                   <div>
                     <h3 className="font-semibold text-hos-text-secondary">Tracking Number</h3>
@@ -322,6 +336,21 @@ function TrackOrderContent() {
                     Copy
                   </button>
                 </div>
+                {order.trackingUrl && (
+                  <a
+                    href={order.trackingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block text-sm text-hos-gold hover:text-hos-gold-hover underline"
+                  >
+                    Open carrier tracking page
+                  </a>
+                )}
+                {order.estimatedDelivery && (
+                  <p className="text-sm text-hos-text-secondary">
+                    Est. Delivery: {new Date(order.estimatedDelivery).toLocaleDateString()}
+                  </p>
+                )}
               </div>
             )}
 
