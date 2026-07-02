@@ -1594,6 +1594,18 @@ export class OrdersService {
       this.validateStatusTransition(order.status, normalizedStatus);
     }
 
+    const isSellerRole = OrdersService.SELLER_ROLES.has(role);
+    if (
+      isSellerRole &&
+      normalizedStatus === 'SHIPPED' &&
+      !updateOrderDto.trackingCode?.trim() &&
+      !order.trackingCode?.trim()
+    ) {
+      throw new BadRequestException(
+        'A tracking number is required before marking an order as shipped',
+      );
+    }
+
     this.assertSellerCanFulfill(order, role, {
       newStatus: normalizedStatus,
       updatingTracking: updateOrderDto.trackingCode != null && updateOrderDto.trackingCode !== '',
@@ -1623,6 +1635,7 @@ export class OrdersService {
         status: (normalizedStatus || undefined) as PrismaOrderStatus,
         paymentStatus: paymentStatusUpdate,
         trackingCode: updateOrderDto.trackingCode,
+        ...(normalizedStatus === 'DELIVERED' ? { deliveredAt: new Date() } : {}),
       },
       include: {
         items: {
@@ -1693,7 +1706,9 @@ export class OrdersService {
             this.validateStatusTransition(child.status || previousStatus, normalizedStatus);
             await this.prisma.order.update({
               where: { id: child.id },
-              data: { status: normalizedStatus as PrismaOrderStatus },
+              data: { status: normalizedStatus as PrismaOrderStatus,
+                ...(normalizedStatus === 'DELIVERED' ? { deliveredAt: new Date() } : {}),
+              },
             });
             await this.prisma.orderNote.create({
               data: {
@@ -2097,6 +2112,8 @@ export class OrdersService {
     // Issue actual Stripe refund for paid orders — only refund the card portion (not gift-card covered amount).
     // Two-phase: attempt Stripe refund first; roll back paymentStatus if it fails.
     let stripeRefundSucceeded = order.paymentStatus !== 'PAID';
+    let stripeRefundId: string | undefined;
+    let cardRefundAmount = 0;
     if (order.paymentStatus === 'PAID' && order.stripePaymentIntentId) {
       const giftCardRedemptions = await this.prisma.giftCardTransaction.findMany({
         where: { orderId: order.id, type: 'REDEMPTION' },
@@ -2106,7 +2123,7 @@ export class OrdersService {
         (sum: number, tx: any) => sum + Number(tx.amount),
         0,
       );
-      const cardRefundAmount = Math.max(0, Number(order.total) - giftCardTotal);
+      cardRefundAmount = Math.max(0, Number(order.total) - giftCardTotal);
 
       stripeRefundSucceeded = false;
       if (cardRefundAmount > 0 && this.paymentProviderService?.isProviderAvailable('stripe')) {
@@ -2119,6 +2136,7 @@ export class OrdersService {
           });
           if (result?.success) {
             stripeRefundSucceeded = true;
+            stripeRefundId = result.refundId;
             this.logger.log(
               `Stripe refund of ${cardRefundAmount} succeeded for cancelled order ${order.orderNumber}`,
             );
@@ -2197,9 +2215,12 @@ export class OrdersService {
           orderId: order.id,
           customerId: order.userId,
           amount: Number(order.total),
+          cardRefundAmount,
           currency: order.currency,
           cancellationRequestId: options?.cancellationRequestId,
           stripeRefundSucceeded,
+          stripeRefundId,
+          sellerId: order.sellerId || undefined,
         });
       } catch (txErr: any) {
         this.logger.error(

@@ -380,6 +380,9 @@ export class TransactionsService implements OnModuleInit {
     const byCustomer: Record<string, { inflow: number; outflow: number }> = {};
 
     for (const tx of transactions) {
+      if (tx.status !== 'COMPLETED') {
+        continue;
+      }
       const amount = Number(tx.amount);
       if (tx.type === 'PAYMENT' || tx.type === 'FEE') {
         totalInflow += amount;

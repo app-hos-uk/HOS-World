@@ -244,6 +244,16 @@ export default function SellerOrdersPage() {
 
   const handleStatusUpdate = async (newStatus: string) => {
     if (!selectedOrder) return;
+
+    const normalized = newStatus.toUpperCase();
+    const hasTracking =
+      Boolean(trackingNumber.trim()) ||
+      Boolean(selectedOrder.trackingNumber?.trim()) ||
+      Boolean(selectedOrder.trackingCode?.trim());
+    if (normalized === 'SHIPPED' && !hasTracking) {
+      toast.error('Please enter a tracking number before marking as shipped');
+      return;
+    }
     
     try {
       setUpdatingStatus(true);
@@ -597,7 +607,12 @@ export default function SellerOrdersPage() {
                     {selectedOrder.status === 'fulfilled' && (
                       <button
                         onClick={() => handleStatusUpdate('SHIPPED')}
-                        disabled={updatingStatus}
+                        disabled={
+                          updatingStatus ||
+                          (!trackingNumber.trim() &&
+                            !selectedOrder.trackingNumber?.trim() &&
+                            !selectedOrder.trackingCode?.trim())
+                        }
                         className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm"
                       >
                         Mark as Shipped

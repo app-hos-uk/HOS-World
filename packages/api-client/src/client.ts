@@ -5036,6 +5036,12 @@ export class ApiClient {
     });
   }
 
+  async retryReturnRefund(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/returns/${id}/retry-refund`, {
+      method: 'PUT',
+    });
+  }
+
   // Payment Providers
   async getPaymentProviders(): Promise<ApiResponse<string[]>> {
     return this.request<ApiResponse<string[]>>('/payments/providers');

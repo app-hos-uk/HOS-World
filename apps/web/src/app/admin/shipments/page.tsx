@@ -88,9 +88,64 @@ export default function AdminShipmentsPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getFulfillmentShipments();
-      const data = response?.data || [];
-      const shipmentList = Array.isArray(data) ? data : [];
+
+      // Customer outbound shipments are tracked on orders (trackingCode + status),
+      // not vendor inbound fulfillment Shipments.
+      let page = 1;
+      let totalPages = 1;
+      const orderList: any[] = [];
+      do {
+        const response = await apiClient.getOrders({ page, limit: 100 });
+        const data = response?.data as any;
+        const orders = Array.isArray(data?.orders)
+          ? data.orders
+          : Array.isArray(data)
+            ? data
+            : [];
+        orderList.push(...orders);
+        totalPages = Math.max(1, data?.pagination?.totalPages ?? 1);
+        page += 1;
+        if (page > 50) break;
+      } while (page <= totalPages);
+
+      const mapStatus = (status: string): Shipment['status'] => {
+        const s = String(status || '').toUpperCase();
+        if (s === 'SHIPPED') return 'IN_TRANSIT';
+        if (s === 'DELIVERED') return 'DELIVERED';
+        if (s === 'REFUNDED') return 'RETURNED';
+        if (s === 'FULFILLED') return 'PACKED';
+        if (s === 'PROCESSING') return 'PICKED';
+        if (s === 'CANCELLED') return 'FAILED';
+        return 'PENDING';
+      };
+
+      const shipmentList: Shipment[] = orderList
+        .filter((o) => !o.parentOrderId)
+        .filter((o) =>
+          ['SHIPPED', 'DELIVERED', 'FULFILLED', 'PROCESSING', 'REFUNDED'].includes(
+            String(o.status || '').toUpperCase(),
+          ),
+        )
+        .map((o) => ({
+          id: o.id,
+          orderId: o.id,
+          order: {
+            id: o.id,
+            orderNumber: o.orderNumber,
+            customer: {
+              email: o.user?.email || o.customer?.email,
+              firstName: o.user?.firstName,
+              lastName: o.user?.lastName,
+            },
+          },
+          carrier: o.carrier || 'Seller',
+          trackingNumber: o.trackingCode || o.trackingNumber,
+          status: mapStatus(o.status),
+          createdAt: o.createdAt,
+          actualDelivery: o.deliveredAt || (String(o.status).toUpperCase() === 'DELIVERED' ? o.updatedAt : undefined),
+          updatedAt: o.updatedAt,
+        }));
+
       setShipments(shipmentList);
       calculateStats(shipmentList);
     } catch (err: any) {

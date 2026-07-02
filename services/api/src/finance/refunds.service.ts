@@ -10,6 +10,8 @@ import { TransactionsService } from './transactions.service';
 import { PaymentProviderService } from '../payments/payment-provider.service';
 import { VendorLedgerService } from '../vendor-ledger/vendor-ledger.service';
 import { DEFAULT_PLATFORM_FEE_RATE } from '../common/platform-config';
+import { ProcessRefundInput, RefundProcessResult } from './refund.types';
+import { RETURN_REFUND_ORDER_INCLUDE } from './refund-order.include';
 
 @Injectable()
 export class RefundsService {
@@ -22,12 +24,7 @@ export class RefundsService {
     @Optional() private vendorLedgerService?: VendorLedgerService,
   ) {}
 
-  async processRefund(data: {
-    returnId: string;
-    amount: number;
-    currency?: string;
-    description?: string;
-  }) {
+  async processRefund(data: ProcessRefundInput): Promise<RefundProcessResult> {
     if (data.amount <= 0) {
       throw new BadRequestException('Refund amount must be greater than zero');
     }
@@ -36,9 +33,7 @@ export class RefundsService {
       where: { id: data.returnId },
       include: {
         order: {
-          include: {
-            seller: { select: { id: true, commissionRate: true } },
-          },
+          include: RETURN_REFUND_ORDER_INCLUDE,
         },
       },
     });
@@ -47,24 +42,29 @@ export class RefundsService {
       throw new NotFoundException('Return request not found');
     }
 
-    // Allow PENDING (called during approval transition) or APPROVED (called after)
-    const allowedStatuses = ['PENDING', 'APPROVED'];
+    const allowedStatuses = data.isRetry
+      ? ['APPROVED', 'PROCESSING']
+      : ['PENDING', 'APPROVED'];
     if (!allowedStatuses.includes(returnRequest.status)) {
-      throw new BadRequestException('Return request must be pending approval or approved before processing refund');
+      throw new BadRequestException(
+        data.isRetry
+          ? 'Return must be approved or processing before retrying a refund'
+          : 'Return request must be pending approval or approved before processing refund',
+      );
     }
 
     if (data.amount > Number(returnRequest.order.total)) {
       throw new BadRequestException('Refund amount cannot exceed order total');
     }
 
-    // Cumulative refund cap: sum all existing COMPLETED refunds for this order
     const existingOrderRefunds = await this.transactionsService.getTransactions({
       orderId: returnRequest.orderId,
       type: 'REFUND',
       status: 'COMPLETED',
     });
     const totalRefundedSoFar = (existingOrderRefunds?.transactions || []).reduce(
-      (sum: number, tx: any) => sum + Number(tx.amount || 0), 0,
+      (sum: number, tx: any) => sum + Number(tx.amount || 0),
+      0,
     );
     if (totalRefundedSoFar + data.amount > Number(returnRequest.order.total)) {
       throw new BadRequestException(
@@ -72,55 +72,79 @@ export class RefundsService {
       );
     }
 
-    const existingRefund = await this.transactionsService.getTransactions({
+    const existingCompleted = await this.transactionsService.getTransactions({
       returnId: data.returnId,
       type: 'REFUND',
       status: 'COMPLETED',
     });
-    if (existingRefund?.transactions?.length > 0) {
+    if (existingCompleted?.transactions?.length > 0) {
       throw new BadRequestException('A refund has already been processed for this return');
     }
+
+    const priorAttempts = await this.transactionsService.getTransactions({
+      returnId: data.returnId,
+      type: 'REFUND',
+    });
+    const priorTxs = priorAttempts?.transactions || [];
+    const hasPending = priorTxs.some((t: any) => t.status === 'PENDING');
+    const hasFailed = priorTxs.some((t: any) => t.status === 'FAILED');
+
+    if (data.isRetry) {
+      if (hasPending) {
+        throw new BadRequestException(
+          'A refund attempt is already in progress for this return',
+        );
+      }
+      if (!hasFailed) {
+        throw new BadRequestException('No failed refund exists to retry');
+      }
+    } else if (hasPending) {
+      throw new BadRequestException('A refund is already being processed for this return');
+    } else if (hasFailed) {
+      throw new BadRequestException(
+        'A prior refund attempt failed. Use retry-refund to re-attempt.',
+      );
+    }
+
+    const retryAttempt = priorTxs.length;
+
+    const sellerId =
+      returnRequest.order.sellerId ||
+      returnRequest.order.childOrders?.[0]?.sellerId ||
+      undefined;
 
     const transaction = await this.transactionsService.createTransaction({
       type: 'REFUND',
       amount: data.amount,
       currency: data.currency || returnRequest.order.currency,
       customerId: returnRequest.userId,
+      sellerId,
       orderId: returnRequest.orderId,
       returnId: data.returnId,
       description: data.description || `Refund for return request ${data.returnId}`,
       status: 'PENDING',
       metadata: {
         returnRequestId: data.returnId,
+        retryAttempt,
+        source: 'return_refund',
       },
     });
 
-    await this.prisma.returnRequest.update({
-      where: { id: data.returnId },
-      data: {
-        refundAmount: data.amount,
-        refundMethod: 'ORIGINAL_PAYMENT',
-      },
-    });
-
-    // Split refund between card and gift-card portions (mirrors cancel logic).
-    // Gift-card redemptions reduce the card-refundable amount.
     const giftCardRedemptions = await this.prisma.giftCardTransaction.findMany({
       where: { orderId: returnRequest.orderId, type: 'REDEMPTION' },
       select: { amount: true, giftCardId: true },
     });
     const giftCardTotal = giftCardRedemptions.reduce(
-      (sum: number, tx: any) => sum + Number(tx.amount), 0,
+      (sum: number, tx: any) => sum + Number(tx.amount),
+      0,
     );
     const orderTotal = Number(returnRequest.order.total);
-    // Proportion of this refund that should go to card vs gift card
-    const cardProportion = orderTotal > 0 ? Math.max(0, orderTotal - giftCardTotal) / orderTotal : 1;
+    const cardProportion =
+      orderTotal > 0 ? Math.max(0, orderTotal - giftCardTotal) / orderTotal : 1;
     const cardRefundAmount = Math.round(data.amount * cardProportion * 100) / 100;
-    const giftCardRefundAmount = data.amount - cardRefundAmount;
+    const giftCardRefundAmount = Math.round((data.amount - cardRefundAmount) * 100) / 100;
 
-    // Reverse gift-card portion back to cards (idempotent, transactional)
     if (giftCardRefundAmount > 0 && giftCardRedemptions.length > 0) {
-      // Check if reversals already exist for this return to ensure idempotency
       const existingReversals = await this.prisma.giftCardTransaction.count({
         where: {
           orderId: returnRequest.orderId,
@@ -154,79 +178,242 @@ export class RefundsService {
           }
         });
         this.logger.log(`Reversed ${giftCardRefundAmount} to gift cards for return ${data.returnId}`);
-      } else {
-        this.logger.log(`Gift-card reversals already exist for return ${data.returnId}, skipping`);
       }
     }
+
+    let stripeRefundSucceeded = false;
+    let stripeError: string | undefined;
+    let stripeRefundId: string | undefined;
 
     const stripePaymentId = returnRequest.order.stripePaymentIntentId;
     if (stripePaymentId && cardRefundAmount > 0 && this.paymentProviderService.isProviderAvailable('stripe')) {
-      try {
-        const provider = this.paymentProviderService.getProvider('stripe');
-        const result = await provider.refundPayment({
-          paymentId: stripePaymentId,
-          amount: cardRefundAmount,
-          metadata: { currency: data.currency || returnRequest.order.currency, returnId: data.returnId },
+      const provider = this.paymentProviderService.getProvider('stripe');
+      const result = await provider.refundPayment({
+        paymentId: stripePaymentId,
+        amount: cardRefundAmount,
+        metadata: {
+          currency: data.currency || returnRequest.order.currency,
+          returnId: data.returnId,
+          retryAttempt: String(retryAttempt),
+        },
+      });
+
+      if (result?.success) {
+        stripeRefundSucceeded = true;
+        stripeRefundId = result.refundId;
+        await this.transactionsService.updateTransactionStatus(transaction.id, 'COMPLETED', {
+          reason: 'Stripe refund succeeded',
         });
-
-        if (result && !result.success) {
-          await this.transactionsService.updateTransactionStatus(transaction.id, 'FAILED');
-          throw new BadRequestException('Payment provider refund was not successful');
-        }
-
-        await this.transactionsService.updateTransactionStatus(transaction.id, 'COMPLETED');
+        await this.prisma.transaction.update({
+          where: { id: transaction.id },
+          data: {
+            metadata: {
+              returnRequestId: data.returnId,
+              retryAttempt,
+              source: 'return_refund',
+              stripeRefundId,
+              cardRefundAmount,
+              giftCardRefundAmount,
+            },
+          },
+        });
+        await this.updatePaymentRefundTotal(returnRequest.orderId, data.amount);
         this.logger.log(`Refund processed via Stripe for return ${data.returnId}`);
-      } catch (error) {
-        if (error instanceof BadRequestException) throw error;
-        this.logger.error(`Stripe refund failed for return ${data.returnId}:`, error);
-        await this.transactionsService.updateTransactionStatus(transaction.id, 'FAILED');
-        throw new BadRequestException('Payment provider refund failed. Please retry.');
+      } else {
+        stripeError = result?.error || 'Payment provider refund was not successful';
+        await this.transactionsService.updateTransactionStatus(transaction.id, 'FAILED', {
+          reason: stripeError,
+        });
       }
     } else if (stripePaymentId && cardRefundAmount > 0) {
-      // Stripe PI exists but provider is temporarily unavailable — do not silently succeed
-      await this.transactionsService.updateTransactionStatus(transaction.id, 'FAILED');
-      throw new BadRequestException(
-        'Payment provider is temporarily unavailable. Refund could not be processed. Please retry later.',
-      );
+      stripeError =
+        'Payment provider is temporarily unavailable. Refund could not be processed. Please retry later.';
+      await this.transactionsService.updateTransactionStatus(transaction.id, 'FAILED', {
+        reason: stripeError,
+      });
     } else if (cardRefundAmount <= 0 || !stripePaymentId) {
-      // No card refund needed (gift-card-only order, or zero card amount) — complete immediately
-      await this.transactionsService.updateTransactionStatus(transaction.id, 'COMPLETED');
-      this.logger.log(`Refund for return ${data.returnId} completed (gift-card only, no Stripe refund needed)`);
+      stripeRefundSucceeded = true;
+      await this.transactionsService.updateTransactionStatus(transaction.id, 'COMPLETED', {
+        reason: 'Gift-card-only or no card charge — refund completed without Stripe',
+      });
+      await this.updatePaymentRefundTotal(returnRequest.orderId, data.amount);
+      this.logger.log(
+        `Refund for return ${data.returnId} completed (no Stripe refund needed)`,
+      );
     } else {
-      await this.transactionsService.updateTransactionStatus(transaction.id, 'PENDING');
-      this.logger.warn(
-        `No payment provider for return ${data.returnId}. Refund marked PENDING for manual processing.`,
+      stripeError = 'No payment provider configured for refund';
+      await this.transactionsService.updateTransactionStatus(transaction.id, 'PENDING', {
+        reason: stripeError,
+      });
+    }
+
+    if (stripeRefundSucceeded) {
+      await this.prisma.returnRequest.update({
+        where: { id: data.returnId },
+        data: {
+          refundAmount: data.amount,
+          refundMethod: 'ORIGINAL_PAYMENT',
+        },
+      });
+      await this.recordVendorLedgerRefunds(returnRequest.order as any, data.amount);
+    }
+
+    const refreshed = await this.transactionsService.getTransactionById(transaction.id);
+
+    return {
+      transaction: refreshed,
+      stripeRefundSucceeded,
+      cardRefundAmount,
+      giftCardRefundAmount,
+      error: stripeError,
+    };
+  }
+
+  async retryReturnRefund(returnId: string): Promise<RefundProcessResult> {
+    const returnRequest = await this.prisma.returnRequest.findUnique({
+      where: { id: returnId },
+      include: {
+        order: {
+          include: RETURN_REFUND_ORDER_INCLUDE,
+        },
+      },
+    });
+    if (!returnRequest) {
+      throw new NotFoundException('Return request not found');
+    }
+    if (!['APPROVED', 'PROCESSING'].includes(returnRequest.status)) {
+      throw new BadRequestException(
+        'Only approved returns with a failed refund can be retried',
       );
     }
 
-    if (this.vendorLedgerService && returnRequest.order.sellerId) {
-      try {
-        const commissionRate = returnRequest.order.seller?.commissionRate
-          ? Number(returnRequest.order.seller.commissionRate)
-          : DEFAULT_PLATFORM_FEE_RATE;
-        await this.vendorLedgerService.recordRefund({
-          sellerId: returnRequest.order.sellerId,
-          orderId: returnRequest.orderId,
-          refundAmount: data.amount,
-          commissionRate,
-        });
-      } catch (err) {
-        this.logger.error(`Failed to record vendor ledger refund: ${err}`);
-      }
+    const priorAttempts = await this.transactionsService.getTransactions({
+      returnId,
+      type: 'REFUND',
+    });
+    const priorTxs = priorAttempts?.transactions || [];
+
+    if (priorTxs.some((t: any) => t.status === 'COMPLETED')) {
+      throw new BadRequestException('Refund already completed for this return');
+    }
+    if (priorTxs.some((t: any) => t.status === 'PENDING')) {
+      throw new BadRequestException('A refund attempt is already in progress for this return');
+    }
+    if (!priorTxs.some((t: any) => t.status === 'FAILED')) {
+      throw new BadRequestException('No failed refund exists to retry');
     }
 
-    return transaction;
+    const amount =
+      returnRequest.refundAmount != null
+        ? Number(returnRequest.refundAmount)
+        : Number(returnRequest.order.total);
+
+    return this.processRefund({
+      returnId,
+      amount,
+      currency: returnRequest.order.currency,
+      description: `Retry refund for return request ${returnId}`,
+      isRetry: true,
+    });
+  }
+
+  private async updatePaymentRefundTotal(orderId: string, amount: number) {
+    const payment = await this.prisma.payment.findFirst({
+      where: { orderId, status: 'PAID' },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!payment) return;
+    const nextRefund = Number(payment.refundAmount || 0) + amount;
+    await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: { refundAmount: nextRefund },
+    });
+  }
+
+  /** Debit vendor ledger using subtotal-proportional amounts (matches recordSale basis). */
+  private async recordVendorLedgerRefunds(
+    order: {
+      id: string;
+      sellerId: string | null;
+      subtotal: unknown;
+      total: unknown;
+      childOrders?: Array<{
+        id: string;
+        sellerId: string | null;
+        subtotal: unknown;
+        seller?: { commissionRate?: unknown } | null;
+      }>;
+    },
+    customerRefundAmount: number,
+  ) {
+    if (!this.vendorLedgerService) return;
+
+    const orderSubtotal = Number(order.subtotal || 0);
+    const orderTotal = Number(order.total || 0);
+    const ledgerBase =
+      orderTotal > 0 && orderSubtotal > 0
+        ? Math.round((customerRefundAmount * orderSubtotal) / orderTotal * 100) / 100
+        : customerRefundAmount;
+
+    const childOrders = order.childOrders || [];
+    if (childOrders.length > 0) {
+      const childSubtotalSum = childOrders.reduce(
+        (sum, c) => sum + Number(c.subtotal || 0),
+        0,
+      );
+      for (const child of childOrders) {
+        if (!child.sellerId) continue;
+        const share =
+          childSubtotalSum > 0
+            ? Math.round((ledgerBase * Number(child.subtotal || 0)) / childSubtotalSum * 100) / 100
+            : ledgerBase / childOrders.length;
+        const commissionRate = child.seller?.commissionRate
+          ? Number(child.seller.commissionRate)
+          : DEFAULT_PLATFORM_FEE_RATE;
+        try {
+          await this.vendorLedgerService.recordRefund({
+            sellerId: child.sellerId,
+            orderId: child.id,
+            refundAmount: share,
+            commissionRate,
+          });
+        } catch (err) {
+          this.logger.error(`Failed vendor ledger refund for child order ${child.id}: ${err}`);
+        }
+      }
+      return;
+    }
+
+    if (!order.sellerId) return;
+    const seller = await this.prisma.seller.findUnique({ where: { id: order.sellerId } });
+    const commissionRate = seller?.commissionRate
+      ? Number(seller.commissionRate)
+      : DEFAULT_PLATFORM_FEE_RATE;
+    try {
+      await this.vendorLedgerService.recordRefund({
+        sellerId: order.sellerId,
+        orderId: order.id,
+        refundAmount: ledgerBase,
+        commissionRate,
+      });
+    } catch (err) {
+      this.logger.error(`Failed to record vendor ledger refund: ${err}`);
+    }
   }
 
   async recordOrderCancellationRefund(data: {
     orderId: string;
     customerId: string;
     amount: number;
+    cardRefundAmount?: number;
     currency?: string;
     cancellationRequestId?: string;
     stripeRefundSucceeded: boolean;
+    stripeRefundId?: string;
+    sellerId?: string;
   }) {
-    if (data.amount <= 0) {
+    const recordedAmount = data.cardRefundAmount ?? data.amount;
+    if (recordedAmount <= 0) {
       return null;
     }
 
@@ -244,11 +431,12 @@ export class RefundsService {
       return null;
     }
 
-    const transaction = await this.transactionsService.createTransaction({
+    return this.transactionsService.createTransaction({
       type: 'REFUND',
-      amount: data.amount,
+      amount: recordedAmount,
       currency: data.currency || 'USD',
       customerId: data.customerId,
+      sellerId: data.sellerId,
       orderId: data.orderId,
       description: data.cancellationRequestId
         ? `Refund for approved cancellation ${data.cancellationRequestId}`
@@ -257,10 +445,10 @@ export class RefundsService {
       metadata: {
         source: 'order_cancellation',
         cancellationRequestId: data.cancellationRequestId,
+        orderTotal: data.amount,
+        stripeRefundId: data.stripeRefundId,
       },
     });
-
-    return transaction;
   }
 
   async getRefunds(filters?: {
@@ -282,7 +470,62 @@ export class RefundsService {
   async updateRefundStatus(
     transactionId: string,
     status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED',
+    options?: { changedById?: string; reason?: string },
   ) {
-    return this.transactionsService.updateTransactionStatus(transactionId, status);
+    return this.transactionsService.updateTransactionStatus(transactionId, status, options);
+  }
+
+  async syncReturnRefundFromWebhook(params: {
+    stripeRefundId: string;
+    paymentIntentId: string;
+    amount: number;
+    status: 'succeeded' | 'failed' | 'pending';
+  }) {
+    const order = await this.prisma.order.findFirst({
+      where: { stripePaymentIntentId: params.paymentIntentId },
+    });
+    if (!order) {
+      this.logger.warn(`No order for refund webhook PI ${params.paymentIntentId}`);
+      return;
+    }
+
+    const txStatus =
+      params.status === 'succeeded'
+        ? 'COMPLETED'
+        : params.status === 'failed'
+          ? 'FAILED'
+          : 'PENDING';
+
+    const existing = await this.prisma.transaction.findMany({
+      where: { orderId: order.id, type: 'REFUND' },
+    });
+    const matched = existing.find(
+      (t) => (t.metadata as any)?.stripeRefundId === params.stripeRefundId,
+    );
+
+    if (matched) {
+      if (matched.status !== txStatus) {
+        await this.transactionsService.updateTransactionStatus(matched.id, txStatus as any, {
+          reason: `Stripe refund webhook (${params.status})`,
+        });
+      }
+      return;
+    }
+
+    await this.transactionsService.createTransaction({
+      type: 'REFUND',
+      amount: params.amount,
+      currency: order.currency,
+      customerId: order.userId,
+      sellerId: order.sellerId || undefined,
+      orderId: order.id,
+      status: txStatus as any,
+      description: `Stripe refund ${params.stripeRefundId}`,
+      metadata: {
+        source: 'stripe_webhook',
+        stripeRefundId: params.stripeRefundId,
+        paymentIntentId: params.paymentIntentId,
+      },
+    });
   }
 }

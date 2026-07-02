@@ -203,12 +203,20 @@ export default function ReturnDetailPage() {
             <div>
               <dt className="text-sm font-medium text-hos-text-muted">Refund transactions</dt>
               <dd className="mt-2 space-y-2">
-                {returnRequest.refundTransactions.map((tx: any) => (
+                {returnRequest.refundTransactions.map((tx: any) => {
+                  const txStatus = String(tx.status || '').toUpperCase();
+                  const statusColor =
+                    txStatus === 'COMPLETED'
+                      ? 'text-green-400'
+                      : txStatus === 'FAILED'
+                        ? 'text-red-400'
+                        : 'text-yellow-400';
+                  return (
                   <div
                     key={tx.id}
                     className="text-sm p-3 rounded-lg bg-hos-bg-tertiary border border-hos-border"
                   >
-                    <p className="font-medium text-green-400">
+                    <p className={`font-medium ${statusColor}`}>
                       {formatPrice(Number(tx.amount), tx.currency || currency)} — {tx.status}
                     </p>
                     <p className="text-xs text-hos-text-muted mt-1">
@@ -216,7 +224,8 @@ export default function ReturnDetailPage() {
                       {tx.stripeRefundId ? ` · Ref: ${tx.stripeRefundId}` : ''}
                     </p>
                   </div>
-                ))}
+                  );
+                })}
               </dd>
             </div>
           )}

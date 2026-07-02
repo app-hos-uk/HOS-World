@@ -36,7 +36,6 @@ const CUSTOMER_REQUESTABLE_STATUSES: OrderStatus[] = [
   'ACCEPTED',
   'CONFIRMED',
   'PROCESSING',
-  'FULFILLED',
 ];
 
 @Injectable()

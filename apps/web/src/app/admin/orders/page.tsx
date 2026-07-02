@@ -193,9 +193,16 @@ export default function AdminOrdersPage() {
       const processingCount = checkoutOrders.filter((o) => st(o) === 'processing').length;
       const shippedCount = checkoutOrders.filter((o) => st(o) === 'shipped').length;
       const completedCount = checkoutOrders.filter((o) => st(o) === 'delivered').length;
-      const cancelledCount = checkoutOrders.filter((o) => ['cancelled', 'refunded'].includes(st(o))).length;
+      const cancelledCount = checkoutOrders.filter((o) =>
+        ['cancelled', 'refunded'].includes(st(o)) ||
+        String(o.paymentStatus || '').toLowerCase() === 'refunded',
+      ).length;
       const totalRevenue = checkoutOrders
-        .filter((o) => !['cancelled', 'refunded'].includes(st(o)))
+        .filter(
+          (o) =>
+            !['cancelled', 'refunded'].includes(st(o)) &&
+            String(o.paymentStatus || '').toLowerCase() !== 'refunded',
+        )
         .reduce((sum: number, o: Order) => sum + (Number(o.total) || 0), 0);
 
       setStats({

@@ -1,20 +1,19 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Optional } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { RefundsService } from '../finance/refunds.service';
+import { RETURN_REFUND_ORDER_INCLUDE } from '../finance/refund-order.include';
 
 @Injectable()
 export class ReturnsEnhancementsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Optional() private refundsService?: RefundsService,
+  ) {}
 
-  /**
-   * Generate return authorization number
-   */
   private generateReturnNumber(): string {
     return `RET-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
   }
 
-  /**
-   * Create return authorization
-   */
   async createReturnAuthorization(returnRequestId: string, notes?: string): Promise<any> {
     const returnRequest = await this.prisma.returnRequest.findUnique({
       where: { id: returnRequestId },
@@ -29,15 +28,12 @@ export class ReturnsEnhancementsService {
       throw new BadRequestException('Return request is not in pending status');
     }
 
-    // Update return request with authorization
     const returnNumber = this.generateReturnNumber();
 
     const updated = await this.prisma.returnRequest.update({
       where: { id: returnRequestId },
       data: {
-        status: 'APPROVED',
         notes: (notes || returnRequest.notes || '') + ` [Return Number: ${returnNumber}]`,
-        // Note: metadata field may not exist in schema - using notes field instead
       },
     });
 
@@ -47,9 +43,6 @@ export class ReturnsEnhancementsService {
     };
   }
 
-  /**
-   * Generate shipping label for return
-   */
   async generateShippingLabel(returnRequestId: string): Promise<any> {
     const returnRequest = await this.prisma.returnRequest.findUnique({
       where: { id: returnRequestId },
@@ -66,41 +59,40 @@ export class ReturnsEnhancementsService {
       throw new NotFoundException('Return request not found');
     }
 
-    if (returnRequest.status !== 'APPROVED') {
-      throw new BadRequestException('Return must be approved before generating label');
+    if (!['APPROVED', 'PROCESSING'].includes(returnRequest.status)) {
+      throw new BadRequestException('Return must be approved before generating a return label');
     }
 
-    // In production, integrate with shipping provider (USPS, FedEx, etc.)
-    // For now, return a mock label URL
     const labelUrl = `https://labels.hos-marketplace.com/returns/${returnRequest.id}`;
+    const trackingNumber = `RTN${returnRequest.id.substring(0, 8).toUpperCase()}`;
 
-    // Note: metadata field may not exist in ReturnRequest schema
-    // Store label info in notes field instead
     await this.prisma.returnRequest.update({
       where: { id: returnRequestId },
       data: {
-        notes: (returnRequest.notes || '') + ` [Shipping Label: ${labelUrl}]`,
+        notes:
+          (returnRequest.notes || '') +
+          ` [Return label: ${labelUrl}, tracking: ${trackingNumber}]`,
       },
     });
 
     return {
       labelUrl,
-      trackingNumber: `RTN${returnRequest.id.substring(0, 8).toUpperCase()}`,
+      trackingNumber,
       instructions: 'Please print and attach this label to your return package.',
     };
   }
 
-  /**
-   * Process return refund
-   */
+  /** Delegates to RefundsService — do not bypass finance/Stripe flows. */
   async processReturnRefund(returnRequestId: string): Promise<any> {
+    if (!this.refundsService) {
+      throw new BadRequestException('Refund service unavailable');
+    }
+
     const returnRequest = await this.prisma.returnRequest.findUnique({
       where: { id: returnRequestId },
       include: {
         order: {
-          include: {
-            payments: true,
-          },
+          include: RETURN_REFUND_ORDER_INCLUDE,
         },
       },
     });
@@ -109,38 +101,52 @@ export class ReturnsEnhancementsService {
       throw new NotFoundException('Return request not found');
     }
 
-    if (returnRequest.status !== 'APPROVED') {
+    if (!['APPROVED', 'PROCESSING'].includes(returnRequest.status)) {
       throw new BadRequestException('Return must be approved before processing refund');
     }
 
-    // Get order total from included order relation
-    const orderTotal = returnRequest.order ? Number(returnRequest.order.total) : 0;
-    const refundAmount = returnRequest.refundAmount || orderTotal;
+    const amount =
+      returnRequest.refundAmount != null
+        ? Number(returnRequest.refundAmount)
+        : Number(returnRequest.order.total);
 
-    // Process refund through payment provider
-    // This is a simplified version - in production, integrate with Stripe
-    const refundId = `refund_${Date.now()}`;
+    const prior = await this.refundsService.getRefunds({ returnId: returnRequestId });
+    const priorTxs = prior?.transactions || [];
+    const isRetry = priorTxs.some((t: any) => t.status === 'FAILED');
 
-    await this.prisma.returnRequest.update({
-      where: { id: returnRequestId },
-      data: {
-        status: 'COMPLETED',
-        processedAt: new Date(),
-        notes: (returnRequest.notes || '') + ` [Refund ID: ${refundId}]`,
-      },
+    const result = await this.refundsService.processRefund({
+      returnId: returnRequestId,
+      amount,
+      currency: returnRequest.order.currency,
+      description: isRetry
+        ? `Retry refund for return request ${returnRequestId}`
+        : `Refund for return request ${returnRequestId}`,
+      isRetry,
     });
+
+    if (result.stripeRefundSucceeded) {
+      await this.prisma.returnRequest.update({
+        where: { id: returnRequestId },
+        data: {
+          status: 'COMPLETED',
+          processedAt: new Date(),
+        },
+      });
+      await this.prisma.order.update({
+        where: { id: returnRequest.orderId },
+        data: { status: 'REFUNDED', paymentStatus: 'REFUNDED' },
+      });
+    }
 
     return {
       returnRequestId,
-      refundAmount,
-      refundId,
-      status: 'completed',
+      refundAmount: amount,
+      status: result.stripeRefundSucceeded ? 'completed' : 'failed',
+      transactionId: result.transaction.id,
+      error: result.error,
     };
   }
 
-  /**
-   * Get return analytics
-   */
   async getReturnAnalytics(sellerId?: string, startDate?: Date, endDate?: Date): Promise<any> {
     const where: any = {};
 
@@ -183,15 +189,13 @@ export class ReturnsEnhancementsService {
       byReason: {} as Record<string, number>,
     };
 
-    // Calculate average
     const returnsWithRefund = returns.filter((r) => r.refundAmount);
     if (returnsWithRefund.length > 0) {
       analytics.averageRefundAmount = analytics.totalRefundAmount / returnsWithRefund.length;
     }
 
-    // Count by reason
     returns.forEach((r) => {
-      const reason = r.reason.substring(0, 50); // Truncate long reasons
+      const reason = r.reason.substring(0, 50);
       analytics.byReason[reason] = (analytics.byReason[reason] || 0) + 1;
     });
 

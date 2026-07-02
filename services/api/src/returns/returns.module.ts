@@ -6,10 +6,12 @@ import { FinanceModule } from '../finance/finance.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ActivityModule } from '../activity/activity.module';
 import { InventoryModule } from '../inventory/inventory.module';
+import { ReturnPoliciesModule } from '../return-policies/return-policies.module';
 
 @Module({
   imports: [
     FinanceModule,
+    ReturnPoliciesModule,
     forwardRef(() => NotificationsModule),
     ActivityModule,
     InventoryModule,

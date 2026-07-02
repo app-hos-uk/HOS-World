@@ -57,10 +57,12 @@ export class RefundsController {
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
   @SwaggerApiResponse({ status: 404, description: 'Return request not found' })
   async processRefund(@Body() body: CreateRefundDto): Promise<ApiResponse<any>> {
-    const refund = await this.refundsService.processRefund(body);
+    const result = await this.refundsService.processRefund(body);
     return {
-      data: refund,
-      message: 'Refund processed successfully',
+      data: result,
+      message: result.stripeRefundSucceeded
+        ? 'Refund processed successfully'
+        : 'Refund recorded but payment provider refund failed — retry or process manually',
     };
   }
 

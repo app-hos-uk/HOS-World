@@ -21,6 +21,7 @@ import { PosInventorySyncService } from '../pos/sync/inventory-sync.service';
 import { MarketingEventBus } from '../journeys/marketing-event.bus';
 import { RedisService } from '../cache/redis.service';
 import { IntegrationsService } from '../integrations/integrations.service';
+import { RefundsService } from '../finance/refunds.service';
 import { DEFAULT_PLATFORM_FEE_RATE } from '../common/platform-config';
 import { Decimal } from '@prisma/client/runtime/library';
 
@@ -45,6 +46,7 @@ export class PaymentsService {
     private marketingBus?: MarketingEventBus,
     @Optional() private redisService?: RedisService,
     @Optional() private integrationsService?: IntegrationsService,
+    @Optional() private refundsService?: RefundsService,
   ) {
     this.logger.log('PaymentsService initialized with payment provider framework');
   }
@@ -620,12 +622,25 @@ export class PaymentsService {
       'charge.dispute.closed',
     ]);
 
+    const REFUND_EVENTS = new Set([
+      'charge.refunded',
+      'refund.created',
+      'refund.updated',
+      'refund.failed',
+    ]);
+
     const isSuccess = SUCCESS_EVENTS.has(event.type);
     const isFailure = FAILURE_EVENTS.has(event.type);
     const isDispute = DISPUTE_EVENTS.has(event.type);
+    const isRefund = REFUND_EVENTS.has(event.type);
 
-    if (!isSuccess && !isFailure && !isDispute) {
+    if (!isSuccess && !isFailure && !isDispute && !isRefund) {
       this.logger.log(`Ignoring unhandled webhook event type: ${event.type}`);
+      return;
+    }
+
+    if (isRefund) {
+      await this.handleRefundWebhook(event);
       return;
     }
 
@@ -738,6 +753,50 @@ export class PaymentsService {
     }
 
     this.logger.log(`Payment failed for order ${order.id} via webhook`);
+  }
+
+  private async handleRefundWebhook(event: any): Promise<void> {
+    const obj = event.data?.object;
+    if (!obj) return;
+
+    const paymentIntentId =
+      obj.payment_intent ||
+      obj.charge?.payment_intent ||
+      (typeof obj.charge === 'string' ? undefined : obj.charge?.payment_intent);
+
+    const refundId = obj.id?.startsWith('re_') ? obj.id : obj.refunds?.data?.[0]?.id;
+    const amountCents = obj.amount_refunded ?? obj.amount ?? 0;
+    const amount = Number(amountCents) / 100;
+    const stripeStatus =
+      obj.status === 'succeeded' || event.type === 'charge.refunded'
+        ? 'succeeded'
+        : obj.status === 'failed' || event.type === 'refund.failed'
+          ? 'failed'
+          : 'pending';
+
+    if (!paymentIntentId || !this.refundsService) {
+      this.logger.warn(`Refund webhook missing PI or RefundsService: ${event.type}`);
+      return;
+    }
+
+    await this.refundsService.syncReturnRefundFromWebhook({
+      stripeRefundId: refundId || `webhook-${event.id}`,
+      paymentIntentId: String(paymentIntentId),
+      amount,
+      status: stripeStatus as 'succeeded' | 'failed' | 'pending',
+    });
+
+    if (stripeStatus === 'succeeded') {
+      const order = await this.prisma.order.findFirst({
+        where: { stripePaymentIntentId: String(paymentIntentId) },
+      });
+      if (order && order.status === 'DELIVERED') {
+        await this.prisma.order.update({
+          where: { id: order.id },
+          data: { status: 'REFUNDED', paymentStatus: 'REFUNDED' },
+        });
+      }
+    }
   }
 
   /**

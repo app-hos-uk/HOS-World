@@ -201,8 +201,10 @@ export class ReturnPoliciesService {
       throw new NotFoundException('Order not found');
     }
 
-    // Check if order is within return window
-    const deliveryDate = order.createdAt; // Use createdAt as delivery date
+    // Use delivery timestamp when available; fall back to order update time for legacy rows.
+    const deliveryDate =
+      (order as any).deliveredAt ||
+      (order.status === 'DELIVERED' ? order.updatedAt : order.createdAt);
     const daysSinceDelivery = Math.floor(
       (Date.now() - deliveryDate.getTime()) / (1000 * 60 * 60 * 24),
     );

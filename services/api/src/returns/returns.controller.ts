@@ -117,6 +117,29 @@ export class ReturnsController {
   }
 
   @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'FINANCE')
+  @Put(':id/retry-refund')
+  @ApiOperation({
+    summary: 'Retry failed return refund (Admin/Finance)',
+    description: 'Re-attempts Stripe refund for an approved return whose prior refund failed.',
+  })
+  @ApiParam({ name: 'id', description: 'Return request UUID', type: String })
+  async retryRefund(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiResponse<any>> {
+    const returnRequest = await this.returnsService.retryReturnRefund(
+      id,
+      req.user.id,
+      req.user.role,
+    );
+    return {
+      data: returnRequest,
+      message: 'Refund retry processed',
+    };
+  }
+
+  @UseGuards(RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
   @Put(':id/status')
   @ApiOperation({

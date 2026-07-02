@@ -14,6 +14,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { ActivityService } from '../activity/activity.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { OrdersService } from '../orders/orders.service';
+import { ReturnPoliciesService } from '../return-policies/return-policies.service';
 
 interface ReturnTimelineStep {
   step: string;
@@ -65,6 +66,7 @@ export class ReturnsService {
   constructor(
     private prisma: PrismaService,
     private refundsService: RefundsService,
+    private returnPoliciesService: ReturnPoliciesService,
     private moduleRef: ModuleRef,
     @Optional() private notificationsService?: NotificationsService,
     @Optional() private activityService?: ActivityService,
@@ -95,10 +97,21 @@ export class ReturnsService {
       throw new NotFoundException('Order not found');
     }
 
-    // Check if order is eligible for return (e.g., delivered, not already returned)
+    // Check if order is eligible for return (must be delivered)
     if (order.status !== 'DELIVERED') {
       throw new BadRequestException('Order must be delivered to request a return');
     }
+
+    const eligibility = await this.returnPoliciesService.checkReturnEligibility(
+      createReturnDto.orderId,
+      createReturnDto.items?.[0]
+        ? order.items.find((i) => i.id === createReturnDto.items![0].orderItemId)?.productId
+        : order.items[0]?.productId,
+    );
+    if (!eligibility.eligible) {
+      throw new BadRequestException(eligibility.reason || 'Return is not allowed for this order');
+    }
+    const applicablePolicyId = eligibility.policy?.id;
 
     // If item-level returns are specified, validate them
     if (createReturnDto.items && createReturnDto.items.length > 0) {
@@ -131,15 +144,16 @@ export class ReturnsService {
         }
       }
     } else {
-      // Full order return - check if return already exists
+      // Full order return - block only active return requests
       const existingReturn = await this.prisma.returnRequest.findFirst({
         where: {
           orderId: createReturnDto.orderId,
+          status: { in: ['PENDING', 'APPROVED', 'PROCESSING'] },
         },
       });
 
       if (existingReturn) {
-        throw new BadRequestException('Return request already exists for this order');
+        throw new BadRequestException('An active return request already exists for this order');
       }
     }
 
@@ -151,6 +165,7 @@ export class ReturnsService {
         reason: createReturnDto.reason,
         notes: createReturnDto.notes,
         status: 'PENDING',
+        returnPolicyId: applicablePolicyId,
         items: createReturnDto.items
           ? {
               create: createReturnDto.items.map((item) => ({
@@ -382,50 +397,64 @@ export class ReturnsService {
       );
     }
 
-    // For APPROVED status, process the refund BEFORE committing the status change.
-    // This prevents the return being marked APPROVED when the refund actually failed.
+    // For APPROVED status, attempt refund then persist approval (mirrors cancellation flow).
     if (newStatus === 'APPROVED') {
       const maxRefundable = this.calculateReturnRefundAmount(returnRequest);
-      const amount = Math.min(refundAmount ?? maxRefundable, maxRefundable);
+      let amount = Math.min(refundAmount ?? maxRefundable, maxRefundable);
+
+      const policy = returnRequest.order
+        ? await this.returnPoliciesService.getApplicablePolicy(
+            returnRequest.order.items[0]?.productId || '',
+            returnRequest.order.sellerId || undefined,
+          )
+        : null;
+      if (policy?.restockingFee) {
+        amount = Math.max(0, Math.round((amount - Number(policy.restockingFee)) * 100) / 100);
+      }
       if (amount <= 0) {
         throw new BadRequestException('No refundable amount for the returned items');
       }
-      try {
-        await this.refundsService.processRefund({
-          returnId: id,
-          amount,
-          currency: returnRequest.order.currency,
-          description: `Refund for return request ${id}`,
-        });
-      } catch (err) {
-        this.logger.error(`Stripe refund failed for return ${id}: ${(err as Error).message}`);
-        throw err instanceof BadRequestException ? err : new BadRequestException(
-          'Refund processing failed. Return has NOT been approved. Please retry.',
-        );
-      }
 
-      // Refund succeeded — now persist APPROVED status and mark order as refunded
+      const refundResult = await this.refundsService.processRefund({
+        returnId: id,
+        amount,
+        currency: returnRequest.order.currency,
+        description: `Refund for return request ${id}`,
+      });
+
+      const refundSucceeded = refundResult.stripeRefundSucceeded;
+
       await this.prisma.$transaction(async (tx) => {
         await tx.returnRequest.update({
           where: { id },
           data: {
             status: 'APPROVED' as any,
             refundAmount: amount,
-            refundMethod,
+            refundMethod: refundMethod || 'ORIGINAL_PAYMENT',
+            notes: refundSucceeded
+              ? returnRequest.notes
+              : [
+                  returnRequest.notes || '',
+                  `[Refund pending: ${refundResult.error || 'Stripe refund failed — manual retry required'}]`,
+                ]
+                  .filter(Boolean)
+                  .join(' '),
           },
         });
-        await tx.order.update({
-          where: { id: returnRequest.orderId },
-          data: { paymentStatus: 'REFUNDED' },
-        });
+
+        if (refundSucceeded) {
+          await this.markOrderRefundedInTx(tx, returnRequest.orderId);
+        }
       });
 
-      try {
-        await this.getOrdersService().reverseInfluencerAttribution(returnRequest.orderId);
-      } catch (commErr) {
-        this.logger.error(
-          `Influencer attribution reversal failed for refunded order ${returnRequest.orderId}: ${(commErr as Error).message}`,
-        );
+      if (refundSucceeded) {
+        try {
+          await this.getOrdersService().reverseInfluencerAttribution(returnRequest.orderId);
+        } catch (commErr) {
+          this.logger.error(
+            `Influencer attribution reversal failed for refunded order ${returnRequest.orderId}: ${(commErr as Error).message}`,
+          );
+        }
       }
 
       this.activityService?.createLog({
@@ -434,16 +463,18 @@ export class ReturnsService {
         entityType: 'ReturnRequest',
         entityId: id,
         description: `Return approved for order ${returnRequest.order.orderNumber || returnRequest.orderId}`,
-        metadata: { refundAmount: amount },
+        metadata: { refundAmount: amount, refundSucceeded },
       }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
       if (this.notificationsService) {
         this.notificationsService.sendNotificationToUser(
           returnRequest.userId,
           'RETURN_APPROVED',
-          'Return approved',
-          `Your return for order ${returnRequest.order.orderNumber || returnRequest.orderId} has been approved. Refund is being processed.`,
-          { returnId: id },
+          refundSucceeded ? 'Return approved' : 'Return approved — refund pending',
+          refundSucceeded
+            ? `Your return for order ${returnRequest.order.orderNumber || returnRequest.orderId} has been approved. Your refund is being processed.`
+            : `Your return for order ${returnRequest.order.orderNumber || returnRequest.orderId} was approved, but the automatic refund could not be completed. Our team will process it shortly.`,
+          { returnId: id, refundSucceeded },
         ).catch((e) => this.logger.warn(`Return approval notification failed: ${(e as Error).message}`));
       }
 
@@ -464,25 +495,8 @@ export class ReturnsService {
       });
 
       if (newStatus === 'COMPLETED' && returnRequest.order) {
-        const returnItems = (returnRequest as any).items;
-        if (returnItems && returnItems.length > 0) {
-          for (const ri of returnItems) {
-            const orderItem = returnRequest.order.items.find((oi: any) => oi.id === ri.orderItemId);
-            if (orderItem) {
-              await tx.product.update({
-                where: { id: orderItem.productId },
-                data: { stock: { increment: ri.quantity } },
-              });
-            }
-          }
-        } else {
-          for (const item of returnRequest.order.items) {
-            await tx.product.update({
-              where: { id: item.productId },
-              data: { stock: { increment: item.quantity } },
-            });
-          }
-        }
+        await this.applyRestockForReturn(tx, returnRequest);
+        await this.markOrderRefundedInTx(tx, returnRequest.orderId);
       }
 
       return result;
@@ -522,6 +536,114 @@ export class ReturnsService {
     return this.mapToReturnType(updated);
   }
 
+  async retryReturnRefund(
+    id: string,
+    userId?: string,
+    role?: string,
+  ): Promise<ReturnRequest> {
+    const returnRequest = await this.prisma.returnRequest.findUnique({
+      where: { id },
+      include: { order: true },
+    });
+    if (!returnRequest) {
+      throw new NotFoundException('Return request not found');
+    }
+    if (role && role !== 'ADMIN' && role !== 'FINANCE') {
+      throw new ForbiddenException('Only admin or finance can retry refunds');
+    }
+
+    const refundResult = await this.refundsService.retryReturnRefund(id);
+
+    if (refundResult.stripeRefundSucceeded) {
+      await this.prisma.$transaction(async (tx) => {
+        await this.markOrderRefundedInTx(tx, returnRequest.orderId);
+      });
+      try {
+        await this.getOrdersService().reverseInfluencerAttribution(returnRequest.orderId);
+      } catch (commErr) {
+        this.logger.error(
+          `Influencer reversal on retry failed for order ${returnRequest.orderId}: ${(commErr as Error).message}`,
+        );
+      }
+    }
+
+    this.activityService?.createLog({
+      userId: userId || returnRequest.userId,
+      action: 'RETURN_REFUND_RETRY',
+      entityType: 'ReturnRequest',
+      entityId: id,
+      description: `Refund retry for return ${id}: ${refundResult.stripeRefundSucceeded ? 'succeeded' : 'failed'}`,
+      metadata: { refundSucceeded: refundResult.stripeRefundSucceeded, error: refundResult.error },
+    }).catch(() => {});
+
+    const updated = await this.prisma.returnRequest.findUnique({ where: { id } });
+    return this.mapToReturnType(updated);
+  }
+
+  private async markOrderRefundedInTx(tx: any, orderId: string) {
+    await tx.order.update({
+      where: { id: orderId },
+      data: {
+        status: 'REFUNDED',
+        paymentStatus: 'REFUNDED',
+      },
+    });
+    await tx.order.updateMany({
+      where: { parentOrderId: orderId },
+      data: {
+        status: 'REFUNDED',
+        paymentStatus: 'REFUNDED',
+      },
+    });
+  }
+
+  private async applyRestockForReturn(tx: any, returnRequest: any) {
+    const returnItems = returnRequest.items;
+    if (returnItems && returnItems.length > 0) {
+      for (const ri of returnItems) {
+        const orderItem = returnRequest.order.items.find((oi: any) => oi.id === ri.orderItemId);
+        if (orderItem) {
+          await tx.product.update({
+            where: { id: orderItem.productId },
+            data: { stock: { increment: ri.quantity } },
+          });
+          if (returnRequest.order.sellerId) {
+            const vp = await tx.vendorProduct.findFirst({
+              where: {
+                productId: orderItem.productId,
+                sellerId: returnRequest.order.sellerId,
+              },
+            });
+            if (vp) {
+              await tx.vendorProduct.update({
+                where: { id: vp.id },
+                data: { vendorStock: { increment: ri.quantity } },
+              });
+            }
+          }
+        }
+      }
+    } else {
+      for (const item of returnRequest.order.items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { stock: { increment: item.quantity } },
+        });
+        if (returnRequest.order.sellerId) {
+          const vp = await tx.vendorProduct.findFirst({
+            where: { productId: item.productId, sellerId: returnRequest.order.sellerId },
+          });
+          if (vp) {
+            await tx.vendorProduct.update({
+              where: { id: vp.id },
+              data: { vendorStock: { increment: item.quantity } },
+            });
+          }
+        }
+      }
+    }
+  }
+
   private calculateReturnRefundAmount(returnRequest: any): number {
     const returnItems = returnRequest.items;
     if (returnItems && returnItems.length > 0) {
@@ -544,7 +666,9 @@ export class ReturnsService {
         // Add proportional tax and shipping
         const proportion = itemsTotal / orderItemsTotal;
         const tax = Number(returnRequest.order?.tax || 0) * proportion;
-        const shipping = Number(returnRequest.order?.shippingCost || 0) * proportion;
+        const shipping =
+          Number(returnRequest.order?.shippingAmount ?? returnRequest.order?.shippingCost ?? 0) *
+          proportion;
         return Math.round((itemsTotal + tax + shipping) * 100) / 100;
       }
       if (itemsTotal > 0) return itemsTotal;
@@ -556,6 +680,9 @@ export class ReturnsService {
     const status = String(returnRequest.status || '').toUpperCase();
     const refundTx = returnRequest.transactions?.find(
       (t: any) => String(t.status).toUpperCase() === 'COMPLETED',
+    );
+    const failedRefundTx = returnRequest.transactions?.find(
+      (t: any) => String(t.status).toUpperCase() === 'FAILED',
     );
     const steps: ReturnTimelineStep[] = [
       {
@@ -580,8 +707,12 @@ export class ReturnsService {
       },
       {
         step: 'REFUND',
-        label: refundTx ? 'Refund processed' : 'Refund pending',
-        at: refundTx?.createdAt,
+        label: failedRefundTx
+          ? 'Refund failed — retry required'
+          : refundTx
+            ? 'Refund processed'
+            : 'Refund pending',
+        at: refundTx?.createdAt || failedRefundTx?.createdAt,
         completed: !!refundTx || status === 'REFUNDED' || status === 'COMPLETED',
       },
       {

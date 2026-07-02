@@ -11,6 +11,7 @@ import { StripeConnectService } from './stripe-connect/stripe-connect.service';
 import { StripeConnectController } from './stripe-connect/stripe-connect.controller';
 import { VendorLedgerModule } from '../vendor-ledger/vendor-ledger.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { FinanceModule } from '../finance/finance.module';
 import { CacheModule } from '../cache/cache.module';
 
 @Module({
@@ -19,6 +20,7 @@ import { CacheModule } from '../cache/cache.module';
     CurrencyModule,
     PaymentProviderModule,
     CacheModule,
+    FinanceModule,
     VendorLedgerModule,
     NotificationsModule,
     forwardRef(() => LoyaltyModule),

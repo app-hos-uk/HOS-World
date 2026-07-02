@@ -249,6 +249,28 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
                           Complete
                         </button>
                       )}
+                      {mode === 'admin' &&
+                        ['approved', 'processing'].includes(row.status) && (
+                          <button
+                            type="button"
+                            disabled={actionLoading === row.id}
+                            onClick={async () => {
+                              try {
+                                setActionLoading(row.id);
+                                await apiClient.retryReturnRefund(row.id);
+                                toast.success('Refund retry submitted');
+                                fetchReturns();
+                              } catch (err: any) {
+                                toast.error(err.message || 'Refund retry failed');
+                              } finally {
+                                setActionLoading(null);
+                              }
+                            }}
+                            className="text-orange-400 text-xs font-medium disabled:opacity-50"
+                          >
+                            Retry refund
+                          </button>
+                        )}
                     </div>
                   </td>
                 </tr>

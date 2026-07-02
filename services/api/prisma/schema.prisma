@@ -895,6 +895,7 @@ model Order {
   paymentMethod     String?
   paymentStatus     PaymentStatus @default(PENDING)
   trackingCode      String?
+  deliveredAt       DateTime?
 
   // Parent/child order support for multi-vendor checkout
   parentOrderId    String?
