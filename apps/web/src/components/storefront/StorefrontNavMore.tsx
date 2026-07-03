@@ -1,27 +1,70 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { STOREFRONT_NAV_MORE } from '@/lib/storefrontNavigation';
 
 export function StorefrontNavMore() {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const updateMenuPosition = useCallback(() => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    setMenuPosition({ top: rect.bottom + 8, left: rect.left });
+  }, []);
 
   useEffect(() => {
     if (!open) return;
+    updateMenuPosition();
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (buttonRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [open]);
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [open, updateMenuPosition]);
+
+  const menuMarkup =
+    open && typeof document !== 'undefined' ? (
+      <div
+        ref={menuRef}
+        role="menu"
+        className="fixed z-[60] min-w-[200px] rounded-lg border border-hos-border bg-hos-bg shadow-xl py-2"
+        style={{ top: menuPosition.top, left: menuPosition.left }}
+      >
+        {STOREFRONT_NAV_MORE.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-2 text-sm text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-secondary transition-colors"
+          >
+            {item.label}
+          </Link>
+        ))}
+      </div>
+    ) : null;
 
   return (
-    <div className="relative shrink-0" ref={ref}>
+    <div className="relative shrink-0" ref={buttonRef}>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (!open) updateMenuPosition();
+          setOpen((v) => !v);
+        }}
         className="inline-flex items-center gap-1 text-hos-text-secondary text-sm hover:text-hos-gold transition-colors duration-200 whitespace-nowrap"
         aria-expanded={open}
         aria-haspopup="true"
@@ -31,20 +74,7 @@ export function StorefrontNavMore() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      {open ? (
-        <div className="absolute left-0 top-full mt-2 z-50 min-w-[200px] rounded-lg border border-hos-border bg-hos-bg shadow-lg py-2">
-          {STOREFRONT_NAV_MORE.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setOpen(false)}
-              className="block px-4 py-2 text-sm text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-secondary transition-colors"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      ) : null}
+      {menuMarkup ? createPortal(menuMarkup, document.body) : null}
     </div>
   );
 }
