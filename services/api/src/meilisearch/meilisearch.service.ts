@@ -43,6 +43,10 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
   private indexingTimeout: NodeJS.Timeout | null = null;
   private readonly BATCH_SIZE = 100;
   private readonly BATCH_DELAY_MS = 500;
+  // Guards for the self-healing auto re-index triggered when the index is found empty/stale.
+  private autoReindexInFlight = false;
+  private lastAutoReindexAt = 0;
+  private readonly AUTO_REINDEX_COOLDOWN_MS = 5 * 60 * 1000;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -553,10 +557,27 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
 
     try {
       const result = await this.productsIndex!.search(query || '', searchParams);
+      const total = result.estimatedTotalHits ?? result.totalHits ?? result.hits.length;
+
+      // Resilience: an available index can still return nothing if it is empty or stale
+      // (e.g. Meilisearch was redeployed/reset, or products were never synced). Since this
+      // does not throw, the normal catch-based fallback never fires and the storefront goes
+      // blank while admin (DB-backed) listings keep working. Verify against the database and,
+      // if it has matching products, serve those and schedule a background re-index to self-heal.
+      if (total === 0 && result.hits.length === 0) {
+        const fallback = await this.fallbackSearch(query, filters);
+        if (fallback.total > 0) {
+          this.logger.warn(
+            'Meilisearch returned no results but the database has matching products — serving DB fallback and scheduling re-index',
+          );
+          this.scheduleAutoReindex();
+          return fallback;
+        }
+      }
 
       return {
         hits: result.hits,
-        total: result.estimatedTotalHits ?? result.totalHits ?? result.hits.length,
+        total,
         processingTimeMs: result.processingTimeMs,
         facetDistribution: result.facetDistribution,
         query: result.query,
@@ -565,6 +586,27 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       this.logger.error(`Search error: ${error.message}`);
       return this.fallbackSearch(query, filters);
     }
+  }
+
+  /**
+   * Background, cooldown-guarded full re-index used to self-heal an empty/stale index
+   * without blocking the search request that detected the problem.
+   */
+  private scheduleAutoReindex(): void {
+    if (!this.isAvailable() || this.autoReindexInFlight) return;
+    const now = Date.now();
+    if (now - this.lastAutoReindexAt < this.AUTO_REINDEX_COOLDOWN_MS) return;
+
+    this.autoReindexInFlight = true;
+    this.lastAutoReindexAt = now;
+    void this.syncAllProducts()
+      .then((r) =>
+        this.logger.log(`Auto re-index complete: ${r.indexed} indexed, ${r.failed} failed`),
+      )
+      .catch((e) => this.logger.error(`Auto re-index failed: ${e.message}`))
+      .finally(() => {
+        this.autoReindexInFlight = false;
+      });
   }
 
   /**
@@ -783,7 +825,13 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     if (skip > maxFallbackDepth) {
       return { hits: [], total: 0, processingTimeMs: 0, query: query || '' };
     }
-    const [products, total] = await Promise.all([
+    // Facets are computed ignoring the selected category/fandom so the sidebar keeps
+    // showing all switchable options (mirrors Meilisearch's baseline facet behaviour).
+    const facetWhere: any = { ...where };
+    delete facetWhere.category;
+    delete facetWhere.fandom;
+
+    const [products, total, facetDistribution] = await Promise.all([
       this.prisma.product.findMany({
         where,
         skip,
@@ -795,14 +843,52 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.product.count({ where }),
+      this.computeDbFacets(facetWhere),
     ]);
 
     return {
       hits: products.map((p) => this.transformProductToDocument(p)),
       total,
       processingTimeMs: 0,
+      facetDistribution,
       query: query || '',
     };
+  }
+
+  /**
+   * Compute category/fandom facet counts from the database so the storefront filter
+   * sidebar still populates when results are served from the DB fallback.
+   */
+  private async computeDbFacets(
+    where: any,
+  ): Promise<Record<string, Record<string, number>>> {
+    try {
+      const [categories, fandoms] = await Promise.all([
+        this.prisma.product.groupBy({
+          by: ['category'],
+          where,
+          _count: { _all: true },
+        }),
+        this.prisma.product.groupBy({
+          by: ['fandom'],
+          where,
+          _count: { _all: true },
+        }),
+      ]);
+
+      const category: Record<string, number> = {};
+      for (const row of categories) {
+        if (row.category) category[row.category] = row._count._all;
+      }
+      const fandom: Record<string, number> = {};
+      for (const row of fandoms) {
+        if (row.fandom) fandom[row.fandom] = row._count._all;
+      }
+      return { category, fandom };
+    } catch (error: any) {
+      this.logger.error(`Failed to compute DB facets: ${error.message}`);
+      return {};
+    }
   }
 
   /**
