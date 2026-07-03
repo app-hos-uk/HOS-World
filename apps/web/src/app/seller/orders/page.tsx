@@ -308,6 +308,10 @@ export default function SellerOrdersPage() {
       toast.error('Please enter a tracking number');
       return;
     }
+    if (!shippingCarrier) {
+      toast.error('Please select a shipping carrier');
+      return;
+    }
     if (shippingCarrier === 'Other' && !customCarrier.trim()) {
       toast.error('Please enter the carrier name');
       return;
@@ -345,6 +349,10 @@ export default function SellerOrdersPage() {
       Boolean(selectedOrder.trackingCode?.trim());
     if (normalized === 'SHIPPED' && !hasTracking) {
       toast.error('Please enter a tracking number before marking as shipped');
+      return;
+    }
+    if (normalized === 'SHIPPED' && !shippingCarrier) {
+      toast.error('Please select a shipping carrier before marking as shipped');
       return;
     }
     if (normalized === 'SHIPPED' && shippingCarrier === 'Other' && !customCarrier.trim()) {
