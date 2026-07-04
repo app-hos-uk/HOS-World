@@ -23,6 +23,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LabelList,
 } from 'recharts';
 
 interface DashboardStats {
@@ -346,24 +347,25 @@ export default function AdminDashboardPage() {
             {/* Top Products and Recent Activity Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Top Products Bar Chart */}
-              <ChartCard title="Top Selling Products" subtitle="By number of sales">
+              <ChartCard title="Top Selling Products" subtitle="By number of sales" height="min-h-[10rem]">
                 {topProductsData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={Math.max(160, topProductsData.length * 44 + 40)}>
                   <BarChart
                     data={topProductsData}
                     layout="vertical"
-                    margin={{ top: 10, right: 12, left: 8, bottom: 8 }}
-                    barCategoryGap="20%"
+                    margin={{ top: 4, right: 40, left: 8, bottom: 20 }}
+                    barCategoryGap="25%"
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke={DARK_CHART_GRID} horizontal={false} />
                     <XAxis
                       type="number"
                       stroke={DARK_CHART_AXIS}
-                      fontSize={12}
+                      fontSize={11}
                       tickLine={false}
                       axisLine={{ stroke: DARK_CHART_GRID }}
                       domain={[0, 'auto']}
                       allowDecimals={false}
+                      label={{ value: 'Units Sold', position: 'insideBottom', offset: -12, fill: DARK_CHART_AXIS, fontSize: 11 }}
                     />
                     <YAxis
                       type="category"
@@ -372,25 +374,28 @@ export default function AdminDashboardPage() {
                       fontSize={10}
                       tickLine={false}
                       axisLine={{ stroke: DARK_CHART_GRID }}
-                      width={140}
+                      width={120}
                       tickFormatter={(name: string) =>
                         name.length > 14 ? `${name.slice(0, 12)}…` : name
                       }
                     />
                     <Tooltip
                       formatter={(value: number) => [`${value}`, 'Sales']}
-                      contentStyle={DARK_CHART_TOOLTIP}
+                      contentStyle={{ ...DARK_CHART_TOOLTIP, padding: '6px 10px', fontSize: 12 }}
                       itemStyle={DARK_CHART_TOOLTIP_ITEM}
-                      labelStyle={DARK_CHART_TOOLTIP_LABEL}
+                      labelStyle={{ ...DARK_CHART_TOOLTIP_LABEL, fontSize: 11 }}
+                      cursor={{ fill: 'rgba(201, 162, 39, 0.06)' }}
                     />
                     <Bar
                       dataKey="sales"
                       fill="#c9a227"
                       radius={[0, 6, 6, 0]}
                       name="Sales"
-                      maxBarSize={48}
+                      maxBarSize={36}
                       isAnimationActive={false}
-                    />
+                    >
+                      <LabelList dataKey="sales" position="right" fill={DARK_CHART_AXIS} fontSize={11} />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
                 ) : (
