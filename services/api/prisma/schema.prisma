@@ -578,6 +578,8 @@ model Product {
   channels                  ProductChannel[]
   posSaleItems              POSSaleItem[]
   ugcSubmissions            UGCSubmission[]
+  views                     ProductView[]
+  viewCount                 Int                     @default(0)
 
   // SEO
   metaTitle       String?
@@ -608,6 +610,23 @@ model Product {
   @@index([status, fandom, createdAt])
   @@index([averageRating])
   @@map("products")
+}
+
+model ProductView {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sessionId String?
+  userId    String?
+  ipHash    String?
+  userAgent String?
+  referrer  String?
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+  @@index([productId, createdAt])
+  @@map("product_views")
 }
 
 enum ProductStatus {

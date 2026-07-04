@@ -406,6 +406,25 @@ export class ShippingService {
     });
   }
 
+  /** Delete a shipping method and its associated rules */
+  async deleteMethod(id: string) {
+    const method = await this.prisma.shippingMethod.findUnique({ where: { id } });
+    if (!method) {
+      throw new NotFoundException('Shipping method not found');
+    }
+    await this.prisma.shippingRule.deleteMany({ where: { shippingMethodId: id } });
+    await this.prisma.shippingMethod.delete({ where: { id } });
+  }
+
+  /** Delete a shipping rule */
+  async deleteRule(id: string) {
+    const rule = await this.prisma.shippingRule.findUnique({ where: { id } });
+    if (!rule) {
+      throw new NotFoundException('Shipping rule not found');
+    }
+    await this.prisma.shippingRule.delete({ where: { id } });
+  }
+
   /** Admin: list all platform shipping methods including inactive */
   async findAllShippingMethodsAdmin() {
     return this.prisma.shippingMethod.findMany({

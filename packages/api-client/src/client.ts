@@ -4648,6 +4648,32 @@ export class ApiClient {
     });
   }
 
+  async updateShippingMethod(id: string, data: any): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/shipping/methods/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateShippingRule(id: string, data: any): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/shipping/rules/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteShippingRule(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/shipping/rules/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteShippingMethod(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/shipping/methods/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   async getVerificationDocuments(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/sellers/verification/documents');
   }
@@ -5443,6 +5469,13 @@ export class ApiClient {
     }
     const query = queryParams.toString();
     return this.request<ApiResponse<any>>(`/analytics/products/performance${query ? `?${query}` : ''}`);
+  }
+
+  async trackProductView(productId: string, sessionId?: string): Promise<void> {
+    await this.request('/products/' + productId + '/view', {
+      method: 'POST',
+      headers: sessionId ? { 'x-session-id': sessionId } : undefined,
+    }).catch(() => {});
   }
 
   async getInventoryMetrics(filters?: {

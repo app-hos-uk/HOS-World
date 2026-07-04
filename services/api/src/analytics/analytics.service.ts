@@ -38,6 +38,7 @@ export interface ProductPerformance {
   orders: number;
   quantity: number;
   averagePrice: number;
+  views: number;
   conversionRate?: number;
 }
 
@@ -325,8 +326,8 @@ export class AnalyticsService {
       },
     });
 
-    // Aggregate by product
-    const productMap = new Map<string, ProductPerformance>();
+    // Aggregate by product, counting distinct orders
+    const productMap = new Map<string, ProductPerformance & { _orderIds: Set<string> }>();
 
     orders.forEach((order) => {
       order.items.forEach((item) => {
@@ -339,19 +340,45 @@ export class AnalyticsService {
           orders: 0,
           quantity: 0,
           averagePrice: Number(product.price),
+          views: 0,
+          _orderIds: new Set<string>(),
         };
 
         existing.revenue += Number(item.price) * item.quantity;
         existing.quantity += item.quantity;
-        existing.orders += 1;
+        existing._orderIds.add(order.id);
+        existing.orders = existing._orderIds.size;
         productMap.set(product.id, existing);
       });
     });
 
+    // Fetch date-filtered view counts to compute accurate conversion rate
+    const productIds = Array.from(productMap.keys());
+    if (productIds.length > 0) {
+      const viewWhere: any = { productId: { in: productIds } };
+      if (startDate || endDate) {
+        viewWhere.createdAt = {};
+        if (startDate) viewWhere.createdAt.gte = startDate;
+        if (endDate) viewWhere.createdAt.lte = endDate;
+      }
+      const viewCounts = await this.prisma.productView.groupBy({
+        by: ['productId'],
+        where: viewWhere,
+        _count: { id: true },
+      });
+      for (const vc of viewCounts) {
+        const entry = productMap.get(vc.productId);
+        if (entry) {
+          entry.views = vc._count.id;
+        }
+      }
+    }
+
     const performance = Array.from(productMap.values())
-      .map((p) => ({
+      .map(({ _orderIds, ...p }) => ({
         ...p,
         averagePrice: p.quantity > 0 ? p.revenue / p.quantity : p.averagePrice,
+        conversionRate: p.views > 0 ? Math.min(100, (p.orders / p.views) * 100) : undefined,
       }))
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, limit);

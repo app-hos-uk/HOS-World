@@ -136,6 +136,7 @@ export default function ProductDetailClient() {
     if (!product?.id || viewedProductIdRef.current === product.id) return;
     viewedProductIdRef.current = product.id;
     trackViewItem(product);
+    apiClient.trackProductView(product.id).catch(() => {});
 
     try {
       const MAX_RECENT = 12;

@@ -9,8 +9,11 @@ import {
   Query,
   UseGuards,
   Request,
+  Req,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { createHash } from 'crypto';
+import { verify } from 'jsonwebtoken';
 import { isUuid } from '../common/utils/uuid';
 import {
   ApiTags,
@@ -27,10 +30,12 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { BulkUpdateProductsDto } from './dto/bulk-update-products.dto';
 import { SearchProductsDto } from './dto/search-products.dto';
+import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { AUTH_COOKIE_NAME } from '../auth/cookie.utils';
 import type { ApiResponse, PaginatedResponse, Product } from '@hos-marketplace/shared-types';
 
 @ApiTags('products')
@@ -39,6 +44,7 @@ export class ProductsController {
   constructor(
     private readonly productsService: ProductsService,
     private readonly productsBulkService: ProductsBulkService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Public()
@@ -92,6 +98,42 @@ export class ProductsController {
       data: product,
       message: 'Product retrieved successfully',
     };
+  }
+
+  @Post(':id/view')
+  @Public()
+  @ApiOperation({
+    summary: 'Track product view',
+    description: 'Record a product view event for analytics',
+  })
+  @ApiParam({ name: 'id', description: 'Product UUID', type: String })
+  @SwaggerApiResponse({ status: 201, description: 'View tracked successfully' })
+  async trackView(
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
+    // Best-effort extraction of userId from JWT on this @Public() endpoint
+    let userId: string | undefined;
+    try {
+      const token = req.cookies?.[AUTH_COOKIE_NAME]
+        || req.headers?.authorization?.replace('Bearer ', '');
+      if (token) {
+        const secret = this.configService.get<string>('JWT_SECRET');
+        const payload = verify(token, secret!) as any;
+        userId = payload?.sub;
+      }
+    } catch {
+      // Token missing or invalid — anonymous view
+    }
+
+    await this.productsService.trackProductView(id, {
+      userId,
+      sessionId: req.headers['x-session-id'],
+      ipHash: req.ip ? createHash('sha256').update(req.ip).digest('hex').substring(0, 16) : undefined,
+      userAgent: req.headers['user-agent']?.substring(0, 200),
+      referrer: req.headers['referer']?.substring(0, 500),
+    });
+    return { success: true };
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

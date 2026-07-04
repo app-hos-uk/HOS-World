@@ -1009,6 +1009,28 @@ export class ProductsService {
     }
   }
 
+  async trackProductView(productId: string, data: {
+    userId?: string;
+    sessionId?: string;
+    ipHash?: string;
+    userAgent?: string;
+    referrer?: string;
+  }) {
+    try {
+      await this.prisma.$transaction([
+        this.prisma.productView.create({
+          data: { productId, ...data },
+        }),
+        this.prisma.product.update({
+          where: { id: productId },
+          data: { viewCount: { increment: 1 } },
+        }),
+      ]);
+    } catch (e) {
+      this.logger.warn(`Failed to track product view: ${(e as Error).message}`);
+    }
+  }
+
   private mapToProductType(
     product: any,
     includeSeller: boolean = false,

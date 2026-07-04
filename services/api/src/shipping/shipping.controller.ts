@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -198,6 +198,28 @@ export class ShippingController {
       data: options,
       message: 'Shipping rates calculated successfully',
     };
+  }
+
+  @Delete('methods/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete shipping method' })
+  @SwaggerApiResponse({ status: 200, description: 'Shipping method deleted' })
+  async deleteShippingMethod(@Param('id') id: string): Promise<ApiResponse<any>> {
+    await this.shippingService.deleteMethod(id);
+    return { data: null, message: 'Shipping method deleted' };
+  }
+
+  @Delete('rules/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete shipping rule' })
+  @SwaggerApiResponse({ status: 200, description: 'Shipping rule deleted' })
+  async deleteShippingRule(@Param('id') id: string): Promise<ApiResponse<any>> {
+    await this.shippingService.deleteRule(id);
+    return { data: null, message: 'Shipping rule deleted' };
   }
 
   @Post('options')

@@ -584,8 +584,8 @@ export default function OrderDetailPage() {
                       Track Order
                     </Link>
                   )}
-                  {['PAID', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'].some(
-                    s => order.paymentStatus?.toUpperCase() === 'PAID' || order.status?.toUpperCase() === s
+                  {(order.paymentStatus?.toUpperCase() === 'PAID' ||
+                    ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'].includes(order.status?.toUpperCase())
                   ) && (
                     <button
                       type="button"

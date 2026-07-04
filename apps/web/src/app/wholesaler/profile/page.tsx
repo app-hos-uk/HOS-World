@@ -55,7 +55,7 @@ export default function WholesalerProfilePage() {
   const [profile, setProfile] = useState<WholesalerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'business' | 'bank' | 'operations' | 'warehouse'>('business');
+  const [activeTab, setActiveTab] = useState<'business' | 'bank' | 'operations' | 'warehouse' | 'verification'>('business');
   const [editing, setEditing] = useState(false);
 
   const [businessForm, setBusinessForm] = useState({
@@ -90,6 +90,35 @@ export default function WholesalerProfilePage() {
     postalCode: '',
     country: '',
   });
+
+  // Verification tab state
+  interface VerificationDocument {
+    id: string;
+    documentType: string;
+    fileUrl: string;
+    fileName?: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    reviewNotes?: string;
+    createdAt: string;
+    reviewedAt?: string;
+  }
+
+  const DOCUMENT_TYPES = [
+    { label: 'Business License', value: 'BUSINESS_LICENSE' },
+    { label: 'Tax Registration', value: 'TAX_REGISTRATION' },
+    { label: 'Identity Proof', value: 'IDENTITY_PROOF' },
+    { label: 'Address Proof', value: 'ADDRESS_PROOF' },
+    { label: 'Other', value: 'OTHER' },
+  ] as const;
+
+  const [verificationDocs, setVerificationDocs] = useState<VerificationDocument[]>([]);
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [docType, setDocType] = useState<string>('BUSINESS_LICENSE');
+  const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file');
+  const [manualUrl, setManualUrl] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [submittingDoc, setSubmittingDoc] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   const menuItems = getSellerMenuItems(true);
 
@@ -233,6 +262,95 @@ export default function WholesalerProfilePage() {
     }
   };
 
+  const fetchVerificationDocs = async () => {
+    try {
+      setVerificationLoading(true);
+      const response = await apiClient.getVerificationDocuments();
+      setVerificationDocs(response?.data || []);
+    } catch (err: any) {
+      console.error('Error fetching verification documents:', err);
+      toast.error(err.message || 'Failed to load verification documents');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'verification') {
+      fetchVerificationDocs();
+    }
+  }, [activeTab]);
+
+  const handleSubmitDocument = async () => {
+    let fileUrl = '';
+    let fileName = '';
+
+    if (uploadMode === 'file') {
+      if (!selectedFile) {
+        toast.error('Please select a file to upload');
+        return;
+      }
+      try {
+        setUploadingFile(true);
+        const uploadResult = await apiClient.uploadSingleFile(selectedFile, 'verification');
+        fileUrl = uploadResult?.data?.url || '';
+        fileName = selectedFile.name;
+        if (!fileUrl) {
+          toast.error('Upload succeeded but no URL returned');
+          return;
+        }
+      } catch (err: any) {
+        toast.error(err.message || 'File upload failed');
+        return;
+      } finally {
+        setUploadingFile(false);
+      }
+    } else {
+      if (!manualUrl.trim()) {
+        toast.error('Please enter a document URL');
+        return;
+      }
+      fileUrl = manualUrl.trim();
+      try {
+        fileName = new URL(fileUrl).pathname.split('/').pop() || 'document';
+      } catch {
+        fileName = 'document';
+      }
+    }
+
+    try {
+      setSubmittingDoc(true);
+      await apiClient.submitVerificationDocument({
+        documentType: docType,
+        fileUrl,
+        fileName,
+      });
+      toast.success('Document submitted for verification');
+      setSelectedFile(null);
+      setManualUrl('');
+      setDocType('BUSINESS_LICENSE');
+      const fileInput = document.getElementById('verification-file-input') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+      await fetchVerificationDocs();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to submit document');
+    } finally {
+      setSubmittingDoc(false);
+    }
+  };
+
+  const handleResubmit = (doc: VerificationDocument) => {
+    setDocType(doc.documentType);
+    setUploadMode('file');
+    setSelectedFile(null);
+    setManualUrl('');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const formatDocType = (type: string) => {
+    return DOCUMENT_TYPES.find((d) => d.value === type)?.label || type.replace(/_/g, ' ');
+  };
+
   if (loading) {
     return (
       <RouteGuard allowedRoles={['WHOLESALER', 'ADMIN']} showAccessDenied={true}>
@@ -291,6 +409,7 @@ export default function WholesalerProfilePage() {
                 { id: 'bank', label: 'Bank Details', icon: '🏦' },
                 { id: 'operations', label: 'Operations Contact', icon: '👥' },
                 { id: 'warehouse', label: 'Warehouse', icon: '📦' },
+                { id: 'verification', label: 'Verification', icon: '✓' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -654,6 +773,208 @@ export default function WholesalerProfilePage() {
                     >
                       {saving ? 'Saving...' : 'Save Warehouse Address'}
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'verification' && (
+                <div className="space-y-6">
+                  {/* Verification Status Banner */}
+                  {profile?.verified ? (
+                    <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 flex items-center gap-3">
+                      <span className="text-green-400 text-xl">&#10003;</span>
+                      <div>
+                        <p className="font-medium text-green-300">Your account is verified</p>
+                        <p className="text-sm text-green-400/70 mt-0.5">Your wholesaler account has been reviewed and approved.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 flex items-center gap-3">
+                      <span className="text-yellow-400 text-xl">&#9888;</span>
+                      <div>
+                        <p className="font-medium text-yellow-300">Your account is pending verification</p>
+                        <p className="text-sm text-yellow-400/70 mt-0.5">Please submit the required documents below.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Document Submission Form */}
+                  <div className="bg-hos-bg-tertiary border border-hos-border rounded-lg p-5">
+                    <h3 className="text-lg font-semibold mb-4">Submit Verification Document</h3>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Document Type</label>
+                        <select
+                          value={docType}
+                          onChange={(e) => setDocType(e.target.value)}
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
+                        >
+                          {DOCUMENT_TYPES.map((dt) => (
+                            <option key={dt.value} value={dt.value}>
+                              {dt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-2">Upload Method</label>
+                        <div className="flex gap-2 mb-3">
+                          <button
+                            type="button"
+                            onClick={() => setUploadMode('file')}
+                            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                              uploadMode === 'file'
+                                ? 'bg-hos-gold text-[#1a1406]'
+                                : 'bg-hos-bg-secondary border border-hos-border text-hos-text-secondary hover:bg-hos-bg-tertiary'
+                            }`}
+                          >
+                            Upload File
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setUploadMode('url')}
+                            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                              uploadMode === 'url'
+                                ? 'bg-hos-gold text-[#1a1406]'
+                                : 'bg-hos-bg-secondary border border-hos-border text-hos-text-secondary hover:bg-hos-bg-tertiary'
+                            }`}
+                          >
+                            Paste URL
+                          </button>
+                        </div>
+
+                        {uploadMode === 'file' ? (
+                          <div>
+                            <input
+                              id="verification-file-input"
+                              type="file"
+                              accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx"
+                              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                              className="w-full text-sm text-hos-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-hos-gold file:text-[#1a1406] hover:file:bg-hos-gold-hover file:cursor-pointer"
+                            />
+                            {selectedFile && (
+                              <p className="text-xs text-hos-text-muted mt-1">
+                                Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                              </p>
+                            )}
+                          </div>
+                        ) : (
+                          <input
+                            type="url"
+                            value={manualUrl}
+                            onChange={(e) => setManualUrl(e.target.value)}
+                            placeholder="https://example.com/document.pdf"
+                            className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
+                          />
+                        )}
+                      </div>
+
+                      <button
+                        onClick={handleSubmitDocument}
+                        disabled={submittingDoc || uploadingFile}
+                        className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 font-medium"
+                      >
+                        {uploadingFile ? 'Uploading...' : submittingDoc ? 'Submitting...' : 'Submit Document'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submitted Documents List */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">Submitted Documents</h3>
+
+                    {verificationLoading ? (
+                      <div className="flex justify-center py-8">
+                        <div className="w-8 h-8 border-4 border-hos-gold border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : verificationDocs.length === 0 ? (
+                      <div className="text-center py-8 bg-hos-bg-tertiary border border-hos-border rounded-lg">
+                        <p className="text-hos-text-muted">No documents submitted yet. Upload your first document above.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {verificationDocs.map((doc) => (
+                          <div
+                            key={doc.id}
+                            className={`bg-hos-bg-tertiary border rounded-lg p-4 ${
+                              doc.status === 'REJECTED' ? 'border-red-500/30' : 'border-hos-border'
+                            }`}
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-medium text-hos-text-secondary">
+                                    {formatDocType(doc.documentType)}
+                                  </span>
+                                  <span
+                                    className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                      doc.status === 'APPROVED'
+                                        ? 'bg-green-900/30 text-green-400'
+                                        : doc.status === 'REJECTED'
+                                          ? 'bg-red-900/30 text-red-400'
+                                          : 'bg-yellow-900/30 text-yellow-400'
+                                    }`}
+                                  >
+                                    {doc.status}
+                                  </span>
+                                </div>
+                                {doc.fileName && (
+                                  <a
+                                    href={doc.fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-hos-gold hover:underline inline-block"
+                                  >
+                                    {doc.fileName}
+                                  </a>
+                                )}
+                                <p className="text-xs text-hos-text-muted">
+                                  Submitted {new Date(doc.createdAt).toLocaleDateString(undefined, {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </p>
+                                {doc.reviewNotes && (
+                                  <div
+                                    className={`mt-2 text-sm rounded-md p-2.5 ${
+                                      doc.status === 'REJECTED'
+                                        ? 'bg-red-500/10 border border-red-500/20 text-red-300'
+                                        : 'bg-hos-bg-secondary text-hos-text-secondary'
+                                    }`}
+                                  >
+                                    <span className="font-medium">Review Notes:</span> {doc.reviewNotes}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex flex-col gap-2 shrink-0">
+                                <a
+                                  href={doc.fileUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-4 py-2 border border-hos-border rounded-lg text-sm text-hos-text-secondary hover:bg-hos-bg-secondary text-center transition-colors"
+                                >
+                                  View
+                                </a>
+                                {doc.status === 'REJECTED' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleResubmit(doc)}
+                                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm hover:bg-hos-gold-hover font-medium"
+                                  >
+                                    Resubmit
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
