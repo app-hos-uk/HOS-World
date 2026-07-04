@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, Suspense, useRef, useMemo, memo } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
@@ -165,7 +165,6 @@ const ActiveFilterChip = memo(function ActiveFilterChip({ label, onRemove }: { l
 
 function ProductsContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { formatPrice } = useCurrency();
 
   const initialState = useMemo(() => parseSearchParams(searchParams), []);
@@ -191,8 +190,6 @@ function ProductsContent() {
   const [priceDraft, setPriceDraft] = useState({ min: '', max: '' });
   const priceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipScrollOnMountRef = useRef(true);
-  const pendingUrlSyncRef = useRef<string | null>(null);
-  const lastPushedUrlRef = useRef<string | null>(null);
 
   const [state, setState] = useState<SearchState>(() => initialState);
 
@@ -224,22 +221,16 @@ function ProductsContent() {
     setPriceDraft({ min: state.minPrice, max: state.maxPrice });
   }, [state.minPrice, state.maxPrice]);
 
-  // Sync state from URL on browser back/forward.
-  // Skip re-parsing when we have a pending URL push (the searchParams from this
-  // render are stale — our push hasn't been reflected yet) or when the incoming
-  // URL matches the last URL we pushed (our own push echoing back).
+  // Sync state from URL on browser back/forward only.
+  // We use window.history.replaceState (not router.replace) to update the URL
+  // bar, which avoids triggering searchParams re-renders entirely. This effect
+  // therefore only fires on genuine browser navigations (back/forward/external).
   const isFirstRenderRef = useRef(true);
   useEffect(() => {
     if (isFirstRenderRef.current) {
       isFirstRenderRef.current = false;
       return;
     }
-    if (pendingUrlSyncRef.current) return;
-    const incoming = `/products${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-    if (lastPushedUrlRef.current !== null && incoming === lastPushedUrlRef.current) {
-      return;
-    }
-    lastPushedUrlRef.current = null;
     setState(parseSearchParams(searchParams));
   }, [searchParams]);
 
@@ -250,20 +241,15 @@ function ProductsContent() {
       if (!('page' in updates)) {
         next.page = 1;
       }
+      // Synchronously update the URL bar without triggering Next.js router
+      // re-renders. This prevents the searchParams back-sync effect from
+      // firing and resetting state.
       const qs = buildSearchParams(next);
-      pendingUrlSyncRef.current = `/products${qs ? `?${qs}` : ''}`;
+      const url = `/products${qs ? `?${qs}` : ''}`;
+      window.history.replaceState(window.history.state, '', url);
       return next;
     });
   }, []);
-
-  // Keep Next.js router in sync with filter state without calling router inside setState
-  useEffect(() => {
-    const url = pendingUrlSyncRef.current;
-    if (!url) return;
-    pendingUrlSyncRef.current = null;
-    lastPushedUrlRef.current = url;
-    router.replace(url, { scroll: false });
-  }, [state, router]);
 
   const activeFilterCount =
     state.categories.length +
