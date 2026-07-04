@@ -1064,15 +1064,15 @@ function AdminProductsContent() {
               )}
             </div>
             <div className="overflow-auto max-h-[calc(100vh-280px)] overflow-x-auto">
-              <table className="w-full min-w-[900px] table-fixed border-collapse divide-y divide-hos-border">
+              <table className="w-full min-w-[1050px] table-fixed border-collapse divide-y divide-hos-border">
                 <colgroup>
                   <col style={{ width: '2.75rem' }} />
                   <col />
                   <col style={{ width: '7rem' }} />
                   <col style={{ width: '5.5rem' }} />
                   <col style={{ width: '6.5rem' }} />
-                  <col style={{ width: '6.5rem' }} />
-                  <col style={{ width: '16rem' }} />
+                  <col style={{ width: '5.75rem' }} />
+                  <col style={{ width: '19rem' }} />
                 </colgroup>
                 <thead className="bg-hos-bg-secondary sticky top-0 z-10">
                   <tr>
@@ -1176,31 +1176,34 @@ function AdminProductsContent() {
                             {product.status === 'OUT_OF_STOCK' ? 'Out of Stock' : product.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 align-middle text-sm text-hos-text-muted whitespace-nowrap tabular-nums">
-                          {new Date(product.createdAt).toLocaleDateString()}
+                        <td className="px-4 py-3 align-middle text-sm text-hos-text-muted whitespace-nowrap tabular-nums overflow-hidden">
+                          <span className="block truncate">{new Date(product.createdAt).toLocaleDateString()}</span>
                         </td>
                         <td className="px-4 py-3 align-middle">
-                          <div className="flex items-center justify-end gap-1">
+                          <div className="flex items-center justify-end gap-1 flex-nowrap shrink-0">
                             <Link
                               href={`/products/${product.slug || product.id}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="h-7 px-2 text-xs text-hos-text-secondary hover:bg-hos-bg-tertiary rounded inline-flex items-center"
+                              className="h-7 w-7 shrink-0 text-hos-text-secondary hover:bg-hos-bg-tertiary rounded inline-flex items-center justify-center"
                               title="View on storefront"
                             >
-                              View
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              <span className="sr-only">View on storefront</span>
                             </Link>
                             <button
                               type="button"
                               onClick={() => handleEdit(product)}
-                              className="h-7 px-2 text-xs text-hos-gold hover:bg-hos-gold/10 rounded inline-flex items-center"
+                              className="h-7 px-2 shrink-0 text-xs text-hos-gold hover:bg-hos-gold/10 rounded inline-flex items-center"
                             >
                               Edit
                             </button>
                             <button
                               type="button"
                               onClick={() => { setProductToDuplicate(product); setShowDuplicateModal(true); }}
-                              className="h-7 w-7 text-xs text-hos-text-secondary hover:bg-hos-bg-tertiary rounded inline-flex items-center justify-center"
+                              className="h-7 w-7 shrink-0 text-xs text-hos-text-secondary hover:bg-hos-bg-tertiary rounded inline-flex items-center justify-center"
                               title="Duplicate"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
@@ -1210,7 +1213,7 @@ function AdminProductsContent() {
                               onChange={(e) =>
                                 handleStatusChangeRequest(product, e.target.value as ProductStatus)
                               }
-                              className={`h-7 px-1.5 text-xs border rounded cursor-pointer font-medium ${
+                              className={`h-7 w-[5.25rem] shrink-0 px-1 text-xs border rounded cursor-pointer font-medium ${
                                 product.status === 'ACTIVE'
                                   ? 'border-green-500/40 text-green-400 bg-green-500/10'
                                   : product.status === 'DRAFT'
@@ -1229,7 +1232,7 @@ function AdminProductsContent() {
                             <button
                               type="button"
                               onClick={() => handleDeleteClick(product)}
-                              className="h-7 px-2 text-xs text-red-400 hover:bg-red-500/10 rounded inline-flex items-center"
+                              className="h-7 px-2 shrink-0 text-xs text-red-400 hover:bg-red-500/10 rounded inline-flex items-center"
                             >
                               Delete
                             </button>

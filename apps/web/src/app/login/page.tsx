@@ -62,6 +62,25 @@ function LoginPageInner() {
     setIsMounted(true);
   }, []);
 
+  // If the user already has an active session, redirect them away from /login
+  useEffect(() => {
+    if (!isMounted || isRedirecting.current || loading) return;
+    const hasSession = document.cookie.includes('is_logged_in=true');
+    if (!hasSession) return;
+    let cancelled = false;
+    apiClient.getCurrentUser().then((res) => {
+      if (cancelled || isRedirecting.current || loading) return;
+      const role = res?.data?.role;
+      if (role) {
+        isRedirecting.current = true;
+        const returnParam = searchParams.get('returnUrl') ?? searchParams.get('redirect');
+        const dest = resolvePostAuthRedirect(role, returnParam);
+        router.replace(dest);
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [isMounted, router, searchParams, loading]);
+
   // Referral landing → /register?ref= → /login?register=1&ref= ; persist for loyalty enroll
   useEffect(() => {
     if (!isMounted) return;
@@ -195,30 +214,43 @@ function LoginPageInner() {
         throw new Error('Login failed — no user profile returned');
       }
 
-      await mergeGuestCartAfterAuth();
-
       setFrontendSessionCookie();
       markLoginSuccess();
+
       const redirectPath = resolvePostAuthRedirect(user?.role, searchParams.get('returnUrl'));
 
-      // Set redirect flag and stop auth check BEFORE redirect
+      // Keep loading=true so the button stays in "Loading..." state during navigation
       isRedirecting.current = true;
       setIsCheckingAuth(false);
-      setLoading(false);
-      
-      // Cancel any auth requests
+
+      // Cancel any pending auth requests
       const controller = authRequestController.current;
       if (controller) {
         controller.abort();
         authRequestController.current = null;
       }
 
-      // Redirect to role-specific dashboard or home
-      if (typeof window !== 'undefined') {
-        window.location.replace(redirectPath);
-      } else {
-        router.replace(redirectPath);
-      }
+      // Await guest cart merge (with timeout) so the authenticated cart is ready
+      // before the destination page loads its cart context.
+      try {
+        await Promise.race([
+          mergeGuestCartAfterAuth(),
+          new Promise((resolve) => setTimeout(resolve, 3000)),
+        ]);
+      } catch { /* proceed with redirect regardless */ }
+
+      // Use Next.js router for fast client-side navigation.
+      // Fall back to full-page reload if router doesn't navigate in time.
+      router.replace(redirectPath);
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          if (window.location.pathname === '/login') {
+            window.location.href = redirectPath;
+          } else {
+            setLoading(false);
+          }
+        }
+      }, 3000);
     } catch (err: any) {
       console.error('[LOGIN] Login error:', err);
       const msg = err.message || '';
@@ -321,30 +353,39 @@ function LoginPageInner() {
         throw new Error('Registration failed — no user profile returned');
       }
 
-      await mergeGuestCartAfterAuth();
-
       setFrontendSessionCookie();
       markLoginSuccess();
 
-      // CRITICAL: Set redirect flag and stop auth check BEFORE redirect
+      const redirectPath = resolvePostRegisterRedirect(user?.role, searchParams.get('returnUrl'));
+
+      // Keep loading=true so the button stays in "Loading..." state during navigation
       isRedirecting.current = true;
       setIsCheckingAuth(false);
-      setLoading(false);
-      
-      // Cancel any auth requests
+
+      // Cancel any pending auth requests
       const controller = authRequestController.current;
       if (controller) {
         controller.abort();
         authRequestController.current = null;
       }
 
-      const redirectPath = resolvePostRegisterRedirect(user?.role, searchParams.get('returnUrl'));
+      try {
+        await Promise.race([
+          mergeGuestCartAfterAuth(),
+          new Promise((resolve) => setTimeout(resolve, 3000)),
+        ]);
+      } catch { /* proceed with redirect regardless */ }
 
-      if (typeof window !== 'undefined') {
-        window.location.replace(redirectPath);
-      } else {
-        router.replace(redirectPath);
-      }
+      router.replace(redirectPath);
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          if (window.location.pathname === '/login') {
+            window.location.href = redirectPath;
+          } else {
+            setLoading(false);
+          }
+        }
+      }, 3000);
     } catch (err: any) {
       const msg = err.message || '';
       let displayError: string;
