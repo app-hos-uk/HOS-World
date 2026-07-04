@@ -225,17 +225,16 @@ function ProductsContent() {
   }, [state.minPrice, state.maxPrice]);
 
   // Sync state from URL on browser back/forward.
-  // When we push a URL via router.replace, Next.js fires searchParams updates
-  // (sometimes multiple times for the same URL). We must skip all of these to
-  // avoid re-parsing state and resetting the page. We keep lastPushedUrlRef set
-  // (don't null it on first match) so duplicate firings are also consumed. It is
-  // only cleared when a genuinely different URL arrives (back/forward/external).
+  // Skip re-parsing when we have a pending URL push (the searchParams from this
+  // render are stale — our push hasn't been reflected yet) or when the incoming
+  // URL matches the last URL we pushed (our own push echoing back).
   const isFirstRenderRef = useRef(true);
   useEffect(() => {
     if (isFirstRenderRef.current) {
       isFirstRenderRef.current = false;
       return;
     }
+    if (pendingUrlSyncRef.current) return;
     const incoming = `/products${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     if (lastPushedUrlRef.current !== null && incoming === lastPushedUrlRef.current) {
       return;
