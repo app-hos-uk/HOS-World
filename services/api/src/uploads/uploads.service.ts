@@ -208,18 +208,32 @@ export class UploadsService implements OnModuleInit {
       'image/png',
       'image/gif',
       'image/webp',
+      'application/pdf',
     ];
 
     if (!allowedMimeTypes.includes(file.mimetype)) {
-      throw new BadRequestException('Invalid file type. Only images are allowed.');
+      throw new BadRequestException(
+        'Invalid file type. Only images (JPEG, PNG, GIF, WebP) and PDF documents are allowed.',
+      );
     }
 
-    // Validate actual file content (magic bytes) to prevent MIME spoofing
+    // Validate actual file content (magic bytes) to prevent MIME spoofing.
+    const isPdf = file.mimetype === 'application/pdf';
     const buffer = file.buffer || (file.path ? readFileSync(file.path) : null);
-    if (buffer && !this.validateFileContent(buffer)) {
-      throw new BadRequestException(
-        'File content does not match declared type. Invalid or unsupported image.',
-      );
+    if (buffer) {
+      if (isPdf) {
+        // PDF files must start with %PDF
+        const header = buffer.subarray(0, 5).toString('ascii');
+        if (!header.startsWith('%PDF')) {
+          throw new BadRequestException(
+            'File content does not match declared type. Invalid PDF document.',
+          );
+        }
+      } else if (!this.validateFileContent(buffer)) {
+        throw new BadRequestException(
+          'File content does not match declared type. Invalid or unsupported image.',
+        );
+      }
     }
 
     // Validate file size (max 10MB)

@@ -37,6 +37,7 @@ export class ActivityService {
             email: true,
             firstName: true,
             lastName: true,
+            role: true,
           },
         },
         seller: {
@@ -107,6 +108,7 @@ export class ActivityService {
               email: true,
               firstName: true,
               lastName: true,
+              role: true,
             },
           },
           seller: {
@@ -198,6 +200,7 @@ export class ActivityService {
             email: true,
             firstName: true,
             lastName: true,
+            role: true,
           },
         },
         seller: {

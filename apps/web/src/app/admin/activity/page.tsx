@@ -54,16 +54,46 @@ const ACTION_COLORS: Record<string, string> = {
 };
 
 const ENTITY_ICONS: Record<string, string> = {
-  USER: '👤',
-  PRODUCT: '📦',
-  ORDER: '🛒',
-  SUBMISSION: '📋',
-  PAYMENT: '💳',
-  SETTLEMENT: '💰',
-  SHIPMENT: '🚚',
-  REVIEW: '⭐',
-  TICKET: '🎫',
-  SETTING: '⚙️',
+  user: '👤',
+  product: '📦',
+  order: '🛒',
+  submission: '📋',
+  payment: '💳',
+  settlement: '💰',
+  shipment: '🚚',
+  review: '⭐',
+  productreview: '⭐',
+  ticket: '🎫',
+  setting: '⚙️',
+  systemsetting: '⚙️',
+  seller: '🏪',
+  category: '📁',
+  fandom: '🎭',
+  tag: '🏷️',
+  collection: '📚',
+  cart: '🛒',
+  event: '📅',
+  shipping: '🚚',
+  shippingzone: '🌍',
+  taxclass: '📊',
+  giftcard: '🎁',
+  digitalproduct: '💾',
+  returnrequest: '↩️',
+  auth: '🔐',
+  notification: '🔔',
+  loyalty: '🏅',
+  loyaltymembership: '🏅',
+  cms: '📝',
+  gdpr: '🛡️',
+  activitylog: '📋',
+  coupon: '🎟️',
+  discount: '💲',
+  webhook: '🔗',
+  analytics: '📈',
+  finance: '💰',
+  transaction: '💳',
+  wholesaler: '🏭',
+  verification: '✅',
 };
 
 export default function AdminActivityPage() {
@@ -257,12 +287,15 @@ export default function AdminActivityPage() {
   };
 
   const getActionBadge = (action: string) => {
-    const color = ACTION_COLORS[action] || 'bg-hos-bg-tertiary text-hos-text-secondary';
+    // Actions come as "Product_CREATE", "Order_UPDATE", etc.
+    // Extract the verb suffix for color matching.
+    const verb = action.includes('_') ? action.split('_').pop()! : action;
+    const color = ACTION_COLORS[verb] || ACTION_COLORS[action] || 'bg-hos-bg-tertiary text-hos-text-secondary';
     return <span className={`px-2 py-0.5 text-xs rounded-full ${color}`}>{action}</span>;
   };
 
   const getEntityIcon = (entityType: string) => {
-    return ENTITY_ICONS[entityType] || '📄';
+    return ENTITY_ICONS[entityType.toLowerCase()] || '📄';
   };
 
   const formatTimeAgo = (date: string) => {
@@ -600,7 +633,7 @@ export default function AdminActivityPage() {
                           </div>
                           <div>
                             <p className="text-sm text-hos-text-muted">User Role</p>
-                            <p className="font-medium">{selectedLog.user.role || 'N/A'}</p>
+                            <p className="font-medium capitalize">{selectedLog.user.role?.toLowerCase().replace(/_/g, ' ') || 'N/A'}</p>
                           </div>
                         </>
                       )}

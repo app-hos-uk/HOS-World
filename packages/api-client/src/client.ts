@@ -5033,12 +5033,6 @@ export class ApiClient {
     });
   }
 
-  async evaluateReturnPolicy(orderId: string, productId?: string): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/return-policies/evaluate', {
-      method: 'POST',
-      body: JSON.stringify({ orderId, productId }),
-    });
-  }
 
   // Return Requests
   async getReturns(): Promise<ApiResponse<any[]>> {
@@ -5069,6 +5063,7 @@ export class ApiClient {
     status: string;
     refundAmount?: number;
     refundMethod?: string;
+    notes?: string;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/returns/${id}/status`, {
       method: 'PUT',

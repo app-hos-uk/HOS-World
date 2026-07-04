@@ -165,6 +165,7 @@ export class ReturnsController {
       updateDto.refundMethod,
       req.user.id,
       req.user.role,
+      updateDto.notes,
     );
     return {
       data: returnRequest,

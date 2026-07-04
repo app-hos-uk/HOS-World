@@ -610,14 +610,16 @@ export default function OrderDetailPage() {
                       Download Invoice
                     </button>
                   )}
+                  {order.status.toUpperCase() === 'DELIVERED' && (
+                    <Link
+                      href={`/returns?orderId=${order.id}`}
+                      className="block w-full px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-center font-medium transition-colors"
+                    >
+                      Request Return
+                    </Link>
+                  )}
                   {['DELIVERED', 'COMPLETED'].includes(order.status.toUpperCase()) && (
                     <>
-                      <Link
-                        href={`/returns?orderId=${order.id}`}
-                        className="block w-full px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-center font-medium transition-colors"
-                      >
-                        Request Return
-                      </Link>
                       <button
                         onClick={async () => {
                           try {

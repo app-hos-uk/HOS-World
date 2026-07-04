@@ -82,7 +82,7 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
       setActionLoading(selected.id);
       await apiClient.updateReturnStatus(selected.id, {
         status: 'REJECTED',
-        refundMethod: rejectNotes.trim() || undefined,
+        notes: rejectNotes.trim() || undefined,
       });
       toast.success('Return rejected');
       setShowRejectModal(false);

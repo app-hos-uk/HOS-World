@@ -463,21 +463,27 @@ export default function ProductDetailClient() {
                     <label className="block text-sm font-medium text-hos-text-secondary mb-2">{variation.name} *</label>
                     <div className="flex flex-wrap gap-2">
                       {(variation.options || []).map((opt: any, optIdx: number) => {
-                        const value = typeof opt === 'object' && opt?.value != null ? opt.value : String(opt);
+                        // Seller form stores the display label in `name` and a secondary
+                        // value in `value` (sometimes a price by mistake). Admin form
+                        // stores the label in `value` with no `name`. Prefer `name` when
+                        // present so seller-created variations display correctly.
+                        const label = typeof opt === 'object' && opt !== null
+                          ? (opt.name || opt.value || String(opt))
+                          : String(opt);
                         const optionPrice = typeof opt === 'object' && opt?.price != null ? opt.price : null;
-                        const isSelected = selectedVariations[variation.name] === value;
+                        const isSelected = selectedVariations[variation.name] === label;
                         return (
                           <button
                             key={optIdx}
                             type="button"
-                            onClick={() => setSelectedVariations((prev) => ({ ...prev, [variation.name]: value }))}
+                            onClick={() => setSelectedVariations((prev) => ({ ...prev, [variation.name]: label }))}
                             className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
                               isSelected
                                 ? 'border-hos-gold bg-hos-gold/10 text-hos-gold ring-2 ring-hos-gold/50'
                                 : 'border-hos-border hover:bg-hos-bg-tertiary'
                             }`}
                           >
-                            {value}
+                            {label}
                             {optionPrice != null && <span className="ml-1 text-hos-gold">({formatPrice(optionPrice, product.currency || 'USD')})</span>}
                           </button>
                         );

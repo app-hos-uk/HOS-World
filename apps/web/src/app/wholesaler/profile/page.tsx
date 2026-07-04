@@ -850,7 +850,7 @@ export default function WholesalerProfilePage() {
                             <input
                               id="verification-file-input"
                               type="file"
-                              accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx"
+                              accept=".pdf,.jpg,.jpeg,.png,.webp"
                               onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                               className="w-full text-sm text-hos-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-hos-gold file:text-[#1a1406] hover:file:bg-hos-gold-hover file:cursor-pointer"
                             />

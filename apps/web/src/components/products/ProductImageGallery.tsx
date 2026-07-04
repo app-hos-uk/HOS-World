@@ -30,6 +30,7 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
   const dragging = useRef(false);
   const lastPointer = useRef({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   const resetZoom = useCallback(() => {
     setScale(1);
@@ -73,11 +74,28 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
     };
   }, [lightboxOpen, closeLightbox, goToImage]);
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setScale((s) => clamp(s + (e.deltaY < 0 ? 0.25 : -0.25), 1, 5));
-  }, []);
+  // Block all wheel/scroll/pinch events on the lightbox overlay so nothing
+  // leaks to the background page.
+  useEffect(() => {
+    const overlay = overlayRef.current;
+    if (!overlay || !lightboxOpen) return;
+    const blockWheel = (e: WheelEvent) => { e.preventDefault(); e.stopPropagation(); };
+    overlay.addEventListener('wheel', blockWheel, { passive: false });
+    return () => overlay.removeEventListener('wheel', blockWheel);
+  }, [lightboxOpen]);
+
+  // Non-passive wheel handler on the image container to drive zoom.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !lightboxOpen) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setScale((s) => clamp(s + (e.deltaY < 0 ? 0.25 : -0.25), 1, 5));
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [lightboxOpen]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     if (scale <= 1) return;
@@ -169,7 +187,8 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
 
       {lightboxOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          ref={overlayRef}
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 touch-none"
           role="dialog"
           aria-modal="true"
           aria-label="Product image zoom"
@@ -210,7 +229,6 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
             className="relative w-full max-w-4xl aspect-square overflow-hidden touch-none select-none"
             style={{ cursor: scale > 1 ? 'grab' : 'zoom-in' }}
             onClick={(e) => e.stopPropagation()}
-            onWheel={handleWheel}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}

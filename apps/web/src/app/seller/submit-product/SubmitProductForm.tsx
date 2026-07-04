@@ -24,6 +24,11 @@ interface VariationOption {
   value: string;
 }
 
+/** Build a display label for a variation option (handles legacy name/value split). */
+function variationOptionLabel(opt: VariationOption): string {
+  return opt.name || opt.value;
+}
+
 interface Variation {
   name: string;
   options: VariationOption[];
@@ -175,8 +180,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
     name: '',
     options: [],
   });
-  const [newOptionName, setNewOptionName] = useState('');
-  const [newOptionValue, setNewOptionValue] = useState('');
+  const [newOptionLabel, setNewOptionLabel] = useState('');
   const submitFeedbackRef = useRef<HTMLDivElement | null>(null);
   const [editLoading, setEditLoading] = useState(false);
 
@@ -389,16 +393,16 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
   };
 
   const addVariationOption = () => {
-    if (newOptionName.trim() && newOptionValue.trim()) {
+    const label = newOptionLabel.trim();
+    if (label) {
       setCurrentVariation({
         ...currentVariation,
         options: [
           ...currentVariation.options,
-          { name: newOptionName.trim(), value: newOptionValue.trim() },
+          { name: label, value: label },
         ],
       });
-      setNewOptionName('');
-      setNewOptionValue('');
+      setNewOptionLabel('');
     }
   };
 
@@ -483,8 +487,11 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
             .map((v) => ({
               name: v.name.trim(),
               options: v.options
-                .map((o) => ({ name: o.name.trim(), value: o.value.trim() }))
-                .filter((o) => o.name.length > 0 && o.value.length > 0),
+                .map((o) => {
+                  const label = (o.name || o.value || '').trim();
+                  return { name: label, value: label };
+                })
+                .filter((o) => o.name.length > 0),
             }))
             .filter((v) => v.name.length > 0 && v.options.length > 0)
         : undefined;
@@ -1382,17 +1389,11 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       <div className="flex gap-2">
                         <input
                           type="text"
-                          value={newOptionName}
-                          onChange={(e) => setNewOptionName(e.target.value)}
+                          value={newOptionLabel}
+                          onChange={(e) => setNewOptionLabel(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addVariationOption(); } }}
                           className="flex-1 px-3 py-2 border border-hos-border rounded-lg text-sm"
-                          placeholder="Option name"
-                        />
-                        <input
-                          type="text"
-                          value={newOptionValue}
-                          onChange={(e) => setNewOptionValue(e.target.value)}
-                          className="flex-1 px-3 py-2 border border-hos-border rounded-lg text-sm"
-                          placeholder="Option value"
+                          placeholder="Option label (e.g. S, M, L or Red, Blue)"
                         />
                         <button
                           type="button"
@@ -1412,7 +1413,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                               className="flex items-center justify-between p-2 bg-hos-bg-secondary rounded"
                             >
                               <span className="text-sm">
-                                {option.name}: {option.value}
+                                {variationOptionLabel(option)}
                               </span>
                               <button
                                 type="button"

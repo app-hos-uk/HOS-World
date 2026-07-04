@@ -383,7 +383,7 @@ export default function OrdersPage() {
                         Track Order
                       </Link>
                     )}
-                    {['delivered', 'completed'].includes(normalizeStatus(order.status)) && (
+                    {normalizeStatus(order.status) === 'delivered' && (
                       <Link
                         href={`/returns?orderId=${order.id}`}
                         className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
@@ -563,7 +563,7 @@ export default function OrdersPage() {
                 >
                   View Full Details
                 </Link>
-                {['delivered', 'completed'].includes(normalizeStatus(selectedOrder.status)) && (
+                {normalizeStatus(selectedOrder.status) === 'delivered' && (
                   <Link
                     href={`/returns?orderId=${selectedOrder.id}`}
                     className="flex-1 px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-center font-medium"

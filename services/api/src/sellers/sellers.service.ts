@@ -4,18 +4,26 @@ import {
   ForbiddenException,
   BadRequestException,
   Logger,
+  Inject,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { UpdateSellerDto } from './dto/update-seller.dto';
 import { SellerType, LogisticsOption, Prisma } from '@prisma/client';
 import { slugify } from '@hos-marketplace/utils';
+import { ActivityService } from '../activity/activity.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class SellersService {
   private readonly logger = new Logger(SellersService.name);
   private readonly encryptionKey: string;
 
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    @Optional() private activityService?: ActivityService,
+    @Optional() @Inject(NotificationsService) private notificationsService?: NotificationsService,
+  ) {
     const key = process.env.ENCRYPTION_KEY;
     if (!key) {
       if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
@@ -792,7 +800,19 @@ export class SellersService {
     const seller = await this.prisma.seller.findUnique({ where: { userId } });
     if (!seller) throw new NotFoundException('Seller profile not found');
 
-    return this.prisma.sellerVerificationDocument.create({
+    if (!data.documentType?.trim()) throw new BadRequestException('Document type is required');
+    if (!data.fileUrl?.trim()) throw new BadRequestException('File URL is required');
+
+    const existingPending = await this.prisma.sellerVerificationDocument.findFirst({
+      where: { sellerId: seller.id, documentType: data.documentType, status: 'PENDING' },
+    });
+    if (existingPending) {
+      throw new BadRequestException(
+        `A ${data.documentType} document is already pending review. Please wait for the review to complete before resubmitting.`,
+      );
+    }
+
+    const doc = await this.prisma.sellerVerificationDocument.create({
       data: {
         sellerId: seller.id,
         documentType: data.documentType,
@@ -801,6 +821,26 @@ export class SellersService {
         status: 'PENDING',
       },
     });
+
+    this.activityService?.createLog({
+      userId,
+      sellerId: seller.id,
+      action: 'VERIFICATION_SUBMITTED',
+      entityType: 'SellerVerificationDocument',
+      entityId: doc.id,
+      description: `Verification document "${data.documentType}" submitted for review`,
+      metadata: { documentType: data.documentType },
+    }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+
+    this.notificationsService?.sendNotificationToUser(
+      userId,
+      'GENERAL',
+      'Verification document submitted',
+      `Your ${data.documentType} document has been submitted for review. You will be notified once the review is complete.`,
+      { documentId: doc.id },
+    ).catch((e) => this.logger.warn(`Notification failed: ${(e as Error).message}`));
+
+    return doc;
   }
 
   async listVerificationDocuments(userId: string, role: string) {
@@ -852,6 +892,45 @@ export class SellersService {
           data: { vendorStatus: 'APPROVED', verified: true, approvedAt: new Date(), approvedBy: reviewerId },
         });
       }
+    }
+
+    if (data.status === 'REJECTED') {
+      const remainingPendingOrApproved = await this.prisma.sellerVerificationDocument.count({
+        where: {
+          sellerId: doc.sellerId,
+          status: { in: ['PENDING', 'APPROVED'] },
+        },
+      });
+      if (remainingPendingOrApproved === 0) {
+        await this.prisma.seller.update({
+          where: { id: doc.sellerId },
+          data: { vendorStatus: 'REJECTED', verified: false },
+        });
+      }
+    }
+
+    this.activityService?.createLog({
+      userId: reviewerId,
+      sellerId: doc.sellerId,
+      action: data.status === 'APPROVED' ? 'VERIFICATION_APPROVED' : 'VERIFICATION_REJECTED',
+      entityType: 'SellerVerificationDocument',
+      entityId: documentId,
+      description: `Verification document "${doc.documentType}" ${data.status.toLowerCase()}${data.reviewNotes ? `: ${data.reviewNotes}` : ''}`,
+      metadata: { status: data.status, documentType: doc.documentType },
+    }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+
+    if (doc.seller?.userId) {
+      const title = data.status === 'APPROVED' ? 'Verification approved' : 'Verification rejected';
+      const message = data.status === 'APPROVED'
+        ? `Your ${doc.documentType} document has been approved. Your account is now verified.`
+        : `Your ${doc.documentType} document was rejected.${data.reviewNotes ? ` Reason: ${data.reviewNotes}` : ' Please resubmit with a valid document.'}`;
+      this.notificationsService?.sendNotificationToUser(
+        doc.seller.userId,
+        'GENERAL',
+        title,
+        message,
+        { documentId, status: data.status },
+      ).catch((e) => this.logger.warn(`Notification failed: ${(e as Error).message}`));
     }
 
     return updated;

@@ -385,6 +385,7 @@ export class ReturnsService {
     refundMethod?: string,
     userId?: string,
     role?: string,
+    notes?: string,
   ): Promise<ReturnRequest> {
     const returnRequest = await this.prisma.returnRequest.findUnique({
       where: { id },
@@ -429,17 +430,51 @@ export class ReturnsService {
       );
     }
 
-    // For APPROVED status, attempt refund then persist approval (mirrors cancellation flow).
+    // For APPROVED status, check policy for requiresInspection. If inspection
+    // is required, approve without processing refund/restock (those happen at
+    // COMPLETED). Otherwise, process refund immediately on approval.
     if (newStatus === 'APPROVED') {
-      const maxRefundable = this.calculateReturnRefundAmount(returnRequest);
-      let amount = Math.min(refundAmount ?? maxRefundable, maxRefundable);
-
       const policy = returnRequest.order
         ? await this.returnPoliciesService.getApplicablePolicy(
             returnRequest.order.items[0]?.productId || '',
             returnRequest.order.sellerId || undefined,
           )
         : null;
+
+      if (policy?.requiresInspection) {
+        await this.prisma.returnRequest.update({
+          where: { id },
+          data: {
+            status: 'APPROVED' as any,
+            refundMethod: refundMethod || 'ORIGINAL_PAYMENT',
+          },
+        });
+
+        this.activityService?.createLog({
+          userId: userId || returnRequest.userId,
+          action: 'RETURN_APPROVED',
+          entityType: 'ReturnRequest',
+          entityId: id,
+          description: `Return approved (inspection required) for order ${returnRequest.order.orderNumber || returnRequest.orderId}`,
+        }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+
+        if (this.notificationsService) {
+          this.notificationsService.sendNotificationToUser(
+            returnRequest.userId,
+            'RETURN_APPROVED',
+            'Return approved — awaiting inspection',
+            `Your return for order ${returnRequest.order.orderNumber || returnRequest.orderId} has been approved. Please ship the item(s) back. Your refund will be processed after inspection.`,
+            { returnId: id },
+          ).catch((e) => this.logger.warn(`Return approval notification failed: ${(e as Error).message}`));
+        }
+
+        const updated = await this.prisma.returnRequest.findUnique({ where: { id } });
+        return this.mapToReturnType(updated);
+      }
+
+      const maxRefundable = this.calculateReturnRefundAmount(returnRequest);
+      let amount = Math.min(refundAmount ?? maxRefundable, maxRefundable);
+
       if (policy?.restockingFee) {
         amount = Math.max(0, Math.round((amount - Number(policy.restockingFee)) * 100) / 100);
       }
@@ -476,7 +511,9 @@ export class ReturnsService {
 
         if (refundSucceeded) {
           await this.applyRestockForReturn(tx, returnRequest);
-          await this.markOrderRefundedInTx(tx, returnRequest.orderId);
+          const isPartial = returnRequest.items?.length > 0 &&
+            returnRequest.items.length < (returnRequest.order?.items?.length ?? 0);
+          await this.markOrderRefundedInTx(tx, returnRequest.orderId, isPartial);
         }
       });
 
@@ -515,6 +552,15 @@ export class ReturnsService {
       return this.mapToReturnType(updated);
     }
 
+    // Determine whether refund+restock were already completed on APPROVE
+    // (i.e. immediate-approval path where Stripe succeeded).
+    // A refund transaction with status COMPLETED is the definitive signal.
+    const refundFullyProcessed = returnRequest.refundAmount
+      && Number(returnRequest.refundAmount) > 0
+      && await this.prisma.transaction.count({
+          where: { returnId: id, type: 'REFUND', status: 'COMPLETED' },
+        }).then(c => c > 0).catch(() => false);
+
     // For non-APPROVED transitions, commit directly
     const updated = await this.prisma.$transaction(async (tx) => {
       const result = await tx.returnRequest.update({
@@ -522,28 +568,111 @@ export class ReturnsService {
         data: {
           status: newStatus as any,
           refundAmount: refundAmount ? refundAmount : undefined,
-          refundMethod,
+          refundMethod: newStatus === 'REJECTED' ? undefined : refundMethod,
+          notes: notes || (newStatus === 'REJECTED' ? refundMethod : undefined),
           processedAt: newStatus === 'COMPLETED' ? new Date() : undefined,
         },
       });
 
-      if (newStatus === 'COMPLETED' && returnRequest.order) {
-        const alreadyRestocked = currentStatus === 'APPROVED';
-        if (!alreadyRestocked) {
-          await this.applyRestockForReturn(tx, returnRequest);
-        }
-        await this.markOrderRefundedInTx(tx, returnRequest.orderId);
+      if (newStatus === 'COMPLETED' && returnRequest.order && refundFullyProcessed) {
+        const isPartial = returnRequest.items?.length > 0 &&
+          returnRequest.items.length < (returnRequest.order?.items?.length ?? 0);
+        await this.markOrderRefundedInTx(tx, returnRequest.orderId, isPartial);
       }
 
       return result;
     });
 
-    // Note: product.stock is already incremented in the transaction above.
-    // We intentionally do NOT call inventoryService.recordStockMovement here because
-    // the main order flow does not decrement warehouse inventory locations (only product.stock).
-    // Recording an IN movement without a prior OUT would overstate warehouse quantities.
-    // Warehouse reconciliation should be handled separately by ops when the physical item is received back.
+    // If transitioning to COMPLETED and no successful refund exists yet
+    // (inspection flow), process refund + restock + mark order now.
+    if (newStatus === 'COMPLETED' && returnRequest.order && !refundFullyProcessed) {
+      const policy = await this.returnPoliciesService.getApplicablePolicy(
+        returnRequest.order.items[0]?.productId || '',
+        returnRequest.order.sellerId || undefined,
+      );
+      const maxRefundable = this.calculateReturnRefundAmount(returnRequest);
+      let amount = Math.min(refundAmount ?? maxRefundable, maxRefundable);
+      if (policy?.restockingFee) {
+        amount = Math.max(0, Math.round((amount - Number(policy.restockingFee)) * 100) / 100);
+      }
+      if (amount > 0) {
+        try {
+          const refundResult = await this.refundsService.processRefund({
+            returnId: id,
+            amount,
+            currency: returnRequest.order.currency,
+            description: `Refund for completed return ${id}`,
+          });
+          if (refundResult.stripeRefundSucceeded) {
+            await this.prisma.$transaction(async (tx) => {
+              await this.applyRestockForReturn(tx, returnRequest);
+              const isPartial = returnRequest.items?.length > 0 &&
+                returnRequest.items.length < (returnRequest.order?.items?.length ?? 0);
+              await this.markOrderRefundedInTx(tx, returnRequest.orderId, isPartial);
+            });
+            await this.prisma.returnRequest.update({
+              where: { id },
+              data: { refundAmount: amount, refundMethod: refundMethod || 'ORIGINAL_PAYMENT' },
+            });
+            try {
+              await this.getOrdersService().reverseInfluencerAttribution(returnRequest.orderId);
+            } catch (commErr) {
+              this.logger.error(
+                `Influencer attribution reversal failed for completed return order ${returnRequest.orderId}: ${(commErr as Error).message}`,
+              );
+            }
+          } else {
+            await this.prisma.returnRequest.update({
+              where: { id },
+              data: {
+                refundAmount: amount,
+                notes: [
+                  returnRequest.notes || '',
+                  `[Refund pending: ${refundResult.error || 'Stripe refund failed — manual retry required'}]`,
+                ].filter(Boolean).join(' '),
+              },
+            });
+          }
+        } catch (e) {
+          this.logger.error(`Refund on completion failed for return ${id}: ${(e as Error).message}`);
+        }
+      }
+    }
 
+    if (this.notificationsService && ['REJECTED', 'COMPLETED'].includes(newStatus)) {
+      const orderLabel = returnRequest.order?.orderNumber || returnRequest.orderId;
+      const title = newStatus === 'REJECTED' ? 'Return request rejected' : 'Return completed';
+      let message: string;
+      if (newStatus === 'REJECTED') {
+        message = `Your return request for order ${orderLabel} has been rejected.${notes ? ` Reason: ${notes}` : ''}`;
+      } else if (refundFullyProcessed) {
+        message = `Your return for order ${orderLabel} has been completed. Your refund was already processed.`;
+      } else {
+        message = `Your return for order ${orderLabel} has been completed and your refund is being processed.`;
+      }
+      this.notificationsService.sendNotificationToUser(
+        returnRequest.userId,
+        newStatus === 'REJECTED' ? 'RETURN_REJECTED' : 'RETURN_COMPLETED',
+        title,
+        message,
+        { returnId: id },
+      ).catch((e) => this.logger.warn(`Return ${newStatus} notification failed: ${(e as Error).message}`));
+    }
+
+    this.activityService?.createLog({
+      userId: userId || returnRequest.userId,
+      action: `RETURN_${newStatus}`,
+      entityType: 'ReturnRequest',
+      entityId: id,
+      description: `Return ${newStatus.toLowerCase()} for order ${returnRequest.order?.orderNumber || returnRequest.orderId}`,
+    }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+
+    // Re-fetch after potential post-transaction updates (refundAmount, notes)
+    // to return the most current state
+    if (newStatus === 'COMPLETED') {
+      const latest = await this.prisma.returnRequest.findUnique({ where: { id } });
+      return this.mapToReturnType(latest);
+    }
     return this.mapToReturnType(updated);
   }
 
@@ -591,8 +720,17 @@ export class ReturnsService {
     const refundResult = await this.refundsService.retryReturnRefund(id);
 
     if (refundResult.stripeRefundSucceeded) {
+      const fullReturn = await this.prisma.returnRequest.findUnique({
+        where: { id },
+        include: { order: { include: { items: true, seller: true } }, items: true },
+      });
       await this.prisma.$transaction(async (tx) => {
-        await this.markOrderRefundedInTx(tx, returnRequest.orderId);
+        if (fullReturn) {
+          await this.applyRestockForReturn(tx, fullReturn);
+        }
+        const isPartial = fullReturn?.items?.length > 0 &&
+          fullReturn.items.length < (fullReturn.order?.items?.length ?? 0);
+        await this.markOrderRefundedInTx(tx, returnRequest.orderId, isPartial);
       });
       try {
         await this.getOrdersService().reverseInfluencerAttribution(returnRequest.orderId);
@@ -610,13 +748,22 @@ export class ReturnsService {
       entityId: id,
       description: `Refund retry for return ${id}: ${refundResult.stripeRefundSucceeded ? 'succeeded' : 'failed'}`,
       metadata: { refundSucceeded: refundResult.stripeRefundSucceeded, error: refundResult.error },
-    }).catch(() => {});
+    }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
     const updated = await this.prisma.returnRequest.findUnique({ where: { id } });
     return this.mapToReturnType(updated);
   }
 
-  private async markOrderRefundedInTx(tx: any, orderId: string) {
+  private async markOrderRefundedInTx(tx: any, orderId: string, isPartial?: boolean) {
+    if (isPartial) {
+      // For partial returns, only update paymentStatus to REFUNDED but keep order
+      // status unchanged — the order is only partially returned, not fully refunded.
+      await tx.order.update({
+        where: { id: orderId },
+        data: { paymentStatus: 'REFUNDED' },
+      });
+      return;
+    }
     await tx.order.update({
       where: { id: orderId },
       data: {

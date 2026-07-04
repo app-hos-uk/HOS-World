@@ -293,7 +293,7 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
                         <div className="mt-2 flex flex-wrap gap-2">
                           {variation.options?.map((option: any, optIdx: number) => (
                             <span key={optIdx} className="px-2 py-1 bg-hos-gold/10 text-hos-gold-hover text-sm rounded">
-                              {option.name}: {option.value}
+                              {option.name || option.value}
                             </span>
                           ))}
                         </div>

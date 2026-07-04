@@ -86,21 +86,48 @@ export class ActivityInterceptor implements NestInterceptor {
   }
 
   private extractEntityType(url: string): string {
-    const segments = url.split('?')[0].split('/').filter(Boolean);
+    let segments = url.split('?')[0].split('/').filter(Boolean);
+
+    // Skip the global NestJS prefix (e.g. "api") so we reach the real
+    // resource segment. Without this, every entry shows entityType "Api".
+    if (segments[0]?.toLowerCase() === 'api') {
+      segments = segments.slice(1);
+    }
 
     if (segments[0] === 'admin' && segments.length >= 2) {
-      const sub = segments[1];
-      const clean = sub.charAt(0).toUpperCase() + sub.slice(1).replace(/s$/, '');
-      return clean;
+      return this.segmentToEntity(segments[1]);
     }
 
     if (segments.length > 0) {
-      const segment = segments[0];
-      const clean = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/s$/, '');
-      return clean;
+      return this.segmentToEntity(segments[0]);
     }
 
     return 'Unknown';
+  }
+
+  /** Convert a URL segment like "products" or "events" to a PascalCase
+   *  singular entity name, e.g. "Product", "Event". */
+  private segmentToEntity(segment: string): string {
+    // Map URL segments to human-friendly entity names where the naive
+    // capitalize-and-de-pluralize heuristic would produce a poor label.
+    const SEGMENT_MAP: Record<string, string> = {
+      auth: 'Auth',
+      'gift-cards': 'GiftCard',
+      'shipping-zones': 'ShippingZone',
+      'tax-classes': 'TaxClass',
+      'digital-products': 'DigitalProduct',
+      'return-requests': 'ReturnRequest',
+      activity: 'ActivityLog',
+      gdpr: 'GDPR',
+      cms: 'CMS',
+    };
+
+    const lower = segment.toLowerCase();
+    if (SEGMENT_MAP[lower]) return SEGMENT_MAP[lower];
+
+    // Default: capitalize first letter, strip trailing "s" for plural→singular
+    const clean = segment.charAt(0).toUpperCase() + segment.slice(1);
+    return clean.replace(/s$/, '');
   }
 
   private getAction(method: string, entityType: string): string {
