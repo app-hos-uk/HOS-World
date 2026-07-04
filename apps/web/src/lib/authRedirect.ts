@@ -1,5 +1,5 @@
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
-  CUSTOMER: '/customer/dashboard',
+  CUSTOMER: '/',
   WHOLESALER: '/wholesaler/dashboard',
   B2C_SELLER: '/seller/dashboard',
   SELLER: '/seller/dashboard',
@@ -32,7 +32,6 @@ export function resolvePostAuthRedirect(
 ): string {
   const safeReturn = getSafeReturnUrl(returnUrl);
   if (safeReturn) return safeReturn;
-  if (role === 'CUSTOMER') return '/';
   if (role && ROLE_DASHBOARD_MAP[role]) return ROLE_DASHBOARD_MAP[role];
   return '/';
 }

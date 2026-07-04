@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth, setFrontendSessionCookie } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { stashReferralFromQuery } from '@/lib/referralAttribution';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
@@ -14,6 +15,7 @@ import { Footer } from '@/components/Footer';
 function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refreshUser } = useAuth();
   const [step, setStep] = useState<'login' | 'character' | 'quiz' | 'forgot-password'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,12 +29,9 @@ function LoginPageInner() {
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(false); // Disabled for stability
-  const [isMounted, setIsMounted] = useState(false); // Prevent hydration mismatches
-  const hasCheckedAuth = useRef(false);
+  const [isMounted, setIsMounted] = useState(false);
   const isRedirecting = useRef(false);
-  const authCheckInProgress = useRef(false); // Prevent concurrent auth checks
-  const authRequestController = useRef<AbortController | null>(null); // Track active request
+  const redirectFallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Global Platform Registration Fields
   const [firstName, setFirstName] = useState('');
@@ -70,7 +69,7 @@ function LoginPageInner() {
     let cancelled = false;
     apiClient.getCurrentUser().then((res) => {
       if (cancelled || isRedirecting.current || loading) return;
-      const role = res?.data?.role;
+      const role = res?.data?.role?.toUpperCase();
       if (role) {
         isRedirecting.current = true;
         const returnParam = searchParams.get('returnUrl') ?? searchParams.get('redirect');
@@ -148,24 +147,43 @@ function LoginPageInner() {
     }
   };
 
-  // CRITICAL: Cancel any auth checks immediately when user starts logging in
+  // Clear the redirect fallback timer if the component unmounts mid-navigation.
   useEffect(() => {
-    if (loading) {
-      // User is actively logging in - cancel any pending auth checks
-      const controller = authRequestController.current;
-      if (controller) {
-        controller.abort();
-        authRequestController.current = null;
+    return () => {
+      if (redirectFallbackTimer.current) {
+        clearTimeout(redirectFallbackTimer.current);
+        redirectFallbackTimer.current = null;
       }
-      // Prevent auth check from running during login
-      isRedirecting.current = false;
-      hasCheckedAuth.current = false;
-      authCheckInProgress.current = false;
-      setIsCheckingAuth(false);
+    };
+  }, []);
+
+  // Shared post-auth navigation. Populates the global AuthContext BEFORE the
+  // soft client-side navigation so that RouteGuard on protected destinations
+  // (e.g. /customer/dashboard) sees the authenticated user instead of bouncing
+  // back to /login. Falls back to a full-page load if the router doesn't leave
+  // /login in time.
+  const completeAuthNavigation = useCallback(async (redirectPath: string) => {
+    try {
+      await Promise.race([
+        refreshUser(),
+        new Promise((resolve) => setTimeout(resolve, 4000)),
+      ]);
+    } catch {
+      /* navigate regardless of auth-context refresh outcome */
     }
-  }, [loading]);
 
+    router.replace(redirectPath);
 
+    if (redirectFallbackTimer.current) clearTimeout(redirectFallbackTimer.current);
+    redirectFallbackTimer.current = setTimeout(() => {
+      if (typeof window === 'undefined') return;
+      if (window.location.pathname === '/login') {
+        window.location.href = redirectPath;
+      } else {
+        setLoading(false);
+      }
+    }, 3000);
+  }, [refreshUser, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,26 +191,6 @@ function LoginPageInner() {
     setLoading(true);
 
     // Form validation
-
-    // CRITICAL: Cancel any pending auth checks immediately
-    const loginController = authRequestController.current;
-    if (loginController) {
-      loginController.abort();
-      authRequestController.current = null;
-    }
-    
-    // Set flags to prevent auth check from running during login
-    isRedirecting.current = false;
-    hasCheckedAuth.current = false;
-    authCheckInProgress.current = false;
-    setIsCheckingAuth(false);
-    
-    // Clear any sessionStorage flags
-    try {
-      sessionStorage.removeItem('login_redirecting');
-    } catch (e) {
-      // Ignore
-    }
 
     // Validate inputs
     if (!email || !password) {
@@ -217,18 +215,10 @@ function LoginPageInner() {
       setFrontendSessionCookie();
       markLoginSuccess();
 
-      const redirectPath = resolvePostAuthRedirect(user?.role, searchParams.get('returnUrl'));
+      const returnParam = searchParams.get('returnUrl') ?? searchParams.get('redirect');
+      const redirectPath = resolvePostAuthRedirect(user?.role?.toUpperCase(), returnParam);
 
-      // Keep loading=true so the button stays in "Loading..." state during navigation
       isRedirecting.current = true;
-      setIsCheckingAuth(false);
-
-      // Cancel any pending auth requests
-      const controller = authRequestController.current;
-      if (controller) {
-        controller.abort();
-        authRequestController.current = null;
-      }
 
       // Await guest cart merge (with timeout) so the authenticated cart is ready
       // before the destination page loads its cart context.
@@ -239,18 +229,7 @@ function LoginPageInner() {
         ]);
       } catch { /* proceed with redirect regardless */ }
 
-      // Use Next.js router for fast client-side navigation.
-      // Fall back to full-page reload if router doesn't navigate in time.
-      router.replace(redirectPath);
-      setTimeout(() => {
-        if (typeof window !== 'undefined') {
-          if (window.location.pathname === '/login') {
-            window.location.href = redirectPath;
-          } else {
-            setLoading(false);
-          }
-        }
-      }, 3000);
+      await completeAuthNavigation(redirectPath);
     } catch (err: any) {
       console.error('[LOGIN] Login error:', err);
       const msg = err.message || '';
@@ -263,8 +242,6 @@ function LoginPageInner() {
       setError(displayError);
       setLoading(false);
       isRedirecting.current = false;
-      hasCheckedAuth.current = false;
-      authCheckInProgress.current = false;
     }
   };
 
@@ -307,26 +284,6 @@ function LoginPageInner() {
       return;
     }
 
-    // CRITICAL: Cancel any pending auth checks immediately
-    const registerController = authRequestController.current;
-    if (registerController) {
-      registerController.abort();
-      authRequestController.current = null;
-    }
-    
-    // Set flags to prevent auth check from running during registration
-    isRedirecting.current = false;
-    hasCheckedAuth.current = false;
-    authCheckInProgress.current = false;
-    setIsCheckingAuth(false);
-    
-    // Clear any sessionStorage flags
-    try {
-      sessionStorage.removeItem('login_redirecting');
-    } catch (e) {
-      // Ignore
-    }
-
     try {
       // Determine role from form or default to customer
       const role = isLogin ? undefined : 'customer'; // For now, registration is customer only
@@ -356,18 +313,10 @@ function LoginPageInner() {
       setFrontendSessionCookie();
       markLoginSuccess();
 
-      const redirectPath = resolvePostRegisterRedirect(user?.role, searchParams.get('returnUrl'));
+      const returnParam = searchParams.get('returnUrl') ?? searchParams.get('redirect');
+      const redirectPath = resolvePostRegisterRedirect(user?.role?.toUpperCase(), returnParam);
 
-      // Keep loading=true so the button stays in "Loading..." state during navigation
       isRedirecting.current = true;
-      setIsCheckingAuth(false);
-
-      // Cancel any pending auth requests
-      const controller = authRequestController.current;
-      if (controller) {
-        controller.abort();
-        authRequestController.current = null;
-      }
 
       try {
         await Promise.race([
@@ -376,16 +325,7 @@ function LoginPageInner() {
         ]);
       } catch { /* proceed with redirect regardless */ }
 
-      router.replace(redirectPath);
-      setTimeout(() => {
-        if (typeof window !== 'undefined') {
-          if (window.location.pathname === '/login') {
-            window.location.href = redirectPath;
-          } else {
-            setLoading(false);
-          }
-        }
-      }, 3000);
+      await completeAuthNavigation(redirectPath);
     } catch (err: any) {
       const msg = err.message || '';
       let displayError: string;
@@ -397,8 +337,6 @@ function LoginPageInner() {
       setError(displayError);
       setLoading(false);
       isRedirecting.current = false;
-      hasCheckedAuth.current = false;
-      authCheckInProgress.current = false;
     }
   };
 

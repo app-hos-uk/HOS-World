@@ -93,7 +93,7 @@ export function Header() {
   const getDashboardLink = (): string => {
     if (!user) return '/';
     const roleDashboardMap: Record<UserRole, string> = {
-      CUSTOMER: '/customer/dashboard',
+      CUSTOMER: '/',
       WHOLESALER: '/wholesaler/dashboard',
       B2C_SELLER: '/seller/dashboard',
       SELLER: '/seller/dashboard',

@@ -139,6 +139,7 @@ function AdminProductsContent() {
   const [statusChangePending, setStatusChangePending] = useState<{ product: Product; newStatus: ProductStatus } | null>(null);
   const [statusChangeLoading, setStatusChangeLoading] = useState(false);
   const [editSnapshot, setEditSnapshot] = useState('');
+  const bulkTargetIdsRef = useRef<string[]>([]);
   const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
 
   const fetchProducts = useCallback(async () => {
@@ -318,18 +319,53 @@ function AdminProductsContent() {
 
   const totalTablePages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
 
+  // Clamp during render (not just in an effect) so paginatedProducts never
+  // slices past the end of a freshly-filtered list — avoids a one-frame empty
+  // table flash when the active filter shrinks the result set from a high page.
+  const safeTablePage = Math.min(tablePage, totalTablePages);
+
   const paginatedProducts = useMemo(() => {
-    const start = (tablePage - 1) * ITEMS_PER_PAGE;
+    const start = (safeTablePage - 1) * ITEMS_PER_PAGE;
     return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
-  }, [filteredProducts, tablePage]);
+  }, [filteredProducts, safeTablePage]);
 
   const allFilteredSelected =
     filteredProducts.length > 0 && filteredProducts.every((p) => selectedProducts.has(p.id));
   const someFilteredSelected = filteredProducts.some((p) => selectedProducts.has(p.id));
 
+  const normalizeForSnapshot = (data: typeof formData, imgs: typeof images, publish: boolean) => {
+    const attrs = (data.attributes || [])
+      .map((a: any) => ({
+        attributeId: a.attributeId ?? '',
+        attributeValueId: a.attributeValueId ?? '',
+        textValue: a.textValue ?? '',
+        numberValue: a.numberValue ?? null,
+        booleanValue: a.booleanValue ?? false,
+        dateValue: a.dateValue ?? '',
+      }))
+      .sort((a: any, b: any) => (a.attributeId || '').localeCompare(b.attributeId || ''));
+    const normalizedImages = imgs.map((img) => ({
+      url: img.url,
+      alt: img.alt || '',
+      order: img.order ?? 0,
+      isPrimary: img.isPrimary ?? false,
+    }));
+    return JSON.stringify({
+      formData: { ...data, attributes: attrs },
+      images: normalizedImages,
+      publishNow: publish,
+    });
+  };
+
+  const buildEditSnapshot = (
+    data: typeof formData,
+    imgs: typeof images,
+    publish: boolean,
+  ) => normalizeForSnapshot(data, imgs, publish);
+
   const isEditDirty = useMemo(() => {
     if (!editSnapshot) return false;
-    return editSnapshot !== JSON.stringify({ formData, images, publishNow });
+    return editSnapshot !== normalizeForSnapshot(formData, images, publishNow);
   }, [editSnapshot, formData, images, publishNow]);
 
   useEffect(() => {
@@ -356,12 +392,6 @@ function AdminProductsContent() {
       checkbox.indeterminate = someFilteredSelected && !allFilteredSelected;
     }
   }, [someFilteredSelected, allFilteredSelected]);
-
-  const buildEditSnapshot = (
-    data: typeof formData,
-    imgs: typeof images,
-    publish: boolean,
-  ) => JSON.stringify({ formData: data, images: imgs, publishNow: publish });
 
   const closeEditModal = () => {
     if (isEditDirty && !window.confirm('Discard unsaved changes?')) return;
@@ -737,6 +767,12 @@ function AdminProductsContent() {
     }
   };
 
+  const openBulkModal = (action: typeof bulkAction) => {
+    bulkTargetIdsRef.current = Array.from(selectedProducts);
+    setBulkAction(action);
+    setShowBulkModal(true);
+  };
+
   const processBulkItem = async (id: string) => {
     if (bulkAction === 'publish') {
       await apiClient.updateAdminProduct(id, { status: 'ACTIVE' });
@@ -750,9 +786,8 @@ function AdminProductsContent() {
   };
 
   const handleBulkAction = async () => {
-    if (selectedProducts.size === 0 || bulkActionLoading) return;
-
-    const ids = Array.from(selectedProducts);
+    const ids = bulkTargetIdsRef.current;
+    if (ids.length === 0 || bulkActionLoading) return;
     let success = 0;
     let failed = 0;
     const failedNames: string[] = [];
@@ -1021,25 +1056,25 @@ function AdminProductsContent() {
               <div className="flex items-center gap-4 mt-4 pt-4 border-t">
                 <span className="text-sm text-hos-text-secondary">{selectedProducts.size} selected</span>
                 <button
-                  onClick={() => { setBulkAction('publish'); setShowBulkModal(true); }}
+                  onClick={() => openBulkModal('publish')}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
                 >
                   Publish
                 </button>
                 <button
-                  onClick={() => { setBulkAction('unpublish'); setShowBulkModal(true); }}
+                  onClick={() => openBulkModal('unpublish')}
                   className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 text-sm"
                 >
                   Unpublish
                 </button>
                 <button
-                  onClick={() => { setBulkAction('inactive'); setShowBulkModal(true); }}
+                  onClick={() => openBulkModal('inactive')}
                   className="px-4 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-secondary text-sm"
                 >
                   Set Inactive
                 </button>
                 <button
-                  onClick={() => { setBulkAction('delete'); setShowBulkModal(true); }}
+                  onClick={() => openBulkModal('delete')}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
                 >
                   Delete
@@ -1059,7 +1094,7 @@ function AdminProductsContent() {
               </h2>
               {filteredProducts.length > ITEMS_PER_PAGE && (
                 <span className="text-sm text-hos-text-muted">
-                  Page {tablePage} of {totalTablePages}
+                  Page {safeTablePage} of {totalTablePages}
                 </span>
               )}
             </div>
@@ -1247,21 +1282,21 @@ function AdminProductsContent() {
             {totalTablePages > 1 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-hos-border">
                 <p className="text-sm text-hos-text-muted">
-                  Showing {(tablePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(tablePage * ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length}
+                  Showing {(safeTablePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(safeTablePage * ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length}
                 </p>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setTablePage((p) => Math.max(1, p - 1))}
-                    disabled={tablePage <= 1}
+                    onClick={() => setTablePage(Math.max(1, safeTablePage - 1))}
+                    disabled={safeTablePage <= 1}
                     className="px-3 py-1.5 text-sm border border-hos-border rounded-lg disabled:opacity-40 hover:bg-hos-bg-tertiary"
                   >
                     Previous
                   </button>
                   <button
                     type="button"
-                    onClick={() => setTablePage((p) => Math.min(totalTablePages, p + 1))}
-                    disabled={tablePage >= totalTablePages}
+                    onClick={() => setTablePage(Math.min(totalTablePages, safeTablePage + 1))}
+                    disabled={safeTablePage >= totalTablePages}
                     className="px-3 py-1.5 text-sm border border-hos-border rounded-lg disabled:opacity-40 hover:bg-hos-bg-tertiary"
                   >
                     Next
@@ -1613,7 +1648,7 @@ function AdminProductsContent() {
                    'Delete Products'}
                 </h2>
                 <p className="text-hos-text-secondary mb-4">
-                  Are you sure you want to {bulkAction === 'inactive' ? 'set inactive' : bulkAction} <strong>{selectedProducts.size}</strong> products?
+                  Are you sure you want to {bulkAction === 'inactive' ? 'set inactive' : bulkAction} <strong>{bulkTargetIdsRef.current.length}</strong> products?
                   {bulkAction === 'delete' && ' This cannot be undone.'}
                 </p>
                 {bulkActionLoading && (

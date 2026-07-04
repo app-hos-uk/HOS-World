@@ -192,7 +192,7 @@ function ProductsContent() {
   const priceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipScrollOnMountRef = useRef(true);
   const pendingUrlSyncRef = useRef<string | null>(null);
-  const isInternalNavRef = useRef(false);
+  const lastPushedUrlRef = useRef<string | null>(null);
 
   const [state, setState] = useState<SearchState>(() => initialState);
 
@@ -231,10 +231,16 @@ function ProductsContent() {
       isFirstRenderRef.current = false;
       return;
     }
-    if (isInternalNavRef.current) {
-      isInternalNavRef.current = false;
+    // If this URL change is the one we just pushed ourselves, consume it and skip
+    // re-parsing. Comparing against the exact pushed URL (instead of a sticky
+    // boolean) prevents the flag from getting "stuck" when router.replace yields
+    // an identical URL and this effect never fires to reset it.
+    const incoming = `/products${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    if (lastPushedUrlRef.current !== null && incoming === lastPushedUrlRef.current) {
+      lastPushedUrlRef.current = null;
       return;
     }
+    lastPushedUrlRef.current = null;
     setState(parseSearchParams(searchParams));
   }, [searchParams]);
 
@@ -256,7 +262,7 @@ function ProductsContent() {
     const url = pendingUrlSyncRef.current;
     if (!url) return;
     pendingUrlSyncRef.current = null;
-    isInternalNavRef.current = true;
+    lastPushedUrlRef.current = url;
     router.replace(url, { scroll: false });
   }, [state, router]);
 
