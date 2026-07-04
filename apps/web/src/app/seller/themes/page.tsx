@@ -292,7 +292,7 @@ export default function SellerThemesPage() {
           }));
         }
       }
-      toast.success(`${theme.name} installed successfully!`);
+      toast.success(`${theme.name} applied successfully!`);
       setPreviewTheme(null);
       await fetchCurrentTheme();
     } catch (err: any) {
@@ -604,11 +604,14 @@ export default function SellerThemesPage() {
                       ) : (
                         <>
                           <button
-                            onClick={() => handleInstallTheme(theme)}
+                            onClick={() => {
+                              if (!window.confirm(`Switch to "${theme.name}"? This will replace your current theme.`)) return;
+                              handleInstallTheme(theme);
+                            }}
                             disabled={actionLoading}
                             className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm disabled:opacity-50"
                           >
-                            {actionLoading ? 'Applying...' : 'Apply Theme'}
+                            {actionLoading ? 'Applying...' : 'Install & Apply'}
                           </button>
                           <button
                             onClick={() => setPreviewTheme(theme)}

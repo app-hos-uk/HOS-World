@@ -213,6 +213,27 @@ export class ReturnsService {
         `Your return request for order ${order.orderNumber || order.id} has been submitted and is pending review.`,
         { returnId: returnRequest.id, orderId: order.id },
       ).catch((e) => this.logger.warn(`Return notification failed: ${(e as Error).message}`));
+
+      if (order.sellerId) {
+        const seller = await this.prisma.seller.findUnique({ where: { id: order.sellerId }, select: { userId: true } });
+        if (seller?.userId) {
+          this.notificationsService.sendNotificationToUser(
+            seller.userId,
+            'RETURN_REQUESTED',
+            'New return request',
+            `A customer has requested a return for order ${order.orderNumber || order.id}. Please review it in your returns dashboard.`,
+            { returnId: returnRequest.id, orderId: order.id },
+          ).catch((e) => this.logger.warn(`Seller return notification failed: ${(e as Error).message}`));
+        }
+      }
+
+      this.notificationsService.sendNotificationToRole(
+        'ADMIN',
+        'RETURN_REQUESTED',
+        'New return request',
+        `A return has been requested for order ${order.orderNumber || order.id}. Review pending in the returns management queue.`,
+        { returnId: returnRequest.id, orderId: order.id },
+      ).catch((e) => this.logger.warn(`Admin return notification failed: ${(e as Error).message}`));
     }
 
     return this.mapToReturnType(returnRequest);
@@ -266,6 +287,17 @@ export class ReturnsService {
                 },
               },
             },
+          },
+        },
+        transactions: {
+          where: { type: 'REFUND' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+          select: {
+            id: true,
+            status: true,
+            amount: true,
+            createdAt: true,
           },
         },
       },
@@ -443,6 +475,7 @@ export class ReturnsService {
         });
 
         if (refundSucceeded) {
+          await this.applyRestockForReturn(tx, returnRequest);
           await this.markOrderRefundedInTx(tx, returnRequest.orderId);
         }
       });
@@ -495,7 +528,10 @@ export class ReturnsService {
       });
 
       if (newStatus === 'COMPLETED' && returnRequest.order) {
-        await this.applyRestockForReturn(tx, returnRequest);
+        const alreadyRestocked = currentStatus === 'APPROVED';
+        if (!alreadyRestocked) {
+          await this.applyRestockForReturn(tx, returnRequest);
+        }
         await this.markOrderRefundedInTx(tx, returnRequest.orderId);
       }
 

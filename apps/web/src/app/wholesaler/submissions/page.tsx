@@ -142,25 +142,33 @@ export default function WholesalerSubmissionsPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-hos-border">
+                <table className="min-w-full divide-y divide-hos-border table-fixed">
+                  <colgroup>
+                    <col />
+                    <col style={{ width: '5.5rem' }} />
+                    <col style={{ width: '6rem' }} />
+                    <col style={{ width: '9rem' }} />
+                    <col style={{ width: '6.5rem' }} />
+                    <col style={{ width: '9rem' }} />
+                  </colgroup>
                   <thead className="bg-hos-bg-secondary">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Product
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Stock
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Min. Order
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Submitted
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -168,21 +176,21 @@ export default function WholesalerSubmissionsPage() {
                   <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     {filteredSubmissions.map((submission) => (
                       <tr key={submission.id} className="hover:bg-hos-bg-tertiary">
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-hos-text-secondary">
+                        <td className="px-4 py-4">
+                          <div className="text-sm font-medium text-hos-text-secondary truncate">
                             {submission.productData?.name || 'Untitled Product'}
                           </div>
-                          <div className="text-sm text-hos-text-muted">
+                          <div className="text-sm text-hos-text-muted truncate">
                             {submission.productData?.description?.substring(0, 50)}...
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {submission.productData?.stock ?? 'N/A'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {submission.productData?.quantity || '—'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-4 py-4 whitespace-nowrap">
                           <span
                             className={`px-2 py-1 text-xs font-medium rounded ${
                               submission.status === 'PROCUREMENT_APPROVED' ||
@@ -205,11 +213,11 @@ export default function WholesalerSubmissionsPage() {
                                   : submission.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {new Date(submission.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex flex-wrap items-center gap-3">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex items-center gap-3">
                             <Link
                               href={`/wholesaler/submit-product?id=${submission.id}`}
                               className="text-hos-gold hover:text-hos-gold"

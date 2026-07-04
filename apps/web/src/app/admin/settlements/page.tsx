@@ -97,12 +97,15 @@ export default function AdminSettlementsPage() {
 
   const fetchSellers = useCallback(async () => {
     try {
-      const response = await apiClient.getUsers();
-      const raw = response?.data as { data?: unknown[] } | unknown[] | undefined;
-      const userData = Array.isArray(raw) ? raw : (raw as { data?: unknown[] })?.data ?? [];
-      const users = Array.isArray(userData) ? userData : [];
-      const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-      setSellers(users.filter((u: any) => sellerRoles.includes(u.role)));
+      const response = await apiClient.getAdminVendors({ limit: 500 });
+      const raw = response?.data;
+      const vendorList = Array.isArray(raw) ? raw : (raw as any)?.data ?? [];
+      setSellers(vendorList.map((s: any) => ({
+        id: s.id,
+        email: s.user?.email || s.email || '',
+        storeName: s.storeName || s.user?.firstName || '',
+        role: s.user?.role || s.sellerType || 'SELLER',
+      })));
     } catch {
       setSellers([]);
     }

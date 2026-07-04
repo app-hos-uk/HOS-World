@@ -932,7 +932,7 @@ function AdminProductsContent() {
           {/* Products Table */}
           <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
             <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Products ({filteredProducts.length})</h2>
+              <h2 className="text-lg font-semibold">Products ({stats.totalProducts})</h2>
               <button onClick={selectAllVisible} className="text-sm text-hos-gold hover:text-hos-gold-hover">
                 Select All Visible
               </button>
@@ -1049,28 +1049,28 @@ function AdminProductsContent() {
                           {new Date(product.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-4 py-3 align-middle text-right">
-                          <div className="flex flex-wrap justify-end gap-1 items-center">
+                          <div className="inline-flex items-center gap-1.5">
                             <button
                               type="button"
                               onClick={() => handleEdit(product)}
-                              className="px-2 py-1 text-sm text-hos-gold hover:bg-hos-gold/10 rounded whitespace-nowrap"
+                              className="px-2 py-1.5 text-xs text-hos-gold hover:bg-hos-gold/10 rounded whitespace-nowrap"
                             >
                               Edit
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDuplicateProduct(product)}
-                              className="px-2 py-1 text-sm text-hos-text-secondary hover:bg-hos-bg-tertiary rounded shrink-0"
+                              className="px-1.5 py-1.5 text-xs text-hos-text-secondary hover:bg-hos-bg-tertiary rounded"
                               title="Duplicate"
                             >
-                              📋
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                             </button>
                             <select
                               value={product.status}
                               onChange={(e) =>
                                 handleStatusChange(product, e.target.value as 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'OUT_OF_STOCK')
                               }
-                              className={`max-w-full px-2 py-1 text-xs border rounded cursor-pointer font-medium ${
+                              className={`px-2 py-1.5 text-xs border rounded cursor-pointer font-medium ${
                                 product.status === 'ACTIVE'
                                   ? 'border-green-500/40 text-green-400 bg-green-500/10'
                                   : product.status === 'DRAFT'
@@ -1086,7 +1086,7 @@ function AdminProductsContent() {
                             <button
                               type="button"
                               onClick={() => handleDeleteClick(product)}
-                              className="px-2 py-1 text-sm text-red-400 hover:bg-red-500/10 rounded whitespace-nowrap"
+                              className="px-2 py-1.5 text-xs text-red-400 hover:bg-red-500/10 rounded whitespace-nowrap"
                             >
                               Delete
                             </button>

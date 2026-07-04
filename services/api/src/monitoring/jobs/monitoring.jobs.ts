@@ -215,24 +215,23 @@ export class MonitoringJobsService implements OnModuleInit {
       }
     }
 
-    // Low stock alerts for sellers (stock between 1 and 3, inclusive)
-    const lowStockProducts = await this.prisma.product.findMany({
-      where: { stock: { gt: 0, lte: 3 }, status: 'ACTIVE' },
+    const alertProducts = await this.prisma.product.findMany({
+      where: { stock: { lte: 5 }, status: 'ACTIVE' },
       select: { id: true, name: true, stock: true, seller: { select: { userId: true } } },
-      take: 100,
+      take: 200,
     });
 
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    for (const product of lowStockProducts) {
+    for (const product of alertProducts) {
       const sellerUserId = product.seller?.userId;
       if (!sellerUserId) continue;
       try {
-        // Dedup: skip if a low-stock notification was already sent for this product in the last 24h
+        const subject = product.stock <= 0 ? 'Out of stock alert' : 'Low stock alert';
         const recentNotification = await this.prisma.notification.findFirst({
           where: {
             userId: sellerUserId,
-            subject: 'Low stock alert',
+            subject,
             metadata: { path: ['productId'], equals: product.id },
             createdAt: { gte: oneDayAgo },
           },
@@ -240,15 +239,20 @@ export class MonitoringJobsService implements OnModuleInit {
         });
         if (recentNotification) continue;
 
+        const type = product.stock <= 0 ? 'OUT_OF_STOCK' : 'LOW_STOCK';
+        const message = product.stock <= 0
+          ? `Product "${product.name}" is out of stock. Customers cannot purchase it until restocked.`
+          : `Product "${product.name}" is low on stock (${product.stock} remaining). Consider restocking soon.`;
+
         await this.notificationsService.sendNotificationToUser(
           sellerUserId,
-          'GENERAL',
-          'Low stock alert',
-          `Product "${product.name}" is low on stock (${product.stock} remaining). Consider restocking soon.`,
+          type,
+          subject,
+          message,
           { productId: product.id, stock: product.stock },
         );
       } catch (e) {
-        this.logger.warn(`Low stock notification failed for product ${product.id}: ${(e as Error).message}`);
+        this.logger.warn(`Stock notification failed for product ${product.id}: ${(e as Error).message}`);
       }
     }
   }

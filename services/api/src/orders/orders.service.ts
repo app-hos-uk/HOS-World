@@ -182,6 +182,39 @@ export class OrdersService {
         );
         break;
     }
+
+    this.notifySellerAboutOrder(orderId, newStatus, orderNumber).catch((e) =>
+      this.logger.warn(`Seller order notification failed: ${(e as Error).message}`),
+    );
+  }
+
+  private async notifySellerAboutOrder(orderId: string, status: string, orderNumber: string): Promise<void> {
+    if (!this.notificationsService) return;
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: { sellerId: true, childOrders: { select: { sellerId: true } } },
+    });
+    if (!order) return;
+
+    const sellerIds = new Set<string>();
+    if (order.sellerId) sellerIds.add(order.sellerId);
+    order.childOrders?.forEach((c) => { if (c.sellerId) sellerIds.add(c.sellerId); });
+
+    const sellerMessages: Record<string, { subject: string; body: string }> = {
+      CONFIRMED: { subject: 'New order received', body: `Order ${orderNumber} has been confirmed and is ready for processing.` },
+      CANCELLED: { subject: 'Order cancelled', body: `Order ${orderNumber} has been cancelled by the customer.` },
+      DELIVERED: { subject: 'Order delivered', body: `Order ${orderNumber} has been marked as delivered.` },
+    };
+    const msg = sellerMessages[status];
+    if (!msg) return;
+
+    for (const sellerId of sellerIds) {
+      const seller = await this.prisma.seller.findUnique({ where: { id: sellerId }, select: { userId: true } });
+      if (!seller?.userId) continue;
+      await this.notificationsService.sendNotificationToUser(
+        seller.userId, 'NEW_ORDER', msg.subject, msg.body, { orderId, orderNumber },
+      );
+    }
   }
 
   constructor(

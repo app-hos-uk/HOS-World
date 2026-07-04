@@ -5559,9 +5559,10 @@ export class ApiClient {
     });
   }
 
-  async processSettlement(id: string): Promise<ApiResponse<any>> {
+  async processSettlement(id: string, data?: { status?: string; paymentReference?: string; notes?: string }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/settlements/${id}/process`, {
-      method: 'POST',
+      method: 'PUT',
+      body: JSON.stringify(data || { status: 'PROCESSING' }),
     });
   }
 
@@ -5570,9 +5571,9 @@ export class ApiClient {
     paymentMethod?: string;
     notes?: string;
   }): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>(`/settlements/${id}/mark-paid`, {
-      method: 'POST',
-      body: JSON.stringify(data),
+    return this.request<ApiResponse<any>>(`/settlements/${id}/process`, {
+      method: 'PUT',
+      body: JSON.stringify({ status: 'PAID', ...data }),
     });
   }
 

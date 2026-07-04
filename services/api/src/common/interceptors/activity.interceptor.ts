@@ -86,14 +86,20 @@ export class ActivityInterceptor implements NestInterceptor {
   }
 
   private extractEntityType(url: string): string {
-    // Extract entity type from URL patterns like /products, /orders, /sellers
-    const match = url.match(/\/([^\/]+)/);
-    if (match) {
-      const segment = match[1];
-      // Remove query params and pluralize/singularize
-      const clean = segment.split('?')[0];
-      return clean.charAt(0).toUpperCase() + clean.slice(1).replace(/s$/, '');
+    const segments = url.split('?')[0].split('/').filter(Boolean);
+
+    if (segments[0] === 'admin' && segments.length >= 2) {
+      const sub = segments[1];
+      const clean = sub.charAt(0).toUpperCase() + sub.slice(1).replace(/s$/, '');
+      return clean;
     }
+
+    if (segments.length > 0) {
+      const segment = segments[0];
+      const clean = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/s$/, '');
+      return clean;
+    }
+
     return 'Unknown';
   }
 

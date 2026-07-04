@@ -354,7 +354,7 @@ export default function OrdersPage() {
                         Complete Payment
                       </Link>
                     )}
-                    {order.paymentStatus?.toUpperCase() === 'PAID' && (
+                    {!['PENDING', 'CANCELLED'].includes(order.status?.toUpperCase()) && (
                       <button
                         type="button"
                         onClick={async () => {

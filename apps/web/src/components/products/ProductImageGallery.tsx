@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { SafeImage } from '@/components/SafeImage';
 
 export interface ProductImage {
@@ -18,9 +18,93 @@ function resolveImageUrl(image: ProductImage | string): string {
   return image?.url || '';
 }
 
+function clamp(val: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, val));
+}
+
 export function ProductImageGallery({ images, productName }: ProductImageGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [scale, setScale] = useState(1);
+  const [translate, setTranslate] = useState({ x: 0, y: 0 });
+  const dragging = useRef(false);
+  const lastPointer = useRef({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const resetZoom = useCallback(() => {
+    setScale(1);
+    setTranslate({ x: 0, y: 0 });
+  }, []);
+
+  const openLightbox = useCallback(() => {
+    resetZoom();
+    setLightboxOpen(true);
+  }, [resetZoom]);
+
+  const closeLightbox = useCallback(() => {
+    setLightboxOpen(false);
+    resetZoom();
+  }, [resetZoom]);
+
+  const goToImage = useCallback((dir: 1 | -1) => {
+    setSelectedIndex((i) => {
+      const next = i + dir;
+      if (next < 0) return images.length - 1;
+      if (next >= images.length) return 0;
+      return next;
+    });
+    resetZoom();
+  }, [images.length, resetZoom]);
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') goToImage(-1);
+      if (e.key === 'ArrowRight') goToImage(1);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [lightboxOpen, closeLightbox, goToImage]);
+
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setScale((s) => clamp(s + (e.deltaY < 0 ? 0.25 : -0.25), 1, 5));
+  }, []);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (scale <= 1) return;
+    dragging.current = true;
+    lastPointer.current = { x: e.clientX, y: e.clientY };
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }, [scale]);
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!dragging.current) return;
+    const dx = e.clientX - lastPointer.current.x;
+    const dy = e.clientY - lastPointer.current.y;
+    lastPointer.current = { x: e.clientX, y: e.clientY };
+    setTranslate((t) => ({ x: t.x + dx, y: t.y + dy }));
+  }, []);
+
+  const handlePointerUp = useCallback(() => {
+    dragging.current = false;
+  }, []);
+
+  const handleDoubleClick = useCallback(() => {
+    if (scale > 1) {
+      resetZoom();
+    } else {
+      setScale(2.5);
+    }
+  }, [scale, resetZoom]);
 
   if (!images || images.length === 0) {
     return (
@@ -37,7 +121,7 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
       <div>
         <button
           type="button"
-          onClick={() => setLightboxOpen(true)}
+          onClick={openLightbox}
           className="relative w-full aspect-square mb-4 bg-hos-bg-secondary rounded-lg overflow-hidden cursor-zoom-in group isolate"
           aria-label="Zoom product image"
         >
@@ -89,24 +173,31 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
           role="dialog"
           aria-modal="true"
           aria-label="Product image zoom"
-          onClick={() => setLightboxOpen(false)}
+          onClick={closeLightbox}
         >
           <button
             type="button"
-            onClick={() => setLightboxOpen(false)}
+            onClick={closeLightbox}
             className="absolute top-4 right-4 text-white/80 hover:text-white text-2xl z-10"
             aria-label="Close zoom"
           >
             ×
           </button>
 
+          {scale > 1 && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); resetZoom(); }}
+              className="absolute top-4 left-4 text-white/70 hover:text-white text-sm bg-white/10 px-3 py-1.5 rounded-lg z-10"
+            >
+              Reset zoom
+            </button>
+          )}
+
           {images.length > 1 && (
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedIndex((i) => (i > 0 ? i - 1 : images.length - 1));
-              }}
+              onClick={(e) => { e.stopPropagation(); goToImage(-1); }}
               className="absolute left-4 text-white/80 hover:text-white text-3xl z-10"
               aria-label="Previous image"
             >
@@ -115,31 +206,43 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
           )}
 
           <div
-            className="relative w-full max-w-4xl aspect-square"
+            ref={containerRef}
+            className="relative w-full max-w-4xl aspect-square overflow-hidden touch-none select-none"
+            style={{ cursor: scale > 1 ? 'grab' : 'zoom-in' }}
             onClick={(e) => e.stopPropagation()}
+            onWheel={handleWheel}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onDoubleClick={handleDoubleClick}
           >
             <SafeImage
               src={currentUrl}
               alt={productName}
               fill
               sizes="100vw"
-              className="object-contain"
+              className="object-contain pointer-events-none"
+              style={{
+                transform: `scale(${scale}) translate(${translate.x / scale}px, ${translate.y / scale}px)`,
+                transition: dragging.current ? 'none' : 'transform 0.2s ease-out',
+              }}
             />
           </div>
 
           {images.length > 1 && (
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedIndex((i) => (i < images.length - 1 ? i + 1 : 0));
-              }}
+              onClick={(e) => { e.stopPropagation(); goToImage(1); }}
               className="absolute right-4 text-white/80 hover:text-white text-3xl z-10"
               aria-label="Next image"
             >
               ›
             </button>
           )}
+
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-xs z-10">
+            Scroll to zoom · Double-click to toggle · Drag to pan
+          </div>
         </div>
       )}
     </>

@@ -276,10 +276,7 @@ function ProductsContent() {
     prevPageRef.current = state.page;
 
     const fetchProducts = async () => {
-      // Page-only navigation: keep sidebar filters mounted, dim grid only
-      if (filtersChanged || products.length === 0) {
-        setLoading(true);
-      }
+      setLoading(true);
       setFetchError(null);
       try {
         const filters: Record<string, any> = {
@@ -385,14 +382,18 @@ function ProductsContent() {
     }
   }, [totalPages, state.page, updateState]);
 
+  const prevScrollPageRef = useRef(state.page);
   useEffect(() => {
     if (skipScrollOnMountRef.current) {
       skipScrollOnMountRef.current = false;
+      prevScrollPageRef.current = state.page;
       return;
     }
-    if (loading) return;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [state.page, loading]);
+    if (prevScrollPageRef.current !== state.page) {
+      prevScrollPageRef.current = state.page;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [state.page]);
 
   const toggleArrayFilter = useCallback((key: 'categories' | 'fandoms', value: string) => {
     updateState(prev => {

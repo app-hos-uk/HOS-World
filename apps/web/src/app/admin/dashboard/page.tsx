@@ -58,6 +58,9 @@ const DARK_CHART_TOOLTIP = {
   boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)',
 };
 
+const DARK_CHART_TOOLTIP_ITEM = { color: '#e8e4dc' };
+const DARK_CHART_TOOLTIP_LABEL = { color: '#c9a227' };
+
 const DARK_CHART_GRID = 'rgba(201, 162, 39, 0.12)';
 const DARK_CHART_AXIS = '#9a958a';
 
@@ -270,6 +273,8 @@ export default function AdminDashboardPage() {
                       />
                       <Tooltip 
                         contentStyle={DARK_CHART_TOOLTIP}
+                        itemStyle={DARK_CHART_TOOLTIP_ITEM}
+                        labelStyle={DARK_CHART_TOOLTIP_LABEL}
                         formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
                       />
                       <Line 
@@ -298,9 +303,9 @@ export default function AdminDashboardPage() {
                     <Pie
                       data={orderStatusData}
                       cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={85}
+                      cy="45%"
+                      innerRadius={55}
+                      outerRadius={80}
                       fill="#8884d8"
                       paddingAngle={3}
                       dataKey="value"
@@ -311,12 +316,12 @@ export default function AdminDashboardPage() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={DARK_CHART_TOOLTIP} />
+                    <Tooltip contentStyle={DARK_CHART_TOOLTIP} itemStyle={DARK_CHART_TOOLTIP_ITEM} labelStyle={DARK_CHART_TOOLTIP_LABEL} />
                     <Legend
                       verticalAlign="bottom"
                       align="center"
                       layout="horizontal"
-                      wrapperStyle={{ paddingTop: 8 }}
+                      wrapperStyle={{ paddingTop: 4 }}
                       formatter={(value, entry) => {
                         const percent = (entry?.payload as { percent?: number })?.percent;
                         return (
@@ -375,6 +380,8 @@ export default function AdminDashboardPage() {
                     <Tooltip
                       formatter={(value: number) => [`${value}`, 'Sales']}
                       contentStyle={DARK_CHART_TOOLTIP}
+                      itemStyle={DARK_CHART_TOOLTIP_ITEM}
+                      labelStyle={DARK_CHART_TOOLTIP_LABEL}
                     />
                     <Bar
                       dataKey="sales"

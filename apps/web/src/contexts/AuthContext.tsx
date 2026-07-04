@@ -202,7 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/login');
   }, [router]);
 
-  const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
+  const INACTIVITY_TIMEOUT_MS = 20 * 60 * 1000;
 
   useEffect(() => {
     if (!user) return;

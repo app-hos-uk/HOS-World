@@ -19,7 +19,8 @@ export default function ReconciliationPage() {
     try {
       setLoading(true);
       const response = await apiClient.getReconciliationRuns({ limit: 20 });
-      setRuns(Array.isArray(response?.data) ? response.data : []);
+      const payload = response?.data;
+      setRuns(Array.isArray(payload) ? payload : (payload as any)?.data ?? []);
     } catch (err: any) {
       toast.error(err.message || 'Failed to load reconciliation runs');
     } finally {

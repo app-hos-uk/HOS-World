@@ -796,8 +796,7 @@ export class DashboardService {
         where: {
           parentOrderId: null,
           deletedAt: null,
-          paymentStatus: 'PAID',
-          status: { notIn: ['CANCELLED'] },
+          status: { notIn: ['CANCELLED', 'REFUNDED'] },
         },
         orderBy: { createdAt: 'desc' },
         take: 500,

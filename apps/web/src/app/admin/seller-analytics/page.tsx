@@ -101,9 +101,10 @@ export default function AdminSellerAnalyticsPage() {
         storeDescription: seller.storeDescription || '',
         isVerified: seller.verified !== false,
         createdAt: seller.createdAt || seller.user?.createdAt || new Date().toISOString(),
+        totalRevenue: seller.totalRevenue || 0,
         _count: seller._count || {
           products: seller.totalProducts || 0,
-          orders: 0,
+          orders: seller.totalOrders || 0,
         },
       }));
 
@@ -176,22 +177,21 @@ export default function AdminSellerAnalyticsPage() {
         sellerGrowth.push({ month: label, count });
       }
 
-      // Top sellers (by product count if available)
       const topSellers = allSellers
         .map((s: any) => ({
           name: s.storeName || `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.email,
-          revenue: s._count?.orders ? s._count.orders * 50 : 0, // Estimate
+          revenue: Number(s.totalRevenue || 0),
           orders: s._count?.orders || 0,
           products: s._count?.products || 0,
         }))
-        .sort((a: any, b: any) => b.products - a.products)
+        .sort((a: any, b: any) => b.revenue - a.revenue)
         .slice(0, 5);
 
       setAnalytics({
         totalSellers: allSellers.length,
         activeSellers: activeSellers.length,
         pendingSellers: pendingSellers.length,
-        totalRevenue: topSellers.reduce((sum: number, s: any) => sum + s.revenue, 0),
+        totalRevenue: allSellers.reduce((sum: number, s: any) => sum + Number(s.totalRevenue || 0), 0),
         sellers: allSellers,
         sellersByType,
         sellerGrowth,

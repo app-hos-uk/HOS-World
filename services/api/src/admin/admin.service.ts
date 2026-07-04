@@ -897,14 +897,34 @@ export class AdminService {
       : [];
     const byAddressId = new Map(addressRows.map((a) => [a.id, a]));
 
+    const sellerIds = sellers.map((s) => s.id);
+    const revenueBySellerRows = sellerIds.length
+      ? await this.prisma.order.groupBy({
+          by: ['sellerId'],
+          where: {
+            sellerId: { in: sellerIds },
+            deletedAt: null,
+            status: { notIn: ['CANCELLED', 'REFUNDED'] },
+          },
+          _sum: { total: true },
+          _count: { _all: true },
+        })
+      : [];
+    const revenueMap = new Map(
+      revenueBySellerRows.map((r) => [r.sellerId, { revenue: Number(r._sum.total || 0), orders: r._count._all }]),
+    );
+
     const sellersWithAddresses = sellers.map((seller) => {
       const warehouseAddress = seller.warehouseAddressId
         ? byAddressId.get(seller.warehouseAddressId) ?? null
         : null;
+      const sellerRevenue = revenueMap.get(seller.id);
       return {
         ...seller,
         warehouseAddress,
         totalProducts: seller._count?.products || 0,
+        totalRevenue: sellerRevenue?.revenue || 0,
+        totalOrders: sellerRevenue?.orders || 0,
       };
     });
 

@@ -433,7 +433,6 @@ export default function CheckoutPage() {
       sessionStorage.setItem(GUEST_CHECKOUT_ACCOUNT_KEY, 'true');
 
       await refreshUser();
-      toast.success('Account created. Continue checkout below.');
     } catch (error: any) {
       const message = error.message || 'Failed to continue as guest';
       if (message.toLowerCase().includes('already exists')) {

@@ -584,7 +584,9 @@ export default function OrderDetailPage() {
                       Track Order
                     </Link>
                   )}
-                  {order.paymentStatus?.toUpperCase() === 'PAID' && (
+                  {['PAID', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'].some(
+                    s => order.paymentStatus?.toUpperCase() === 'PAID' || order.status?.toUpperCase() === s
+                  ) && (
                     <button
                       type="button"
                       onClick={async () => {
