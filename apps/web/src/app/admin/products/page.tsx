@@ -72,7 +72,6 @@ function AdminProductsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [page, setPage] = useState(1);
   const [sellers, setSellers] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [publishNow, setPublishNow] = useState(true);
@@ -132,17 +131,41 @@ function AdminProductsContent() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getAdminProducts({ 
-        page, 
+
+      // Fetch the first page to discover the total count
+      const firstResponse = await apiClient.getAdminProducts({
+        page: 1,
         limit: 100,
         sellerId: sellerFilterFromUrl || undefined,
       });
-      const payload = response?.data;
-      const list = payload?.products || payload?.data || payload || [];
-      const productList = Array.isArray(list) ? list : [];
-      const totalFromApi = typeof payload?.pagination?.total === 'number' ? payload.pagination.total : undefined;
+      const firstPayload = firstResponse?.data;
+      const firstList = firstPayload?.products || firstPayload?.data || firstPayload || [];
+      let productList: Product[] = Array.isArray(firstList) ? firstList : [];
+      const totalFromApi = typeof firstPayload?.pagination?.total === 'number'
+        ? firstPayload.pagination.total
+        : undefined;
+
+      // If there are more products beyond the first page, fetch remaining pages
+      if (totalFromApi && totalFromApi > productList.length) {
+        const totalPages = Math.ceil(totalFromApi / 100);
+        const remaining = await Promise.all(
+          Array.from({ length: totalPages - 1 }, (_, i) =>
+            apiClient.getAdminProducts({
+              page: i + 2,
+              limit: 100,
+              sellerId: sellerFilterFromUrl || undefined,
+            }),
+          ),
+        );
+        for (const res of remaining) {
+          const p = res?.data;
+          const items = p?.products || p?.data || p || [];
+          if (Array.isArray(items)) productList = productList.concat(items);
+        }
+      }
+
       setProducts(productList);
-      calculateStats(productList, totalFromApi);
+      calculateStats(productList, totalFromApi ?? productList.length);
     } catch (err: any) {
       console.error('Error fetching products:', err);
       setError(err.message || 'Failed to load products');
@@ -150,7 +173,7 @@ function AdminProductsContent() {
     } finally {
       setLoading(false);
     }
-  }, [page, sellerFilterFromUrl]);
+  }, [sellerFilterFromUrl]);
 
   const fetchSellers = useCallback(async () => {
     try {
