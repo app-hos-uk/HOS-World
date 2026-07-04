@@ -3746,6 +3746,12 @@ export class ApiClient {
     });
   }
 
+  async deleteAdminProduct(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/products/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   async updateAdminProduct(
     id: string,
     data: {

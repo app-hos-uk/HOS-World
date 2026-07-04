@@ -12,7 +12,7 @@ import { expandDepartmentCategories } from '@/lib/storefrontNavigation';
 
 const ITEMS_PER_PAGE = 20;
 
-/** Module-level caches survive ProductsContent remount on router.replace. */
+/** Module-level caches survive component remounts during navigation. */
 let cachedBaselineFacets: Record<string, Record<string, number>> = {};
 let cachedListing: {
   filterKey: string;
@@ -20,7 +20,6 @@ let cachedListing: {
   totalHits: number;
   totalPages: number;
 } = { filterKey: '', products: [], totalHits: 0, totalPages: 0 };
-let internalNavCount = 0;
 
 const SORT_OPTIONS = [
   { value: '', label: 'Relevance' },
@@ -192,6 +191,8 @@ function ProductsContent() {
   const [priceDraft, setPriceDraft] = useState({ min: '', max: '' });
   const priceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipScrollOnMountRef = useRef(true);
+  const pendingUrlSyncRef = useRef<string | null>(null);
+  const isInternalNavRef = useRef(false);
 
   const [state, setState] = useState<SearchState>(() => initialState);
 
@@ -223,32 +224,41 @@ function ProductsContent() {
     setPriceDraft({ min: state.minPrice, max: state.maxPrice });
   }, [state.minPrice, state.maxPrice]);
 
-  // Sync state from URL when searchParams change (browser back/forward)
+  // Sync state from URL on browser back/forward
+  const isFirstRenderRef = useRef(true);
   useEffect(() => {
-    if (internalNavCount > 0) {
-      internalNavCount -= 1;
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      return;
+    }
+    if (isInternalNavRef.current) {
+      isInternalNavRef.current = false;
       return;
     }
     setState(parseSearchParams(searchParams));
   }, [searchParams]);
 
   const updateState = useCallback((updatesOrFn: Partial<SearchState> | ((prev: SearchState) => Partial<SearchState>)) => {
-    let computedNext: SearchState | undefined;
     setState(prev => {
       const updates = typeof updatesOrFn === 'function' ? updatesOrFn(prev) : updatesOrFn;
       const next = { ...prev, ...updates };
       if (!('page' in updates)) {
         next.page = 1;
       }
-      computedNext = next;
+      const qs = buildSearchParams(next);
+      pendingUrlSyncRef.current = `/products${qs ? `?${qs}` : ''}`;
       return next;
     });
-    if (computedNext) {
-      const qs = buildSearchParams(computedNext);
-      internalNavCount += 1;
-      router.replace(`/products${qs ? `?${qs}` : ''}`, { scroll: false });
-    }
-  }, [router]);
+  }, []);
+
+  // Keep Next.js router in sync with filter state without calling router inside setState
+  useEffect(() => {
+    const url = pendingUrlSyncRef.current;
+    if (!url) return;
+    pendingUrlSyncRef.current = null;
+    isInternalNavRef.current = true;
+    router.replace(url, { scroll: false });
+  }, [state, router]);
 
   const activeFilterCount =
     state.categories.length +

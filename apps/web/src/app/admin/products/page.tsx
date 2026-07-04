@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback, Suspense } from 'react';
+import { useEffect, useState, useMemo, useCallback, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AdminLayout } from '@/components/AdminLayout';
@@ -10,11 +10,15 @@ import { CategorySelector } from '@/components/taxonomy/CategorySelector';
 import { FandomSelector } from '@/components/taxonomy/FandomSelector';
 import { TagSelector } from '@/components/taxonomy/TagSelector';
 import { AttributeEditor } from '@/components/taxonomy/AttributeEditor';
-import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { DataExport } from '@/components/DataExport';
 import { SafeImage } from '@/components/SafeImage';
 import Link from 'next/link';
+
+const ITEMS_PER_PAGE = 25;
+const BULK_BATCH_SIZE = 5;
+
+type ProductStatus = 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'OUT_OF_STOCK';
 
 interface Product {
   id: string;
@@ -125,7 +129,17 @@ function AdminProductsContent() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [bulkAction, setBulkAction] = useState<'publish' | 'unpublish' | 'inactive' | 'delete'>('publish');
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
   const [updatingProduct, setUpdatingProduct] = useState(false);
+  const [tablePage, setTablePage] = useState(1);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [productToDuplicate, setProductToDuplicate] = useState<Product | null>(null);
+  const [duplicateLoading, setDuplicateLoading] = useState(false);
+  const [statusChangePending, setStatusChangePending] = useState<{ product: Product; newStatus: ProductStatus } | null>(null);
+  const [statusChangeLoading, setStatusChangeLoading] = useState(false);
+  const [editSnapshot, setEditSnapshot] = useState('');
+  const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -302,6 +316,60 @@ function AdminProductsContent() {
     return filtered;
   }, [products, searchTerm, statusFilter, categoryFilter, stockFilter, sortBy, sortOrder]);
 
+  const totalTablePages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+
+  const paginatedProducts = useMemo(() => {
+    const start = (tablePage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProducts, tablePage]);
+
+  const allFilteredSelected =
+    filteredProducts.length > 0 && filteredProducts.every((p) => selectedProducts.has(p.id));
+  const someFilteredSelected = filteredProducts.some((p) => selectedProducts.has(p.id));
+
+  const isEditDirty = useMemo(() => {
+    if (!editSnapshot) return false;
+    return editSnapshot !== JSON.stringify({ formData, images, publishNow });
+  }, [editSnapshot, formData, images, publishNow]);
+
+  useEffect(() => {
+    setTablePage(1);
+  }, [searchTerm, statusFilter, categoryFilter, stockFilter, sortBy, sortOrder]);
+
+  useEffect(() => {
+    if (tablePage > totalTablePages) {
+      setTablePage(totalTablePages);
+    }
+  }, [tablePage, totalTablePages]);
+
+  useEffect(() => {
+    setSelectedProducts((prev) => {
+      const visibleIds = new Set(filteredProducts.map((p) => p.id));
+      const pruned = new Set([...prev].filter((id) => visibleIds.has(id)));
+      return pruned.size === prev.size ? prev : pruned;
+    });
+  }, [filteredProducts]);
+
+  useEffect(() => {
+    const checkbox = selectAllCheckboxRef.current;
+    if (checkbox) {
+      checkbox.indeterminate = someFilteredSelected && !allFilteredSelected;
+    }
+  }, [someFilteredSelected, allFilteredSelected]);
+
+  const buildEditSnapshot = (
+    data: typeof formData,
+    imgs: typeof images,
+    publish: boolean,
+  ) => JSON.stringify({ formData: data, images: imgs, publishNow: publish });
+
+  const closeEditModal = () => {
+    if (isEditDirty && !window.confirm('Discard unsaved changes?')) return;
+    setShowEditModal(false);
+    setEditingProduct(null);
+    setEditSnapshot('');
+  };
+
   const addImageByUrl = () => {
     const url = newImageUrl.trim();
     if (!url) return;
@@ -454,7 +522,7 @@ function AdminProductsContent() {
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
-    setFormData({
+    const nextFormData = {
       name: product.name || '',
       description: product.description || '',
       shortDescription: product.shortDescription || '',
@@ -487,14 +555,18 @@ function AdminProductsContent() {
       metaDescription: product.metaDescription || '',
       isFeatured: product.isFeatured || false,
       isHidden: product.isHidden || false,
-    });
-    setImages(product.images?.map((img: any) => ({
+    };
+    const nextImages = product.images?.map((img: any) => ({
       url: img.url,
       alt: img.alt || '',
       order: img.order || 0,
       isPrimary: img.isPrimary || false,
-    })) || []);
-    setPublishNow(product.status === 'ACTIVE');
+    })) || [];
+    const nextPublishNow = product.status === 'ACTIVE';
+    setFormData(nextFormData);
+    setImages(nextImages);
+    setPublishNow(nextPublishNow);
+    setEditSnapshot(buildEditSnapshot(nextFormData, nextImages, nextPublishNow));
     setShowEditModal(true);
   };
 
@@ -534,6 +606,7 @@ function AdminProductsContent() {
       toast.success('Product updated successfully');
       setShowEditModal(false);
       setEditingProduct(null);
+      setEditSnapshot('');
       fetchProducts();
     } catch (err: any) {
       toast.error(err.message || 'Failed to update product');
@@ -542,31 +615,38 @@ function AdminProductsContent() {
     }
   };
 
-  const handleDuplicateProduct = async (product: Product) => {
+  const handleDuplicateConfirm = async () => {
+    if (!productToDuplicate || duplicateLoading) return;
+    const product = productToDuplicate;
     try {
+      setDuplicateLoading(true);
       await apiClient.createAdminProduct({
         name: `${product.name} (Copy)`,
         description: product.description,
         price: product.price,
-        stock: 0, // Start with 0 stock
+        stock: 0,
         ...(product.taxClassId ? { taxClassId: product.taxClassId } : {}),
         ...(product.taxRate != null ? { taxRate: product.taxRate } : {}),
         isPlatformOwned: product.isPlatformOwned,
         sellerId: product.sellerId,
-        status: 'DRAFT', // Always create as draft
+        status: 'DRAFT',
         categoryId: product.categoryId || product.categoryRelation?.categoryId,
         tagIds: product.tagsRelation?.map(t => t.tagId) || product.tags?.map(t => t.id),
         attributes: product.attributes,
         images: product.images?.map(img => ({ url: img.url, alt: img.alt, order: img.order })),
       });
       toast.success('Product duplicated successfully');
+      setShowDuplicateModal(false);
+      setProductToDuplicate(null);
       fetchProducts();
     } catch (err: any) {
       toast.error(err.message || 'Failed to duplicate product');
+    } finally {
+      setDuplicateLoading(false);
     }
   };
 
-  const handleStatusChange = async (product: Product, newStatus: 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'OUT_OF_STOCK') => {
+  const handleStatusChange = async (product: Product, newStatus: ProductStatus) => {
     try {
       await apiClient.updateAdminProduct(product.id, { status: newStatus });
       const labels: Record<string, string> = {
@@ -599,40 +679,42 @@ function AdminProductsContent() {
     setShowDeleteModal(true);
   };
 
+  const handleStatusChangeRequest = (product: Product, newStatus: ProductStatus) => {
+    if (newStatus === product.status) {
+      if (statusChangePending?.product.id === product.id) {
+        setStatusChangePending(null);
+      }
+      return;
+    }
+    setStatusChangePending({ product, newStatus });
+  };
+
+  const handleStatusChangeConfirm = async () => {
+    if (!statusChangePending || statusChangeLoading) return;
+    try {
+      setStatusChangeLoading(true);
+      await handleStatusChange(statusChangePending.product, statusChangePending.newStatus);
+      setStatusChangePending(null);
+    } finally {
+      setStatusChangeLoading(false);
+    }
+  };
+
   const handleDeleteConfirm = async () => {
     if (!productToDelete) return;
 
     setDeleteLoading(true);
     setDeleteError(null);
     try {
-      const apiUrl = getPublicApiBaseUrl();
-      const response = await fetch(
-        `${apiUrl}/admin/products/${productToDelete.id}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-        }
-      );
-      
-      const data = await response.json().catch(() => ({}));
-      const errorMessage = data.message || (Array.isArray(data.message) ? data.message[0] : 'Failed to delete product');
-      
-      if (!response.ok) {
-        setDeleteError(errorMessage);
-        return;
-      }
-      
+      await apiClient.deleteAdminProduct(productToDelete.id);
       toast.success('Product deleted successfully');
       setShowDeleteModal(false);
       setProductToDelete(null);
       setDeleteError(null);
       fetchProducts();
     } catch (err: any) {
-      setDeleteError(err.message || 'Failed to delete product');
-      toast.error(err.message || 'Failed to delete product');
+      const errorMessage = err.message || 'Failed to delete product';
+      setDeleteError(errorMessage);
     } finally {
       setDeleteLoading(false);
     }
@@ -655,41 +737,57 @@ function AdminProductsContent() {
     }
   };
 
-  const handleBulkAction = async () => {
-    if (selectedProducts.size === 0) return;
+  const processBulkItem = async (id: string) => {
+    if (bulkAction === 'publish') {
+      await apiClient.updateAdminProduct(id, { status: 'ACTIVE' });
+    } else if (bulkAction === 'unpublish') {
+      await apiClient.updateAdminProduct(id, { status: 'DRAFT' });
+    } else if (bulkAction === 'inactive') {
+      await apiClient.updateAdminProduct(id, { status: 'INACTIVE' });
+    } else if (bulkAction === 'delete') {
+      await apiClient.deleteAdminProduct(id);
+    }
+  };
 
+  const handleBulkAction = async () => {
+    if (selectedProducts.size === 0 || bulkActionLoading) return;
+
+    const ids = Array.from(selectedProducts);
     let success = 0;
     let failed = 0;
-
     const failedNames: string[] = [];
-    for (const id of selectedProducts) {
-      try {
-        if (bulkAction === 'publish') {
-          await apiClient.updateAdminProduct(id, { status: 'ACTIVE' });
-        } else if (bulkAction === 'unpublish') {
-          await apiClient.updateAdminProduct(id, { status: 'DRAFT' });
-        } else if (bulkAction === 'inactive') {
-          await apiClient.updateAdminProduct(id, { status: 'INACTIVE' });
-        } else if (bulkAction === 'delete') {
-          const apiUrl = getPublicApiBaseUrl();
-          await fetch(`${apiUrl}/admin/products/${id}`, {
-            method: 'DELETE',
-            credentials: 'include',
-          });
+
+    setBulkActionLoading(true);
+    setBulkProgress({ current: 0, total: ids.length });
+
+    for (let i = 0; i < ids.length; i += BULK_BATCH_SIZE) {
+      const batch = ids.slice(i, i + BULK_BATCH_SIZE);
+      const results = await Promise.allSettled(batch.map((id) => processBulkItem(id)));
+      results.forEach((result, idx) => {
+        const id = batch[idx];
+        if (result.status === 'fulfilled') {
+          success++;
+        } else {
+          failed++;
+          const p = products.find((pr) => pr.id === id);
+          failedNames.push(p?.name || id);
         }
-        success++;
-      } catch (err: any) {
-        failed++;
-        const p = products.find((pr) => pr.id === id);
-        failedNames.push(p?.name || id);
-      }
+      });
+      setBulkProgress({ current: Math.min(i + BULK_BATCH_SIZE, ids.length), total: ids.length });
     }
 
     if (failed > 0 && bulkAction === 'publish') {
       toast.error(`${failed} product${failed > 1 ? 's' : ''} could not be published (missing required fields: images, price, category, or description). Updated ${success} successfully.`);
+    } else if (failed > 0) {
+      const preview = failedNames.slice(0, 3).join(', ');
+      const suffix = failedNames.length > 3 ? ` and ${failedNames.length - 3} more` : '';
+      toast.error(`${failed} failed (${preview}${suffix}). ${success} succeeded.`);
     } else {
-      toast.success(`${bulkAction === 'delete' ? 'Deleted' : 'Updated'} ${success} products${failed > 0 ? `, ${failed} failed` : ''}`);
+      toast.success(`${bulkAction === 'delete' ? 'Deleted' : 'Updated'} ${success} products`);
     }
+
+    setBulkActionLoading(false);
+    setBulkProgress({ current: 0, total: 0 });
     setShowBulkModal(false);
     setSelectedProducts(new Set());
     fetchProducts();
@@ -718,7 +816,7 @@ function AdminProductsContent() {
     { key: 'price', header: 'Price', format: (v: number, r: Product) => `${r.currency || 'USD'} ${Number(v || 0).toFixed(2)}` },
     { key: 'stock', header: 'Stock' },
     { key: 'status', header: 'Status' },
-    { key: 'category', header: 'Fandom', format: (v: any) => v?.name || '' },
+    { key: 'category', header: 'Category', format: (v: any) => v?.name || '' },
   ];
 
   const getStockBadge = (stock: number) => {
@@ -800,35 +898,35 @@ function AdminProductsContent() {
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
               <button
-                onClick={() => { setStatusFilter('ALL'); setStockFilter('ALL'); }}
-                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-hos-gold/30 transition ${statusFilter === 'ALL' && stockFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
+                onClick={() => { setSearchTerm(''); setStatusFilter('ALL'); setStockFilter('ALL'); }}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-hos-gold/30 transition ${statusFilter === 'ALL' && stockFilter === 'ALL' && !searchTerm ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-sm text-hos-text-secondary">Total</p>
                 <p className="text-2xl font-bold text-hos-gold">{stats.totalProducts}</p>
               </button>
               <button
-                onClick={() => { setStatusFilter('ACTIVE'); setStockFilter('ALL'); }}
+                onClick={() => { setSearchTerm(''); setStatusFilter('ACTIVE'); setStockFilter('ALL'); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-green-300 transition ${statusFilter === 'ACTIVE' && stockFilter === 'ALL' ? 'ring-2 ring-green-500' : ''}`}
               >
                 <p className="text-sm text-hos-text-secondary">Active</p>
                 <p className="text-2xl font-bold text-green-400">{stats.activeProducts}</p>
               </button>
               <button
-                onClick={() => { setStatusFilter('DRAFT'); setStockFilter('ALL'); }}
+                onClick={() => { setSearchTerm(''); setStatusFilter('DRAFT'); setStockFilter('ALL'); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-yellow-300 transition ${statusFilter === 'DRAFT' && stockFilter === 'ALL' ? 'ring-2 ring-yellow-500' : ''}`}
               >
                 <p className="text-sm text-hos-text-secondary">Draft</p>
                 <p className="text-2xl font-bold text-yellow-400">{stats.draftProducts}</p>
               </button>
               <button
-                onClick={() => { setStatusFilter('ALL'); setStockFilter('OUT'); }}
+                onClick={() => { setSearchTerm(''); setStatusFilter('ALL'); setStockFilter('OUT'); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-red-300 transition ${stockFilter === 'OUT' && statusFilter === 'ALL' ? 'ring-2 ring-red-500' : ''}`}
               >
                 <p className="text-sm text-hos-text-secondary">Out of Stock</p>
                 <p className="text-2xl font-bold text-red-400">{stats.outOfStock}</p>
               </button>
               <button
-                onClick={() => { setStatusFilter('ALL'); setStockFilter('LOW'); }}
+                onClick={() => { setSearchTerm(''); setStatusFilter('ALL'); setStockFilter('LOW'); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left hover:ring-2 hover:ring-orange-300 transition ${stockFilter === 'LOW' && statusFilter === 'ALL' ? 'ring-2 ring-orange-500' : ''}`}
               >
                 <p className="text-sm text-hos-text-secondary">Low Stock</p>
@@ -877,13 +975,14 @@ function AdminProductsContent() {
                 <option value="ACTIVE">Active</option>
                 <option value="DRAFT">Draft</option>
                 <option value="INACTIVE">Inactive</option>
+                <option value="OUT_OF_STOCK">Out of Stock</option>
               </select>
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
                 className="px-4 py-2 border border-hos-border rounded-lg"
               >
-                <option value="ALL">All Fandoms</option>
+                <option value="ALL">All Categories</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{'  '.repeat(cat.level || 0)}{cat.name}</option>
                 ))}
@@ -955,12 +1054,16 @@ function AdminProductsContent() {
           {/* Products Table */}
           <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
             <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Products ({filteredProducts.length}{stats && filteredProducts.length < stats.totalProducts ? ` of ${stats.totalProducts}` : ''})</h2>
-              <button onClick={selectAllVisible} className="text-sm text-hos-gold hover:text-hos-gold-hover">
-                Select All Visible
-              </button>
+              <h2 className="text-lg font-semibold">
+                Products ({filteredProducts.length}{stats && filteredProducts.length < stats.totalProducts ? ` of ${stats.totalProducts}` : ''})
+              </h2>
+              {filteredProducts.length > ITEMS_PER_PAGE && (
+                <span className="text-sm text-hos-text-muted">
+                  Page {tablePage} of {totalTablePages}
+                </span>
+              )}
             </div>
-            <div className="overflow-auto max-h-[500px] overflow-x-auto">
+            <div className="overflow-auto max-h-[calc(100vh-280px)] overflow-x-auto">
               <table className="w-full min-w-[900px] table-fixed border-collapse divide-y divide-hos-border">
                 <colgroup>
                   <col style={{ width: '2.75rem' }} />
@@ -969,17 +1072,18 @@ function AdminProductsContent() {
                   <col style={{ width: '5.5rem' }} />
                   <col style={{ width: '6.5rem' }} />
                   <col style={{ width: '6.5rem' }} />
-                  <col style={{ width: '14rem' }} />
+                  <col style={{ width: '16rem' }} />
                 </colgroup>
                 <thead className="bg-hos-bg-secondary sticky top-0 z-10">
                   <tr>
                     <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-hos-text-muted uppercase align-middle">
                       <input
+                        ref={selectAllCheckboxRef}
                         type="checkbox"
-                        checked={selectedProducts.size === filteredProducts.length && filteredProducts.length > 0}
-                        onChange={() => selectedProducts.size === filteredProducts.length ? clearSelection() : selectAllVisible()}
+                        checked={allFilteredSelected}
+                        onChange={() => (allFilteredSelected ? clearSelection() : selectAllVisible())}
                         className="rounded border-hos-border text-hos-gold"
-                        aria-label="Select all products"
+                        aria-label="Select all filtered products"
                       />
                     </th>
                     <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase align-middle">
@@ -1012,7 +1116,7 @@ function AdminProductsContent() {
                   </tbody>
                 ) : (
                   <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
-                    {filteredProducts.map((product) => (
+                    {paginatedProducts.map((product) => (
                       <tr
                         key={product.id}
                         className={`hover:bg-hos-bg-tertiary ${selectedProducts.has(product.id) ? 'bg-hos-gold/10' : ''}`}
@@ -1062,10 +1166,14 @@ function AdminProductsContent() {
                                 ? 'bg-green-500/15 text-green-400'
                                 : product.status === 'DRAFT'
                                   ? 'bg-yellow-500/15 text-yellow-400'
-                                  : 'bg-hos-bg-tertiary text-hos-text-secondary'
+                                  : product.status === 'OUT_OF_STOCK'
+                                    ? 'bg-orange-500/15 text-orange-400'
+                                    : product.status === 'INACTIVE'
+                                      ? 'bg-hos-bg-tertiary text-hos-text-muted'
+                                      : 'bg-hos-bg-tertiary text-hos-text-secondary'
                             }`}
                           >
-                            {product.status}
+                            {product.status === 'OUT_OF_STOCK' ? 'Out of Stock' : product.status}
                           </span>
                         </td>
                         <td className="px-4 py-3 align-middle text-sm text-hos-text-muted whitespace-nowrap tabular-nums">
@@ -1073,6 +1181,15 @@ function AdminProductsContent() {
                         </td>
                         <td className="px-4 py-3 align-middle">
                           <div className="flex items-center justify-end gap-1">
+                            <Link
+                              href={`/products/${product.slug || product.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="h-7 px-2 text-xs text-hos-text-secondary hover:bg-hos-bg-tertiary rounded inline-flex items-center"
+                              title="View on storefront"
+                            >
+                              View
+                            </Link>
                             <button
                               type="button"
                               onClick={() => handleEdit(product)}
@@ -1082,7 +1199,7 @@ function AdminProductsContent() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => handleDuplicateProduct(product)}
+                              onClick={() => { setProductToDuplicate(product); setShowDuplicateModal(true); }}
                               className="h-7 w-7 text-xs text-hos-text-secondary hover:bg-hos-bg-tertiary rounded inline-flex items-center justify-center"
                               title="Duplicate"
                             >
@@ -1091,20 +1208,23 @@ function AdminProductsContent() {
                             <select
                               value={product.status}
                               onChange={(e) =>
-                                handleStatusChange(product, e.target.value as 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'OUT_OF_STOCK')
+                                handleStatusChangeRequest(product, e.target.value as ProductStatus)
                               }
                               className={`h-7 px-1.5 text-xs border rounded cursor-pointer font-medium ${
                                 product.status === 'ACTIVE'
                                   ? 'border-green-500/40 text-green-400 bg-green-500/10'
                                   : product.status === 'DRAFT'
                                     ? 'border-yellow-500/40 text-yellow-400 bg-yellow-500/10'
-                                    : 'border-hos-border text-hos-text-secondary bg-hos-bg-secondary'
+                                    : product.status === 'OUT_OF_STOCK'
+                                      ? 'border-orange-500/40 text-orange-400 bg-orange-500/10'
+                                      : 'border-hos-border text-hos-text-secondary bg-hos-bg-secondary'
                               }`}
                               title="Change status"
                             >
                               <option value="ACTIVE">Active</option>
                               <option value="DRAFT">Draft</option>
                               <option value="INACTIVE">Inactive</option>
+                              <option value="OUT_OF_STOCK">Out of Stock</option>
                             </select>
                             <button
                               type="button"
@@ -1121,6 +1241,31 @@ function AdminProductsContent() {
                 )}
               </table>
             </div>
+            {totalTablePages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-hos-border">
+                <p className="text-sm text-hos-text-muted">
+                  Showing {(tablePage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(tablePage * ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length}
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTablePage((p) => Math.max(1, p - 1))}
+                    disabled={tablePage <= 1}
+                    className="px-3 py-1.5 text-sm border border-hos-border rounded-lg disabled:opacity-40 hover:bg-hos-bg-tertiary"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTablePage((p) => Math.min(totalTablePages, p + 1))}
+                    disabled={tablePage >= totalTablePages}
+                    className="px-3 py-1.5 text-sm border border-hos-border rounded-lg disabled:opacity-40 hover:bg-hos-bg-tertiary"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Edit Modal - Simplified for brevity, uses same form structure */}
@@ -1130,13 +1275,13 @@ function AdminProductsContent() {
               role="dialog"
               aria-modal="true"
               aria-labelledby="edit-product-modal-title"
-              onKeyDown={(e) => e.key === 'Escape' && (setShowEditModal(false), setEditingProduct(null))}
+              onKeyDown={(e) => e.key === 'Escape' && closeEditModal()}
             >
               <div className="bg-hos-bg-secondary rounded-lg max-w-4xl w-full my-4 max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 id="edit-product-modal-title" className="text-2xl font-bold">Edit Product</h2>
-                    <button onClick={() => { setShowEditModal(false); setEditingProduct(null); }} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">
+                    <button onClick={closeEditModal} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">
                       ×
                     </button>
                   </div>
@@ -1377,7 +1522,7 @@ function AdminProductsContent() {
                       <button type="submit" disabled={updatingProduct} className="flex-1 px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                         {updatingProduct ? 'Updating...' : 'Update Product'}
                       </button>
-                      <button type="button" onClick={() => { setShowEditModal(false); setEditingProduct(null); }} className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted font-medium">
+                      <button type="button" onClick={closeEditModal} className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted font-medium">
                         Cancel
                       </button>
                     </div>
@@ -1455,7 +1600,7 @@ function AdminProductsContent() {
               role="dialog"
               aria-modal="true"
               aria-labelledby="bulk-action-modal-title"
-              onKeyDown={(e) => e.key === 'Escape' && setShowBulkModal(false)}
+              onKeyDown={(e) => e.key === 'Escape' && !bulkActionLoading && setShowBulkModal(false)}
             >
               <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
                 <h2 id="bulk-action-modal-title" className="text-2xl font-bold mb-4">
@@ -1464,25 +1609,121 @@ function AdminProductsContent() {
                    bulkAction === 'inactive' ? 'Set Products Inactive' : 
                    'Delete Products'}
                 </h2>
-                <p className="text-hos-text-secondary mb-6">
+                <p className="text-hos-text-secondary mb-4">
                   Are you sure you want to {bulkAction === 'inactive' ? 'set inactive' : bulkAction} <strong>{selectedProducts.size}</strong> products?
                   {bulkAction === 'delete' && ' This cannot be undone.'}
                 </p>
+                {bulkActionLoading && (
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between text-sm text-hos-text-muted mb-2">
+                      <span>Processing...</span>
+                      <span>{bulkProgress.current} / {bulkProgress.total}</span>
+                    </div>
+                    <div className="h-2 bg-hos-bg-tertiary rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-hos-gold transition-all duration-200"
+                        style={{ width: bulkProgress.total ? `${(bulkProgress.current / bulkProgress.total) * 100}%` : '0%' }}
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="flex gap-3">
                   <button 
-                    onClick={handleBulkAction} 
-                    className={`flex-1 px-6 py-2 text-hos-text-secondary rounded-lg font-medium ${
-                      bulkAction === 'delete' ? 'bg-red-600 hover:bg-red-700' : 
-                      bulkAction === 'inactive' ? 'bg-hos-bg-tertiary hover:bg-hos-bg-secondary' : 
-                      'bg-hos-gold hover:bg-hos-gold-hover'
+                    onClick={handleBulkAction}
+                    disabled={bulkActionLoading}
+                    className={`flex-1 px-6 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
+                      bulkAction === 'delete'
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        : bulkAction === 'inactive'
+                          ? 'bg-hos-bg-tertiary hover:bg-hos-bg-secondary text-hos-text-secondary'
+                          : 'bg-hos-gold hover:bg-hos-gold-hover text-[#1a1406]'
                     }`}
                   >
-                    {bulkAction === 'publish' ? 'Publish All' : 
-                     bulkAction === 'unpublish' ? 'Unpublish All' : 
-                     bulkAction === 'inactive' ? 'Set All Inactive' : 
-                     'Delete All'}
+                    {bulkActionLoading
+                      ? 'Processing...'
+                      : bulkAction === 'publish'
+                        ? 'Publish All'
+                        : bulkAction === 'unpublish'
+                          ? 'Unpublish All'
+                          : bulkAction === 'inactive'
+                            ? 'Set All Inactive'
+                            : 'Delete All'}
                   </button>
-                  <button onClick={() => setShowBulkModal(false)} className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted font-medium">
+                  <button
+                    onClick={() => setShowBulkModal(false)}
+                    disabled={bulkActionLoading}
+                    className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted font-medium disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Duplicate Confirmation Modal */}
+          {showDuplicateModal && productToDuplicate && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="duplicate-product-modal-title"
+              onKeyDown={(e) => e.key === 'Escape' && !duplicateLoading && (setShowDuplicateModal(false), setProductToDuplicate(null))}
+            >
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
+                <h2 id="duplicate-product-modal-title" className="text-2xl font-bold mb-4">Duplicate Product</h2>
+                <p className="text-hos-text-secondary mb-6">
+                  Create a draft copy of <strong>{productToDuplicate.name}</strong>?
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleDuplicateConfirm}
+                    disabled={duplicateLoading}
+                    className="flex-1 px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover font-medium disabled:opacity-50"
+                  >
+                    {duplicateLoading ? 'Duplicating...' : 'Duplicate'}
+                  </button>
+                  <button
+                    onClick={() => { setShowDuplicateModal(false); setProductToDuplicate(null); }}
+                    disabled={duplicateLoading}
+                    className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted font-medium disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Status Change Confirmation Modal */}
+          {statusChangePending && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="status-change-modal-title"
+              onKeyDown={(e) => e.key === 'Escape' && !statusChangeLoading && setStatusChangePending(null)}
+            >
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
+                <h2 id="status-change-modal-title" className="text-2xl font-bold mb-4">Change Product Status</h2>
+                <p className="text-hos-text-secondary mb-6">
+                  Change <strong>{statusChangePending.product.name}</strong> from{' '}
+                  <strong>{statusChangePending.product.status}</strong> to{' '}
+                  <strong>{statusChangePending.newStatus === 'OUT_OF_STOCK' ? 'Out of Stock' : statusChangePending.newStatus}</strong>?
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleStatusChangeConfirm}
+                    disabled={statusChangeLoading}
+                    className="flex-1 px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover font-medium disabled:opacity-50"
+                  >
+                    {statusChangeLoading ? 'Updating...' : 'Confirm'}
+                  </button>
+                  <button
+                    onClick={() => setStatusChangePending(null)}
+                    disabled={statusChangeLoading}
+                    className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted font-medium disabled:opacity-50"
+                  >
                     Cancel
                   </button>
                 </div>
