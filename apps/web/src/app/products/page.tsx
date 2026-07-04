@@ -233,17 +233,21 @@ function ProductsContent() {
   }, [searchParams]);
 
   const updateState = useCallback((updatesOrFn: Partial<SearchState> | ((prev: SearchState) => Partial<SearchState>)) => {
+    let computedNext: SearchState | undefined;
     setState(prev => {
       const updates = typeof updatesOrFn === 'function' ? updatesOrFn(prev) : updatesOrFn;
       const next = { ...prev, ...updates };
       if (!('page' in updates)) {
         next.page = 1;
       }
-      const qs = buildSearchParams(next);
-      internalNavCount += 1;
-      router.replace(`/products${qs ? `?${qs}` : ''}`, { scroll: false });
+      computedNext = next;
       return next;
     });
+    if (computedNext) {
+      const qs = buildSearchParams(computedNext);
+      internalNavCount += 1;
+      router.replace(`/products${qs ? `?${qs}` : ''}`, { scroll: false });
+    }
   }, [router]);
 
   const activeFilterCount =
