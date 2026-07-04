@@ -253,13 +253,14 @@ export default function CustomerDashboardPage() {
       statusCounts[status] = (statusCounts[status] || 0) + 1;
     });
 
-    const colors = {
+    const colors: Record<string, string> = {
       COMPLETED: '#10B981',
-      DELIVERED: '#10B981',
+      DELIVERED: '#06b6d4',
       PENDING: '#F59E0B',
       PROCESSING: '#3B82F6',
       SHIPPED: '#8B5CF6',
       CANCELLED: '#EF4444',
+      PAID: '#c9a227',
     };
 
     const categoryBreakdown = Object.entries(statusCounts).map(([status, count]) => ({
@@ -853,19 +854,26 @@ export default function CustomerDashboardPage() {
               {/* Order Status Breakdown — legend + fixed chart box avoids slice-label overflow misalignment */}
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
                 <div className="flex min-h-[320px] flex-col rounded-xl border border-hos-border bg-hos-bg-secondary p-6 shadow-sm">
-                  <h3 className="mb-4 text-lg font-semibold text-hos-text-secondary">Order Status Breakdown</h3>
+                  <h3 className="mb-2 text-lg font-semibold text-hos-text-secondary">Order Status Breakdown</h3>
                   {spendingAnalytics.categoryBreakdown.length > 0 ? (
                     <div className="flex min-h-0 flex-1 flex-col justify-center">
-                      <div className="mx-auto h-[260px] w-full max-w-md">
+                      <div className="relative mx-auto h-[280px] w-full max-w-md">
+                        {/* Total count in donut center */}
+                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ paddingBottom: 48 }}>
+                          <div className="text-center">
+                            <p className="text-2xl font-bold text-hos-text-secondary">{stats?.totalOrders ?? 0}</p>
+                            <p className="text-[10px] text-hos-text-muted uppercase tracking-wide">Total Orders</p>
+                          </div>
+                        </div>
                         <ResponsiveContainer width="100%" height="100%">
-                          <PieChart margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                          <PieChart margin={{ top: 16, right: 8, left: 8, bottom: 8 }}>
                             <Pie
                               data={spendingAnalytics.categoryBreakdown}
                               cx="50%"
-                              cy="45%"
-                              innerRadius="42%"
-                              outerRadius="72%"
-                              paddingAngle={spendingAnalytics.categoryBreakdown.length > 1 ? 2 : 0}
+                              cy="44%"
+                              innerRadius="38%"
+                              outerRadius="70%"
+                              paddingAngle={spendingAnalytics.categoryBreakdown.length > 1 ? 3 : 0}
                               dataKey="value"
                               nameKey="name"
                               labelLine={false}
@@ -874,16 +882,31 @@ export default function CustomerDashboardPage() {
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                               ))}
                             </Pie>
-                            <Tooltip />
+                            <Tooltip
+                              offset={20}
+                              contentStyle={{
+                                backgroundColor: '#14141a',
+                                border: '1px solid rgba(201, 162, 39, 0.22)',
+                                borderRadius: '8px',
+                                color: '#e8e4dc',
+                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3)',
+                                padding: '6px 10px',
+                                fontSize: 12,
+                              }}
+                              itemStyle={{ color: '#e8e4dc', fontSize: 12 }}
+                              labelStyle={{ color: '#c9a227', fontSize: 11 }}
+                              formatter={(value: number, name: string) => [`${value} order${value !== 1 ? 's' : ''}`, name]}
+                            />
                             <Legend
                               verticalAlign="bottom"
                               align="center"
                               layout="horizontal"
-                              wrapperStyle={{ paddingTop: 8 }}
+                              iconSize={10}
+                              wrapperStyle={{ paddingTop: 12, lineHeight: '24px' }}
                               formatter={(value, entry) => {
                                 const v = (entry?.payload as { value?: number })?.value;
                                 return (
-                                  <span className="text-xs text-hos-text-secondary">
+                                  <span className="text-xs text-hos-text-secondary" style={{ marginRight: 8 }}>
                                     {value}
                                     {typeof v === 'number' ? ` (${v})` : ''}
                                   </span>

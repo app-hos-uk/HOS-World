@@ -49,7 +49,7 @@ interface AdminDashboardData {
   topProducts?: Array<{ name: string; sales: number; revenue: number }>;
 }
 
-const COLORS = ['#c9a227', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#94a3b8'];
+const COLORS = ['#c9a227', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8B5CF6', '#94a3b8', '#ec4899'];
 
 const DARK_CHART_TOOLTIP = {
   backgroundColor: '#14141a',
@@ -299,42 +299,58 @@ export default function AdminDashboardPage() {
               {/* Order Status Pie Chart */}
               <ChartCard title="Orders by Status" subtitle="Current order distribution">
                 {orderStatusData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-                    <Pie
-                      data={orderStatusData}
-                      cx="50%"
-                      cy="45%"
-                      innerRadius={55}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      paddingAngle={3}
-                      dataKey="value"
-                      nameKey="name"
-                      labelLine={false}
-                    >
-                      {orderStatusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={DARK_CHART_TOOLTIP} itemStyle={DARK_CHART_TOOLTIP_ITEM} labelStyle={DARK_CHART_TOOLTIP_LABEL} />
-                    <Legend
-                      verticalAlign="bottom"
-                      align="center"
-                      layout="horizontal"
-                      wrapperStyle={{ paddingTop: 4 }}
-                      formatter={(value, entry) => {
-                        const percent = (entry?.payload as { percent?: number })?.percent;
-                        return (
-                          <span className="text-xs text-hos-text-secondary">
-                            {value}
-                            {typeof percent === 'number' ? ` ${(percent * 100).toFixed(0)}%` : ''}
-                          </span>
-                        );
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <div className="relative h-full w-full">
+                  {/* Total count in donut center */}
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ paddingBottom: 44 }}>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-hos-text-secondary">{stats.totalOrders}</p>
+                      <p className="text-[10px] text-hos-text-muted uppercase tracking-wide">Total</p>
+                    </div>
+                  </div>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart margin={{ top: 16, right: 8, left: 8, bottom: 8 }}>
+                      <Pie
+                        data={orderStatusData}
+                        cx="50%"
+                        cy="44%"
+                        innerRadius={50}
+                        outerRadius={78}
+                        fill="#8884d8"
+                        paddingAngle={3}
+                        dataKey="value"
+                        nameKey="name"
+                        labelLine={false}
+                      >
+                        {orderStatusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        offset={20}
+                        contentStyle={{ ...DARK_CHART_TOOLTIP, padding: '6px 10px', fontSize: 12 }}
+                        itemStyle={DARK_CHART_TOOLTIP_ITEM}
+                        labelStyle={{ ...DARK_CHART_TOOLTIP_LABEL, fontSize: 11 }}
+                        formatter={(value: number, name: string) => [`${value} order${value !== 1 ? 's' : ''}`, name]}
+                      />
+                      <Legend
+                        verticalAlign="bottom"
+                        align="center"
+                        layout="horizontal"
+                        iconSize={10}
+                        wrapperStyle={{ paddingTop: 10, lineHeight: '24px' }}
+                        formatter={(value, entry) => {
+                          const percent = (entry?.payload as { percent?: number })?.percent;
+                          return (
+                            <span className="text-xs text-hos-text-secondary" style={{ marginRight: 8 }}>
+                              {value}
+                              {typeof percent === 'number' ? ` ${(percent * 100).toFixed(0)}%` : ''}
+                            </span>
+                          );
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center px-4 text-center text-hos-text-muted">
                     <p className="text-sm font-medium text-hos-text-secondary">No order status data</p>
