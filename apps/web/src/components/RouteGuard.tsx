@@ -45,7 +45,7 @@ export function RouteGuard({
       } else {
         // Redirect based on effective role
         const roleRedirectMap: Record<UserRole, string> = {
-          CUSTOMER: '/customer/dashboard',
+          CUSTOMER: '/',
           WHOLESALER: '/wholesaler/dashboard',
           B2C_SELLER: '/seller/dashboard',
           SELLER: '/seller/dashboard',
