@@ -969,7 +969,7 @@ function AdminProductsContent() {
                   <col style={{ width: '5.5rem' }} />
                   <col style={{ width: '6.5rem' }} />
                   <col style={{ width: '6.5rem' }} />
-                  <col style={{ width: '10rem' }} />
+                  <col style={{ width: '14rem' }} />
                 </colgroup>
                 <thead className="bg-hos-bg-secondary sticky top-0 z-10">
                   <tr>
@@ -1071,19 +1071,19 @@ function AdminProductsContent() {
                         <td className="px-4 py-3 align-middle text-sm text-hos-text-muted whitespace-nowrap tabular-nums">
                           {new Date(product.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-4 py-3 align-middle text-right">
-                          <div className="inline-flex items-center gap-1.5">
+                        <td className="px-4 py-3 align-middle">
+                          <div className="flex items-center justify-end gap-1">
                             <button
                               type="button"
                               onClick={() => handleEdit(product)}
-                              className="px-2 py-1.5 text-xs text-hos-gold hover:bg-hos-gold/10 rounded whitespace-nowrap"
+                              className="h-7 px-2 text-xs text-hos-gold hover:bg-hos-gold/10 rounded inline-flex items-center"
                             >
                               Edit
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDuplicateProduct(product)}
-                              className="px-1.5 py-1.5 text-xs text-hos-text-secondary hover:bg-hos-bg-tertiary rounded"
+                              className="h-7 w-7 text-xs text-hos-text-secondary hover:bg-hos-bg-tertiary rounded inline-flex items-center justify-center"
                               title="Duplicate"
                             >
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
@@ -1093,7 +1093,7 @@ function AdminProductsContent() {
                               onChange={(e) =>
                                 handleStatusChange(product, e.target.value as 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'OUT_OF_STOCK')
                               }
-                              className={`px-2 py-1.5 text-xs border rounded cursor-pointer font-medium ${
+                              className={`h-7 px-1.5 text-xs border rounded cursor-pointer font-medium ${
                                 product.status === 'ACTIVE'
                                   ? 'border-green-500/40 text-green-400 bg-green-500/10'
                                   : product.status === 'DRAFT'
@@ -1109,7 +1109,7 @@ function AdminProductsContent() {
                             <button
                               type="button"
                               onClick={() => handleDeleteClick(product)}
-                              className="px-2 py-1.5 text-xs text-red-400 hover:bg-red-500/10 rounded whitespace-nowrap"
+                              className="h-7 px-2 text-xs text-red-400 hover:bg-red-500/10 rounded inline-flex items-center"
                             >
                               Delete
                             </button>
