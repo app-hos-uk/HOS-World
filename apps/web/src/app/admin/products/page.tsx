@@ -932,7 +932,7 @@ function AdminProductsContent() {
           {/* Products Table */}
           <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
             <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Products ({filteredProducts.length}{filteredProducts.length < stats.totalProducts ? ` of ${stats.totalProducts}` : ''})</h2>
+              <h2 className="text-lg font-semibold">Products ({filteredProducts.length}{stats && filteredProducts.length < stats.totalProducts ? ` of ${stats.totalProducts}` : ''})</h2>
               <button onClick={selectAllVisible} className="text-sm text-hos-gold hover:text-hos-gold-hover">
                 Select All Visible
               </button>
