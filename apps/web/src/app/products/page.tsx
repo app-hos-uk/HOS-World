@@ -224,20 +224,20 @@ function ProductsContent() {
     setPriceDraft({ min: state.minPrice, max: state.maxPrice });
   }, [state.minPrice, state.maxPrice]);
 
-  // Sync state from URL on browser back/forward
+  // Sync state from URL on browser back/forward.
+  // When we push a URL via router.replace, Next.js fires searchParams updates
+  // (sometimes multiple times for the same URL). We must skip all of these to
+  // avoid re-parsing state and resetting the page. We keep lastPushedUrlRef set
+  // (don't null it on first match) so duplicate firings are also consumed. It is
+  // only cleared when a genuinely different URL arrives (back/forward/external).
   const isFirstRenderRef = useRef(true);
   useEffect(() => {
     if (isFirstRenderRef.current) {
       isFirstRenderRef.current = false;
       return;
     }
-    // If this URL change is the one we just pushed ourselves, consume it and skip
-    // re-parsing. Comparing against the exact pushed URL (instead of a sticky
-    // boolean) prevents the flag from getting "stuck" when router.replace yields
-    // an identical URL and this effect never fires to reset it.
     const incoming = `/products${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     if (lastPushedUrlRef.current !== null && incoming === lastPushedUrlRef.current) {
-      lastPushedUrlRef.current = null;
       return;
     }
     lastPushedUrlRef.current = null;
