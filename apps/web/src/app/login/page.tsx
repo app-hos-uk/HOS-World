@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth, setFrontendSessionCookie } from '@/lib/api';
-import { useAuth } from '@/contexts/AuthContext';
 import { stashReferralFromQuery } from '@/lib/referralAttribution';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
@@ -15,7 +14,6 @@ import { Footer } from '@/components/Footer';
 function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { refreshUser } = useAuth();
   const [step, setStep] = useState<'login' | 'character' | 'quiz' | 'forgot-password'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,7 +29,6 @@ function LoginPageInner() {
   const [resetSuccess, setResetSuccess] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const isRedirecting = useRef(false);
-  const redirectFallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Global Platform Registration Fields
   const [firstName, setFirstName] = useState('');
@@ -74,7 +71,8 @@ function LoginPageInner() {
         isRedirecting.current = true;
         const returnParam = searchParams.get('returnUrl') ?? searchParams.get('redirect');
         const dest = resolvePostAuthRedirect(role, returnParam);
-        router.replace(dest);
+        // Full-page nav so protected destinations aren't bounced by middleware.
+        if (typeof window !== 'undefined') window.location.assign(dest);
       }
     }).catch(() => {});
     return () => { cancelled = true; };
@@ -147,43 +145,18 @@ function LoginPageInner() {
     }
   };
 
-  // Clear the redirect fallback timer if the component unmounts mid-navigation.
-  useEffect(() => {
-    return () => {
-      if (redirectFallbackTimer.current) {
-        clearTimeout(redirectFallbackTimer.current);
-        redirectFallbackTimer.current = null;
-      }
-    };
-  }, []);
-
-  // Shared post-auth navigation. Populates the global AuthContext BEFORE the
-  // soft client-side navigation so that RouteGuard on protected destinations
-  // (e.g. /customer/dashboard) sees the authenticated user instead of bouncing
-  // back to /login. Falls back to a full-page load if the router doesn't leave
-  // /login in time.
-  const completeAuthNavigation = useCallback(async (redirectPath: string) => {
-    try {
-      await Promise.race([
-        refreshUser(),
-        new Promise((resolve) => setTimeout(resolve, 4000)),
-      ]);
-    } catch {
-      /* navigate regardless of auth-context refresh outcome */
+  // Shared post-auth navigation. Uses a FULL-PAGE navigation (not router.replace)
+  // so the Next.js middleware re-evaluates the freshly-set session cookie and the
+  // app re-bootstraps authenticated. A soft router.replace to a protected route
+  // (e.g. /customer/dashboard) gets bounced straight back to /login by the
+  // middleware / client router cache — confirmed via live browser trace. Keeping
+  // loading=true means the button stays in its "Loading..." state until the new
+  // page takes over.
+  const completeAuthNavigation = useCallback((redirectPath: string) => {
+    if (typeof window !== 'undefined') {
+      window.location.assign(redirectPath);
     }
-
-    router.replace(redirectPath);
-
-    if (redirectFallbackTimer.current) clearTimeout(redirectFallbackTimer.current);
-    redirectFallbackTimer.current = setTimeout(() => {
-      if (typeof window === 'undefined') return;
-      if (window.location.pathname === '/login') {
-        window.location.href = redirectPath;
-      } else {
-        setLoading(false);
-      }
-    }, 3000);
-  }, [refreshUser, router]);
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
