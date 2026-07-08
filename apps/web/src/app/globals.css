@@ -505,11 +505,11 @@ h6 {
 
   .cat-logo-slot {
     @apply w-full aspect-square rounded-full flex items-center justify-center
-           p-2 overflow-hidden
+           p-4 overflow-hidden
            bg-gradient-to-br from-[#1a1a2e] via-[#16162a] to-[#0f0f1a]
            shadow-[0_8px_32px_rgba(0,0,0,0.5)]
-           border-2 border-hos-border
-           group-hover:border-hos-gold-dim group-hover:shadow-[0_12px_40px_rgba(201,162,39,0.2)]
+           ring-2 ring-hos-border
+           group-hover:ring-hos-gold-dim group-hover:shadow-[0_12px_40px_rgba(201,162,39,0.2)]
            transition-all duration-200;
   }
 

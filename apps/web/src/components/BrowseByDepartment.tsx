@@ -4,11 +4,11 @@ import Link from 'next/link';
 
 const DEPARTMENTS = [
   {
-    id: 'collectables',
+    id: 'collectibles',
     meta: '2.4k+ listings · props & figures',
-    title: 'Collectables & replicas',
+    title: 'Collectibles & replicas',
     description: 'Wands, statuettes, and prop replicas from rated sellers.',
-    cta: 'Shop collectables',
+    cta: 'Shop collectibles',
     href: '/products?category=collectibles',
     icon: (
       <svg viewBox="0 0 64 64" width="32" height="32" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -57,7 +57,7 @@ export default function BrowseByDepartment() {
           <h2 className="font-display text-hos-gold-hover text-2xl md:text-3xl mt-1">
             Browse by department
           </h2>
-          <p className="text-hos-text-muted text-sm mt-1 font-body">
+          <p className="text-hos-text-secondary text-sm mt-1 font-body">
             Same marketplace checkout — pick a lane and dive into what vendors stock for your fandom.
           </p>
         </div>
@@ -82,7 +82,7 @@ export default function BrowseByDepartment() {
                 {dept.meta}
               </span>
               <h3 className="font-display text-hos-gold-hover text-xl md:text-2xl mb-2.5">{dept.title}</h3>
-              <p className="text-hos-text-muted text-[15px] leading-relaxed mb-3.5 font-body">{dept.description}</p>
+              <p className="text-hos-text-secondary text-[15px] leading-relaxed mb-3.5 font-body">{dept.description}</p>
               <span className="font-ui text-[13px] font-bold text-hos-gold group-hover:text-hos-gold-hover transition-colors">
                 {dept.cta}
               </span>

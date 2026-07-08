@@ -52,7 +52,7 @@ async function postRegistrationPayload(data: Record<string, unknown>) {
 export function FoundingMemberForm() {
   const { fandoms: FANDOMS } = useCatalogFandoms();
   const searchParams = useSearchParams();
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [hint, setHint] = useState('Select at least one universe ↑');
   const [hintColor, setHintColor] = useState<string>('var(--gold-d)');
   const [submitting, setSubmitting] = useState(false);
@@ -72,10 +72,11 @@ export function FoundingMemberForm() {
   useEffect(() => {
     const interests = searchParams.getAll('interest').map((s) => s.trim()).filter(Boolean);
     if (interests.length === 0) return;
-    const next = new Set<number>();
+    const next = new Set<string>();
     interests.forEach((name) => {
-      const idx = FANDOMS.findIndex((f) => f.n === decodeURIComponent(name));
-      if (idx >= 0) next.add(idx);
+      const decoded = decodeURIComponent(name);
+      const match = FANDOMS.find((f) => f.n === decoded);
+      if (match) next.add(match.n);
     });
     if (next.size > 0) {
       setSelected(next);
@@ -83,16 +84,13 @@ export function FoundingMemberForm() {
     }
   }, [searchParams, syncHint, FANDOMS]);
 
-  const otherSelected = (() => {
-    const idx = FANDOMS.findIndex((f) => f.n === OTHER_UNIVERSE_NAME);
-    return idx >= 0 && selected.has(idx);
-  })();
+  const otherSelected = selected.has(OTHER_UNIVERSE_NAME);
 
-  const toggleFandom = (i: number) => {
+  const toggleFandom = (name: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      if (next.has(i)) next.delete(i);
-      else next.add(i);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
       syncHint(next.size);
       return next;
     });
@@ -111,10 +109,9 @@ export function FoundingMemberForm() {
       return;
     }
 
-    const otherIdx = FANDOMS.findIndex((f) => f.n === OTHER_UNIVERSE_NAME);
     const otherTa = form.querySelector<HTMLTextAreaElement>('#otherFranchises');
     let otherFranchises = '';
-    if (otherIdx >= 0 && selected.has(otherIdx)) {
+    if (selected.has(OTHER_UNIVERSE_NAME)) {
       otherFranchises = (otherTa?.value || '').trim();
       if (!otherFranchises) {
         setHint('Please name the franchises you are into (required with Other Universe).');
@@ -132,7 +129,7 @@ export function FoundingMemberForm() {
       return;
     }
 
-    const fandoms = Array.from(selected).map((i) => FANDOMS[i].n);
+    const fandoms = Array.from(selected);
     const firstName = (form.querySelector<HTMLInputElement>('#fn')?.value || '').trim();
     const data = {
       firstName,
@@ -197,18 +194,19 @@ export function FoundingMemberForm() {
         <h3>Your Universes</h3>
         <p>Select every fandom you love. This directly shapes what we stock — your choices build our shelves.</p>
         <div className="fan-grid" id="fanGrid">
-          {FANDOMS.map((f, i) => (
+          {FANDOMS.map((f) => (
             <button
               key={f.n}
               type="button"
-              className={`fan-card${selected.has(i) ? ' sel' : ''}`}
-              onClick={() => toggleFandom(i)}
-              aria-pressed={selected.has(i)}
+              className={`fan-card${selected.has(f.n) ? ' sel' : ''}`}
+              onClick={() => toggleFandom(f.n)}
+              aria-pressed={selected.has(f.n)}
             >
               <div className="fan-chk">✓</div>
               <div className="fan-brand">
                 <div className="fan-brand-plate">
-                  <img className="fan-brand-img" src={f.logo} alt={`${f.n} logo`} loading="lazy" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img className="fan-brand-img" src={f.logo} alt={`${f.n} logo`} loading="lazy" onError={(e) => { (e.target as HTMLImageElement).src = '/landing/fandom/other.svg'; }} />
                 </div>
               </div>
               <div className="fan-nm">{f.n}</div>

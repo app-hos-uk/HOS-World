@@ -96,7 +96,7 @@ export function FandomCollection({ limit, showAllPage = false, searchQuery }: Fa
             <h2 className="font-display text-hos-gold-hover text-2xl md:text-3xl">
               Shop by franchise
             </h2>
-            <p className="text-hos-text-muted text-sm mt-1 font-body">
+            <p className="text-hos-text-secondary text-sm mt-1 font-body">
               The magic is within you — explore our top worlds.
             </p>
           </div>
@@ -139,7 +139,7 @@ export function FandomCollection({ limit, showAllPage = false, searchQuery }: Fa
                       alt={fandom.name}
                       width={200}
                       height={200}
-                      className="w-full h-full object-contain object-center"
+                      className="max-w-[70%] max-h-[70%] w-auto h-auto object-contain object-center"
                     />
                   ) : fandom.image ? (
                     <SafeImage

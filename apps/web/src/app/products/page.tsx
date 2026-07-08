@@ -8,7 +8,7 @@ import { apiClient } from '@/lib/api';
 import { StorefrontBreadcrumbs } from '@/components/storefront/StorefrontBreadcrumbs';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { ProductCard } from '@/components/ProductCard';
-import { expandDepartmentCategories } from '@/lib/storefrontNavigation';
+import { expandDepartmentCategories, expandCategoriesForSearch } from '@/lib/storefrontNavigation';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -288,7 +288,7 @@ function ProductsContent() {
           page: state.page,
           limit: ITEMS_PER_PAGE,
         };
-        if (state.categories.length) filters.categories = state.categories;
+        if (state.categories.length) filters.categories = expandCategoriesForSearch(state.categories);
         if (state.fandoms.length) filters.fandoms = state.fandoms;
         if (state.minPrice) filters.minPrice = Number(state.minPrice);
         if (state.maxPrice) filters.maxPrice = Number(state.maxPrice);

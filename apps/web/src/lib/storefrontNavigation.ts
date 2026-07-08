@@ -11,23 +11,50 @@ export type FooterNavSection = {
   links: NavLink[];
 };
 
-/** Maps department URL slugs to product category values in search/index */
+/** Canonical display name for each department slug */
+export const DEPARTMENT_DISPLAY_NAMES: Record<string, string> = {
+  collectibles: 'Collectibles',
+  apparel: 'Apparel',
+  'home-gifts': 'Home & Gifts',
+};
+
+/** Maps department slug to all variant spellings for search/API matching */
 export const DEPARTMENT_CATEGORY_ALIASES: Record<string, string[]> = {
   collectibles: ['Collectibles', 'collectibles', 'Collectables', 'Collectables & replicas'],
   apparel: ['Apparel', 'apparel', 'Clothing & Apparel', 'Clothing', 'Robes'],
   'home-gifts': ['Home & Gifts', 'Home & gifts', 'Gifts', 'Home', 'home-gifts', 'Home & Decor'],
 };
 
+/**
+ * Resolves department slugs to canonical display names for state/UI.
+ * Only one canonical name per department appears in filter chips and sidebar.
+ */
 export function expandDepartmentCategories(slugs: string[]): string[] {
-  const expanded = new Set<string>();
+  const result = new Set<string>();
   for (const slug of slugs) {
     const key = slug.toLowerCase();
-    const aliases = DEPARTMENT_CATEGORY_ALIASES[key];
-    if (aliases) {
-      aliases.forEach((value) => expanded.add(value));
-    } else {
-      expanded.add(slug);
+    const display = DEPARTMENT_DISPLAY_NAMES[key];
+    result.add(display || slug);
+  }
+  return [...result];
+}
+
+/**
+ * Expands canonical category names to all search aliases for API queries.
+ * Used only when building the actual search request — not for UI display.
+ */
+export function expandCategoriesForSearch(categories: string[]): string[] {
+  const expanded = new Set<string>();
+  for (const cat of categories) {
+    let matched = false;
+    for (const [, aliases] of Object.entries(DEPARTMENT_CATEGORY_ALIASES)) {
+      if (aliases.some((a) => a.toLowerCase() === cat.toLowerCase())) {
+        aliases.forEach((v) => expanded.add(v));
+        matched = true;
+        break;
+      }
     }
+    if (!matched) expanded.add(cat);
   }
   return [...expanded];
 }

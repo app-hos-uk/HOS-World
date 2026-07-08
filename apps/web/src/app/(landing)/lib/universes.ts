@@ -9,7 +9,7 @@ export type Universe = {
 };
 
 export const UNIVERSES: Universe[] = [
-  { n: 'Marvel', logo: '/landing/fandom/marvel-tile.svg', tag: 'Superhero Universe', d: 'Avengers. X-Men. Spider-Man. The entire Marvel Cinematic Universe.', cols: ['#0D0005', '#250008', '#440012', '#680018', '#880A0A'], ac: '#FF3822', featured: true },
+  { n: 'Marvel', logo: '/landing/fandom/marvel-tile.svg', tag: 'Superhero Universe', d: 'Avengers. X-Men. Spider-Man. The entire Marvel Cinematic Universe.', cols: ['#0D0005', '#250008', '#440012', '#680018', '#880A0A'], ac: '#FF3822' },
   { n: 'Star Wars', logo: '/landing/fandom/starwars.svg', tag: 'Galaxy Far Away', d: 'The Force. The Rebellion. Legends written across the stars.', cols: ['#040410', '#0C0C1E', '#181428', '#261E10', '#342808'], ac: '#FFE81F' },
   { n: 'DC Universe', logo: '/landing/fandom/dc.svg', tag: 'The DC Multiverse', d: 'Gotham. Metropolis. The Justice League assembles.', cols: ['#030310', '#07071E', '#0B0F30', '#0F1B4C', '#122464'], ac: '#4DAAFF' },
   { n: 'Middle Earth', logo: '/landing/fandom/lotr.svg', tag: "Tolkien's World", d: 'Hobbits. Elves. Dragons. One ring to rule them all.', cols: ['#040804', '#0A1206', '#121C08', '#1E2A08', '#2A3610'], ac: '#9CB850' },

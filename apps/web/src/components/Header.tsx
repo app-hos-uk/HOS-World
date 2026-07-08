@@ -384,7 +384,7 @@ export function Header() {
       {(showCustomerNav || (isAuthenticated && !isCustomerRole && !isDashboardPage && quickLinks.length > 0)) && (
         <div className="hidden lg:block border-t border-hos-border bg-hos-bg">
           <div className="max-w-7xl mx-auto px-4">
-            <nav className="flex items-center justify-start gap-x-4 xl:gap-x-6 gap-y-2 py-2.5 overflow-x-auto scrollbar-thin px-1 min-w-0" role="navigation" aria-label="Main navigation">
+            <nav className="flex items-center justify-start gap-x-6 xl:gap-x-8 gap-y-2 py-3 overflow-x-auto scrollbar-thin px-1 min-w-0" role="navigation" aria-label="Main navigation">
               {showCustomerNav && (
                 <>
                   {STOREFRONT_NAV_PRIMARY.map((item) => (
