@@ -49,7 +49,6 @@ async function postRegistrationPayload(data: Record<string, unknown>) {
       body: JSON.stringify(payload),
     });
     if (res.ok || res.status === 409) {
-      fireGoogleBackup();
       return true;
     }
     fireGoogleBackup();

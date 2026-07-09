@@ -565,7 +565,7 @@ function AdminProductsContent() {
       sellerId: product.sellerId || '',
       categoryId: product.categoryId || product.categoryRelation?.categoryId || '',
       fandom: (product as any).fandom || '',
-      tagIds: product.tagsRelation?.map((t: any) => t.tagId) || product.tags?.map((t: any) => t.id) || [],
+      tagIds: (product.tagsRelation?.map((t: any) => t.tagId) || product.tags?.map((t: any) => t.id) || []).filter(Boolean),
       variations: (product.variations || []).map((v: any) => ({
         name: v.name,
         options: Array.isArray(v.options) ? v.options : [],
@@ -662,7 +662,7 @@ function AdminProductsContent() {
         sellerId: product.sellerId,
         status: 'DRAFT',
         categoryId: product.categoryId || product.categoryRelation?.categoryId,
-        tagIds: product.tagsRelation?.map(t => t.tagId) || product.tags?.map(t => t.id),
+        tagIds: (product.tagsRelation?.map(t => t.tagId) || product.tags?.map(t => t.id) || []).filter(Boolean),
         attributes: product.attributes,
         images: product.images?.map(img => ({ url: img.url, alt: img.alt, order: img.order })),
       });

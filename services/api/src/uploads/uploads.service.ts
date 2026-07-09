@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { existsSync, unlinkSync, mkdirSync, readFileSync } from 'fs';
-import { join, parse as parsePath } from 'path';
+import { join, parse as parsePath, resolve } from 'path';
 import { randomUUID } from 'crypto';
 import { QueueService, JobType } from '../queue/queue.service';
 
@@ -47,8 +47,7 @@ export class UploadsService implements OnModuleInit {
     private configService: ConfigService,
     private queueService: QueueService,
   ) {
-    // Railway Volume path (configurable via env, defaults to /data/uploads)
-    this.uploadBasePath = this.configService.get<string>('UPLOAD_BASE_PATH') || '/data/uploads';
+    this.uploadBasePath = this.resolveUploadBasePath();
 
     // API base URL for constructing absolute URLs
     // Priority: API_URL env var > construct from PORT > fallback to production URL
@@ -62,6 +61,22 @@ export class UploadsService implements OnModuleInit {
         ? `https://${railwayDomain.replace(/^https?:\/\//, '')}`
         : `http://localhost:${port}`;
       this.apiBaseUrl = `${host}/api`;
+    }
+  }
+
+  private resolveUploadBasePath(): string {
+    const explicit = this.configService.get<string>('UPLOAD_BASE_PATH');
+    if (explicit) return explicit;
+    try {
+      const target = '/data/uploads';
+      if (!existsSync('/data')) mkdirSync('/data', { recursive: true });
+      if (!existsSync(target)) mkdirSync(target, { recursive: true });
+      return target;
+    } catch {
+      const fallback = resolve(process.cwd(), 'uploads');
+      if (!existsSync(fallback)) mkdirSync(fallback, { recursive: true });
+      this.logger.warn(`Using local uploads directory: ${fallback}`);
+      return fallback;
     }
   }
 

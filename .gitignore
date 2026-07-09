@@ -84,6 +84,9 @@ Thumbs.db
 *.orig.*
 web-build/
 
+# Local uploads (dev)
+services/api/uploads/
+
 # Logs
 logs
 *.log

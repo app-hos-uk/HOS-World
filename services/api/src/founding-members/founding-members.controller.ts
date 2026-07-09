@@ -149,10 +149,11 @@ export class FoundingMembersController {
   @ApiOperation({
     summary: 'Send account creation invitations to founding members who haven\'t created an account yet',
   })
-  async sendAccountInvitations(@Body() body?: { batchSize?: number }) {
+  async sendAccountInvitations(@Body() body?: { batchSize?: number; memberIds?: string[] }) {
     const result = await this.foundingMembersService.sendAccountInvitations({
       onlyUnsent: true,
       batchSize: body?.batchSize ?? 50,
+      memberIds: body?.memberIds,
     });
     return {
       data: result,

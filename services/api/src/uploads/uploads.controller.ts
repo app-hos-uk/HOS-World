@@ -77,6 +77,20 @@ function fileFilter(req: any, file: Express.Multer.File, cb: Function) {
 const storageProvider = process.env.STORAGE_PROVIDER || 'local';
 const useCloudStorage = ['cloudinary', 's3', 'minio'].includes(storageProvider);
 
+function resolveUploadBasePath(): string {
+  if (process.env.UPLOAD_BASE_PATH) return process.env.UPLOAD_BASE_PATH;
+  try {
+    const target = '/data/uploads';
+    if (!existsSync('/data')) mkdirSync('/data', { recursive: true });
+    if (!existsSync(target)) mkdirSync(target, { recursive: true });
+    return target;
+  } catch {
+    const fallback = join(process.cwd(), 'uploads');
+    if (!existsSync(fallback)) mkdirSync(fallback, { recursive: true });
+    return fallback;
+  }
+}
+
 // Create storage configuration based on provider
 function createStorage() {
   // For cloud storage (Cloudinary, S3, MinIO), use memory storage to get buffer
@@ -85,7 +99,7 @@ function createStorage() {
   }
 
   // For local storage, use disk storage
-  const uploadBasePath = process.env.UPLOAD_BASE_PATH || '/data/uploads';
+  const uploadBasePath = resolveUploadBasePath();
 
   return diskStorage({
     destination: (req, file, cb) => {

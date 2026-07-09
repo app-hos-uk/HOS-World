@@ -124,7 +124,10 @@ export class ProductsService {
       }
     }
 
-    // Validate tagIds if provided
+    // Sanitize and validate tagIds if provided
+    if (createProductDto.tagIds) {
+      createProductDto.tagIds = createProductDto.tagIds.filter((id): id is string => typeof id === 'string' && id.length > 0);
+    }
     if (createProductDto.tagIds && createProductDto.tagIds.length > 0) {
       const tags = await this.prisma.tag.findMany({
         where: { id: { in: createProductDto.tagIds } },
@@ -346,10 +349,11 @@ export class ProductsService {
       where.categoryId = searchDto.categoryId;
     }
 
-    if (searchDto.tagIds && searchDto.tagIds.length > 0) {
+    const validSearchTagIds = searchDto.tagIds?.filter((id): id is string => typeof id === 'string' && id.length > 0);
+    if (validSearchTagIds && validSearchTagIds.length > 0) {
       where.tagsRelation = {
         some: {
-          tagId: { in: searchDto.tagIds },
+          tagId: { in: validSearchTagIds },
         },
       };
     }
@@ -728,7 +732,10 @@ export class ProductsService {
       }
     }
 
-    // Validate tagIds if provided
+    // Sanitize and validate tagIds if provided
+    if (updateProductDto.tagIds) {
+      updateProductDto.tagIds = updateProductDto.tagIds.filter((id): id is string => typeof id === 'string' && id.length > 0);
+    }
     if (updateProductDto.tagIds && updateProductDto.tagIds.length > 0) {
       const tags = await this.prisma.tag.findMany({
         where: { id: { in: updateProductDto.tagIds } },

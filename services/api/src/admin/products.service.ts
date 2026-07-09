@@ -155,7 +155,10 @@ export class AdminProductsService {
       }
     }
 
-    // Validate tagIds if provided
+    // Sanitize and validate tagIds if provided
+    if (data.tagIds) {
+      data.tagIds = data.tagIds.filter((id): id is string => typeof id === 'string' && id.length > 0);
+    }
     if (data.tagIds && data.tagIds.length > 0) {
       const tags = await this.prisma.tag.findMany({
         where: { id: { in: data.tagIds } },
@@ -455,7 +458,10 @@ export class AdminProductsService {
       }
     }
 
-    // Validate tagIds if provided
+    // Sanitize and validate tagIds if provided
+    if (data.tagIds) {
+      data.tagIds = data.tagIds.filter((id): id is string => typeof id === 'string' && id.length > 0);
+    }
     if (data.tagIds && data.tagIds.length > 0) {
       const tags = await this.prisma.tag.findMany({
         where: { id: { in: data.tagIds } },

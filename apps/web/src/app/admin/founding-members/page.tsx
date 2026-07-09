@@ -112,6 +112,8 @@ export default function AdminFoundingMembersPage() {
   const [invitationLoading, setInvitationLoading] = useState(false);
   const [invitationResult, setInvitationResult] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -139,6 +141,7 @@ export default function AdminFoundingMembersPage() {
 
   useEffect(() => {
     fetchMembers();
+    setSelectedIds(new Set());
   }, [fetchMembers]);
 
   const resetImportState = () => {
@@ -261,19 +264,43 @@ export default function AdminFoundingMembersPage() {
     }
   };
 
-  const handleSendAccountInvitations = async () => {
-    if (!confirm('Send account creation invitations to all founding members who haven\'t created an account yet?')) return;
+  const handleSendAccountInvitations = async (toSelected = false) => {
+    const ids = toSelected ? Array.from(selectedIds) : undefined;
+    const target = toSelected ? `${ids!.length} selected member(s)` : 'all eligible founding members';
+    if (!confirm(`Send account creation invitations to ${target}?`)) return;
     setInvitationLoading(true);
     setInvitationResult(null);
     setError(null);
     try {
-      const res = await apiClient.sendFoundingMemberAccountInvitations(50);
+      const res = await apiClient.sendFoundingMemberAccountInvitations({
+        batchSize: 50,
+        memberIds: ids,
+      });
       setInvitationResult(res.data as { sent: number; failed: number; skipped: number });
+      setSelectedIds(new Set());
+      await fetchMembers();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to send account invitations');
     } finally {
       setInvitationLoading(false);
     }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === members.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(members.map((m) => m.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   const formatDate = (s: string) => {
@@ -329,7 +356,7 @@ export default function AdminFoundingMembersPage() {
               )}
             </button>
             <button
-              onClick={handleSendAccountInvitations}
+              onClick={() => handleSendAccountInvitations(false)}
               disabled={invitationLoading}
               className="px-4 py-2 border border-hos-gold text-hos-gold rounded-lg text-sm font-medium hover:bg-hos-gold/10 disabled:opacity-50 flex items-center gap-2"
             >
@@ -342,9 +369,18 @@ export default function AdminFoundingMembersPage() {
                   Sending...
                 </>
               ) : (
-                'Send Account Invitations'
+                'Send Account Invitations (All)'
               )}
             </button>
+            {selectedIds.size > 0 && (
+              <button
+                onClick={() => handleSendAccountInvitations(true)}
+                disabled={invitationLoading}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 disabled:opacity-50 flex items-center gap-2"
+              >
+                Send to Selected ({selectedIds.size})
+              </button>
+            )}
             {confirmationResult && (
               <span className="text-sm text-hos-text-muted">
                 Confirmations: {confirmationResult.sent} sent, {confirmationResult.failed} failed, {confirmationResult.skipped} already sent
@@ -352,7 +388,7 @@ export default function AdminFoundingMembersPage() {
             )}
             {invitationResult && (
               <span className="text-sm text-hos-text-muted">
-                Invitations: {invitationResult.sent} sent, {invitationResult.failed} failed, {invitationResult.skipped} already sent
+                Invitations: {invitationResult.sent} sent, {invitationResult.failed} failed, {invitationResult.skipped} already invited
               </span>
             )}
           </div>
@@ -420,6 +456,14 @@ export default function AdminFoundingMembersPage() {
                     <table className="min-w-full divide-y divide-hos-border">
                       <thead className="bg-hos-bg-secondary">
                         <tr>
+                          <th className="px-4 py-3 text-left">
+                            <input
+                              type="checkbox"
+                              checked={members.length > 0 && selectedIds.size === members.length}
+                              onChange={toggleSelectAll}
+                              className="rounded border-hos-border accent-hos-gold"
+                            />
+                          </th>
                           <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">Name</th>
                           <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">Email</th>
                           <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">Fandoms</th>
@@ -430,7 +474,15 @@ export default function AdminFoundingMembersPage() {
                       </thead>
                       <tbody className="divide-y divide-hos-border">
                         {members.map((m) => (
-                          <tr key={m.id}>
+                          <tr key={m.id} className={selectedIds.has(m.id) ? 'bg-hos-gold/5' : ''}>
+                            <td className="px-4 py-3">
+                              <input
+                                type="checkbox"
+                                checked={selectedIds.has(m.id)}
+                                onChange={() => toggleSelect(m.id)}
+                                className="rounded border-hos-border accent-hos-gold"
+                              />
+                            </td>
                             <td className="px-4 py-3 text-sm text-hos-text-secondary">
                               {[m.firstName, m.lastName].filter(Boolean).join(' ')}
                             </td>
@@ -440,7 +492,15 @@ export default function AdminFoundingMembersPage() {
                             </td>
                             <td className="px-4 py-3 text-sm text-hos-text-muted">{m.source || '—'}</td>
                             <td className="px-4 py-3 text-sm text-hos-text-muted">{formatDate(m.registeredAt)}</td>
-                            <td className="px-4 py-3 text-sm capitalize text-hos-text-muted">{m.status.toLowerCase()}</td>
+                            <td className="px-4 py-3">
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                m.status === 'INVITED' ? 'bg-blue-500/15 text-blue-300' :
+                                m.status === 'LINKED' ? 'bg-green-500/15 text-green-300' :
+                                'bg-amber-500/15 text-amber-300'
+                              }`}>
+                                {m.status.toLowerCase()}
+                              </span>
+                            </td>
                           </tr>
                         ))}
                       </tbody>

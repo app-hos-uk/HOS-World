@@ -446,9 +446,7 @@
   .f-logo-img{width:60px;height:60px;}
   .f-logo-mark{display:block;height:clamp(32px,3.5vw,42px);width:auto;max-width:min(70vw,400px);object-fit:contain;object-position:center;}
 }
-.f-urls{font-size:clamp(0.95rem,2.2vw,1.02rem);font-style:italic;color:var(--gold);margin-bottom:20px;line-height:1.55;}
-.f-urls a{color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(201,168,76,.45);}
-.f-urls a:hover{color:var(--gold-l);text-decoration-color:var(--gold-l);}
+.f-urls{font-family:'Cinzel',serif;font-size:clamp(0.78rem,1.8vw,0.88rem);letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:22px;line-height:1.55;opacity:.75;}
 .f-links{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;}
 .f-links a{font-family:'Cinzel',serif;font-size:var(--type-ui-sm);letter-spacing:.2em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .3s;}
 .f-links a:hover,.f-links a:focus-visible{color:var(--gold-l);}

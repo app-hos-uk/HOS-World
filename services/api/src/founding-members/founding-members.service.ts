@@ -488,6 +488,7 @@ export class FoundingMembersService {
   async sendAccountInvitations(options?: {
     onlyUnsent?: boolean;
     batchSize?: number;
+    memberIds?: string[];
   }): Promise<{ sent: number; failed: number; skipped: number }> {
     const batchSize = options?.batchSize ?? 50;
     const onlyUnsent = options?.onlyUnsent ?? true;
@@ -496,55 +497,65 @@ export class FoundingMembersService {
     const frontendUrl = (
       this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000'
     ).replace(/\/$/, '');
-    const registerLink = `${frontendUrl}/auth/register?ref=founding`;
+    const registerLink = `${frontendUrl}/register?ref=founding`;
+
+    const where: any = { userId: null };
+    if (options?.memberIds?.length) {
+      where.id = { in: options.memberIds };
+    }
+    if (onlyUnsent) {
+      where.status = { not: 'INVITED' };
+    }
 
     const members = await this.prisma.foundingMember.findMany({
-      where: { userId: null },
+      where,
       orderBy: { registeredAt: 'asc' },
-      select: { id: true, email: true, firstName: true, metadata: true },
+      select: { id: true, email: true, firstName: true, metadata: true, status: true },
     });
 
-    const toSend = onlyUnsent
-      ? members.filter((m) => !this.hasAccountInvitationSent(m.metadata))
-      : members;
+    if (onlyUnsent) {
+      result.skipped = await this.prisma.foundingMember.count({
+        where: {
+          userId: null,
+          status: 'INVITED',
+          ...(options?.memberIds?.length ? { id: { in: options.memberIds } } : {}),
+        },
+      });
+    }
 
-    result.skipped = members.length - toSend.length;
-
-    for (let batchStart = 0; batchStart < toSend.length; batchStart += batchSize) {
-      const batch = toSend.slice(batchStart, batchStart + batchSize);
+    for (let batchStart = 0; batchStart < members.length; batchStart += batchSize) {
+      const batch = members.slice(batchStart, batchStart + batchSize);
       const batchResults = await Promise.allSettled(
         batch.map(async (member) => {
-          const sentAt = new Date().toISOString();
-          await this.prisma.foundingMember.update({
-            where: { id: member.id },
-            data: {
-              metadata: this.mergeMetadata(member.metadata, {
-                accountInvitationSentAt: sentAt,
-              }),
-            },
-          });
           try {
             await this.notificationsService.sendFoundingMemberAccountInvitation(
               member.email,
               { firstName: member.firstName, registerLink },
             );
+            const sentAt = new Date().toISOString();
+            await this.prisma.foundingMember.update({
+              where: { id: member.id },
+              data: {
+                status: 'INVITED',
+                metadata: this.mergeMetadata(member.metadata, {
+                  accountInvitationSentAt: sentAt,
+                }),
+              },
+            });
           } catch (emailErr) {
-            try {
-              await this.prisma.foundingMember.update({
-                where: { id: member.id },
-                data: {
-                  metadata: this.mergeMetadata(member.metadata, {
-                    accountInvitationSentAt: null,
-                    accountInvitationError:
-                      emailErr instanceof Error ? emailErr.message : 'unknown',
-                  }),
-                },
-              });
-            } catch (rollbackErr) {
+            await this.prisma.foundingMember.update({
+              where: { id: member.id },
+              data: {
+                metadata: this.mergeMetadata(member.metadata, {
+                  accountInvitationError:
+                    emailErr instanceof Error ? emailErr.message : 'unknown',
+                }),
+              },
+            }).catch((rollbackErr) => {
               this.logger.error(
-                `Failed to rollback accountInvitationSentAt for member ${member.id}: ${rollbackErr instanceof Error ? rollbackErr.message : 'unknown'}`,
+                `Failed to save invitation error for member ${member.id}: ${rollbackErr instanceof Error ? rollbackErr.message : 'unknown'}`,
               );
-            }
+            });
             throw emailErr;
           }
         }),
@@ -561,10 +572,10 @@ export class FoundingMembersService {
         }
       }
 
-      const processed = Math.min(batchStart + batchSize, toSend.length);
-      if (processed % 100 === 0 || processed === toSend.length) {
+      const processed = Math.min(batchStart + batchSize, members.length);
+      if (processed % 100 === 0 || processed === members.length) {
         this.logger.log(
-          `Account invitation progress: ${processed}/${toSend.length} (${result.sent} sent, ${result.failed} failed, ${result.skipped} skipped)`,
+          `Account invitation progress: ${processed}/${members.length} (${result.sent} sent, ${result.failed} failed, ${result.skipped} skipped)`,
         );
       }
     }

@@ -14,14 +14,7 @@ export function LandingFooter() {
         <img className="f-logo-img" src={LANDING_LOGO} width={60} height={60} alt="" aria-hidden="true" />
         <img className="f-logo-mark" src={LANDING_WORDMARK} width={1024} height={258} alt="" aria-hidden="true" />
       </div>
-      <div className="f-urls">
-        <strong>House Of Spells</strong>
-        {' '}&nbsp;·&nbsp;{' '}
-        <a href="https://www.houseofspells.co.uk/" target="_blank" rel="noopener noreferrer">
-          House Of Spells UK
-        </a>
-        {' '}&nbsp;·&nbsp; Times Square, New York
-      </div>
+      <div className="f-urls">Times Square, New York</div>
       <div className="f-links">
         <Link href="/">Home</Link>
         <Link href="/universes">Universes</Link>

@@ -1179,7 +1179,7 @@ export class TemplatesService {
       startsAt: 'Saturday, 15 July 2026 at 7:00 PM',
       unsubscribeUrl: 'https://hos-marketplace.com/unsubscribe?token=example',
       loyaltyPointsEarned: '50',
-      registerLink: 'https://hos-marketplace.com/auth/register?ref=founding',
+      registerLink: 'https://hos-marketplace.com/register?ref=founding',
     };
     return samples[variable] || `[${variable}]`;
   }

@@ -6759,10 +6759,13 @@ export class ApiClient {
     });
   }
 
-  async sendFoundingMemberAccountInvitations(batchSize?: number): Promise<ApiResponse<any>> {
+  async sendFoundingMemberAccountInvitations(options?: { batchSize?: number; memberIds?: string[] }): Promise<ApiResponse<any>> {
+    const payload: any = {};
+    if (options?.batchSize) payload.batchSize = options.batchSize;
+    if (options?.memberIds?.length) payload.memberIds = options.memberIds;
     return this.request<ApiResponse<any>>('/founding-members/send-account-invitations', {
       method: 'POST',
-      body: JSON.stringify(batchSize ? { batchSize } : {}),
+      body: JSON.stringify(payload),
     });
   }
 
