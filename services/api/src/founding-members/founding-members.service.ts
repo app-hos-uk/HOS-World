@@ -239,31 +239,17 @@ export class FoundingMembersService {
       const batch = toSend.slice(batchStart, batchStart + batchSize);
       const batchResults = await Promise.allSettled(
         batch.map(async (member) => {
-          const sentAt = new Date().toISOString();
+          await this.notificationsService.sendFoundingMemberConfirmation(member.email, {
+            firstName: member.firstName,
+          });
           await this.prisma.foundingMember.update({
             where: { id: member.id },
             data: {
               metadata: this.mergeMetadata(member.metadata, {
-                confirmationEmailSentAt: sentAt,
+                confirmationEmailSentAt: new Date().toISOString(),
               }),
             },
           });
-          try {
-            await this.notificationsService.sendFoundingMemberConfirmation(member.email, {
-              firstName: member.firstName,
-            });
-          } catch (emailErr) {
-            await this.prisma.foundingMember.update({
-              where: { id: member.id },
-              data: {
-                metadata: this.mergeMetadata(member.metadata, {
-                  confirmationEmailSentAt: null,
-                  confirmationEmailError: emailErr instanceof Error ? emailErr.message : 'unknown',
-                }),
-              },
-            }).catch(() => {});
-            throw emailErr;
-          }
         }),
       );
 

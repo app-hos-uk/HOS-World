@@ -106,6 +106,9 @@ export default function AdminFoundingMembersPage() {
   const [manualLoading, setManualLoading] = useState(false);
   const [manualMessage, setManualMessage] = useState<string | null>(null);
 
+  const [confirmationLoading, setConfirmationLoading] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
+
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -240,6 +243,21 @@ export default function AdminFoundingMembersPage() {
     }
   };
 
+  const handleSendConfirmations = async () => {
+    if (!confirm('Send confirmation emails to all founding members who haven\'t received one yet?')) return;
+    setConfirmationLoading(true);
+    setConfirmationResult(null);
+    setError(null);
+    try {
+      const res = await apiClient.sendFoundingMemberConfirmations(50);
+      setConfirmationResult(res.data as { sent: number; failed: number; skipped: number });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send confirmation emails');
+    } finally {
+      setConfirmationLoading(false);
+    }
+  };
+
   const formatDate = (s: string) => {
     try {
       return new Date(s).toLocaleDateString(undefined, { dateStyle: 'medium' });
@@ -273,6 +291,31 @@ export default function AdminFoundingMembersPage() {
               ))}
             </div>
           )}
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={handleSendConfirmations}
+              disabled={confirmationLoading}
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm font-medium hover:bg-hos-gold-hover disabled:opacity-50 flex items-center gap-2"
+            >
+              {confirmationLoading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Sending...
+                </>
+              ) : (
+                'Send Confirmation Emails'
+              )}
+            </button>
+            {confirmationResult && (
+              <span className="text-sm text-hos-text-muted">
+                {confirmationResult.sent} sent, {confirmationResult.failed} failed, {confirmationResult.skipped} already sent
+              </span>
+            )}
+          </div>
 
           <div className="flex gap-2 border-b border-hos-border">
             {(['list', 'import', 'add'] as Tab[]).map((t) => (

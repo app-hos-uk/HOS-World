@@ -152,6 +152,7 @@ const menuItems: MenuItem[] = [
       { title: 'Bonus Campaigns', href: '/admin/loyalty/campaigns', icon: '🎯' },
       { title: 'Members', href: '/admin/loyalty/members', icon: '👥' },
       { title: 'Transactions', href: '/admin/loyalty/transactions', icon: '💳' },
+      { title: 'Seed Data', href: '/admin/loyalty/seed', icon: '🌱' },
     ],
   },
   {
@@ -235,6 +236,7 @@ const menuItems: MenuItem[] = [
     icon: '⚙️',
     children: [
       { title: 'Settings', href: '/admin/settings', icon: '🔧' },
+      { title: 'Feature Flags', href: '/admin/feature-flags', icon: '🚩' },
       { title: 'Permissions', href: '/admin/permissions', icon: '🔐' },
       { title: 'Themes', href: '/admin/themes', icon: '🎨' },
       { title: 'Webhooks', href: '/admin/webhooks', icon: '🔗' },

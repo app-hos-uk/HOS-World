@@ -6752,4 +6752,30 @@ export class ApiClient {
     });
   }
 
+  async sendFoundingMemberConfirmations(batchSize?: number): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/founding-members/send-confirmations', {
+      method: 'POST',
+      body: JSON.stringify(batchSize ? { batchSize } : {}),
+    });
+  }
+
+  // ===== Feature Flags =====
+  async getFeatureFlags(): Promise<ApiResponse<Record<string, boolean>>> {
+    return this.request<ApiResponse<Record<string, boolean>>>('/admin/feature-flags');
+  }
+
+  async setFeatureFlag(flag: string, enabled: boolean): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/feature-flags/${flag}`, {
+      method: 'PUT',
+      body: JSON.stringify({ enabled }),
+    });
+  }
+
+  // ===== Admin Seed =====
+  async seedLoyaltyData(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/seed-loyalty', {
+      method: 'POST',
+    });
+  }
+
 }
