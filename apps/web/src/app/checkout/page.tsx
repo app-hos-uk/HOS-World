@@ -2,6 +2,7 @@
 
 import { MinimalCheckoutHeader } from '@/components/storefront/MinimalCheckoutHeader';
 import { MinimalCheckoutFooter } from '@/components/storefront/MinimalCheckoutFooter';
+import { LoyaltyRedemptionWidget } from '@/components/checkout/LoyaltyRedemptionWidget';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient, getOrCreateGuestCartSessionId, clearGuestCartSessionId, markLoginSuccess, setFrontendSessionCookie, GUEST_CHECKOUT_ACCOUNT_KEY } from '@/lib/api';
@@ -854,8 +855,17 @@ export default function CheckoutPage() {
 
   const subtotal = cart.items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
   const discount = cart.discount || 0;
+  const rawLoyaltyDiscount = cart.loyaltyDiscountAmount || 0;
+  const loyaltyDiscount = Math.min(rawLoyaltyDiscount, discount);
+  const promotionDiscount = Math.max(0, discount - loyaltyDiscount);
+  const loyaltyRewardApplied = (cart.pendingLoyaltyPoints ?? 0) > 0;
   const effectiveShippingCost = cart.promotionFreeShipping ? 0 : shippingCost;
   const total = subtotal - discount + effectiveShippingCost + taxAmount;
+
+  const handleLoyaltyCartUpdate = (updatedCart: any) => {
+    setCart(updatedCart);
+    void refreshCart();
+  };
 
   return (
     <div className="min-h-screen bg-hos-bg-secondary">
@@ -1064,6 +1074,10 @@ export default function CheckoutPage() {
             </section>
             )}
 
+            {checkoutStep === 3 && isAuthenticated && (
+              <LoyaltyRedemptionWidget cart={cart} onCartUpdate={handleLoyaltyCartUpdate} />
+            )}
+
             {/* Gifting Option - shown at Review step */}
             {checkoutStep === 3 && (
               <section aria-label="Gift Options" className="bg-hos-bg-secondary rounded-lg shadow-sm border border-hos-border p-4 sm:p-6">
@@ -1258,10 +1272,17 @@ export default function CheckoutPage() {
                   <span>{formatPrice(subtotal)}</span>
                 </div>
 
-                {discount > 0 && (
+                {promotionDiscount > 0 && (
                   <div className="flex justify-between text-sm text-green-400">
-                    <span>Discount</span>
-                    <span>-{formatPrice(discount)}</span>
+                    <span>Discount{cart.couponCode ? ` (${cart.couponCode})` : ''}</span>
+                    <span>-{formatPrice(promotionDiscount)}</span>
+                  </div>
+                )}
+
+                {loyaltyDiscount > 0 && (
+                  <div className="flex justify-between text-sm text-purple-300">
+                    <span>Loyalty reward{loyaltyRewardApplied ? ` (${cart.pendingLoyaltyPoints?.toLocaleString()} pts)` : ''}</span>
+                    <span>-{formatPrice(loyaltyDiscount)}</span>
                   </div>
                 )}
 

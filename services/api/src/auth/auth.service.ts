@@ -6,6 +6,9 @@ import {
   ForbiddenException,
   NotFoundException,
   Logger,
+  forwardRef,
+  Inject,
+  Optional,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -20,6 +23,8 @@ import { GuestCheckoutDto } from './dto/guest-checkout.dto';
 import { LoginDto } from './dto/login.dto';
 import { CartService } from '../cart/cart.service';
 import { AddressesService } from '../addresses/addresses.service';
+import { FoundingMembersService } from '../founding-members/founding-members.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 import { slugify } from '@hos-marketplace/utils';
 import type { User, AuthResponse } from '@hos-marketplace/shared-types';
 
@@ -64,6 +69,10 @@ export class AuthService {
     private templatesService: TemplatesService,
     private cartService: CartService,
     private addressesService: AddressesService,
+    @Optional() @Inject(forwardRef(() => FoundingMembersService))
+    private foundingMembersService?: FoundingMembersService,
+    @Optional() @Inject(forwardRef(() => LoyaltyService))
+    private loyaltyService?: LoyaltyService,
   ) {
     // Check if RefreshToken model is available on startup
     this.checkRefreshTokenAvailability();
@@ -304,6 +313,45 @@ export class AuthService {
           }),
         },
       });
+    }
+
+    // Best-effort: link founding member + auto-enroll in loyalty
+    try {
+      if (this.foundingMembersService) {
+        const linked = await this.foundingMembersService.linkToUser(registerDto.email, user.id);
+        if (linked && this.loyaltyService?.isEnabled()) {
+          try {
+            const membership = await this.loyaltyService.enroll(user.id);
+            if (membership) {
+              const bonusPoints = parseInt(
+                this.configService.get<string>('FOUNDING_MEMBER_BONUS_POINTS', '500'),
+                10,
+              );
+              if (bonusPoints > 0) {
+                const existingBonus = await this.prisma.loyaltyTransaction.findFirst({
+                  where: { membershipId: membership.id, source: 'FOUNDING_MEMBER_BONUS' },
+                });
+                if (!existingBonus) {
+                  await this.loyaltyService.awardBonus(
+                    membership.id,
+                    bonusPoints,
+                    'FOUNDING_MEMBER_BONUS',
+                    'Founding member welcome bonus',
+                  );
+                }
+              }
+            }
+          } catch (loyaltyErr: unknown) {
+            this.logger.warn(
+              `Founding member loyalty auto-enroll failed for ${user.email}: ${loyaltyErr instanceof Error ? loyaltyErr.message : 'unknown'}`,
+            );
+          }
+        }
+      }
+    } catch (fmErr: unknown) {
+      this.logger.warn(
+        `Founding member link failed for ${user.email}: ${fmErr instanceof Error ? fmErr.message : 'unknown'}`,
+      );
     }
 
     // Create tenant membership for new user (default to platform tenant)

@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -20,12 +21,16 @@ import { CreateFoundingMemberDto } from './dto/create-founding-member.dto';
 import { ImportFoundingMembersDto } from './dto/import-founding-members.dto';
 import { AdminCreateFoundingMemberDto } from './dto/admin-create-founding-member.dto';
 import { FOUNDING_MEMBER_ADMIN_ROLES } from './founding-members.roles';
+import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
 
 @ApiTags('Founding Members')
 @Controller('founding-members')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class FoundingMembersController {
-  constructor(private readonly foundingMembersService: FoundingMembersService) {}
+  constructor(
+    private readonly foundingMembersService: FoundingMembersService,
+    private readonly featureFlagsService: FeatureFlagsService,
+  ) {}
 
   @Public()
   @Throttle({ default: { limit: 3, ttl: 60000 } })
@@ -33,6 +38,10 @@ export class FoundingMembersController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register as a founding member' })
   async register(@Body() dto: CreateFoundingMemberDto, @Request() req: any) {
+    if (!this.featureFlagsService.isEnabled(FeatureFlag.FOUNDING_MEMBERS)) {
+      throw new ForbiddenException('Founding member registration is currently closed.');
+    }
+
     const ipAddress =
       req.headers?.['x-forwarded-for']?.split(',')[0] ||
       req.headers?.['x-real-ip'] ||
@@ -112,6 +121,24 @@ export class FoundingMembersController {
     return {
       data: member,
       message: 'Founding member added successfully',
+    };
+  }
+
+  @Post('send-confirmations')
+  @Roles(...FOUNDING_MEMBER_ADMIN_ROLES)
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Send confirmation emails to all founding members who haven\'t received one',
+  })
+  async sendConfirmations(@Body() body?: { batchSize?: number }) {
+    const result = await this.foundingMembersService.sendConfirmationToAll({
+      onlyUnsent: true,
+      batchSize: body?.batchSize ?? 50,
+    });
+    return {
+      data: result,
+      message: `Sent ${result.sent} emails, ${result.failed} failed, ${result.skipped} skipped`,
     };
   }
 

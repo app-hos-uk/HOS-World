@@ -564,25 +564,76 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
   {
     slug: 'founding_member_confirmation',
     channel: 'EMAIL',
-    subject: "You're on the Founding Members List — House of Spells",
+    subject: "You're a Founding Member — House of Spells",
     description: 'Sent when someone registers as a founding member.',
     variables: ['firstName', 'email'],
     body: `<!DOCTYPE html>
-<html><head><style>
-  body{font-family:Arial,sans-serif;line-height:1.6;color:#333}
-  .container{max-width:600px;margin:0 auto;padding:20px}
-  .header{background:#553c9a;color:#fff;padding:20px;text-align:center}
-  .content{padding:20px;background:#f7fafc}
-  .footer{text-align:center;padding:20px;color:#718096;font-size:12px}
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{margin:0;padding:0;background:#0a0612;font-family:Georgia,'Times New Roman',serif;line-height:1.7;color:#e8e0f5;-webkit-text-size-adjust:100%}
+  .wrapper{background:#0a0612;padding:24px 12px}
+  .container{max-width:600px;margin:0 auto;background:#120a1f;border-radius:12px;overflow:hidden;border:1px solid #3d2a6e;box-shadow:0 8px 32px rgba(45,27,105,.45)}
+  .header{background:linear-gradient(135deg,#2D1B69 0%,#1a0f3c 100%);padding:36px 24px;text-align:center;border-bottom:2px solid #7c5cbf}
+  .brand{font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#c4b5fd;margin:0 0 8px}
+  .header h1{margin:0;font-size:28px;font-weight:400;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+  .header .tagline{margin:12px 0 0;font-size:14px;color:#d4c4f5;font-style:italic}
+  .content{padding:32px 28px;background:#120a1f}
+  .content p{margin:0 0 18px;font-size:16px;color:#d8ccf0}
+  .highlight{background:linear-gradient(90deg,rgba(124,92,191,.2),rgba(45,27,105,.15));border-left:3px solid #9f7aea;padding:16px 20px;margin:24px 0;border-radius:0 8px 8px 0}
+  .highlight p{margin:0;color:#f3eeff}
+  .benefits{margin:28px 0;padding:0;list-style:none}
+  .benefits li{padding:12px 0 12px 32px;position:relative;border-bottom:1px solid rgba(124,92,191,.2);font-size:15px;color:#e0d4f5}
+  .benefits li:last-child{border-bottom:none}
+  .benefits li::before{content:"✦";position:absolute;left:0;color:#c4b5fd;font-size:14px}
+  .benefits strong{color:#fff}
+  .next-steps{background:#1a0f3c;border-radius:8px;padding:20px 24px;margin:28px 0;border:1px solid #3d2a6e}
+  .next-steps h2{margin:0 0 12px;font-size:18px;font-weight:400;color:#c4b5fd}
+  .next-steps p{margin:0 0 10px;font-size:14px;color:#b8a8d8}
+  .next-steps p:last-child{margin:0}
+  .footer{background:#0a0612;padding:28px 24px;text-align:center;border-top:1px solid #2d1b69}
+  .footer .brand-name{font-size:16px;color:#c4b5fd;letter-spacing:2px;margin:0 0 8px}
+  .footer p{margin:0 0 8px;font-size:12px;color:#7c6b9e}
+  .social{margin-top:16px;font-size:12px;color:#5c4d7a}
+  @media only screen and (max-width:480px){
+    .content{padding:24px 18px}
+    .header h1{font-size:24px}
+  }
 </style></head><body>
+<div class="wrapper">
 <div class="container">
-  <div class="header"><h1>Welcome, Founding Member</h1></div>
-  <div class="content">
-    <p>Hi {{firstName}},</p>
-    <p>Thank you for joining the House of Spells founding members list. We've registered <strong>{{email}}</strong> and will keep you updated as we launch.</p>
-    <p>You're among the first to help shape our enchanted marketplace — we'll be in touch soon with exclusive early access details.</p>
+  <div class="header">
+    <p class="brand">House of Spells</p>
+    <h1>Welcome, Founding Member</h1>
+    <p class="tagline">The gates are opening — and you're among the first inside.</p>
   </div>
-  <div class="footer"><p>House of Spells Marketplace</p></div>
+  <div class="content">
+    <p>Dear {{firstName}},</p>
+    <p>You are now one of the very first <strong>Founding Members</strong> of House of Spells — an enchanted marketplace built for collectors, dreamers, and fans of the magical worlds we all love.</p>
+    <div class="highlight">
+      <p>We've registered <strong>{{email}}</strong> on our exclusive founding list. Your place is secured.</p>
+    </div>
+    <p>As a founding member, you'll have privileged access to <strong>The Enchanted Circle</strong> — our loyalty programme where every purchase earns magical rewards, and your devotion to the fandoms you love is celebrated.</p>
+    <ul class="benefits">
+      <li><strong>Early access</strong> — shop new drops and silent-launch collections before anyone else</li>
+      <li><strong>Founding bonus points</strong> — exclusive loyalty points awarded when you create your account</li>
+      <li><strong>Exclusive collectibles</strong> — first access to limited-edition pieces reserved for founding members</li>
+      <li><strong>Insider updates</strong> — be the first to hear about launches, events, and enchanted surprises</li>
+    </ul>
+    <div class="next-steps">
+      <h2>What happens next?</h2>
+      <p>1. We'll send you a personal invitation to create your House of Spells account.</p>
+      <p>2. You'll receive early-access details before our public launch.</p>
+      <p>3. Your founding member benefits activate the moment you join The Enchanted Circle.</p>
+    </div>
+    <p>Thank you for believing in what we're building. The magic is just beginning.</p>
+    <p style="margin-top:24px;color:#c4b5fd;font-style:italic;">— The House of Spells Team</p>
+  </div>
+  <div class="footer">
+    <p class="brand-name">HOUSE OF SPELLS</p>
+    <p>Enchanted collectibles for every fandom.</p>
+    <p class="social">Follow us: Instagram · TikTok · Facebook</p>
+  </div>
+</div>
 </div></body></html>`,
   },
 

@@ -83,6 +83,30 @@ export class LoyaltyService {
       include: { tier: true },
     });
 
+    // Award SIGNUP earn rule bonus if configured
+    try {
+      const signupRule = await this.prisma.loyaltyEarnRule.findFirst({
+        where: { action: 'SIGNUP', isActive: true },
+      });
+      if (signupRule && signupRule.pointsAmount > 0) {
+        const existingSignup = await this.prisma.loyaltyTransaction.findFirst({
+          where: { membershipId: membership.id, source: 'SIGNUP', type: LoyaltyTxType.BONUS },
+        });
+        if (!existingSignup) {
+          await this.awardBonus(
+            membership.id,
+            signupRule.pointsAmount,
+            'SIGNUP',
+            'Welcome bonus for joining The Enchanted Circle',
+          );
+        }
+      }
+    } catch (signupErr: unknown) {
+      this.logger.warn(
+        `Signup bonus failed for user ${userId}: ${signupErr instanceof Error ? signupErr.message : 'unknown'}`,
+      );
+    }
+
     this.events.onWelcome(userId, tier.name).catch((e: unknown) => {
       this.logger.warn(`Welcome event failed for ${userId}: ${e instanceof Error ? e.message : 'unknown'}`);
     });
@@ -561,6 +585,31 @@ export class LoyaltyService {
       pointsRedeemed: Math.abs(redeemed._sum.points || 0),
       programmeLiabilityEstimate: liability * redeemValue,
     };
+  }
+
+  async awardBonus(
+    membershipId: string,
+    points: number,
+    source: string,
+    description: string,
+  ): Promise<void> {
+    if (points <= 0) return;
+    const membership = await this.prisma.loyaltyMembership.findUnique({ where: { id: membershipId } });
+    if (!membership) return;
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.wallet.applyDelta(tx, membershipId, points, LoyaltyTxType.BONUS, {
+        source,
+        channel: 'WEB',
+        description,
+      });
+      await tx.loyaltyMembership.update({
+        where: { id: membershipId },
+        data: { totalPointsEarned: { increment: points } },
+      });
+    });
+
+    await this.tiers.recalculateTier(membershipId);
   }
 
   async adminAdjustPoints(userId: string, delta: number, reason?: string) {

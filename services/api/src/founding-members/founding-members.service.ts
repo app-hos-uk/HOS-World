@@ -103,73 +103,191 @@ export class FoundingMembersService {
       createdEmails: [],
     };
 
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      const rowNum = i + 1;
-      const email = row.email?.toLowerCase().trim();
+    const BATCH_SIZE = 50;
 
-      if (!email || !row.firstName?.trim()) {
-        result.failed++;
-        result.errors.push({
-          row: rowNum,
-          email: email || '(missing)',
-          message: 'Email and first name are required',
-        });
-        continue;
-      }
+    for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
+      const batch = rows.slice(batchStart, batchStart + BATCH_SIZE);
+      const batchResults = await Promise.allSettled(
+        batch.map(async (row, batchIndex) => {
+          const i = batchStart + batchIndex;
+          const rowNum = i + 1;
+          const email = row.email?.toLowerCase().trim();
 
-      const existing = await this.prisma.foundingMember.findUnique({ where: { email } });
-      if (existing) {
-        if (options?.skipDuplicates !== false) {
-          result.skipped++;
+          if (!email || !row.firstName?.trim()) {
+            return {
+              status: 'failed' as const,
+              row: rowNum,
+              email: email || '(missing)',
+              message: 'Email and first name are required',
+            };
+          }
+
+          const existing = await this.prisma.foundingMember.findUnique({ where: { email } });
+          if (existing) {
+            if (options?.skipDuplicates !== false) {
+              return { status: 'skipped' as const };
+            }
+            return {
+              status: 'failed' as const,
+              row: rowNum,
+              email,
+              message: 'Email already registered',
+            };
+          }
+
+          try {
+            const member = await this.createMember(
+              {
+                email: row.email,
+                firstName: row.firstName,
+                lastName: row.lastName,
+                phone: row.phone,
+                country: row.country,
+                fandoms: row.fandoms?.length ? row.fandoms : [],
+                otherFranchises: row.otherFranchises,
+                source: row.source || options?.defaultSource || 'external_import',
+                spendBracket: row.spendBracket,
+              },
+              {
+                registeredFrom: 'admin_import',
+                importedBy: options?.importedBy,
+                originalRegisteredAt: row.registeredAt || null,
+              },
+              {
+                sendConfirmationEmail: options?.sendConfirmationEmail ?? false,
+                registeredAt: row.registeredAt ? new Date(row.registeredAt) : undefined,
+              },
+            );
+            return { status: 'created' as const, email: member.email };
+          } catch (err: unknown) {
+            return {
+              status: 'failed' as const,
+              row: rowNum,
+              email,
+              message: err instanceof Error ? err.message : 'Import failed',
+            };
+          }
+        }),
+      );
+
+      for (const settled of batchResults) {
+        if (settled.status === 'rejected') {
+          result.failed++;
+          result.errors.push({
+            row: batchStart + 1,
+            email: '(unknown)',
+            message: settled.reason instanceof Error ? settled.reason.message : 'Import failed',
+          });
           continue;
         }
-        result.failed++;
-        result.errors.push({
-          row: rowNum,
-          email,
-          message: 'Email already registered',
-        });
-        continue;
+
+        const rowResult = settled.value;
+        switch (rowResult.status) {
+          case 'created':
+            result.created++;
+            result.createdEmails.push(rowResult.email);
+            break;
+          case 'skipped':
+            result.skipped++;
+            break;
+          case 'failed':
+            result.failed++;
+            result.errors.push({
+              row: rowResult.row,
+              email: rowResult.email,
+              message: rowResult.message,
+            });
+            break;
+        }
       }
 
-      try {
-        const member = await this.createMember(
-          {
-            email: row.email,
-            firstName: row.firstName,
-            lastName: row.lastName,
-            phone: row.phone,
-            country: row.country,
-            fandoms: row.fandoms?.length ? row.fandoms : [],
-            otherFranchises: row.otherFranchises,
-            source: row.source || options?.defaultSource || 'external_import',
-            spendBracket: row.spendBracket,
-          },
-          {
-            registeredFrom: 'admin_import',
-            importedBy: options?.importedBy,
-            originalRegisteredAt: row.registeredAt || null,
-          },
-          {
-            sendConfirmationEmail: options?.sendConfirmationEmail ?? false,
-            registeredAt: row.registeredAt ? new Date(row.registeredAt) : undefined,
-          },
+      const processed = Math.min(batchStart + BATCH_SIZE, rows.length);
+      if (processed % 100 === 0 || processed === rows.length) {
+        this.logger.log(
+          `Import progress: ${processed}/${rows.length} (${result.created} created, ${result.skipped} skipped, ${result.failed} failed)`,
         );
-        result.created++;
-        result.createdEmails.push(member.email);
-      } catch (err: unknown) {
-        result.failed++;
-        result.errors.push({
-          row: rowNum,
-          email,
-          message: err instanceof Error ? err.message : 'Import failed',
-        });
       }
     }
 
     this.logger.log(
       `Founding member import: ${result.created} created, ${result.skipped} skipped, ${result.failed} failed`,
+    );
+
+    return result;
+  }
+
+  async sendConfirmationToAll(options?: {
+    onlyUnsent?: boolean;
+    batchSize?: number;
+  }): Promise<{ sent: number; failed: number; skipped: number }> {
+    const batchSize = options?.batchSize ?? 50;
+    const onlyUnsent = options?.onlyUnsent ?? true;
+    const result = { sent: 0, failed: 0, skipped: 0 };
+
+    const members = await this.prisma.foundingMember.findMany({
+      orderBy: { registeredAt: 'asc' },
+      select: { id: true, email: true, firstName: true, metadata: true },
+    });
+
+    const toSend = onlyUnsent
+      ? members.filter((member) => !this.hasConfirmationEmailSent(member.metadata))
+      : members;
+
+    result.skipped = members.length - toSend.length;
+
+    for (let batchStart = 0; batchStart < toSend.length; batchStart += batchSize) {
+      const batch = toSend.slice(batchStart, batchStart + batchSize);
+      const batchResults = await Promise.allSettled(
+        batch.map(async (member) => {
+          const sentAt = new Date().toISOString();
+          await this.prisma.foundingMember.update({
+            where: { id: member.id },
+            data: {
+              metadata: this.mergeMetadata(member.metadata, {
+                confirmationEmailSentAt: sentAt,
+              }),
+            },
+          });
+          try {
+            await this.notificationsService.sendFoundingMemberConfirmation(member.email, {
+              firstName: member.firstName,
+            });
+          } catch (emailErr) {
+            await this.prisma.foundingMember.update({
+              where: { id: member.id },
+              data: {
+                metadata: this.mergeMetadata(member.metadata, {
+                  confirmationEmailSentAt: null,
+                  confirmationEmailError: emailErr instanceof Error ? emailErr.message : 'unknown',
+                }),
+              },
+            }).catch(() => {});
+            throw emailErr;
+          }
+        }),
+      );
+
+      for (const settled of batchResults) {
+        if (settled.status === 'fulfilled') {
+          result.sent++;
+        } else {
+          result.failed++;
+          this.logger.warn(
+            `Founding member confirmation batch send failed: ${settled.reason instanceof Error ? settled.reason.message : 'unknown'}`,
+          );
+        }
+      }
+
+      const processed = Math.min(batchStart + batchSize, toSend.length);
+      if (processed % 100 === 0 || processed === toSend.length) {
+        this.logger.log(
+          `Confirmation email progress: ${processed}/${toSend.length} (${result.sent} sent, ${result.failed} failed, ${result.skipped} skipped)`,
+        );
+      }
+    }
+
+    this.logger.log(
+      `Founding member confirmations: ${result.sent} sent, ${result.failed} failed, ${result.skipped} skipped`,
     );
 
     return result;
@@ -322,6 +440,14 @@ export class FoundingMembersService {
         await this.notificationsService.sendFoundingMemberConfirmation(member.email, {
           firstName: member.firstName,
         });
+        await this.prisma.foundingMember.update({
+          where: { id: member.id },
+          data: {
+            metadata: this.mergeMetadata(metadata, {
+              confirmationEmailSentAt: new Date().toISOString(),
+            }),
+          },
+        });
       } catch (err: unknown) {
         this.logger.warn(
           `Founding member confirmation email failed for ${member.email}: ${err instanceof Error ? err.message : 'unknown'}`,
@@ -330,6 +456,25 @@ export class FoundingMembersService {
     }
 
     return member;
+  }
+
+  private hasConfirmationEmailSent(metadata: Prisma.JsonValue | null): boolean {
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+      return false;
+    }
+    const sentAt = (metadata as Record<string, unknown>).confirmationEmailSentAt;
+    return typeof sentAt === 'string' && sentAt.length > 0;
+  }
+
+  private mergeMetadata(
+    existing: Prisma.JsonValue | Record<string, unknown> | null | undefined,
+    updates: Record<string, unknown>,
+  ): Prisma.InputJsonValue {
+    const base =
+      existing && typeof existing === 'object' && !Array.isArray(existing)
+        ? { ...(existing as Record<string, unknown>) }
+        : {};
+    return { ...base, ...updates } as Prisma.InputJsonValue;
   }
 
   async findByEmail(email: string) {

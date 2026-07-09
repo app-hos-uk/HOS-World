@@ -14,6 +14,8 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { TemplatesModule } from '../templates/templates.module';
 import { CartModule } from '../cart/cart.module';
 import { AddressesModule } from '../addresses/addresses.module';
+import { FoundingMembersModule } from '../founding-members/founding-members.module';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 
 const logger = new Logger('AuthModule');
 
@@ -44,6 +46,8 @@ const logger = new Logger('AuthModule');
     TemplatesModule,
     CartModule,
     AddressesModule,
+    FoundingMembersModule,
+    forwardRef(() => LoyaltyModule),
   ],
   controllers: [AuthController, AuthOAuthController],
   providers: [AuthService, JwtStrategy, LocalStrategy],
