@@ -114,7 +114,7 @@ export function TipTapEditor({
         <ToolbarButton onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} title="Numbered list">1. List</ToolbarButton>
         <ToolbarButton onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} title="Quote">&ldquo;</ToolbarButton>
         <ToolbarButton onClick={setLink} active={editor.isActive('link')} title="Link">Link</ToolbarButton>
-        <ToolbarButton onClick={addImage} title="Image">Image</ToolbarButton>
+        <ToolbarButton onClick={addImage} title="Insert image — JPEG/PNG/GIF/WebP, 800px+ width, max 10 MB">Image</ToolbarButton>
         <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Table">Table</ToolbarButton>
       </div>
       <EditorContent editor={editor} />

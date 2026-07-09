@@ -531,6 +531,7 @@ export class AdminProductsService {
       tags: _tags,
       images: _images,
       attributes: _attributes,
+      variations: _variations,
       ...scalarData
     } = data;
 

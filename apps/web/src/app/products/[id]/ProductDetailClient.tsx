@@ -14,6 +14,17 @@ import { SafeImage } from '@/components/SafeImage';
 import { ProductImageGallery } from '@/components/products/ProductImageGallery';
 import Link from 'next/link';
 import { StorefrontBreadcrumbs } from '@/components/storefront/StorefrontBreadcrumbs';
+
+const CATEGORY_DISPLAY_RENAMES: Record<string, string> = {
+  'collectibles hos uk': 'Collectibles',
+  'collectibles-hos-uk': 'Collectibles',
+  'hos uk': 'Collectibles',
+};
+
+function displayCategory(raw: string): string {
+  const canonical = CATEGORY_DISPLAY_RENAMES[raw.toLowerCase().trim()];
+  return canonical ?? raw;
+}
 import { trackViewItem, trackAddToCart } from '@/lib/analytics';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -791,7 +802,7 @@ export default function ProductDetailClient() {
           {product.category && (
             <div className="bg-hos-bg-secondary rounded-lg p-4">
               <h3 className="font-semibold mb-2">Category</h3>
-              <p className="text-hos-text-secondary">{product.category.replace(/[-\s]*HOS[-\s]*UK[-\s]*/gi, '').replace(/-+$/, '').trim() || 'Collectibles'}</p>
+              <p className="text-hos-text-secondary">{displayCategory(product.category)}</p>
             </div>
           )}
           {product.fandom && (

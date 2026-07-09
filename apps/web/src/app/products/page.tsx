@@ -350,29 +350,29 @@ function ProductsContent() {
           const data = response.data as any;
           const rawProds = data.products || [];
           let prods = rawProds;
+          let resolvedTotal: number;
+          let resolvedPages: number;
           if (hasClientFilter) {
             const allFiltered = applyClientFilters(rawProds);
             const start = (state.page - 1) * ITEMS_PER_PAGE;
             prods = allFiltered.slice(start, start + ITEMS_PER_PAGE);
-            const total = allFiltered.length;
-            setProducts(prods);
-            setTotalHits(total);
-            setTotalPages(Math.max(1, Math.ceil(total / ITEMS_PER_PAGE)));
+            resolvedTotal = allFiltered.length;
+            resolvedPages = Math.max(1, Math.ceil(resolvedTotal / ITEMS_PER_PAGE));
           } else {
-            setProducts(prods);
-            const total = Number(data.total) || 0;
-            setTotalHits(total);
-            const fromTotal = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+            resolvedTotal = Number(data.total) || 0;
+            const fromTotal = Math.max(1, Math.ceil(resolvedTotal / ITEMS_PER_PAGE));
             const fromApi = Number(data.totalPages);
-            const resolvedTotalPages =
+            resolvedPages =
               Number.isFinite(fromApi) && fromApi > 0 ? Math.max(fromApi, fromTotal) : fromTotal;
-            setTotalPages(resolvedTotalPages);
           }
+          setProducts(prods);
+          setTotalHits(resolvedTotal);
+          setTotalPages(resolvedPages);
           cachedListing = {
             filterKey: buildFilterKey(state),
             products: prods,
-            totalHits: totalHits,
-            totalPages: totalPages,
+            totalHits: resolvedTotal,
+            totalPages: resolvedPages,
           };
           if (data.facets) {
             if (state.categories.length === 0 && state.fandoms.length === 0) {
@@ -407,31 +407,32 @@ function ProductsContent() {
           if (fallback?.data) {
             const d = fallback.data as any;
             const rawProds = Array.isArray(d.data) ? d.data : (d.items || []);
+            let fbProds: any[];
+            let fbResolvedTotal: number;
+            let fbResolvedPages: number;
             if (hasClientFilter) {
               const allFiltered = applyClientFilters(rawProds);
               const start = (state.page - 1) * ITEMS_PER_PAGE;
-              const prods = allFiltered.slice(start, start + ITEMS_PER_PAGE);
-              const total = allFiltered.length;
-              setProducts(prods);
-              setTotalHits(total);
-              setTotalPages(Math.max(1, Math.ceil(total / ITEMS_PER_PAGE)));
+              fbProds = allFiltered.slice(start, start + ITEMS_PER_PAGE);
+              fbResolvedTotal = allFiltered.length;
+              fbResolvedPages = Math.max(1, Math.ceil(fbResolvedTotal / ITEMS_PER_PAGE));
             } else {
-              const prods = rawProds;
+              fbProds = rawProds;
               const pagination = d.pagination || {};
-              const fbTotal = Number(pagination.total ?? d.total) || 0;
-              setProducts(prods);
-              setTotalHits(fbTotal);
-              const fbPages = Math.max(1, Math.ceil(fbTotal / ITEMS_PER_PAGE));
+              fbResolvedTotal = Number(pagination.total ?? d.total) || 0;
+              const fbPages = Math.max(1, Math.ceil(fbResolvedTotal / ITEMS_PER_PAGE));
               const fbApi = Number(pagination.totalPages ?? d.totalPages);
-              const resolvedPages =
+              fbResolvedPages =
                 Number.isFinite(fbApi) && fbApi > 0 ? Math.max(fbApi, fbPages) : fbPages;
-              setTotalPages(resolvedPages);
             }
+            setProducts(fbProds);
+            setTotalHits(fbResolvedTotal);
+            setTotalPages(fbResolvedPages);
             cachedListing = {
               filterKey: buildFilterKey(state),
-              products: products,
-              totalHits: totalHits,
-              totalPages: totalPages,
+              products: fbProds,
+              totalHits: fbResolvedTotal,
+              totalPages: fbResolvedPages,
             };
           }
         } catch (fallbackErr) {

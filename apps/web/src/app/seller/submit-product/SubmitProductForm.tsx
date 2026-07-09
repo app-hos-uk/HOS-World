@@ -11,6 +11,7 @@ import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
 import Image from 'next/image';
+import { ImageSpecsHint } from '@/components/ImageSpecsHint';
 import Link from 'next/link';
 
 interface ImageUpload {
@@ -1291,7 +1292,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                     <div className="flex items-center justify-between gap-3 flex-wrap">
                       <div>
                         <div className="font-medium text-hos-text-secondary">Upload images</div>
-                        <div className="text-xs text-hos-text-secondary">JPEG/PNG/GIF/WebP, max 10MB each</div>
+                        <ImageSpecsHint context="product-seller" className="mt-1" />
                       </div>
                       <label className="inline-flex items-center px-4 py-2 bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover cursor-pointer">
                         <input

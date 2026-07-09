@@ -372,16 +372,14 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
   }
 
   private static readonly CATEGORY_RENAMES: Record<string, string> = {
-    'Collectibles HOS UK': 'Collectibles',
-    'Collectibles-HOS-UK': 'Collectibles',
     'collectibles hos uk': 'Collectibles',
-    'HOS UK': 'Collectibles',
+    'collectibles-hos-uk': 'Collectibles',
     'hos uk': 'Collectibles',
   };
 
   private sanitizeCategory(raw: string | null | undefined): string | null {
     if (!raw) return null;
-    return MeilisearchService.CATEGORY_RENAMES[raw] ?? raw;
+    return MeilisearchService.CATEGORY_RENAMES[raw.toLowerCase().trim()] ?? raw;
   }
 
   /**

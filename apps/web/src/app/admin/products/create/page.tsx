@@ -10,6 +10,7 @@ import { TagSelector } from '@/components/taxonomy/TagSelector';
 import { AttributeEditor } from '@/components/taxonomy/AttributeEditor';
 import { FandomSelector } from '@/components/taxonomy/FandomSelector';
 import { SafeImage } from '@/components/SafeImage';
+import { ImageSpecsHint } from '@/components/ImageSpecsHint';
 import { useRouter } from 'next/navigation';
 
 /**
@@ -593,10 +594,10 @@ export default function ProductCreationPage() {
                                 placeholder="Stock"
                                 min={0}
                               />
-                              <label className="inline-flex items-center gap-1 text-xs text-hos-gold cursor-pointer">
+                              <label className="inline-flex items-center gap-1 text-xs text-hos-gold cursor-pointer" title="400×400px, JPEG/PNG/GIF/WebP, max 5 MB, square (1:1)">
                                 <input
                                   type="file"
-                                  accept="image/*"
+                                  accept="image/jpeg,image/png,image/gif,image/webp"
                                   className="hidden"
                                   disabled={!!uploadingVariationImage}
                                   onChange={(e) => {
@@ -701,7 +702,7 @@ export default function ProductCreationPage() {
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div>
                       <div className="font-medium text-hos-text-secondary">Upload product images</div>
-                      <div className="text-xs text-hos-text-secondary">JPEG/PNG/GIF/WebP, max 5MB each, up to 4 images</div>
+                      <ImageSpecsHint context="product" className="mt-1" />
                     </div>
                     <label className="inline-flex items-center px-4 py-2 bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover cursor-pointer">
                       <input

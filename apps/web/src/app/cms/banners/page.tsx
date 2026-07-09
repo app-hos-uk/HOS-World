@@ -8,6 +8,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { CmsPortalErrorBanner } from '@/components/CmsPortalErrorBanner';
 import { cmsActionToastMessage, cmsLoadingErrorMessage } from '@/lib/cmsPortalFeedback';
+import { ImageSpecsHint, getBannerContext } from '@/components/ImageSpecsHint';
 
 export default function CMSBannersPage() {
   const toast = useToast();
@@ -247,6 +248,7 @@ export default function CMSBannersPage() {
                     className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="https://example.com/banner.jpg"
                   />
+                  <ImageSpecsHint context={getBannerContext(formData.type)} className="mt-1.5" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-hos-text-secondary mb-1">Link URL (optional)</label>
@@ -348,6 +350,7 @@ export default function CMSBannersPage() {
                     className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     placeholder="https://example.com/banner.jpg"
                   />
+                  <ImageSpecsHint context={getBannerContext(formData.type)} className="mt-1.5" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-hos-text-secondary mb-1">Link URL (optional)</label>

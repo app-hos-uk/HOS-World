@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { ImageSpecsHint } from '@/components/ImageSpecsHint';
 
 function MarketingMaterialsPageContent() {
   const searchParams = useSearchParams();
@@ -429,7 +430,7 @@ function MarketingMaterialsPageContent() {
                             <>📤 Upload file</>
                           )}
                         </label>
-                        <span className="text-xs text-hos-text-muted">JPEG, PNG, GIF, WebP · max 250KB</span>
+                        <ImageSpecsHint context="marketing" compact />
                       </div>
                       <p className="text-xs text-hos-text-muted mb-1">Or paste a URL:</p>
                       <input

@@ -7,6 +7,7 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
+import { ImageSpecsHint } from '@/components/ImageSpecsHint';
 
 interface MediaAsset {
   id: string;
@@ -183,6 +184,7 @@ export default function AdminMediaLibraryPage() {
               <p className="text-hos-text-secondary mt-1">
                 Manage uploaded images and media assets ({total} total)
               </p>
+              <ImageSpecsHint context="media-general" className="mt-2" />
             </div>
             <div className="flex gap-2">
               <input

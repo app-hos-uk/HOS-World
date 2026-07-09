@@ -13,6 +13,7 @@ import { AttributeEditor } from '@/components/taxonomy/AttributeEditor';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { DataExport } from '@/components/DataExport';
 import { SafeImage } from '@/components/SafeImage';
+import { ImageSpecsHint } from '@/components/ImageSpecsHint';
 import Link from 'next/link';
 
 const ITEMS_PER_PAGE = 25;
@@ -1426,7 +1427,8 @@ function AdminProductsContent() {
 
                     {/* Images */}
                     <div className="border-t pt-4">
-                      <h3 className="text-sm font-semibold text-hos-text-secondary mb-4">Images</h3>
+                      <h3 className="text-sm font-semibold text-hos-text-secondary mb-2">Images</h3>
+                      <ImageSpecsHint context="product" className="mb-4" />
                       <div className="flex items-center gap-3 flex-wrap">
                         <label className="inline-flex items-center px-4 py-2 bg-hos-gold text-[#1a1406] rounded hover:bg-hos-gold-hover cursor-pointer">
                           <input type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple className="hidden" disabled={uploadingImages} onChange={(e) => uploadImages(e.target.files)} />

@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useRef, useState } from 'react';
 import { apiClient } from '@/lib/api';
+import { ImageSpecsHint } from '@/components/ImageSpecsHint';
 
 interface ImageUploaderProps {
   imageUrl: string;
@@ -63,7 +64,8 @@ export function ImageUploader({ imageUrl, altText, imageTitle, onChange }: Image
           </button>
         )}
       </div>
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+      <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleUpload} />
+      <ImageSpecsHint context="blog-cover" className="mt-1" />
 
       <div>
         <label className="block text-xs text-hos-text-muted mb-1">Alt Text (required for SEO)</label>

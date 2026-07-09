@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { SafeImage } from '@/components/SafeImage';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { ImageSpecsHint } from '@/components/ImageSpecsHint';
 
 type CatalogStatusTab = 'pending' | 'in_progress' | 'completed';
 
@@ -615,7 +616,7 @@ function CatalogEntriesContent() {
                             <>📤 Upload image(s)</>
                           )}
                         </label>
-                        <span className="text-xs text-hos-text-muted">JPEG, PNG, GIF, WebP · max 250KB each · up to 4</span>
+                        <ImageSpecsHint context="catalog" compact />
                       </div>
                       <p className="text-xs text-hos-text-muted mb-2">Or paste a URL below:</p>
                       <div className="flex gap-2 mb-2">

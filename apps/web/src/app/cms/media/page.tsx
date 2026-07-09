@@ -8,6 +8,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { CmsPortalErrorBanner } from '@/components/CmsPortalErrorBanner';
 import { cmsActionToastMessage, cmsLoadingErrorMessage } from '@/lib/cmsPortalFeedback';
+import { ImageSpecsHint } from '@/components/ImageSpecsHint';
 
 export default function CMSMediaPage() {
   const toast = useToast();
@@ -65,6 +66,7 @@ export default function CMSMediaPage() {
             <div>
               <h1 className="text-2xl font-bold text-hos-text-secondary">Media Library</h1>
               <p className="text-hos-text-secondary mt-1">Manage your media files</p>
+              <ImageSpecsHint context="media-general" className="mt-2" />
             </div>
             <label className="px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium cursor-pointer">
               {uploading ? 'Uploading...' : '+ Upload Media'}
