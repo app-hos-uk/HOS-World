@@ -1071,6 +1071,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       >
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
+                        <option value="AED">AED</option>
                       </select>
                     </div>
                   </div>

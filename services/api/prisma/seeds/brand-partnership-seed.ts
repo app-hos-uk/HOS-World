@@ -22,7 +22,7 @@ async function main() {
       contractEnd: end,
       totalBudget: new Decimal(50000),
       spentBudget: new Decimal(0),
-      currency: 'GBP',
+      currency: 'USD',
     },
     update: {
       status: 'ACTIVE',
@@ -62,7 +62,7 @@ async function main() {
       contractEnd: end,
       totalBudget: new Decimal(10000),
       spentBudget: new Decimal(0),
-      currency: 'GBP',
+      currency: 'USD',
     },
     update: { contractEnd: end },
   });

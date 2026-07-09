@@ -256,10 +256,10 @@ export class LoyaltyAnalyticsService {
 
   async getClvDistribution(): Promise<Array<{ bucket: string; count: number; avgClv: number }>> {
     const buckets = [
-      { label: '£0–50', min: 0, max: 50 },
-      { label: '£50–200', min: 50, max: 200 },
-      { label: '£200–500', min: 200, max: 500 },
-      { label: '£500+', min: 500, max: 999999 },
+      { label: '$0–50', min: 0, max: 50 },
+      { label: '$50–200', min: 50, max: 200 },
+      { label: '$200–500', min: 200, max: 500 },
+      { label: '$500+', min: 500, max: 999999 },
     ];
 
     const result: Array<{ bucket: string; count: number; avgClv: number }> = [];

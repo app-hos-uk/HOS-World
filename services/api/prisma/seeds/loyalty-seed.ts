@@ -175,19 +175,29 @@ async function main() {
   }
 
   const rewards = [
-    { name: '£1 Discount', type: 'DISCOUNT', pointsCost: 100, value: 1.0 },
-    { name: '£5 Discount', type: 'DISCOUNT', pointsCost: 500, value: 5.0 },
-    { name: '£10 Discount', type: 'DISCOUNT', pointsCost: 1000, value: 10.0 },
+    { name: '$1 Discount', type: 'DISCOUNT', pointsCost: 100, value: 1.0 },
+    { name: '$5 Discount', type: 'DISCOUNT', pointsCost: 500, value: 5.0 },
+    { name: '$10 Discount', type: 'DISCOUNT', pointsCost: 1000, value: 10.0 },
     { name: 'Free Shipping Upgrade', type: 'FREE_SHIPPING', pointsCost: 200, value: null },
     { name: 'Raffle Entry', type: 'RAFFLE', pointsCost: 50, value: null },
-    { name: '£5 Gift Card', type: 'GIFT_CARD', pointsCost: 500, value: 5.0 },
-    { name: '£1 Charity Donation', type: 'CHARITY', pointsCost: 100, value: 1.0 },
+    { name: '$5 Gift Card', type: 'GIFT_CARD', pointsCost: 500, value: 5.0 },
+    { name: '$1 Charity Donation', type: 'CHARITY', pointsCost: 100, value: 1.0 },
     { name: 'Early Access Pass', type: 'EARLY_ACCESS', pointsCost: 300, value: null },
   ];
 
   for (const rw of rewards) {
-    const existing = await prisma.loyaltyRedemptionOption.findFirst({ where: { name: rw.name } });
-    if (!existing) {
+    const legacyName = rw.name.replace('$', '£');
+    const existing = await prisma.loyaltyRedemptionOption.findFirst({
+      where: { OR: [{ name: rw.name }, { name: legacyName }] },
+    });
+    if (existing) {
+      if (existing.name !== rw.name) {
+        await prisma.loyaltyRedemptionOption.update({
+          where: { id: existing.id },
+          data: { name: rw.name },
+        });
+      }
+    } else {
       await prisma.loyaltyRedemptionOption.create({
         data: {
           name: rw.name,

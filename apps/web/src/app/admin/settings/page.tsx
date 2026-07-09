@@ -529,6 +529,7 @@ export default function AdminSettingsPage() {
                       >
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
+                        <option value="AED">AED</option>
                       </select>
                     </div>
                     <div>

@@ -440,7 +440,7 @@ export default function WholesalerBulkProductsPage() {
               <h4 className="font-medium text-hos-text-secondary mb-2">Optional Columns:</h4>
               <ul className="list-disc list-inside space-y-1 text-sm text-hos-text-secondary">
                 <li><code className="bg-hos-gold/20 px-1 rounded">sku</code> - Product SKU/identifier</li>
-                <li><code className="bg-hos-gold/20 px-1 rounded">currency</code> - Currency code (USD, GBP, EUR)</li>
+                <li><code className="bg-hos-gold/20 px-1 rounded">currency</code> - Currency code (USD, EUR, AED)</li>
                 <li><code className="bg-hos-gold/20 px-1 rounded">category</code> - Product category</li>
                 <li><code className="bg-hos-gold/20 px-1 rounded">fandom</code> - Fandom slug (e.g., harry-potter, lord-of-the-rings)</li>
                 <li><code className="bg-hos-gold/20 px-1 rounded">tags</code> - Tags separated by pipe | (e.g., wand|replica|collectible)</li>

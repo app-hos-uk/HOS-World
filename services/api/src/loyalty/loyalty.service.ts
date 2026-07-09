@@ -7,6 +7,7 @@ import {
   forwardRef,
   Optional,
   Logger,
+  OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, UserRole, LoyaltyTxType } from '@prisma/client';
@@ -27,7 +28,7 @@ import { MarketingEventBus } from '../journeys/marketing-event.bus';
 import { isTruthy } from '../common/utils/config';
 
 @Injectable()
-export class LoyaltyService {
+export class LoyaltyService implements OnModuleInit {
   private readonly logger = new Logger(LoyaltyService.name);
 
   constructor(
@@ -44,6 +45,25 @@ export class LoyaltyService {
     @Optional() @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
   ) {}
+
+  async onModuleInit() {
+    try {
+      const options = await this.prisma.loyaltyRedemptionOption.findMany({
+        where: { name: { startsWith: '£' } },
+      });
+      if (options.length > 0) {
+        for (const opt of options) {
+          await this.prisma.loyaltyRedemptionOption.update({
+            where: { id: opt.id },
+            data: { name: opt.name.replace('£', '$') },
+          });
+        }
+        this.logger.log(`Migrated ${options.length} redemption option names from £ to $`);
+      }
+    } catch (e) {
+      this.logger.warn('Failed to migrate redemption option currency symbols', e);
+    }
+  }
 
   assertEnabled(): void {
     if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) {
