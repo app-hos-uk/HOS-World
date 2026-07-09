@@ -11,6 +11,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { slugify } from '@hos-marketplace/utils';
+import { MeilisearchService } from '../meilisearch/meilisearch.service';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('admin')
@@ -24,6 +25,7 @@ export class MigrationTaxonomyDataController {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    private meilisearch: MeilisearchService,
   ) {}
 
   private checkMigrationsEnabled(): void {
@@ -334,6 +336,58 @@ export class MigrationTaxonomyDataController {
       return {
         data: null,
         message: 'Failed to get migration status',
+        error: error.message,
+      };
+    }
+  }
+
+  private static readonly CATEGORY_CLEANUP_PATTERNS = [
+    'collectibles hos uk',
+    'collectibles-hos-uk',
+    'hos uk',
+  ];
+
+  @Post('cleanup-categories')
+  @ApiOperation({
+    summary: 'Clean up legacy category names',
+    description:
+      'Renames "Collectibles HOS UK" and similar legacy category values (case-insensitive) to "Collectibles", then triggers a Meilisearch re-sync. Requires ENABLE_ADMIN_MIGRATIONS=true. Admin only.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Cleanup completed' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden' })
+  async cleanupCategories(): Promise<ApiResponse<any>> {
+    this.checkMigrationsEnabled();
+
+    const results = { renamed: 0, errors: [] as string[] };
+
+    try {
+      const patterns = MigrationTaxonomyDataController.CATEGORY_CLEANUP_PATTERNS;
+      const placeholders = patterns.map((_, i) => `$${i + 1}`).join(', ');
+      const result = await this.prisma.$executeRawUnsafe(
+        `UPDATE "products" SET "category" = 'Collectibles' WHERE LOWER(TRIM("category")) IN (${placeholders})`,
+        ...patterns,
+      );
+      results.renamed = typeof result === 'number' ? result : 0;
+      if (results.renamed > 0) {
+        this.logger.log(`Renamed ${results.renamed} products to "Collectibles"`);
+      }
+
+      if (results.renamed > 0 && this.meilisearch.isAvailable()) {
+        this.logger.log('Triggering Meilisearch re-sync after category cleanup');
+        this.meilisearch.syncAllProducts().catch((err) => {
+          this.logger.error(`Post-cleanup Meilisearch sync failed: ${err.message}`);
+        });
+      }
+
+      return {
+        data: results,
+        message: `Cleanup complete: ${results.renamed} products renamed`,
+      };
+    } catch (error: any) {
+      this.logger.error(`Category cleanup failed: ${error.message}`);
+      return {
+        data: null,
+        message: 'Category cleanup failed',
         error: error.message,
       };
     }

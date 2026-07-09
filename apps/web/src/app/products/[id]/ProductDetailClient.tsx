@@ -791,7 +791,7 @@ export default function ProductDetailClient() {
           {product.category && (
             <div className="bg-hos-bg-secondary rounded-lg p-4">
               <h3 className="font-semibold mb-2">Category</h3>
-              <p className="text-hos-text-secondary">{product.category}</p>
+              <p className="text-hos-text-secondary">{product.category.replace(/[-\s]*HOS[-\s]*UK[-\s]*/gi, '').replace(/-+$/, '').trim() || 'Collectibles'}</p>
             </div>
           )}
           {product.fandom && (

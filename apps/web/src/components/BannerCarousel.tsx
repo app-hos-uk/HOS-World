@@ -52,35 +52,41 @@ export function BannerCarousel({
           animationDirection: direction === 'right' ? 'reverse' : 'normal',
         }}
       >
-        {duplicatedBanners.map((banner, index) => (
-          <Link
-            key={`${banner.id}-${index}`}
-            href={banner.link}
-            className="flex-shrink-0 group relative overflow-hidden rounded-lg border border-hos-border hover:border-hos-border-accent transition-colors duration-200"
-            prefetch={false}
-          >
-            <div className="relative w-48 h-24 sm:w-64 sm:h-32 md:w-80 md:h-40">
-              <Image
-                src={banner.image}
-                alt={banner.title}
-                fill
-                sizes="(max-width: 640px) 192px 96px, (max-width: 768px) 256px 128px, 320px 160px"
-                className="object-cover transition-transform duration-300 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20" />
-              {banner.badge && (
-                <span className="absolute top-2 left-2 px-3 py-1 bg-hos-bg-secondary text-hos-gold text-xs font-semibold rounded-full font-ui border border-hos-border">
-                  {banner.badge}
-                </span>
-              )}
-              <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 md:p-4">
-                <h3 className="text-hos-text-secondary font-semibold text-xs sm:text-sm md:text-base font-ui group-hover:text-hos-gold transition-colors duration-200">
-                  {banner.title}
-                </h3>
+        {duplicatedBanners.map((banner, index) => {
+          const hasSpecificLink = banner.link && banner.link !== '/products';
+          const Wrapper = hasSpecificLink ? Link : 'div';
+          const wrapperProps = hasSpecificLink
+            ? { href: banner.link, prefetch: false as const }
+            : {};
+          return (
+            <Wrapper
+              key={`${banner.id}-${index}`}
+              {...(wrapperProps as any)}
+              className={`flex-shrink-0 group relative overflow-hidden rounded-lg border border-hos-border transition-colors duration-200 ${hasSpecificLink ? 'hover:border-hos-border-accent cursor-pointer' : ''}`}
+            >
+              <div className="relative w-48 h-24 sm:w-64 sm:h-32 md:w-80 md:h-40">
+                <Image
+                  src={banner.image}
+                  alt={banner.title}
+                  fill
+                  sizes="(max-width: 640px) 192px 96px, (max-width: 768px) 256px 128px, 320px 160px"
+                  className="object-cover transition-transform duration-300 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20" />
+                {banner.badge && (
+                  <span className="absolute top-2 left-2 px-3 py-1 bg-hos-bg-secondary text-hos-gold text-xs font-semibold rounded-full font-ui border border-hos-border">
+                    {banner.badge}
+                  </span>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 md:p-4">
+                  <h3 className="text-hos-text-secondary font-semibold text-xs sm:text-sm md:text-base font-ui group-hover:text-hos-gold transition-colors duration-200">
+                    {banner.title}
+                  </h3>
+                </div>
               </div>
-            </div>
-          </Link>
-        ))}
+            </Wrapper>
+          );
+        })}
       </div>
     </div>
   );

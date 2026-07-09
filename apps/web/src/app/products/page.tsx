@@ -39,6 +39,7 @@ interface SearchState {
   maxPrice: string;
   rating: number;
   inStock: boolean;
+  deals: boolean;
   sort: string;
   page: number;
 }
@@ -52,9 +53,29 @@ function parseSearchParams(params: URLSearchParams): SearchState {
     maxPrice: params.get('maxPrice') || '',
     rating: Number(params.get('rating')) || 0,
     inStock: params.get('inStock') === 'true',
+    deals: params.get('deals') === 'true',
     sort: params.get('sortBy') || params.get('sort') || '',
     page: Number(params.get('page')) || 1,
   };
+}
+
+const CATEGORY_RENAMES: Record<string, string> = {
+  'collectibles hos uk': 'Collectibles',
+  'collectibles-hos-uk': 'Collectibles',
+  'hos uk': 'Collectibles',
+};
+
+function sanitizeFacetMap(facetMap: Record<string, number>): Record<string, number> {
+  const result: Record<string, number> = {};
+  for (const [name, count] of Object.entries(facetMap)) {
+    const canonical = CATEGORY_RENAMES[name.toLowerCase().trim()];
+    if (canonical) {
+      result[canonical] = (result[canonical] || 0) + count;
+    } else {
+      result[name] = (result[name] || 0) + count;
+    }
+  }
+  return result;
 }
 
 /** Keep all baseline facet options visible; use live counts where available. */
@@ -83,7 +104,7 @@ function mergeFacetsForDisplay(
 
   return {
     ...incoming,
-    category: mergeKey('category', selected.categories),
+    category: sanitizeFacetMap(mergeKey('category', selected.categories)),
     fandom: mergeKey('fandom', selected.fandoms),
   };
 }
@@ -97,6 +118,7 @@ function buildSearchParams(state: SearchState): string {
   if (state.maxPrice) params.set('maxPrice', state.maxPrice);
   if (state.rating > 0) params.set('rating', String(state.rating));
   if (state.inStock) params.set('inStock', 'true');
+  if (state.deals) params.set('deals', 'true');
   if (state.sort) params.set('sortBy', state.sort);
   if (state.page > 1) params.set('page', String(state.page));
   return params.toString();
@@ -111,6 +133,7 @@ function buildFilterKey(s: SearchState): string {
     mx: s.maxPrice,
     r: s.rating,
     st: s.inStock,
+    d: s.deals,
     so: s.sort,
     p: s.page,
   });
@@ -203,6 +226,7 @@ function ProductsContent() {
         maxPrice: state.maxPrice,
         rating: state.rating,
         inStock: state.inStock,
+        deals: state.deals,
         sort: state.sort,
       }),
     [
@@ -213,6 +237,7 @@ function ProductsContent() {
       state.maxPrice,
       state.rating,
       state.inStock,
+      state.deals,
       state.sort,
     ],
   );
@@ -257,7 +282,8 @@ function ProductsContent() {
     (state.minPrice ? 1 : 0) +
     (state.maxPrice ? 1 : 0) +
     (state.rating > 0 ? 1 : 0) +
-    (state.inStock ? 1 : 0);
+    (state.inStock ? 1 : 0) +
+    (state.deals ? 1 : 0);
 
   const clearAllFilters = useCallback(() => {
     updateState({
@@ -267,6 +293,7 @@ function ProductsContent() {
       maxPrice: '',
       rating: 0,
       inStock: false,
+      deals: false,
     });
   }, [updateState]);
 
@@ -280,13 +307,32 @@ function ProductsContent() {
     prevFilterKeyRef.current = filterDepsKey;
     prevPageRef.current = state.page;
 
+    const hasClientFilter = state.deals || state.rating > 0 || state.inStock;
+    const CLIENT_FILTER_BATCH = 100;
+
+    const applyClientFilters = (prods: any[]): any[] => {
+      let result = prods;
+      if (state.deals) {
+        result = result.filter((p: any) => p.rrp && Number(p.rrp) > Number(p.price));
+      }
+      if (state.rating > 0) {
+        result = result.filter((p: any) => Number(p.averageRating || 0) >= state.rating);
+      }
+      if (state.inStock) {
+        result = result.filter((p: any) => Number(p.stock ?? p.quantity ?? 1) > 0);
+      }
+      return result;
+    };
+
     const fetchProducts = async () => {
       setLoading(true);
       setFetchError(null);
       try {
+        const apiLimit = hasClientFilter ? CLIENT_FILTER_BATCH : ITEMS_PER_PAGE;
+        const apiPage = hasClientFilter ? 1 : state.page;
         const filters: Record<string, any> = {
-          page: state.page,
-          limit: ITEMS_PER_PAGE,
+          page: apiPage,
+          limit: apiLimit,
         };
         if (state.categories.length) filters.categories = expandCategoriesForSearch(state.categories);
         if (state.fandoms.length) filters.fandoms = state.fandoms;
@@ -302,20 +348,31 @@ function ProductsContent() {
 
         if (response?.data) {
           const data = response.data as any;
-          const prods = data.products || [];
-          setProducts(prods);
-          const total = Number(data.total) || 0;
-          setTotalHits(total);
-          const fromTotal = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
-          const fromApi = Number(data.totalPages);
-          const resolvedTotalPages =
-            Number.isFinite(fromApi) && fromApi > 0 ? Math.max(fromApi, fromTotal) : fromTotal;
-          setTotalPages(resolvedTotalPages);
+          const rawProds = data.products || [];
+          let prods = rawProds;
+          if (hasClientFilter) {
+            const allFiltered = applyClientFilters(rawProds);
+            const start = (state.page - 1) * ITEMS_PER_PAGE;
+            prods = allFiltered.slice(start, start + ITEMS_PER_PAGE);
+            const total = allFiltered.length;
+            setProducts(prods);
+            setTotalHits(total);
+            setTotalPages(Math.max(1, Math.ceil(total / ITEMS_PER_PAGE)));
+          } else {
+            setProducts(prods);
+            const total = Number(data.total) || 0;
+            setTotalHits(total);
+            const fromTotal = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
+            const fromApi = Number(data.totalPages);
+            const resolvedTotalPages =
+              Number.isFinite(fromApi) && fromApi > 0 ? Math.max(fromApi, fromTotal) : fromTotal;
+            setTotalPages(resolvedTotalPages);
+          }
           cachedListing = {
             filterKey: buildFilterKey(state),
             products: prods,
-            totalHits: total,
-            totalPages: resolvedTotalPages,
+            totalHits: totalHits,
+            totalPages: totalPages,
           };
           if (data.facets) {
             if (state.categories.length === 0 && state.fandoms.length === 0) {
@@ -333,9 +390,11 @@ function ProductsContent() {
         if (cancelled) return;
         console.error('Meilisearch failed, falling back to getProducts:', err);
         try {
+          const apiLimit = hasClientFilter ? CLIENT_FILTER_BATCH : ITEMS_PER_PAGE;
+          const apiPage = hasClientFilter ? 1 : state.page;
           const fallback = await apiClient.getProducts({
-            page: state.page,
-            limit: ITEMS_PER_PAGE,
+            page: apiPage,
+            limit: apiLimit,
             query: state.query,
             category: state.categories[0],
             fandom: state.fandoms[0],
@@ -347,21 +406,32 @@ function ProductsContent() {
           if (cancelled) return;
           if (fallback?.data) {
             const d = fallback.data as any;
-            const prods = Array.isArray(d.data) ? d.data : (d.items || []);
-            const pagination = d.pagination || {};
-            const fbTotal = Number(pagination.total ?? d.total) || 0;
-            setProducts(prods);
-            setTotalHits(fbTotal);
-            const fbPages = Math.max(1, Math.ceil(fbTotal / ITEMS_PER_PAGE));
-            const fbApi = Number(pagination.totalPages ?? d.totalPages);
-            const resolvedPages =
-              Number.isFinite(fbApi) && fbApi > 0 ? Math.max(fbApi, fbPages) : fbPages;
-            setTotalPages(resolvedPages);
+            const rawProds = Array.isArray(d.data) ? d.data : (d.items || []);
+            if (hasClientFilter) {
+              const allFiltered = applyClientFilters(rawProds);
+              const start = (state.page - 1) * ITEMS_PER_PAGE;
+              const prods = allFiltered.slice(start, start + ITEMS_PER_PAGE);
+              const total = allFiltered.length;
+              setProducts(prods);
+              setTotalHits(total);
+              setTotalPages(Math.max(1, Math.ceil(total / ITEMS_PER_PAGE)));
+            } else {
+              const prods = rawProds;
+              const pagination = d.pagination || {};
+              const fbTotal = Number(pagination.total ?? d.total) || 0;
+              setProducts(prods);
+              setTotalHits(fbTotal);
+              const fbPages = Math.max(1, Math.ceil(fbTotal / ITEMS_PER_PAGE));
+              const fbApi = Number(pagination.totalPages ?? d.totalPages);
+              const resolvedPages =
+                Number.isFinite(fbApi) && fbApi > 0 ? Math.max(fbApi, fbPages) : fbPages;
+              setTotalPages(resolvedPages);
+            }
             cachedListing = {
               filterKey: buildFilterKey(state),
-              products: prods,
-              totalHits: fbTotal,
-              totalPages: resolvedPages,
+              products: products,
+              totalHits: totalHits,
+              totalPages: totalPages,
             };
           }
         } catch (fallbackErr) {
@@ -593,6 +663,19 @@ function ProductsContent() {
           In Stock Only
         </label>
       </div>
+
+      {/* Deals toggle */}
+      <div>
+        <label className="flex items-center gap-2 cursor-pointer text-sm text-hos-text-secondary">
+          <input
+            type="checkbox"
+            checked={state.deals}
+            onChange={(e) => updateState({ deals: e.target.checked })}
+            className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
+          />
+          Deals Only
+        </label>
+      </div>
     </div>
   );
 
@@ -618,6 +701,9 @@ function ProductsContent() {
       {state.inStock && (
         <ActiveFilterChip label="In Stock" onRemove={() => updateState({ inStock: false })} />
       )}
+      {state.deals && (
+        <ActiveFilterChip label="Deals Only" onRemove={() => updateState({ deals: false })} />
+      )}
     </div>
   );
 
@@ -634,7 +720,7 @@ function ProductsContent() {
         />
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">
-            {state.query ? `Search results for "${state.query}"` : 'All Products'}
+            {state.query ? `Search results for "${state.query}"` : state.deals ? 'Deals of the Day' : 'All Products'}
           </h1>
           <p className="text-hos-text-secondary mt-1">
             Browse our collection of magical items from your favorite fandoms

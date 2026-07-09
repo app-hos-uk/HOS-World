@@ -20,7 +20,7 @@ export const DEPARTMENT_DISPLAY_NAMES: Record<string, string> = {
 
 /** Maps department slug to all variant spellings for search/API matching */
 export const DEPARTMENT_CATEGORY_ALIASES: Record<string, string[]> = {
-  collectibles: ['Collectibles', 'collectibles', 'Collectables', 'Collectables & replicas'],
+  collectibles: ['Collectibles', 'collectibles', 'Collectables', 'Collectables & replicas', 'Collectibles HOS UK', 'Collectibles-HOS-UK'],
   apparel: ['Apparel', 'apparel', 'Clothing & Apparel', 'Clothing', 'Robes'],
   'home-gifts': ['Home & Gifts', 'Home & gifts', 'Gifts', 'Home', 'home-gifts', 'Home & Decor'],
 };
@@ -61,7 +61,7 @@ export function expandCategoriesForSearch(categories: string[]): string[] {
 
 /** Primary storefront nav — always visible in header */
 export const STOREFRONT_NAV_PRIMARY: NavLink[] = [
-  { label: 'Deals of the day', href: '/products?sortBy=price_asc' },
+  { label: 'Deals of the day', href: '/products?sortBy=price_asc&deals=true' },
   { label: 'Shop by franchise', href: '/fandoms' },
   { label: 'Collectibles', href: '/products?category=collectibles' },
   { label: 'Blog', href: '/blog' },

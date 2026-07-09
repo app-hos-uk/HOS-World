@@ -87,9 +87,11 @@ export function LandingNav({ active }: Props) {
             </a>
           )}
         </div>
-        <Link href={LANDING_REGISTER_PATH} className="nav-cta">
-          Claim Your Place
-        </Link>
+        {active !== 'register' && (
+          <Link href={LANDING_REGISTER_PATH} className="nav-cta">
+            Claim Your Place
+          </Link>
+        )}
         <button
           type="button"
           className="nav-burger"

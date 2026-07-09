@@ -89,7 +89,7 @@
   /* ═══ TEXT ═══ */
   --color-text-primary: #e8e4dc;
   --color-text-secondary: #9a958a;
-  --color-text-muted: #6b6860;
+  --color-text-muted: #8a8580;
 
   /* ═══ ACCENT (reference gold) ═══ */
   --color-accent-gold: #c9a227;
@@ -505,11 +505,11 @@ h6 {
 
   .cat-logo-slot {
     @apply w-full aspect-square rounded-full flex items-center justify-center
-           p-4 overflow-hidden
+           p-5 overflow-hidden
            bg-gradient-to-br from-[#1a1a2e] via-[#16162a] to-[#0f0f1a]
            shadow-[0_8px_32px_rgba(0,0,0,0.5)]
-           ring-2 ring-hos-border
-           group-hover:ring-hos-gold-dim group-hover:shadow-[0_12px_40px_rgba(201,162,39,0.2)]
+           border-2 border-hos-border
+           group-hover:border-hos-gold-dim group-hover:shadow-[0_12px_40px_rgba(201,162,39,0.2)]
            transition-all duration-200;
   }
 

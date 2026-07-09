@@ -89,7 +89,7 @@ export function ProductCard({
         <img
           src={imageUrl}
           alt={name}
-          className={`relative z-0 max-w-[88%] max-h-[88%] w-auto h-auto object-contain object-center${hoverable ? ' group-hover:scale-105 transition-transform duration-300' : ''}`}
+          className={`relative z-0 w-full h-full object-contain object-center p-3${hoverable ? ' group-hover:scale-105 transition-transform duration-300' : ''}`}
           onError={handleImageError}
         />
       ) : null}

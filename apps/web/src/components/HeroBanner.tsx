@@ -151,7 +151,8 @@ export function HeroBanner({
           className={`absolute inset-0 bg-cover bg-no-repeat transition-all duration-1000 ease-in-out ${getAnimationClass()}`}
           style={{
             backgroundImage: `linear-gradient(120deg, rgba(7, 7, 8, 0.88) 0%, rgba(7, 7, 8, 0.48) 42%, rgba(7, 7, 8, 0.93) 100%), url(${heroBackgroundImage})`,
-            backgroundPosition: 'center 40%',
+            backgroundPosition: 'center center',
+            backgroundSize: 'cover',
           }}
           aria-hidden
         />
@@ -182,9 +183,11 @@ export function HeroBanner({
               <Link href={currentSlideData.link} className="btn-storefront-primary" prefetch={true}>
                 {currentSlideData.buttonText}
               </Link>
-              <Link href="/products" className="btn-storefront-ghost" prefetch={true}>
-                Shop all products
-              </Link>
+              {currentSlideData.link !== '/products' && (
+                <Link href="/products" className="btn-storefront-ghost" prefetch={true}>
+                  Shop all products
+                </Link>
+              )}
             </div>
           </div>
         </div>

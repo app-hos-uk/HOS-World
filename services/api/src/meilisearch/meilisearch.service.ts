@@ -371,6 +371,19 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  private static readonly CATEGORY_RENAMES: Record<string, string> = {
+    'Collectibles HOS UK': 'Collectibles',
+    'Collectibles-HOS-UK': 'Collectibles',
+    'collectibles hos uk': 'Collectibles',
+    'HOS UK': 'Collectibles',
+    'hos uk': 'Collectibles',
+  };
+
+  private sanitizeCategory(raw: string | null | undefined): string | null {
+    if (!raw) return null;
+    return MeilisearchService.CATEGORY_RENAMES[raw] ?? raw;
+  }
+
   /**
    * Transform product to Meilisearch document
    */
@@ -385,7 +398,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       price: parseFloat(product.price || '0'),
       currency: product.currency || 'USD',
       stock: product.stock || 0,
-      category: product.category || null,
+      category: this.sanitizeCategory(product.category),
       categoryId: product.categoryId || null,
       brand: product.brand || null,
       fandom: product.fandom || null,

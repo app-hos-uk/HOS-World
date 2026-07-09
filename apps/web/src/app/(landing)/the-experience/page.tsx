@@ -4,7 +4,7 @@ import { LandingShell } from '../components/LandingShell';
 import { LandingFooter } from '../components/LandingFooter';
 import { TimesSquareCanvas } from '../components/TimesSquareCanvas';
 import { landingPageMetadata } from '../lib/landingMetadata';
-import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from '../lib/constants';
+import { LANDING_REGISTER_PATH } from '../lib/constants';
 
 export const metadata: Metadata = landingPageMetadata({
   title: 'The Experience — House of Spells',
@@ -56,10 +56,6 @@ export default function ExperiencePage() {
     <LandingShell nav="experience" mainId="pg-experience">
       <main id="pg-experience" className="hos-page" tabIndex={-1}>
         <div className="exp-intro rv">
-          <div className="hos-lockup intro-lockup" role="img" aria-label="House of Spells">
-            <img className="exp-intro-logo" src={LANDING_LOGO} width={100} height={100} alt="" aria-hidden="true" />
-            <img className="hos-wordmark-img" src={LANDING_WORDMARK} width={1024} height={258} alt="" aria-hidden="true" />
-          </div>
           <p className="eyebrow">The Experience</p>
           <h2 className="sec-h2">
             Times Square.

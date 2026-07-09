@@ -68,9 +68,34 @@ export function FoundingMemberForm() {
   useEffect(() => {
     const interests = searchParams.getAll('interest').map((s) => s.trim()).filter(Boolean);
     if (interests.length === 0) return;
+
+    const FANDOM_ALIASES: Record<string, string> = {
+      'harry potter': 'Wizarding World',
+      'hogwarts': 'Wizarding World',
+      'hp': 'Wizarding World',
+      'lotr': 'Middle Earth',
+      'lord of the rings': 'Middle Earth',
+      'got': 'Game of Thrones',
+      'mcu': 'Marvel',
+      'dc': 'DC Universe',
+      'dc comics': 'DC Universe',
+      'superman': 'DC Universe',
+      'batman': 'DC Universe',
+    };
+
     const next = new Set<number>();
-    interests.forEach((name) => {
-      const idx = FANDOMS.findIndex((f) => f.n === decodeURIComponent(name));
+    interests.forEach((raw) => {
+      const decoded = decodeURIComponent(raw);
+      let idx = FANDOMS.findIndex((f) => f.n === decoded);
+      if (idx < 0) {
+        idx = FANDOMS.findIndex((f) => f.n.toLowerCase() === decoded.toLowerCase());
+      }
+      if (idx < 0) {
+        const aliasTarget = FANDOM_ALIASES[decoded.toLowerCase()];
+        if (aliasTarget) {
+          idx = FANDOMS.findIndex((f) => f.n === aliasTarget);
+        }
+      }
       if (idx >= 0) next.add(idx);
     });
     if (next.size > 0) {
