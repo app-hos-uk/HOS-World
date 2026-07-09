@@ -6771,11 +6771,4 @@ export class ApiClient {
     });
   }
 
-  // ===== Admin Seed =====
-  async seedLoyaltyData(): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/admin/seed-loyalty', {
-      method: 'POST',
-    });
-  }
-
 }

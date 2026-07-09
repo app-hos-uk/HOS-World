@@ -11,7 +11,6 @@ import { MigrationTaxonomyController } from './migration-taxonomy.controller';
 import { MigrationTaxonomyDataController } from './migration-taxonomy-data.controller';
 import { PublicConfigController } from './public-config.controller';
 import { AdminService } from './admin.service';
-import { AdminSeedService } from './admin-seed.service';
 import { AdminSellersService } from './sellers.service';
 import { AdminProductsService } from './products.service';
 import { DatabaseModule } from '../database/database.module';
@@ -46,7 +45,7 @@ const migrationControllers =
 @Module({
   imports: [DatabaseModule, ConfigModule, NotificationsModule, ProductsModule, forwardRef(() => ReviewsModule)],
   controllers: [...coreControllers, ...migrationControllers],
-  providers: [AdminService, AdminSeedService, AdminSellersService, AdminProductsService],
-  exports: [AdminService, AdminSeedService, AdminSellersService, AdminProductsService],
+  providers: [AdminService, AdminSellersService, AdminProductsService],
+  exports: [AdminService, AdminSellersService, AdminProductsService],
 })
 export class AdminModule {}

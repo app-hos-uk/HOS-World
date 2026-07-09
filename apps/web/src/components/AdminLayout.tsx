@@ -152,7 +152,6 @@ const menuItems: MenuItem[] = [
       { title: 'Bonus Campaigns', href: '/admin/loyalty/campaigns', icon: '🎯' },
       { title: 'Members', href: '/admin/loyalty/members', icon: '👥' },
       { title: 'Transactions', href: '/admin/loyalty/transactions', icon: '💳' },
-      { title: 'Seed Data', href: '/admin/loyalty/seed', icon: '🌱' },
     ],
   },
   {

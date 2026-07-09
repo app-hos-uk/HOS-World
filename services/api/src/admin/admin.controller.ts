@@ -24,7 +24,6 @@ import {
 import { AdminService } from './admin.service';
 import { ReviewsService } from '../reviews/reviews.service';
 import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
-import { AdminSeedService } from './admin-seed.service';
 import { CreateAdminUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -43,7 +42,6 @@ export class AdminController {
     private readonly adminService: AdminService,
     private readonly reviewsService: ReviewsService,
     private readonly featureFlagsService: FeatureFlagsService,
-    private readonly adminSeedService: AdminSeedService,
   ) {}
 
   @Get('feature-flags')
@@ -516,13 +514,5 @@ export class AdminController {
   ): Promise<ApiResponse<any>> {
     const review = await this.reviewsService.moderateReview(id, 'reject', req.user.id);
     return { data: review, message: 'Review rejected successfully' };
-  }
-
-  @Post('seed-loyalty')
-  @ApiOperation({ summary: 'Seed loyalty tiers, earn rules, and redemption options' })
-  @SwaggerApiResponse({ status: 200, description: 'Loyalty data seeded successfully' })
-  async seedLoyalty(): Promise<ApiResponse<any>> {
-    const result = await this.adminSeedService.seedLoyaltyData();
-    return { data: result, message: 'Loyalty data seeded successfully' };
   }
 }
