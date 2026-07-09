@@ -50,6 +50,15 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   productionBrowserSourceMaps: false,
+  async redirects() {
+    return [
+      {
+        source: '/auth/register',
+        destination: '/register',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
