@@ -239,17 +239,37 @@ export class FoundingMembersService {
       const batch = toSend.slice(batchStart, batchStart + batchSize);
       const batchResults = await Promise.allSettled(
         batch.map(async (member) => {
-          await this.notificationsService.sendFoundingMemberConfirmation(member.email, {
-            firstName: member.firstName,
-          });
+          const sentAt = new Date().toISOString();
           await this.prisma.foundingMember.update({
             where: { id: member.id },
             data: {
               metadata: this.mergeMetadata(member.metadata, {
-                confirmationEmailSentAt: new Date().toISOString(),
+                confirmationEmailSentAt: sentAt,
               }),
             },
           });
+          try {
+            await this.notificationsService.sendFoundingMemberConfirmation(member.email, {
+              firstName: member.firstName,
+            });
+          } catch (emailErr) {
+            try {
+              await this.prisma.foundingMember.update({
+                where: { id: member.id },
+                data: {
+                  metadata: this.mergeMetadata(member.metadata, {
+                    confirmationEmailSentAt: null,
+                    confirmationEmailError: emailErr instanceof Error ? emailErr.message : 'unknown',
+                  }),
+                },
+              });
+            } catch (rollbackErr) {
+              this.logger.error(
+                `Failed to rollback confirmationEmailSentAt for member ${member.id}: ${rollbackErr instanceof Error ? rollbackErr.message : 'unknown'}`,
+              );
+            }
+            throw emailErr;
+          }
         }),
       );
 
