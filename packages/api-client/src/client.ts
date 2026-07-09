@@ -6759,6 +6759,13 @@ export class ApiClient {
     });
   }
 
+  async sendFoundingMemberAccountInvitations(batchSize?: number): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/founding-members/send-account-invitations', {
+      method: 'POST',
+      body: JSON.stringify(batchSize ? { batchSize } : {}),
+    });
+  }
+
   // ===== Feature Flags =====
   async getFeatureFlags(): Promise<ApiResponse<Record<string, boolean>>> {
     return this.request<ApiResponse<Record<string, boolean>>>('/admin/feature-flags');

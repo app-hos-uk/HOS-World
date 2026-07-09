@@ -142,6 +142,24 @@ export class FoundingMembersController {
     };
   }
 
+  @Post('send-account-invitations')
+  @Roles(...FOUNDING_MEMBER_ADMIN_ROLES)
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Send account creation invitations to founding members who haven\'t created an account yet',
+  })
+  async sendAccountInvitations(@Body() body?: { batchSize?: number }) {
+    const result = await this.foundingMembersService.sendAccountInvitations({
+      onlyUnsent: true,
+      batchSize: body?.batchSize ?? 50,
+    });
+    return {
+      data: result,
+      message: `Sent ${result.sent} invitations, ${result.failed} failed, ${result.skipped} skipped`,
+    };
+  }
+
   @Get()
   @Roles(...FOUNDING_MEMBER_ADMIN_ROLES)
   @ApiOperation({ summary: 'List all founding members (Admin / Marketing)' })

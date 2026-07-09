@@ -1,4 +1,5 @@
 import { Injectable, ConflictException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -45,6 +46,7 @@ export class FoundingMembersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly configService: ConfigService,
   ) {}
 
   async register(
@@ -481,6 +483,105 @@ export class FoundingMembersService {
         ? { ...(existing as Record<string, unknown>) }
         : {};
     return { ...base, ...updates } as Prisma.InputJsonValue;
+  }
+
+  async sendAccountInvitations(options?: {
+    onlyUnsent?: boolean;
+    batchSize?: number;
+  }): Promise<{ sent: number; failed: number; skipped: number }> {
+    const batchSize = options?.batchSize ?? 50;
+    const onlyUnsent = options?.onlyUnsent ?? true;
+    const result = { sent: 0, failed: 0, skipped: 0 };
+
+    const frontendUrl = (
+      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000'
+    ).replace(/\/$/, '');
+    const registerLink = `${frontendUrl}/auth/register?ref=founding`;
+
+    const members = await this.prisma.foundingMember.findMany({
+      where: { userId: null },
+      orderBy: { registeredAt: 'asc' },
+      select: { id: true, email: true, firstName: true, metadata: true },
+    });
+
+    const toSend = onlyUnsent
+      ? members.filter((m) => !this.hasAccountInvitationSent(m.metadata))
+      : members;
+
+    result.skipped = members.length - toSend.length;
+
+    for (let batchStart = 0; batchStart < toSend.length; batchStart += batchSize) {
+      const batch = toSend.slice(batchStart, batchStart + batchSize);
+      const batchResults = await Promise.allSettled(
+        batch.map(async (member) => {
+          const sentAt = new Date().toISOString();
+          await this.prisma.foundingMember.update({
+            where: { id: member.id },
+            data: {
+              metadata: this.mergeMetadata(member.metadata, {
+                accountInvitationSentAt: sentAt,
+              }),
+            },
+          });
+          try {
+            await this.notificationsService.sendFoundingMemberAccountInvitation(
+              member.email,
+              { firstName: member.firstName, registerLink },
+            );
+          } catch (emailErr) {
+            try {
+              await this.prisma.foundingMember.update({
+                where: { id: member.id },
+                data: {
+                  metadata: this.mergeMetadata(member.metadata, {
+                    accountInvitationSentAt: null,
+                    accountInvitationError:
+                      emailErr instanceof Error ? emailErr.message : 'unknown',
+                  }),
+                },
+              });
+            } catch (rollbackErr) {
+              this.logger.error(
+                `Failed to rollback accountInvitationSentAt for member ${member.id}: ${rollbackErr instanceof Error ? rollbackErr.message : 'unknown'}`,
+              );
+            }
+            throw emailErr;
+          }
+        }),
+      );
+
+      for (const settled of batchResults) {
+        if (settled.status === 'fulfilled') {
+          result.sent++;
+        } else {
+          result.failed++;
+          this.logger.warn(
+            `Founding member account invitation send failed: ${settled.reason instanceof Error ? settled.reason.message : 'unknown'}`,
+          );
+        }
+      }
+
+      const processed = Math.min(batchStart + batchSize, toSend.length);
+      if (processed % 100 === 0 || processed === toSend.length) {
+        this.logger.log(
+          `Account invitation progress: ${processed}/${toSend.length} (${result.sent} sent, ${result.failed} failed, ${result.skipped} skipped)`,
+        );
+      }
+    }
+
+    this.logger.log(
+      `Account invitations: ${result.sent} sent, ${result.failed} failed, ${result.skipped} skipped`,
+    );
+
+    return result;
+  }
+
+  private hasAccountInvitationSent(metadata: Prisma.JsonValue | null): boolean {
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+      return false;
+    }
+    const sentAt = (metadata as Record<string, unknown>).accountInvitationSentAt;
+    return typeof sentAt === 'string' && sentAt.length > 0;
   }
 
   async findByEmail(email: string) {

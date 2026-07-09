@@ -637,6 +637,85 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
 </div></body></html>`,
   },
 
+  // ─── Founding member account invitation ─────────────────────────────
+  {
+    slug: 'founding_member_account_invitation',
+    channel: 'EMAIL',
+    subject: 'Your Invitation to Create Your House of Spells Account',
+    description: 'Sent to founding members to invite them to create their account before public launch.',
+    variables: ['firstName', 'email', 'registerLink'],
+    body: `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{margin:0;padding:0;background:#0a0612;font-family:Georgia,'Times New Roman',serif;line-height:1.7;color:#e8e0f5;-webkit-text-size-adjust:100%}
+  .wrapper{background:#0a0612;padding:24px 12px}
+  .container{max-width:600px;margin:0 auto;background:#120a1f;border-radius:12px;overflow:hidden;border:1px solid #3d2a6e;box-shadow:0 8px 32px rgba(45,27,105,.45)}
+  .header{background:linear-gradient(135deg,#2D1B69 0%,#1a0f3c 100%);padding:36px 24px;text-align:center;border-bottom:2px solid #7c5cbf}
+  .brand{font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#c4b5fd;margin:0 0 8px}
+  .header h1{margin:0;font-size:28px;font-weight:400;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+  .header .tagline{margin:12px 0 0;font-size:14px;color:#d4c4f5;font-style:italic}
+  .content{padding:32px 28px;background:#120a1f}
+  .content p{margin:0 0 18px;font-size:16px;color:#d8ccf0}
+  .highlight{background:linear-gradient(90deg,rgba(124,92,191,.2),rgba(45,27,105,.15));border-left:3px solid #9f7aea;padding:16px 20px;margin:24px 0;border-radius:0 8px 8px 0}
+  .highlight p{margin:0;color:#f3eeff}
+  .cta-wrap{text-align:center;margin:32px 0}
+  .cta{display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#9f7aea,#7c5cbf);color:#fff;text-decoration:none;border-radius:8px;font-size:16px;font-weight:bold;letter-spacing:0.5px;box-shadow:0 4px 16px rgba(124,92,191,.4)}
+  .steps{margin:28px 0;padding:0;list-style:none}
+  .steps li{padding:12px 0 12px 32px;position:relative;border-bottom:1px solid rgba(124,92,191,.2);font-size:15px;color:#e0d4f5}
+  .steps li:last-child{border-bottom:none}
+  .steps li::before{content:"\\2726";position:absolute;left:0;color:#c4b5fd;font-size:14px}
+  .steps strong{color:#fff}
+  .footer{background:#0a0612;padding:28px 24px;text-align:center;border-top:1px solid #2d1b69}
+  .footer .brand-name{font-size:16px;color:#c4b5fd;letter-spacing:2px;margin:0 0 8px}
+  .footer p{margin:0 0 8px;font-size:12px;color:#7c6b9e}
+  .social{margin-top:16px;font-size:12px;color:#5c4d7a}
+  .social a{color:#c4b5fd;text-decoration:none}
+  @media only screen and (max-width:480px){
+    .content{padding:24px 18px}
+    .header h1{font-size:24px}
+  }
+</style></head><body>
+<div class="wrapper">
+<div class="container">
+  <div class="header">
+    <p class="brand">House of Spells</p>
+    <h1>Your Account Awaits</h1>
+    <p class="tagline">The gates are open &mdash; step inside and claim your founding privileges.</p>
+  </div>
+  <div class="content">
+    <p>Dear {{firstName}},</p>
+    <p>As a <strong>Founding Member</strong>, you have been given early access to create your House of Spells account before our public launch.</p>
+    <div class="highlight">
+      <p>This invitation is for <strong>{{email}}</strong>. Please register using this email to activate your founding member benefits.</p>
+    </div>
+    <div class="cta-wrap">
+      <a class="cta" href="{{registerLink}}">Create My Account</a>
+    </div>
+    <p>When you create your account, you will automatically receive:</p>
+    <ul class="steps">
+      <li><strong>Founding bonus points</strong> &mdash; added to your Enchanted Circle wallet instantly</li>
+      <li><strong>Founding Member status</strong> &mdash; permanently linked to your profile</li>
+      <li><strong>Early access</strong> &mdash; shop new drops and collections before anyone else</li>
+      <li><strong>Exclusive perks</strong> &mdash; access to limited-edition pieces reserved for founders</li>
+    </ul>
+    <p>If the button above does not work, copy and paste this link into your browser:</p>
+    <p style="word-break:break-all;color:#9f7aea;font-size:13px;">{{registerLink}}</p>
+    <p style="margin-top:24px;color:#c4b5fd;font-style:italic;">&mdash; The House of Spells Team</p>
+  </div>
+  <div class="footer">
+    <p class="brand-name">HOUSE OF SPELLS</p>
+    <p>Enchanted collectibles for every fandom.</p>
+    <p class="social">
+      Follow us:
+      <a href="https://www.instagram.com/houseofspells">Instagram</a> &middot;
+      <a href="https://www.tiktok.com/@houseofspells">TikTok</a> &middot;
+      <a href="https://www.facebook.com/houseofspellsuk">Facebook</a>
+    </p>
+  </div>
+</div>
+</div></body></html>`,
+  },
+
   // ─── Phase 7 — Ambassador programme ───────────────────────────────────
   {
     slug: 'ambassador_welcome',
@@ -1100,6 +1179,7 @@ export class TemplatesService {
       startsAt: 'Saturday, 15 July 2026 at 7:00 PM',
       unsubscribeUrl: 'https://hos-marketplace.com/unsubscribe?token=example',
       loyaltyPointsEarned: '50',
+      registerLink: 'https://hos-marketplace.com/auth/register?ref=founding',
     };
     return samples[variable] || `[${variable}]`;
   }

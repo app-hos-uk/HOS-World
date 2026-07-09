@@ -9,40 +9,57 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 const REG_MIN_HUMAN_FILL_MS = 1800;
 
 async function postRegistrationPayload(data: Record<string, unknown>) {
-  try {
-    const res = await fetch(`${API_BASE_URL}/founding-members`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        phone: data.phone,
-        country: data.country,
-        fandoms: data.fandoms,
-        otherFranchises: data.otherFranchises,
-        source: data.source,
-        spendBracket: data.spend,
-      }),
-    });
-    if (res.ok) return true;
-    if (res.status === 409) return true;
-    throw new Error('api_error');
-  } catch {
+  const payload = {
+    firstName: data.firstName,
+    lastName: data.lastName,
+    email: data.email,
+    phone: data.phone,
+    country: data.country,
+    fandoms: data.fandoms,
+    otherFranchises: data.otherFranchises,
+    source: data.source,
+    spendBracket: data.spend,
+  };
+
+  if (!API_BASE_URL) {
+    throw new Error('registration_failed');
+  }
+
+  const fireGoogleBackup = () => {
     const googleUrl = REG_GOOGLE_SCRIPT_URL.trim();
     if (googleUrl.includes('script.google.com')) {
-      const jsonStr = JSON.stringify(data);
       fetch(googleUrl, {
         method: 'POST',
         mode: 'no-cors',
         cache: 'no-store',
         keepalive: true,
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: jsonStr,
+        body: JSON.stringify(data),
       }).catch(() => {});
+    }
+  };
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/founding-members`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok || res.status === 409) {
+      fireGoogleBackup();
       return true;
     }
-    throw new Error('no_backend_config');
+    fireGoogleBackup();
+    throw new Error('api_error');
+  } catch (err) {
+    if (err instanceof Error && err.message === 'api_error') {
+      throw new Error('registration_failed');
+    }
+    fireGoogleBackup();
+    throw new Error('registration_failed');
   }
 }
 
@@ -177,11 +194,8 @@ export function FoundingMemberForm() {
     try {
       await postRegistrationPayload(data);
       setSuccess({ name: firstName || 'Friend', fandoms, other: otherFranchises });
-    } catch (err) {
-      const message = err instanceof Error && err.message === 'no_backend_config'
-        ? 'Registration backend is not configured yet. Please contact us at House Of Spells.'
-        : 'Something went wrong. Please try again.';
-      setHint(message);
+    } catch {
+      setHint('Something went wrong. Please try again or contact us at House Of Spells.');
       setHintColor('#c75c5c');
       setSubmitting(false);
     }

@@ -109,6 +109,9 @@ export default function AdminFoundingMembersPage() {
   const [confirmationLoading, setConfirmationLoading] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
 
+  const [invitationLoading, setInvitationLoading] = useState(false);
+  const [invitationResult, setInvitationResult] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
+
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -258,6 +261,21 @@ export default function AdminFoundingMembersPage() {
     }
   };
 
+  const handleSendAccountInvitations = async () => {
+    if (!confirm('Send account creation invitations to all founding members who haven\'t created an account yet?')) return;
+    setInvitationLoading(true);
+    setInvitationResult(null);
+    setError(null);
+    try {
+      const res = await apiClient.sendFoundingMemberAccountInvitations(50);
+      setInvitationResult(res.data as { sent: number; failed: number; skipped: number });
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send account invitations');
+    } finally {
+      setInvitationLoading(false);
+    }
+  };
+
   const formatDate = (s: string) => {
     try {
       return new Date(s).toLocaleDateString(undefined, { dateStyle: 'medium' });
@@ -310,9 +328,31 @@ export default function AdminFoundingMembersPage() {
                 'Send Confirmation Emails'
               )}
             </button>
+            <button
+              onClick={handleSendAccountInvitations}
+              disabled={invitationLoading}
+              className="px-4 py-2 border border-hos-gold text-hos-gold rounded-lg text-sm font-medium hover:bg-hos-gold/10 disabled:opacity-50 flex items-center gap-2"
+            >
+              {invitationLoading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Sending...
+                </>
+              ) : (
+                'Send Account Invitations'
+              )}
+            </button>
             {confirmationResult && (
               <span className="text-sm text-hos-text-muted">
-                {confirmationResult.sent} sent, {confirmationResult.failed} failed, {confirmationResult.skipped} already sent
+                Confirmations: {confirmationResult.sent} sent, {confirmationResult.failed} failed, {confirmationResult.skipped} already sent
+              </span>
+            )}
+            {invitationResult && (
+              <span className="text-sm text-hos-text-muted">
+                Invitations: {invitationResult.sent} sent, {invitationResult.failed} failed, {invitationResult.skipped} already sent
               </span>
             )}
           </div>
