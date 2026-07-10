@@ -185,7 +185,7 @@ export default function AdminDepartmentsPage() {
   }
 
   return (
-    <RouteGuard requiredRole="ADMIN">
+    <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="max-w-6xl mx-auto">
           {/* Header */}

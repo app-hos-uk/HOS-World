@@ -136,7 +136,7 @@ export default function AdminTestimonialsPage() {
   };
 
   return (
-    <RouteGuard requiredRole="ADMIN">
+    <RouteGuard allowedRoles={['ADMIN']}>
       <AdminLayout>
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6">

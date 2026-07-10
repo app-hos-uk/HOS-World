@@ -12,218 +12,71 @@ interface AdminLayoutProps {
   title?: string;
 }
 
+type MenuZone = 'quickAccess' | 'commerce' | 'growth' | 'operations';
+
 interface MenuItem {
   title: string;
   href?: string;
   icon: string;
   badge?: number;
   children?: MenuItem[];
+  zone?: MenuZone;
 }
 
+const ZONE_LABELS: Record<MenuZone, string> = {
+  quickAccess: 'Quick Access',
+  commerce: 'Commerce',
+  growth: 'Growth',
+  operations: 'Operations',
+};
+
 const menuItems: MenuItem[] = [
+  // --- Quick Access ---
   {
     title: 'Dashboard',
     href: '/admin/dashboard',
     icon: '📊',
+    zone: 'quickAccess',
   },
   {
-    title: 'User Management',
+    title: 'Users',
     href: '/admin/users',
     icon: '👥',
+    zone: 'quickAccess',
   },
   {
-    title: 'Business Operations',
-    icon: '🏢',
+    title: 'Support Tickets',
+    href: '/admin/support',
+    icon: '🎫',
+    zone: 'quickAccess',
+  },
+
+  // --- Commerce ---
+  {
+    title: 'Orders & Fulfillment',
+    icon: '🛒',
+    zone: 'commerce',
     children: [
-      { title: 'Product Submissions', href: '/admin/submissions', icon: '📦' },
-      { title: 'Procurement Dashboard', href: '/procurement/dashboard', icon: '📊' },
-      { title: 'Review Submissions', href: '/procurement/submissions', icon: '✅' },
-      { title: 'Orders', href: '/admin/orders', icon: '🛒' },
+      { title: 'All Orders', href: '/admin/orders', icon: '🛒' },
       { title: 'Returns', href: '/admin/returns', icon: '↩️' },
+      { title: 'Cancellations', href: '/admin/cancellations', icon: '❌' },
       { title: 'Shipments', href: '/admin/shipments', icon: '🚚' },
-      { title: 'Shipping Methods', href: '/admin/shipping', icon: '📦' },
-      { title: 'Catalog Admin Queue', href: '/admin/catalog', icon: '📚' },
-      { title: 'Catalog Dashboard', href: '/catalog/dashboard', icon: '📊' },
-      { title: 'Catalog Team Workflow', href: '/catalog/entries', icon: '📝' },
-      { title: 'Marketing Materials', href: '/admin/marketing', icon: '📢' },
-      { title: 'Newsletter', href: '/admin/newsletter', icon: '📧' },
-      { title: 'Founding Members', href: '/admin/founding-members', icon: '🌟' },
-      { title: 'Admin Pricing Approvals', href: '/admin/pricing', icon: '💰' },
-      { title: 'Pricing Review Workflow', href: '/finance/pricing', icon: '💵' },
-      { title: 'Publishing', href: '/admin/publishing', icon: '🚀' },
-      { title: 'Media Library', href: '/admin/media', icon: '🖼️' },
-    ],
-  },
-  {
-    title: 'Sellers & Wholesalers',
-    icon: '🏪',
-    children: [
-      { title: 'All Sellers', href: '/admin/sellers', icon: '👤' },
-      { title: 'Seller Applications', href: '/admin/seller-applications', icon: '📝' },
-      { title: 'Verification Queue', href: '/admin/seller-verifications', icon: '🪪' },
-      { title: 'Vendor Products', href: '/admin/vendor-products', icon: '📋' },
-      { title: 'Seller Analytics', href: '/admin/seller-analytics', icon: '📈' },
-    ],
-  },
-  {
-    title: 'Influencers',
-    icon: '⭐',
-    children: [
-      { title: 'All Influencers', href: '/admin/influencers', icon: '👤' },
-      { title: 'Invitations', href: '/admin/influencers/invitations', icon: '✉️' },
-      { title: 'Commissions', href: '/admin/influencers/commissions', icon: '💰' },
-      { title: 'Payouts', href: '/admin/influencers/payouts', icon: '💸' },
-      { title: 'Campaigns', href: '/admin/influencers/campaigns', icon: '📢' },
-    ],
-  },
-  {
-    title: 'Finance',
-    icon: '💰',
-    children: [
-      { title: 'Finance Dashboard', href: '/admin/finance', icon: '💳' },
-      { title: 'Cancellation Queue', href: '/admin/cancellations', icon: '❌' },
-      { title: 'Settlements', href: '/admin/settlements', icon: '💸' },
-      { title: 'Returns', href: '/admin/returns', icon: '↩️' },
-      { title: 'Reconciliation', href: '/admin/finance/reconciliation', icon: '🔄' },
-      { title: 'Disputes', href: '/admin/finance/disputes', icon: '⚠️' },
-      { title: 'Period Close', href: '/admin/finance/periods', icon: '📅' },
-      { title: 'Aging Analysis', href: '/admin/finance/aging', icon: '⏳' },
-      { title: 'Revenue Recognition', href: '/admin/finance/revenue', icon: '📈' },
-    ],
-  },
-  {
-    title: 'Promotions',
-    icon: '🎁',
-    href: '/admin/promotions',
-  },
-  {
-    title: 'Marketing automation',
-    icon: '✨',
-    children: [
-      { title: 'Journeys', href: '/admin/journeys', icon: '🗺️' },
-      { title: 'Message logs', href: '/admin/messaging', icon: '📨' },
-      { title: 'Delivery dashboard', href: '/admin/notifications/delivery', icon: '📡' },
-      { title: 'Messaging stats', href: '/admin/messaging/stats', icon: '📈' },
-    ],
-  },
-  {
-    title: 'Events',
-    icon: '🎪',
-    children: [
-      { title: 'All events', href: '/admin/events', icon: '📅' },
-      { title: 'Create event', href: '/admin/events/new', icon: '➕' },
-    ],
-  },
-  {
-    title: 'Audiences',
-    icon: '🎯',
-    children: [
-      { title: 'Segments', href: '/admin/segments', icon: '👥' },
-      { title: 'Create segment', href: '/admin/segments/new', icon: '➕' },
-    ],
-  },
-  {
-    title: 'Ambassadors',
-    icon: '🌟',
-    children: [
-      { title: 'All ambassadors', href: '/admin/ambassadors', icon: '👑' },
-      { title: 'UGC review', href: '/admin/ambassadors/ugc', icon: '📸' },
-      { title: 'Dashboard', href: '/admin/ambassadors/dashboard', icon: '📊' },
-    ],
-  },
-  {
-    title: 'Brand Partnerships',
-    icon: '🤝',
-    children: [
-      { title: 'Partners', href: '/admin/brand-partnerships', icon: '🏢' },
-      { title: 'Campaigns', href: '/admin/brand-partnerships/campaigns', icon: '📢' },
-      { title: 'New partner', href: '/admin/brand-partnerships/new', icon: '➕' },
-      { title: 'Dashboard', href: '/admin/brand-partnerships/dashboard', icon: '📊' },
-    ],
-  },
-  {
-    title: 'Loyalty Management',
-    icon: '💎',
-    children: [
-      { title: 'Overview', href: '/admin/loyalty', icon: '📊' },
-      { title: 'Tiers', href: '/admin/loyalty/tiers', icon: '🏆' },
-      { title: 'Earn Rules', href: '/admin/loyalty/earn-rules', icon: '⚡' },
-      { title: 'Redemption Options', href: '/admin/loyalty/redemption-options', icon: '🎁' },
-      { title: 'Bonus Campaigns', href: '/admin/loyalty/campaigns', icon: '🎯' },
-      { title: 'Members', href: '/admin/loyalty/members', icon: '👥' },
-      { title: 'Transactions', href: '/admin/loyalty/transactions', icon: '💳' },
-    ],
-  },
-  {
-    title: 'Loyalty Analytics',
-    icon: '📈',
-    children: [
-      { title: 'Program health', href: '/admin/loyalty-analytics', icon: '💡' },
-      { title: 'CLV report', href: '/admin/loyalty-analytics/clv', icon: '👤' },
-      { title: 'Campaign ROI', href: '/admin/loyalty-analytics/attribution', icon: '🎯' },
-      { title: 'Fandom trends', href: '/admin/loyalty-analytics/fandom-trends', icon: '⚡' },
-      { title: 'Tier analysis', href: '/admin/loyalty-analytics/tiers', icon: '🏆' },
-      { title: 'Channels', href: '/admin/loyalty-analytics/channels', icon: '📊' },
-    ],
-  },
-  {
-    title: 'Click & Collect',
-    icon: '🏪',
-    children: [{ title: 'Orders', href: '/admin/click-collect', icon: '📦' }],
-  },
-  {
-    title: 'Product Campaigns',
-    icon: '🎪',
-    children: [
-      { title: 'All campaigns', href: '/admin/product-campaigns', icon: '📋' },
-      { title: 'New campaign', href: '/admin/product-campaigns/new', icon: '➕' },
-    ],
-  },
-  {
-    title: 'Stores',
-    icon: '🏬',
-    children: [
-      { title: 'All stores', href: '/admin/stores', icon: '📍' },
-      { title: 'New store', href: '/admin/stores/new', icon: '➕' },
-    ],
-  },
-  {
-    title: 'Fulfillment',
-    icon: '🚚',
-    children: [
-      { title: 'Shipments', href: '/fulfillment/shipments', icon: '📦' },
+      { title: 'Click & Collect', href: '/admin/click-collect', icon: '🏪' },
       { title: 'Fulfillment Centers', href: '/admin/fulfillment-centers', icon: '🏭' },
       { title: 'Warehouses', href: '/admin/warehouses', icon: '🏬' },
-      { title: 'Inventory', href: '/admin/inventory', icon: '📊' },
+      { title: 'Inventory Dashboard', href: '/admin/inventory', icon: '📊' },
     ],
   },
   {
-    title: 'Support',
-    icon: '🎧',
-    children: [
-      { title: 'Tickets', href: '/admin/support', icon: '🎫' },
-    ],
-  },
-  {
-    title: 'Monitoring',
-    icon: '📊',
-    children: [
-      { title: 'Activity Logs', href: '/admin/activity', icon: '📝' },
-      { title: 'Discrepancies', href: '/admin/discrepancies', icon: '⚠️' },
-      { title: 'POS Integration', href: '/admin/pos', icon: '🏪' },
-      { title: 'Fandom Quizzes', href: '/admin/quiz', icon: '🧙' },
-      { title: 'Privacy Audit Log', href: '/admin/privacy-audit', icon: '🔒' },
-      { title: 'Notification Templates', href: '/admin/templates', icon: '📋' },
-      { title: 'WhatsApp', href: '/admin/whatsapp', icon: '💬' },
-    ],
-  },
-  {
-    title: 'Products',
+    title: 'Products & Catalog',
     icon: '🛍️',
+    zone: 'commerce',
     children: [
       { title: 'All Products', href: '/admin/products', icon: '📦' },
       { title: 'Create Product', href: '/admin/products/create', icon: '➕' },
+      { title: 'Product Submissions', href: '/admin/submissions', icon: '📝' },
       { title: 'Price Management', href: '/admin/products/pricing', icon: '💰' },
+      { title: 'Catalog Queue', href: '/admin/catalog', icon: '📚' },
       { title: 'Product Reviews', href: '/admin/reviews', icon: '⭐' },
       { title: 'Departments', href: '/admin/departments', icon: '🏬' },
       { title: 'Fandoms', href: '/admin/categories', icon: '📁' },
@@ -232,17 +85,106 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    title: 'Content',
+    title: 'Sellers & Vendors',
+    icon: '🏪',
+    zone: 'commerce',
+    children: [
+      { title: 'All Sellers', href: '/admin/sellers', icon: '👤' },
+      { title: 'Seller Applications', href: '/admin/seller-applications', icon: '📝' },
+      { title: 'Verification Queue', href: '/admin/seller-verifications', icon: '🪪' },
+      { title: 'Vendor Products', href: '/admin/vendor-products', icon: '📋' },
+      { title: 'Seller Analytics', href: '/admin/seller-analytics', icon: '📈' },
+    ],
+  },
+
+  // --- Growth ---
+  {
+    title: 'Marketing & Engagement',
+    icon: '✨',
+    zone: 'growth',
+    children: [
+      { title: 'Promotions', href: '/admin/promotions', icon: '🎁' },
+      { title: 'Journeys', href: '/admin/journeys', icon: '🗺️' },
+      { title: 'Newsletter', href: '/admin/newsletter', icon: '📧' },
+      { title: 'Founding Members', href: '/admin/founding-members', icon: '🌟' },
+      { title: 'All Influencers', href: '/admin/influencers', icon: '⭐' },
+      { title: 'Influencer Invitations', href: '/admin/influencers/invitations', icon: '✉️' },
+      { title: 'Influencer Commissions', href: '/admin/influencers/commissions', icon: '💰' },
+      { title: 'Influencer Payouts', href: '/admin/influencers/payouts', icon: '💸' },
+      { title: 'All Ambassadors', href: '/admin/ambassadors', icon: '👑' },
+      { title: 'Ambassador UGC Review', href: '/admin/ambassadors/ugc', icon: '📸' },
+      { title: 'Ambassador Dashboard', href: '/admin/ambassadors/dashboard', icon: '📊' },
+      { title: 'Brand Partnerships', href: '/admin/brand-partnerships', icon: '🤝' },
+      { title: 'Events', href: '/admin/events', icon: '🎪' },
+      { title: 'Segments', href: '/admin/segments', icon: '🎯' },
+      { title: 'Product Campaigns', href: '/admin/product-campaigns', icon: '📋' },
+    ],
+  },
+  {
+    title: 'Loyalty',
+    icon: '💎',
+    zone: 'growth',
+    children: [
+      { title: 'Overview', href: '/admin/loyalty', icon: '📊' },
+      { title: 'Tiers', href: '/admin/loyalty/tiers', icon: '🏆' },
+      { title: 'Earn Rules', href: '/admin/loyalty/earn-rules', icon: '⚡' },
+      { title: 'Redemption Options', href: '/admin/loyalty/redemption-options', icon: '🎁' },
+      { title: 'Bonus Campaigns', href: '/admin/loyalty/campaigns', icon: '🎯' },
+      { title: 'Members', href: '/admin/loyalty/members', icon: '👥' },
+      { title: 'Transactions', href: '/admin/loyalty/transactions', icon: '💳' },
+      { title: 'Program Health', href: '/admin/loyalty-analytics', icon: '💡' },
+      { title: 'CLV Report', href: '/admin/loyalty-analytics/clv', icon: '👤' },
+      { title: 'Fandom Trends', href: '/admin/loyalty-analytics/fandom-trends', icon: '⚡' },
+    ],
+  },
+
+  // --- Operations ---
+  {
+    title: 'Finance',
+    icon: '💰',
+    zone: 'operations',
+    children: [
+      { title: 'Finance Dashboard', href: '/admin/finance', icon: '💳' },
+      { title: 'Settlements', href: '/admin/settlements', icon: '💸' },
+      { title: 'Pricing Approvals', href: '/admin/pricing', icon: '💵' },
+      { title: 'Reconciliation', href: '/admin/finance/reconciliation', icon: '🔄' },
+      { title: 'Disputes', href: '/admin/finance/disputes', icon: '⚠️' },
+      { title: 'Period Close', href: '/admin/finance/periods', icon: '📅' },
+      { title: 'Aging Analysis', href: '/admin/finance/aging', icon: '⏳' },
+      { title: 'Revenue Recognition', href: '/admin/finance/revenue', icon: '📈' },
+    ],
+  },
+  {
+    title: 'Content & Storefront',
     icon: '✏️',
+    zone: 'operations',
     children: [
       { title: 'Navigation', href: '/admin/navigation', icon: '🧭' },
       { title: 'Testimonials', href: '/admin/testimonials', icon: '💬' },
       { title: 'Blog', href: '/admin/blog', icon: '📝' },
+      { title: 'Stores', href: '/admin/stores', icon: '🏬' },
+      { title: 'Media Library', href: '/admin/media', icon: '🖼️' },
+      { title: 'Publishing', href: '/admin/publishing', icon: '🚀' },
+      { title: 'Notification Templates', href: '/admin/templates', icon: '📋' },
     ],
   },
   {
-    title: 'System',
+    title: 'Analytics & Reports',
+    icon: '📈',
+    zone: 'operations',
+    children: [
+      { title: 'All Reports', href: '/admin/reports', icon: '📋' },
+      { title: 'Sales Reports', href: '/admin/reports/sales', icon: '💵' },
+      { title: 'User Analytics', href: '/admin/reports/users', icon: '👥' },
+      { title: 'Product Analytics', href: '/admin/reports/products', icon: '📦' },
+      { title: 'Platform Metrics', href: '/admin/reports/platform', icon: '📈' },
+      { title: 'Inventory Reports', href: '/admin/reports/inventory', icon: '📦' },
+    ],
+  },
+  {
+    title: 'System & Config',
     icon: '⚙️',
+    zone: 'operations',
     children: [
       { title: 'Settings', href: '/admin/settings', icon: '🔧' },
       { title: 'Feature Flags', href: '/admin/feature-flags', icon: '🚩' },
@@ -251,26 +193,13 @@ const menuItems: MenuItem[] = [
       { title: 'Webhooks', href: '/admin/webhooks', icon: '🔗' },
       { title: 'Search', href: '/admin/search', icon: '🔍' },
       { title: 'Domain Management', href: '/admin/domains', icon: '🌐' },
-      { title: 'Fulfillment Centers', href: '/admin/fulfillment-centers', icon: '🏭' },
-      { title: 'Warehouses', href: '/admin/warehouses', icon: '📦' },
-      { title: 'Warehouse Transfers', href: '/admin/warehouses/transfers', icon: '🔄' },
-      { title: 'Inventory Dashboard', href: '/admin/inventory', icon: '📊' },
       { title: 'Tax Zones', href: '/admin/tax-zones', icon: '💰' },
       { title: 'Logistics Partners', href: '/admin/logistics', icon: '🚛' },
-      { title: 'Customer Groups', href: '/admin/customer-groups', icon: '👥' },
       { title: 'Return Policies', href: '/admin/return-policies', icon: '↩️' },
-    ],
-  },
-  {
-    title: 'Analytics & Reports',
-    icon: '📊',
-    children: [
-      { title: 'All Reports', href: '/admin/reports', icon: '📋' },
-      { title: 'Sales Reports', href: '/admin/reports/sales', icon: '💵' },
-      { title: 'User Analytics', href: '/admin/reports/users', icon: '👥' },
-      { title: 'Product Analytics', href: '/admin/reports/products', icon: '📦' },
-      { title: 'Platform Metrics', href: '/admin/reports/platform', icon: '📈' },
-      { title: 'Inventory Reports', href: '/admin/reports/inventory', icon: '📦' },
+      { title: 'Customer Groups', href: '/admin/customer-groups', icon: '👥' },
+      { title: 'Activity Logs', href: '/admin/activity', icon: '📝' },
+      { title: 'Discrepancies', href: '/admin/discrepancies', icon: '⚠️' },
+      { title: 'POS Integration', href: '/admin/pos', icon: '🏪' },
     ],
   },
 ];
@@ -281,46 +210,49 @@ const menuItems: MenuItem[] = [
  */
 const TEAM_ADMIN_SHELL_MENUS: Record<string, MenuItem[]> = {
   CATALOG: [
-    { title: 'Catalog Dashboard', href: '/catalog/dashboard', icon: '📊' },
-    { title: 'Catalog workflow', href: '/catalog/entries', icon: '📝' },
+    { title: 'Catalog Dashboard', href: '/catalog/dashboard', icon: '📊', zone: 'quickAccess' },
+    { title: 'Catalog Workflow', href: '/catalog/entries', icon: '📝', zone: 'quickAccess' },
     {
-      title: 'Cross-seller duplicates',
+      title: 'Cross-seller Duplicates',
       href: '/procurement/submissions?view=cross-seller',
       icon: '🔄',
+      zone: 'commerce',
     },
-    { title: 'Vendor Products', href: '/admin/vendor-products', icon: '📋' },
-    { title: 'Create Product', href: '/admin/products/create', icon: '➕' },
+    { title: 'Vendor Products', href: '/admin/vendor-products', icon: '📋', zone: 'commerce' },
+    { title: 'Create Product', href: '/admin/products/create', icon: '➕', zone: 'commerce' },
+    { title: 'Catalog Queue', href: '/admin/catalog', icon: '📚', zone: 'commerce' },
   ],
   PROCUREMENT: [
-    { title: 'Procurement Dashboard', href: '/procurement/dashboard', icon: '📊' },
-    { title: 'Review Submissions', href: '/procurement/submissions', icon: '✅' },
-    { title: 'Admin Submissions', href: '/admin/submissions', icon: '📦' },
-    { title: 'Vendor Products', href: '/admin/vendor-products', icon: '📋' },
+    { title: 'Procurement Dashboard', href: '/procurement/dashboard', icon: '📊', zone: 'quickAccess' },
+    { title: 'Review Submissions', href: '/procurement/submissions', icon: '✅', zone: 'commerce' },
+    { title: 'Product Submissions', href: '/admin/submissions', icon: '📦', zone: 'commerce' },
+    { title: 'Vendor Products', href: '/admin/vendor-products', icon: '📋', zone: 'commerce' },
   ],
   MARKETING: [
-    { title: 'Marketing Dashboard', href: '/marketing/dashboard', icon: '📊' },
-    { title: 'Materials', href: '/marketing/materials', icon: '📢' },
-    { title: 'Campaigns', href: '/marketing/campaigns', icon: '🎯' },
-    { title: 'Admin marketing', href: '/admin/marketing', icon: '📣' },
-    { title: 'Founding Members', href: '/admin/founding-members', icon: '🌟' },
-    { title: 'Influencer commissions', href: '/admin/influencers/commissions', icon: '💸' },
-    { title: 'Loyalty Campaigns', href: '/admin/loyalty/campaigns', icon: '🎯' },
-    { title: 'Loyalty Earn Rules', href: '/admin/loyalty/earn-rules', icon: '⚡' },
-    { title: 'Loyalty Analytics', href: '/admin/loyalty-analytics', icon: '📈' },
+    { title: 'Marketing Dashboard', href: '/marketing/dashboard', icon: '📊', zone: 'quickAccess' },
+    { title: 'Materials', href: '/marketing/materials', icon: '📢', zone: 'growth' },
+    { title: 'Campaigns', href: '/marketing/campaigns', icon: '🎯', zone: 'growth' },
+    { title: 'Admin Marketing', href: '/admin/marketing', icon: '📣', zone: 'growth' },
+    { title: 'Founding Members', href: '/admin/founding-members', icon: '🌟', zone: 'growth' },
+    { title: 'Influencer Commissions', href: '/admin/influencers/commissions', icon: '💸', zone: 'growth' },
+    { title: 'Loyalty Campaigns', href: '/admin/loyalty/campaigns', icon: '🎯', zone: 'growth' },
+    { title: 'Loyalty Earn Rules', href: '/admin/loyalty/earn-rules', icon: '⚡', zone: 'growth' },
+    { title: 'Loyalty Analytics', href: '/admin/loyalty-analytics', icon: '📈', zone: 'growth' },
   ],
   FINANCE: [
-    { title: 'Finance Dashboard', href: '/finance/dashboard', icon: '📊' },
-    { title: 'Cancellation Queue', href: '/admin/cancellations', icon: '❌' },
-    { title: 'Pricing workflow', href: '/finance/pricing', icon: '💵' },
-    { title: 'Product pricing', href: '/admin/products/pricing', icon: '💰' },
-    { title: 'Loyalty Overview', href: '/admin/loyalty', icon: '💎' },
-    { title: 'Redemption Options', href: '/admin/loyalty/redemption-options', icon: '🎁' },
-    { title: 'Loyalty Transactions', href: '/admin/loyalty/transactions', icon: '💳' },
-    { title: 'Reconciliation', href: '/admin/finance/reconciliation', icon: '🔄' },
-    { title: 'Disputes', href: '/admin/finance/disputes', icon: '⚠️' },
-    { title: 'Period Close', href: '/admin/finance/periods', icon: '📅' },
-    { title: 'Aging Analysis', href: '/admin/finance/aging', icon: '⏳' },
-    { title: 'Revenue Recognition', href: '/admin/finance/revenue', icon: '📈' },
+    { title: 'Finance Dashboard', href: '/finance/dashboard', icon: '📊', zone: 'quickAccess' },
+    { title: 'Cancellations', href: '/admin/cancellations', icon: '❌', zone: 'operations' },
+    { title: 'Pricing Workflow', href: '/finance/pricing', icon: '💵', zone: 'operations' },
+    { title: 'Product Pricing', href: '/admin/products/pricing', icon: '💰', zone: 'operations' },
+    { title: 'Pricing Approvals', href: '/admin/pricing', icon: '💵', zone: 'operations' },
+    { title: 'Loyalty Overview', href: '/admin/loyalty', icon: '💎', zone: 'operations' },
+    { title: 'Redemption Options', href: '/admin/loyalty/redemption-options', icon: '🎁', zone: 'operations' },
+    { title: 'Loyalty Transactions', href: '/admin/loyalty/transactions', icon: '💳', zone: 'operations' },
+    { title: 'Reconciliation', href: '/admin/finance/reconciliation', icon: '🔄', zone: 'operations' },
+    { title: 'Disputes', href: '/admin/finance/disputes', icon: '⚠️', zone: 'operations' },
+    { title: 'Period Close', href: '/admin/finance/periods', icon: '📅', zone: 'operations' },
+    { title: 'Aging Analysis', href: '/admin/finance/aging', icon: '⏳', zone: 'operations' },
+    { title: 'Revenue Recognition', href: '/admin/finance/revenue', icon: '📈', zone: 'operations' },
   ],
 };
 
@@ -545,13 +477,26 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto px-2 py-4">
             <ul className="space-y-1">
-              {visibleMenuItems.map((item) => {
+              {visibleMenuItems.map((item, index) => {
                 const hasChildren = item.children && item.children.length > 0;
                 const isExpanded = expandedMenus.has(item.title);
                 const parentActive = isParentActive(item);
+                const prevZone = index > 0 ? visibleMenuItems[index - 1].zone : undefined;
+                const showZoneDivider = item.zone && (index === 0 || item.zone !== prevZone);
 
                 return (
                   <li key={item.title}>
+                    {showZoneDivider && (
+                      <div
+                        className={`pb-1.5 px-3 ${
+                          index === 0 ? '' : 'pt-3 mt-2 border-t border-hos-border/50'
+                        }`}
+                      >
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-hos-text-muted">
+                          {ZONE_LABELS[item.zone!]}
+                        </span>
+                      </div>
+                    )}
                     {hasChildren ? (
                       <>
                         <button
