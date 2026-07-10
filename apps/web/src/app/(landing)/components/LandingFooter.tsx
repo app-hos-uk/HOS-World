@@ -37,7 +37,7 @@ export function LandingFooter() {
         <Link href="/the-experience">Experience</Link>
         <Link href={LANDING_REGISTER_PATH}>Register</Link>
         <Link href={shopLink}>{shopLabel}</Link>
-        <Link href="/privacy">Privacy</Link>
+        <Link href="/privacy-policy">Privacy</Link>
       </div>
     </footer>
   );
