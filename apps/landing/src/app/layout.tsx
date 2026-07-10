@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { Cinzel, Cinzel_Decorative, Cormorant_Garamond } from 'next/font/google';
+import { Suspense } from 'react';
 import { landingPageMetadata } from './lib/landingMetadata';
+import { getSiteUrl } from '../lib/siteUrls';
+import { LandingAnalytics } from './components/LandingAnalytics';
 import './landing.css';
 
 const cinzelDecorative = Cinzel_Decorative({
@@ -26,6 +29,7 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   ...landingPageMetadata({
     title: "House of Spells — Earth's Multi-Fandom Universe",
     description:
@@ -57,6 +61,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           fontFamily: "'Cormorant Garamond', Georgia, serif",
         }}
       >
+        <Suspense fallback={null}>
+          <LandingAnalytics />
+        </Suspense>
         {children}
       </body>
     </html>
