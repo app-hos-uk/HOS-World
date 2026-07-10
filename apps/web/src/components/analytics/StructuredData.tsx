@@ -1,23 +1,30 @@
+'use client';
+
 import { getSiteUrl } from '@/lib/siteUrls';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
+import { brandDisplayName } from '@/lib/siteSettingsDefaults';
 
 const SITE_URL = getSiteUrl();
 
 export function SiteStructuredData() {
+  const settings = useSiteSettings();
+  const name = brandDisplayName(settings.platformName);
+
   const organization = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'House of Spells',
+    name,
     url: SITE_URL,
     logo: `${SITE_URL}/assets/logo-emblem.png`,
     sameAs: [
-      process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK_URL,
-      process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL,
-      process.env.NEXT_PUBLIC_SOCIAL_X_URL ?? process.env.NEXT_PUBLIC_SOCIAL_TWITTER_URL,
+      settings.socialFacebookUrl,
+      settings.socialInstagramUrl,
+      settings.socialXUrl,
     ].filter(Boolean),
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer service',
-      email: 'info@houseofspells.com',
+      email: settings.contactEmail,
       availableLanguage: 'English',
     },
   };
@@ -25,7 +32,7 @@ export function SiteStructuredData() {
   const website = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: 'House of Spells',
+    name,
     url: SITE_URL,
     potentialAction: {
       '@type': 'SearchAction',

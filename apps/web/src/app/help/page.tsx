@@ -1,8 +1,13 @@
+'use client';
+
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 
 export default function HelpPage() {
+  const settings = useSiteSettings();
+
   return (
     <div className="min-h-screen bg-hos-bg-secondary">
       <Header />
@@ -55,8 +60,8 @@ export default function HelpPage() {
               You can also reach us directly:
             </p>
             <p className="text-sm sm:text-base text-hos-text-secondary">
-              Email: support@houseofspells.com<br />
-              Phone: 1-800-HOS-HELP
+              Email: {settings.contactEmail}<br />
+              Phone: {settings.contactPhone}
             </p>
           </section>
         </div>
@@ -65,4 +70,3 @@ export default function HelpPage() {
     </div>
   );
 }
-

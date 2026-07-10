@@ -707,9 +707,9 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
     <p>Enchanted collectibles for every fandom.</p>
     <p class="social">
       Follow us:
-      <a href="https://www.instagram.com/houseofspells">Instagram</a> &middot;
-      <a href="https://www.tiktok.com/@houseofspells">TikTok</a> &middot;
-      <a href="https://www.facebook.com/houseofspellsuk">Facebook</a>
+      <a href="{{socialInstagramUrl}}">Instagram</a> &middot;
+      <a href="{{socialTiktokUrl}}">TikTok</a> &middot;
+      <a href="{{socialFacebookUrl}}">Facebook</a>
     </p>
   </div>
 </div>
@@ -827,6 +827,14 @@ export class TemplatesService {
     slug: string,
     variables: Record<string, string>,
   ): Promise<{ subject: string; body: string; channel: TemplateChannel }> {
+    const globalDefaults: Record<string, string> = {
+      socialInstagramUrl: process.env.SOCIAL_INSTAGRAM_URL || 'https://www.instagram.com/houseofspells',
+      socialTiktokUrl: process.env.SOCIAL_TIKTOK_URL || 'https://www.tiktok.com/@houseofspells',
+      socialFacebookUrl: process.env.SOCIAL_FACEBOOK_URL || 'https://www.facebook.com/houseofspellsuk',
+      platformName: process.env.PLATFORM_NAME || 'House of Spells',
+    };
+    const mergedVariables = { ...globalDefaults, ...variables };
+
     const template = await this.resolve(slug);
 
     const escapeHtml = (str: string): string =>
@@ -840,11 +848,11 @@ export class TemplatesService {
 
     const replaceVars = (text: string): string => {
       return text.replace(/\{\{(\w+)\}\}/g, (_match, key) => {
-        if (variables[key] === undefined) {
+        if (mergedVariables[key] === undefined) {
           this.logger.warn(`Template "${slug}": missing variable "{{${key}}}"`);
           return '';
         }
-        const val = variables[key];
+        const val = mergedVariables[key];
         if (key.toLowerCase().includes('table') || key.toLowerCase().includes('html')) {
           return val;
         }

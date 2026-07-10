@@ -225,9 +225,19 @@ const menuItems: MenuItem[] = [
       { title: 'Create Product', href: '/admin/products/create', icon: '➕' },
       { title: 'Price Management', href: '/admin/products/pricing', icon: '💰' },
       { title: 'Product Reviews', href: '/admin/reviews', icon: '⭐' },
+      { title: 'Departments', href: '/admin/departments', icon: '🏬' },
       { title: 'Fandoms', href: '/admin/categories', icon: '📁' },
       { title: 'Attributes', href: '/admin/attributes', icon: '🔧' },
       { title: 'Tags', href: '/admin/tags', icon: '🏷️' },
+    ],
+  },
+  {
+    title: 'Content',
+    icon: '✏️',
+    children: [
+      { title: 'Navigation', href: '/admin/navigation', icon: '🧭' },
+      { title: 'Testimonials', href: '/admin/testimonials', icon: '💬' },
+      { title: 'Blog', href: '/admin/blog', icon: '📝' },
     ],
   },
   {

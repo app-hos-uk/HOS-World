@@ -64,10 +64,12 @@ export class AdminController {
     if (!Object.values(FeatureFlag).includes(flag as FeatureFlag)) {
       return { data: { flag, enabled: false }, message: `Unknown feature flag: ${flag}` };
     }
-    this.featureFlagsService.setFlag(flag as FeatureFlag, body.enabled);
+    const { persisted } = await this.featureFlagsService.setFlag(flag as FeatureFlag, body.enabled);
     return {
       data: { flag, enabled: body.enabled },
-      message: `Feature flag ${flag} set to ${body.enabled}`,
+      message: persisted
+        ? `Feature flag ${flag} set to ${body.enabled}`
+        : `Feature flag ${flag} set to ${body.enabled} (in-memory only — DB persistence failed)`,
     };
   }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -11,7 +11,12 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { SearchBar } from '@/components/SearchBar';
 import type { UserRole } from '@hos-marketplace/shared-types';
 import { BrandLogo } from '@/components/BrandLogo';
-import { STOREFRONT_NAV_PRIMARY, STOREFRONT_NAV_MORE } from '@/lib/storefrontNavigation';
+import {
+  getNavPrimary,
+  getNavMore,
+  loadNavigationFromApi,
+  type NavLink,
+} from '@/lib/storefrontNavigation';
 import { StorefrontNavMore } from '@/components/storefront/StorefrontNavMore';
 
 const ROLE_QUICK_LINKS: Record<string, Array<{ title: string; href: string; icon: string }>> = {
@@ -69,6 +74,15 @@ export function Header() {
   const { user, isAuthenticated, logout, impersonatedRole, effectiveRole, switchRole } = useAuth();
   const { cartItemCount } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [navPrimary, setNavPrimary] = useState<NavLink[]>(getNavPrimary());
+  const [navMore, setNavMore] = useState<NavLink[]>(getNavMore());
+
+  useEffect(() => {
+    loadNavigationFromApi().then(() => {
+      setNavPrimary(getNavPrimary());
+      setNavMore(getNavMore());
+    });
+  }, []);
 
   const currentRole = effectiveRole || user?.role;
   const isCustomerRole = !isAuthenticated || currentRole === 'CUSTOMER';
@@ -387,7 +401,7 @@ export function Header() {
             <nav className="flex items-center justify-start gap-x-8 xl:gap-x-10 gap-y-2 py-3 overflow-x-auto scrollbar-thin px-1 min-w-0" role="navigation" aria-label="Main navigation">
               {showCustomerNav && (
                 <>
-                  {STOREFRONT_NAV_PRIMARY.map((item) => (
+                  {navPrimary.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
@@ -396,7 +410,7 @@ export function Header() {
                       {item.label}
                     </Link>
                   ))}
-                  <StorefrontNavMore />
+                  <StorefrontNavMore items={navMore} />
                 </>
               )}
               {showAuthCustomerNav && (
@@ -436,10 +450,10 @@ export function Header() {
                     <SearchBar compact />
                   </Suspense>
                 </div>
-                {STOREFRONT_NAV_PRIMARY.map((item) => (
+                {navPrimary.map((item) => (
                   <MobileNavLink key={item.href} href={item.href} icon="·" label={item.label} onClick={() => setIsMobileMenuOpen(false)} />
                 ))}
-                {STOREFRONT_NAV_MORE.map((item) => (
+                {navMore.map((item) => (
                   <MobileNavLink key={`more-${item.href}`} href={item.href} icon="·" label={item.label} onClick={() => setIsMobileMenuOpen(false)} />
                 ))}
               </>

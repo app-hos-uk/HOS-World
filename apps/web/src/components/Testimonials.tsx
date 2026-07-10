@@ -1,31 +1,16 @@
 'use client';
 
-const QUOTES = [
-  {
-    quote:
-      'Finally one place that feels like the shop floor in New York — I can bundle gifts from two vendors in a single order.',
-    author: 'Eilidh M.',
-    city: 'Austin',
-    rating: 5,
-    verified: true,
-  },
-  {
-    quote:
-      "Love the franchise strips and how clearly each seller's ratings show up. Feels safer than random resale sites.",
-    author: 'James T.',
-    city: 'Chicago',
-    rating: 5,
-    verified: true,
-  },
-  {
-    quote:
-      'The collectibles section is dangerous for my wallet. Arrived in two days, well packed — display case is showroom quality.',
-    author: 'Priya K.',
-    city: 'Seattle',
-    rating: 5,
-    verified: true,
-  },
-];
+import { useEffect, useState } from 'react';
+import { apiClient } from '@/lib/api';
+
+interface Testimonial {
+  id: string;
+  quote: string;
+  author: string;
+  city?: string;
+  rating: number;
+  verified: boolean;
+}
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -46,6 +31,19 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function Testimonials() {
+  const [quotes, setQuotes] = useState<Testimonial[]>([]);
+
+  useEffect(() => {
+    apiClient
+      .getTestimonials()
+      .then((res) => {
+        if (res?.data?.length) setQuotes(res.data);
+      })
+      .catch(() => { /* silent */ });
+  }, []);
+
+  if (quotes.length === 0) return null;
+
   return (
     <section className="bg-hos-bg py-12 sm:py-16">
       <div className="max-w-7xl mx-auto px-4">
@@ -59,9 +57,9 @@ export default function Testimonials() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {QUOTES.map((item) => (
+          {quotes.map((item) => (
             <blockquote
-              key={item.author}
+              key={item.id}
               className="bg-hos-bg-secondary border border-hos-border rounded-xl p-7 flex flex-col justify-between"
             >
               <div>
@@ -78,7 +76,7 @@ export default function Testimonials() {
               </div>
               <footer className="mt-5 not-italic">
                 <p className="text-hos-gold text-[13px] font-ui">
-                  {item.author}, {item.city}
+                  {item.author}{item.city ? `, ${item.city}` : ''}
                 </p>
                 {item.verified ? (
                   <p className="text-hos-text-muted text-[11px] mt-1 font-ui flex items-center gap-1">

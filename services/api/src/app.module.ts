@@ -102,6 +102,9 @@ import { VendorProductsModule } from './vendor-products/vendor-products.module';
 import { VendorLedgerModule } from './vendor-ledger/vendor-ledger.module';
 import { InvoicesModule } from './invoices/invoices.module';
 import { FoundingMembersModule } from './founding-members/founding-members.module';
+import { DepartmentsModule } from './departments/departments.module';
+import { NavigationModule } from './navigation/navigation.module';
+import { TestimonialsModule } from './testimonials/testimonials.module';
 import { FeatureFlagsModule } from './config/feature-flags.module';
 import { validateEnvironmentVariables } from './config/env.validation';
 import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
@@ -202,6 +205,12 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     VendorLedgerModule,
     // Founding Members
     FoundingMembersModule,
+    // Departments (storefront sections)
+    DepartmentsModule,
+    // Navigation (storefront nav menus)
+    NavigationModule,
+    // Testimonials (storefront customer quotes)
+    TestimonialsModule,
     // Invoices
     InvoicesModule,
     // Templates

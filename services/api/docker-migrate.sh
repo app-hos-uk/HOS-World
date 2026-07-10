@@ -37,6 +37,14 @@ npx prisma migrate resolve --applied 20260629150100_add_reconciliation_engine 2>
 npx prisma migrate resolve --applied 20260629150200_add_disputes 2>/dev/null || true
 npx prisma migrate resolve --applied 20260629150300_add_financial_periods 2>/dev/null || true
 
+echo "=== Step 2d: Execute departments migration ==="
+npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260710130000_add_departments/migration.sql 2>&1 || echo "WARN: departments migration had issues (may be OK if already applied)"
+npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260710131000_add_navigation_and_testimonials/migration.sql 2>&1 || echo "WARN: navigation/testimonials migration had issues (may be OK if already applied)"
+npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260709180000_fix_invited_member_status/migration.sql 2>&1 || echo "WARN: fix_invited_member_status migration had issues (may be OK if already applied)"
+npx prisma migrate resolve --applied 20260709180000_fix_invited_member_status 2>/dev/null || true
+npx prisma migrate resolve --applied 20260710130000_add_departments 2>/dev/null || true
+npx prisma migrate resolve --applied 20260710131000_add_navigation_and_testimonials 2>/dev/null || true
+
 echo "=== Step 3: Run migrate deploy (authoritative) ==="
 # Fail closed: if migrations cannot be applied the schema is in an unknown state and the app
 # must NOT start (silently starting on a drifted schema previously caused production outages

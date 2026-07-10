@@ -2407,6 +2407,7 @@ model Category {
   products    Product[]
   attributes  Attribute[] // Category-specific attributes
   influencerCommissionRules InfluencerCommissionRule[]
+  departments Department[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
@@ -2483,6 +2484,75 @@ model ProductAttribute {
   @@index([productId])
   @@index([attributeId])
   @@map("product_attributes")
+}
+
+// Department Model (storefront browsing sections)
+model Department {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  meta        String?  // Subtitle shown above the title (e.g. "2.4k+ listings · props & figures")
+  ctaText     String?  // Call-to-action label (e.g. "Shop collectibles")
+  ctaUrl      String   // Link target (e.g. "/products?category=collectibles")
+  iconSvg     String?  @db.Text // SVG markup for the department icon
+  image       String?  // Optional banner/card image URL
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  categoryId  String?  // Optional link to a taxonomy Category
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, order])
+  @@map("departments")
+}
+
+// Navigation Menu Items (admin-managed storefront nav, footer links)
+model NavigationItem {
+  id        String   @id @default(uuid())
+  group     String   // e.g. "header_primary", "header_more", "footer_shop", "footer_policy"
+  label     String
+  href      String
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  external  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([group, isActive, order])
+  @@map("navigation_items")
+}
+
+// Testimonials (admin-managed customer quotes for storefront)
+model Testimonial {
+  id        String   @id @default(uuid())
+  quote     String   @db.Text
+  author    String
+  city      String?
+  rating    Int      @default(5)
+  verified  Boolean  @default(true)
+  order     Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, order])
+  @@map("testimonials")
+}
+
+// Platform-wide key-value settings (feature flags, config overrides)
+model PlatformSetting {
+  id        String   @id @default(uuid())
+  category  String   // e.g. "feature_flag", "site", "social"
+  key       String
+  value     String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([category, key])
+  @@index([category])
+  @@map("platform_settings")
 }
 
 // Tag Model

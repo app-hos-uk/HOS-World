@@ -8,7 +8,7 @@ import { apiClient } from '@/lib/api';
 import { StorefrontBreadcrumbs } from '@/components/storefront/StorefrontBreadcrumbs';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { ProductCard } from '@/components/ProductCard';
-import { expandDepartmentCategories, expandCategoriesForSearch } from '@/lib/storefrontNavigation';
+import { expandDepartmentCategories, expandCategoriesForSearch, loadDepartmentMappings } from '@/lib/storefrontNavigation';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -241,6 +241,8 @@ function ProductsContent() {
       state.sort,
     ],
   );
+
+  useEffect(() => { loadDepartmentMappings(); }, []);
 
   useEffect(() => {
     setPriceDraft({ min: state.minPrice, max: state.maxPrice });

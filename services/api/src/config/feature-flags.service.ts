@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../database/prisma.service';
 
 export enum FeatureFlag {
   FOUNDING_MEMBERS = 'FOUNDING_MEMBERS',
@@ -36,9 +37,12 @@ export class FeatureFlagsService implements OnModuleInit {
   private readonly logger = new Logger(FeatureFlagsService.name);
   private readonly flags = new Map<string, boolean>();
 
-  constructor(private configService: ConfigService) {}
+  constructor(
+    private configService: ConfigService,
+    private prisma: PrismaService,
+  ) {}
 
-  onModuleInit() {
+  async onModuleInit() {
     for (const [flag, defaultValue] of Object.entries(FLAG_DEFAULTS)) {
       const envKey = `FF_${flag}`;
       const envValue = this.configService.get<string>(envKey);
@@ -47,9 +51,18 @@ export class FeatureFlagsService implements OnModuleInit {
       this.flags.set(flag, resolved);
     }
 
-    const enabled = [...this.flags.entries()]
-      .filter(([, v]) => v)
-      .map(([k]) => k);
+    try {
+      const rows = await this.prisma.platformSetting.findMany({
+        where: { category: 'feature_flag' },
+      });
+      for (const row of rows) {
+        this.flags.set(row.key, row.value === 'true');
+      }
+    } catch {
+      this.logger.warn('platform_settings table not available yet — using env/defaults');
+    }
+
+    const enabled = [...this.flags.entries()].filter(([, v]) => v).map(([k]) => k);
     this.logger.log(`Feature flags loaded: ${enabled.length} enabled, ${this.flags.size - enabled.length} disabled`);
   }
 
@@ -65,8 +78,20 @@ export class FeatureFlagsService implements OnModuleInit {
     return result;
   }
 
-  setFlag(flag: FeatureFlag, enabled: boolean): void {
+  async setFlag(flag: FeatureFlag, enabled: boolean): Promise<{ persisted: boolean }> {
     this.flags.set(flag, enabled);
-    this.logger.log(`Feature flag ${flag} set to ${enabled}`);
+    let persisted = false;
+    try {
+      await this.prisma.platformSetting.upsert({
+        where: { category_key: { category: 'feature_flag', key: flag } },
+        update: { value: String(enabled) },
+        create: { category: 'feature_flag', key: flag, value: String(enabled) },
+      });
+      persisted = true;
+    } catch (err) {
+      this.logger.warn(`Could not persist flag ${flag} — ${(err as Error).message}`);
+    }
+    this.logger.log(`Feature flag ${flag} set to ${enabled} (persisted=${persisted})`);
+    return { persisted };
   }
 }

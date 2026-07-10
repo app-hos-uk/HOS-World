@@ -16,6 +16,11 @@ interface HeroSlide {
   fandom?: string;
 }
 
+interface TrustStripItem {
+  title: string;
+  description: string;
+}
+
 interface HeroBannerProps {
   slides?: HeroSlide[];
   autoPlay?: boolean;
@@ -23,11 +28,12 @@ interface HeroBannerProps {
   animationType?: 'fade' | 'slide' | 'zoom' | 'parallax';
   showIndicators?: boolean;
   showArrows?: boolean;
+  trustStripItems?: TrustStripItem[];
 }
 
 const HERO_FALLBACK_IMAGE = REFERENCE_ASSETS.heroBanner;
 
-const TRUST_STRIP_ITEMS = [
+const DEFAULT_TRUST_STRIP: TrustStripItem[] = [
   {
     title: 'Buyer protection',
     description: 'Dispute support on marketplace orders',
@@ -51,7 +57,9 @@ export function HeroBanner({
   animationType = 'fade',
   showIndicators = true,
   showArrows = true,
+  trustStripItems,
 }: HeroBannerProps) {
+  const TRUST_STRIP_ITEMS = trustStripItems?.length ? trustStripItems : DEFAULT_TRUST_STRIP;
   const activeSlides = slides ?? defaultSlides;
 
   const [currentSlide, setCurrentSlide] = useState(0);

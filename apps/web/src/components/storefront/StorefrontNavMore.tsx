@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { STOREFRONT_NAV_MORE } from '@/lib/storefrontNavigation';
+import { getNavMore, type NavLink } from '@/lib/storefrontNavigation';
 
-export function StorefrontNavMore() {
+export function StorefrontNavMore({ items }: { items?: NavLink[] }) {
+  const navItems = items ?? getNavMore();
   const [open, setOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<HTMLDivElement>(null);
@@ -43,7 +44,7 @@ export function StorefrontNavMore() {
         className="fixed z-[60] min-w-[200px] rounded-lg border border-hos-border bg-hos-bg shadow-xl py-2"
         style={{ top: menuPosition.top, left: menuPosition.left }}
       >
-        {STOREFRONT_NAV_MORE.map((item) => (
+        {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}

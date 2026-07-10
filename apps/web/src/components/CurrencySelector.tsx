@@ -1,12 +1,16 @@
 'use client';
 
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { getCurrencySymbol } from '@hos-marketplace/utils';
 
 const SUPPORTED_CURRENCIES = [
   { code: 'USD', name: 'US Dollar', symbol: '$' },
   { code: 'EUR', name: 'Euro', symbol: '€' },
+  { code: 'GBP', name: 'British Pound', symbol: '£' },
   { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ' },
+  { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
+  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
+  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
+  { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' },
 ];
 
 export function CurrencySelector() {
@@ -52,4 +56,3 @@ export function CurrencySelector() {
     </div>
   );
 }
-

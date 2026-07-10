@@ -3887,6 +3887,158 @@ export class ApiClient {
     });
   }
 
+  // Departments (storefront sections)
+  async getDepartments(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/departments');
+  }
+
+  async getAllDepartments(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/departments/all');
+  }
+
+  async getDepartment(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/departments/${id}`);
+  }
+
+  async createDepartment(data: {
+    name: string;
+    slug?: string;
+    description?: string;
+    meta?: string;
+    ctaText?: string;
+    ctaUrl: string;
+    iconSvg?: string;
+    image?: string;
+    order?: number;
+    isActive?: boolean;
+    categoryId?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/departments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateDepartment(id: string, data: {
+    name?: string;
+    slug?: string;
+    description?: string;
+    meta?: string;
+    ctaText?: string;
+    ctaUrl?: string;
+    iconSvg?: string;
+    image?: string;
+    order?: number;
+    isActive?: boolean;
+    categoryId?: string | null;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/departments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteDepartment(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/departments/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async reorderDepartments(orderedIds: string[]): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/departments/reorder/batch', {
+      method: 'PUT',
+      body: JSON.stringify({ orderedIds }),
+    });
+  }
+
+  // Navigation (storefront nav menus)
+  async getNavigationByGroup(group: string): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>(`/navigation?group=${encodeURIComponent(group)}`);
+  }
+
+  async getAllNavigation(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/navigation/all');
+  }
+
+  async createNavigationItem(data: {
+    group: string;
+    label: string;
+    href: string;
+    order?: number;
+    isActive?: boolean;
+    external?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/navigation', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateNavigationItem(id: string, data: {
+    group?: string;
+    label?: string;
+    href?: string;
+    order?: number;
+    isActive?: boolean;
+    external?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/navigation/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteNavigationItem(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/navigation/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Testimonials (storefront customer quotes)
+  async getTestimonials(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/testimonials');
+  }
+
+  async getAllTestimonials(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/testimonials/all');
+  }
+
+  async createTestimonial(data: {
+    quote: string;
+    author: string;
+    city?: string;
+    rating?: number;
+    verified?: boolean;
+    order?: number;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/testimonials', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTestimonial(id: string, data: {
+    quote?: string;
+    author?: string;
+    city?: string;
+    rating?: number;
+    verified?: boolean;
+    order?: number;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/testimonials/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteTestimonial(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/testimonials/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Taxonomy - Attributes
   async getAttributes(filters?: {
     categoryId?: string;

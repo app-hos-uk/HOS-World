@@ -1,15 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { apiClient } from '@/lib/api';
 import { BrandLogo } from '@/components/BrandLogo';
 import {
-  FOOTER_POLICY_LINKS,
-  FOOTER_SHOP_LINKS,
+  getFooterShopLinks,
+  getFooterPolicyLinks,
+  loadNavigationFromApi,
   SOCIAL_LINKS,
   resolveSocialHref,
   type SocialPlatform,
+  type NavLink,
 } from '@/lib/storefrontNavigation';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 import { brandDisplayName } from '@/lib/siteSettingsDefaults';
@@ -162,6 +164,15 @@ function FooterNewsletter({ brandName }: { brandName: string }) {
 export function Footer() {
   const site = useSiteSettings();
   const brandName = brandDisplayName(site.platformName);
+  const [shopLinks, setShopLinks] = useState<NavLink[]>(getFooterShopLinks());
+  const [policyLinks, setPolicyLinks] = useState<NavLink[]>(getFooterPolicyLinks());
+
+  useEffect(() => {
+    loadNavigationFromApi().then(() => {
+      setShopLinks(getFooterShopLinks());
+      setPolicyLinks(getFooterPolicyLinks());
+    });
+  }, []);
 
   const socialEntries = useMemo(() => {
     const settingsHref: Record<SocialPlatform, string> = {
@@ -219,13 +230,13 @@ export function Footer() {
           <FooterNavColumn
             title="Main Menu"
             ariaLabel="Shop and main navigation"
-            links={FOOTER_SHOP_LINKS}
+            links={shopLinks}
           />
 
           <FooterNavColumn
             title="Help & Policies"
             ariaLabel="Help and policies"
-            links={FOOTER_POLICY_LINKS}
+            links={policyLinks}
           />
 
           <FooterNewsletter brandName={brandName} />
