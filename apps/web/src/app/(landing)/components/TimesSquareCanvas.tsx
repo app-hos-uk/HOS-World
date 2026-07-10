@@ -31,7 +31,7 @@ export function TimesSquareCanvas() {
       { bx: 0.05, by: 0.12, bw: 0.1, bh: 0.18, col: '#FF3822', logo: '/landing/fandom/marvel-tile.svg', alt: 'MARVEL' },
       { bx: 0.18, by: 0.22, bw: 0.08, bh: 0.12, col: '#FFE81F', logo: '/landing/fandom/starwars.svg', alt: 'STAR WARS' },
       { bx: 0.27, by: 0.08, bw: 0.12, bh: 0.2, col: '#9C55DD', logo: '/landing/fandom/wizarding.svg', alt: 'WIZARDING' },
-      { bx: 0.44, by: 0.05, bw: 0.14, bh: 0.22, col: '#C9A84C', logo: LANDING_WORDMARK, alt: 'HOUSE OF SPELLS' },
+      { bx: 0.44, by: 0.05, bw: 0.14, bh: 0.22, col: '#5B8A32', logo: '/landing/fandom/vikings.svg', alt: 'VIKINGS' },
       { bx: 0.6, by: 0.15, bw: 0.09, bh: 0.14, col: '#4DAAFF', logo: '/landing/fandom/dc.svg', alt: 'DC' },
       { bx: 0.72, by: 0.1, bw: 0.11, bh: 0.18, col: '#E85D04', logo: '/landing/fandom/naruto-konoha.svg', alt: 'NARUTO' },
       { bx: 0.86, by: 0.2, bw: 0.1, bh: 0.14, col: '#44BB77', logo: '/landing/fandom/ghibli.svg', alt: 'GHIBLI' },

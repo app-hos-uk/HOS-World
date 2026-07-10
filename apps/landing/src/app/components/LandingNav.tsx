@@ -70,7 +70,7 @@ export function LandingNav({ active }: Props) {
           <img className="nav-logo-img" src={LANDING_LOGO} width={64} height={64} alt="" aria-hidden="true" />
           <img className="nav-logo-mark" src={LANDING_WORDMARK} width={1024} height={258} alt="" aria-hidden="true" />
         </Link>
-        <div className="nav-links">
+        <div className="nav-links-center">
           {LINKS.map((l) => (
             <Link
               key={l.key}

@@ -36,15 +36,15 @@
 .vignette{position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse at center,transparent 30%,rgba(5,5,13,.88) 100%);}
 
 /* NAV — mobile first (burger + compact); desktop from 769px */
-.landing-site nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px var(--hos-pad-inline);min-height:var(--hos-nav-h);background:linear-gradient(180deg,rgba(5,5,13,.96) 0%,transparent 100%);backdrop-filter:blur(8px);transition:all .3s;}
+.landing-site nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px var(--hos-pad-inline);min-height:var(--hos-nav-h);background:linear-gradient(180deg,rgba(5,5,13,.96) 0%,transparent 100%);backdrop-filter:blur(8px);transition:all .3s;isolation:isolate;}
 .landing-site nav.scrolled{background:rgba(5,5,13,.97);border-bottom:1px solid rgba(201,168,76,.08);}
-.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;cursor:pointer;color:inherit;min-width:0;}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none;cursor:pointer;color:inherit;min-width:0;background:transparent;position:relative;z-index:1;}
 .landing-site a.nav-logo:focus-visible,.landing-site a.nav-cta:focus-visible,.landing-site a.nav-link:focus-visible{outline:1px solid var(--gold);outline-offset:4px;}
-.nav-logo-img{width:52px;height:52px;border-radius:50%;object-fit:cover;filter:drop-shadow(0 0 8px rgba(201,168,76,.5));transition:.3s;flex-shrink:0;}
+.nav-logo-img{width:52px;height:52px;border-radius:50%;object-fit:cover;filter:drop-shadow(0 0 8px rgba(201,168,76,.5));transition:.3s;flex-shrink:0;background:transparent;}
 .nav-logo:hover .nav-logo-img{filter:drop-shadow(0 0 16px rgba(201,168,76,.9));}
 /* Nav wordmark: see --hos-wordmark-min in :root; shown from min-width 769px */
 .nav-logo-mark{display:none;}
-.nav-links{display:none;align-items:center;gap:28px;}
+.nav-links-center{display:none;align-items:center;gap:28px;position:absolute;left:50%;transform:translateX(-50%);}
 .nav-link{font-family:'Cinzel',serif;font-size:var(--type-ui-sm);letter-spacing:.22em;text-transform:uppercase;color:var(--muted);text-decoration:none;cursor:pointer;transition:color .3s;background:none;border:none;}
 .nav-link:hover,.nav-link.active{color:var(--gold);}
 .nav-cta{font-family:'Cinzel',serif;font-size:clamp(0.72rem,0.68rem + 0.2vw,0.8125rem);letter-spacing:.2em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(201,168,76,.32);padding:10px 14px;background:rgba(201,168,76,.05);cursor:pointer;transition:all .3s;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;}
@@ -59,7 +59,7 @@
   .landing-site nav{padding:16px var(--hos-pad-inline);}
   .nav-logo-img{width:64px;height:64px;}
   .nav-logo-mark{display:block;height:clamp(28px,3.6vw,40px);width:auto;max-width:min(38vw,380px);object-fit:contain;object-position:left center;flex-shrink:1;}
-  .nav-links{display:flex;gap:32px;}
+  .nav-links-center{display:flex;gap:32px;}
   .nav-burger{display:none;}
   .nav-cta{font-size:var(--type-ui-sm);letter-spacing:.24em;padding:9px 22px;max-width:none;}
   .nav-link-shop{opacity:.75;font-size:var(--type-ui-min)!important;}
@@ -446,11 +446,30 @@
   .f-logo-img{width:60px;height:60px;}
   .f-logo-mark{display:block;height:clamp(32px,3.5vw,42px);width:auto;max-width:min(70vw,400px);object-fit:contain;object-position:center;}
 }
-.f-urls{font-family:'Cinzel',serif;font-size:clamp(0.78rem,1.8vw,0.88rem);letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:22px;line-height:1.55;opacity:.75;}
+.f-urls{font-family:'Cinzel',serif;font-size:clamp(0.78rem,1.8vw,0.88rem);letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:18px;line-height:1.55;opacity:.75;}
+.f-social{display:flex;gap:18px;justify-content:center;align-items:center;margin-bottom:20px;}
+.f-social-link{display:flex;align-items:center;justify-content:center;width:36px;height:36px;color:var(--muted);transition:color .3s,transform .3s;}
+.f-social-link:hover{color:var(--gold-l);transform:translateY(-2px);}
+.f-social-link svg{width:20px;height:20px;}
 .f-links{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;}
 .f-links a{font-family:'Cinzel',serif;font-size:var(--type-ui-sm);letter-spacing:.2em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .3s;}
 .f-links a:hover,.f-links a:focus-visible{color:var(--gold-l);}
 .f-links a:focus-visible{outline:1px solid var(--gold);outline-offset:4px;}
+
+/* ═══════════════════ PRIVACY PAGE ═══════════════════ */
+.privacy-container{max-width:780px;margin:0 auto;padding:calc(var(--hos-nav-h) + 40px) var(--hos-pad-inline) 60px;position:relative;z-index:2;}
+@media(min-width:769px){.privacy-container{padding:120px 24px 80px;}}
+.privacy-title{font-family:'Cinzel Decorative',serif;font-size:clamp(1.8rem,5vw,3rem);font-weight:700;color:var(--gold);margin-bottom:8px;text-align:center;}
+.privacy-subtitle{font-family:'Cinzel',serif;font-size:var(--type-ui-sm);letter-spacing:.24em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:24px;}
+.privacy-rule{width:200px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:0 auto 40px;}
+.privacy-body{font-size:clamp(1rem,2vw,1.1rem);color:var(--muted);line-height:1.85;}
+.privacy-body h2{font-family:'Cinzel',serif;font-size:clamp(1.05rem,2.2vw,1.25rem);color:var(--white);margin:2em 0 .6em;letter-spacing:.06em;}
+.privacy-body p{margin:0 0 1.2em;}
+.privacy-body ul{margin:0 0 1.2em;padding-left:1.4em;}
+.privacy-body li{margin-bottom:.4em;}
+.privacy-body a{color:var(--gold);text-decoration:underline;text-underline-offset:3px;}
+.privacy-body a:hover{color:var(--gold-l);}
+.privacy-body strong{color:var(--text);font-weight:600;}
 
 /* REVEAL */
 .rv,.rv-l,.rv-r{transition:opacity .9s ease,transform .9s ease;}
@@ -673,7 +692,7 @@
 @media(min-width:769px) and (max-width:1200px){
   /* Match mobile nav behavior on iPad/small-laptop widths */
   .nav-logo-mark { display:none; }
-  .nav-links { display:none; }
+  .nav-links-center { display:none; }
   .nav-burger { display:flex; }
 
   .manifesto-grid { gap:48px; padding:0 32px; }
