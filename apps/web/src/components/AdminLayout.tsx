@@ -160,6 +160,7 @@ const menuItems: MenuItem[] = [
     zone: 'operations',
     children: [
       { title: 'Navigation', href: '/admin/navigation', icon: '🧭' },
+      { title: 'Universes', href: '/admin/universes', icon: '🌌' },
       { title: 'Testimonials', href: '/admin/testimonials', icon: '💬' },
       { title: 'Blog', href: '/admin/blog', icon: '📝' },
       { title: 'Stores', href: '/admin/stores', icon: '🏬' },

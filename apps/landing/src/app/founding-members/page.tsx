@@ -6,6 +6,7 @@ import { FoundingMemberForm } from '../components/FoundingMemberForm';
 import { landingPageMetadata } from '../lib/landingMetadata';
 import { LANDING_LOGO, LANDING_WORDMARK } from '../lib/constants';
 import { isFoundingMembersEnabled } from '../lib/foundingMembersConfig';
+import { fetchFandomsFromUniverses } from '../lib/universesApi';
 
 export const metadata: Metadata = landingPageMetadata({
   title: 'Register — Founding Members | House of Spells',
@@ -16,6 +17,7 @@ export const metadata: Metadata = landingPageMetadata({
 
 export default async function FoundingMembersPage() {
   const registrationOpen = await isFoundingMembersEnabled();
+  const fandoms = await fetchFandomsFromUniverses();
 
   return (
     <LandingShell nav="register" mainId="pg-register">
@@ -34,7 +36,7 @@ export default async function FoundingMembersPage() {
         </div>
 
         <Suspense fallback={<div style={{ minHeight: 400 }} />}>
-          <FoundingMemberForm registrationOpen={registrationOpen} />
+          <FoundingMemberForm registrationOpen={registrationOpen} fandoms={fandoms} />
         </Suspense>
 
         <div style={{ height: 80 }} />

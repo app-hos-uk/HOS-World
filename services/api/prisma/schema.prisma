@@ -4363,3 +4363,22 @@ model BlogPost {
   @@index([categoryId])
   @@map("blog_posts")
 }
+
+model Universe {
+  id             String   @id @default(uuid())
+  name           String   @unique
+  slug           String   @unique
+  logo           String?
+  tag            String?
+  description    String?  @db.Text
+  accentColor    String?
+  gradientColors Json?
+  order          Int      @default(0)
+  featured       Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([isActive, order])
+  @@map("universes")
+}

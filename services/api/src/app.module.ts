@@ -104,6 +104,7 @@ import { InvoicesModule } from './invoices/invoices.module';
 import { FoundingMembersModule } from './founding-members/founding-members.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { NavigationModule } from './navigation/navigation.module';
+import { UniversesModule } from './universes/universes.module';
 import { TestimonialsModule } from './testimonials/testimonials.module';
 import { FeatureFlagsModule } from './config/feature-flags.module';
 import { validateEnvironmentVariables } from './config/env.validation';
@@ -209,6 +210,7 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     DepartmentsModule,
     // Navigation (storefront nav menus)
     NavigationModule,
+    UniversesModule,
     // Testimonials (storefront customer quotes)
     TestimonialsModule,
     // Invoices

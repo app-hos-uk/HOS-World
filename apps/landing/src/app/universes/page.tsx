@@ -5,6 +5,7 @@ import { LandingFooter } from '../components/LandingFooter';
 import { UniverseGrid } from '../components/UniverseGrid';
 import { landingPageMetadata } from '../lib/landingMetadata';
 import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from '../lib/constants';
+import { fetchUniverses } from '../lib/universesApi';
 
 export const metadata: Metadata = landingPageMetadata({
   title: 'Universes — House of Spells',
@@ -13,7 +14,9 @@ export const metadata: Metadata = landingPageMetadata({
   path: '/universes',
 });
 
-export default function UniversesPage() {
+export default async function UniversesPage() {
+  const universes = await fetchUniverses();
+
   return (
     <LandingShell nav="universes" mainId="pg-universes">
       <main id="pg-universes" className="hos-page" tabIndex={-1}>
@@ -33,7 +36,7 @@ export default function UniversesPage() {
           </p>
         </div>
 
-        <UniverseGrid />
+        <UniverseGrid universes={universes} />
 
         <div className="landing-cta-row">
           <Link href={LANDING_REGISTER_PATH} className="btn-p">

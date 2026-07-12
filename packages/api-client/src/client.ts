@@ -3994,6 +3994,62 @@ export class ApiClient {
     });
   }
 
+  // Universes (landing page marketing tiles)
+  async getUniverses(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/universes');
+  }
+
+  async getAdminUniverses(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/universes/admin');
+  }
+
+  async createUniverse(data: {
+    name: string;
+    logo?: string;
+    tag?: string;
+    description?: string;
+    accentColor?: string;
+    gradientColors?: string[];
+    order?: number;
+    featured?: boolean;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/universes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateUniverse(id: string, data: {
+    name?: string;
+    logo?: string;
+    tag?: string;
+    description?: string;
+    accentColor?: string;
+    gradientColors?: string[];
+    order?: number;
+    featured?: boolean;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/universes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteUniverse(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/universes/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async reorderUniverses(orderedIds: string[]): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/universes/reorder', {
+      method: 'PUT',
+      body: JSON.stringify({ orderedIds }),
+    });
+  }
+
   // Testimonials (storefront customer quotes)
   async getTestimonials(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/testimonials');

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { FANDOMS, OTHER_UNIVERSE_NAME } from '../lib/fandoms';
+import { FANDOMS, OTHER_UNIVERSE_NAME, type Fandom } from '../lib/fandoms';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 const REG_MIN_HUMAN_FILL_MS = 1800;
@@ -62,9 +62,10 @@ async function postRegistrationPayload(data: Record<string, unknown>) {
 
 type Props = {
   registrationOpen?: boolean;
+  fandoms?: Fandom[];
 };
 
-export function FoundingMemberForm({ registrationOpen = true }: Props) {
+export function FoundingMemberForm({ registrationOpen = true, fandoms = FANDOMS }: Props) {
   const searchParams = useSearchParams();
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [hint, setHint] = useState('Select at least one universe ↑');
@@ -104,14 +105,14 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
     const next = new Set<number>();
     interests.forEach((raw) => {
       const decoded = decodeURIComponent(raw);
-      let idx = FANDOMS.findIndex((f) => f.n === decoded);
+      let idx = fandoms.findIndex((f) => f.n === decoded);
       if (idx < 0) {
-        idx = FANDOMS.findIndex((f) => f.n.toLowerCase() === decoded.toLowerCase());
+        idx = fandoms.findIndex((f) => f.n.toLowerCase() === decoded.toLowerCase());
       }
       if (idx < 0) {
         const aliasTarget = FANDOM_ALIASES[decoded.toLowerCase()];
         if (aliasTarget) {
-          idx = FANDOMS.findIndex((f) => f.n === aliasTarget);
+          idx = fandoms.findIndex((f) => f.n === aliasTarget);
         }
       }
       if (idx >= 0) next.add(idx);
@@ -120,10 +121,10 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
       setSelected(next);
       syncHint(next.size);
     }
-  }, [searchParams, syncHint]);
+  }, [searchParams, syncHint, fandoms]);
 
   const otherSelected = (() => {
-    const idx = FANDOMS.findIndex((f) => f.n === OTHER_UNIVERSE_NAME);
+    const idx = fandoms.findIndex((f) => f.n === OTHER_UNIVERSE_NAME);
     return idx >= 0 && selected.has(idx);
   })();
 
@@ -150,7 +151,7 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
       return;
     }
 
-    const otherIdx = FANDOMS.findIndex((f) => f.n === OTHER_UNIVERSE_NAME);
+    const otherIdx = fandoms.findIndex((f) => f.n === OTHER_UNIVERSE_NAME);
     const otherTa = form.querySelector<HTMLTextAreaElement>('#otherFranchises');
     let otherFranchises = '';
     if (otherIdx >= 0 && selected.has(otherIdx)) {
@@ -171,7 +172,7 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
       return;
     }
 
-    const fandoms = Array.from(selected).map((i) => FANDOMS[i].n);
+    const selectedFandoms = Array.from(selected).map((i) => fandoms[i].n);
     const firstName = (form.querySelector<HTMLInputElement>('#fn')?.value || '').trim();
     const email = (form.querySelector<HTMLInputElement>('#em')?.value || '').trim();
     if (!EMAIL_RE.test(email)) {
@@ -189,7 +190,7 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
       country: (form.querySelector<HTMLSelectElement>('#co')?.value || ''),
       source: (form.querySelector<HTMLSelectElement>('#src')?.value || ''),
       spend: (form.querySelector<HTMLSelectElement>('#sp')?.value || ''),
-      fandoms,
+      fandoms: selectedFandoms,
       otherFranchises,
       timestamp: new Date().toISOString(),
       formStartedAt,
@@ -202,7 +203,7 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
     setSubmitting(true);
     try {
       await postRegistrationPayload(data);
-      setSuccess({ name: firstName || 'Friend', fandoms, other: otherFranchises });
+      setSuccess({ name: firstName || 'Friend', fandoms: selectedFandoms, other: otherFranchises });
     } catch (err) {
       const code = err instanceof Error ? err.message : 'registration_failed';
       const messages: Record<string, string> = {
@@ -236,7 +237,7 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
         <p className="confirm-msg">Your place in the circle is claimed. We&apos;ll summon you when the gates open in Times Square.</p>
         <div className="confirm-fandoms" id="confirmFandoms">
           {success.fandoms.map((n) => {
-            const f = FANDOMS.find((x) => x.n === n);
+            const f = fandoms.find((x) => x.n === n);
             return (
               <div key={n} className="cf-tag">
                 {f?.logo ? <img className="cf-brand-img" src={f.logo} alt="" loading="lazy" /> : null}
@@ -260,7 +261,7 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
         <h3>Your Universes</h3>
         <p>Select every fandom you love. This directly shapes what we stock — your choices build our shelves.</p>
         <div className="fan-grid" id="fanGrid">
-          {FANDOMS.map((f, i) => (
+          {fandoms.map((f, i) => (
             <button
               key={f.n}
               type="button"
