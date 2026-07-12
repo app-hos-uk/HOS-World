@@ -23,12 +23,14 @@ import { SegmentationModule } from '../segmentation/segmentation.module';
 import { AmbassadorModule } from '../ambassador/ambassador.module';
 import { BrandPartnershipsModule } from '../brand-partnerships/brand-partnerships.module';
 import { ProductCampaignsModule } from '../product-campaigns/product-campaigns.module';
+import { FeatureFlagsModule } from '../config/feature-flags.module';
 
 @Module({
   imports: [
     DatabaseModule,
     QueueModule,
     ConfigModule,
+    FeatureFlagsModule,
     forwardRef(() => JourneyModule),
     forwardRef(() => AmbassadorModule),
     BrandPartnershipsModule,

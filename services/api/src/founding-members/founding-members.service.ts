@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
@@ -54,6 +54,10 @@ export class FoundingMembersService {
     metadata?: Record<string, unknown>,
     options?: { sendConfirmationEmail?: boolean },
   ) {
+    if (!this.isValidEmail(dto.email)) {
+      throw new BadRequestException('Please provide a valid email address.');
+    }
+
     const existing = await this.prisma.foundingMember.findUnique({
       where: { email: dto.email.toLowerCase().trim() },
     });
@@ -241,18 +245,20 @@ export class FoundingMembersService {
       const batch = toSend.slice(batchStart, batchStart + batchSize);
       const batchResults = await Promise.allSettled(
         batch.map(async (member) => {
-          const sentAt = new Date().toISOString();
-          await this.prisma.foundingMember.update({
-            where: { id: member.id },
-            data: {
-              metadata: this.mergeMetadata(member.metadata, {
-                confirmationEmailSentAt: sentAt,
-              }),
-            },
-          });
           try {
-            await this.notificationsService.sendFoundingMemberConfirmation(member.email, {
+            const sent = await this.notificationsService.sendFoundingMemberConfirmation(member.email, {
               firstName: member.firstName,
+            });
+            if (!sent) {
+              throw new Error('Email provider unavailable');
+            }
+            await this.prisma.foundingMember.update({
+              where: { id: member.id },
+              data: {
+                metadata: this.mergeMetadata(member.metadata, {
+                  confirmationEmailSentAt: new Date().toISOString(),
+                }),
+              },
             });
           } catch (emailErr) {
             try {
@@ -260,14 +266,13 @@ export class FoundingMembersService {
                 where: { id: member.id },
                 data: {
                   metadata: this.mergeMetadata(member.metadata, {
-                    confirmationEmailSentAt: null,
                     confirmationEmailError: emailErr instanceof Error ? emailErr.message : 'unknown',
                   }),
                 },
               });
             } catch (rollbackErr) {
               this.logger.error(
-                `Failed to rollback confirmationEmailSentAt for member ${member.id}: ${rollbackErr instanceof Error ? rollbackErr.message : 'unknown'}`,
+                `Failed to record confirmation email error for member ${member.id}: ${rollbackErr instanceof Error ? rollbackErr.message : 'unknown'}`,
               );
             }
             throw emailErr;
@@ -445,17 +450,23 @@ export class FoundingMembersService {
 
     if (options?.sendConfirmationEmail) {
       try {
-        await this.notificationsService.sendFoundingMemberConfirmation(member.email, {
+        const sent = await this.notificationsService.sendFoundingMemberConfirmation(member.email, {
           firstName: member.firstName,
         });
-        await this.prisma.foundingMember.update({
-          where: { id: member.id },
-          data: {
-            metadata: this.mergeMetadata(metadata, {
-              confirmationEmailSentAt: new Date().toISOString(),
-            }),
-          },
-        });
+        if (sent) {
+          await this.prisma.foundingMember.update({
+            where: { id: member.id },
+            data: {
+              metadata: this.mergeMetadata(member.metadata, {
+                confirmationEmailSentAt: new Date().toISOString(),
+              }),
+            },
+          });
+        } else {
+          this.logger.warn(
+            `Founding member confirmation email not sent for ${member.email} — email provider unavailable`,
+          );
+        }
       } catch (err: unknown) {
         this.logger.warn(
           `Founding member confirmation email failed for ${member.email}: ${err instanceof Error ? err.message : 'unknown'}`,

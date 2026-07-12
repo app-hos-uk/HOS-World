@@ -1,4 +1,5 @@
 import { IsEmail, IsString, IsOptional, IsArray, MinLength, MaxLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateFoundingMemberDto {
@@ -15,7 +16,8 @@ export class CreateFoundingMemberDto {
   lastName?: string;
 
   @ApiProperty({ example: 'john@example.com' })
-  @IsEmail()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
+  @IsEmail({}, { message: 'Please provide a valid email address' })
   email: string;
 
   @ApiPropertyOptional({ example: '+1234567890' })

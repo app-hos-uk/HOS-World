@@ -351,14 +351,19 @@ export class NotificationsService implements OnModuleInit {
   async sendFoundingMemberConfirmation(
     email: string,
     data: { firstName: string },
-  ): Promise<void> {
+  ): Promise<boolean> {
     const rendered = await this.templatesService.render('founding_member_confirmation', {
       firstName: data.firstName,
       email,
     });
 
-    await this.queueNotification(email, rendered.subject, rendered.body);
-    this.logger.log(`Founding member confirmation queued for ${email}`);
+    const sent = await this.sendEmail(email, rendered.subject, rendered.body);
+    if (sent) {
+      this.logger.log(`Founding member confirmation sent to ${email}`);
+    } else {
+      this.logger.warn(`Founding member confirmation could not be sent to ${email}`);
+    }
+    return sent;
   }
 
   async sendFoundingMemberAccountInvitation(

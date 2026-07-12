@@ -26,6 +26,7 @@ import { EnrollLoyaltyDto } from './dto/enroll.dto';
 import { LoyaltyPreferencesDto } from './dto/loyalty-preferences.dto';
 import { MarketingEventBus } from '../journeys/marketing-event.bus';
 import { isTruthy } from '../common/utils/config';
+import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
 
 @Injectable()
 export class LoyaltyService implements OnModuleInit {
@@ -34,6 +35,7 @@ export class LoyaltyService implements OnModuleInit {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    private featureFlags: FeatureFlagsService,
     private burn: LoyaltyBurnEngine,
     private earn: LoyaltyEarnEngine,
     private tiers: LoyaltyTierEngine,
@@ -66,13 +68,19 @@ export class LoyaltyService implements OnModuleInit {
   }
 
   assertEnabled(): void {
+    if (!this.featureFlags.isEnabled(FeatureFlag.LOYALTY_PROGRAMME)) {
+      throw new BadRequestException('Loyalty programme is not enabled');
+    }
     if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) {
       throw new BadRequestException('Loyalty programme is not enabled');
     }
   }
 
   isEnabled(): boolean {
-    return isTruthy(this.config.get<string>('LOYALTY_ENABLED'));
+    return (
+      this.featureFlags.isEnabled(FeatureFlag.LOYALTY_PROGRAMME) &&
+      isTruthy(this.config.get<string>('LOYALTY_ENABLED'))
+    );
   }
 
   async enroll(userId: string, dto?: EnrollLoyaltyDto) {
@@ -155,6 +163,7 @@ export class LoyaltyService implements OnModuleInit {
   }
 
   async getMembership(userId: string) {
+    this.assertEnabled();
     await this.ensureInitiateTier();
     return this.prisma.loyaltyMembership.findUnique({
       where: { userId },
@@ -236,6 +245,7 @@ export class LoyaltyService implements OnModuleInit {
   }
 
   async getFandomProfile(userId: string) {
+    this.assertEnabled();
     const m = await this.prisma.loyaltyMembership.findUnique({
       where: { userId },
       select: { fandomProfile: true },
@@ -245,6 +255,7 @@ export class LoyaltyService implements OnModuleInit {
   }
 
   async getTransactions(userId: string, query: { page?: number; limit?: number }) {
+    this.assertEnabled();
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) throw new NotFoundException('Not enrolled');
     const page = Math.max(1, query.page || 1);
@@ -262,6 +273,7 @@ export class LoyaltyService implements OnModuleInit {
   }
 
   async tierProgress(userId: string) {
+    this.assertEnabled();
     const membership = await this.prisma.loyaltyMembership.findUnique({
       where: { userId },
       include: { tier: true },
@@ -303,6 +315,7 @@ export class LoyaltyService implements OnModuleInit {
   }
 
   getRedemptionOptions(region?: string) {
+    this.assertEnabled();
     const now = new Date();
     const where: Prisma.LoyaltyRedemptionOptionWhereInput = {
       isActive: true,
@@ -338,6 +351,7 @@ export class LoyaltyService implements OnModuleInit {
   }
 
   async referralInfo(userId: string) {
+    this.assertEnabled();
     const membership = await this.prisma.loyaltyMembership.findUnique({
       where: { userId },
       include: { user: { select: { firstName: true, lastName: true } } },

@@ -17,6 +17,8 @@ import { DatabaseModule } from '../database/database.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { ProductsModule } from '../products/products.module';
 import { ReviewsModule } from '../reviews/reviews.module';
+import { FeatureFlagsModule } from '../config/feature-flags.module';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const migrationControllersEnabled = process.env.ENABLE_ADMIN_MIGRATIONS === 'true';
@@ -43,7 +45,7 @@ const migrationControllers =
     : [];
 
 @Module({
-  imports: [DatabaseModule, ConfigModule, NotificationsModule, ProductsModule, forwardRef(() => ReviewsModule)],
+  imports: [DatabaseModule, ConfigModule, NotificationsModule, ProductsModule, FeatureFlagsModule, LoyaltyModule, forwardRef(() => ReviewsModule)],
   controllers: [...coreControllers, ...migrationControllers],
   providers: [AdminService, AdminSellersService, AdminProductsService],
   exports: [AdminService, AdminSellersService, AdminProductsService],

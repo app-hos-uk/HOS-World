@@ -4,16 +4,28 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { OTHER_UNIVERSE_NAME } from '../lib/fandoms';
 import { useCatalogFandoms } from '@/hooks/useCatalogFandoms';
-import { REG_GOOGLE_SCRIPT_URL } from '../lib/constants';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
 const REG_MIN_HUMAN_FILL_MS = 1800;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type RegistrationError =
+  | 'duplicate_email'
+  | 'registration_closed'
+  | 'invalid_email'
+  | 'invalid_input'
+  | 'registration_failed';
 
 async function postRegistrationPayload(data: Record<string, unknown>) {
+  const email = String(data.email || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) {
+    throw new Error('invalid_email' satisfies RegistrationError);
+  }
+
   const payload = {
-    firstName: data.firstName,
-    lastName: data.lastName,
-    email: data.email,
+    firstName: String(data.firstName || '').trim(),
+    lastName: String(data.lastName || '').trim(),
+    email,
     phone: data.phone,
     country: data.country,
     fandoms: data.fandoms,
@@ -22,44 +34,34 @@ async function postRegistrationPayload(data: Record<string, unknown>) {
     spendBracket: data.spend,
   };
 
-  const fireGoogleBackup = () => {
-    const googleUrl = REG_GOOGLE_SCRIPT_URL.trim();
-    if (googleUrl.includes('script.google.com')) {
-      fetch(googleUrl, {
-        method: 'POST',
-        mode: 'no-cors',
-        cache: 'no-store',
-        keepalive: true,
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(data),
-      }).catch(() => {});
-    }
-  };
+  const res = await fetch(`${getPublicApiBaseUrl()}/founding-members`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    body: JSON.stringify(payload),
+  });
 
-  try {
-    const res = await fetch(`${getPublicApiBaseUrl()}/founding-members`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-      body: JSON.stringify(payload),
-    });
-    if (res.ok || res.status === 409) {
-      return true;
-    }
-    fireGoogleBackup();
-    throw new Error('api_error');
-  } catch (err) {
-    if (err instanceof Error && err.message === 'api_error') {
-      throw new Error('registration_failed');
-    }
-    fireGoogleBackup();
-    throw new Error('registration_failed');
+  if (res.status === 403) {
+    throw new Error('registration_closed' satisfies RegistrationError);
+  }
+  if (res.status === 409) {
+    throw new Error('duplicate_email' satisfies RegistrationError);
+  }
+  if (res.status === 400 || res.status === 422) {
+    throw new Error('invalid_input' satisfies RegistrationError);
+  }
+  if (!res.ok) {
+    throw new Error('registration_failed' satisfies RegistrationError);
   }
 }
 
-export function FoundingMemberForm() {
+type Props = {
+  registrationOpen?: boolean;
+};
+
+export function FoundingMemberForm({ registrationOpen = true }: Props) {
   const { fandoms: FANDOMS } = useCatalogFandoms();
   const searchParams = useSearchParams();
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -165,10 +167,18 @@ export function FoundingMemberForm() {
 
     const fandoms = Array.from(selected);
     const firstName = (form.querySelector<HTMLInputElement>('#fn')?.value || '').trim();
+    const email = (form.querySelector<HTMLInputElement>('#em')?.value || '').trim();
+    if (!EMAIL_RE.test(email)) {
+      setHint('Please enter a valid email address.');
+      setHintColor('#c75c5c');
+      form.querySelector<HTMLInputElement>('#em')?.focus();
+      return;
+    }
+
     const data = {
       firstName,
-      lastName: form.querySelector<HTMLInputElement>('#ln')?.value || '',
-      email: form.querySelector<HTMLInputElement>('#em')?.value || '',
+      lastName: (form.querySelector<HTMLInputElement>('#ln')?.value || '').trim(),
+      email,
       phone: form.querySelector<HTMLInputElement>('#ph')?.value || '',
       country: (form.querySelector<HTMLSelectElement>('#co')?.value || ''),
       source: (form.querySelector<HTMLSelectElement>('#src')?.value || ''),
@@ -187,12 +197,31 @@ export function FoundingMemberForm() {
     try {
       await postRegistrationPayload(data);
       setSuccess({ name: firstName || 'Friend', fandoms, other: otherFranchises });
-    } catch {
-      setHint('Something went wrong. Please try again or contact us at House Of Spells.');
+    } catch (err) {
+      const code = err instanceof Error ? err.message : 'registration_failed';
+      const messages: Record<string, string> = {
+        duplicate_email: 'This email is already registered as a founding member.',
+        registration_closed: 'Founding member registration is currently unavailable.',
+        invalid_email: 'Please enter a valid email address.',
+        invalid_input: 'Please check your details and try again.',
+        registration_failed: 'Something went wrong. Please try again or contact us at House Of Spells.',
+      };
+      setHint(messages[code] || messages.registration_failed);
       setHintColor('#c75c5c');
       setSubmitting(false);
     }
   };
+
+  if (!registrationOpen) {
+    return (
+      <div className="reg-form-inner rv vis" style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center' }}>
+        <h2 className="confirm-h1">Registration Closed</h2>
+        <p className="confirm-msg">
+          Founding member registration is currently unavailable. Please check back soon.
+        </p>
+      </div>
+    );
+  }
 
   if (success) {
     return (

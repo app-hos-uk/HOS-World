@@ -5,6 +5,7 @@ import { LandingFooter } from '../components/LandingFooter';
 import { FoundingMemberForm } from '../components/FoundingMemberForm';
 import { landingPageMetadata } from '../lib/landingMetadata';
 import { LANDING_LOGO, LANDING_WORDMARK } from '../lib/constants';
+import { isFoundingMembersEnabled } from '../lib/foundingMembersConfig';
 
 export const metadata: Metadata = landingPageMetadata({
   title: 'Register — Founding Members | House of Spells',
@@ -13,7 +14,9 @@ export const metadata: Metadata = landingPageMetadata({
   path: '/founding-members',
 });
 
-export default function FoundingMembersPage() {
+export default async function FoundingMembersPage() {
+  const registrationOpen = await isFoundingMembersEnabled();
+
   return (
     <LandingShell nav="register" mainId="pg-register">
       <main id="pg-register" className="hos-page" tabIndex={-1}>
@@ -31,7 +34,7 @@ export default function FoundingMembersPage() {
         </div>
 
         <Suspense fallback={<div style={{ minHeight: 400 }} />}>
-          <FoundingMemberForm />
+          <FoundingMemberForm registrationOpen={registrationOpen} />
         </Suspense>
 
         <div style={{ height: 80 }} />

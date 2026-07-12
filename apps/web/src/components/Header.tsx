@@ -18,6 +18,7 @@ import {
   type NavLink,
 } from '@/lib/storefrontNavigation';
 import { StorefrontNavMore } from '@/components/storefront/StorefrontNavMore';
+import { useLoyaltyEnabled } from '@/hooks/useLoyaltyEnabled';
 
 const ROLE_QUICK_LINKS: Record<string, Array<{ title: string; href: string; icon: string }>> = {
   ADMIN: [
@@ -76,6 +77,7 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [navPrimary, setNavPrimary] = useState<NavLink[]>(getNavPrimary());
   const [navMore, setNavMore] = useState<NavLink[]>(getNavMore());
+  const loyaltyEnabled = useLoyaltyEnabled();
 
   useEffect(() => {
     loadNavigationFromApi().then(() => {
@@ -418,10 +420,12 @@ export function Header() {
                   <NavDivider />
                   <NavLink href="/profile" icon="⚙️" label="Manage Profile" currentPath={pathname} />
                   <NavLink href="/orders" icon="📦" label="My Orders" currentPath={pathname} />
-                  <NavLink href="/loyalty" icon="✨" label="Rewards" currentPath={pathname} />
+                  {loyaltyEnabled && (
+                    <NavLink href="/loyalty" icon="✨" label="Rewards" currentPath={pathname} />
+                  )}
                 </>
               )}
-              {showGuestNav && (
+              {showGuestNav && loyaltyEnabled && (
                 <>
                   <NavDivider />
                   <NavLink href="/loyalty" icon="✨" label="Rewards" currentPath={pathname} />
@@ -464,7 +468,9 @@ export function Header() {
                 <MobileNavLink href="/profile" icon="⚙️" label="Manage Profile" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href="/wishlist" icon="❤️" label="Wishlist" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href="/orders" icon="📦" label="My Orders" onClick={() => setIsMobileMenuOpen(false)} />
-                <MobileNavLink href="/loyalty" icon="✨" label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />
+                {loyaltyEnabled && (
+                  <MobileNavLink href="/loyalty" icon="✨" label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />
+                )}
                 <MobileNavLink href="/cart" icon="🛒" label={`Basket${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
                 {!isDashboardPage && (
                   <div className="px-3 py-2">
@@ -481,10 +487,15 @@ export function Header() {
                 </button>
               </>
             )}
-            {showGuestNav && (
+            {showGuestNav && loyaltyEnabled && (
               <>
                 <div className="border-t border-hos-border my-2" />
                 <MobileNavLink href="/loyalty" icon="✨" label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />
+              </>
+            )}
+            {showGuestNav && (
+              <>
+                <div className="border-t border-hos-border my-2" />
                 <MobileNavLink href="/cart" icon="🛒" label={`Basket${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
               </>
             )}

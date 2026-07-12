@@ -6,6 +6,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useLoyaltyEnabled } from '@/hooks/useLoyaltyEnabled';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Image from 'next/image';
@@ -55,6 +56,7 @@ export default function CustomerDashboardPage() {
   const toast = useToast();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const { formatPrice } = useCurrency();
+  const loyaltyEnabled = useLoyaltyEnabled();
   const [loading, setLoading] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const hasLoadedOnceRef = useRef(false);
@@ -479,6 +481,7 @@ export default function CustomerDashboardPage() {
                 </div>
 
                 {/* Loyalty Program Card */}
+                {loyaltyEnabled && (
                 <div className="bg-gradient-to-br from-amber-600 to-amber-800 rounded-xl p-6 text-white shadow-lg">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">The Enchanted Circle</h2>
@@ -535,6 +538,7 @@ export default function CustomerDashboardPage() {
                     </div>
                   )}
                 </div>
+                )}
 
                 {/* Wishlist Preview */}
                 <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-hos-border lg:col-span-2">
