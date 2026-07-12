@@ -1,9 +1,38 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { marked } from 'marked';
+import sanitizeHtml from 'sanitize-html';
 import { LandingShell } from '../../components/LandingShell';
 import { LandingFooter } from '../../components/LandingFooter';
 import { getBlogPost, getStrapiMediaUrl } from '@/lib/strapi';
+
+const BLOG_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: [
+    'p', 'br', 'strong', 'em', 'b', 'i', 'u', 'ul', 'ol', 'li',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'blockquote', 'a', 'code', 'pre', 'span', 'div', 'hr',
+    'table', 'thead', 'tbody', 'tr', 'td', 'th',
+    'img', 'figure', 'figcaption', 'video', 'source',
+    'iframe', 'section', 'article',
+  ],
+  allowedAttributes: {
+    a: ['href', 'title', 'target', 'rel'],
+    img: ['src', 'alt', 'width', 'height', 'loading'],
+    iframe: ['src', 'width', 'height', 'frameborder', 'allowfullscreen'],
+    video: ['src', 'controls', 'width', 'height'],
+    source: ['src', 'type'],
+    '*': ['class', 'id'],
+  },
+  allowedSchemes: ['http', 'https', 'mailto'],
+  allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
+};
+
+function ensureHtml(content: string): string {
+  const hasBlockTags = /<(p|h[1-6]|div|ul|ol|blockquote|table|figure)\b/i.test(content);
+  const html = hasBlockTags ? content : (marked.parse(content, { async: false }) as string);
+  return sanitizeHtml(html, BLOG_SANITIZE_OPTIONS);
+}
 
 export const revalidate = 60;
 
@@ -90,7 +119,7 @@ export default async function BlogPostPage({ params }: Props) {
 
           <div
             className="blog-article-content rv"
-            dangerouslySetInnerHTML={{ __html: post.attributes.content }}
+            dangerouslySetInnerHTML={{ __html: ensureHtml(post.attributes.content) }}
           />
 
           <footer className="blog-article-footer rv">
