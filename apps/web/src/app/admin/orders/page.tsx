@@ -829,10 +829,10 @@ export default function AdminOrdersPage() {
                           <span>${Number(selectedOrder.subtotal).toFixed(2)}</span>
                         </div>
                       )}
-                      {selectedOrder.shipping !== undefined && (
+                      {(selectedOrder.shippingAmount ?? selectedOrder.shipping) !== undefined && (
                         <div className="flex justify-between">
                           <span className="text-hos-text-muted">Shipping:</span>
-                          <span>${Number(selectedOrder.shipping).toFixed(2)}</span>
+                          <span>${Number(selectedOrder.shippingAmount ?? selectedOrder.shipping).toFixed(2)}</span>
                         </div>
                       )}
                       {selectedOrder.tax !== undefined && (
@@ -841,10 +841,10 @@ export default function AdminOrdersPage() {
                           <span>${Number(selectedOrder.tax).toFixed(2)}</span>
                         </div>
                       )}
-                      {selectedOrder.discount !== undefined && selectedOrder.discount > 0 && (
+                      {(selectedOrder.discountAmount ?? selectedOrder.discount) > 0 && (
                         <div className="flex justify-between text-green-400">
                           <span>Discount:</span>
-                          <span>-${Number(selectedOrder.discount).toFixed(2)}</span>
+                          <span>-${Number(selectedOrder.discountAmount ?? selectedOrder.discount).toFixed(2)}</span>
                         </div>
                       )}
                       <div className="flex justify-between font-bold text-lg pt-2 border-t">

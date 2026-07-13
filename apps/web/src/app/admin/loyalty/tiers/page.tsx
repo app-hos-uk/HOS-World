@@ -33,8 +33,7 @@ export default function AdminLoyaltyTiersPage() {
     setForm({
       name: tier.name,
       level: tier.level,
-      minPoints: tier.minPoints,
-      maxPoints: tier.maxPoints,
+      pointsThreshold: tier.pointsThreshold ?? tier.minPoints ?? 0,
       multiplier: tier.multiplier,
       color: tier.color || '',
       icon: tier.icon || '',
@@ -84,8 +83,8 @@ export default function AdminLoyaltyTiersPage() {
                         <input type="number" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={Number(form.level || 0)} onChange={(e) => setForm({ ...form, level: parseInt(e.target.value) })} />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Min Points</label>
-                        <input type="number" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={Number(form.minPoints || 0)} onChange={(e) => setForm({ ...form, minPoints: parseInt(e.target.value) })} />
+                        <label className="block text-sm font-medium text-hos-text-secondary mb-1">Points Threshold</label>
+                        <input type="number" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={Number(form.pointsThreshold || 0)} onChange={(e) => setForm({ ...form, pointsThreshold: parseInt(e.target.value) })} />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-hos-text-secondary mb-1">Multiplier</label>
@@ -108,7 +107,7 @@ export default function AdminLoyaltyTiersPage() {
                       <div>
                         <h3 className="font-semibold text-hos-text-secondary">{tier.name}</h3>
                         <p className="text-sm text-hos-text-muted">
-                          Level {tier.level} &middot; {Number(tier.minPoints).toLocaleString()}+ pts &middot; {tier.multiplier}x multiplier
+                          Level {tier.level} &middot; {Number(tier.pointsThreshold ?? tier.minPoints ?? 0).toLocaleString()}+ pts &middot; {tier.multiplier}x multiplier
                         </p>
                       </div>
                     </div>

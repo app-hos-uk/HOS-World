@@ -613,7 +613,7 @@ export class LoyaltyService implements OnModuleInit {
       ]);
 
     const redeemValue = Number(this.config.get('LOYALTY_DEFAULT_REDEEM_VALUE', 0.01));
-    const liability = balanceAgg._sum.currentBalance || 0;
+    const liability = balanceAgg._sum.currentBalance ?? 0;
 
     return {
       totalMembers: members,
@@ -622,8 +622,8 @@ export class LoyaltyService implements OnModuleInit {
       earnRuleCount,
       redemptionOptionCount,
       campaignCount,
-      pointsIssued: issued._sum.points || 0,
-      pointsRedeemed: Math.abs(redeemed._sum.points || 0),
+      pointsIssued: issued._sum.points ?? 0,
+      pointsRedeemed: Math.abs(redeemed._sum.points ?? 0),
       totalPointsInCirculation: liability,
       programmeLiabilityEstimate: liability * redeemValue,
     };

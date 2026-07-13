@@ -11,7 +11,7 @@ export default function AdminLoyaltyRedemptionPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
-  const [form, setForm] = useState({ name: '', description: '', pointsCost: 0, type: 'DISCOUNT', discountValue: 0, isActive: true });
+  const [form, setForm] = useState({ name: '', description: '', pointsCost: 0, type: 'DISCOUNT', value: 0, isActive: true });
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
@@ -30,7 +30,7 @@ export default function AdminLoyaltyRedemptionPage() {
   useEffect(() => { load(); }, [load]);
 
   const resetForm = () => {
-    setForm({ name: '', description: '', pointsCost: 0, type: 'DISCOUNT', discountValue: 0, isActive: true });
+    setForm({ name: '', description: '', pointsCost: 0, type: 'DISCOUNT', value: 0, isActive: true });
     setEditing(null);
     setShowForm(false);
   };
@@ -42,7 +42,7 @@ export default function AdminLoyaltyRedemptionPage() {
       description: opt.description || '',
       pointsCost: opt.pointsCost || 0,
       type: opt.type || 'DISCOUNT',
-      discountValue: opt.discountValue || 0,
+      value: opt.value ?? opt.discountValue ?? 0,
       isActive: opt.isActive ?? true,
     });
     setShowForm(true);
@@ -115,7 +115,7 @@ export default function AdminLoyaltyRedemptionPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Discount Value</label>
-                <input type="number" step="0.01" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.discountValue} onChange={(e) => setForm({ ...form, discountValue: parseFloat(e.target.value) || 0 })} />
+                <input type="number" step="0.01" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.value} onChange={(e) => setForm({ ...form, value: parseFloat(e.target.value) || 0 })} />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>

@@ -11,7 +11,7 @@ export default function AdminLoyaltyEarnRulesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
-  const [form, setForm] = useState({ action: '', pointsAwarded: 0, description: '', isActive: true });
+  const [form, setForm] = useState({ action: '', pointsAmount: 0, name: '', isActive: true });
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
@@ -30,7 +30,7 @@ export default function AdminLoyaltyEarnRulesPage() {
   useEffect(() => { load(); }, [load]);
 
   const resetForm = () => {
-    setForm({ action: '', pointsAwarded: 0, description: '', isActive: true });
+    setForm({ action: '', pointsAmount: 0, name: '', isActive: true });
     setEditing(null);
     setShowForm(false);
   };
@@ -39,8 +39,8 @@ export default function AdminLoyaltyEarnRulesPage() {
     setEditing(rule);
     setForm({
       action: rule.action || '',
-      pointsAwarded: rule.pointsAwarded || 0,
-      description: rule.description || '',
+      pointsAmount: rule.pointsAmount ?? rule.pointsAwarded ?? 0,
+      name: rule.name ?? rule.description ?? '',
       isActive: rule.isActive ?? true,
     });
     setShowForm(true);
@@ -100,11 +100,11 @@ export default function AdminLoyaltyEarnRulesPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Points Awarded</label>
-                <input type="number" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.pointsAwarded} onChange={(e) => setForm({ ...form, pointsAwarded: parseInt(e.target.value) || 0 })} />
+                <input type="number" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.pointsAmount} onChange={(e) => setForm({ ...form, pointsAmount: parseInt(e.target.value) || 0 })} />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
-                <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="What triggers this rule" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="What triggers this rule" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="isActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded" />
@@ -140,8 +140,8 @@ export default function AdminLoyaltyEarnRulesPage() {
                 {rules.map((rule) => (
                   <tr key={rule.id} className="hover:bg-hos-bg-tertiary">
                     <td className="px-4 py-3 font-medium text-hos-text-secondary">{rule.action}</td>
-                    <td className="px-4 py-3">{rule.pointsAwarded}</td>
-                    <td className="px-4 py-3 text-hos-text-secondary">{rule.description || '—'}</td>
+                    <td className="px-4 py-3">{rule.pointsAmount ?? rule.pointsAwarded}</td>
+                    <td className="px-4 py-3 text-hos-text-secondary">{rule.name ?? rule.description ?? '—'}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${rule.isActive !== false ? 'bg-green-500/15 text-green-400' : 'bg-hos-bg-tertiary text-hos-text-secondary'}`}>
                         {rule.isActive !== false ? 'Active' : 'Inactive'}
