@@ -41,6 +41,10 @@ import { Response } from 'express';
 import { existsSync, mkdirSync } from 'fs';
 import { StorageProvider } from '../storage/storage.service';
 import { BadRequestException } from '@nestjs/common';
+import {
+  parseUploadRelativePath,
+  sanitizeUploadFolder,
+} from '../common/utils/sanitize-upload-folder';
 
 const ALLOWED_FILE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf'];
 /** Must match uploads.service.ts and storefront copy (seller product images: up to 10MB each). */
@@ -104,14 +108,18 @@ function createStorage() {
   return diskStorage({
     destination: (req, file, cb) => {
       const folder = (req.body?.folder as string) || 'uploads';
-      const safeFolder = folder.replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 50) || 'uploads';
-      const destPath = join(uploadBasePath, safeFolder);
+      try {
+        const safeFolder = sanitizeUploadFolder(folder);
+        const destPath = join(uploadBasePath, ...safeFolder.split('/'));
 
-      if (!existsSync(destPath)) {
-        mkdirSync(destPath, { recursive: true });
+        if (!existsSync(destPath)) {
+          mkdirSync(destPath, { recursive: true });
+        }
+
+        cb(null, destPath);
+      } catch (err) {
+        cb(err as Error, '');
       }
-
-      cb(null, destPath);
     },
     filename: (req, file, cb) => {
       let ext = extname(file.originalname || '').toLowerCase();
@@ -348,47 +356,6 @@ export class UploadsController {
     };
   }
 
-  @Public()
-  @Get(':folder/:filename')
-  @ApiOperation({
-    summary: 'Serve uploaded file',
-    description: 'Serves an uploaded file. Public endpoint, no authentication required.',
-  })
-  @ApiParam({ name: 'folder', description: 'Folder name', type: String })
-  @ApiParam({ name: 'filename', description: 'File name', type: String })
-  @SwaggerApiResponse({ status: 200, description: 'File served successfully', type: 'file' })
-  @SwaggerApiResponse({ status: 404, description: 'File not found' })
-  async serveFile(
-    @Param('folder') folder: string,
-    @Param('filename') filename: string,
-    @Res() res: Response,
-  ): Promise<void> {
-    // Prevent path traversal attacks
-    if (
-      folder.includes('..') ||
-      folder.startsWith('/') ||
-      filename.includes('..') ||
-      filename.includes('/')
-    ) {
-      throw new NotFoundException('File not found');
-    }
-
-    try {
-      const filePath = this.uploadsService.getFileForServing(folder, filename);
-
-      // Set caching headers (1 year for images)
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      res.setHeader('Content-Type', this.getContentType(filename));
-
-      res.sendFile(filePath);
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new NotFoundException('File not found');
-    }
-  }
-
   @Get('cloudinary/signature')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -421,6 +388,36 @@ export class UploadsController {
       data: signature,
       message: 'Upload signature retrieved successfully',
     };
+  }
+
+  @Public()
+  @Get('*')
+  @ApiOperation({
+    summary: 'Serve uploaded file',
+    description: 'Serves an uploaded file. Supports nested folder paths. Public endpoint.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'File served successfully', type: 'file' })
+  @SwaggerApiResponse({ status: 404, description: 'File not found' })
+  async serveFile(@Param() params: Record<string, string>, @Res() res: Response): Promise<void> {
+    const relativePath = params['0'];
+    if (!relativePath || relativePath.includes('..')) {
+      throw new NotFoundException('File not found');
+    }
+
+    try {
+      const { folder, filename } = parseUploadRelativePath(relativePath);
+      const filePath = this.uploadsService.getFileForServing(folder, filename);
+
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('Content-Type', this.getContentType(filename));
+
+      res.sendFile(filePath);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new NotFoundException('File not found');
+    }
   }
 
   @Delete(':url')

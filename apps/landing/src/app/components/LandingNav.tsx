@@ -14,6 +14,7 @@ const LINKS: { key: LandingNavKey; href: string; label: string }[] = [
   { key: 'home', href: '/', label: 'Home' },
   { key: 'universes', href: '/universes', label: 'Universes' },
   { key: 'experience', href: '/the-experience', label: 'The Experience' },
+  { key: 'gallery', href: '/gallery', label: 'Gallery' },
   { key: 'blog', href: '/blog', label: 'Blog' },
   { key: 'register', href: LANDING_REGISTER_PATH, label: 'Register' },
 ];

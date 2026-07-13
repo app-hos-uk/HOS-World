@@ -3,9 +3,13 @@ import { LandingShell } from './components/LandingShell';
 import { LandingFooter } from './components/LandingFooter';
 import { LandingStructuredData } from './components/LandingStructuredData';
 import { Ticker } from './components/Ticker';
+import { GalleryAlbumGrid } from './components/GalleryAlbumGrid';
 import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from './lib/constants';
+import { fetchGalleryAlbums } from './lib/galleryApi';
 
-export default function LandingHomePage() {
+export default async function LandingHomePage() {
+  const galleryAlbums = await fetchGalleryAlbums();
+  const featuredAlbums = galleryAlbums.slice(0, 3);
   return (
     <LandingShell nav="home" mainId="pg-home">
       <LandingStructuredData />
@@ -149,6 +153,24 @@ export default function LandingHomePage() {
         </div>
 
         <Ticker reverse />
+
+        {featuredAlbums.length > 0 && (
+          <section className="gallery-home-section">
+            <div className="gallery-home-header rv">
+              <p className="eyebrow">The Chronicle</p>
+              <h2 className="sec-h2">Event Gallery</h2>
+              <p className="sec-sub">
+                Relive launches, gatherings, and celebrations from the House of Spells universe.
+              </p>
+            </div>
+            <GalleryAlbumGrid albums={featuredAlbums} />
+            <div className="gallery-home-cta rv">
+              <Link href="/gallery" className="btn-p">
+                View All Events
+              </Link>
+            </div>
+          </section>
+        )}
 
         <div style={{ height: 60 }} />
         <LandingFooter />

@@ -4050,6 +4050,109 @@ export class ApiClient {
     });
   }
 
+  // Gallery (event photo albums)
+  async getGalleryAlbums(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/gallery/albums');
+  }
+
+  async getGalleryAlbum(slug: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/gallery/albums/${slug}`);
+  }
+
+  async getAdminGalleryAlbums(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/gallery/admin/albums');
+  }
+
+  async getAdminGalleryAlbum(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/gallery/admin/albums/${id}`);
+  }
+
+  async createGalleryAlbum(data: {
+    title: string;
+    description?: string;
+    eventDate?: string;
+    location?: string;
+    countryCode?: string;
+    outletSlug?: string;
+    coverUrl?: string;
+    order?: number;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/gallery/albums', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateGalleryAlbum(
+    id: string,
+    data: {
+      title?: string;
+      description?: string;
+      eventDate?: string;
+      location?: string;
+      countryCode?: string;
+      outletSlug?: string;
+      coverUrl?: string;
+      order?: number;
+      isActive?: boolean;
+    },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/gallery/albums/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteGalleryAlbum(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/gallery/albums/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async addGalleryImage(
+    albumId: string,
+    data: { url: string; alt?: string; caption?: string; order?: number },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/gallery/albums/${albumId}/images`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async addGalleryImagesBulk(
+    albumId: string,
+    images: Array<{ url: string; alt?: string; caption?: string; order?: number }>,
+  ): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>(`/gallery/albums/${albumId}/images/bulk`, {
+      method: 'POST',
+      body: JSON.stringify(images),
+    });
+  }
+
+  async updateGalleryImage(
+    id: string,
+    data: { url?: string; alt?: string; caption?: string; order?: number },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/gallery/images/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteGalleryImage(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/gallery/images/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async reorderGalleryImages(albumId: string, orderedIds: string[]): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/gallery/albums/${albumId}/images/reorder`, {
+      method: 'PUT',
+      body: JSON.stringify({ orderedIds }),
+    });
+  }
+
   // Testimonials (storefront customer quotes)
   async getTestimonials(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/testimonials');

@@ -162,6 +162,7 @@ const menuItems: MenuItem[] = [
       { title: 'Navigation', href: '/admin/navigation', icon: '🧭' },
       { title: 'Universes', href: '/admin/universes', icon: '🌌' },
       { title: 'Testimonials', href: '/admin/testimonials', icon: '💬' },
+      { title: 'Gallery', href: '/admin/gallery', icon: '📸' },
       { title: 'Blog', href: '/admin/blog', icon: '📝' },
       { title: 'Stores', href: '/admin/stores', icon: '🏬' },
       { title: 'Media Library', href: '/admin/media', icon: '🖼️' },

@@ -106,6 +106,7 @@ import { DepartmentsModule } from './departments/departments.module';
 import { NavigationModule } from './navigation/navigation.module';
 import { UniversesModule } from './universes/universes.module';
 import { TestimonialsModule } from './testimonials/testimonials.module';
+import { GalleryModule } from './gallery/gallery.module';
 import { FeatureFlagsModule } from './config/feature-flags.module';
 import { validateEnvironmentVariables } from './config/env.validation';
 import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
@@ -213,6 +214,7 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     UniversesModule,
     // Testimonials (storefront customer quotes)
     TestimonialsModule,
+    GalleryModule,
     // Invoices
     InvoicesModule,
     // Templates

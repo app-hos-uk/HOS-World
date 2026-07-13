@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { sanitizeUploadFolder } from '../common/utils/sanitize-upload-folder';
 import * as fs from 'fs/promises';
 import { v2 as cloudinary } from 'cloudinary';
 import {
@@ -114,7 +115,7 @@ export class StorageService {
       throw new BadRequestException('No file provided');
     }
 
-    const safeFolder = this.sanitizeFolder(folder);
+    const safeFolder = sanitizeUploadFolder(folder);
 
     switch (this.provider) {
       case StorageProvider.S3:
@@ -126,11 +127,6 @@ export class StorageService {
       default:
         return this.uploadLocal(file, safeFolder);
     }
-  }
-
-  private sanitizeFolder(folder: string): string {
-    const safe = (folder || 'uploads').replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 50);
-    return safe || 'uploads';
   }
 
   async uploadMultipleFiles(
@@ -326,6 +322,8 @@ export class StorageService {
       throw new BadRequestException('Cloudinary is not configured as the storage provider');
     }
 
+    const safeFolder = sanitizeUploadFolder(folder);
+
     const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME');
     const apiKey = this.configService.get<string>('CLOUDINARY_API_KEY');
     const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET');
@@ -337,7 +335,7 @@ export class StorageService {
     const timestamp = options?.timestamp || Math.round(new Date().getTime() / 1000);
     const params: Record<string, any> = {
       timestamp,
-      folder,
+      folder: safeFolder,
     };
 
     if (options?.eager) {
@@ -357,7 +355,7 @@ export class StorageService {
       timestamp,
       apiKey,
       cloudName,
-      folder,
+      folder: safeFolder,
     };
   }
 

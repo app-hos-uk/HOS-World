@@ -10,6 +10,11 @@ import { existsSync, unlinkSync, mkdirSync, readFileSync } from 'fs';
 import { join, parse as parsePath, resolve } from 'path';
 import { randomUUID } from 'crypto';
 import { QueueService, JobType } from '../queue/queue.service';
+import {
+  parseUploadRelativePath,
+  resolveUploadFilePath,
+  sanitizeUploadFolder,
+} from '../common/utils/sanitize-upload-folder';
 
 let sharp: any;
 try {
@@ -104,15 +109,14 @@ export class UploadsService implements OnModuleInit {
       return { original: imageUrl };
     }
 
-    const urlMatch = imageUrl.match(/\/uploads\/([^/]+)\/([^/]+)$/);
+    const urlMatch = imageUrl.match(/\/uploads\/(.+)$/);
     if (!urlMatch) {
       this.logger.warn(`Cannot parse image URL for processing: ${imageUrl}`);
       return { original: imageUrl };
     }
 
-    const [, folder, filename] = urlMatch;
-    const safeFolder = this.sanitizeFolder(folder);
-    const filePath = join(this.uploadBasePath, safeFolder, filename);
+    const { folder, filename } = parseUploadRelativePath(urlMatch[1]);
+    const filePath = resolveUploadFilePath(this.uploadBasePath, folder, filename);
 
     if (!existsSync(filePath)) {
       this.logger.warn(`Source file not found for processing: ${filePath}`);
@@ -121,11 +125,12 @@ export class UploadsService implements OnModuleInit {
 
     const { name: baseName, ext } = parsePath(filename);
     const result: ImageSizes = { original: imageUrl };
+    const safeFolder = sanitizeUploadFolder(folder);
 
     for (const config of IMAGE_SIZE_CONFIGS) {
       try {
         const resizedFilename = `${baseName}${config.suffix}${ext}`;
-        const outputPath = join(this.uploadBasePath, safeFolder, resizedFilename);
+        const outputPath = resolveUploadFilePath(this.uploadBasePath, safeFolder, resizedFilename);
 
         await sharp(filePath)
           .resize(config.width, config.height, { fit: 'inside', withoutEnlargement: true })
@@ -143,41 +148,22 @@ export class UploadsService implements OnModuleInit {
   }
 
   /**
-   * Sanitize folder name to prevent path traversal
-   */
-  private sanitizeFolder(folder: string): string {
-    // Remove path traversal attempts, keep only alphanumeric, dash, underscore
-    return folder.replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 50) || 'uploads';
-  }
-
-  /**
-   * Sanitize filename and generate UUID-based name
-   */
-  private sanitizeFilename(originalname: string): string {
-    // Get file extension
-    const ext = originalname.substring(originalname.lastIndexOf('.')).toLowerCase();
-    // Generate UUID filename
-    return `${randomUUID()}${ext}`;
-  }
-
-  /**
-   * Get full file path on disk
+   * Get full file path on disk (creates nested directories as needed).
    */
   private getFilePath(folder: string, filename: string): string {
-    const safeFolder = this.sanitizeFolder(folder);
-    const fullPath = join(this.uploadBasePath, safeFolder);
-    // Ensure directory exists
-    if (!existsSync(fullPath)) {
-      mkdirSync(fullPath, { recursive: true });
+    const safeFolder = sanitizeUploadFolder(folder);
+    const dirPath = join(this.uploadBasePath, ...safeFolder.split('/'));
+    if (!existsSync(dirPath)) {
+      mkdirSync(dirPath, { recursive: true });
     }
-    return join(fullPath, filename);
+    return join(dirPath, filename);
   }
 
   /**
    * Get public URL for a file
    */
   private getPublicUrl(folder: string, filename: string): string {
-    const safeFolder = this.sanitizeFolder(folder);
+    const safeFolder = sanitizeUploadFolder(folder);
     return `${this.apiBaseUrl}/uploads/${safeFolder}/${filename}`;
   }
 
@@ -258,7 +244,7 @@ export class UploadsService implements OnModuleInit {
     }
 
     // Sanitize folder - multer already saved the file with UUID filename
-    const safeFolder = this.sanitizeFolder(folder);
+    const safeFolder = sanitizeUploadFolder(folder);
     // Use the filename that multer generated (already UUID-based)
     const savedFilename = file.filename;
 
@@ -304,16 +290,7 @@ export class UploadsService implements OnModuleInit {
    * Get file path for serving
    */
   getFileForServing(folder: string, filename: string): string {
-    // Explicit path traversal prevention
-    if (folder.includes('..') || filename.includes('..')) {
-      throw new BadRequestException('Invalid path');
-    }
-    const safeFolder = this.sanitizeFolder(folder);
-    const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '').substring(0, 255);
-    if (!safeFilename) {
-      throw new BadRequestException('Invalid filename');
-    }
-    const filePath = join(this.uploadBasePath, safeFolder, safeFilename);
+    const filePath = resolveUploadFilePath(this.uploadBasePath, folder, filename);
 
     if (!existsSync(filePath)) {
       throw new NotFoundException('File not found');
@@ -324,14 +301,12 @@ export class UploadsService implements OnModuleInit {
 
   async deleteFile(url: string): Promise<void> {
     try {
-      // Extract folder and filename from URL
-      // URL format: /api/uploads/{folder}/{filename}
-      const urlMatch = url.match(/\/uploads\/([^/]+)\/([^/]+)$/);
+      const urlMatch = url.match(/\/uploads\/(.+)$/);
       if (!urlMatch) {
         throw new BadRequestException('Invalid file URL format');
       }
 
-      const [, folder, filename] = urlMatch;
+      const { folder, filename } = parseUploadRelativePath(urlMatch[1]);
       const filePath = this.getFilePath(folder, filename);
 
       if (existsSync(filePath)) {

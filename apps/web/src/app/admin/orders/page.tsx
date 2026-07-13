@@ -53,7 +53,9 @@ interface Order {
   subtotal?: number;
   tax?: number;
   shipping?: number;
+  shippingAmount?: number;
   discount?: number;
+  discountAmount?: number;
   currency?: string;
   status: string;
   paymentStatus?: string;
@@ -841,7 +843,7 @@ export default function AdminOrdersPage() {
                           <span>${Number(selectedOrder.tax).toFixed(2)}</span>
                         </div>
                       )}
-                      {(selectedOrder.discountAmount ?? selectedOrder.discount) > 0 && (
+                      {(selectedOrder.discountAmount ?? selectedOrder.discount ?? 0) > 0 && (
                         <div className="flex justify-between text-green-400">
                           <span>Discount:</span>
                           <span>-${Number(selectedOrder.discountAmount ?? selectedOrder.discount).toFixed(2)}</span>

@@ -4382,3 +4382,38 @@ model Universe {
   @@index([isActive, order])
   @@map("universes")
 }
+
+model GalleryAlbum {
+  id          String         @id @default(uuid())
+  title       String
+  slug        String         @unique
+  description String?        @db.Text
+  eventDate   DateTime?
+  location    String?
+  countryCode String?        // ISO-style region slug, e.g. us, uk, ae
+  outletSlug  String?        // Outlet/venue slug, e.g. times-square, stratford
+  coverUrl    String?
+  order       Int            @default(0)
+  isActive    Boolean        @default(true)
+  images      GalleryImage[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([isActive, order])
+  @@index([countryCode, outletSlug])
+  @@map("gallery_albums")
+}
+
+model GalleryImage {
+  id        String       @id @default(uuid())
+  albumId   String
+  album     GalleryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  caption   String?
+  order     Int          @default(0)
+  createdAt DateTime     @default(now())
+
+  @@index([albumId, order])
+  @@map("gallery_images")
+}

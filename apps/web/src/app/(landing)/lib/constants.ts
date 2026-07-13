@@ -24,4 +24,4 @@ export const FLOAT_EMOJIS = [
 export const REG_GOOGLE_SCRIPT_URL =
   'https://script.google.com/macros/s/AKfycbx51QGCWyhj7YepAjv1o1YF5d_1zJqJg1E-yoirSQgVKrP3vwazgcntXARn0kFQdLeW/exec';
 
-export type LandingNavKey = 'home' | 'universes' | 'experience' | 'register';
+export type LandingNavKey = 'home' | 'universes' | 'experience' | 'gallery' | 'register';
