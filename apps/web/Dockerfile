@@ -67,9 +67,11 @@ ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 
 # Standalone output bundles a minimal node_modules + server.js.
 # Static assets and public/ are not included by the tracer — copy them in.
-COPY --from=base /app/apps/web/.next/standalone ./
-COPY --from=base /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=base /app/apps/web/public ./apps/web/public
+# chown so the non-root runtime user can write Next.js cache at runtime.
+COPY --from=base --chown=node:node /app/apps/web/.next/standalone ./
+COPY --from=base --chown=node:node /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=base --chown=node:node /app/apps/web/public ./apps/web/public
+RUN mkdir -p apps/web/.next/cache && chown -R node:node apps/web/.next
 
 USER node
 EXPOSE 3000
