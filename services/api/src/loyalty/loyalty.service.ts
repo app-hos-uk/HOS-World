@@ -591,32 +591,40 @@ export class LoyaltyService implements OnModuleInit {
   }
 
   async adminDashboard() {
-    const [members, tiers, issued, redeemed] = await Promise.all([
-      this.prisma.loyaltyMembership.count(),
-      this.prisma.loyaltyTier.findMany({
-        where: { isActive: true },
-        include: { _count: { select: { members: true } } },
-      }),
-      this.prisma.loyaltyTransaction.aggregate({
-        where: { type: 'EARN' },
-        _sum: { points: true },
-      }),
-      this.prisma.loyaltyTransaction.aggregate({
-        where: { type: 'BURN' },
-        _sum: { points: true },
-      }),
-    ]);
+    const [members, tiers, issued, redeemed, earnRuleCount, redemptionOptionCount, campaignCount, balanceAgg] =
+      await Promise.all([
+        this.prisma.loyaltyMembership.count(),
+        this.prisma.loyaltyTier.findMany({
+          where: { isActive: true },
+          include: { _count: { select: { members: true } } },
+        }),
+        this.prisma.loyaltyTransaction.aggregate({
+          where: { type: 'EARN' },
+          _sum: { points: true },
+        }),
+        this.prisma.loyaltyTransaction.aggregate({
+          where: { type: 'BURN' },
+          _sum: { points: true },
+        }),
+        this.prisma.loyaltyEarnRule.count({ where: { isActive: true } }),
+        this.prisma.loyaltyRedemptionOption.count({ where: { isActive: true } }),
+        this.prisma.loyaltyBonusCampaign.count({ where: { isActive: true } }),
+        this.prisma.loyaltyMembership.aggregate({ _sum: { currentBalance: true } }),
+      ]);
 
     const redeemValue = Number(this.config.get('LOYALTY_DEFAULT_REDEEM_VALUE', 0.01));
-    const liability =
-      (await this.prisma.loyaltyMembership.aggregate({ _sum: { currentBalance: true } }))._sum
-        .currentBalance || 0;
+    const liability = balanceAgg._sum.currentBalance || 0;
 
     return {
       totalMembers: members,
+      tierCount: tiers.length,
       tierDistribution: tiers.map((t) => ({ tier: t.name, count: t._count.members })),
+      earnRuleCount,
+      redemptionOptionCount,
+      campaignCount,
       pointsIssued: issued._sum.points || 0,
       pointsRedeemed: Math.abs(redeemed._sum.points || 0),
+      totalPointsInCirculation: liability,
       programmeLiabilityEstimate: liability * redeemValue,
     };
   }

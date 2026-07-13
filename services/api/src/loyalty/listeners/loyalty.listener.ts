@@ -85,8 +85,16 @@ export class LoyaltyListener {
       if (!referral || referral.status !== 'PENDING') return;
       if (referral.referrerId === refereeMembership.id) return;
 
-      const refereePoints = this.config.get<number>('LOYALTY_REFERRAL_REFEREE_BONUS', 100);
-      const referrerPoints = this.config.get<number>('LOYALTY_REFERRAL_REFERRER_BONUS', 200);
+      const [refereeRule, referrerRule] = await Promise.all([
+        this.prisma.loyaltyEarnRule.findUnique({ where: { action: 'REFERRAL_REFEREE' } }),
+        this.prisma.loyaltyEarnRule.findUnique({ where: { action: 'REFERRAL_REFERRER' } }),
+      ]);
+      const refereePoints = (refereeRule?.isActive && refereeRule.pointsAmount != null)
+        ? refereeRule.pointsAmount
+        : this.config.get<number>('LOYALTY_REFERRAL_REFEREE_BONUS', 100);
+      const referrerPoints = (referrerRule?.isActive && referrerRule.pointsAmount != null)
+        ? referrerRule.pointsAmount
+        : this.config.get<number>('LOYALTY_REFERRAL_REFERRER_BONUS', 200);
 
       await this.prisma.$transaction(async (tx) => {
         // Only the first successful claim should award points; concurrent

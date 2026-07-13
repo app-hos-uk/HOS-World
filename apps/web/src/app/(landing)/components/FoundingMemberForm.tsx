@@ -14,6 +14,7 @@ type RegistrationError =
   | 'registration_closed'
   | 'invalid_email'
   | 'invalid_input'
+  | 'rate_limited'
   | 'registration_failed';
 
 async function postRegistrationPayload(data: Record<string, unknown>) {
@@ -48,6 +49,9 @@ async function postRegistrationPayload(data: Record<string, unknown>) {
   }
   if (res.status === 409) {
     throw new Error('duplicate_email' satisfies RegistrationError);
+  }
+  if (res.status === 429) {
+    throw new Error('rate_limited' satisfies RegistrationError);
   }
   if (res.status === 400 || res.status === 422) {
     throw new Error('invalid_input' satisfies RegistrationError);
@@ -204,6 +208,7 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
         registration_closed: 'Founding member registration is currently unavailable.',
         invalid_email: 'Please enter a valid email address.',
         invalid_input: 'Please check your details and try again.',
+        rate_limited: 'Too many attempts. Please wait a minute and try again.',
         registration_failed: 'Something went wrong. Please try again or contact us at House Of Spells.',
       };
       setHint(messages[code] || messages.registration_failed);

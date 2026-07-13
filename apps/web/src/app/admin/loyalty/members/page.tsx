@@ -128,8 +128,8 @@ export default function AdminLoyaltyMembersPage() {
                         {m.tier?.name || 'None'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-hos-text-secondary">{Number(m.pointsBalance ?? 0).toLocaleString()}</td>
-                    <td className="px-4 py-3 text-right text-hos-text-secondary">{Number(m.lifetimePoints ?? 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-hos-text-secondary">{Number(m.currentBalance ?? m.pointsBalance ?? 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right text-hos-text-secondary">{Number(m.totalPointsEarned ?? m.lifetimePoints ?? 0).toLocaleString()}</td>
                     <td className="px-4 py-3 text-hos-text-muted text-xs">{m.enrolledAt ? new Date(m.enrolledAt).toLocaleDateString() : '—'}</td>
                     <td className="px-4 py-3 text-right">
                       <button

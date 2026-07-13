@@ -40,7 +40,7 @@ export class CreateFoundingMemberDto {
   @ApiPropertyOptional({ example: 'Anime, K-Drama' })
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(2000)
   otherFranchises?: string;
 
   @ApiPropertyOptional({ example: 'social_media' })
