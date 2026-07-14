@@ -71,11 +71,13 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [hint, setHint] = useState('Select at least one universe ↑');
   const [hintColor, setHintColor] = useState<string>('var(--gold-d)');
+  const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<{ name: string; fandoms: string[]; other: string } | null>(null);
   const [formStartedAt] = useState(() => Date.now());
 
   const syncHint = useCallback((size: number) => {
+    setFormError('');
     if (size > 0) {
       setHint(`${size} universe${size > 1 ? 's' : ''} selected`);
       setHintColor('var(--gold)');
@@ -136,15 +138,21 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
     });
   };
 
+  const showError = (msg: string) => {
+    setFormError(msg);
+    setHint(msg);
+    setHintColor('#c75c5c');
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setFormError('');
     const form = e.currentTarget;
-    const hp = form.querySelector<HTMLInputElement>('#websiteField');
+    const hp = form.querySelector<HTMLInputElement>('#hpField');
     if (hp && hp.value.trim() !== '') return;
 
     if (selected.size === 0) {
-      setHint('Select at least one universe to continue');
-      setHintColor('#c75c5c');
+      showError('Select at least one universe to continue');
       document.querySelector('.reg-left')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       return;
     }
@@ -154,8 +162,7 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
     if (selected.has(OTHER_UNIVERSE_NAME)) {
       otherFranchises = (otherTa?.value || '').trim();
       if (!otherFranchises) {
-        setHint('Please name the franchises you are into (required with Other Universe).');
-        setHintColor('#c75c5c');
+        showError('Please name the franchises you are into (required with Other Universe).');
         document.getElementById('otherFranchisesWrap')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         otherTa?.focus();
         return;
@@ -164,8 +171,7 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
 
     const nowMs = Date.now();
     if (nowMs - formStartedAt < REG_MIN_HUMAN_FILL_MS) {
-      setHint('Please review details and submit again.');
-      setHintColor('#c75c5c');
+      showError('Please review your details and try again.');
       return;
     }
 
@@ -173,8 +179,7 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
     const firstName = (form.querySelector<HTMLInputElement>('#fn')?.value || '').trim();
     const email = (form.querySelector<HTMLInputElement>('#em')?.value || '').trim();
     if (!EMAIL_RE.test(email)) {
-      setHint('Please enter a valid email address.');
-      setHintColor('#c75c5c');
+      showError('Please enter a valid email address.');
       form.querySelector<HTMLInputElement>('#em')?.focus();
       return;
     }
@@ -211,8 +216,7 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
         rate_limited: 'Too many attempts. Please wait a minute and try again.',
         registration_failed: 'Something went wrong. Please try again or contact us at House Of Spells.',
       };
-      setHint(messages[code] || messages.registration_failed);
-      setHintColor('#c75c5c');
+      showError(messages[code] || messages.registration_failed);
       setSubmitting(false);
     }
   };
@@ -291,8 +295,8 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
             </div>
             <form id="regForm" onSubmit={handleSubmit}>
               <div aria-hidden="true" style={{ position: 'absolute', left: -10000, top: 'auto', width: 1, height: 1, overflow: 'hidden' }}>
-                <label htmlFor="websiteField">Leave this field empty</label>
-                <input type="text" id="websiteField" name="website" tabIndex={-1} autoComplete="off" />
+                <label htmlFor="hpField">Leave this field empty</label>
+                <input type="text" id="hpField" name="confirm_fax" tabIndex={-1} autoComplete="nope" />
               </div>
               <div className="f-row">
                 <div className="f-g">
@@ -368,6 +372,11 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
                   required={otherSelected}
                 />
               </div>
+              {formError && (
+                <p className="form-error" role="alert" style={{ color: '#c75c5c', fontSize: '0.95rem', margin: '0 0 0.75rem', textAlign: 'center' }}>
+                  {formError}
+                </p>
+              )}
               <button type="submit" className="sub-btn" disabled={submitting}>
                 {submitting ? 'Sending...' : 'Claim My Place'}
               </button>
