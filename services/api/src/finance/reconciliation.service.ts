@@ -54,19 +54,31 @@ export class ReconciliationService {
           const stripe = this.paymentProviderService.getProvider('stripe');
           const stripeInstance = (stripe as any).getStripeInstance?.();
           if (stripeInstance) {
-            const charges = await stripeInstance.charges.list({
-              created: {
-                gte: Math.floor(params.periodStart.getTime() / 1000),
-                lt: Math.floor(params.periodEnd.getTime() / 1000),
-              },
-              limit: 100,
-            });
-            stripeCharges = charges.data.map((c: any) => ({
-              id: c.id,
-              amount: c.amount / 100,
-              currency: c.currency.toUpperCase(),
-              payment_intent: c.payment_intent,
-            }));
+            const periodStart = Math.floor(params.periodStart.getTime() / 1000);
+            const periodEnd = Math.floor(params.periodEnd.getTime() / 1000);
+            let startingAfter: string | undefined;
+            let hasMore = true;
+            while (hasMore) {
+              const charges = await stripeInstance.charges.list({
+                created: { gte: periodStart, lt: periodEnd },
+                limit: 100,
+                ...(startingAfter ? { starting_after: startingAfter } : {}),
+              });
+              stripeCharges.push(
+                ...charges.data.map((c: any) => ({
+                  id: c.id,
+                  amount: c.amount / 100,
+                  currency: c.currency.toUpperCase(),
+                  payment_intent: c.payment_intent,
+                })),
+              );
+              hasMore = charges.has_more;
+              if (charges.data.length > 0) {
+                startingAfter = charges.data[charges.data.length - 1].id;
+              } else {
+                hasMore = false;
+              }
+            }
           }
         } catch (err: any) {
           this.logger.warn(`Could not fetch Stripe charges: ${err.message}`);
@@ -102,8 +114,9 @@ export class ReconciliationService {
           });
         } else {
           const internalAmt = Number(internal.amount);
+          const internalCurrency = String(internal.currency || 'USD').toUpperCase();
           const diff = Math.abs(internalAmt - charge.amount);
-          if (diff < 0.02) {
+          if (diff < 0.02 && internalCurrency === charge.currency) {
             matched++;
             items.push({
               runId: run.id,

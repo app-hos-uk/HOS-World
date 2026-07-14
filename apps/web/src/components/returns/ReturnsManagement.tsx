@@ -127,7 +127,7 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold">Return Requests</h1>
-          <p className="text-sm text-hos-text-muted mt-1">
+          <p className="text-sm text-hos-text-secondary mt-1">
             {mode === 'admin'
               ? 'Review and process customer return requests across the marketplace'
               : 'Manage return requests for your orders'}

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 export default function AdminAmbassadorDashboardPage() {
@@ -21,8 +20,7 @@ export default function AdminAmbassadorDashboardPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-4xl mx-auto">
+              <div className="p-6 max-w-4xl mx-auto">
           <Link href="/admin/ambassadors" className="text-sm text-violet-400 mb-4 inline-block">
             ← All ambassadors
           </Link>
@@ -56,7 +54,6 @@ export default function AdminAmbassadorDashboardPage() {
             <p className="text-hos-text-muted">No data available.</p>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

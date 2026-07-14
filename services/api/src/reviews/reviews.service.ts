@@ -95,6 +95,7 @@ export class ReviewsService {
         rating: createReviewDto.rating,
         title: createReviewDto.title,
         comment: createReviewDto.comment,
+        images: createReviewDto.images ?? [],
         verified: !!hasPurchased,
         status: 'PENDING',
       },

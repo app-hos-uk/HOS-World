@@ -163,7 +163,9 @@ export class LoyaltyListener {
     if (!review || review.status !== 'APPROVED') return 0;
 
     const text = `${review.comment ?? ''} ${review.title ?? ''}`;
-    const isPhoto = PHOTO_IN_REVIEW.test(text);
+    const isPhoto =
+      (Array.isArray((review as any).images) && (review as any).images.length > 0) ||
+      PHOTO_IN_REVIEW.test(text);
     const action = isPhoto ? 'PHOTO_REVIEW' : 'REVIEW';
 
     const dup = await this.prisma.loyaltyTransaction.findFirst({

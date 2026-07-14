@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { CategorySelector } from '@/components/taxonomy/CategorySelector';
@@ -300,8 +299,7 @@ export default function ProductCreationPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'CATALOG']} showAccessDenied={true}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-hos-text-secondary">Create Product</h1>
@@ -854,7 +852,6 @@ export default function ProductCreationPage() {
             </form>
           </div>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

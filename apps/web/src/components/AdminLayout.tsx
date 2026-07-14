@@ -77,6 +77,7 @@ const menuItems: MenuItem[] = [
       { title: 'Product Submissions', href: '/admin/submissions', icon: '📝' },
       { title: 'Price Management', href: '/admin/products/pricing', icon: '💰' },
       { title: 'Catalog Queue', href: '/admin/catalog', icon: '📚' },
+      { title: 'Publishing', href: '/admin/publishing', icon: '🚀' },
       { title: 'Product Reviews', href: '/admin/reviews', icon: '⭐' },
       { title: 'Departments', href: '/admin/departments', icon: '🏬' },
       { title: 'Fandoms', href: '/admin/categories', icon: '📁' },
@@ -163,10 +164,9 @@ const menuItems: MenuItem[] = [
       { title: 'Universes', href: '/admin/universes', icon: '🌌' },
       { title: 'Testimonials', href: '/admin/testimonials', icon: '💬' },
       { title: 'Gallery', href: '/admin/gallery', icon: '📸' },
-      { title: 'Blog', href: '/admin/blog', icon: '📝' },
+      { title: 'Blog', href: '/cms/blog', icon: '📝' },
       { title: 'Stores', href: '/admin/stores', icon: '🏬' },
       { title: 'Media Library', href: '/admin/media', icon: '🖼️' },
-      { title: 'Publishing', href: '/admin/publishing', icon: '🚀' },
       { title: 'Notification Templates', href: '/admin/templates', icon: '📋' },
     ],
   },
@@ -267,6 +267,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const { logout, user } = useAuth();
   const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const navScrollRef = useRef<HTMLElement | null>(null);
+  const SIDEBAR_SCROLL_KEY = 'admin-sidebar-scroll';
 
   const visibleMenuItems = useMemo((): MenuItem[] => {
     const role = String(user?.role ?? '').toUpperCase();
@@ -283,6 +285,28 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         clearTimeout(blurTimeoutRef.current);
       }
     };
+  }, []);
+
+  // Restore sidebar scroll position across navigations
+  useEffect(() => {
+    const nav = navScrollRef.current;
+    if (!nav) return;
+    try {
+      const saved = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
+      if (saved) nav.scrollTop = Number(saved) || 0;
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  const handleNavScroll = useCallback(() => {
+    const nav = navScrollRef.current;
+    if (!nav) return;
+    try {
+      sessionStorage.setItem(SIDEBAR_SCROLL_KEY, String(nav.scrollTop));
+    } catch {
+      // ignore storage errors
+    }
   }, []);
 
   // Reset search state on navigation
@@ -477,7 +501,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto px-2 py-4">
+          <nav ref={navScrollRef} onScroll={handleNavScroll} className="flex-1 overflow-y-auto px-2 py-4">
             <ul className="space-y-1">
               {visibleMenuItems.map((item, index) => {
                 const hasChildren = item.children && item.children.length > 0;

@@ -69,6 +69,55 @@ export class ApiClient {
     }
   }
 
+  /** Authenticated blob download with cookie credentials and 401 refresh retry. */
+  private async fetchBlobWithAuth(url: string, timeoutMs: number): Promise<Blob> {
+    const doFetch = async () => {
+      const token = this.getToken();
+      const headers: Record<string, string> = {
+        'X-Requested-With': 'XMLHttpRequest',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      return this.fetchWithTimeout(
+        url,
+        {
+          method: 'GET',
+          headers,
+          credentials: 'include',
+        },
+        timeoutMs,
+      );
+    };
+
+    let response = await doFetch();
+
+    if (response.status === 401) {
+      const refreshed = await this.tryRefreshToken();
+      if (refreshed) {
+        response = await doFetch();
+      }
+    }
+
+    if (!response.ok) {
+      let errorMessage = `Export failed: ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        const msg = (errorData as any)?.message;
+        errorMessage = Array.isArray(msg) ? msg.join(', ') : msg || errorMessage;
+      } catch {
+        // ignore non-JSON error bodies
+      }
+      if (response.status === 401 && !this.unauthorizedHandled) {
+        this.unauthorizedHandled = true;
+        this.onUnauthorized();
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.blob();
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -1671,11 +1720,12 @@ export class ApiClient {
   }
 
   // Orders endpoints
-  async getOrders(params?: { page?: number; limit?: number; status?: string }): Promise<ApiResponse<Order[]>> {
+  async getOrders(params?: { page?: number; limit?: number; status?: string; sellerId?: string }): Promise<ApiResponse<Order[]>> {
     const search = new URLSearchParams();
     if (params?.page != null) search.append('page', String(params.page));
     if (params?.limit != null) search.append('limit', String(params.limit));
     if (params?.status) search.append('status', params.status);
+    if (params?.sellerId) search.append('sellerId', params.sellerId);
     const query = search.toString();
     return this.request<ApiResponse<Order[]>>(`/orders${query ? `?${query}` : ''}`);
   }
@@ -3214,9 +3264,23 @@ export class ApiClient {
   }
 
   // Finance - Payouts
-  async getPayouts(sellerId?: string): Promise<ApiResponse<any[]>> {
-    const url = sellerId ? `/finance/payouts?sellerId=${sellerId}` : '/finance/payouts';
-    return this.request<ApiResponse<any[]>>(url);
+  async getPayouts(filters?: {
+    sellerId?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any[]>> {
+    const params = new URLSearchParams();
+    if (filters?.sellerId) params.append('sellerId', filters.sellerId);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.page != null) params.append('page', String(filters.page));
+    if (filters?.limit != null) params.append('limit', String(filters.limit));
+    const query = params.toString();
+    return this.request<ApiResponse<any[]>>(`/finance/payouts${query ? `?${query}` : ''}`);
   }
 
   async schedulePayout(data: any): Promise<ApiResponse<any>> {
@@ -3227,9 +3291,27 @@ export class ApiClient {
   }
 
   // Finance - Refunds
-  async getRefunds(customerId?: string): Promise<ApiResponse<any[]>> {
-    const url = customerId ? `/finance/refunds?customerId=${customerId}` : '/finance/refunds';
-    return this.request<ApiResponse<any[]>>(url);
+  async getRefunds(filters?: {
+    customerId?: string;
+    orderId?: string;
+    returnId?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any[]>> {
+    const params = new URLSearchParams();
+    if (filters?.customerId) params.append('customerId', filters.customerId);
+    if (filters?.orderId) params.append('orderId', filters.orderId);
+    if (filters?.returnId) params.append('returnId', filters.returnId);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.page != null) params.append('page', String(filters.page));
+    if (filters?.limit != null) params.append('limit', String(filters.limit));
+    const query = params.toString();
+    return this.request<ApiResponse<any[]>>(`/finance/refunds${query ? `?${query}` : ''}`);
   }
 
   async processRefund(data: any): Promise<ApiResponse<any>> {
@@ -5580,7 +5662,7 @@ export class ApiClient {
     return { ...res, data: [] };
   }
 
-  async createReview(productId: string, data: { rating: number; title: string; comment: string }): Promise<ApiResponse<any>> {
+  async createReview(productId: string, data: { rating: number; title: string; comment: string; images?: string[] }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/reviews/products/${productId}`, {
       method: 'POST',
       body: JSON.stringify(data),
@@ -5842,30 +5924,10 @@ export class ApiClient {
     }
     const query = queryParams.toString();
 
-    // For file downloads, we need to handle the response as a blob
-    const token = this.getToken();
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
     const baseUrl = this.baseUrl || '';
     const url = `${baseUrl}/analytics/export/${format}?${query}`;
 
-    const response = await this.fetchWithTimeout(
-      url,
-      {
-        method: 'GET',
-        headers,
-      },
-      120000,
-    );
-
-    if (!response.ok) {
-      throw new Error(`Export failed: ${response.statusText}`);
-    }
-
-    return response.blob();
+    return this.fetchBlobWithAuth(url, 120000);
   }
 
   // ============================================================
@@ -6653,10 +6715,11 @@ export class ApiClient {
   }
 
   // ===== Media / Uploads =====
-  async getMediaAssets(page?: number, limit?: number): Promise<ApiResponse<any>> {
+  async getMediaAssets(page?: number, limit?: number, search?: string): Promise<ApiResponse<any>> {
     const params = new URLSearchParams();
     if (page) params.append('page', String(page));
     if (limit) params.append('limit', String(limit));
+    if (search?.trim()) params.append('search', search.trim());
     const qs = params.toString();
     return this.request<ApiResponse<any>>(`/uploads${qs ? `?${qs}` : ''}`, { method: 'GET' });
   }
@@ -6826,19 +6889,7 @@ export class ApiClient {
 
   // ===== Invoices =====
   async downloadInvoice(orderId: string): Promise<Blob> {
-    const token = this.getToken();
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    const response = await this.fetchWithTimeout(
-      `${this.baseUrl}/invoices/order/${orderId}`,
-      {
-        method: 'GET',
-        headers,
-      },
-      60000,
-    );
-    if (!response.ok) throw new Error('Failed to download invoice');
-    return response.blob();
+    return this.fetchBlobWithAuth(`${this.baseUrl}/invoices/order/${orderId}`, 60000);
   }
 
   // ===== Vendor Application =====

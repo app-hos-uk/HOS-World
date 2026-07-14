@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { FileUpload } from '@/components/FileUpload';
@@ -160,8 +159,7 @@ export default function AdminUniversesPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="max-w-6xl mx-auto">
+              <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl font-bold text-hos-text-primary">Universe Management</h1>
@@ -432,7 +430,6 @@ export default function AdminUniversesPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

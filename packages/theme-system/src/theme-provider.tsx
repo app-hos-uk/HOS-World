@@ -36,20 +36,29 @@ export function ThemeProvider({
       return;
     }
 
-    try {
-      const storedThemeId = localStorage.getItem(storageKey);
-      if (storedThemeId) {
-        const storedTheme = defaultThemes[storedThemeId];
-        if (storedTheme) {
-          setThemeState(storedTheme);
+    const loadStoredTheme = async () => {
+      try {
+        const storedThemeId = localStorage.getItem(storageKey);
+        if (storedThemeId) {
+          const storedTheme = defaultThemes[storedThemeId];
+          if (storedTheme) {
+            setThemeState(storedTheme);
+          } else if (loadThemeFromApi) {
+            const apiTheme = await loadThemeFromApi(storedThemeId);
+            if (apiTheme) {
+              setThemeState(apiTheme);
+            }
+          }
         }
+      } catch (error) {
+        console.error('Failed to load theme from storage:', error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to load theme from storage:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [storageKey]);
+    };
+
+    void loadStoredTheme();
+  }, [storageKey, loadThemeFromApi]);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);

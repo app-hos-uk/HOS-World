@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -96,8 +95,7 @@ export default function PublishingDashboardPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
-      <AdminLayout>
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">Publishing Dashboard</h1>
             <p className="text-hos-text-secondary mt-1">
@@ -269,7 +267,6 @@ export default function PublishingDashboardPage() {
             )}
           </div>
         )}
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -264,8 +263,7 @@ export default function AdminReturnPoliciesPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'SELLER', 'B2C_SELLER']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Return Policies</h1>
             <button
@@ -763,7 +761,6 @@ export default function AdminReturnPoliciesPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

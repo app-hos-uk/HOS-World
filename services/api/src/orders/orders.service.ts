@@ -1345,7 +1345,7 @@ export class OrdersService {
   async findAll(
     userId: string,
     role: string,
-    opts?: { page?: number; limit?: number; status?: string },
+    opts?: { page?: number; limit?: number; status?: string; sellerId?: string },
   ): Promise<{ data: Order[]; pagination: { page: number; limit: number; total: number; totalPages: number } }> {
     const page = Math.max(1, opts?.page ?? 1);
     const limit = Math.min(50, Math.max(1, opts?.limit ?? 20));
@@ -1389,6 +1389,12 @@ export class OrdersService {
     } else {
       // Staff roles (ADMIN, FINANCE, FULFILLMENT, PROCUREMENT) — one checkout per row
       where.parentOrderId = null;
+      if (opts?.sellerId) {
+        where.OR = [
+          { sellerId: opts.sellerId },
+          { childOrders: { some: { sellerId: opts.sellerId } } },
+        ];
+      }
     }
 
     const [orders, total] = await Promise.all([

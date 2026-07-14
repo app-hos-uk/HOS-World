@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -69,6 +68,7 @@ function VendorProductsContent() {
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const [listings, setListings] = useState<VendorProduct[]>([]);
+  const [stats, setStats] = useState({ total: 0, pending: 0, active: 0, rejected: 0, approved: 0 });
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,6 +84,27 @@ function VendorProductsContent() {
 
   // Detail panel
   const [selectedListing, setSelectedListing] = useState<VendorProduct | null>(null);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await apiClient.getVendorProducts({});
+      const data = response?.data;
+      const allListings: VendorProduct[] = Array.isArray(data)
+        ? data
+        : data?.data && Array.isArray(data.data)
+          ? data.data
+          : [];
+      setStats({
+        total: allListings.length,
+        pending: allListings.filter((l) => l.status === 'PENDING_APPROVAL').length,
+        active: allListings.filter((l) => l.status === 'ACTIVE').length,
+        rejected: allListings.filter((l) => l.status === 'REJECTED').length,
+        approved: allListings.filter((l) => l.status === 'APPROVED').length,
+      });
+    } catch {
+      // keep previous stats on failure
+    }
+  }, []);
 
   const fetchListings = useCallback(async () => {
     try {
@@ -109,16 +130,8 @@ function VendorProductsContent() {
 
   useEffect(() => {
     fetchListings();
-  }, [fetchListings]);
-
-  const stats = useMemo(() => {
-    const total = listings.length;
-    const pending = listings.filter(l => l.status === 'PENDING_APPROVAL').length;
-    const active = listings.filter(l => l.status === 'ACTIVE').length;
-    const rejected = listings.filter(l => l.status === 'REJECTED').length;
-    const approved = listings.filter(l => l.status === 'APPROVED').length;
-    return { total, pending, active, rejected, approved };
-  }, [listings]);
+    fetchStats();
+  }, [fetchListings, fetchStats]);
 
   const handleApprove = async () => {
     if (!approveModal) return;
@@ -132,6 +145,7 @@ function VendorProductsContent() {
       setApproveModal(null);
       setApproveForm({ platformPrice: '', marginPercent: '' });
       fetchListings();
+      fetchStats();
     } catch (error: any) {
       toast.error(error?.message || 'Failed to approve');
     } finally {
@@ -148,6 +162,7 @@ function VendorProductsContent() {
       setRejectModal(null);
       setRejectReason('');
       fetchListings();
+      fetchStats();
     } catch (error: any) {
       toast.error(error?.message || 'Failed to reject');
     } finally {
@@ -161,6 +176,7 @@ function VendorProductsContent() {
       await apiClient.activateVendorProduct(id);
       toast.success('Vendor product activated');
       fetchListings();
+      fetchStats();
     } catch (error: any) {
       toast.error(error?.message || 'Failed to activate');
     } finally {
@@ -344,7 +360,7 @@ function VendorProductsContent() {
                           <button
                             onClick={() => handleActivate(listing.id)}
                             disabled={actionLoading === listing.id}
-                            className="px-2.5 py-1 text-xs font-medium text-hos-text-secondary bg-hos-gold hover:bg-hos-gold-hover rounded-md transition-colors disabled:opacity-50"
+                            className="px-2.5 py-1 text-xs font-medium text-[#1a1406] bg-hos-gold hover:bg-hos-gold-hover rounded-md transition-colors disabled:opacity-50"
                           >
                             Activate
                           </button>
@@ -532,9 +548,7 @@ function VendorProductsContent() {
 export default function AdminVendorProductsPage() {
   return (
     <RouteGuard allowedRoles={['ADMIN', 'CATALOG', 'PROCUREMENT']}>
-      <AdminLayout>
-        <VendorProductsContent />
-      </AdminLayout>
-    </RouteGuard>
+              <VendorProductsContent />
+          </RouteGuard>
   );
 }

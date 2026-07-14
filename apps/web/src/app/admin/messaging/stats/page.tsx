@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 export default function AdminMessagingStatsPage() {
@@ -23,8 +22,7 @@ export default function AdminMessagingStatsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-4xl mx-auto space-y-4">
+              <div className="p-6 max-w-4xl mx-auto space-y-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-hos-text-secondary">Messaging stats (30 days)</h1>
             <Link href="/admin/messaging" className="text-hos-gold text-sm hover:underline">
@@ -53,7 +51,6 @@ export default function AdminMessagingStatsPage() {
             </>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

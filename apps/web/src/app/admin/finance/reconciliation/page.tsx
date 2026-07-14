@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -82,8 +81,7 @@ export default function ReconciliationPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'FINANCE']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-hos-text-secondary">Stripe Reconciliation</h1>
             <p className="text-hos-text-muted mt-1">Compare internal transactions against Stripe records</p>
@@ -172,7 +170,6 @@ export default function ReconciliationPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

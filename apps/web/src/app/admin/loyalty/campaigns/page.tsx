@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -94,8 +93,7 @@ export default function AdminLoyaltyCampaignsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
-      <AdminLayout>
-        <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-hos-text-secondary">Bonus Campaigns</h1>
             <p className="text-hos-text-secondary mt-1">Create double-points and multiplier campaigns</p>
@@ -181,7 +179,6 @@ export default function AdminLoyaltyCampaignsPage() {
             )}
           </div>
         )}
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

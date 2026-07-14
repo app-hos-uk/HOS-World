@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import { AdminLayout } from '@/components/AdminLayout';
 import { RouteGuard } from '@/components/RouteGuard';
 
 const api = apiClient as any;
@@ -159,20 +158,17 @@ export default function InfluencerDetailPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['ADMIN', 'MARKETING']} showAccessDenied={true}>
-        <AdminLayout>
-          <div className="flex items-center justify-center py-20">
+                  <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     );
   }
 
   if (!influencer) {
     return (
       <RouteGuard allowedRoles={['ADMIN', 'MARKETING']} showAccessDenied={true}>
-        <AdminLayout>
-          <div className="text-center py-20">
+                  <div className="text-center py-20">
             <h2 className="text-2xl font-bold text-hos-text-secondary mb-2">Influencer Not Found</h2>
             <p className="text-hos-text-secondary mb-6">The influencer you are looking for does not exist or has been removed.</p>
             <Link
@@ -182,8 +178,7 @@ export default function InfluencerDetailPage() {
               Back to Influencers
             </Link>
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     );
   }
 
@@ -194,8 +189,7 @@ export default function InfluencerDetailPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'MARKETING']} showAccessDenied={true}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -372,7 +366,6 @@ export default function InfluencerDetailPage() {
             </div>
           </div>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

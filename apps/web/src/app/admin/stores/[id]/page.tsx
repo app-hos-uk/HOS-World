@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -63,8 +62,7 @@ export default function AdminStoreDetailPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-3xl mx-auto space-y-6">
+              <div className="p-6 max-w-3xl mx-auto space-y-6">
           <Link href="/admin/stores" className="text-sm text-violet-400">
             ← Stores
           </Link>
@@ -126,7 +124,6 @@ export default function AdminStoreDetailPage() {
             <p className="text-hos-text-muted">Loading…</p>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

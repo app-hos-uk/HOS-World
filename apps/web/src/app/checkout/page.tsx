@@ -1012,9 +1012,13 @@ export default function CheckoutPage() {
               </section>
             )}
             {checkoutStep === 2 && shippingAddressId && shippingOptions.length === 0 && (
-              <section className="bg-hos-bg-secondary rounded-lg shadow-sm border border-hos-border p-4 sm:p-6">
+              <section className="bg-hos-bg-secondary rounded-lg shadow-sm border border-yellow-500/30 p-4 sm:p-6">
                 <h2 className="text-lg font-semibold mb-2">Shipping Method</h2>
-                <p className="text-sm text-hos-text-secondary">No shipping options are required or available for this order. Continue to review.</p>
+                <p className="text-sm font-medium text-yellow-300">Shipping not configured</p>
+                <p className="text-sm text-hos-text-secondary mt-1">
+                  No shipping rates were returned for this address. Checkout will proceed with $0 shipping.
+                  Contact support if you expected a shipping charge.
+                </p>
               </section>
             )}
 

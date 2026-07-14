@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 export default function FandomTrendsPage() {
@@ -21,36 +20,34 @@ export default function FandomTrendsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-5xl mx-auto space-y-4">
+              <div className="p-6 max-w-5xl mx-auto space-y-4">
           <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">← Health</Link>
           <h1 className="text-2xl font-semibold text-hos-text-secondary">Fandom trends (30d)</h1>
           {loading ? <p className="text-hos-text-muted">Loading…</p> : error ? <p className="text-red-400 text-sm">{error}</p> : (
-            <table className="min-w-full text-sm border rounded bg-hos-bg-secondary">
+            <table className="admin-table border rounded bg-hos-bg-secondary">
               <thead className="bg-hos-bg-secondary"><tr>
-                <th className="text-left px-3 py-2">Fandom</th>
-                <th className="px-3 py-2">Members</th>
-                <th className="px-3 py-2">Revenue</th>
-                <th className="px-3 py-2">Orders</th>
-                <th className="px-3 py-2">Avg spend</th>
-                <th className="px-3 py-2">Growth</th>
+                <th>Fandom</th>
+                <th>Members</th>
+                <th>Revenue</th>
+                <th>Orders</th>
+                <th>Avg spend</th>
+                <th>Growth</th>
               </tr></thead>
               <tbody>
                 {data.map((f: any) => (
                   <tr key={f.fandom} className="border-t">
-                    <td className="px-3 py-2 font-medium">{f.fandom}</td>
-                    <td className="px-3 py-2">{f.members}</td>
-                    <td className="px-3 py-2">${Number(f.revenue).toFixed(2)}</td>
-                    <td className="px-3 py-2">{f.orders}</td>
-                    <td className="px-3 py-2">${Number(f.avgSpend).toFixed(2)}</td>
-                    <td className="px-3 py-2">{f.growth > 0 ? '+' : ''}{f.growth}%</td>
+                    <td className="font-medium">{f.fandom}</td>
+                    <td>{f.members}</td>
+                    <td>${Number(f.revenue).toFixed(2)}</td>
+                    <td>{f.orders}</td>
+                    <td>${Number(f.avgSpend).toFixed(2)}</td>
+                    <td>{f.growth > 0 ? '+' : ''}{f.growth}%</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

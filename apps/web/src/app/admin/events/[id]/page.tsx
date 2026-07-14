@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -97,8 +96,7 @@ export default function AdminEventDetailPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-5xl mx-auto space-y-4">
+              <div className="p-6 max-w-5xl mx-auto space-y-4">
           <div className="flex gap-4 items-center">
             <Link href="/admin/events" className="text-hos-gold hover:underline text-sm">
               ← Back
@@ -253,7 +251,6 @@ export default function AdminEventDetailPage() {
             </>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

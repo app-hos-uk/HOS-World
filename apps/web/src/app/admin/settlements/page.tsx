@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -239,7 +238,7 @@ export default function AdminSettlementsPage() {
   const handleProcessSettlement = async (settlementId: string) => {
     try {
       setProcessing(true);
-      await apiClient.processSettlement(settlementId);
+      await apiClient.processSettlement(settlementId, { status: 'PAID' });
       toast.success('Settlement processing started');
       fetchSettlements();
       setShowDetailModal(false);
@@ -309,7 +308,7 @@ export default function AdminSettlementsPage() {
     let success = 0;
     for (const id of selectedSettlements) {
       try {
-        await apiClient.processSettlement(id);
+        await apiClient.processSettlement(id, { status: 'PAID' });
         success++;
       } catch {
         // Continue on error
@@ -359,19 +358,16 @@ export default function AdminSettlementsPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['ADMIN', 'FINANCE']}>
-        <AdminLayout>
-          <div className="flex items-center justify-center h-64">
+                  <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     );
   }
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'FINANCE']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -782,7 +778,6 @@ export default function AdminSettlementsPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

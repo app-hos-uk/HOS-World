@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DataExport } from '@/components/DataExport';
@@ -115,6 +115,8 @@ const ORDER_TABLE_COLUMNS: AdminColumnDef[] = [
 ];
 
 export default function AdminOrdersPage() {
+  const searchParams = useSearchParams();
+  const sellerIdFilter = searchParams.get('sellerId') || searchParams.get('seller') || '';
   const toast = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,7 +162,7 @@ export default function AdminOrdersPage() {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, []);
+  }, [sellerIdFilter]);
 
   const fetchOrders = async () => {
     try {
@@ -174,7 +176,11 @@ export default function AdminOrdersPage() {
       let reportedTotal: number | undefined;
 
       do {
-        const response = await apiClient.getOrders({ page, limit: 100 });
+        const response = await apiClient.getOrders({
+          page,
+          limit: 100,
+          sellerId: sellerIdFilter || undefined,
+        });
         const { orders, pagination } = extractOrdersFromApiResponse(response);
         orderList.push(...orders);
         reportedTotal = pagination?.total;
@@ -315,8 +321,7 @@ export default function AdminOrdersPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-hos-text-secondary">Orders Management</h1>
@@ -886,7 +891,6 @@ export default function AdminOrdersPage() {
             )}
           </Modal>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

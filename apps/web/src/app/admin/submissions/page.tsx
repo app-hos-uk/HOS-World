@@ -3,7 +3,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { SafeImage } from '@/components/SafeImage';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DataExport } from '@/components/DataExport';
@@ -16,6 +15,15 @@ import {
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer
 } from 'recharts';
+
+const DARK_CHART_TOOLTIP = {
+  backgroundColor: '#1a1a1c',
+  border: '1px solid #2a2a2e',
+  borderRadius: '6px',
+  color: '#e8e4dc',
+};
+const DARK_CHART_TOOLTIP_ITEM = { color: '#e8e4dc' };
+const DARK_CHART_TOOLTIP_LABEL = { color: '#c9a227' };
 
 /** Submission images can be URL strings or objects with url (from seller submit form). */
 function getImageUrl(img: string | { url: string; alt?: string; order?: number } | undefined): string | undefined {
@@ -375,8 +383,7 @@ export default function AdminSubmissionsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'PROCUREMENT']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -508,10 +515,13 @@ export default function AdminSubmissionsPage() {
                         ))}
                       </Pie>
                       <Tooltip
+                        contentStyle={{ ...DARK_CHART_TOOLTIP, padding: '6px 10px', fontSize: 12 }}
+                        itemStyle={DARK_CHART_TOOLTIP_ITEM}
+                        labelStyle={{ ...DARK_CHART_TOOLTIP_LABEL, fontSize: 11 }}
                         formatter={(value: number | string) => {
                           const v = Number(value);
                           const pct = chartTotal ? ((v / chartTotal) * 100).toFixed(1) : '0';
-                          return [`${v} (${pct}% of total)`, 'Submissions'];
+                          return [`${v} (${pct}%)`, 'Submissions'];
                         }}
                       />
                     </PieChart>
@@ -1191,7 +1201,6 @@ export default function AdminSubmissionsPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

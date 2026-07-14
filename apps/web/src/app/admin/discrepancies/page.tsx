@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -40,8 +39,7 @@ export default function AdminDiscrepanciesPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <h1 className="text-2xl font-bold text-hos-text-secondary">Discrepancy Reports</h1>
 
           {loading ? (
@@ -100,8 +98,7 @@ export default function AdminDiscrepanciesPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }
 

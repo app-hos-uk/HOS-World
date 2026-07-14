@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -359,8 +358,7 @@ export default function AdminPromotionsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
-      <AdminLayout>
-        <div className="mb-6">
+              <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Promotions Management</h1>
@@ -848,7 +846,6 @@ export default function AdminPromotionsPage() {
             </div>
           </div>
         )}
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

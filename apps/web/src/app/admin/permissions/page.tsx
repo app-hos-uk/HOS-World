@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 interface Permission {
@@ -167,8 +166,7 @@ export default function AdminPermissionsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
-      <AdminLayout>
-        <div className="mb-6">
+              <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Permissions Management</h1>
           <p className="text-hos-text-secondary mt-2">Manage granular permissions for each role</p>
         </div>
@@ -332,7 +330,7 @@ export default function AdminPermissionsPage() {
                       }
                     }}
                     disabled={creatingRole || !newRoleName.trim()}
-                    className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
+                    className="px-4 py-2 text-sm font-medium text-[#1a1406] bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                   >
                     {creatingRole ? 'Creating...' : 'Create Role'}
                   </button>
@@ -341,8 +339,7 @@ export default function AdminPermissionsPage() {
             </div>
           </div>
         )}
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }
 

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 const FLAG_DESCRIPTIONS: Record<string, string> = {
@@ -78,8 +77,7 @@ export default function AdminFeatureFlagsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-hos-text-secondary">Feature Flags</h1>
             <p className="mt-1 text-sm text-hos-text-muted">
@@ -200,7 +198,6 @@ export default function AdminFeatureFlagsPage() {
             </p>
           </div>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

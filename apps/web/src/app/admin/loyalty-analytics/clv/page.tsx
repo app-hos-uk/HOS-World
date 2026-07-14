@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 export default function ClvReportPage() {
@@ -39,8 +38,7 @@ export default function ClvReportPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-5xl mx-auto space-y-6">
+              <div className="p-6 max-w-5xl mx-auto space-y-6">
           <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">← Health</Link>
           <h1 className="text-2xl font-semibold text-hos-text-secondary">CLV report</h1>
           {loading ? <p className="text-hos-text-muted">Loading…</p> : (
@@ -64,22 +62,22 @@ export default function ClvReportPage() {
               </div>
               <div>
                 <h2 className="text-lg font-medium mb-2">Top members</h2>
-                <table className="min-w-full text-sm border rounded bg-hos-bg-secondary">
+                <table className="admin-table border rounded bg-hos-bg-secondary">
                   <thead className="bg-hos-bg-secondary"><tr>
-                    <th className="text-left px-3 py-2">Name</th>
-                    <th className="px-3 py-2">CLV</th>
-                    <th className="px-3 py-2">Tier</th>
-                    <th className="px-3 py-2">Spend</th>
-                    <th className="px-3 py-2">Orders</th>
+                    <th>Name</th>
+                    <th>CLV</th>
+                    <th>Tier</th>
+                    <th>Spend</th>
+                    <th>Orders</th>
                   </tr></thead>
                   <tbody>
                     {top.map((m: any) => (
                       <tr key={m.membershipId} className="border-t">
-                        <td className="px-3 py-2">{m.name}</td>
-                        <td className="px-3 py-2">${Number(m.clvScore).toFixed(2)}</td>
-                        <td className="px-3 py-2">{m.tier}</td>
-                        <td className="px-3 py-2">${Number(m.totalSpend).toFixed(2)}</td>
-                        <td className="px-3 py-2">{m.purchaseCount}</td>
+                        <td>{m.name}</td>
+                        <td>${Number(m.clvScore).toFixed(2)}</td>
+                        <td>{m.tier}</td>
+                        <td>${Number(m.totalSpend).toFixed(2)}</td>
+                        <td>{m.purchaseCount}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -98,7 +96,6 @@ export default function ClvReportPage() {
             </>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

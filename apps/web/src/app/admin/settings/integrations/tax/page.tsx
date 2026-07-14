@@ -3,7 +3,6 @@
 import { useEffect, useState, Fragment } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Dialog, Transition } from '@headlessui/react';
@@ -267,8 +266,7 @@ export default function TaxIntegrationsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
-      <AdminLayout>
-        <div className="mb-6">
+              <div className="mb-6">
           <div className="flex items-center gap-2 text-sm text-hos-text-muted mb-2">
             <Link href="/admin/settings" className="hover:text-hos-gold">Settings</Link>
             <span>/</span>
@@ -609,7 +607,6 @@ export default function TaxIntegrationsPage() {
             </div>
           </Dialog>
         </Transition>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

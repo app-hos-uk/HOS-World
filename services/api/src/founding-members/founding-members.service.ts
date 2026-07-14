@@ -508,7 +508,7 @@ export class FoundingMembersService {
     const frontendUrl = (
       this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000'
     ).replace(/\/$/, '');
-    const registerLink = `${frontendUrl}/register?ref=founding`;
+    const registerLink = `${frontendUrl}/register?invite=founding`;
 
     const where: any = { userId: null };
     if (options?.memberIds?.length) {

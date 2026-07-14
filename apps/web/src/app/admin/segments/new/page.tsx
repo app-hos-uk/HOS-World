@@ -4,7 +4,6 @@ import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { RuleBuilder, emptyGroup, type SegmentRuleGroup } from '../RuleBuilder';
@@ -50,8 +49,7 @@ export default function AdminSegmentNewPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-4xl mx-auto space-y-4">
+              <div className="p-6 max-w-4xl mx-auto space-y-4">
           <Link href="/admin/segments" className="text-hos-gold hover:underline text-sm">
             ← Segments
           </Link>
@@ -98,7 +96,6 @@ export default function AdminSegmentNewPage() {
             {saving ? 'Saving…' : 'Save segment'}
           </button>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

@@ -2,13 +2,11 @@
 
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 
 export default function AdminPosStoresPage() {
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <Link href="/admin/pos" className="text-sm text-hos-gold hover:text-hos-gold">
             ← POS home
           </Link>
@@ -24,7 +22,6 @@ export default function AdminPosStoresPage() {
             <code className="rounded bg-amber-500/15 px-1">externalOutletId</code>.
           </div>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DataExport } from '@/components/DataExport';
@@ -385,8 +384,7 @@ export default function AdminDomainsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
@@ -475,7 +473,7 @@ export default function AdminDomainsPage() {
 
           {/* Search & Filters */}
           <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Search</label>
                 <input
@@ -522,7 +520,7 @@ export default function AdminDomainsPage() {
                 <button
                   onClick={handleBulkGenerateSubdomains}
                   disabled={selectedSellers.size === 0 || actionLoading}
-                  className="w-full px-4 py-2 text-sm bg-hos-gold/20 text-hos-gold-hover rounded-lg hover:bg-hos-gold/20 disabled:opacity-50"
+                  className="w-full px-4 py-2 text-sm bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                 >
                   Generate Subdomains ({selectedSellers.size})
                 </button>
@@ -1034,7 +1032,6 @@ export default function AdminDomainsPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 interface Subscription {
@@ -66,8 +65,7 @@ export default function AdminNewsletterPage() {
 
   return (
     <RouteGuard allowedRoles={[...ALLOWED_ROLES]}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-hos-text-secondary">Newsletter Subscriptions</h1>
             <p className="mt-1 text-sm text-hos-text-muted">
@@ -187,7 +185,6 @@ export default function AdminNewsletterPage() {
             )}
           </div>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

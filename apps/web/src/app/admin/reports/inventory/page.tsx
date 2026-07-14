@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { DateRangePicker, DateRange } from '@/components/DateRangePicker';
 import {
@@ -82,12 +81,10 @@ export default function AdminInventoryAnalyticsPage() {
   if (loading && !data) {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
-        <AdminLayout>
-          <div className="flex items-center justify-center h-64">
+                  <div className="flex items-center justify-center h-64">
             <div className="text-hos-text-muted">Loading inventory analytics...</div>
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     );
   }
 
@@ -101,8 +98,7 @@ export default function AdminInventoryAnalyticsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-hos-text-secondary">Inventory Analytics</h1>
             <div className="flex gap-2">
@@ -203,7 +199,6 @@ export default function AdminInventoryAnalyticsPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

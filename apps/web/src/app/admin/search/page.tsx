@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 interface SearchStats {
@@ -129,19 +128,16 @@ export default function AdminSearchPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
-        <AdminLayout>
-          <div className="flex items-center justify-center h-64">
+                  <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-hos-gold" />
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     );
   }
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <h1 className="text-2xl font-bold text-hos-text-secondary">Search Management</h1>
 
           {error && (
@@ -205,7 +201,7 @@ export default function AdminSearchPage() {
               <button
                 onClick={() => setConfirmAction('sync')}
                 disabled={syncing || rebuilding}
-                className="px-5 py-2.5 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-5 py-2.5 text-sm font-medium text-[#1a1406] bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {syncing && <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
                 {syncing ? 'Syncing...' : 'Sync Products'}
@@ -276,7 +272,7 @@ export default function AdminSearchPage() {
                 type="button"
                 onClick={() => handleSearch(1)}
                 disabled={searching || !searchQuery.trim()}
-                className="px-5 py-2.5 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-5 py-2.5 text-sm font-medium text-[#1a1406] bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {searching && <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />}
                 Search
@@ -383,7 +379,6 @@ export default function AdminSearchPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

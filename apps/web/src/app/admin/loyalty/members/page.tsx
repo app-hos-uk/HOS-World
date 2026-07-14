@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -55,8 +54,7 @@ export default function AdminLoyaltyMembersPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
-      <AdminLayout>
-        <div className="mb-6">
+              <div className="mb-6">
           <h1 className="text-2xl font-bold text-hos-text-secondary">Loyalty Members</h1>
           <p className="text-hos-text-secondary mt-1">Search members, view details, and adjust points</p>
         </div>
@@ -150,7 +148,6 @@ export default function AdminLoyaltyMembersPage() {
             )}
           </div>
         )}
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

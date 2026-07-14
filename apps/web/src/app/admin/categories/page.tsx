@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { SafeImage } from '@/components/SafeImage';
@@ -431,7 +430,9 @@ export default function AdminCategoriesPage() {
                   />
                 </div>
               ) : category.icon ? (
-                <span className="text-2xl">{category.icon}</span>
+                <div className="w-10 h-10 rounded bg-hos-bg-tertiary flex items-center justify-center text-2xl flex-shrink-0">
+                  {category.icon}
+                </div>
               ) : (
                 <div className="w-10 h-10 rounded bg-hos-bg-tertiary flex items-center justify-center text-hos-text-muted flex-shrink-0">
                   📁
@@ -584,19 +585,16 @@ export default function AdminCategoriesPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
-        <AdminLayout>
-          <div className="flex items-center justify-center h-64">
+                  <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     );
   }
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
@@ -883,7 +881,6 @@ export default function AdminCategoriesPage() {
             </div>
           </div>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

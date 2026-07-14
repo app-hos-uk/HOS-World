@@ -883,10 +883,28 @@ export class ReturnsService {
       {
         step: 'APPROVED',
         label: status === 'REJECTED' ? 'Return rejected' : 'Return approved',
-        at: ['APPROVED', 'PROCESSING', 'COMPLETED', 'REFUNDED'].includes(status)
+        at: ['APPROVED', 'PROCESSING', 'COMPLETED'].includes(status)
           ? returnRequest.updatedAt
           : undefined,
-        completed: ['APPROVED', 'PROCESSING', 'COMPLETED', 'REFUNDED', 'REJECTED'].includes(status),
+        completed: ['APPROVED', 'PROCESSING', 'COMPLETED', 'REJECTED'].includes(status),
+      },
+      {
+        step: 'PROCESSING',
+        label: 'Return in transit',
+        at: status === 'PROCESSING' ? returnRequest.updatedAt : undefined,
+        completed: ['PROCESSING', 'COMPLETED'].includes(status),
+      },
+      {
+        step: 'RECEIVED',
+        label: 'Package received',
+        at: returnRequest.receivedAt || undefined,
+        completed: ['PROCESSING', 'COMPLETED'].includes(status) && !!returnRequest.receivedAt,
+      },
+      {
+        step: 'INSPECTED',
+        label: 'Inspection complete',
+        at: returnRequest.inspectedAt || undefined,
+        completed: ['PROCESSING', 'COMPLETED'].includes(status) && !!returnRequest.inspectedAt,
       },
       {
         step: 'REFUND',
@@ -896,13 +914,13 @@ export class ReturnsService {
             ? 'Refund processed'
             : 'Refund pending',
         at: refundTx?.createdAt || failedRefundTx?.createdAt,
-        completed: !!refundTx || status === 'REFUNDED' || status === 'COMPLETED',
+        completed: !!refundTx || status === 'COMPLETED',
       },
       {
         step: 'COMPLETED',
         label: 'Return completed',
         at: returnRequest.processedAt || undefined,
-        completed: ['COMPLETED', 'REFUNDED'].includes(status),
+        completed: status === 'COMPLETED',
       },
     ];
     return steps;

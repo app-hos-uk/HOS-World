@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -53,8 +52,7 @@ export default function DisputesPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'FINANCE']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-hos-text-secondary">Disputes & Chargebacks</h1>
             <p className="text-hos-text-muted mt-1">Manage payment disputes and track chargeback rates</p>
@@ -107,7 +105,6 @@ export default function DisputesPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

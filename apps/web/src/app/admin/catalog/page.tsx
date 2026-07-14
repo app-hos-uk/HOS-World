@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 export default function AdminCatalogPage() {
@@ -53,20 +52,17 @@ export default function AdminCatalogPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
-        <AdminLayout>
-          <div className="flex items-center justify-center h-64">
+                  <div className="flex items-center justify-center h-64">
             <div className="text-hos-text-muted">Loading catalog entries...</div>
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     );
   }
 
   if (error) {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
-        <AdminLayout>
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
             <p className="text-red-300">Error: {error}</p>
             <button
               onClick={() => fetchEntries(true)}
@@ -75,15 +71,13 @@ export default function AdminCatalogPage() {
               Retry
             </button>
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     );
   }
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-hos-text-secondary">Catalog Entries</h1>
@@ -99,7 +93,7 @@ export default function AdminCatalogPage() {
               </button>
               <Link
                 href="/catalog/entries"
-                className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover"
+                className="px-4 py-2 text-sm font-medium text-[#1a1406] bg-hos-gold rounded-lg hover:bg-hos-gold-hover whitespace-nowrap shrink-0"
               >
                 Full Catalog Workflow →
               </Link>
@@ -171,8 +165,7 @@ export default function AdminCatalogPage() {
             </table>
           </div>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }
 

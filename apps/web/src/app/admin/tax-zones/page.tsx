@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Fragment } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Dialog, Transition } from '@headlessui/react';
@@ -278,8 +277,7 @@ export default function AdminTaxZonesPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="container mx-auto px-4 py-8">
+              <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-3xl font-bold text-hos-gold mb-2">Tax Zones Management</h1>
@@ -327,7 +325,7 @@ export default function AdminTaxZonesPage() {
                             {zone.postalCodes.length > 0 && ` (${zone.postalCodes.length} postal codes)`}
                           </p>
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center space-x-4">
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                               zone.isActive
@@ -339,19 +337,19 @@ export default function AdminTaxZonesPage() {
                           </span>
                           <button
                             onClick={() => openRateModal(zone)}
-                            className="text-sm text-hos-gold hover:text-hos-gold font-medium"
+                            className="px-3 py-1 text-sm text-hos-gold hover:text-hos-gold font-medium"
                           >
                             + Add Rate
                           </button>
                           <button
                             onClick={() => handleEditZone(zone)}
-                            className="text-sm text-hos-text-secondary hover:text-hos-gold"
+                            className="px-3 py-1 text-sm text-hos-text-secondary hover:text-hos-gold"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDeleteZone(zone.id)}
-                            className="text-sm text-red-400 hover:text-red-300"
+                            className="px-3 py-1 text-sm text-red-400 hover:text-red-300"
                           >
                             Delete
                           </button>
@@ -585,7 +583,7 @@ export default function AdminTaxZonesPage() {
                           <button
                             type="submit"
                             disabled={submitting}
-                            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
+                            className="px-4 py-2 text-sm font-medium text-[#1a1406] bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
                           >
                             {submitting ? 'Saving...' : isEditMode ? 'Update' : 'Create'}
                           </button>
@@ -731,7 +729,7 @@ export default function AdminTaxZonesPage() {
                           <button
                             type="submit"
                             disabled={submitting}
-                            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
+                            className="px-4 py-2 text-sm font-medium text-[#1a1406] bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
                           >
                             {submitting ? 'Saving...' : 'Create Rate'}
                           </button>
@@ -744,7 +742,6 @@ export default function AdminTaxZonesPage() {
             </Dialog>
           </Transition>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

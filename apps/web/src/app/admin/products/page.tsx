@@ -3,7 +3,6 @@
 import { useEffect, useState, useMemo, useCallback, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { CategorySelector } from '@/components/taxonomy/CategorySelector';
@@ -878,19 +877,16 @@ function AdminProductsContent() {
   if (loading && products.length === 0) {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
-        <AdminLayout>
-          <div className="flex items-center justify-center h-64">
+                  <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     );
   }
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6 flex flex-col min-h-[calc(100vh-8rem)]">
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
@@ -1088,7 +1084,7 @@ function AdminProductsContent() {
           </div>
 
           {/* Products Table */}
-          <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+          <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden flex flex-col flex-1 min-h-0">
             <div className="p-4 border-b flex justify-between items-center">
               <h2 className="text-lg font-semibold">
                 Products ({filteredProducts.length}{stats && filteredProducts.length < stats.totalProducts ? ` of ${stats.totalProducts}` : ''})
@@ -1099,7 +1095,7 @@ function AdminProductsContent() {
                 </span>
               )}
             </div>
-            <div className="overflow-auto max-h-[calc(100vh-280px)] overflow-x-auto">
+            <div className="overflow-auto flex-1 min-h-0 overflow-x-auto">
               <table className="w-full min-w-[1050px] table-fixed border-collapse divide-y divide-hos-border">
                 <colgroup>
                   <col style={{ width: '2.75rem' }} />
@@ -1771,8 +1767,7 @@ function AdminProductsContent() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }
 
@@ -1780,12 +1775,10 @@ export default function AdminProductsPage() {
   return (
     <Suspense fallback={
       <RouteGuard allowedRoles={['ADMIN']}>
-        <AdminLayout>
-          <div className="flex items-center justify-center h-64">
+                  <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     }>
       <AdminProductsContent />
     </Suspense>

@@ -77,11 +77,13 @@ export class OrdersController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('status') status?: string,
+    @Query('sellerId') sellerId?: string,
   ): Promise<ApiResponse<Order[]>> {
     const result = await this.ordersService.findAll(req.user.id, req.user.role, {
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 20,
       status,
+      sellerId,
     });
     return {
       data: result.data,

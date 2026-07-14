@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { apiClient } from '@/lib/api';
-import { AdminLayout } from '@/components/AdminLayout';
 import { RouteGuard } from '@/components/RouteGuard';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
@@ -126,8 +125,7 @@ export default function MigrationFeaturesPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6">
+              <div className="p-6">
           <h1 className="text-2xl font-bold mb-6">Comprehensive Features Migration</h1>
 
           <div className="bg-hos-bg-secondary rounded-lg shadow p-6 mb-6">
@@ -256,8 +254,7 @@ export default function MigrationFeaturesPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }
 

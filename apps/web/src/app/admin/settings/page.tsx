@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { EmailTestPanel } from '@/components/admin/EmailTestPanel';
@@ -123,8 +122,7 @@ export default function AdminSettingsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
-      <AdminLayout>
-        <div className="mb-6">
+              <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">System Settings</h1>
           <p className="text-hos-text-secondary mt-2">Configure platform-wide settings and preferences</p>
         </div>
@@ -692,7 +690,6 @@ export default function AdminSettingsPage() {
           </div>
         </div>
         )}
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

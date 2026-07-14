@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Fragment } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Dialog, Transition } from '@headlessui/react';
@@ -103,20 +102,17 @@ export default function AdminLogisticsPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
-        <AdminLayout>
-          <div className="flex items-center justify-center h-64">
+                  <div className="flex items-center justify-center h-64">
             <div className="text-hos-text-muted">Loading logistics partners...</div>
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     );
   }
 
   if (error) {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
-        <AdminLayout>
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
             <p className="text-red-300">Error: {error}</p>
             <button
               onClick={fetchPartners}
@@ -125,15 +121,13 @@ export default function AdminLogisticsPage() {
               Retry
             </button>
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     );
   }
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-hos-text-secondary">Logistics Partners</h1>
             <button
@@ -314,7 +308,7 @@ export default function AdminLogisticsPage() {
                         <button
                           type="submit"
                           disabled={submitting}
-                          className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
+                          className="px-4 py-2 text-sm font-medium text-[#1a1406] bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                         >
                           {submitting ? 'Creating...' : 'Create Partner'}
                         </button>
@@ -326,8 +320,7 @@ export default function AdminLogisticsPage() {
             </div>
           </Dialog>
         </Transition>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }
 

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -60,8 +59,7 @@ export default function FinancialPeriodsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'FINANCE']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-hos-text-secondary">Financial Period Close</h1>
@@ -126,7 +124,6 @@ export default function FinancialPeriodsPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

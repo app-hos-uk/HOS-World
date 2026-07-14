@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -41,8 +40,7 @@ export default function AdminClickCollectListPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-6xl mx-auto">
+              <div className="p-6 max-w-6xl mx-auto">
           <h1 className="text-2xl font-semibold text-hos-text-secondary mb-4">Click &amp; collect</h1>
           <div className="flex flex-wrap gap-2 mb-4">
             <input
@@ -74,6 +72,8 @@ export default function AdminClickCollectListPage() {
           </div>
           {loading ? (
             <p className="text-hos-text-muted">Loading…</p>
+          ) : rows.length === 0 ? (
+            <p className="text-hos-text-muted text-center py-8">No Click &amp; Collect orders found.</p>
           ) : (
             <ul className="space-y-2 text-sm">
               {rows.map((r) => {
@@ -96,7 +96,6 @@ export default function AdminClickCollectListPage() {
             </ul>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

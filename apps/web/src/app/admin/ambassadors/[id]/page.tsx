@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -46,8 +45,7 @@ export default function AdminAmbassadorDetailPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-4xl mx-auto">
+              <div className="p-6 max-w-4xl mx-auto">
           <Link href="/admin/ambassadors" className="text-sm text-violet-400 mb-4 inline-block">
             ← Back
           </Link>
@@ -97,7 +95,6 @@ export default function AdminAmbassadorDetailPage() {
             <p className="text-hos-text-muted">Loading…</p>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

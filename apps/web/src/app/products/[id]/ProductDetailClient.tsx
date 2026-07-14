@@ -14,6 +14,7 @@ import { SafeImage } from '@/components/SafeImage';
 import { ProductImageGallery } from '@/components/products/ProductImageGallery';
 import Link from 'next/link';
 import { StorefrontBreadcrumbs } from '@/components/storefront/StorefrontBreadcrumbs';
+import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
 const CATEGORY_DISPLAY_RENAMES: Record<string, string> = {
   'collectibles hos uk': 'Collectibles',
@@ -64,7 +65,8 @@ export default function ProductDetailClient() {
   const [addingToCart, setAddingToCart] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
-  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', title: '' });
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', title: '', images: [] as string[] });
+  const [uploadingReviewImages, setUploadingReviewImages] = useState(false);
   /** Selected variation per dimension (e.g. { Size: 'M', Color: 'Red' }) for add-to-cart */
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
@@ -347,10 +349,11 @@ export default function ProductDetailClient() {
         rating: reviewForm.rating,
         comment: reviewForm.comment,
         title: reviewForm.title,
+        images: reviewForm.images.length > 0 ? reviewForm.images : undefined,
       });
       toast.success('Review submitted successfully!');
       setShowReviewForm(false);
-      setReviewForm({ rating: 5, comment: '', title: '' });
+      setReviewForm({ rating: 5, comment: '', title: '', images: [] });
       // Refresh reviews
       const reviewsResponse = await apiClient.getProductReviews(product.id);
       setReviews(extractProductReviews(reviewsResponse?.data));
@@ -699,6 +702,66 @@ export default function ProductDetailClient() {
                     className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     required
                   />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-2">Photos (optional)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    disabled={uploadingReviewImages || reviewForm.images.length >= 5}
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files || []);
+                      if (!files.length) return;
+                      setUploadingReviewImages(true);
+                      try {
+                        const uploaded: string[] = [];
+                        for (const file of files.slice(0, 5 - reviewForm.images.length)) {
+                          const formData = new FormData();
+                          formData.append('file', file);
+                          formData.append('folder', 'reviews');
+                          const res = await fetch(`${getPublicApiBaseUrl() || 'http://localhost:3001/api'}/uploads/single`, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                            body: formData,
+                          });
+                          if (!res.ok) throw new Error('Upload failed');
+                          const json = await res.json();
+                          const url = json?.data?.url || json?.url;
+                          if (url) uploaded.push(url);
+                        }
+                        setReviewForm((prev) => ({ ...prev, images: [...prev.images, ...uploaded].slice(0, 5) }));
+                      } catch {
+                        toast.error('Failed to upload review photo');
+                      } finally {
+                        setUploadingReviewImages(false);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="block w-full text-sm text-hos-text-secondary"
+                  />
+                  {reviewForm.images.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {reviewForm.images.map((url, idx) => (
+                        <div key={url} className="relative h-16 w-16 rounded overflow-hidden border border-hos-border">
+                          <SafeImage src={url} alt={`Review photo ${idx + 1}`} width={64} height={64} className="h-full w-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setReviewForm((prev) => ({
+                                ...prev,
+                                images: prev.images.filter((_, i) => i !== idx),
+                              }))
+                            }
+                            className="absolute top-0 right-0 bg-black/60 text-white text-xs px-1"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-3">
                   <button

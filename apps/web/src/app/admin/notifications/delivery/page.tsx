@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -70,8 +69,7 @@ export default function AdminNotificationDeliveryPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout title="Notification Delivery">
-        <div className="mb-6">
+              <div className="mb-6">
           <h1 className="text-2xl font-bold text-hos-text-secondary">Notification Delivery Dashboard</h1>
           <p className="text-hos-text-muted text-sm mt-1">Channel health and failed delivery queue</p>
         </div>
@@ -181,7 +179,6 @@ export default function AdminNotificationDeliveryPage() {
             </div>
           </div>
         )}
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

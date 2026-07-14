@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { DateRangePicker, DateRange } from '@/components/DateRangePicker';
 import {
@@ -96,12 +95,10 @@ export default function AdminProductAnalyticsPage() {
   if (loading && data.length === 0) {
     return (
       <RouteGuard allowedRoles={['ADMIN', 'SELLER', 'B2C_SELLER']}>
-        <AdminLayout>
-          <div className="flex items-center justify-center h-64">
+                  <div className="flex items-center justify-center h-64">
             <div className="text-hos-text-muted">Loading product analytics...</div>
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     );
   }
 
@@ -119,8 +116,7 @@ export default function AdminProductAnalyticsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'SELLER', 'B2C_SELLER']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-hos-text-secondary">Product Performance</h1>
             <div className="flex gap-2">
@@ -275,7 +271,6 @@ export default function AdminProductAnalyticsPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

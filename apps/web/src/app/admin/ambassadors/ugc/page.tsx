@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -41,8 +40,7 @@ export default function AdminAmbassadorUgcPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-5xl mx-auto">
+              <div className="p-6 max-w-5xl mx-auto">
           <Link href="/admin/ambassadors" className="text-sm text-violet-400 mb-4 inline-block">
             ← Ambassadors
           </Link>
@@ -109,7 +107,6 @@ export default function AdminAmbassadorUgcPage() {
             </ul>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

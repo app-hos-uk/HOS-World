@@ -38,7 +38,17 @@ function SellerThemeSync() {
 
 const ThemeProviderWrapperComponent = ({ children }: { children: React.ReactNode }) => {
   return (
-    <ThemeProvider defaultThemeId="hos-default">
+    <ThemeProvider
+      defaultThemeId="hos-default"
+      loadThemeFromApi={async (themeId) => {
+        try {
+          const res = await apiClient.getTheme(themeId);
+          return res?.data ?? null;
+        } catch {
+          return null;
+        }
+      }}
+    >
       <ThemeLoader />
       <SellerThemeSync />
       {children}

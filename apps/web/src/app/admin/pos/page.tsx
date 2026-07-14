@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -30,8 +29,7 @@ export default function AdminPosDashboardPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-8">
+              <div className="space-y-8">
           <div>
             <h1 className="text-2xl font-bold text-hos-text-secondary">POS Integration</h1>
             <p className="mt-1 text-hos-text-secondary">
@@ -51,7 +49,7 @@ export default function AdminPosDashboardPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/admin/pos/connections"
-              className="rounded-md bg-hos-gold px-4 py-2 text-sm font-medium text-hos-text-secondary hover:bg-hos-gold-hover"
+              className="rounded-md bg-hos-gold px-4 py-2 text-sm font-medium text-[#1a1406] hover:bg-hos-gold-hover"
             >
               Manage connections
             </Link>
@@ -80,7 +78,6 @@ export default function AdminPosDashboardPage() {
             </p>
           </div>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

@@ -128,16 +128,27 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto, ipAddress?: string, userAgent?: string): Promise<AuthResponse> {
+    registerDto.email = registerDto.email?.trim().toLowerCase();
+
     // Invite-only registration gate
     const registrationMode = this.configService.get<string>('REGISTRATION_MODE', 'open');
     if (registrationMode === 'invite_only') {
-      const inviteCode = registerDto.inviteCode;
-      const validCodes = (this.configService.get<string>('REGISTRATION_INVITE_CODES', '') || '')
-        .split(',')
-        .map((c) => c.trim())
-        .filter(Boolean);
-      if (!inviteCode || !validCodes.includes(inviteCode)) {
-        throw new ForbiddenException('Registration is currently invite-only. Please provide a valid invite code.');
+      let bypassInviteGate = false;
+      if (this.foundingMembersService) {
+        const fm = await this.foundingMembersService.findByEmail(registerDto.email);
+        if (fm && ['REGISTERED', 'INVITED'].includes(fm.status)) {
+          bypassInviteGate = true;
+        }
+      }
+      if (!bypassInviteGate) {
+        const inviteCode = registerDto.inviteCode;
+        const validCodes = (this.configService.get<string>('REGISTRATION_INVITE_CODES', '') || '')
+          .split(',')
+          .map((c) => c.trim())
+          .filter(Boolean);
+        if (!inviteCode || !validCodes.includes(inviteCode)) {
+          throw new ForbiddenException('Registration is currently invite-only. Please provide a valid invite code.');
+        }
       }
     }
 
@@ -261,6 +272,16 @@ export class AuthService {
           currencyPreference,
         },
       });
+
+      if (this.loyaltyService?.isEnabled()) {
+        try {
+          await this.loyaltyService.enroll(user.id);
+        } catch (loyaltyErr: unknown) {
+          this.logger.warn(
+            `Customer loyalty auto-enroll failed for ${user.email}: ${loyaltyErr instanceof Error ? loyaltyErr.message : 'unknown'}`,
+          );
+        }
+      }
     } else if (sellerRoles.includes(registerDto.role)) {
       // Generate unique slug for seller
       const baseSlug = slugify(registerDto.storeName!);

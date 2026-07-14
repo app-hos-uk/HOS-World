@@ -3,7 +3,6 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { SafeImage } from '@/components/SafeImage';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -392,8 +391,7 @@ export default function AdminSellersPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -422,29 +420,29 @@ export default function AdminSellersPage() {
                 <p className="text-xl font-bold text-hos-text-secondary">{stats.totalSellers}</p>
               </button>
               <button
-                onClick={() => setTypeFilter('B2C_SELLER')}
-                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'B2C_SELLER' ? 'ring-2 ring-hos-gold/50' : ''}`}
+                onClick={() => { setTypeFilter('B2C_SELLER'); setStatusFilter('ALL'); }}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'B2C_SELLER' && statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">B2C Sellers</p>
                 <p className="text-xl font-bold text-hos-gold">{stats.b2cSellers}</p>
               </button>
               <button
-                onClick={() => setTypeFilter('WHOLESALER')}
-                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'WHOLESALER' ? 'ring-2 ring-hos-gold/50' : ''}`}
+                onClick={() => { setTypeFilter('WHOLESALER'); setStatusFilter('ALL'); }}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'WHOLESALER' && statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Wholesalers</p>
                 <p className="text-xl font-bold text-green-400">{stats.wholesalers}</p>
               </button>
               <button
-                onClick={() => setStatusFilter('ACTIVE')}
-                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'ACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
+                onClick={() => { setTypeFilter('ALL'); setStatusFilter('ACTIVE'); }}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'ALL' && statusFilter === 'ACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Active</p>
                 <p className="text-xl font-bold text-green-400">{stats.activeSellers}</p>
               </button>
               <button
-                onClick={() => setStatusFilter('INACTIVE')}
-                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'INACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
+                onClick={() => { setTypeFilter('ALL'); setStatusFilter('INACTIVE'); }}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'ALL' && statusFilter === 'INACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Inactive</p>
                 <p className="text-xl font-bold text-red-400">{stats.inactiveSellers}</p>
@@ -737,19 +735,13 @@ export default function AdminSellersPage() {
           {/* Invitations Tab */}
           {activeTab === 'invitations' && (
             <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
-              <div className="p-4 border-b flex justify-between items-center">
+              <div className="p-4 border-b">
                 <div>
                   <h2 className="text-lg font-semibold">Seller invitations</h2>
                   <p className="text-xs text-hos-text-muted mt-0.5">
                     {pendingInvitationsCount} pending · {invitations.length} total
                   </p>
                 </div>
-                <button
-                  onClick={() => setShowInviteForm(true)}
-                  className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover text-sm"
-                >
-                  + New Invitation
-                </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-hos-border">
@@ -1021,7 +1013,7 @@ export default function AdminSellersPage() {
                         View Products
                       </a>
                       <a
-                        href={`/admin/orders?seller=${selectedSeller.id}`}
+                        href={`/admin/orders?sellerId=${selectedSeller.sellerId ?? selectedSeller.id}`}
                         className="px-4 py-2 bg-hos-gold/20 text-hos-gold rounded-lg hover:bg-hos-gold/20"
                       >
                         View Orders
@@ -1046,7 +1038,6 @@ export default function AdminSellersPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

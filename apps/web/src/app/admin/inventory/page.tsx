@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
@@ -39,6 +39,8 @@ interface RecentMovement {
 }
 
 export default function AdminInventoryDashboardPage() {
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'overview';
   const toast = useToast();
   const [stats, setStats] = useState<InventoryStats | null>(null);
   const [recentTransfers, setRecentTransfers] = useState<RecentTransfer[]>([]);
@@ -48,32 +50,39 @@ export default function AdminInventoryDashboardPage() {
   useEffect(() => {
     fetchDashboardData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeTab]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
 
-      // Fetch warehouses for stats
-      const warehousesRes = await apiClient.getWarehouses();
-      const warehouses = warehousesRes?.data || [];
+      const withTimeout = <T,>(promise: Promise<T>, ms = 15000): Promise<T> =>
+        Promise.race([
+          promise,
+          new Promise<T>((_, reject) =>
+            setTimeout(() => reject(new Error('Request timed out')), ms),
+          ),
+        ]);
+
+      const [warehousesRes, transfersRes, movementsRes] = await Promise.allSettled([
+        withTimeout(apiClient.getWarehouses()),
+        withTimeout(apiClient.getStockTransfers({ status: 'PENDING', page: 1, limit: 10 })),
+        withTimeout(apiClient.getStockMovements({ page: 1, limit: activeTab === 'movements' ? 50 : 10 })),
+      ]);
+
+      const warehouses = warehousesRes.status === 'fulfilled' ? (warehousesRes.value?.data || []) : [];
       const activeWarehouses = warehouses.filter((w: any) => w.isActive).length;
 
-      // Fetch recent transfers
-      const transfersRes = await apiClient.getStockTransfers({
-        status: 'PENDING',
-        page: 1,
-        limit: 10,
-      });
-      const transfersData = transfersRes?.data?.transfers || [];
+      const transfersData =
+        transfersRes.status === 'fulfilled'
+          ? transfersRes.value?.data?.transfers || []
+          : [];
       setRecentTransfers(transfersData);
 
-      // Fetch recent movements
-      const movementsRes = await apiClient.getStockMovements({
-        page: 1,
-        limit: 10,
-      });
-      const movementsData = movementsRes?.data?.movements || [];
+      const movementsData =
+        movementsRes.status === 'fulfilled'
+          ? movementsRes.value?.data?.movements || []
+          : [];
       setRecentMovements(movementsData);
 
       // Fetch inventory metrics for product stats
@@ -173,8 +182,7 @@ export default function AdminInventoryDashboardPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="container mx-auto px-4 py-8">
+              <div className="container mx-auto px-4 py-8">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-hos-gold mb-2">Inventory Dashboard</h1>
             <p className="text-hos-text-secondary">Overview of warehouses, stock transfers, and movements</p>
@@ -363,7 +371,6 @@ export default function AdminInventoryDashboardPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

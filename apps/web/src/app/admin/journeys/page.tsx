@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -31,7 +30,8 @@ export default function AdminJourneysPage() {
     try {
       await apiClient.adminDeleteJourney(id);
       toast.success('Journey deactivated');
-      load();
+      setRows((prev) => prev.map((j) => (j.id === id ? { ...j, isActive: false } : j)));
+      await load();
     } catch (e: any) {
       toast.error(e?.message || 'Failed');
     }
@@ -39,8 +39,7 @@ export default function AdminJourneysPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-6xl mx-auto">
+              <div className="p-6 max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-semibold text-hos-text-secondary">Marketing journeys</h1>
             <Link
@@ -78,13 +77,15 @@ export default function AdminJourneysPage() {
                         <Link href={`/admin/journeys/${j.id}`} className="text-hos-gold hover:underline">
                           View
                         </Link>
-                        <button
-                          type="button"
-                          className="text-red-400 hover:underline"
-                          onClick={() => deactivate(j.id)}
-                        >
-                          Deactivate
-                        </button>
+                        {j.isActive && (
+                          <button
+                            type="button"
+                            className="text-red-400 hover:underline"
+                            onClick={() => deactivate(j.id)}
+                          >
+                            Deactivate
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -94,7 +95,6 @@ export default function AdminJourneysPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

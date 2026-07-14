@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import { AdminLayout } from '@/components/AdminLayout';
 import { RouteGuard } from '@/components/RouteGuard';
 
 const api = apiClient as any;
@@ -103,8 +102,7 @@ export default function AdminInfluencerCommissionsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-      <div className="space-y-6">
+            <div className="space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-hos-text-secondary">Influencer Commissions</h1>
@@ -220,7 +218,6 @@ export default function AdminInfluencerCommissionsPage() {
           )}
         </div>
       </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

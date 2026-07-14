@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 export default function LoyaltyAnalyticsPage() {
@@ -29,8 +28,7 @@ export default function LoyaltyAnalyticsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-5xl mx-auto space-y-6">
+              <div className="p-6 max-w-5xl mx-auto space-y-6">
           <h1 className="text-2xl font-semibold text-hos-text-secondary">Program health</h1>
           {error ? (
             <p className="text-red-400 text-sm">{error}</p>
@@ -73,7 +71,6 @@ export default function LoyaltyAnalyticsPage() {
             <p className="text-hos-text-muted">No data available.</p>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

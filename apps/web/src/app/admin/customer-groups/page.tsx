@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -191,8 +190,7 @@ export default function AdminCustomerGroupsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'MARKETING']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Customer Groups</h1>
             <button
@@ -489,7 +487,6 @@ export default function AdminCustomerGroupsPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -94,17 +93,14 @@ export default function AdminSegmentDetailPage() {
   if (!seg) {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
-        <AdminLayout>
-          <div className="p-6">Loading…</div>
-        </AdminLayout>
-      </RouteGuard>
+                  <div className="p-6">Loading…</div>
+              </RouteGuard>
     );
   }
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-5xl mx-auto space-y-4">
+              <div className="p-6 max-w-5xl mx-auto space-y-4">
           <div className="flex justify-between items-start gap-4 flex-wrap">
             <div>
               <Link href="/admin/segments" className="text-hos-gold hover:underline text-sm">
@@ -125,7 +121,7 @@ export default function AdminSegmentDetailPage() {
                   <button
                     type="button"
                     onClick={refresh}
-                    className="rounded-md bg-hos-gold px-3 py-1.5 text-sm text-hos-text-secondary"
+                    className="rounded-md bg-hos-gold px-3 py-1.5 text-sm text-[#1a1406]"
                   >
                     Refresh now
                   </button>
@@ -294,7 +290,6 @@ export default function AdminSegmentDetailPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

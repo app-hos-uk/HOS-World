@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -138,8 +137,7 @@ export default function AdminQuizPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-5xl">
+              <div className="p-6 max-w-5xl">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-semibold text-stone-100">Fandom quizzes</h1>
             <button
@@ -304,7 +302,6 @@ export default function AdminQuizPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

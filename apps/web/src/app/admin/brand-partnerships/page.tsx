@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -56,8 +55,7 @@ export default function AdminBrandPartnershipsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-6xl mx-auto">
+              <div className="p-6 max-w-6xl mx-auto">
           <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
             <h1 className="text-2xl font-semibold text-hos-text-secondary">Brand partnerships</h1>
             <div className="flex gap-2">
@@ -155,7 +153,6 @@ export default function AdminBrandPartnershipsPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

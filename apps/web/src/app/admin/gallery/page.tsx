@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { FileUpload } from '@/components/FileUpload';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
@@ -201,8 +200,7 @@ export default function AdminGalleryPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
-      <AdminLayout>
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Gallery</h1>
             <p className="text-hos-text-secondary mt-1">
@@ -452,7 +450,6 @@ export default function AdminGalleryPage() {
             </div>
           </div>
         )}
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

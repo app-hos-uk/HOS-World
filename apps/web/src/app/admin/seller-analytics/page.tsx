@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import {
   BarChart,
@@ -86,8 +85,13 @@ export default function AdminSellerAnalyticsPage() {
       }
 
       // Fetch sellers from admin endpoint
-      const sellersResponse = await apiClient.getAdminSellers();
-      const rawSellers = Array.isArray(sellersResponse?.data) ? sellersResponse.data : [];
+      const sellersResponse = await apiClient.getAdminSellers({ page: 1, limit: 500 });
+      const payload = sellersResponse?.data as any;
+      const rawSellers = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
 
       // Map seller profile data to the format expected by analytics
       const mappedSellers = rawSellers.map((seller: any) => ({
@@ -124,11 +128,11 @@ export default function AdminSellerAnalyticsPage() {
       // New sellers in range
       const newSellersInRange = sellersInRange.length;
 
-      // Group by type (all sellers)
+      // Group by type (sellers in selected range)
       const sellersByType = [
-        { type: 'B2C Seller', count: allSellers.filter((s: any) => s.role === 'B2C_SELLER').length },
-        { type: 'Wholesaler', count: allSellers.filter((s: any) => s.role === 'WHOLESALER').length },
-        { type: 'Seller', count: allSellers.filter((s: any) => s.role === 'SELLER').length },
+        { type: 'B2C Seller', count: sellersInRange.filter((s: any) => s.role === 'B2C_SELLER').length },
+        { type: 'Wholesaler', count: sellersInRange.filter((s: any) => s.role === 'WHOLESALER').length },
+        { type: 'Seller', count: sellersInRange.filter((s: any) => s.role === 'SELLER').length },
       ].filter(t => t.count > 0);
 
       // Generate growth data based on time range
@@ -177,7 +181,7 @@ export default function AdminSellerAnalyticsPage() {
         sellerGrowth.push({ month: label, count });
       }
 
-      const topSellers = allSellers
+      const topSellers = sellersInRange
         .map((s: any) => ({
           name: s.storeName || `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.email,
           revenue: Number(s.totalRevenue || 0),
@@ -188,11 +192,11 @@ export default function AdminSellerAnalyticsPage() {
         .slice(0, 5);
 
       setAnalytics({
-        totalSellers: allSellers.length,
-        activeSellers: activeSellers.length,
-        pendingSellers: pendingSellers.length,
-        totalRevenue: allSellers.reduce((sum: number, s: any) => sum + Number(s.totalRevenue || 0), 0),
-        sellers: allSellers,
+        totalSellers: sellersInRange.length,
+        activeSellers: sellersInRange.filter((s: any) => s.isVerified).length,
+        pendingSellers: sellersInRange.filter((s: any) => !s.isVerified).length,
+        totalRevenue: sellersInRange.reduce((sum: number, s: any) => sum + Number(s.totalRevenue || 0), 0),
+        sellers: sellersInRange,
         sellersByType,
         sellerGrowth,
         topSellers,
@@ -207,8 +211,7 @@ export default function AdminSellerAnalyticsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-hos-text-secondary">Seller Analytics</h1>
@@ -464,7 +467,6 @@ export default function AdminSellerAnalyticsPage() {
             </>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

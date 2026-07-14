@@ -1117,6 +1117,7 @@ model ProductReview {
   rating    Int // 1-5 stars
   title     String?
   comment   String?      @db.Text
+  images    String[]     @default([])
   verified  Boolean      @default(false) // If user purchased the product
   helpful   Int          @default(0) // Helpful votes count
   status    ReviewStatus @default(PENDING)

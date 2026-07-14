@@ -8,6 +8,7 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export enum RegisterRole {
   CUSTOMER = 'customer',
@@ -35,6 +36,7 @@ export enum CommunicationMethod {
 }
 
 export class RegisterDto {
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
   @IsEmail()
   email: string;
 

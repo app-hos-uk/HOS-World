@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -46,8 +45,7 @@ export default function AdminLoyaltyDashboardPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
-      <AdminLayout>
-        <div className="mb-6">
+              <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Loyalty Program Management</h1>
           <p className="text-hos-text-secondary mt-1">Manage tiers, earn rules, rewards, campaigns, and members</p>
         </div>
@@ -145,7 +143,6 @@ export default function AdminLoyaltyDashboardPage() {
             </div>
           </>
         )}
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

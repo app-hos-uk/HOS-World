@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import { StatCard } from '@/components/ui/StatCard';
@@ -142,8 +141,7 @@ export default function AdminDashboardPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
-      <AdminLayout>
-        {/* Page Header */}
+              {/* Page Header */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-hos-text-secondary">Dashboard</h1>
@@ -301,11 +299,9 @@ export default function AdminDashboardPage() {
                 {orderStatusData.length > 0 ? (
                 <div className="relative h-full w-full">
                   {/* Total count in donut center */}
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ paddingBottom: 44 }}>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-hos-text-secondary">{stats.totalOrders}</p>
-                      <p className="text-[10px] text-hos-text-muted uppercase tracking-wide">Total</p>
-                    </div>
+                  <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-center" style={{ top: '44%', transform: 'translate(-50%, -50%)' }}>
+                    <p className="text-2xl font-bold text-hos-text-secondary">{stats.totalOrders}</p>
+                    <p className="text-[10px] text-hos-text-muted uppercase tracking-wide">Total</p>
                   </div>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart margin={{ top: 16, right: 8, left: 8, bottom: 8 }}>
@@ -313,8 +309,8 @@ export default function AdminDashboardPage() {
                         data={orderStatusData}
                         cx="50%"
                         cy="44%"
-                        innerRadius={50}
-                        outerRadius={78}
+                        innerRadius="55%"
+                        outerRadius="78%"
                         fill="#8884d8"
                         paddingAngle={3}
                         dataKey="value"
@@ -509,7 +505,6 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         )}
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/useToast';
 import { SafeImage } from '@/components/SafeImage';
 import { isValidHttpPublicUrl } from '@/lib/httpUrlValidation';
 import { GoogleFontLink } from '@/components/GoogleFontLink';
+import { useThemeContext } from '@hos-marketplace/theme-system';
 
 interface Theme {
   id: string;
@@ -146,6 +147,7 @@ const FONT_OPTIONS = ['Inter', 'Roboto', 'Open Sans', 'Lato', 'Poppins', 'Montse
 
 export default function SellerThemesPage() {
   const toast = useToast();
+  const { loadTheme } = useThemeContext();
   const { user, effectiveRole } = useAuth();
   const [themes, setThemes] = useState<Theme[]>([]);
   const [currentTheme, setCurrentTheme] = useState<SellerTheme | null>(null);
@@ -294,6 +296,7 @@ export default function SellerThemesPage() {
       }
       toast.success(`${theme.name} applied successfully!`);
       setPreviewTheme(null);
+      await loadTheme(theme.id);
       await fetchCurrentTheme();
     } catch (err: any) {
       console.error('Error installing theme:', err);

@@ -1,12 +1,14 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Optional } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { TransactionsService } from './transactions.service';
+import { VendorLedgerService } from '../vendor-ledger/vendor-ledger.service';
 
 @Injectable()
 export class PayoutsService {
   constructor(
     private prisma: PrismaService,
     private transactionsService: TransactionsService,
+    @Optional() private vendorLedgerService?: VendorLedgerService,
   ) {}
 
   async schedulePayout(data: {
@@ -73,7 +75,16 @@ export class PayoutsService {
       }
     }
 
-    // Update transaction status to completed
+    // Debit vendor ledger and mark payout completed
+    if (transaction.sellerId && this.vendorLedgerService) {
+      await this.vendorLedgerService.recordPayout({
+        sellerId: transaction.sellerId,
+        amount: Number(transaction.amount),
+        referenceId: transactionId,
+        currency: transaction.currency || 'USD',
+      });
+    }
+
     const updated = await this.transactionsService.updateTransactionStatus(
       transactionId,
       'COMPLETED',

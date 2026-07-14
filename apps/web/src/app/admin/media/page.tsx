@@ -3,7 +3,6 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { SafeImage } from '@/components/SafeImage';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
@@ -62,7 +61,7 @@ export default function AdminMediaLibraryPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getMediaAssets(page, limit);
+      const response = await apiClient.getMediaAssets(page, limit, debouncedSearch || undefined);
       if (response?.data) {
         const data = response.data as MediaResponse;
         setAssets(data.items || []);
@@ -77,22 +76,13 @@ export default function AdminMediaLibraryPage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, debouncedSearch]);
 
   useEffect(() => {
     fetchAssets();
   }, [fetchAssets]);
 
-  const filteredAssets = useMemo(() => {
-    if (!debouncedSearch) return assets;
-    const term = debouncedSearch.toLowerCase();
-    return assets.filter(
-      (a) =>
-        a.filename.toLowerCase().includes(term) ||
-        a.productName?.toLowerCase().includes(term) ||
-        a.alt?.toLowerCase().includes(term)
-    );
-  }, [assets, debouncedSearch]);
+  const displayedAssets = assets;
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -175,8 +165,7 @@ export default function AdminMediaLibraryPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
@@ -254,7 +243,7 @@ export default function AdminMediaLibraryPage() {
           )}
 
           {/* Empty State */}
-          {!loading && !error && filteredAssets.length === 0 && (
+          {!loading && !error && displayedAssets.length === 0 && (
             <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-8 text-center">
               <div className="text-5xl mb-4">🖼️</div>
               <p className="text-hos-text-muted text-lg mb-2">
@@ -277,9 +266,9 @@ export default function AdminMediaLibraryPage() {
           )}
 
           {/* Media Grid */}
-          {!loading && !error && filteredAssets.length > 0 && (
+          {!loading && !error && displayedAssets.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {filteredAssets.map((asset) => (
+              {displayedAssets.map((asset) => (
                 <div
                   key={asset.id}
                   className="bg-hos-bg-secondary border border-hos-border rounded-lg overflow-hidden hover:shadow-lg transition-all group"
@@ -499,7 +488,6 @@ export default function AdminMediaLibraryPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

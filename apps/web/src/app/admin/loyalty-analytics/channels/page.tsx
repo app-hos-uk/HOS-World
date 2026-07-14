@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 export default function ChannelPerformancePage() {
@@ -31,8 +30,7 @@ export default function ChannelPerformancePage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-4xl mx-auto space-y-4">
+              <div className="p-6 max-w-4xl mx-auto space-y-4">
           <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">← Health</Link>
           <h1 className="text-2xl font-semibold text-hos-text-secondary">Channel performance (30d)</h1>
           {loading ? <p className="text-hos-text-muted">Loading…</p> : error ? <p className="text-red-400 text-sm">{error}</p> : data ? (
@@ -42,7 +40,6 @@ export default function ChannelPerformancePage() {
             </div>
           ) : <p className="text-hos-text-muted">No data available.</p>}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

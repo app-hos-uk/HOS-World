@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useRouter } from 'next/navigation';
@@ -197,8 +196,7 @@ export default function PriceManagementPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'FINANCE']} showAccessDenied={true}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-hos-text-secondary">Price Management</h1>
@@ -557,7 +555,6 @@ export default function PriceManagementPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

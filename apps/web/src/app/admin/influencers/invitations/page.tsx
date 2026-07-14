@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import { AdminLayout } from '@/components/AdminLayout';
 import { RouteGuard } from '@/components/RouteGuard';
 
 const api = apiClient as any;
@@ -124,8 +123,7 @@ export default function AdminInfluencerInvitationsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-      <div className="space-y-6">
+            <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -318,7 +316,6 @@ export default function AdminInfluencerInvitationsPage() {
           </div>
         )}
       </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

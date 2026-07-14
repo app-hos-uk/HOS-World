@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -57,8 +56,7 @@ export default function AdminProductCampaignNewPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-lg mx-auto space-y-4">
+              <div className="p-6 max-w-lg mx-auto space-y-4">
           <Link href="/admin/product-campaigns" className="text-sm text-violet-400">
             ← Campaigns
           </Link>
@@ -124,7 +122,6 @@ export default function AdminProductCampaignNewPage() {
             {saving ? 'Saving…' : 'Create'}
           </button>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

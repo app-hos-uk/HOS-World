@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Fragment } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Dialog, Transition } from '@headlessui/react';
@@ -176,8 +175,7 @@ export default function AdminStockTransfersPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="container mx-auto px-4 py-8">
+              <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-3xl font-bold text-hos-gold mb-2">Stock Transfers</h1>
@@ -493,7 +491,7 @@ export default function AdminStockTransfersPage() {
                           <button
                             type="submit"
                             disabled={submitting}
-                            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
+                            className="px-4 py-2 text-sm font-medium text-[#1a1406] bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
                           >
                             {submitting ? 'Creating...' : 'Create Transfer'}
                           </button>
@@ -506,7 +504,6 @@ export default function AdminStockTransfersPage() {
             </Dialog>
           </Transition>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

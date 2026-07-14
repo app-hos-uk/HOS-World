@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 export default function AdminMessagingLogsPage() {
@@ -35,8 +34,7 @@ export default function AdminMessagingLogsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-6xl mx-auto">
+              <div className="p-6 max-w-6xl mx-auto">
           <h1 className="text-2xl font-semibold text-hos-text-secondary mb-4">Message logs</h1>
           <div className="flex flex-wrap gap-2 mb-4">
             <select
@@ -95,7 +93,6 @@ export default function AdminMessagingLogsPage() {
             </>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

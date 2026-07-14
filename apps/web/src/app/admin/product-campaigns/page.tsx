@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -31,8 +30,7 @@ export default function AdminProductCampaignsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-5xl mx-auto">
+              <div className="p-6 max-w-5xl mx-auto">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-semibold text-hos-text-secondary">Product campaigns</h1>
             <Link
@@ -82,7 +80,6 @@ export default function AdminProductCampaignsPage() {
             </ul>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 export default function AttributionPage() {
@@ -24,8 +23,7 @@ export default function AttributionPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-5xl mx-auto space-y-4">
+              <div className="p-6 max-w-5xl mx-auto space-y-4">
           <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">← Health</Link>
           <h1 className="text-2xl font-semibold text-hos-text-secondary">Campaign ROI</h1>
           {loading ? <p className="text-hos-text-muted">Loading…</p> : error ? <p className="text-red-400 text-sm">{error}</p> : (
@@ -39,24 +37,24 @@ export default function AttributionPage() {
                   <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">Avg ROI</p><p className="text-xl font-semibold">{totals.avgRoi}x</p></div>
                 </div>
               )}
-              <table className="min-w-full text-sm border rounded bg-hos-bg-secondary">
+              <table className="admin-table border rounded bg-hos-bg-secondary">
                 <thead className="bg-hos-bg-secondary"><tr>
-                  <th className="text-left px-3 py-2">Campaign</th>
-                  <th className="px-3 py-2">Type</th>
-                  <th className="px-3 py-2">Orders</th>
-                  <th className="px-3 py-2">Revenue</th>
-                  <th className="px-3 py-2">Points</th>
-                  <th className="px-3 py-2">ROI</th>
+                  <th>Campaign</th>
+                  <th>Type</th>
+                  <th>Orders</th>
+                  <th>Revenue</th>
+                  <th>Points</th>
+                  <th>ROI</th>
                 </tr></thead>
                 <tbody>
                   {campaigns.map((c: any) => (
                     <tr key={c.campaignId} className="border-t">
-                      <td className="px-3 py-2">{c.campaignName}</td>
-                      <td className="px-3 py-2">{c.campaignType}</td>
-                      <td className="px-3 py-2">{c.totalOrders}</td>
-                      <td className="px-3 py-2">${Number(c.totalRevenue).toFixed(2)}</td>
-                      <td className="px-3 py-2">{c.totalPoints}</td>
-                      <td className="px-3 py-2">{c.roi}x</td>
+                      <td>{c.campaignName}</td>
+                      <td>{c.campaignType}</td>
+                      <td>{c.totalOrders}</td>
+                      <td>${Number(c.totalRevenue).toFixed(2)}</td>
+                      <td>{c.totalPoints}</td>
+                      <td>{c.roi}x</td>
                     </tr>
                   ))}
                 </tbody>
@@ -64,7 +62,6 @@ export default function AttributionPage() {
             </>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

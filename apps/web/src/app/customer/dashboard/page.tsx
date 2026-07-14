@@ -100,6 +100,14 @@ export default function CustomerDashboardPage() {
       if (!hasLoadedOnceRef.current) setLoading(true);
       setError(null);
 
+      const withTimeout = <T,>(promise: Promise<T>, ms = 10000): Promise<T> =>
+        Promise.race([
+          promise,
+          new Promise<T>((_, reject) =>
+            setTimeout(() => reject(new Error('Request timed out')), ms),
+          ),
+        ]);
+
       const [
         ordersResponse,
         wishlistResponse,
@@ -108,17 +116,25 @@ export default function CustomerDashboardPage() {
         loyaltyRes,
         loyaltyProgressRes,
         recommendationsRes,
-      ] = await Promise.all([
-        apiClient.getOrders().catch(() => ({ data: [] })),
-        apiClient.getWishlist({ limit: 8 }).catch(() => ({ data: [] })),
-        apiClient.getCart().catch(() => ({ data: { items: [] } })),
-        apiClient.getGamificationStats().catch(() => null),
-        apiClient.getLoyaltyMembership().catch(() => null),
-        apiClient.getLoyaltyTierProgress().catch(() => null),
-        apiClient.getAIRecommendations().catch(() => null),
+      ] = await Promise.allSettled([
+        withTimeout(apiClient.getOrders().catch(() => ({ data: [] }))),
+        withTimeout(apiClient.getWishlist({ limit: 8 }).catch(() => ({ data: [] }))),
+        withTimeout(apiClient.getCart().catch(() => ({ data: { items: [] } }))),
+        withTimeout(apiClient.getGamificationStats().catch(() => null)),
+        withTimeout(apiClient.getLoyaltyMembership().catch(() => null)),
+        withTimeout(apiClient.getLoyaltyTierProgress().catch(() => null)),
+        withTimeout(apiClient.getAIRecommendations().catch(() => null)),
       ]);
 
-      const orders: DashboardOrder[] = Array.isArray(ordersResponse?.data) ? ordersResponse.data : [];
+      const ordersResult = ordersResponse.status === 'fulfilled' ? ordersResponse.value : { data: [] };
+      const wishlistResult = wishlistResponse.status === 'fulfilled' ? wishlistResponse.value : { data: [] };
+      const cartResult = cartResponse.status === 'fulfilled' ? cartResponse.value : { data: { items: [] } };
+      const gamificationResponse_data = gamificationResponse.status === 'fulfilled' ? gamificationResponse.value : null;
+      const loyaltyRes_data = loyaltyRes.status === 'fulfilled' ? loyaltyRes.value : null;
+      const loyaltyProgressRes_data = loyaltyProgressRes.status === 'fulfilled' ? loyaltyProgressRes.value : null;
+      const recommendationsRes_data = recommendationsRes.status === 'fulfilled' ? recommendationsRes.value : null;
+
+      const orders: DashboardOrder[] = Array.isArray(ordersResult?.data) ? ordersResult.data : [];
       setAllOrders(orders);
       
       // Calculate stats
@@ -136,7 +152,7 @@ export default function CustomerDashboardPage() {
         .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
 
       // Fetch wishlist — request a separate count call for the true total
-      const wishlistData = wishlistResponse?.data as any;
+      const wishlistData = wishlistResult?.data as any;
       const wishlistArray: any[] = Array.isArray(wishlistData)
         ? wishlistData
         : (wishlistData?.products || []);
@@ -149,16 +165,16 @@ export default function CustomerDashboardPage() {
       const wishlistItemsCount = paginationTotal ?? wishlistArray.length;
       setRecentWishlist(wishlistArray.slice(0, 4));
 
-      const cartItems = cartResponse?.data?.items?.length || 0;
+      const cartItems = cartResult?.data?.items?.length || 0;
 
-      if (gamificationResponse?.data) {
-        setProfileStats(gamificationResponse.data);
+      if (gamificationResponse_data?.data) {
+        setProfileStats(gamificationResponse_data.data);
       }
 
-      setLoyaltyMembership(loyaltyRes?.data ?? null);
-      setLoyaltyProgress(loyaltyProgressRes?.data ?? null);
+      setLoyaltyMembership(loyaltyRes_data?.data ?? null);
+      setLoyaltyProgress(loyaltyProgressRes_data?.data ?? null);
 
-      const recs = recommendationsRes?.data;
+      const recs = recommendationsRes_data?.data;
       setRecommendedProducts(Array.isArray(recs) ? recs.slice(0, 8) : []);
 
       // Build recent activity from orders and wishlist

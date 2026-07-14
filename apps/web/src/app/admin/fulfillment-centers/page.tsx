@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Fragment } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Dialog, Transition } from '@headlessui/react';
@@ -174,20 +173,17 @@ export default function AdminFulfillmentCentersPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
-        <AdminLayout>
-          <div className="flex items-center justify-center h-64">
+                  <div className="flex items-center justify-center h-64">
             <div className="text-hos-text-muted">Loading fulfillment centers...</div>
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     );
   }
 
   if (error) {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
-        <AdminLayout>
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
             <p className="text-red-300">Error: {error}</p>
             <button
               onClick={fetchCenters}
@@ -196,15 +192,13 @@ export default function AdminFulfillmentCentersPage() {
               Retry
             </button>
           </div>
-        </AdminLayout>
-      </RouteGuard>
+              </RouteGuard>
     );
   }
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-hos-text-secondary">Fulfillment Centers</h1>
             <button
@@ -525,8 +519,7 @@ export default function AdminFulfillmentCentersPage() {
             </div>
           </Dialog>
         </Transition>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }
 

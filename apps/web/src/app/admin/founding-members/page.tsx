@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import {
   downloadCsvTemplate,
@@ -313,8 +312,7 @@ export default function AdminFoundingMembersPage() {
 
   return (
     <RouteGuard allowedRoles={[...ALLOWED_ROLES]}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-hos-text-secondary">Founding Members</h1>
             <p className="mt-1 text-sm text-hos-text-muted">
@@ -693,7 +691,6 @@ export default function AdminFoundingMembersPage() {
             </form>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

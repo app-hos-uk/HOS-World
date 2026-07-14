@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 
 export default function TierAnalysisPage() {
@@ -21,38 +20,36 @@ export default function TierAnalysisPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="p-6 max-w-5xl mx-auto space-y-4">
+              <div className="p-6 max-w-5xl mx-auto space-y-4">
           <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">← Health</Link>
           <h1 className="text-2xl font-semibold text-hos-text-secondary">Tier analysis</h1>
           {loading ? <p className="text-hos-text-muted">Loading…</p> : error ? <p className="text-red-400 text-sm">{error}</p> : (
-            <table className="min-w-full text-sm border rounded bg-hos-bg-secondary">
+            <table className="admin-table border rounded bg-hos-bg-secondary">
               <thead className="bg-hos-bg-secondary"><tr>
-                <th className="text-left px-3 py-2">Tier</th>
-                <th className="px-3 py-2">Members</th>
-                <th className="px-3 py-2">Avg spend</th>
-                <th className="px-3 py-2">Avg CLV</th>
-                <th className="px-3 py-2">Freq/mo</th>
-                <th className="px-3 py-2">Churn</th>
-                <th className="px-3 py-2">Revenue</th>
+                <th>Tier</th>
+                <th>Members</th>
+                <th>Avg spend</th>
+                <th>Avg CLV</th>
+                <th>Freq/mo</th>
+                <th>Churn</th>
+                <th>Revenue</th>
               </tr></thead>
               <tbody>
                 {data.map((t: any) => (
                   <tr key={t.tier} className="border-t">
-                    <td className="px-3 py-2 font-medium">{t.tier}</td>
-                    <td className="px-3 py-2">{t.memberCount}</td>
-                    <td className="px-3 py-2">${Number(t.avgSpend).toFixed(2)}</td>
-                    <td className="px-3 py-2">${Number(t.avgClv).toFixed(2)}</td>
-                    <td className="px-3 py-2">{Number(t.avgPurchaseFreq).toFixed(2)}</td>
-                    <td className="px-3 py-2">{(Number(t.churnRate) * 100).toFixed(1)}%</td>
-                    <td className="px-3 py-2">${Number(t.revenueContribution).toFixed(2)}</td>
+                    <td className="font-medium">{t.tier}</td>
+                    <td>{t.memberCount}</td>
+                    <td>${Number(t.avgSpend).toFixed(2)}</td>
+                    <td>${Number(t.avgClv).toFixed(2)}</td>
+                    <td>{Number(t.avgPurchaseFreq).toFixed(2)}</td>
+                    <td>{(Number(t.churnRate) * 100).toFixed(1)}%</td>
+                    <td>${Number(t.revenueContribution).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

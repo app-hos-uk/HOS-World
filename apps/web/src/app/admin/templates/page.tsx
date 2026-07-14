@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { AdminLayout } from '@/components/AdminLayout';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { sanitizeEmailPreviewHtml, wrapEmailPreviewDocument } from '@/lib/sanitizeHtml';
@@ -184,8 +183,7 @@ export default function AdminTemplatesPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-    <AdminLayout>
-      <div className="space-y-6">
+          <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Notification Templates</h1>
@@ -505,7 +503,6 @@ export default function AdminTemplatesPage() {
           </div>
         </div>
       </div>
-    </AdminLayout>
-    </RouteGuard>
+        </RouteGuard>
   );
 }

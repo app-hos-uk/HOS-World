@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DataExport } from '@/components/DataExport';
@@ -39,15 +38,63 @@ export default function AdminFinancePage() {
   const safePayouts = useMemo(() => Array.isArray(payouts) ? payouts : [], [payouts]);
   const safeRefunds = useMemo(() => Array.isArray(refunds) ? refunds : [], [refunds]);
 
+  const formatLocalDate = (d: Date): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getDateRangeBounds = useCallback(() => {
+    const now = new Date();
+    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
+    const start = new Date(now);
+    start.setDate(start.getDate() - (days - 1));
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(now);
+    end.setHours(23, 59, 59, 999);
+    return {
+      startDate: formatLocalDate(start),
+      endDate: formatLocalDate(end),
+      start,
+      end,
+    };
+  }, [dateRange]);
+
+  const isInDateRange = useCallback(
+    (createdAt: string | Date | undefined) => {
+      if (!createdAt) return false;
+      const { start, end } = getDateRangeBounds();
+      const d = new Date(createdAt);
+      return d >= start && d <= end;
+    },
+    [getDateRangeBounds],
+  );
+
+  const rangedTransactions = useMemo(
+    () => safeTransactions.filter((tx) => isInDateRange(tx.createdAt)),
+    [safeTransactions, isInDateRange],
+  );
+  const rangedPayouts = useMemo(
+    () => safePayouts.filter((p) => isInDateRange(p.createdAt)),
+    [safePayouts, isInDateRange],
+  );
+  const rangedRefunds = useMemo(
+    () => safeRefunds.filter((r) => isInDateRange(r.createdAt)),
+    [safeRefunds, isInDateRange],
+  );
+
   // Note: toast is NOT included in deps because useToast() returns a new object each render
   // The toast methods themselves are stable; including toast would cause infinite re-fetches
   const fetchAllData = useCallback(async () => {
     try {
       setLoading(true);
+      const { startDate, endDate } = getDateRangeBounds();
+      const dateFilters = { startDate, endDate };
       const [txRes, payoutRes, refundRes, settingsRes] = await Promise.all([
-        apiClient.getTransactions().catch(() => ({ data: [] })),
-        apiClient.getPayouts().catch(() => ({ data: [] })),
-        apiClient.getRefunds().catch(() => ({ data: [] })),
+        apiClient.getTransactions(dateFilters).catch(() => ({ data: [] })),
+        apiClient.getPayouts(dateFilters).catch(() => ({ data: [] })),
+        apiClient.getRefunds(dateFilters).catch(() => ({ data: [] })),
         apiClient.getSystemSettings().catch(() => null),
       ]);
       
@@ -64,26 +111,28 @@ export default function AdminFinancePage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dateRange, getDateRangeBounds]);
 
   // Fetch data for specific tab - takes tab as parameter to avoid stale closure
   // Note: toast excluded from deps (see comment above fetchAllData)
   const fetchDataForTab = useCallback(async (tab: 'transactions' | 'payouts' | 'refunds') => {
     try {
       setLoading(true);
+      const { startDate, endDate } = getDateRangeBounds();
+      const dateFilters = { startDate, endDate };
       switch (tab) {
         case 'transactions': {
-          const res = await apiClient.getTransactions();
+          const res = await apiClient.getTransactions(dateFilters);
           setTransactions(extractData(res));
           break;
         }
         case 'payouts': {
-          const res = await apiClient.getPayouts();
+          const res = await apiClient.getPayouts(dateFilters);
           setPayouts(extractData(res));
           break;
         }
         case 'refunds': {
-          const res = await apiClient.getRefunds();
+          const res = await apiClient.getRefunds(dateFilters);
           setRefunds(extractData(res));
           break;
         }
@@ -94,7 +143,7 @@ export default function AdminFinancePage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dateRange, getDateRangeBounds]);
 
   useEffect(() => {
     fetchAllData();
@@ -105,16 +154,16 @@ export default function AdminFinancePage() {
     if (activeTab !== 'overview' && activeTab !== 'reports') {
       fetchDataForTab(activeTab);
     }
-  }, [activeTab, fetchDataForTab]);
+  }, [activeTab, fetchDataForTab, dateRange]);
 
   // Calculate financial metrics (guard: API may return { transactions } object)
   const metrics = useMemo(() => {
-    const completedTx = safeTransactions.filter(tx => tx.status === 'COMPLETED');
+    const completedTx = rangedTransactions.filter(tx => tx.status === 'COMPLETED');
     const totalRevenue = completedTx.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-    const pendingTx = safeTransactions.filter(tx => tx.status === 'PENDING');
+    const pendingTx = rangedTransactions.filter(tx => tx.status === 'PENDING');
     const pendingAmount = pendingTx.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-    const totalPayouts = safePayouts.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-    const totalRefunds = safeRefunds.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
+    const totalPayouts = rangedPayouts.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const totalRefunds = rangedRefunds.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
     const netRevenue = totalRevenue - totalRefunds;
     const platformFees = totalRevenue * platformFeeRate;
 
@@ -125,18 +174,10 @@ export default function AdminFinancePage() {
       totalRefunds,
       netRevenue,
       platformFees,
-      transactionCount: safeTransactions.length,
+      transactionCount: rangedTransactions.length,
       avgTransactionValue: completedTx.length > 0 ? totalRevenue / completedTx.length : 0,
     };
-  }, [safeTransactions, safePayouts, safeRefunds, platformFeeRate]);
-
-  // Helper to format date as YYYY-MM-DD in LOCAL time (not UTC)
-  const formatLocalDate = (d: Date): string => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  }, [rangedTransactions, rangedPayouts, rangedRefunds, platformFeeRate]);
 
   // Revenue chart data (last 30 days)
   const revenueChartData = useMemo(() => {
@@ -150,7 +191,7 @@ export default function AdminFinancePage() {
       // Use local date format consistently to avoid timezone mismatches
       const dateStr = formatLocalDate(date);
       
-      const dayTransactions = safeTransactions.filter(tx => {
+      const dayTransactions = rangedTransactions.filter(tx => {
         // Convert transaction date to local date string for consistent comparison
         const txDate = new Date(tx.createdAt);
         const txDateStr = formatLocalDate(txDate);
@@ -167,29 +208,29 @@ export default function AdminFinancePage() {
     }
     
     return data;
-  }, [safeTransactions, dateRange]);
+  }, [rangedTransactions, dateRange]);
 
   // Transaction type breakdown
   const transactionTypeData = useMemo(() => {
     const types: Record<string, number> = {};
-    safeTransactions.forEach(tx => {
+    rangedTransactions.forEach(tx => {
       const type = tx.type || 'OTHER';
       types[type] = (types[type] || 0) + (Number(tx.amount) || 0);
     });
     
     return Object.entries(types).map(([name, value]) => ({ name, value }));
-  }, [safeTransactions]);
+  }, [rangedTransactions]);
 
   // Payment status breakdown
   const paymentStatusData = useMemo(() => {
     const statuses: Record<string, number> = {};
-    safeTransactions.forEach(tx => {
+    rangedTransactions.forEach(tx => {
       const status = tx.status || 'UNKNOWN';
       statuses[status] = (statuses[status] || 0) + 1;
     });
     
     return Object.entries(statuses).map(([name, value]) => ({ name, value }));
-  }, [safeTransactions]);
+  }, [rangedTransactions]);
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: '📊' },
@@ -201,8 +242,7 @@ export default function AdminFinancePage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-hos-text-secondary">Finance Dashboard</h1>
@@ -572,8 +612,7 @@ export default function AdminFinancePage() {
             </>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }
 

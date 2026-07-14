@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -72,8 +71,7 @@ export default function AdminSellerVerificationsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'FINANCE']}>
-      <AdminLayout title="Seller Verifications">
-        <div className="mb-6">
+              <div className="mb-6">
           <h1 className="text-2xl font-bold text-hos-text-secondary">Seller Verification Queue</h1>
           <p className="text-hos-text-muted text-sm mt-1">
             Review wholesaler and seller identity documents
@@ -187,7 +185,6 @@ export default function AdminSellerVerificationsPage() {
             ))}
           </div>
         )}
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

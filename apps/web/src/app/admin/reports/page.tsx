@@ -1,7 +1,6 @@
 'use client';
 
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import Link from 'next/link';
 
 const reportLinks = [
@@ -15,8 +14,7 @@ const reportLinks = [
 export default function AdminReportsPage() {
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-hos-text-secondary">Reports</h1>
             <p className="mt-1 text-sm text-hos-text-muted">Analytics and report dashboards</p>
@@ -37,7 +35,6 @@ export default function AdminReportsPage() {
             ))}
           </div>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

@@ -10,7 +10,6 @@ import {
 } from '@/lib/sellerProfileFieldValidation';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Dialog, Transition } from '@headlessui/react';
@@ -211,8 +210,7 @@ export default function AdminWarehousesPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-      <AdminLayout>
-        <div className="container mx-auto px-4 py-8">
+              <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-3xl font-bold text-hos-gold mb-2">Warehouse Management</h1>
@@ -639,7 +637,7 @@ export default function AdminWarehousesPage() {
                           <button
                             type="submit"
                             disabled={submitting}
-                            className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
+                            className="px-4 py-2 text-sm font-medium text-[#1a1406] bg-hos-gold rounded-md hover:bg-hos-gold-hover disabled:opacity-50"
                           >
                             {submitting ? 'Saving...' : isEditMode ? 'Update' : 'Create'}
                           </button>
@@ -652,7 +650,6 @@ export default function AdminWarehousesPage() {
             </Dialog>
           </Transition>
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

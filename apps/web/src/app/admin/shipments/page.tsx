@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DataExport } from '@/components/DataExport';
@@ -207,7 +206,11 @@ export default function AdminShipmentsPage() {
 
     // Status filter
     if (statusFilter !== 'ALL') {
-      filtered = filtered.filter(s => s.status === statusFilter);
+      if (statusFilter === 'PENDING_GROUP') {
+        filtered = filtered.filter(s => ['PENDING', 'PICKED', 'PACKED'].includes(s.status));
+      } else {
+        filtered = filtered.filter(s => s.status === statusFilter);
+      }
     }
 
     // Carrier filter
@@ -320,8 +323,7 @@ export default function AdminShipmentsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'FULFILLMENT']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -342,7 +344,7 @@ export default function AdminShipmentsPage() {
                 <p className="text-xl font-bold text-hos-text-secondary">{stats.total}</p>
               </button>
               <button
-                onClick={() => setStatusFilter('PENDING')}
+                onClick={() => setStatusFilter('PENDING_GROUP')}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'PENDING' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Pending</p>
@@ -745,7 +747,6 @@ export default function AdminShipmentsPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

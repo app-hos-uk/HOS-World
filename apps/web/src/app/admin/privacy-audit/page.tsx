@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { AdminLayout } from '@/components/AdminLayout';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
@@ -70,8 +69,7 @@ export default function PrivacyAuditPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
-      <AdminLayout>
-        <div className="mb-6">
+              <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold">Privacy Audit Log</h1>
           <p className="text-hos-text-secondary mt-2">
             Track all consent changes, Do Not Sell opt-outs, and data access request events across users.
@@ -200,7 +198,6 @@ export default function PrivacyAuditPage() {
             </div>
           </div>
         )}
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

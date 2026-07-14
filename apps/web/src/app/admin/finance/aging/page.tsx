@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { AdminLayout } from '@/components/AdminLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -89,8 +88,7 @@ export default function AgingAnalysisPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'FINANCE']}>
-      <AdminLayout>
-        <div className="space-y-6">
+              <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-hos-text-secondary">Aging Analysis</h1>
             <p className="text-hos-text-muted mt-1">Track overdue transactions, settlements, and disputes by age</p>
@@ -118,7 +116,6 @@ export default function AgingAnalysisPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }

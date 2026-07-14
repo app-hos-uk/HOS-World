@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import { AdminLayout } from '@/components/AdminLayout';
 import { RouteGuard } from '@/components/RouteGuard';
 
 type Rule = {
@@ -200,8 +199,7 @@ export default function InfluencerCommissionSettingsPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'MARKETING']} showAccessDenied={true}>
-      <AdminLayout>
-        <div className="space-y-6 max-w-5xl">
+              <div className="space-y-6 max-w-5xl">
           <div className="flex items-center gap-4">
             <button
               type="button"
@@ -429,7 +427,6 @@ export default function InfluencerCommissionSettingsPage() {
             </>
           )}
         </div>
-      </AdminLayout>
-    </RouteGuard>
+          </RouteGuard>
   );
 }
