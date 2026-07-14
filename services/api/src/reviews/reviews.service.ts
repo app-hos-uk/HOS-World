@@ -23,6 +23,7 @@ interface Review {
   rating: number;
   title?: string;
   comment?: string;
+  images?: string[];
   verified: boolean;
   helpful: number;
   status: string;
@@ -494,6 +495,7 @@ export class ReviewsService {
       rating: review.rating,
       title: review.title || undefined,
       comment: review.comment || undefined,
+      images: Array.isArray(review.images) ? review.images : [],
       verified: review.verified,
       helpful: review.helpful,
       status: review.status.toLowerCase(),

@@ -897,14 +897,18 @@ export class ReturnsService {
       {
         step: 'RECEIVED',
         label: 'Package received',
-        at: returnRequest.receivedAt || undefined,
-        completed: ['PROCESSING', 'COMPLETED'].includes(status) && !!returnRequest.receivedAt,
+        at: ['PROCESSING', 'COMPLETED'].includes(status)
+          ? returnRequest.updatedAt
+          : undefined,
+        completed: ['PROCESSING', 'COMPLETED'].includes(status),
       },
       {
         step: 'INSPECTED',
         label: 'Inspection complete',
-        at: returnRequest.inspectedAt || undefined,
-        completed: ['PROCESSING', 'COMPLETED'].includes(status) && !!returnRequest.inspectedAt,
+        at: status === 'COMPLETED'
+          ? returnRequest.processedAt || returnRequest.updatedAt
+          : undefined,
+        completed: status === 'COMPLETED',
       },
       {
         step: 'REFUND',

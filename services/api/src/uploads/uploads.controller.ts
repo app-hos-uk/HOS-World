@@ -12,6 +12,8 @@ import {
   Param,
   Res,
   NotFoundException,
+  ForbiddenException,
+  BadRequestException,
   Request,
 } from '@nestjs/common';
 import {
@@ -31,6 +33,7 @@ import { PrismaService } from '../database/prisma.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { diskStorage, memoryStorage } from 'multer';
@@ -40,7 +43,6 @@ import { randomUUID } from 'crypto';
 import { Response } from 'express';
 import { existsSync, mkdirSync } from 'fs';
 import { StorageProvider } from '../storage/storage.service';
-import { BadRequestException } from '@nestjs/common';
 import {
   parseUploadRelativePath,
   sanitizeUploadFolder,
@@ -238,7 +240,7 @@ export class UploadsController {
 
   @Post('single')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CMS_EDITOR')
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CMS_EDITOR', 'CUSTOMER')
   @UseInterceptors(
     FileInterceptor('file', {
       storage: createStorage(),
@@ -249,7 +251,8 @@ export class UploadsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Upload single file',
-    description: 'Uploads a single file. Supports images up to 250KB for product images.',
+    description:
+      'Uploads a single file. Customers may only upload to the reviews folder.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -274,8 +277,16 @@ export class UploadsController {
   async uploadSingle(
     @UploadedFile() file: Express.Multer.File,
     @Body('folder') folder?: string,
+    @CurrentUser() user?: { role?: string },
   ): Promise<ApiResponse<{ url: string }>> {
-    const targetFolder = folder || 'products';
+    const targetFolder = sanitizeUploadFolder(folder || 'products');
+    const role = String(user?.role || '').toUpperCase();
+    if (role === 'CUSTOMER' && targetFolder !== 'reviews') {
+      throw new ForbiddenException('Customers may only upload review photos');
+    }
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
 
     // Use StorageService for cloud providers (Cloudinary, S3, MinIO)
     if (useCloudStorage) {

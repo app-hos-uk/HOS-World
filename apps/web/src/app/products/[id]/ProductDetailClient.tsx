@@ -14,7 +14,6 @@ import { SafeImage } from '@/components/SafeImage';
 import { ProductImageGallery } from '@/components/products/ProductImageGallery';
 import Link from 'next/link';
 import { StorefrontBreadcrumbs } from '@/components/storefront/StorefrontBreadcrumbs';
-import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 
 const CATEGORY_DISPLAY_RENAMES: Record<string, string> = {
   'collectibles hos uk': 'Collectibles',
@@ -717,18 +716,8 @@ export default function ProductDetailClient() {
                       try {
                         const uploaded: string[] = [];
                         for (const file of files.slice(0, 5 - reviewForm.images.length)) {
-                          const formData = new FormData();
-                          formData.append('file', file);
-                          formData.append('folder', 'reviews');
-                          const res = await fetch(`${getPublicApiBaseUrl() || 'http://localhost:3001/api'}/uploads/single`, {
-                            method: 'POST',
-                            credentials: 'include',
-                            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                            body: formData,
-                          });
-                          if (!res.ok) throw new Error('Upload failed');
-                          const json = await res.json();
-                          const url = json?.data?.url || json?.url;
+                          const res = await apiClient.uploadSingleFile(file, 'reviews');
+                          const url = res?.data?.url;
                           if (url) uploaded.push(url);
                         }
                         setReviewForm((prev) => ({ ...prev, images: [...prev.images, ...uploaded].slice(0, 5) }));

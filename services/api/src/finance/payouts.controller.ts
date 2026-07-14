@@ -22,6 +22,7 @@ import { PayoutsService } from './payouts.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { parseQueryDate } from '../common/utils/parse-query-date';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { SchedulePayoutDto } from './dto/schedule-payout.dto';
 
@@ -131,8 +132,8 @@ export class PayoutsController {
     const result = await this.payoutsService.getPayouts({
       sellerId,
       status: status as any,
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
+      startDate: parseQueryDate(startDate, 'start'),
+      endDate: parseQueryDate(endDate, 'end'),
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
@@ -182,8 +183,8 @@ export class PayoutsController {
   ): Promise<ApiResponse<any>> {
     const result = await this.payoutsService.getSellerPayoutHistory(sellerId, {
       status: status as any,
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
+      startDate: parseQueryDate(startDate, 'start'),
+      endDate: parseQueryDate(endDate, 'end'),
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });

@@ -45,52 +45,59 @@ export class PayoutsService {
   }
 
   async processPayout(transactionId: string) {
-    const transaction = await this.prisma.transaction.findUnique({
-      where: { id: transactionId },
-    });
-
-    if (!transaction) {
-      throw new NotFoundException('Transaction not found');
-    }
-
-    if (transaction.type !== 'PAYOUT') {
-      throw new BadRequestException('Transaction is not a payout');
-    }
-
-    if (transaction.status !== 'PENDING') {
-      throw new BadRequestException('Payout has already been processed');
-    }
-
-    // Verify vendor ledger balance covers the payout amount
-    if (transaction.sellerId) {
-      const lastEntry = await this.prisma.vendorLedgerEntry.findFirst({
-        where: { sellerId: transaction.sellerId },
-        orderBy: { createdAt: 'desc' },
+    return this.prisma.$transaction(async (tx) => {
+      const transaction = await tx.transaction.findUnique({
+        where: { id: transactionId },
       });
-      const currentBalance = lastEntry ? Number(lastEntry.balance) : 0;
-      if (currentBalance < Number(transaction.amount)) {
-        throw new BadRequestException(
-          `Insufficient vendor ledger balance. Available: ${currentBalance.toFixed(2)}, payout amount: ${Number(transaction.amount).toFixed(2)}`,
+
+      if (!transaction) {
+        throw new NotFoundException('Transaction not found');
+      }
+
+      if (transaction.type !== 'PAYOUT') {
+        throw new BadRequestException('Transaction is not a payout');
+      }
+
+      if (transaction.status !== 'PENDING') {
+        throw new BadRequestException('Payout has already been processed');
+      }
+
+      if (transaction.sellerId && this.vendorLedgerService) {
+        await this.vendorLedgerService.recordPayout(
+          {
+            sellerId: transaction.sellerId,
+            amount: Number(transaction.amount),
+            referenceId: transactionId,
+            currency: transaction.currency || 'USD',
+          },
+          { tx },
         );
       }
-    }
 
-    // Debit vendor ledger and mark payout completed
-    if (transaction.sellerId && this.vendorLedgerService) {
-      await this.vendorLedgerService.recordPayout({
-        sellerId: transaction.sellerId,
-        amount: Number(transaction.amount),
-        referenceId: transactionId,
-        currency: transaction.currency || 'USD',
+      const updated = await tx.transaction.update({
+        where: { id: transactionId },
+        data: { status: 'COMPLETED' },
+        include: {
+          seller: {
+            select: { id: true, storeName: true, slug: true },
+          },
+          customer: {
+            select: { id: true, email: true, firstName: true, lastName: true },
+          },
+        },
       });
-    }
 
-    const updated = await this.transactionsService.updateTransactionStatus(
-      transactionId,
-      'COMPLETED',
-    );
+      await tx.transactionAuditLog.create({
+        data: {
+          transactionId,
+          previousStatus: 'PENDING',
+          newStatus: 'COMPLETED',
+          reason: 'Payout processed',
+        },
+      });
 
-    return updated;
+      return updated;
+    });
   }
 
   async getPayouts(filters?: {

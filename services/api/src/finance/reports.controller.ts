@@ -10,6 +10,7 @@ import { ReportsService } from './reports.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { parseQueryDate } from '../common/utils/parse-query-date';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('finance')
@@ -56,8 +57,8 @@ export class ReportsController {
     @Query('period') period?: 'daily' | 'weekly' | 'monthly' | 'yearly',
   ): Promise<ApiResponse<any>> {
     const report = await this.reportsService.getRevenueReport({
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
+      startDate: parseQueryDate(startDate, 'start'),
+      endDate: parseQueryDate(endDate, 'end'),
       sellerId,
       period,
     });
@@ -97,8 +98,8 @@ export class ReportsController {
     @Query('sellerId') sellerId?: string,
   ): Promise<ApiResponse<any[]>> {
     const performance = await this.reportsService.getSellerPerformance({
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
+      startDate: parseQueryDate(startDate, 'start'),
+      endDate: parseQueryDate(endDate, 'end'),
       sellerId,
     });
     return {
@@ -142,8 +143,8 @@ export class ReportsController {
     @Query('customerId') customerId?: string,
   ): Promise<ApiResponse<any[]>> {
     const spending = await this.reportsService.getCustomerSpending({
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
+      startDate: parseQueryDate(startDate, 'start'),
+      endDate: parseQueryDate(endDate, 'end'),
       customerId,
     });
     return {
@@ -179,8 +180,8 @@ export class ReportsController {
     @Query('sellerId') sellerId?: string,
   ): Promise<ApiResponse<any>> {
     const fees = await this.reportsService.getPlatformFees({
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
+      startDate: parseQueryDate(startDate, 'start'),
+      endDate: parseQueryDate(endDate, 'end'),
       sellerId,
     });
     return {

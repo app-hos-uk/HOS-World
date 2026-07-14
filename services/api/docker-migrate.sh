@@ -45,6 +45,10 @@ npx prisma migrate resolve --applied 20260709180000_fix_invited_member_status 2>
 npx prisma migrate resolve --applied 20260710130000_add_departments 2>/dev/null || true
 npx prisma migrate resolve --applied 20260710131000_add_navigation_and_testimonials 2>/dev/null || true
 
+echo "=== Step 2e: Product review images migration ==="
+npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260714120000_add_product_review_images/migration.sql 2>&1 || echo "WARN: product review images migration had issues (may be OK if already applied)"
+npx prisma migrate resolve --applied 20260714120000_add_product_review_images 2>/dev/null || true
+
 echo "=== Step 3: Run migrate deploy (authoritative) ==="
 # Fail closed: if migrations cannot be applied the schema is in an unknown state and the app
 # must NOT start (silently starting on a drifted schema previously caused production outages

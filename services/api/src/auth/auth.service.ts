@@ -336,13 +336,19 @@ export class AuthService {
       });
     }
 
-    // Best-effort: link founding member + auto-enroll in loyalty
+    // Best-effort: link founding member + award founding loyalty bonus
     try {
       if (this.foundingMembersService) {
         const linked = await this.foundingMembersService.linkToUser(registerDto.email, user.id);
         if (linked && this.loyaltyService?.isEnabled()) {
           try {
-            const membership = await this.loyaltyService.enroll(user.id);
+            // Prefer existing membership (customer path may already have enrolled)
+            let membership = await this.prisma.loyaltyMembership.findUnique({
+              where: { userId: user.id },
+            });
+            if (!membership) {
+              membership = await this.loyaltyService.enroll(user.id);
+            }
             if (membership) {
               const bonusPoints = parseInt(
                 this.configService.get<string>('FOUNDING_MEMBER_BONUS_POINTS', '500'),
@@ -364,7 +370,7 @@ export class AuthService {
             }
           } catch (loyaltyErr: unknown) {
             this.logger.warn(
-              `Founding member loyalty auto-enroll failed for ${user.email}: ${loyaltyErr instanceof Error ? loyaltyErr.message : 'unknown'}`,
+              `Founding member loyalty bonus failed for ${user.email}: ${loyaltyErr instanceof Error ? loyaltyErr.message : 'unknown'}`,
             );
           }
         }

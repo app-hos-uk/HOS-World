@@ -12,8 +12,11 @@ function RegisterRedirectInner() {
     if (didRedirect.current) return;
     didRedirect.current = true;
     const ref = sp.get('ref');
-    const qs = ref ? `?register=1&ref=${encodeURIComponent(ref)}` : '?register=1';
-    router.replace(`/login${qs}`);
+    const invite = sp.get('invite');
+    const params = new URLSearchParams({ register: '1' });
+    if (ref) params.set('ref', ref);
+    if (invite) params.set('invite', invite);
+    router.replace(`/login?${params.toString()}`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

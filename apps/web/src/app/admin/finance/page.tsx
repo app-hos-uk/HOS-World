@@ -54,35 +54,18 @@ export default function AdminFinancePage() {
     const end = new Date(now);
     end.setHours(23, 59, 59, 999);
     return {
-      startDate: formatLocalDate(start),
-      endDate: formatLocalDate(end),
+      // ISO preserves local day bounds across timezones on the API
+      startDate: start.toISOString(),
+      endDate: end.toISOString(),
       start,
       end,
     };
   }, [dateRange]);
 
-  const isInDateRange = useCallback(
-    (createdAt: string | Date | undefined) => {
-      if (!createdAt) return false;
-      const { start, end } = getDateRangeBounds();
-      const d = new Date(createdAt);
-      return d >= start && d <= end;
-    },
-    [getDateRangeBounds],
-  );
-
-  const rangedTransactions = useMemo(
-    () => safeTransactions.filter((tx) => isInDateRange(tx.createdAt)),
-    [safeTransactions, isInDateRange],
-  );
-  const rangedPayouts = useMemo(
-    () => safePayouts.filter((p) => isInDateRange(p.createdAt)),
-    [safePayouts, isInDateRange],
-  );
-  const rangedRefunds = useMemo(
-    () => safeRefunds.filter((r) => isInDateRange(r.createdAt)),
-    [safeRefunds, isInDateRange],
-  );
+  // After server-side date filtering, use the same lists for overview + tabs
+  const rangedTransactions = safeTransactions;
+  const rangedPayouts = safePayouts;
+  const rangedRefunds = safeRefunds;
 
   // Note: toast is NOT included in deps because useToast() returns a new object each render
   // The toast methods themselves are stable; including toast would cause infinite re-fetches
@@ -90,7 +73,7 @@ export default function AdminFinancePage() {
     try {
       setLoading(true);
       const { startDate, endDate } = getDateRangeBounds();
-      const dateFilters = { startDate, endDate };
+      const dateFilters = { startDate, endDate, limit: 500 };
       const [txRes, payoutRes, refundRes, settingsRes] = await Promise.all([
         apiClient.getTransactions(dateFilters).catch(() => ({ data: [] })),
         apiClient.getPayouts(dateFilters).catch(() => ({ data: [] })),
@@ -119,7 +102,7 @@ export default function AdminFinancePage() {
     try {
       setLoading(true);
       const { startDate, endDate } = getDateRangeBounds();
-      const dateFilters = { startDate, endDate };
+      const dateFilters = { startDate, endDate, limit: 500 };
       switch (tab) {
         case 'transactions': {
           const res = await apiClient.getTransactions(dateFilters);
@@ -150,11 +133,13 @@ export default function AdminFinancePage() {
   }, [fetchAllData]);
 
   useEffect(() => {
-    // Only call fetchDataForTab for tabs that it handles (not overview or reports)
+    // Detail tabs: only refetch when switching tab (date changes already covered by fetchAllData)
     if (activeTab !== 'overview' && activeTab !== 'reports') {
       fetchDataForTab(activeTab);
     }
-  }, [activeTab, fetchDataForTab, dateRange]);
+    // intentionally omit dateRange to avoid dual-fetch race with fetchAllData
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, fetchDataForTab]);
 
   // Calculate financial metrics (guard: API may return { transactions } object)
   const metrics = useMemo(() => {
@@ -421,7 +406,7 @@ export default function AdminFinancePage() {
                   <div className="p-4 border-b flex justify-between items-center">
                     <h3 className="font-semibold">All Transactions</h3>
                     <DataExport
-                      data={safeTransactions}
+                      data={rangedTransactions}
                       columns={[
                         { key: 'type', header: 'Type' },
                         { key: 'amount', header: 'Amount', format: (v: number, t: any) => `${t.currency || 'USD'} ${Number(v).toFixed(2)}` },
@@ -441,12 +426,12 @@ export default function AdminFinancePage() {
                       </tr>
                     </thead>
                     <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
-                      {safeTransactions.length === 0 ? (
+                      {rangedTransactions.length === 0 ? (
                         <tr>
                           <td colSpan={4} className="px-6 py-8 text-center text-hos-text-muted">No transactions found</td>
                         </tr>
                       ) : (
-                        safeTransactions.map((tx) => (
+                        rangedTransactions.map((tx) => (
                           <tr key={tx.id} className="hover:bg-hos-bg-tertiary">
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{tx.type}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -477,7 +462,7 @@ export default function AdminFinancePage() {
                   <div className="p-4 border-b flex justify-between items-center">
                     <h3 className="font-semibold">Seller Payouts</h3>
                     <DataExport
-                      data={safePayouts}
+                      data={rangedPayouts}
                       columns={[
                         {
                           key: 'sellerId',
@@ -504,7 +489,7 @@ export default function AdminFinancePage() {
                       </tr>
                     </thead>
                     <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
-                      {safePayouts.length === 0 ? (
+                      {rangedPayouts.length === 0 ? (
                         <tr>
                           <td colSpan={4} className="px-6 py-8 text-center text-hos-text-muted text-sm">
                             <p>No payouts found.</p>
@@ -517,7 +502,7 @@ export default function AdminFinancePage() {
                           </td>
                         </tr>
                       ) : (
-                        safePayouts.map((payout) => (
+                        rangedPayouts.map((payout) => (
                           <tr key={payout.id} className="hover:bg-hos-bg-tertiary">
                             <td className="px-6 py-4 text-sm">
                               <p className="font-medium text-hos-text-secondary">
@@ -555,7 +540,7 @@ export default function AdminFinancePage() {
                   <div className="p-4 border-b flex justify-between items-center">
                     <h3 className="font-semibold">Refunds</h3>
                     <DataExport
-                      data={safeRefunds}
+                      data={rangedRefunds}
                       columns={[
                         { key: 'orderId', header: 'Order' },
                         { key: 'amount', header: 'Amount', format: (v: number, r: any) => `${r.currency || 'USD'} ${Number(v).toFixed(2)}` },
@@ -575,12 +560,12 @@ export default function AdminFinancePage() {
                       </tr>
                     </thead>
                     <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
-                      {safeRefunds.length === 0 ? (
+                      {rangedRefunds.length === 0 ? (
                         <tr>
                           <td colSpan={4} className="px-6 py-8 text-center text-hos-text-muted">No refunds found</td>
                         </tr>
                       ) : (
-                        safeRefunds.map((refund) => (
+                        rangedRefunds.map((refund) => (
                           <tr key={refund.id} className="hover:bg-hos-bg-tertiary">
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{refund.orderId}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

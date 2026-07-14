@@ -15,7 +15,12 @@ describe('PayoutsService', () => {
     },
     transaction: {
       findUnique: jest.fn(),
+      update: jest.fn(),
     },
+    transactionAuditLog: {
+      create: jest.fn(),
+    },
+    $transaction: jest.fn(async (fn: (tx: any) => Promise<any>) => fn(mockPrismaService)),
   };
 
   const mockTransactionsService = {
@@ -100,6 +105,9 @@ describe('PayoutsService', () => {
         id: transactionId,
         type: 'PAYOUT',
         status: 'PENDING',
+        amount: 100,
+        currency: 'USD',
+        sellerId: null,
       };
       const updatedTransaction = {
         ...mockTransaction,
@@ -107,13 +115,16 @@ describe('PayoutsService', () => {
       };
 
       mockPrismaService.transaction.findUnique.mockResolvedValue(mockTransaction);
-      mockTransactionsService.updateTransactionStatus.mockResolvedValue(updatedTransaction);
+      mockPrismaService.transaction.update.mockResolvedValue(updatedTransaction);
+      mockPrismaService.transactionAuditLog.create.mockResolvedValue({});
 
       const result = await service.processPayout(transactionId);
 
-      expect(mockTransactionsService.updateTransactionStatus).toHaveBeenCalledWith(
-        transactionId,
-        'COMPLETED',
+      expect(mockPrismaService.transaction.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: transactionId },
+          data: { status: 'COMPLETED' },
+        }),
       );
       expect(result.status).toBe('COMPLETED');
     });

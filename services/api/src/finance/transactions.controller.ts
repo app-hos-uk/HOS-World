@@ -22,6 +22,7 @@ import { TransactionsService } from './transactions.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { parseQueryDate } from '../common/utils/parse-query-date';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto';
@@ -147,8 +148,8 @@ export class TransactionsController {
       returnId,
       type: type as any,
       status: status as any,
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
+      startDate: parseQueryDate(startDate, 'start'),
+      endDate: parseQueryDate(endDate, 'end'),
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined,
     });
@@ -211,8 +212,8 @@ export class TransactionsController {
       customerId,
       type: type as any,
       status: status as any,
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined,
+      startDate: parseQueryDate(startDate, 'start'),
+      endDate: parseQueryDate(endDate, 'end'),
     });
     return {
       data: result,

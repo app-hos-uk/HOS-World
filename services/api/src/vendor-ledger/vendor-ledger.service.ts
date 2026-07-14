@@ -120,46 +120,63 @@ export class VendorLedgerService {
     );
   }
 
-  async recordPayout(params: {
-    sellerId: string;
-    amount: number;
-    referenceId?: string;
-    currency?: string;
-  }) {
+  async recordPayout(
+    params: {
+      sellerId: string;
+      amount: number;
+      referenceId?: string;
+      currency?: string;
+    },
+    options?: { tx?: Prisma.TransactionClient },
+  ) {
     const { sellerId, amount, referenceId, currency = 'USD' } = params;
 
     if (amount <= 0) {
       throw new BadRequestException('Payout amount must be greater than zero');
     }
 
-    return this.prisma.$transaction(
-      async (tx) => {
-        const lastEntry = await tx.vendorLedgerEntry.findFirst({
-          where: { sellerId },
-          orderBy: { createdAt: 'desc' },
+    const run = async (tx: Prisma.TransactionClient) => {
+      if (referenceId) {
+        const existing = await tx.vendorLedgerEntry.findFirst({
+          where: { sellerId, type: 'PAYOUT', referenceId },
         });
-        const currentBalance = lastEntry ? Number(lastEntry.balance) : 0;
-
-        if (amount > currentBalance) {
-          throw new BadRequestException(
-            `Insufficient balance. Available: $${currentBalance.toFixed(2)}, Requested: $${amount.toFixed(2)}`,
-          );
+        if (existing) {
+          return existing;
         }
+      }
 
-        return tx.vendorLedgerEntry.create({
-          data: {
-            sellerId,
-            type: 'PAYOUT',
-            amount: -amount,
-            currency,
-            balance: +(currentBalance - amount).toFixed(2),
-            description: `Payout processed`,
-            referenceId,
-          },
-        });
-      },
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-    );
+      const lastEntry = await tx.vendorLedgerEntry.findFirst({
+        where: { sellerId },
+        orderBy: { createdAt: 'desc' },
+      });
+      const currentBalance = lastEntry ? Number(lastEntry.balance) : 0;
+
+      if (amount > currentBalance) {
+        throw new BadRequestException(
+          `Insufficient balance. Available: $${currentBalance.toFixed(2)}, Requested: $${amount.toFixed(2)}`,
+        );
+      }
+
+      return tx.vendorLedgerEntry.create({
+        data: {
+          sellerId,
+          type: 'PAYOUT',
+          amount: -amount,
+          currency,
+          balance: +(currentBalance - amount).toFixed(2),
+          description: `Payout processed`,
+          referenceId,
+        },
+      });
+    };
+
+    if (options?.tx) {
+      return run(options.tx);
+    }
+
+    return this.prisma.$transaction(run, {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    });
   }
 
   async getBalance(sellerId: string): Promise<number> {

@@ -3245,13 +3245,23 @@ export class ApiClient {
   }
 
   // Finance - Transactions
-  async getTransactions(filters?: { sellerId?: string; customerId?: string; type?: string; startDate?: string; endDate?: string }): Promise<ApiResponse<any[]>> {
+  async getTransactions(filters?: {
+    sellerId?: string;
+    customerId?: string;
+    type?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any[]>> {
     const params = new URLSearchParams();
     if (filters?.sellerId) params.append('sellerId', filters.sellerId);
     if (filters?.customerId) params.append('customerId', filters.customerId);
     if (filters?.type) params.append('type', filters.type);
     if (filters?.startDate) params.append('startDate', filters.startDate);
     if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.page != null) params.append('page', String(filters.page));
+    if (filters?.limit != null) params.append('limit', String(filters.limit));
     const query = params.toString();
     return this.request<ApiResponse<any[]>>(`/finance/transactions${query ? `?${query}` : ''}`);
   }
