@@ -299,7 +299,7 @@ export default function AdminDashboardPage() {
                 {orderStatusData.length > 0 ? (
                 <div className="relative h-full w-full">
                   {/* Total count in donut center */}
-                  <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-center" style={{ top: '44%', transform: 'translate(-50%, -50%)' }}>
+                  <div className="pointer-events-none absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 text-center">
                     <p className="text-2xl font-bold text-hos-text-secondary">{stats.totalOrders}</p>
                     <p className="text-[10px] text-hos-text-muted uppercase tracking-wide">Total</p>
                   </div>
