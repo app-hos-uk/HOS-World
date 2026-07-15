@@ -429,7 +429,7 @@ model Seller {
   stores           Store[]
   posConnections   POSConnection[]
 
-  loyaltyEnabled      Boolean  @default(false)
+  loyaltyEnabled      Boolean  @default(true)
   loyaltyEarnRate     Decimal? @db.Decimal(5, 4)
   loyaltyFundingModel String   @default("SELLER_FUNDED") // SELLER_FUNDED or PLATFORM_FUNDED
 
