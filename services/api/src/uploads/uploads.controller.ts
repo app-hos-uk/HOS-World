@@ -190,7 +190,11 @@ export class UploadsController {
 
     const where: any = {};
     if (search) {
-      where.url = { contains: search, mode: 'insensitive' };
+      where.OR = [
+        { url: { contains: search, mode: 'insensitive' } },
+        { alt: { contains: search, mode: 'insensitive' } },
+        { product: { name: { contains: search, mode: 'insensitive' } } },
+      ];
     }
 
     const [items, total] = await Promise.all([

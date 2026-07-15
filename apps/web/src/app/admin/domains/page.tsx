@@ -520,7 +520,7 @@ export default function AdminDomainsPage() {
                 <button
                   onClick={handleBulkGenerateSubdomains}
                   disabled={selectedSellers.size === 0 || actionLoading}
-                  className="w-full px-4 py-2 text-sm bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
+                  className="w-full h-[42px] px-4 py-2 text-sm bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                 >
                   Generate Subdomains ({selectedSellers.size})
                 </button>

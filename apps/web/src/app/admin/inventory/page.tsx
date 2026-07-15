@@ -188,10 +188,62 @@ export default function AdminInventoryDashboardPage() {
             <p className="text-hos-text-secondary">Overview of warehouses, stock transfers, and movements</p>
           </div>
 
+          {/* Tab navigation */}
+          <div className="flex gap-2 mb-6">
+            <Link
+              href="/admin/inventory"
+              className={`px-4 py-2 text-sm rounded-lg font-medium ${activeTab === 'overview' ? 'bg-hos-gold text-[#1a1406]' : 'bg-hos-bg-secondary text-hos-text-secondary hover:bg-hos-bg-tertiary'}`}
+            >
+              Overview
+            </Link>
+            <Link
+              href="/admin/inventory?tab=movements"
+              className={`px-4 py-2 text-sm rounded-lg font-medium ${activeTab === 'movements' ? 'bg-hos-gold text-[#1a1406]' : 'bg-hos-bg-secondary text-hos-text-secondary hover:bg-hos-bg-tertiary'}`}
+            >
+              Stock Movements
+            </Link>
+          </div>
+
           {loading ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
               <p className="mt-4 text-hos-text-secondary">Loading inventory data...</p>
+            </div>
+          ) : activeTab === 'movements' ? (
+            <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
+              <div className="px-6 py-4 border-b border-hos-border">
+                <h2 className="text-lg font-semibold text-hos-text-secondary">Stock Movements</h2>
+              </div>
+              {recentMovements.length === 0 ? (
+                <div className="px-6 py-12 text-center text-hos-text-muted text-sm">
+                  No stock movements recorded yet.
+                </div>
+              ) : (
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Warehouse</th>
+                      <th>Type</th>
+                      <th className="text-right">Qty</th>
+                      <th>Reference</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentMovements.map((m) => (
+                      <tr key={m.id}>
+                        <td className="font-medium">{m.product.name}</td>
+                        <td>{m.inventoryLocation.warehouse.name} ({m.inventoryLocation.warehouse.code})</td>
+                        <td><span className={`font-semibold ${getMovementTypeColor(m.movementType)}`}>{m.movementType}</span></td>
+                        <td className={`text-right font-semibold ${getMovementTypeColor(m.movementType)}`}>{m.quantity > 0 ? '+' : ''}{m.quantity}</td>
+                        <td className="text-hos-text-muted">{m.referenceType || '—'}</td>
+                        <td className="text-hos-text-muted">{formatDate(m.createdAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           ) : (
             <div className="space-y-6">

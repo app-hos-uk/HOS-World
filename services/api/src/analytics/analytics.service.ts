@@ -411,21 +411,34 @@ export class AnalyticsService {
       },
     });
 
-    // Calculate metrics
     let totalValue = 0;
     let totalQuantity = 0;
     let lowStockCount = 0;
     const warehouses = new Set<string>();
 
-    locations.forEach((loc) => {
-      const value = Number(loc.product.price) * loc.quantity;
-      totalValue += value;
-      totalQuantity += loc.quantity;
-      if (loc.quantity <= (loc.lowStockThreshold || 10)) {
-        lowStockCount++;
-      }
-      warehouses.add(loc.warehouseId);
-    });
+    if (locations.length > 0) {
+      locations.forEach((loc) => {
+        const value = Number(loc.product.price) * loc.quantity;
+        totalValue += value;
+        totalQuantity += loc.quantity;
+        if (loc.quantity <= (loc.lowStockThreshold || 10)) {
+          lowStockCount++;
+        }
+        warehouses.add(loc.warehouseId);
+      });
+    } else {
+      const products = await this.prisma.product.findMany({
+        where: { status: 'ACTIVE' },
+        select: { stock: true, price: true },
+        take: 50000,
+      });
+      products.forEach((p) => {
+        const stock = p.stock ?? 0;
+        totalQuantity += stock;
+        totalValue += Number(p.price) * stock;
+        if (stock <= 10) lowStockCount++;
+      });
+    }
 
     // Calculate turnover rate (simplified: sales / average inventory)
     const { startDate, endDate } = filters;

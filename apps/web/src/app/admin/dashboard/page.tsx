@@ -299,9 +299,11 @@ export default function AdminDashboardPage() {
                 {orderStatusData.length > 0 ? (
                 <div className="relative h-full w-full">
                   {/* Total count in donut center */}
-                  <div className="pointer-events-none absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 text-center">
-                    <p className="text-2xl font-bold text-hos-text-secondary">{stats.totalOrders}</p>
-                    <p className="text-[10px] text-hos-text-muted uppercase tracking-wide">Total</p>
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ paddingBottom: 44 }}>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-hos-text-secondary">{stats.totalOrders}</p>
+                      <p className="text-[10px] text-hos-text-muted uppercase tracking-wide">Total</p>
+                    </div>
                   </div>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart margin={{ top: 16, right: 8, left: 8, bottom: 8 }}>

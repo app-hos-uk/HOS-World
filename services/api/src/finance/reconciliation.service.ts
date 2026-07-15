@@ -179,7 +179,7 @@ export class ReconciliationService {
           matched++;
           items.push({
             runId: run.id,
-            type: 'REFUND_MATCHED',
+            type: 'MATCHED',
             transactionId: refundTx.id,
             internalAmount: actual,
             currency: refundTx.currency,
@@ -188,7 +188,7 @@ export class ReconciliationService {
           mismatched++;
           items.push({
             runId: run.id,
-            type: 'REFUND_MISMATCH',
+            type: 'AMOUNT_MISMATCH',
             transactionId: refundTx.id,
             internalAmount: actual,
             stripeAmount: expected,
@@ -204,7 +204,7 @@ export class ReconciliationService {
           if (!items.some((i) => i.transactionId === tx.id && i.type === 'MATCHED')) {
             items.push({
               runId: run.id,
-              type: 'INTERNAL_ONLY',
+              type: 'MISSING_STRIPE',
               transactionId: tx.id,
               internalAmount: Number(tx.amount),
               currency: tx.currency,

@@ -24,24 +24,24 @@ export default function FandomTrendsPage() {
           <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">← Health</Link>
           <h1 className="text-2xl font-semibold text-hos-text-secondary">Fandom trends (30d)</h1>
           {loading ? <p className="text-hos-text-muted">Loading…</p> : error ? <p className="text-red-400 text-sm">{error}</p> : (
-            <table className="admin-table border rounded bg-hos-bg-secondary">
-              <thead className="bg-hos-bg-secondary"><tr>
+            <table className="admin-table rounded">
+              <thead><tr>
                 <th>Fandom</th>
-                <th>Members</th>
-                <th>Revenue</th>
-                <th>Orders</th>
-                <th>Avg spend</th>
-                <th>Growth</th>
+                <th className="text-right">Members</th>
+                <th className="text-right">Revenue</th>
+                <th className="text-right">Orders</th>
+                <th className="text-right">Avg spend</th>
+                <th className="text-right">Growth</th>
               </tr></thead>
               <tbody>
                 {data.map((f: any) => (
-                  <tr key={f.fandom} className="border-t">
+                  <tr key={f.fandom}>
                     <td className="font-medium">{f.fandom}</td>
-                    <td>{f.members}</td>
-                    <td>${Number(f.revenue).toFixed(2)}</td>
-                    <td>{f.orders}</td>
-                    <td>${Number(f.avgSpend).toFixed(2)}</td>
-                    <td>{f.growth > 0 ? '+' : ''}{f.growth}%</td>
+                    <td className="text-right">{f.members}</td>
+                    <td className="text-right">${Number(f.revenue).toFixed(2)}</td>
+                    <td className="text-right">{f.orders}</td>
+                    <td className="text-right">${Number(f.avgSpend).toFixed(2)}</td>
+                    <td className="text-right">{f.growth > 0 ? '+' : ''}{f.growth}%</td>
                   </tr>
                 ))}
               </tbody>

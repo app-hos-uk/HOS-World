@@ -413,55 +413,61 @@ export default function AdminSellersPage() {
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
               <button
-                onClick={() => { setTypeFilter('ALL'); setStatusFilter('ALL'); }}
-                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'ALL' && statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
+                onClick={() => { setTypeFilter('ALL'); setStatusFilter('ALL'); setActiveTab('sellers'); }}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'ALL' && statusFilter === 'ALL' && activeTab === 'sellers' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Total Sellers</p>
                 <p className="text-xl font-bold text-hos-text-secondary">{stats.totalSellers}</p>
               </button>
               <button
-                onClick={() => { setTypeFilter('B2C_SELLER'); setStatusFilter('ALL'); }}
+                onClick={() => { setTypeFilter('B2C_SELLER'); setStatusFilter('ALL'); setActiveTab('sellers'); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'B2C_SELLER' && statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">B2C Sellers</p>
                 <p className="text-xl font-bold text-hos-gold">{stats.b2cSellers}</p>
               </button>
               <button
-                onClick={() => { setTypeFilter('WHOLESALER'); setStatusFilter('ALL'); }}
+                onClick={() => { setTypeFilter('WHOLESALER'); setStatusFilter('ALL'); setActiveTab('sellers'); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'WHOLESALER' && statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Wholesalers</p>
                 <p className="text-xl font-bold text-green-400">{stats.wholesalers}</p>
               </button>
               <button
-                onClick={() => { setTypeFilter('ALL'); setStatusFilter('ACTIVE'); }}
+                onClick={() => { setTypeFilter('ALL'); setStatusFilter('ACTIVE'); setActiveTab('sellers'); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'ALL' && statusFilter === 'ACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Active</p>
                 <p className="text-xl font-bold text-green-400">{stats.activeSellers}</p>
               </button>
               <button
-                onClick={() => { setTypeFilter('ALL'); setStatusFilter('INACTIVE'); }}
+                onClick={() => { setTypeFilter('ALL'); setStatusFilter('INACTIVE'); setActiveTab('sellers'); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${typeFilter === 'ALL' && statusFilter === 'INACTIVE' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Inactive</p>
                 <p className="text-xl font-bold text-red-400">{stats.inactiveSellers}</p>
               </button>
               <button
-                onClick={() => setActiveTab('invitations')}
+                onClick={() => { setActiveTab('invitations'); setTypeFilter('ALL'); setStatusFilter('ALL'); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${activeTab === 'invitations' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Pending Invites</p>
                 <p className="text-xl font-bold text-yellow-400">{pendingInvitationsCount}</p>
               </button>
-              <div className="bg-hos-bg-secondary rounded-lg shadow p-3">
+              <button
+                onClick={() => { setActiveTab('sellers'); setTypeFilter('ALL'); setStatusFilter('ALL'); setSortBy('date'); setSortOrder('desc'); }}
+                className="bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md"
+              >
                 <p className="text-xs text-hos-text-muted">New This Month</p>
                 <p className="text-xl font-bold text-hos-gold">{stats.newThisMonth}</p>
-              </div>
-              <div className="bg-hos-bg-secondary rounded-lg shadow p-3">
+              </button>
+              <button
+                onClick={() => { setActiveTab('sellers'); setTypeFilter('ALL'); setStatusFilter('ALL'); setSortBy('products'); setSortOrder('desc'); }}
+                className="bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md"
+              >
                 <p className="text-xs text-hos-text-muted">Avg Products</p>
                 <p className="text-xl font-bold text-hos-text-secondary">{stats.avgProductsPerSeller}</p>
-              </div>
+              </button>
             </div>
           )}
 

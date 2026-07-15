@@ -49,7 +49,7 @@ export default function AdminPosDashboardPage() {
           <div className="flex flex-wrap gap-3">
             <Link
               href="/admin/pos/connections"
-              className="rounded-md bg-hos-gold px-4 py-2 text-sm font-medium text-[#1a1406] hover:bg-hos-gold-hover"
+              className="rounded-md bg-hos-gold px-4 py-2 text-sm font-medium text-[#1a1406] hover:bg-hos-gold-hover hover:text-[#1a1406]"
             >
               Manage connections
             </Link>

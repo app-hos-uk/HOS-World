@@ -336,7 +336,7 @@ export default function AdminMediaLibraryPage() {
           )}
 
           {/* Pagination */}
-          {!loading && totalPages > 1 && (
+          {!loading && totalPages > 1 && total > 0 && (
             <div className="flex items-center justify-between bg-hos-bg-secondary rounded-lg shadow px-4 py-3">
               <p className="text-sm text-hos-text-secondary">
                 Showing {(page - 1) * limit + 1}–

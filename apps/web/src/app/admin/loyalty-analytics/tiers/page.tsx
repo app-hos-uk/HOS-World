@@ -24,26 +24,26 @@ export default function TierAnalysisPage() {
           <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">← Health</Link>
           <h1 className="text-2xl font-semibold text-hos-text-secondary">Tier analysis</h1>
           {loading ? <p className="text-hos-text-muted">Loading…</p> : error ? <p className="text-red-400 text-sm">{error}</p> : (
-            <table className="admin-table border rounded bg-hos-bg-secondary">
-              <thead className="bg-hos-bg-secondary"><tr>
+            <table className="admin-table rounded">
+              <thead><tr>
                 <th>Tier</th>
-                <th>Members</th>
-                <th>Avg spend</th>
-                <th>Avg CLV</th>
-                <th>Freq/mo</th>
-                <th>Churn</th>
-                <th>Revenue</th>
+                <th className="text-right">Members</th>
+                <th className="text-right">Avg spend</th>
+                <th className="text-right">Avg CLV</th>
+                <th className="text-right">Freq/mo</th>
+                <th className="text-right">Churn</th>
+                <th className="text-right">Revenue</th>
               </tr></thead>
               <tbody>
                 {data.map((t: any) => (
-                  <tr key={t.tier} className="border-t">
+                  <tr key={t.tier}>
                     <td className="font-medium">{t.tier}</td>
-                    <td>{t.memberCount}</td>
-                    <td>${Number(t.avgSpend).toFixed(2)}</td>
-                    <td>${Number(t.avgClv).toFixed(2)}</td>
-                    <td>{Number(t.avgPurchaseFreq).toFixed(2)}</td>
-                    <td>{(Number(t.churnRate) * 100).toFixed(1)}%</td>
-                    <td>${Number(t.revenueContribution).toFixed(2)}</td>
+                    <td className="text-right">{t.memberCount}</td>
+                    <td className="text-right">${Number(t.avgSpend).toFixed(2)}</td>
+                    <td className="text-right">${Number(t.avgClv).toFixed(2)}</td>
+                    <td className="text-right">{Number(t.avgPurchaseFreq).toFixed(2)}</td>
+                    <td className="text-right">{(Number(t.churnRate) * 100).toFixed(1)}%</td>
+                    <td className="text-right">${Number(t.revenueContribution).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>

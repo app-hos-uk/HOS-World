@@ -324,24 +324,7 @@ export default function CustomerDashboardPage() {
     return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
   };
 
-  if (loading && !hasLoadedOnce) {
-    return (
-      <RouteGuard allowedRoles={['CUSTOMER']}>
-        <div className="min-h-screen bg-hos-bg-secondary">
-          <Header />
-          <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
-                <p className="text-sm sm:text-base text-hos-text-secondary">Loading dashboard...</p>
-              </div>
-            </div>
-          </main>
-          <Footer />
-        </div>
-      </RouteGuard>
-    );
-  }
+  const showSkeleton = loading && !hasLoadedOnce;
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER']}>
@@ -350,14 +333,23 @@ export default function CustomerDashboardPage() {
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Header */}
           <div className="mb-6 sm:mb-8">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-hos-text-secondary mb-2">
-              {stats?.totalOrders === 0 ? 'Welcome' : 'Welcome back'}{user?.firstName ? `, ${user.firstName}` : ''}! ✨
-            </h1>
-            <p className="text-hos-text-secondary text-sm sm:text-base">
-              {stats?.totalOrders === 0
-                ? 'Start your magical shopping journey with us'
-                : 'Manage your orders, track shipments, and explore your shopping journey'}
-            </p>
+            {showSkeleton ? (
+              <>
+                <div className="h-9 w-72 bg-hos-bg-tertiary rounded-lg animate-pulse mb-2" />
+                <div className="h-5 w-96 bg-hos-bg-tertiary rounded animate-pulse" />
+              </>
+            ) : (
+              <>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-hos-text-secondary mb-2">
+                  {stats?.totalOrders === 0 ? 'Welcome' : 'Welcome back'}{user?.firstName ? `, ${user.firstName}` : ''}! ✨
+                </h1>
+                <p className="text-hos-text-secondary text-sm sm:text-base">
+                  {stats?.totalOrders === 0
+                    ? 'Start your magical shopping journey with us'
+                    : 'Manage your orders, track shipments, and explore your shopping journey'}
+                </p>
+              </>
+            )}
           </div>
 
           {error && (
@@ -394,36 +386,24 @@ export default function CustomerDashboardPage() {
             <>
               {/* Stats Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-                <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
-                  <div className="text-3xl mb-2">📦</div>
-                  <p className="text-2xl font-bold text-hos-text-secondary">{stats?.totalOrders || 0}</p>
-                  <p className="text-xs text-hos-text-muted">Total Orders</p>
-                </div>
-                <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
-                  <div className="text-3xl mb-2">⏳</div>
-                  <p className="text-2xl font-bold text-amber-400">{stats?.pendingOrders || 0}</p>
-                  <p className="text-xs text-hos-text-muted">In Progress</p>
-                </div>
-                <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
-                  <div className="text-3xl mb-2">✅</div>
-                  <p className="text-2xl font-bold text-green-400">{stats?.completedOrders || 0}</p>
-                  <p className="text-xs text-hos-text-muted">Completed</p>
-                </div>
-                <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
-                  <div className="text-3xl mb-2">💰</div>
-                  <p className="text-2xl font-bold text-hos-gold">{formatPrice(stats?.totalSpent || 0)}</p>
-                  <p className="text-xs text-hos-text-muted">Total Spent</p>
-                </div>
-                <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
-                  <div className="text-3xl mb-2">❤️</div>
-                  <p className="text-2xl font-bold text-pink-400">{stats?.wishlistItems || 0}</p>
-                  <p className="text-xs text-hos-text-muted">Wishlist</p>
-                </div>
-                <div className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
-                  <div className="text-3xl mb-2">🛒</div>
-                  <p className="text-2xl font-bold text-hos-gold">{stats?.cartItems || 0}</p>
-                  <p className="text-xs text-hos-text-muted">In Cart</p>
-                </div>
+                {([
+                  { icon: '📦', value: stats?.totalOrders || 0, label: 'Total Orders', color: 'text-hos-text-secondary' },
+                  { icon: '⏳', value: stats?.pendingOrders || 0, label: 'In Progress', color: 'text-amber-400' },
+                  { icon: '✅', value: stats?.completedOrders || 0, label: 'Completed', color: 'text-green-400' },
+                  { icon: '💰', value: formatPrice(stats?.totalSpent || 0), label: 'Total Spent', color: 'text-hos-gold' },
+                  { icon: '❤️', value: stats?.wishlistItems || 0, label: 'Wishlist', color: 'text-pink-400' },
+                  { icon: '🛒', value: stats?.cartItems || 0, label: 'In Cart', color: 'text-hos-gold' },
+                ] as const).map((card) => (
+                  <div key={card.label} className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
+                    <div className="text-3xl mb-2">{card.icon}</div>
+                    {showSkeleton ? (
+                      <div className="h-8 w-16 bg-hos-bg-tertiary rounded animate-pulse mb-1" />
+                    ) : (
+                      <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
+                    )}
+                    <p className="text-xs text-hos-text-muted">{card.label}</p>
+                  </div>
+                ))}
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

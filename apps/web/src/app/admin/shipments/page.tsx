@@ -335,7 +335,7 @@ export default function AdminShipmentsPage() {
 
           {/* Stats Cards */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 gap-3">
               <button
                 onClick={() => setStatusFilter('ALL')}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'ALL' ? 'ring-2 ring-hos-gold/50' : ''}`}
@@ -344,11 +344,25 @@ export default function AdminShipmentsPage() {
                 <p className="text-xl font-bold text-hos-text-secondary">{stats.total}</p>
               </button>
               <button
-                onClick={() => setStatusFilter('PENDING_GROUP')}
+                onClick={() => setStatusFilter('PENDING')}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'PENDING' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Pending</p>
-                <p className="text-xl font-bold text-yellow-400">{stats.pending}</p>
+                <p className="text-xl font-bold text-yellow-400">{shipments.filter(s => s.status === 'PENDING').length}</p>
+              </button>
+              <button
+                onClick={() => setStatusFilter('PICKED')}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'PICKED' ? 'ring-2 ring-hos-gold/50' : ''}`}
+              >
+                <p className="text-xs text-hos-text-muted">Picked</p>
+                <p className="text-xl font-bold text-hos-gold">{shipments.filter(s => s.status === 'PICKED').length}</p>
+              </button>
+              <button
+                onClick={() => setStatusFilter('PACKED')}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${statusFilter === 'PACKED' ? 'ring-2 ring-hos-gold/50' : ''}`}
+              >
+                <p className="text-xs text-hos-text-muted">Packed</p>
+                <p className="text-xl font-bold text-hos-gold">{shipments.filter(s => s.status === 'PACKED').length}</p>
               </button>
               <button
                 onClick={() => setStatusFilter('IN_TRANSIT')}

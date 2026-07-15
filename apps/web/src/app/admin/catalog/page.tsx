@@ -93,7 +93,7 @@ export default function AdminCatalogPage() {
               </button>
               <Link
                 href="/catalog/entries"
-                className="px-4 py-2 text-sm font-medium text-[#1a1406] bg-hos-gold rounded-lg hover:bg-hos-gold-hover whitespace-nowrap shrink-0"
+                className="px-4 py-2 text-sm font-medium text-[#1a1406] bg-hos-gold rounded-lg hover:bg-hos-gold-hover hover:text-[#1a1406] whitespace-nowrap shrink-0"
               >
                 Full Catalog Workflow →
               </Link>

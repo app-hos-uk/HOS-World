@@ -25,13 +25,13 @@ export default function AdminJourneysPage() {
     load();
   }, [load]);
 
-  const deactivate = async (id: string) => {
-    if (!confirm('Deactivate this journey?')) return;
+  const toggleActive = async (id: string, activate: boolean) => {
+    const action = activate ? 'Activate' : 'Deactivate';
+    if (!confirm(`${action} this journey?`)) return;
     try {
-      await apiClient.adminDeleteJourney(id);
-      toast.success('Journey deactivated');
-      setRows((prev) => prev.map((j) => (j.id === id ? { ...j, isActive: false } : j)));
-      await load();
+      await apiClient.adminUpdateJourney(id, { isActive: activate });
+      toast.success(`Journey ${activate ? 'activated' : 'deactivated'}`);
+      load();
     } catch (e: any) {
       toast.error(e?.message || 'Failed');
     }
@@ -62,7 +62,7 @@ export default function AdminJourneysPage() {
                     <th className="px-4 py-2">Trigger</th>
                     <th className="px-4 py-2">Active</th>
                     <th className="px-4 py-2">Enrollments</th>
-                    <th className="px-4 py-2" />
+                    <th className="px-4 py-2 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -77,13 +77,21 @@ export default function AdminJourneysPage() {
                         <Link href={`/admin/journeys/${j.id}`} className="text-hos-gold hover:underline">
                           View
                         </Link>
-                        {j.isActive && (
+                        {j.isActive ? (
                           <button
                             type="button"
                             className="text-red-400 hover:underline"
-                            onClick={() => deactivate(j.id)}
+                            onClick={() => toggleActive(j.id, false)}
                           >
                             Deactivate
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="text-green-400 hover:underline"
+                            onClick={() => toggleActive(j.id, true)}
+                          >
+                            Activate
                           </button>
                         )}
                       </td>

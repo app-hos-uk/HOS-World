@@ -26,7 +26,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 // @ts-ignore - exceljs types may not be available
 import * as ExcelJS from 'exceljs';
 // @ts-ignore - pdfkit types may not be available
-import PDFDocument from 'pdfkit';
+import * as PDFDocument from 'pdfkit';
 
 @ApiTags('analytics')
 @Controller('analytics')

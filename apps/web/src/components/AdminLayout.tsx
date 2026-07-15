@@ -287,17 +287,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     };
   }, []);
 
-  // Restore sidebar scroll position across navigations
+  // Restore sidebar scroll position after navigation (runs after auto-expand settles the DOM)
   useEffect(() => {
-    const nav = navScrollRef.current;
-    if (!nav) return;
-    try {
-      const saved = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
-      if (saved) nav.scrollTop = Number(saved) || 0;
-    } catch {
-      // ignore storage errors
-    }
-  }, []);
+    const raf = requestAnimationFrame(() => {
+      const nav = navScrollRef.current;
+      if (!nav) return;
+      try {
+        const saved = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
+        if (saved) nav.scrollTop = Number(saved) || 0;
+      } catch {
+        // ignore storage errors
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [pathname]);
 
   const handleNavScroll = useCallback(() => {
     const nav = navScrollRef.current;

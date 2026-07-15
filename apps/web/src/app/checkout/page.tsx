@@ -1292,7 +1292,7 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-sm">
                   <span className="text-hos-text-secondary">Shipping</span>
-                  <span>{effectiveShippingCost > 0 ? formatPrice(effectiveShippingCost) : 'Free'}</span>
+                  <span>{effectiveShippingCost > 0 ? formatPrice(effectiveShippingCost) : shippingOptions.length > 0 || cart?.promotionFreeShipping ? 'Free' : 'TBC'}</span>
                 </div>
 
                 <div className="flex justify-between text-sm">
