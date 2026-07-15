@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import type { Theme } from '@hos-marketplace/shared-types';
 import { hosTheme, defaultThemes } from './theme';
-import { normalizeTheme } from './normalize-theme';
 
 interface ThemeContextValue {
   theme: Theme;
@@ -23,24 +22,22 @@ interface ThemeProviderProps {
 
 function applyTheme(themeToApply: Theme) {
   if (typeof window === 'undefined') return;
-  const safe = normalizeTheme(themeToApply) || hosTheme;
-  if (!safe.colors?.primary) return;
 
   const root = document.documentElement;
 
-  root.style.setProperty('--color-primary', safe.colors.primary);
-  root.style.setProperty('--color-secondary', safe.colors.secondary);
-  root.style.setProperty('--color-background', safe.colors.background);
-  root.style.setProperty('--color-surface', safe.colors.surface);
-  root.style.setProperty('--color-text-primary', safe.colors.text.primary);
-  root.style.setProperty('--color-text-secondary', safe.colors.text.secondary);
-  root.style.setProperty('--color-accent', safe.colors.accent);
-  root.style.setProperty('--color-error', safe.colors.error);
-  root.style.setProperty('--color-success', safe.colors.success);
-  root.style.setProperty('--color-warning', safe.colors.warning);
+  root.style.setProperty('--color-primary', themeToApply.colors.primary);
+  root.style.setProperty('--color-secondary', themeToApply.colors.secondary);
+  root.style.setProperty('--color-background', themeToApply.colors.background);
+  root.style.setProperty('--color-surface', themeToApply.colors.surface);
+  root.style.setProperty('--color-text-primary', themeToApply.colors.text.primary);
+  root.style.setProperty('--color-text-secondary', themeToApply.colors.text.secondary);
+  root.style.setProperty('--color-accent', themeToApply.colors.accent);
+  root.style.setProperty('--color-error', themeToApply.colors.error);
+  root.style.setProperty('--color-success', themeToApply.colors.success);
+  root.style.setProperty('--color-warning', themeToApply.colors.warning);
 
-  root.style.setProperty('--font-family-primary', safe.typography.fontFamily.primary);
-  root.style.setProperty('--font-family-secondary', safe.typography.fontFamily.secondary);
+  root.style.setProperty('--font-family-primary', themeToApply.typography.fontFamily.primary);
+  root.style.setProperty('--font-family-secondary', themeToApply.typography.fontFamily.secondary);
 }
 
 export function ThemeProvider({
@@ -49,9 +46,7 @@ export function ThemeProvider({
   storageKey = 'hos-theme',
   loadThemeFromApi,
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(
-    () => normalizeTheme(defaultThemes[defaultThemeId]) || hosTheme,
-  );
+  const [theme, setThemeState] = useState<Theme>(defaultThemes[defaultThemeId] || hosTheme);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load theme from storage on mount
@@ -67,15 +62,11 @@ export function ThemeProvider({
         if (storedThemeId) {
           const storedTheme = defaultThemes[storedThemeId];
           if (storedTheme) {
-            const normalized = normalizeTheme(storedTheme);
-            if (normalized) {
-              setThemeState((prev) => (prev.id === normalized.id ? prev : normalized));
-            }
+            setThemeState(storedTheme);
           } else if (loadThemeFromApi) {
             const apiTheme = await loadThemeFromApi(storedThemeId);
-            const normalized = normalizeTheme(apiTheme);
-            if (normalized) {
-              setThemeState((prev) => (prev.id === normalized.id ? prev : normalized));
+            if (apiTheme) {
+              setThemeState(apiTheme);
             }
           }
         }
@@ -90,18 +81,15 @@ export function ThemeProvider({
   }, [storageKey, loadThemeFromApi]);
 
   const setTheme = useCallback((newTheme: Theme) => {
-    const normalized = normalizeTheme(newTheme);
-    if (!normalized) return;
-
-    setThemeState((prev) => (prev.id === normalized.id ? prev : normalized));
+    setThemeState((prev) => (prev.id === newTheme.id ? prev : newTheme));
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem(storageKey, normalized.id);
+        localStorage.setItem(storageKey, newTheme.id);
       } catch (error) {
         console.error('Failed to save theme to storage:', error);
       }
     }
-    applyTheme(normalized);
+    applyTheme(newTheme);
   }, [storageKey]);
 
   const setThemeById = useCallback((themeId: string) => {
@@ -114,26 +102,27 @@ export function ThemeProvider({
   const loadTheme = useCallback(async (themeId: string): Promise<Theme | null> => {
     const defaultTheme = defaultThemes[themeId];
     if (defaultTheme) {
-      const normalized = normalizeTheme(defaultTheme) || hosTheme;
-      setTheme(normalized);
-      return normalized;
+      setTheme(defaultTheme);
+      return defaultTheme;
     }
 
     if (loadThemeFromApi) {
       try {
         const apiTheme = await loadThemeFromApi(themeId);
-        const normalized = normalizeTheme(apiTheme);
-        if (normalized) {
-          setThemeState((prev) => (prev.id === normalized.id ? prev : normalized));
-          if (typeof window !== 'undefined') {
-            try {
-              localStorage.setItem(storageKey, normalized.id);
-            } catch {
-              /* ignore */
+        if (apiTheme) {
+          setThemeState((prev) => {
+            if (prev.id === apiTheme.id) return prev;
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem(storageKey, apiTheme.id);
+              } catch {
+                /* ignore */
+              }
             }
-          }
-          applyTheme(normalized);
-          return normalized;
+            applyTheme(apiTheme);
+            return apiTheme;
+          });
+          return apiTheme;
         }
       } catch (error) {
         console.error('Failed to load theme from API:', error);
