@@ -20,8 +20,17 @@ interface ThemeProviderProps {
   loadThemeFromApi?: (themeId: string) => Promise<Theme | null>;
 }
 
+/**
+ * API themes may store tokens nested under `config` instead of at the root,
+ * so anything without top-level colors is rejected rather than applied.
+ */
+function isRenderableTheme(candidate: Theme | null | undefined): candidate is Theme {
+  return Boolean(candidate?.colors?.primary && candidate?.colors?.text?.primary);
+}
+
 function applyTheme(themeToApply: Theme) {
   if (typeof window === 'undefined') return;
+  if (!isRenderableTheme(themeToApply)) return;
 
   const root = document.documentElement;
 
@@ -36,8 +45,8 @@ function applyTheme(themeToApply: Theme) {
   root.style.setProperty('--color-success', themeToApply.colors.success);
   root.style.setProperty('--color-warning', themeToApply.colors.warning);
 
-  root.style.setProperty('--font-family-primary', themeToApply.typography.fontFamily.primary);
-  root.style.setProperty('--font-family-secondary', themeToApply.typography.fontFamily.secondary);
+  root.style.setProperty('--font-family-primary', themeToApply.typography?.fontFamily?.primary ?? '');
+  root.style.setProperty('--font-family-secondary', themeToApply.typography?.fontFamily?.secondary ?? '');
 }
 
 export function ThemeProvider({
@@ -65,7 +74,7 @@ export function ThemeProvider({
             setThemeState(storedTheme);
           } else if (loadThemeFromApi) {
             const apiTheme = await loadThemeFromApi(storedThemeId);
-            if (apiTheme) {
+            if (isRenderableTheme(apiTheme)) {
               setThemeState(apiTheme);
             }
           }
@@ -81,6 +90,7 @@ export function ThemeProvider({
   }, [storageKey, loadThemeFromApi]);
 
   const setTheme = useCallback((newTheme: Theme) => {
+    if (!isRenderableTheme(newTheme)) return;
     setThemeState((prev) => (prev.id === newTheme.id ? prev : newTheme));
     if (typeof window !== 'undefined') {
       try {
@@ -109,7 +119,7 @@ export function ThemeProvider({
     if (loadThemeFromApi) {
       try {
         const apiTheme = await loadThemeFromApi(themeId);
-        if (apiTheme) {
+        if (isRenderableTheme(apiTheme)) {
           setThemeState((prev) => {
             if (prev.id === apiTheme.id) return prev;
             if (typeof window !== 'undefined') {

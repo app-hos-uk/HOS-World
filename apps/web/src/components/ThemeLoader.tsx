@@ -7,9 +7,11 @@ export function ThemeLoader() {
   const theme = useTheme();
 
   useEffect(() => {
-    // Apply theme CSS variables to document root
+    // Skip malformed themes (e.g. API themes with tokens nested under config)
+    if (!theme?.colors?.primary || !theme.colors.text?.primary) return;
+
     const root = document.documentElement;
-    
+
     root.style.setProperty('--color-primary', theme.colors.primary);
     root.style.setProperty('--color-secondary', theme.colors.secondary);
     root.style.setProperty('--color-background', theme.colors.background);
@@ -33,8 +35,8 @@ export function ThemeLoader() {
     root.style.setProperty('--color-sale-red', theme.colors.error);
     root.style.setProperty('--color-new-green', theme.colors.success);
     
-    root.style.setProperty('--font-family-primary', theme.typography.fontFamily.primary);
-    root.style.setProperty('--font-family-secondary', theme.typography.fontFamily.secondary);
+    root.style.setProperty('--font-family-primary', theme.typography?.fontFamily?.primary ?? '');
+    root.style.setProperty('--font-family-secondary', theme.typography?.fontFamily?.secondary ?? '');
   }, [theme]);
 
   return null;
