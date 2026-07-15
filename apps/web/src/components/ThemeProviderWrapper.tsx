@@ -45,6 +45,7 @@ const ThemeProviderWrapperComponent = ({ children }: { children: React.ReactNode
   const loadThemeFromApi = useCallback(async (themeId: string) => {
     try {
       const res = await apiClient.getTheme(themeId);
+      // API returns { id, name, config: { colors, typography, ... } }
       return res?.data ?? null;
     } catch {
       return null;
