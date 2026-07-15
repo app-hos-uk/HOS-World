@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { landingPageMetadata } from './lib/landingMetadata';
 import { getSiteUrl } from '../lib/siteUrls';
 import { LandingAnalytics } from './components/LandingAnalytics';
+import { LandingStructuredData } from './components/LandingStructuredData';
 import './landing.css';
 
 const cinzelDecorative = Cinzel_Decorative({
@@ -55,6 +56,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <LandingStructuredData />
+      </head>
       <body
         className={`landing-site ${cinzelDecorative.variable} ${cinzel.variable} ${cormorant.variable}`}
         style={{

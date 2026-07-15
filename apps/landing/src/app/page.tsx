@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { LandingShell } from './components/LandingShell';
 import { LandingFooter } from './components/LandingFooter';
-import { LandingStructuredData } from './components/LandingStructuredData';
 import { Ticker } from './components/Ticker';
 import { GalleryAlbumGrid } from './components/GalleryAlbumGrid';
 import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from './lib/constants';
@@ -12,7 +11,6 @@ export default async function LandingHomePage() {
   const featuredAlbums = galleryAlbums.slice(0, 3);
   return (
     <LandingShell nav="home" mainId="pg-home">
-      <LandingStructuredData />
       <main id="pg-home" className="hos-page" tabIndex={-1}>
         <div className="hero-inner">
           <div className="hero-brand-lockup">
