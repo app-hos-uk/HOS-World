@@ -35,7 +35,7 @@ export function LandingStructuredData() {
         '@type': 'OpeningHoursSpecification',
         dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
         opens: '10:00',
-        closes: '23:59',
+        closes: '24:00',
       },
     ],
     priceRange: '$$',
