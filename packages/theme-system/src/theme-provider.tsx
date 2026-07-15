@@ -65,34 +65,31 @@ export function ThemeProvider({
       return;
     }
 
-    const loadStoredTheme = async () => {
-      try {
-        const storedThemeId = localStorage.getItem(storageKey);
-        if (storedThemeId) {
-          const storedTheme = defaultThemes[storedThemeId];
-          if (storedTheme) {
-            setThemeState(storedTheme);
-          } else if (loadThemeFromApi) {
-            const apiTheme = await loadThemeFromApi(storedThemeId);
-            if (isRenderableTheme(apiTheme)) {
-              setThemeState(apiTheme);
-            }
-          }
+    // Only built-in themes are restored from storage. API themes (e.g. seller
+    // themes) are session-only and re-applied after auth by SellerThemeSync,
+    // so a stale cached id can never restyle the app for the wrong user.
+    try {
+      const storedThemeId = localStorage.getItem(storageKey);
+      if (storedThemeId) {
+        const storedTheme = defaultThemes[storedThemeId];
+        if (storedTheme) {
+          setThemeState(storedTheme);
+        } else {
+          localStorage.removeItem(storageKey);
         }
-      } catch (error) {
-        console.error('Failed to load theme from storage:', error);
-      } finally {
-        setIsLoading(false);
       }
-    };
-
-    void loadStoredTheme();
-  }, [storageKey, loadThemeFromApi]);
+    } catch (error) {
+      console.error('Failed to load theme from storage:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [storageKey]);
 
   const setTheme = useCallback((newTheme: Theme) => {
     if (!isRenderableTheme(newTheme)) return;
     setThemeState((prev) => (prev.id === newTheme.id ? prev : newTheme));
-    if (typeof window !== 'undefined') {
+    // Persist built-in theme ids only; API theme ids are never restored on boot
+    if (typeof window !== 'undefined' && defaultThemes[newTheme.id]) {
       try {
         localStorage.setItem(storageKey, newTheme.id);
       } catch (error) {
@@ -122,13 +119,6 @@ export function ThemeProvider({
         if (isRenderableTheme(apiTheme)) {
           setThemeState((prev) => {
             if (prev.id === apiTheme.id) return prev;
-            if (typeof window !== 'undefined') {
-              try {
-                localStorage.setItem(storageKey, apiTheme.id);
-              } catch {
-                /* ignore */
-              }
-            }
             applyTheme(apiTheme);
             return apiTheme;
           });
@@ -140,7 +130,7 @@ export function ThemeProvider({
     }
 
     return null;
-  }, [loadThemeFromApi, setTheme, storageKey]);
+  }, [loadThemeFromApi, setTheme]);
 
   useEffect(() => {
     if (!isLoading) {
