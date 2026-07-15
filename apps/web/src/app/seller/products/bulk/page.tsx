@@ -180,7 +180,7 @@ export default function SellerBulkProductsPage() {
         'Collectibles',
         'harry-potter',
         'wand|replica|collectible',
-        'https://example.com/images/wand1.jpg|https://example.com/images/wand2.jpg',
+        'https://picsum.photos/seed/hp-wand-1/800/800|https://picsum.photos/seed/hp-wand-2/800/800',
         'ACTIVE',
       ],
       [
@@ -193,7 +193,7 @@ export default function SellerBulkProductsPage() {
         'Apparel',
         'harry-potter',
         'scarf|gryffindor|apparel',
-        'https://example.com/images/scarf1.jpg',
+        'https://picsum.photos/seed/hp-scarf-1/800/800',
         'ACTIVE',
       ],
       [
@@ -206,7 +206,7 @@ export default function SellerBulkProductsPage() {
         'Jewelry',
         'lord-of-the-rings',
         'ring|replica|jewelry',
-        'https://example.com/images/ring1.jpg|https://example.com/images/ring2.jpg',
+        'https://picsum.photos/seed/lotr-ring-1/800/800|https://picsum.photos/seed/lotr-ring-2/800/800',
         'ACTIVE',
       ],
     ];
@@ -600,7 +600,7 @@ export default function SellerBulkProductsPage() {
             <div className="bg-hos-bg-secondary rounded-lg p-4 border border-hos-border-accent">
               <h4 className="font-medium text-hos-text-secondary mb-2">Example Row:</h4>
               <div className="text-xs font-mono bg-hos-bg-tertiary p-3 rounded overflow-x-auto whitespace-nowrap">
-                &quot;Harry Potter Wand&quot;,&quot;Authentic wand replica&quot;,&quot;HP-001&quot;,&quot;49.99&quot;,&quot;100&quot;,&quot;USD&quot;,&quot;Collectibles&quot;,&quot;harry-potter&quot;,&quot;wand|replica&quot;,&quot;https://example.com/image.jpg&quot;,&quot;ACTIVE&quot;
+                &quot;Harry Potter Wand&quot;,&quot;Authentic wand replica&quot;,&quot;HP-001&quot;,&quot;49.99&quot;,&quot;100&quot;,&quot;USD&quot;,&quot;Collectibles&quot;,&quot;harry-potter&quot;,&quot;wand|replica&quot;,&quot;https://picsum.photos/seed/hp-wand/800/800&quot;,&quot;ACTIVE&quot;
               </div>
             </div>
 
