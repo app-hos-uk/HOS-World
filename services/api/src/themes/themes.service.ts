@@ -411,12 +411,15 @@ export class ThemesService {
 
   private mapToThemeType(theme: any): Theme {
     const typeStr = typeof theme.type === 'string' ? theme.type : String(theme.type ?? '');
+    const config =
+      theme.config && typeof theme.config === 'object' ? theme.config : {};
     return {
       id: theme.id,
       name: theme.name,
       type: typeStr.toLowerCase(),
       sellerId: theme.sellerId || undefined,
       config: theme.config,
+      ...config,
       isActive: theme.isActive,
       version: theme.version,
       createdAt: theme.createdAt,
@@ -426,6 +429,6 @@ export class ThemesService {
       previewImages: Array.isArray(theme.previewImages) ? theme.previewImages : [],
       metadata: theme.metadata && typeof theme.metadata === 'object' ? theme.metadata : undefined,
       assets: theme.assets ?? undefined,
-    };
+    } as Theme;
   }
 }

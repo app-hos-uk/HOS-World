@@ -22,6 +22,7 @@ interface ThemeProviderProps {
 
 function applyTheme(themeToApply: Theme) {
   if (typeof window === 'undefined') return;
+  if (!themeToApply?.colors?.primary) return;
 
   const root = document.documentElement;
 
@@ -36,8 +37,8 @@ function applyTheme(themeToApply: Theme) {
   root.style.setProperty('--color-success', themeToApply.colors.success);
   root.style.setProperty('--color-warning', themeToApply.colors.warning);
 
-  root.style.setProperty('--font-family-primary', themeToApply.typography.fontFamily.primary);
-  root.style.setProperty('--font-family-secondary', themeToApply.typography.fontFamily.secondary);
+  root.style.setProperty('--font-family-primary', themeToApply.typography?.fontFamily?.primary ?? '');
+  root.style.setProperty('--font-family-secondary', themeToApply.typography?.fontFamily?.secondary ?? '');
 }
 
 export function ThemeProvider({
