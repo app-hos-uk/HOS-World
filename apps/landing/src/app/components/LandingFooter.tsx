@@ -63,9 +63,6 @@ export function LandingFooter() {
                 </a>
               ))}
             </div>
-            <p className="footer-ext-links">
-              <a href="https://houseofspells.com/careers">Careers</a>
-            </p>
           </div>
         </div>
 
@@ -73,14 +70,20 @@ export function LandingFooter() {
         <div className="footer-bottom">
           <div className="f-links">
             <Link href="/">Home</Link>
+            <a href="https://houseofspells.com/careers">Careers</a>
             <Link href="/universes">Universes</Link>
             <Link href="/the-experience">Experience</Link>
             <Link href={LANDING_REGISTER_PATH}>Register</Link>
             <Link href="/privacy">Privacy</Link>
           </div>
           <p className="footer-copyright">
-            © 2026 House of Spells. All rights reserved. · houseofspells.com is the global flagship — the UK store
-            lives on at houseofspells.co.uk.
+            © 2026 House of Spells. All rights reserved. · houseofspells.com is the global flagship.
+            <br />
+            The UK store lives on at{' '}
+            <a href="https://www.houseofspells.co.uk" target="_blank" rel="noopener noreferrer">
+              houseofspells.co.uk
+            </a>
+            .
           </p>
         </div>
       </div>

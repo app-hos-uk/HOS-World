@@ -439,12 +439,12 @@
 .landing-site footer{position:relative;z-index:2;border-top:1px solid rgba(201,168,76,.07);padding:36px var(--hos-pad-inline) 28px;text-align:center;}
 @media(min-width:769px){.landing-site footer{padding:44px 48px 36px;}}
 /* ═══════════════════ FOOTER ═══════════════════ */
-footer{background:#0C1428;color:var(--muted);padding:48px var(--hos-pad-inline) 32px;position:relative;z-index:2;}
+footer{background:rgba(12,20,40,.4);color:var(--muted);padding:40px var(--hos-pad-inline) 28px;position:relative;z-index:2;border-top:1px solid rgba(201,168,76,.08);}
 
 .footer-container{max-width:1200px;margin:0 auto;}
 
 /* Main footer content - 3 columns on desktop */
-.footer-main{display:grid;grid-template-columns:1fr;gap:40px;margin-bottom:32px;text-align:center;}
+.footer-main{display:grid;grid-template-columns:1fr;gap:36px;margin-bottom:28px;text-align:center;}
 @media(min-width:769px){
   .footer-main{grid-template-columns:1fr 1.5fr 1fr;gap:48px;text-align:left;}
 }
@@ -480,19 +480,17 @@ footer{background:#0C1428;color:var(--muted);padding:48px var(--hos-pad-inline) 
 .footer-social-icon:hover{color:#C5A55A;transform:translateY(-2px);}
 .footer-social-icon svg{width:20px;height:20px;flex-shrink:0;}
 
-.footer-ext-links{font-size:0.85rem;}
-.footer-ext-links a{color:#C5A55A;text-decoration:none;transition:color .3s;}
-.footer-ext-links a:hover{color:#F2D878;}
-
 /* Footer bottom - centered */
-.footer-bottom{border-top:1px solid rgba(201,168,76,.12);padding-top:24px;display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center;}
+.footer-bottom{border-top:1px solid rgba(201,168,76,.1);padding-top:20px;display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center;}
 
 .f-links{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;}
 .f-links a{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-decoration:none;transition:color .3s;}
 .f-links a:hover,.f-links a:focus-visible{color:#C5A55A;}
 .f-links a:focus-visible{outline:1px solid #C5A55A;outline-offset:4px;}
 
-.footer-copyright{font-size:0.78rem;line-height:1.6;color:var(--muted);opacity:.8;max-width:680px;}
+.footer-copyright{font-size:0.78rem;line-height:1.7;color:var(--muted);opacity:.8;max-width:680px;}
+.footer-copyright a{color:#C5A55A;text-decoration:none;transition:color .3s;}
+.footer-copyright a:hover{color:#F2D878;text-decoration:underline;}
 
 /* ═══════════════════ PRIVACY PAGE ═══════════════════ */
 .privacy-container{max-width:780px;margin:0 auto;padding:calc(var(--hos-nav-h) + 40px) var(--hos-pad-inline) 60px;position:relative;z-index:2;}
