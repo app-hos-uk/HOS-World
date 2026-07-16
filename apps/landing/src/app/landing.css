@@ -435,11 +435,9 @@
 .error-h{font-family:'Cinzel Decorative',serif;font-size:clamp(1.2rem,4vw,1.6rem);color:var(--gold);margin-bottom:16px;}
 .error-p{font-size:clamp(1.05rem,2.5vw,1.15rem);color:var(--muted);line-height:1.75;margin-bottom:28px;font-style:italic;max-width:36em;margin-left:auto;margin-right:auto;}
 
-/* FOOTER */
-.landing-site footer{position:relative;z-index:2;border-top:1px solid rgba(201,168,76,.07);padding:36px var(--hos-pad-inline) 28px;text-align:center;}
-@media(min-width:769px){.landing-site footer{padding:44px 48px 36px;}}
 /* ═══════════════════ FOOTER ═══════════════════ */
-footer{background:rgba(12,20,40,.4);color:var(--muted);padding:40px 0 28px;position:relative;z-index:2;border-top:1px solid rgba(201,168,76,.08);}
+.landing-site footer{position:relative;z-index:2;border-top:1px solid rgba(201,168,76,.08);background:transparent;color:var(--muted);padding:40px 0 28px;text-align:left;}
+@media(min-width:769px){.landing-site footer{padding:40px 0 28px;}}
 
 .footer-container{max-width:100%;padding:0 var(--hos-pad-inline);}
 
