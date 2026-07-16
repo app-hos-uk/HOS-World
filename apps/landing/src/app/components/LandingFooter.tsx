@@ -13,73 +13,64 @@ const SOCIALS_NYC = [
 export function LandingFooter() {
   return (
     <footer>
-      <div className="footer-grid">
-        <div className="footer-brand">
-          <div className="f-logo-wrap" role="img" aria-label="House of Spells">
-            <img className="f-logo-img" src={LANDING_LOGO} width={60} height={60} alt="" aria-hidden="true" />
-            <img className="f-logo-mark" src={LANDING_WORDMARK} width={1024} height={258} alt="" aria-hidden="true" />
+      <div className="footer-container">
+        {/* Main footer content */}
+        <div className="footer-main">
+          <div className="footer-brand">
+            <div className="f-logo-wrap" role="img" aria-label="House of Spells">
+              <img className="f-logo-img" src={LANDING_LOGO} width={60} height={60} alt="" aria-hidden="true" />
+              <img className="f-logo-mark" src={LANDING_WORDMARK} width={1024} height={258} alt="" aria-hidden="true" />
+            </div>
+            <p className="footer-tagline">Earth&apos;s Multi-Fandom Universe</p>
           </div>
-          <p className="footer-tagline">
-            <strong>House of Spells</strong>
-            <br />
-            Earth&apos;s Multi-Fandom Universe
-          </p>
-        </div>
 
-        <div className="footer-visit">
-          <h4>Visit Us</h4>
-          <address>
-            House of Spells — Times Square
-            <br />
-            234 West 42nd Street
-            <br />
-            New York, NY 10036
-            <br />
-            Between 7th &amp; 8th Avenues
-          </address>
-          <p>Open Daily · 10:00 AM – Midnight</p>
-          <p>
-            Tel: <a href="tel:+13322504251">+1 (332) 250-4251</a>
-          </p>
-          <p>
-            <a
-              href="https://maps.google.com/?q=House+of+Spells+234+West+42nd+Street+New+York+NY+10036"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Get Directions
-            </a>
-          </p>
-        </div>
-
-        <div className="footer-connect">
-          <h4>Connect</h4>
-          <div className="footer-social-links">
-            {SOCIALS_NYC.map((s) => (
+          <div className="footer-visit">
+            <h4>Visit Us</h4>
+            <address>
+              House of Spells — Times Square
+              <br />
+              234 West 42nd Street, New York, NY 10036
+              <br />
+              Between 7th &amp; 8th Avenues
+            </address>
+            <p className="footer-hours">Open Daily · 10:00 AM – Midnight</p>
+            <p className="footer-contact">
+              Tel: <a href="tel:+13322504251">+1 (332) 250-4251</a> ·{' '}
               <a
-                key={s.label}
-                href={s.href}
+                href="https://maps.google.com/?q=House+of+Spells+234+West+42nd+Street+New+York+NY+10036"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="footer-social-link"
               >
-                {s.icon}
-                <span>{s.label}</span>
+                Get Directions
               </a>
-            ))}
+            </p>
           </div>
-          <p className="footer-ext-links">
-            <a href="https://shop.houseofspells.com">Shop Online</a> ·{' '}
-            <a href="https://houseofspells.com/careers">Careers</a>
-          </p>
+
+          <div className="footer-connect">
+            <h4>Connect</h4>
+            <div className="footer-social-icons">
+              {SOCIALS_NYC.map((s) => (
+                <a
+                  key={s.label}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="footer-social-icon"
+                  aria-label={s.label}
+                  title={s.label}
+                >
+                  {s.icon}
+                </a>
+              ))}
+            </div>
+            <p className="footer-ext-links">
+              <a href="https://houseofspells.com/careers">Careers</a>
+            </p>
+          </div>
         </div>
 
-        <div className="footer-legal">
-          <p>
-            © 2026 House of Spells. All rights reserved.
-            <br />
-            houseofspells.com is the global flagship — the UK store lives on at houseofspells.co.uk.
-          </p>
+        {/* Footer bottom */}
+        <div className="footer-bottom">
           <div className="f-links">
             <Link href="/">Home</Link>
             <Link href="/universes">Universes</Link>
@@ -87,6 +78,10 @@ export function LandingFooter() {
             <Link href={LANDING_REGISTER_PATH}>Register</Link>
             <Link href="/privacy">Privacy</Link>
           </div>
+          <p className="footer-copyright">
+            © 2026 House of Spells. All rights reserved. · houseofspells.com is the global flagship — the UK store
+            lives on at houseofspells.co.uk.
+          </p>
         </div>
       </div>
     </footer>
