@@ -490,6 +490,24 @@
 .footer-copyright a{color:#C5A55A;text-decoration:none;transition:color .3s;}
 .footer-copyright a:hover{color:#F2D878;text-decoration:underline;}
 
+/* Footer small-screen adjustments */
+@media(max-width:768px){
+  .footer-main{gap:28px;margin-bottom:24px;}
+  .footer-visit address{font-size:0.85rem;line-height:1.6;}
+  .footer-visit .footer-hours,.footer-visit .footer-contact{font-size:0.82rem;}
+  .footer-contact{white-space:nowrap;}
+  .f-links{gap:14px 18px;}
+  .f-links a{font-size:0.65rem;letter-spacing:.12em;}
+  .footer-copyright{font-size:0.72rem;padding:0 8px;}
+}
+@media(max-width:400px){
+  .footer-visit address{font-size:0.8rem;}
+  .footer-contact{white-space:normal;}
+  .f-links{gap:10px 14px;}
+  .f-links a{font-size:0.6rem;letter-spacing:.1em;}
+  .footer-copyright{font-size:0.68rem;}
+}
+
 /* ═══════════════════ PRIVACY PAGE ═══════════════════ */
 .privacy-container{max-width:780px;margin:0 auto;padding:calc(var(--hos-nav-h) + 40px) var(--hos-pad-inline) 60px;position:relative;z-index:2;}
 @media(min-width:769px){.privacy-container{padding:120px 24px 80px;}}
