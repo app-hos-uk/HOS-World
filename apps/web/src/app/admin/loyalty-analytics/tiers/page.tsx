@@ -24,30 +24,32 @@ export default function TierAnalysisPage() {
           <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">← Health</Link>
           <h1 className="text-2xl font-semibold text-hos-text-secondary">Tier analysis</h1>
           {loading ? <p className="text-hos-text-muted">Loading…</p> : error ? <p className="text-red-400 text-sm">{error}</p> : (
-            <table className="admin-table rounded">
-              <thead><tr>
-                <th>Tier</th>
-                <th className="text-right">Members</th>
-                <th className="text-right">Avg spend</th>
-                <th className="text-right">Avg CLV</th>
-                <th className="text-right">Freq/mo</th>
-                <th className="text-right">Churn</th>
-                <th className="text-right">Revenue</th>
-              </tr></thead>
-              <tbody>
-                {data.map((t: any) => (
-                  <tr key={t.tier}>
-                    <td className="font-medium">{t.tier}</td>
-                    <td className="text-right">{t.memberCount}</td>
-                    <td className="text-right">${Number(t.avgSpend).toFixed(2)}</td>
-                    <td className="text-right">${Number(t.avgClv).toFixed(2)}</td>
-                    <td className="text-right">{Number(t.avgPurchaseFreq).toFixed(2)}</td>
-                    <td className="text-right">{(Number(t.churnRate) * 100).toFixed(1)}%</td>
-                    <td className="text-right">${Number(t.revenueContribution).toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="admin-table rounded min-w-full">
+                <thead><tr>
+                  <th className="whitespace-nowrap">Tier</th>
+                  <th className="text-right whitespace-nowrap">Members</th>
+                  <th className="text-right whitespace-nowrap">Avg spend</th>
+                  <th className="text-right whitespace-nowrap">Avg CLV</th>
+                  <th className="text-right whitespace-nowrap">Freq/mo</th>
+                  <th className="text-right whitespace-nowrap">Churn</th>
+                  <th className="text-right whitespace-nowrap">Revenue</th>
+                </tr></thead>
+                <tbody>
+                  {data.map((t: any) => (
+                    <tr key={t.tier}>
+                      <td className="font-medium whitespace-nowrap">{t.tier}</td>
+                      <td className="text-right tabular-nums">{t.memberCount}</td>
+                      <td className="text-right tabular-nums">${Number(t.avgSpend).toFixed(2)}</td>
+                      <td className="text-right tabular-nums">${Number(t.avgClv).toFixed(2)}</td>
+                      <td className="text-right tabular-nums">{Number(t.avgPurchaseFreq).toFixed(2)}</td>
+                      <td className="text-right tabular-nums">{(Number(t.churnRate) * 100).toFixed(1)}%</td>
+                      <td className="text-right tabular-nums">${Number(t.revenueContribution).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
           </RouteGuard>

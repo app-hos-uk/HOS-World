@@ -307,16 +307,17 @@ function ReviewsByProduct() {
 
   const fetchProducts = async () => {
     try {
+      setLoading(true);
       const response = await apiClient.getAdminProducts({ page: 1, limit: 100 });
       const raw = response?.data as { products?: unknown[]; data?: unknown[] } | unknown[] | undefined;
       const productList = Array.isArray(raw) ? raw : (raw as any)?.products ?? (raw as any)?.data ?? [];
       setProducts(Array.isArray(productList) ? productList : []);
-      if (Array.isArray(productList) && productList.length > 0) {
-        setSelectedProduct(productList[0].id);
-      }
+      // Don't auto-select first product - let user choose
     } catch (err: any) {
       console.error('Error fetching products:', err);
       setError(err.message || 'Failed to load products');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -403,6 +404,35 @@ function ReviewsByProduct() {
           ))}
         </select>
       </div>
+
+      {!selectedProduct && loading && (
+        <div className="bg-hos-bg-secondary rounded-lg shadow p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-hos-border border-t-hos-gold mx-auto mb-3"></div>
+          <p className="text-hos-text-muted text-sm">Loading products...</p>
+        </div>
+      )}
+
+      {!selectedProduct && !loading && error && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center">
+          <span className="text-4xl block mb-3">⚠️</span>
+          <p className="text-red-300 font-medium">Failed to load products</p>
+          <p className="text-red-300/70 text-sm mt-1">{error}</p>
+          <button
+            onClick={fetchProducts}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!selectedProduct && !loading && !error && (
+        <div className="bg-hos-bg-secondary rounded-lg shadow p-8 text-center">
+          <span className="text-4xl block mb-3">📋</span>
+          <p className="text-hos-text-secondary font-medium">Select a product above to view its reviews</p>
+          <p className="text-hos-text-muted text-sm mt-1">Choose from {products.length} available products</p>
+        </div>
+      )}
 
       {selectedProduct && (
         <>

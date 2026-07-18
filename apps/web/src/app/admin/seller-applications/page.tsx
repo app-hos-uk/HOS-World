@@ -24,7 +24,7 @@ interface SellerInvitation {
 
 export default function AdminSellerApplicationsPage() {
   const toast = useToast();
-  const [invitations, setInvitations] = useState<SellerInvitation[]>([]);
+  const [allInvitations, setAllInvitations] = useState<SellerInvitation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -39,15 +39,16 @@ export default function AdminSellerApplicationsPage() {
   useEffect(() => {
     fetchInvitations();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter]);
+  }, []);
 
   const fetchInvitations = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiClient.getSellerInvitations(statusFilter || undefined);
+      // Always fetch all invitations for accurate stats
+      const response = await apiClient.getSellerInvitations();
       const invitationList = Array.isArray(response?.data) ? response.data : [];
-      setInvitations(invitationList);
+      setAllInvitations(invitationList);
     } catch (err: any) {
       console.error('Error fetching seller invitations:', err);
       setError(err.message || 'Failed to load seller invitations');
@@ -55,6 +56,11 @@ export default function AdminSellerApplicationsPage() {
       setLoading(false);
     }
   };
+
+  // Filter invitations based on statusFilter
+  const invitations = statusFilter 
+    ? allInvitations.filter(inv => inv.status === statusFilter)
+    : allInvitations;
 
   const handleInviteSeller = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,11 +124,12 @@ export default function AdminSellerApplicationsPage() {
     }
   };
 
+  // Stats always show overall counts from all invitations
   const stats = {
-    total: invitations.length,
-    pending: invitations.filter(i => i.status === 'PENDING').length,
-    accepted: invitations.filter(i => i.status === 'ACCEPTED').length,
-    expired: invitations.filter(i => i.status === 'EXPIRED').length,
+    total: allInvitations.length,
+    pending: allInvitations.filter(i => i.status === 'PENDING').length,
+    accepted: allInvitations.filter(i => i.status === 'ACCEPTED').length,
+    expired: allInvitations.filter(i => i.status === 'EXPIRED').length,
   };
 
   return (

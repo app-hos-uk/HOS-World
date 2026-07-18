@@ -70,10 +70,9 @@ export function RouteGuard({
   // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-hos-bg to-hos-bg-secondary flex items-center justify-center">
+      <div className="min-h-screen bg-hos-bg-secondary flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto"></div>
-          <p className="mt-4 text-hos-text-secondary">Loading...</p>
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-hos-border border-t-hos-gold mx-auto"></div>
         </div>
       </div>
     );
