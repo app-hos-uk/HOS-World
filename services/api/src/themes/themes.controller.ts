@@ -12,6 +12,7 @@ import {
   ParseUUIDPipe,
   UploadedFile,
   UseInterceptors,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -197,23 +198,17 @@ export class ThemesController {
   @Put('seller/my-theme')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Update my seller theme',
-    description: "Updates the authenticated seller's theme. Seller access required.",
+    summary: 'Update my seller theme (DEPRECATED)',
+    description: 'This endpoint has been deprecated. Theme customization is no longer available.',
   })
   @ApiBody({ type: UpdateSellerThemeDto })
-  @SwaggerApiResponse({ status: 200, description: 'Seller theme updated successfully' })
-  @SwaggerApiResponse({ status: 400, description: 'Invalid request data' })
+  @SwaggerApiResponse({ status: 403, description: 'Theme customization has been disabled' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller access required' })
   async updateMySellerTheme(
     @Request() req: any,
     @Body() updateDto: UpdateSellerThemeDto,
   ): Promise<ApiResponse<any>> {
-    const theme = await this.themesService.updateSellerTheme(req.user.id, updateDto);
-    return {
-      data: theme,
-      message: 'Seller theme updated successfully',
-    };
+    throw new ForbiddenException('Theme customization has been disabled. All stores now use the default HOS theme.');
   }
 
   @Public()
@@ -297,9 +292,8 @@ export class ThemesController {
   @Post('templates/:templateId/apply')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Apply theme template (Seller only)',
-    description:
-      'Creates a new theme from a template for the authenticated seller. Seller access required.',
+    summary: 'Apply theme template (DEPRECATED)',
+    description: 'This endpoint has been deprecated. Theme customization is no longer available.',
   })
   @ApiParam({ name: 'templateId', description: 'Template UUID', type: String })
   @ApiBody({
@@ -310,24 +304,14 @@ export class ThemesController {
       },
     },
   })
-  @SwaggerApiResponse({ status: 201, description: 'Theme created from template successfully' })
+  @SwaggerApiResponse({ status: 403, description: 'Theme customization has been disabled' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Seller access required' })
-  @SwaggerApiResponse({ status: 404, description: 'Template not found' })
   async createFromTemplate(
     @Request() req: any,
     @Param('templateId') templateId: string,
     @Body() body: { name?: string },
   ): Promise<ApiResponse<any>> {
-    const theme = await this.themesService.createThemeFromTemplate(
-      req.user.id,
-      templateId,
-      body.name,
-    );
-    return {
-      data: theme,
-      message: 'Theme created from template successfully',
-    };
+    throw new ForbiddenException('Theme customization has been disabled. All stores now use the default HOS theme.');
   }
 
   // Theme Upload

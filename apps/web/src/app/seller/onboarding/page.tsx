@@ -7,9 +7,8 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import Image from 'next/image';
 
-type OnboardingStep = 'store-info' | 'location' | 'theme' | 'verification' | 'payment' | 'complete';
+type OnboardingStep = 'store-info' | 'location' | 'verification' | 'payment' | 'complete';
 
 export default function SellerOnboardingPage() {
   const router = useRouter();
@@ -37,10 +36,6 @@ export default function SellerOnboardingPage() {
     city: '',
     region: '',
     timezone: 'UTC',
-  });
-
-  const [theme, setTheme] = useState({
-    themeId: '',
   });
 
   const [payment, setPayment] = useState({
@@ -110,14 +105,10 @@ export default function SellerOnboardingPage() {
           });
         }
 
-        if (seller.themeId) {
-          setTheme({ themeId: seller.themeId });
-        }
-
-        if (seller.themeId) {
-          setCurrentStep('payment');
-        } else if (seller.country) {
-          setCurrentStep('theme');
+        if (seller.country) {
+          // Route based on seller type - wholesalers need verification first
+          const sellerType = String(seller.sellerType || '').toUpperCase();
+          setCurrentStep(sellerType === 'WHOLESALER' ? 'verification' : 'payment');
         } else if (seller.storeName) {
           setCurrentStep('location');
         }
@@ -177,27 +168,9 @@ export default function SellerOnboardingPage() {
         region: location.region,
       });
       toast.success('Location information saved');
-      setCurrentStep('theme');
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to save location');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleThemeSubmit = async () => {
-    if (!theme.themeId) {
-      toast.error('Please select a theme');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await apiClient.updateSellerTheme({ themeId: theme.themeId });
-      toast.success('Theme selected');
       setCurrentStep(userRole === 'WHOLESALER' ? 'verification' : 'payment');
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to save theme');
+      toast.error(err?.message || 'Failed to save location');
     } finally {
       setLoading(false);
     }
@@ -236,7 +209,6 @@ export default function SellerOnboardingPage() {
   const baseSteps: { key: OnboardingStep; title: string; description: string }[] = [
     { key: 'store-info', title: 'Store Information', description: 'Set up your store details' },
     { key: 'location', title: 'Location', description: 'Add your business location' },
-    { key: 'theme', title: 'Theme', description: 'Choose your store theme' },
   ];
   const wholesalerSteps = userRole === 'WHOLESALER'
     ? [{ key: 'verification' as const, title: 'Verification', description: 'Upload business documents' }]
@@ -473,36 +445,6 @@ export default function SellerOnboardingPage() {
                 </div>
               )}
 
-              {currentStep === 'theme' && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-2">Choose Your Theme</h2>
-                    <p className="text-hos-text-secondary">Select a theme for your store</p>
-                  </div>
-
-                  <ThemeSelector
-                    selectedThemeId={theme.themeId}
-                    onSelect={(themeId) => setTheme({ themeId })}
-                  />
-
-                  <div className="flex justify-between">
-                    <button
-                      onClick={() => setCurrentStep('location')}
-                      className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
-                    >
-                      Back
-                    </button>
-                    <button
-                      onClick={handleThemeSubmit}
-                      disabled={loading || !theme.themeId}
-                      className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
-                    >
-                      {loading ? 'Saving...' : 'Continue'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {currentStep === 'verification' && (
                 <div className="space-y-6">
                   <div>
@@ -551,7 +493,7 @@ export default function SellerOnboardingPage() {
 
                   <div className="flex justify-between">
                     <button
-                      onClick={() => setCurrentStep('theme')}
+                      onClick={() => setCurrentStep('location')}
                       className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
                     >
                       Back
@@ -600,7 +542,7 @@ export default function SellerOnboardingPage() {
 
                   <div className="flex justify-between">
                     <button
-                      onClick={() => setCurrentStep(userRole === 'WHOLESALER' ? 'verification' : 'theme')}
+                      onClick={() => setCurrentStep(userRole === 'WHOLESALER' ? 'verification' : 'location')}
                       className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium"
                     >
                       Back
@@ -632,71 +574,3 @@ export default function SellerOnboardingPage() {
     </RouteGuard>
   );
 }
-
-// Theme Selector Component
-function ThemeSelector({
-  selectedThemeId,
-  onSelect,
-}: {
-  selectedThemeId: string;
-  onSelect: (themeId: string) => void;
-}) {
-  const [themes, setThemes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchThemes();
-  }, []);
-
-  const fetchThemes = async () => {
-    try {
-      const response = await apiClient.getThemes('SELLER');
-      if (response?.data) {
-        setThemes(response.data.filter((t: any) => t.isActive));
-      }
-    } catch (err) {
-      console.error('Error fetching themes:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return <div className="text-center py-8">Loading themes...</div>;
-  }
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {themes.map((theme) => (
-        <button
-          key={theme.id}
-          onClick={() => onSelect(theme.id)}
-          className={`p-4 border-2 rounded-lg text-left transition-all ${
-            selectedThemeId === theme.id
-              ? 'border-hos-gold bg-hos-gold/10'
-              : 'border-hos-border hover:border-hos-border'
-          }`}
-        >
-          <div className="relative aspect-video bg-hos-bg-tertiary rounded mb-3 flex items-center justify-center overflow-hidden">
-            {theme.previewImages && theme.previewImages.length > 0 ? (
-              <Image
-                src={theme.previewImages[0]}
-                alt={theme.name}
-                fill
-                className="object-cover rounded"
-                sizes="(max-width: 768px) 100vw, 33vw"
-              />
-            ) : (
-              <span className="text-4xl">🎨</span>
-            )}
-          </div>
-          <div className="font-semibold">{theme.name}</div>
-          {theme.description && (
-            <div className="text-sm text-hos-text-secondary mt-1 line-clamp-2">{theme.description}</div>
-          )}
-        </button>
-      ))}
-    </div>
-  );
-}
-

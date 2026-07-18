@@ -24,7 +24,6 @@ export function getSellerMenuItems(isWholesaler: boolean): SellerMenuItem[] {
       { title: 'Earnings', href: '/seller/earnings', icon: '💰' },
       { title: 'Submissions', href: '/wholesaler/submissions', icon: '📝' },
       { title: 'Profile', href: '/wholesaler/profile', icon: '👤' },
-      { title: 'Themes', href: '/wholesaler/themes', icon: '🎨' },
     ];
   }
 
@@ -38,7 +37,6 @@ export function getSellerMenuItems(isWholesaler: boolean): SellerMenuItem[] {
     { title: 'Earnings', href: '/seller/earnings', icon: '💰' },
     { title: 'Submissions', href: '/seller/submissions', icon: '📝' },
     { title: 'Profile', href: '/seller/profile', icon: '👤' },
-    { title: 'Themes', href: '/seller/themes', icon: '🎨' },
     { title: 'Bulk Import', href: '/seller/products/bulk', icon: '📤' },
   ];
 }

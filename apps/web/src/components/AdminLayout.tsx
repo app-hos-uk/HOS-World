@@ -191,7 +191,6 @@ const menuItems: MenuItem[] = [
       { title: 'Settings', href: '/admin/settings', icon: '🔧' },
       { title: 'Feature Flags', href: '/admin/feature-flags', icon: '🚩' },
       { title: 'Permissions', href: '/admin/permissions', icon: '🔐' },
-      { title: 'Themes', href: '/admin/themes', icon: '🎨' },
       { title: 'Webhooks', href: '/admin/webhooks', icon: '🔗' },
       { title: 'Search', href: '/admin/search', icon: '🔍' },
       { title: 'Domain Management', href: '/admin/domains', icon: '🌐' },
