@@ -237,12 +237,15 @@ export class ReconciliationService {
       );
       return updated;
     } catch (err: any) {
+      const errorMessage = err.message || 'Unknown error occurred';
       await this.prisma.reconciliationRun.update({
         where: { id: run.id },
-        data: { status: 'FAILED', notes: err.message },
+        data: { status: 'FAILED', notes: errorMessage },
       });
-      this.logger.error(`Reconciliation failed: ${err.message}`);
-      throw err;
+      this.logger.error(`Reconciliation failed: ${errorMessage}`, err.stack);
+      
+      // Re-throw with more context for the API response
+      throw new Error(`Reconciliation failed: ${errorMessage}`);
     }
   }
 

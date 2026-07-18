@@ -20,12 +20,16 @@ interface Settlement {
     email: string;
     bankDetails?: any;
   };
-  amount: number;
+  // Backend returns totalSales, but we also support 'amount' for compatibility
+  amount?: number;
+  totalSales?: number;
   currency: string;
   status: 'PENDING' | 'PROCESSING' | 'PAID' | 'FAILED' | 'CANCELLED';
   periodStart: string;
   periodEnd: string;
-  ordersCount: number;
+  // Backend returns totalOrders, but we also support 'ordersCount' for compatibility
+  ordersCount?: number;
+  totalOrders?: number;
   platformFee: number;
   netAmount: number;
   paymentMethod?: string;
@@ -110,6 +114,10 @@ export default function AdminSettlementsPage() {
     }
   }, []);
 
+    // Helper functions to normalize field names (backend returns totalSales/totalOrders, some code expects amount/ordersCount)
+  const getGrossAmount = (s: Settlement) => s.totalSales ?? s.amount ?? 0;
+  const getOrdersCount = (s: Settlement) => s.totalOrders ?? s.ordersCount ?? 0;
+
   const calculateStats = (settlementList: Settlement[]) => {
     const pending = settlementList.filter(s => s.status === 'PENDING');
     const processing = settlementList.filter(s => s.status === 'PROCESSING');
@@ -123,7 +131,7 @@ export default function AdminSettlementsPage() {
     
     const totalFees = settlementList.reduce((sum, s) => sum + (s.platformFee || 0), 0);
     const avgAmount = settlementList.length > 0 
-      ? settlementList.reduce((sum, s) => sum + (s.amount || 0), 0) / settlementList.length 
+      ? settlementList.reduce((sum, s) => sum + getGrossAmount(s), 0) / settlementList.length 
       : 0;
 
     setStats({
@@ -347,8 +355,10 @@ export default function AdminSettlementsPage() {
   const exportColumns = [
     { key: 'id', header: 'Settlement ID' },
     { key: 'seller', header: 'Seller', format: (v: any) => v?.storeName || '' },
+    { key: 'totalSales', header: 'Gross Amount', format: (v: number, r: Settlement) => `${r.currency || 'USD'} ${Number(r.totalSales ?? r.amount ?? 0).toFixed(2)}` },
     { key: 'netAmount', header: 'Net Amount', format: (v: number, r: Settlement) => `${r.currency || 'USD'} ${Number(v).toFixed(2)}` },
     { key: 'platformFee', header: 'Platform Fee', format: (v: number, r: Settlement) => `${r.currency || 'USD'} ${Number(v).toFixed(2)}` },
+    { key: 'totalOrders', header: 'Orders', format: (v: number, r: Settlement) => String(r.totalOrders ?? r.ordersCount ?? 0) },
     { key: 'status', header: 'Status' },
     { key: 'periodStart', header: 'Period Start', format: (v: string) => new Date(v).toLocaleDateString() },
     { key: 'periodEnd', header: 'Period End', format: (v: string) => new Date(v).toLocaleDateString() },
@@ -562,8 +572,8 @@ export default function AdminSettlementsPage() {
                         <td className="px-4 py-3 text-sm text-hos-text-secondary">
                           {new Date(settlement.periodStart).toLocaleDateString()} - {new Date(settlement.periodEnd).toLocaleDateString()}
                         </td>
-                        <td className="px-4 py-3 text-sm text-hos-text-secondary">{settlement.ordersCount}</td>
-                        <td className="px-4 py-3 text-sm text-hos-text-secondary">{formatPrice(settlement.amount)}</td>
+                        <td className="px-4 py-3 text-sm text-hos-text-secondary">{getOrdersCount(settlement)}</td>
+                        <td className="px-4 py-3 text-sm text-hos-text-secondary">{formatPrice(getGrossAmount(settlement))}</td>
                         <td className="px-4 py-3 text-sm text-red-400">-{formatPrice(settlement.platformFee)}</td>
                         <td className="px-4 py-3 text-sm font-medium text-green-400">{formatPrice(settlement.netAmount)}</td>
                         <td className="px-4 py-3">{getStatusBadge(settlement.status)}</td>
@@ -632,11 +642,11 @@ export default function AdminSettlementsPage() {
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Orders</p>
-                        <p className="font-medium">{selectedSettlement.ordersCount}</p>
+                        <p className="font-medium">{getOrdersCount(selectedSettlement)}</p>
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Gross Amount</p>
-                        <p className="font-medium">{formatPrice(selectedSettlement.amount)}</p>
+                        <p className="font-medium">{formatPrice(getGrossAmount(selectedSettlement))}</p>
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Platform Fee</p>

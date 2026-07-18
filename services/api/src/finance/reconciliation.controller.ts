@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Put, Body, Param, Query, UseGuards, Request, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, Param, Query, UseGuards, Request, ParseUUIDPipe, BadRequestException } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -15,9 +15,28 @@ export class ReconciliationController {
     @Body() body: { periodStart: string; periodEnd: string },
     @Request() req: any,
   ) {
+    // Validate required fields
+    if (!body.periodStart || !body.periodEnd) {
+      throw new BadRequestException('Both periodStart and periodEnd are required');
+    }
+
+    // Validate date formats
+    const periodStart = new Date(body.periodStart);
+    const periodEnd = new Date(body.periodEnd);
+    
+    if (isNaN(periodStart.getTime())) {
+      throw new BadRequestException('Invalid periodStart date format');
+    }
+    if (isNaN(periodEnd.getTime())) {
+      throw new BadRequestException('Invalid periodEnd date format');
+    }
+    if (periodStart >= periodEnd) {
+      throw new BadRequestException('periodStart must be before periodEnd');
+    }
+
     const result = await this.reconciliationService.startReconciliation({
-      periodStart: new Date(body.periodStart),
-      periodEnd: new Date(body.periodEnd),
+      periodStart,
+      periodEnd,
       startedById: req.user?.id,
     });
     return { data: result, message: 'Reconciliation completed' };
