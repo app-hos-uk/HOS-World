@@ -308,6 +308,7 @@ function ReviewsByProduct() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await apiClient.getAdminProducts({ page: 1, limit: 100 });
       const raw = response?.data as { products?: unknown[]; data?: unknown[] } | unknown[] | undefined;
       const productList = Array.isArray(raw) ? raw : (raw as any)?.products ?? (raw as any)?.data ?? [];
