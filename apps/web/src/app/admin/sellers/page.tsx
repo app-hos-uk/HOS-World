@@ -218,6 +218,32 @@ export default function AdminSellersPage() {
     [invitations],
   );
 
+  // Invitation filters (separate from seller filters)
+  const [invStatusFilter, setInvStatusFilter] = useState<'ALL' | 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'CANCELLED'>('ALL');
+  const [invSearchTerm, setInvSearchTerm] = useState('');
+
+  // Filtered invitations
+  const filteredInvitations = useMemo(() => {
+    let filtered = [...invitations];
+    
+    // Search filter (uses separate invSearchTerm, not shared with sellers)
+    if (invSearchTerm) {
+      const term = invSearchTerm.toLowerCase();
+      filtered = filtered.filter(inv =>
+        inv.email.toLowerCase().includes(term)
+      );
+    }
+    
+    // Status filter
+    if (invStatusFilter !== 'ALL') {
+      filtered = filtered.filter(inv => 
+        invitationStatusNormalized(inv.status) === invStatusFilter
+      );
+    }
+    
+    return filtered;
+  }, [invitations, invSearchTerm, invStatusFilter]);
+
   // Filtered and sorted sellers
   const filteredSellers = useMemo(() => {
     let filtered = [...sellers];
@@ -448,8 +474,8 @@ export default function AdminSellersPage() {
                 <p className="text-xl font-bold text-red-400">{stats.inactiveSellers}</p>
               </button>
               <button
-                onClick={() => { setActiveTab('invitations'); setTypeFilter('ALL'); setStatusFilter('ALL'); }}
-                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${activeTab === 'invitations' ? 'ring-2 ring-hos-gold/50' : ''}`}
+                onClick={() => { setActiveTab('invitations'); setInvStatusFilter('PENDING'); }}
+                className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${activeTab === 'invitations' && invStatusFilter === 'PENDING' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Pending Invites</p>
                 <p className="text-xl font-bold text-yellow-400">{pendingInvitationsCount}</p>
@@ -742,11 +768,39 @@ export default function AdminSellersPage() {
           {activeTab === 'invitations' && (
             <div className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
               <div className="p-4 border-b">
-                <div>
-                  <h2 className="text-lg font-semibold">Seller invitations</h2>
-                  <p className="text-xs text-hos-text-muted mt-0.5">
-                    {pendingInvitationsCount} pending · {invitations.length} total
-                  </p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold">Seller invitations</h2>
+                    <p className="text-xs text-hos-text-muted mt-0.5">
+                      {filteredInvitations.length} showing{invStatusFilter !== 'ALL' ? ` (${invStatusFilter.toLowerCase()})` : ''} · {pendingInvitationsCount} pending · {invitations.length} total
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={invSearchTerm}
+                      onChange={(e) => setInvSearchTerm(e.target.value)}
+                      placeholder="Search by email..."
+                      className="px-3 py-1.5 text-sm border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted w-48"
+                    />
+                    <select
+                      value={invStatusFilter}
+                      onChange={(e) => setInvStatusFilter(e.target.value as any)}
+                      className="px-3 py-1.5 text-sm border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary"
+                    >
+                      <option value="ALL">All Statuses</option>
+                      <option value="PENDING">Pending</option>
+                      <option value="ACCEPTED">Accepted</option>
+                      <option value="EXPIRED">Expired</option>
+                      <option value="CANCELLED">Cancelled</option>
+                    </select>
+                    <button
+                      onClick={() => { setInvStatusFilter('ALL'); setInvSearchTerm(''); }}
+                      className="px-3 py-1.5 text-sm text-hos-text-muted hover:text-hos-text-secondary"
+                    >
+                      Clear
+                    </button>
+                  </div>
                 </div>
               </div>
               <div className="overflow-x-auto">
@@ -762,14 +816,14 @@ export default function AdminSellersPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
-                    {invitations.length === 0 ? (
+                    {filteredInvitations.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="px-6 py-8 text-center text-hos-text-muted">
-                          No invitations found
+                          No invitations found{invStatusFilter !== 'ALL' ? ` with status "${invStatusFilter}"` : ''}
                         </td>
                       </tr>
                     ) : (
-                      invitations.map((inv) => (
+                      filteredInvitations.map((inv) => (
                         <tr key={inv.id} className="hover:bg-hos-bg-tertiary">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">{inv.email}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm">{getRoleBadge(inv.sellerType)}</td>

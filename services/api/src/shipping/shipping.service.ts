@@ -215,7 +215,48 @@ export class ShippingService {
     // Sort by rate (lowest first)
     availableOptions.sort((a, b) => a.rate - b.rate);
 
+    // If no shipping options are available, provide a default standard shipping option
+    if (availableOptions.length === 0) {
+      const defaultRate = this.getDefaultShippingRate(cartValue, destination);
+      availableOptions.push({
+        method: {
+          id: 'default-standard',
+          name: 'Standard Shipping',
+          description: 'Default shipping rate',
+          type: 'STANDARD' as any,
+        },
+        rule: {
+          id: 'default-rule',
+          name: 'Default Rate',
+          estimatedDays: 7,
+        },
+        rate: defaultRate,
+        freeShipping: defaultRate === 0,
+      });
+    }
+
     return availableOptions;
+  }
+
+  /**
+   * Get default shipping rate when no configured methods match
+   */
+  private getDefaultShippingRate(cartValue: number, destination: ShippingDestination): number {
+    // Free shipping threshold (can be made configurable)
+    const freeShippingThreshold = 100;
+    if (cartValue >= freeShippingThreshold) {
+      return 0;
+    }
+
+    // Default shipping rates by region
+    const domesticCountries = ['US', 'USA', 'GB', 'UK', 'GBR'];
+    const isDomestic = domesticCountries.includes(destination.country?.toUpperCase() || '');
+
+    // Base rates (can be made configurable via env vars)
+    const domesticRate = 5.99;
+    const internationalRate = 12.99;
+
+    return isDomestic ? domesticRate : internationalRate;
   }
 
   /**
@@ -243,7 +284,8 @@ export class ShippingService {
         }
       }
 
-      // Check cart value range
+      // Check cart value range (supports both cartValueRange object and minCartValue shorthand)
+      const extConditions = conditions as ShippingRuleConditions & { minCartValue?: number; countries?: string[] };
       if (conditions.cartValueRange) {
         if (
           conditions.cartValueRange.min !== undefined &&
@@ -257,11 +299,23 @@ export class ShippingService {
         ) {
           continue;
         }
+      } else if (extConditions.minCartValue !== undefined && cartValue < extConditions.minCartValue) {
+        // Shorthand: minCartValue means cart must be at least this amount
+        continue;
       }
 
-      // Check country
-      if (conditions.country && conditions.country !== destination.country) {
+      // Check country (supports both single country and countries array)
+      const destCountry = destination.country?.toUpperCase();
+      if (conditions.country && conditions.country.toUpperCase() !== destCountry) {
         continue;
+      }
+      if (extConditions.countries && extConditions.countries.length > 0) {
+        const countryMatches = extConditions.countries.some(
+          (c) => c.toUpperCase() === destCountry
+        );
+        if (!countryMatches) {
+          continue;
+        }
       }
 
       // Check state

@@ -51,7 +51,8 @@ const ORDER_STATUSES = [
   { key: 'PENDING', label: 'Order Placed', icon: '📋', description: 'Your order has been received' },
   { key: 'CONFIRMED', label: 'Confirmed', icon: '✅', description: 'Order confirmed by seller' },
   { key: 'PROCESSING', label: 'Processing', icon: '⚙️', description: 'Your order is being prepared' },
-  { key: 'SHIPPED', label: 'Shipped', icon: '📦', description: 'Order has been shipped' },
+  { key: 'FULFILLED', label: 'Packed', icon: '📦', description: 'Order has been packed and ready for shipping' },
+  { key: 'SHIPPED', label: 'Shipped', icon: '🚚', description: 'Order is on the way' },
   { key: 'DELIVERED', label: 'Delivered', icon: '🎉', description: 'Order delivered successfully' },
 ];
 
@@ -142,7 +143,8 @@ function TrackOrderContent() {
   const getStatusIndex = (status: string) => {
     const upper = (status || '').toUpperCase();
     const index = ORDER_STATUSES.findIndex(s => s.key === upper);
-    if (upper === 'COMPLETED' || upper === 'FULFILLED') return ORDER_STATUSES.length - 1;
+    // COMPLETED maps to DELIVERED (the last status in the timeline)
+    if (upper === 'COMPLETED') return ORDER_STATUSES.length - 1;
     return index >= 0 ? index : 0;
   };
 
@@ -158,11 +160,20 @@ function TrackOrderContent() {
       const eventDate = new Date(createdDate);
       eventDate.setHours(eventDate.getHours() + i * 12); // Add 12 hours per stage
 
+      // Determine location based on the status key
+      const statusKey = ORDER_STATUSES[i].key;
+      let location: string | undefined;
+      if (statusKey === 'FULFILLED') {
+        location = 'Warehouse';
+      } else if (statusKey === 'SHIPPED' || statusKey === 'DELIVERED') {
+        location = 'Distribution Center';
+      }
+
       events.push({
         date: eventDate.toISOString(),
-        status: ORDER_STATUSES[i].key,
+        status: statusKey,
         description: ORDER_STATUSES[i].description,
-        location: i >= 3 ? 'Distribution Center' : undefined,
+        location,
       });
     }
 

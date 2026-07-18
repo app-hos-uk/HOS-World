@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { isTruthy } from '../common/utils/config';
 
 const logger = new Logger('EnvValidation');
 
@@ -168,7 +169,7 @@ export function validateEnvironmentVariables(
     warnings.push('SMTP_USER and SMTP_PASS should be set when SMTP_HOST is configured');
   }
 
-  if (config.LOYALTY_ENABLED === 'true') {
+  if (isTruthy(config.LOYALTY_ENABLED as string | undefined)) {
     if (!config.HOS_SELLER_ID) {
       warnings.push('HOS_SELLER_ID should be set when loyalty is enabled');
     }

@@ -518,10 +518,11 @@ export default function AdminSubmissionsPage() {
                         contentStyle={{ ...DARK_CHART_TOOLTIP, padding: '6px 10px', fontSize: 12 }}
                         itemStyle={DARK_CHART_TOOLTIP_ITEM}
                         labelStyle={{ ...DARK_CHART_TOOLTIP_LABEL, fontSize: 11 }}
-                        formatter={(value: number | string) => {
+                        formatter={(value: number | string, _name: string, props: any) => {
                           const v = Number(value);
                           const pct = chartTotal ? ((v / chartTotal) * 100).toFixed(1) : '0';
-                          return [`${v} (${pct}%)`, 'Submissions'];
+                          const statusName = props?.payload?.name || 'Submissions';
+                          return [`${v} (${pct}%)`, statusName];
                         }}
                       />
                     </PieChart>

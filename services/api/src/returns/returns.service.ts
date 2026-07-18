@@ -867,6 +867,50 @@ export class ReturnsService {
     const failedRefundTx = returnRequest.transactions?.find(
       (t: any) => String(t.status).toUpperCase() === 'FAILED',
     );
+
+    // Handle cancelled returns
+    if (status === 'CANCELLED') {
+      return [
+        {
+          step: 'REQUESTED',
+          label: 'Return requested',
+          at: returnRequest.createdAt,
+          completed: true,
+        },
+        {
+          step: 'CANCELLED',
+          label: 'Return cancelled',
+          at: returnRequest.updatedAt,
+          completed: true,
+        },
+      ];
+    }
+
+    // Handle rejected returns
+    if (status === 'REJECTED') {
+      return [
+        {
+          step: 'REQUESTED',
+          label: 'Return requested',
+          at: returnRequest.createdAt,
+          completed: true,
+        },
+        {
+          step: 'REVIEW',
+          label: 'Under review',
+          at: returnRequest.createdAt,
+          completed: true,
+        },
+        {
+          step: 'REJECTED',
+          label: 'Return rejected',
+          at: returnRequest.updatedAt,
+          completed: true,
+        },
+      ];
+    }
+
+    // Normal flow timeline
     const steps: ReturnTimelineStep[] = [
       {
         step: 'REQUESTED',
@@ -878,37 +922,37 @@ export class ReturnsService {
         step: 'REVIEW',
         label: 'Under review',
         at: returnRequest.createdAt,
-        completed: !['PENDING'].includes(status),
+        completed: status !== 'PENDING',
       },
       {
         step: 'APPROVED',
-        label: status === 'REJECTED' ? 'Return rejected' : 'Return approved',
+        label: 'Return approved',
         at: ['APPROVED', 'PROCESSING', 'COMPLETED'].includes(status)
           ? returnRequest.updatedAt
           : undefined,
-        completed: ['APPROVED', 'PROCESSING', 'COMPLETED', 'REJECTED'].includes(status),
+        completed: ['APPROVED', 'PROCESSING', 'COMPLETED'].includes(status),
       },
       {
-        step: 'PROCESSING',
-        label: 'Return in transit',
-        at: status === 'PROCESSING' ? returnRequest.updatedAt : undefined,
-        completed: ['PROCESSING', 'COMPLETED'].includes(status),
+        step: 'SHIPPED',
+        label: returnRequest.trackingNumber
+          ? `Shipped (${returnRequest.carrier || 'Tracking'}: ${returnRequest.trackingNumber})`
+          : (['PROCESSING', 'COMPLETED'].includes(status) || returnRequest.shippedAt ? 'Shipped' : 'Awaiting shipment'),
+        at: returnRequest.shippedAt || (['PROCESSING', 'COMPLETED'].includes(status) ? returnRequest.updatedAt : undefined),
+        // Mark completed if we have shipping evidence OR status indicates shipping has occurred
+        completed: !!returnRequest.shippedAt || ['PROCESSING', 'COMPLETED'].includes(status),
       },
       {
         step: 'RECEIVED',
         label: 'Package received',
-        at: ['PROCESSING', 'COMPLETED'].includes(status)
-          ? returnRequest.updatedAt
-          : undefined,
-        completed: ['PROCESSING', 'COMPLETED'].includes(status),
+        at: returnRequest.receivedAt || (['PROCESSING', 'COMPLETED'].includes(status) ? returnRequest.updatedAt : undefined),
+        // Mark completed if we have received evidence OR status indicates item was received
+        completed: !!returnRequest.receivedAt || ['PROCESSING', 'COMPLETED'].includes(status),
       },
       {
         step: 'INSPECTED',
         label: 'Inspection complete',
-        at: status === 'COMPLETED'
-          ? returnRequest.processedAt || returnRequest.updatedAt
-          : undefined,
-        completed: status === 'COMPLETED',
+        at: returnRequest.inspectedAt || (status === 'COMPLETED' ? returnRequest.processedAt || returnRequest.updatedAt : undefined),
+        completed: !!returnRequest.inspectedAt || status === 'COMPLETED',
       },
       {
         step: 'REFUND',

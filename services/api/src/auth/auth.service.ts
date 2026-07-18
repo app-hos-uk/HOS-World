@@ -134,14 +134,23 @@ export class AuthService {
     const registrationMode = this.configService.get<string>('REGISTRATION_MODE', 'open');
     if (registrationMode === 'invite_only') {
       let bypassInviteGate = false;
+      const inviteCode = registerDto.inviteCode;
+      
       if (this.foundingMembersService) {
         const fm = await this.foundingMembersService.findByEmail(registerDto.email);
-        if (fm && ['REGISTERED', 'INVITED'].includes(fm.status)) {
+        if (fm) {
+          if (fm.status === 'LINKED') {
+            throw new ConflictException('This founding member email has already been used to create an account. Please log in instead.');
+          }
+          // Allow founding members in any non-LINKED status (REGISTERED, INVITED, etc.)
           bypassInviteGate = true;
+        } else if (inviteCode?.toLowerCase() === 'founding') {
+          // User has founding invite code but email not found in founding members list
+          throw new ForbiddenException('This email is not registered as a founding member. Please use the email address you registered with.');
         }
       }
+      
       if (!bypassInviteGate) {
-        const inviteCode = registerDto.inviteCode;
         const validCodes = (this.configService.get<string>('REGISTRATION_INVITE_CODES', '') || '')
           .split(',')
           .map((c) => c.trim())

@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import {
+  ComposedChart,
   BarChart,
   Bar,
-  LineChart,
   Line,
   PieChart,
   Pie,
@@ -165,20 +165,27 @@ export default function AdminSellerAnalyticsPage() {
       }
       
       for (let i = periods - 1; i >= 0; i--) {
-        const periodDate = new Date(now.getTime() - i * intervalDays * 24 * 60 * 60 * 1000);
+        const periodEnd = new Date(now.getTime() - i * intervalDays * 24 * 60 * 60 * 1000);
+        const periodStart = new Date(periodEnd.getTime() - intervalDays * 24 * 60 * 60 * 1000);
         let label: string;
         if (timeRange === '7d') {
-          label = periodDate.toLocaleDateString('en-US', { weekday: 'short' });
+          label = periodEnd.toLocaleDateString('en-US', { weekday: 'short' });
         } else if (timeRange === '1y') {
-          label = months[periodDate.getMonth()];
+          label = months[periodEnd.getMonth()];
         } else {
-          label = `${periodDate.getMonth() + 1}/${periodDate.getDate()}`;
+          label = `${periodEnd.getMonth() + 1}/${periodEnd.getDate()}`;
         }
-        const count = allSellers.filter((s: any) => {
+        // Count new sellers in this period (not cumulative)
+        const newCount = allSellers.filter((s: any) => {
           const createdAt = new Date(s.createdAt);
-          return createdAt <= periodDate;
+          return createdAt > periodStart && createdAt <= periodEnd;
         }).length;
-        sellerGrowth.push({ month: label, count });
+        // Also track cumulative total for reference
+        const cumulativeCount = allSellers.filter((s: any) => {
+          const createdAt = new Date(s.createdAt);
+          return createdAt <= periodEnd;
+        }).length;
+        sellerGrowth.push({ month: label, count: cumulativeCount, newSellers: newCount });
       }
 
       const topSellers = sellersInRange
@@ -301,14 +308,25 @@ export default function AdminSellerAnalyticsPage() {
                   <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Seller Growth</h2>
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={analytics.sellerGrowth}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <ComposedChart data={analytics.sellerGrowth}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2e" />
                         <XAxis dataKey="month" stroke="#6b7280" fontSize={12} />
-                        <YAxis stroke="#6b7280" fontSize={12} />
+                        <YAxis yAxisId="left" stroke="#6b7280" fontSize={12} />
+                        <YAxis yAxisId="right" orientation="right" stroke="#10b981" fontSize={12} />
                         <Tooltip 
-                          contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                          contentStyle={{ backgroundColor: '#1a1a1c', border: '1px solid #2a2a2e', borderRadius: '6px', color: '#e8e4dc' }}
+                        />
+                        <Legend />
+                        <Bar 
+                          yAxisId="right"
+                          dataKey="newSellers" 
+                          fill="#10b981"
+                          opacity={0.7}
+                          radius={[4, 4, 0, 0]}
+                          name="New Sellers"
                         />
                         <Line 
+                          yAxisId="left"
                           type="monotone" 
                           dataKey="count" 
                           stroke="#8b5cf6" 
@@ -316,7 +334,7 @@ export default function AdminSellerAnalyticsPage() {
                           dot={{ fill: '#8b5cf6', strokeWidth: 2 }}
                           name="Total Sellers"
                         />
-                      </LineChart>
+                      </ComposedChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
@@ -324,28 +342,47 @@ export default function AdminSellerAnalyticsPage() {
                 {/* Sellers by Type */}
                 <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                   <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Sellers by Type</h2>
-                  <div className="h-64">
+                  <div className="h-64 flex flex-col">
                     {analytics.sellersByType.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={analytics.sellersByType}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            paddingAngle={5}
-                            dataKey="count"
-                            label={({ type, percent }) => `${type} ${(percent * 100).toFixed(0)}%`}
-                          >
-                            {analytics.sellersByType.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
+                      <>
+                        <div className="flex-1">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={analytics.sellersByType}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={50}
+                                outerRadius={70}
+                                fill="#8884d8"
+                                paddingAngle={5}
+                                dataKey="count"
+                                label={false}
+                              >
+                                {analytics.sellersByType.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <Tooltip 
+                                contentStyle={{ backgroundColor: '#1a1a1c', border: '1px solid #2a2a2e', borderRadius: '6px', color: '#e8e4dc' }}
+                                formatter={(value: number, name: string) => [`${value} sellers`, name]}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
+                          {analytics.sellersByType.map((entry, index) => (
+                            <div key={entry.type} className="flex items-center gap-1.5 text-xs">
+                              <span 
+                                className="w-2.5 h-2.5 rounded-sm" 
+                                style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                              />
+                              <span className="text-hos-text-secondary">{entry.type}</span>
+                              <span className="text-hos-text-muted">({entry.count})</span>
+                            </div>
+                          ))}
+                        </div>
+                      </>
                     ) : (
                       <div className="flex items-center justify-center h-full text-hos-text-muted">
                         No seller data available

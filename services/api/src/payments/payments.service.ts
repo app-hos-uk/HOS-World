@@ -23,6 +23,7 @@ import { RedisService } from '../cache/redis.service';
 import { IntegrationsService } from '../integrations/integrations.service';
 import { RefundsService } from '../finance/refunds.service';
 import { DEFAULT_PLATFORM_FEE_RATE } from '../common/platform-config';
+import { isTruthy } from '../common/utils/config';
 import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
@@ -518,7 +519,7 @@ export class PaymentsService {
       }
     }
 
-    if (this.loyaltyService && this.configService.get<string>('LOYALTY_ENABLED') === 'true') {
+    if (this.loyaltyService && isTruthy(this.configService.get<string>('LOYALTY_ENABLED'))) {
       try {
         const rootOrderId = order.parentOrderId || order.id;
         await this.loyaltyService.processOrderComplete(rootOrderId);

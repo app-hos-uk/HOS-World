@@ -1192,6 +1192,11 @@ model ReturnRequest {
   refundAmount   Decimal?      @db.Decimal(10, 2)
   refundMethod   String?
   notes          String?       @db.Text
+  trackingNumber String?       // Tracking number for return shipment
+  carrier        String?       // Shipping carrier (UPS, FedEx, etc.)
+  shippedAt      DateTime?     // When the customer shipped the return
+  receivedAt     DateTime?     // When the return was received
+  inspectedAt    DateTime?     // When the return was inspected
   processedAt    DateTime?
   items          ReturnItem[] // Item-level returns
   transactions   Transaction[]
