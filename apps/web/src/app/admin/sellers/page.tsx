@@ -474,7 +474,7 @@ export default function AdminSellersPage() {
                 <p className="text-xl font-bold text-red-400">{stats.inactiveSellers}</p>
               </button>
               <button
-                onClick={() => { setActiveTab('invitations'); setInvStatusFilter('PENDING'); }}
+                onClick={() => { setActiveTab('invitations'); setInvStatusFilter('PENDING'); setInvSearchTerm(''); }}
                 className={`bg-hos-bg-secondary rounded-lg shadow p-3 text-left hover:shadow-md ${activeTab === 'invitations' && invStatusFilter === 'PENDING' ? 'ring-2 ring-hos-gold/50' : ''}`}
               >
                 <p className="text-xs text-hos-text-muted">Pending Invites</p>
