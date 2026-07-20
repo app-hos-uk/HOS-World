@@ -100,6 +100,10 @@ export default function SellerOrdersPage() {
   const [trackingUrl, setTrackingUrl] = useState('');
   const [estimatedDelivery, setEstimatedDelivery] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [shippingMode, setShippingMode] = useState<'shippo' | 'manual'>('shippo');
+  const [shippingRates, setShippingRates] = useState<any[]>([]);
+  const [selectedRate, setSelectedRate] = useState<any | null>(null);
+  const [loadingRates, setLoadingRates] = useState(false);
   const [deepLinkId, setDeepLinkId] = useState<string | null>(null);
   const [cancellationRequests, setCancellationRequests] = useState<any[]>([]);
   const [orderCancellationRequest, setOrderCancellationRequest] = useState<any | null>(null);
@@ -134,6 +138,9 @@ export default function SellerOrdersPage() {
     setCustomCarrier(shipping.customCarrier);
     setTrackingUrl(shipping.trackingUrl);
     setEstimatedDelivery(shipping.estimatedDelivery);
+    setShippingRates([]);
+    setSelectedRate(null);
+    setShippingMode(shipping.trackingNumber ? 'manual' : 'shippo');
   };
 
   const menuItems = getSellerMenuItems(false);
@@ -297,6 +304,70 @@ export default function SellerOrdersPage() {
       fetchAllOrders();
     } catch (err: any) {
       toast.error(err.message || 'Failed to review cancellation');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleFetchShippingRates = async () => {
+    if (!selectedOrder) return;
+
+    try {
+      setLoadingRates(true);
+      setSelectedRate(null);
+      const response = await apiClient.getOrderShippingRates(selectedOrder.id);
+      const rates = Array.isArray(response?.data) ? response.data : [];
+      setShippingRates(rates);
+      if (rates.length === 0) {
+        toast.error('No shipping rates available. Check Shippo configuration or use manual entry.');
+      } else {
+        toast.success(`Found ${rates.length} shipping rate${rates.length === 1 ? '' : 's'}`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to fetch shipping rates');
+      setShippingRates([]);
+    } finally {
+      setLoadingRates(false);
+    }
+  };
+
+  const handleShipViaShippo = async () => {
+    if (!selectedOrder || !selectedRate) return;
+
+    try {
+      setUpdatingStatus(true);
+      const response = await apiClient.shipOrder(selectedOrder.id, {
+        provider: selectedRate.providerId || selectedRate.providerName || 'shippo',
+        serviceCode: selectedRate.serviceCode,
+      });
+      const result = response?.data;
+      if (!result?.trackingNumber) {
+        throw new Error('Shipment created but no tracking number returned');
+      }
+
+      const carrier =
+        result.metadata?.carrier ||
+        result.serviceName?.split(' ')[0] ||
+        selectedRate.metadata?.carrier ||
+        'Shippo';
+
+      toast.success('Label purchased and order shipped');
+      const updatedOrder = {
+        ...selectedOrder,
+        status: 'shipped',
+        trackingNumber: result.trackingNumber,
+        trackingCode: result.trackingNumber,
+        carrier,
+        trackingUrl: result.trackingUrl || '',
+        estimatedDelivery: result.estimatedDeliveryDate || undefined,
+        shippingCost: result.rate ?? selectedOrder.shippingCost,
+      };
+      setSelectedOrder(updatedOrder);
+      syncShippingState(updatedOrder);
+      fetchOrders(statusFilter);
+      fetchAllOrders();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to purchase shipping label');
     } finally {
       setUpdatingStatus(false);
     }
@@ -872,10 +943,16 @@ export default function SellerOrdersPage() {
                         <span className="text-hos-text-secondary">${Number(selectedOrder.subtotal).toFixed(2)}</span>
                       </div>
                     )}
-                    {(selectedOrder.shippingCost || selectedOrder.shippingAmount) ? (
+                    {(selectedOrder.shippingAmount) ? (
                       <div className="flex justify-between">
-                        <span className="text-hos-text-muted">Shipping</span>
-                        <span className="text-hos-text-secondary">${Number(selectedOrder.shippingCost || selectedOrder.shippingAmount || 0).toFixed(2)}</span>
+                        <span className="text-hos-text-muted">Shipping (customer)</span>
+                        <span className="text-hos-text-secondary">${Number(selectedOrder.shippingAmount || 0).toFixed(2)}</span>
+                      </div>
+                    ) : null}
+                    {selectedOrder.shippingCost ? (
+                      <div className="flex justify-between">
+                        <span className="text-hos-text-muted">Label cost</span>
+                        <span className="text-hos-text-secondary">${Number(selectedOrder.shippingCost).toFixed(2)}</span>
                       </div>
                     ) : null}
                     <div className="flex justify-between font-medium text-base pt-2 border-t">
@@ -891,83 +968,180 @@ export default function SellerOrdersPage() {
                   selectedOrder.trackingCode ||
                   selectedOrder.carrier) && (
                   <div className="bg-hos-gold/10 rounded-lg p-4 space-y-4">
-                    <h3 className="font-medium text-hos-text-secondary">Shipping Details</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-medium text-hos-text-muted mb-1">
-                          Carrier
-                        </label>
-                        <select
-                          value={shippingCarrier}
-                          onChange={(e) => setShippingCarrier(e.target.value)}
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
-                        >
-                          <option value="">Select carrier</option>
-                          {SHIPPING_CARRIERS.map((carrier) => (
-                            <option key={carrier} value={carrier}>
-                              {carrier}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      {shippingCarrier === 'Other' && (
-                        <div>
-                          <label className="block text-xs font-medium text-hos-text-muted mb-1">
-                            Carrier name
-                          </label>
-                          <input
-                            type="text"
-                            value={customCarrier}
-                            onChange={(e) => setCustomCarrier(e.target.value)}
-                            placeholder="Enter carrier name"
-                            className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
-                          />
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <h3 className="font-medium text-hos-text-secondary">Shipping Details</h3>
+                      {!selectedOrder.trackingNumber && !selectedOrder.trackingCode && (
+                        <div className="inline-flex rounded-lg border border-hos-border overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => setShippingMode('shippo')}
+                            className={`px-3 py-1.5 text-sm ${
+                              shippingMode === 'shippo'
+                                ? 'bg-hos-gold text-[#1a1406]'
+                                : 'bg-hos-bg-secondary text-hos-text-secondary'
+                            }`}
+                          >
+                            Ship via Shippo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShippingMode('manual')}
+                            className={`px-3 py-1.5 text-sm ${
+                              shippingMode === 'manual'
+                                ? 'bg-hos-gold text-[#1a1406]'
+                                : 'bg-hos-bg-secondary text-hos-text-secondary'
+                            }`}
+                          >
+                            Enter Tracking Manually
+                          </button>
                         </div>
                       )}
-                      <div>
-                        <label className="block text-xs font-medium text-hos-text-muted mb-1">
-                          Tracking number
-                        </label>
-                        <input
-                          type="text"
-                          value={trackingNumber}
-                          onChange={(e) => setTrackingNumber(e.target.value)}
-                          placeholder="Enter tracking number"
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-hos-text-muted mb-1">
-                          Tracking URL (optional)
-                        </label>
-                        <input
-                          type="url"
-                          value={trackingUrl}
-                          onChange={(e) => setTrackingUrl(e.target.value)}
-                          placeholder="https://carrier.com/track/..."
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-hos-text-muted mb-1">
-                          Estimated delivery (optional)
-                        </label>
-                        <input
-                          type="date"
-                          value={estimatedDelivery}
-                          onChange={(e) => setEstimatedDelivery(e.target.value)}
-                          className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
-                        />
-                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleSaveShippingDetails}
-                      disabled={updatingStatus}
-                      className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm"
-                    >
-                      Save shipping details
-                    </button>
+
+                    {shippingMode === 'shippo' &&
+                    !selectedOrder.trackingNumber &&
+                    !selectedOrder.trackingCode ? (
+                      <div className="space-y-4">
+                        <p className="text-sm text-hos-text-muted">
+                          Fetch live carrier rates, purchase a label, and mark the order as shipped automatically.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleFetchShippingRates}
+                          disabled={loadingRates || updatingStatus || selectedOrder.status !== 'fulfilled'}
+                          className="px-4 py-2 bg-hos-bg-secondary border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50 text-sm"
+                        >
+                          {loadingRates ? 'Fetching rates...' : 'Get Rates'}
+                        </button>
+                        {selectedOrder.status !== 'fulfilled' && (
+                          <p className="text-xs text-orange-300">
+                            Order must be marked as Fulfilled before purchasing a Shippo label.
+                          </p>
+                        )}
+                        {shippingRates.length > 0 && (
+                          <div className="space-y-2">
+                            {shippingRates.map((rate) => {
+                              const isSelected = selectedRate?.serviceCode === rate.serviceCode;
+                              const carrierName =
+                                rate.metadata?.carrier || rate.serviceName?.split(' ')[0] || rate.providerName;
+                              return (
+                                <button
+                                  key={`${rate.providerId}-${rate.serviceCode}`}
+                                  type="button"
+                                  onClick={() => setSelectedRate(rate)}
+                                  className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                                    isSelected
+                                      ? 'border-hos-gold bg-hos-gold/20'
+                                      : 'border-hos-border bg-hos-bg-secondary hover:border-hos-gold/50'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div>
+                                      <p className="font-medium text-hos-text-secondary">
+                                        {carrierName} — {rate.serviceName}
+                                      </p>
+                                      <p className="text-xs text-hos-text-muted mt-1">
+                                        Est. {rate.estimatedDays} day{rate.estimatedDays === 1 ? '' : 's'}
+                                      </p>
+                                    </div>
+                                    <p className="font-semibold text-hos-gold">
+                                      {formatPrice(Number(rate.rate || 0), rate.currency || 'USD')}
+                                    </p>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleShipViaShippo}
+                          disabled={updatingStatus || !selectedRate || selectedOrder.status !== 'fulfilled'}
+                          className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm"
+                        >
+                          Buy Label & Ship
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-medium text-hos-text-muted mb-1">
+                              Carrier
+                            </label>
+                            <select
+                              value={shippingCarrier}
+                              onChange={(e) => setShippingCarrier(e.target.value)}
+                              className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
+                            >
+                              <option value="">Select carrier</option>
+                              {SHIPPING_CARRIERS.map((carrier) => (
+                                <option key={carrier} value={carrier}>
+                                  {carrier}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          {shippingCarrier === 'Other' && (
+                            <div>
+                              <label className="block text-xs font-medium text-hos-text-muted mb-1">
+                                Carrier name
+                              </label>
+                              <input
+                                type="text"
+                                value={customCarrier}
+                                onChange={(e) => setCustomCarrier(e.target.value)}
+                                placeholder="Enter carrier name"
+                                className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
+                              />
+                            </div>
+                          )}
+                          <div>
+                            <label className="block text-xs font-medium text-hos-text-muted mb-1">
+                              Tracking number
+                            </label>
+                            <input
+                              type="text"
+                              value={trackingNumber}
+                              onChange={(e) => setTrackingNumber(e.target.value)}
+                              placeholder="Enter tracking number"
+                              className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-hos-text-muted mb-1">
+                              Tracking URL (optional)
+                            </label>
+                            <input
+                              type="url"
+                              value={trackingUrl}
+                              onChange={(e) => setTrackingUrl(e.target.value)}
+                              placeholder="https://carrier.com/track/..."
+                              className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-hos-text-muted mb-1">
+                              Estimated delivery (optional)
+                            </label>
+                            <input
+                              type="date"
+                              value={estimatedDelivery}
+                              onChange={(e) => setEstimatedDelivery(e.target.value)}
+                              className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleSaveShippingDetails}
+                          disabled={updatingStatus}
+                          className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm"
+                        >
+                          Save shipping details
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

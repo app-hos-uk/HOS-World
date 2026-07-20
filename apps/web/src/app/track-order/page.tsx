@@ -17,6 +17,15 @@ interface TrackingEvent {
   description: string;
 }
 
+interface LiveTrackingEvent {
+  timestamp: string | Date;
+  statusDescription: string;
+  location?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+}
+
 interface Order {
   id: string;
   orderNumber?: string;
@@ -65,6 +74,7 @@ function TrackOrderContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
+  const [liveTrackingEvents, setLiveTrackingEvents] = useState<LiveTrackingEvent[]>([]);
 
   useEffect(() => {
     const urlOrderNumber = searchParams.get('orderNumber');
@@ -85,6 +95,7 @@ function TrackOrderContent() {
     setLoading(true);
     setError(null);
     setSearched(true);
+    setLiveTrackingEvents([]);
 
     try {
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
@@ -129,6 +140,18 @@ function TrackOrderContent() {
             product: { name: it.productName || 'Item' },
           })),
         });
+
+        if (raw.trackingCode) {
+          try {
+            const trackingRes = await apiClient.getPublicLiveTracking(numberToSearch);
+            const events = Array.isArray(trackingRes?.data?.events) ? trackingRes.data.events : [];
+            if (events.length > 0) {
+              setLiveTrackingEvents(events);
+            }
+          } catch {
+            // Fall back to synthetic timeline
+          }
+        }
       } else {
         setError('Order not found. Please check the order number and try again.');
       }
@@ -150,17 +173,15 @@ function TrackOrderContent() {
 
   const currentStatusIndex = order ? getStatusIndex(order.status) : 0;
 
-  const generateTrackingEvents = (order: Order): TrackingEvent[] => {
+  const generateTrackingEvents = (trackedOrder: Order): TrackingEvent[] => {
     const events: TrackingEvent[] = [];
-    const statusIndex = getStatusIndex(order.status);
-    const createdDate = new Date(order.createdAt);
+    const statusIndex = getStatusIndex(trackedOrder.status);
+    const createdDate = new Date(trackedOrder.createdAt);
 
-    // Generate events based on current status
     for (let i = 0; i <= statusIndex && i < ORDER_STATUSES.length; i++) {
       const eventDate = new Date(createdDate);
-      eventDate.setHours(eventDate.getHours() + i * 12); // Add 12 hours per stage
+      eventDate.setHours(eventDate.getHours() + i * 12);
 
-      // Determine location based on the status key
       const statusKey = ORDER_STATUSES[i].key;
       let location: string | undefined;
       if (statusKey === 'FULFILLED') {
@@ -177,8 +198,23 @@ function TrackOrderContent() {
       });
     }
 
-    return events.reverse(); // Most recent first
+    return events.reverse();
   };
+
+  const formatLiveEventLocation = (event: LiveTrackingEvent) => {
+    const parts = [event.location, event.city, event.state, event.country].filter(Boolean);
+    return parts.join(', ');
+  };
+
+  const timelineEvents = order
+    ? liveTrackingEvents.length > 0
+      ? liveTrackingEvents.map((event) => ({
+          date: String(event.timestamp),
+          description: event.statusDescription,
+          location: formatLiveEventLocation(event) || undefined,
+        }))
+      : generateTrackingEvents(order)
+    : [];
 
   return (
     <div className="min-h-screen bg-hos-bg-secondary">
@@ -367,15 +403,17 @@ function TrackOrderContent() {
 
             {/* Timeline */}
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-              <h3 className="font-semibold text-hos-text-secondary mb-4">Tracking History</h3>
+              <h3 className="font-semibold text-hos-text-secondary mb-4">
+                {liveTrackingEvents.length > 0 ? 'Live Tracking History' : 'Tracking History'}
+              </h3>
               <div className="space-y-4">
-                {generateTrackingEvents(order).map((event, index) => (
+                {timelineEvents.map((event, index) => (
                   <div key={index} className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <div className={`w-3 h-3 rounded-full ${
                         index === 0 ? 'bg-hos-gold' : 'bg-hos-bg-tertiary'
                       }`} />
-                      {index < generateTrackingEvents(order).length - 1 && (
+                      {index < timelineEvents.length - 1 && (
                         <div className="w-0.5 h-full bg-hos-bg-tertiary mt-1" />
                       )}
                     </div>

@@ -17,6 +17,8 @@ import {
   ShipmentResponse,
 } from '../shipping/courier/interfaces/courier-provider.interface';
 import { NotificationsService } from '../notifications/notifications.service';
+import { TransactionsService } from '../finance/transactions.service';
+import { VendorLedgerService } from '../vendor-ledger/vendor-ledger.service';
 
 const DEFAULT_PACKAGE: PackageDimensions = {
   length: 30,
@@ -34,6 +36,8 @@ export class OrderShippingService {
     private readonly courierFactory: CourierFactoryService,
     private readonly configService: ConfigService,
     private readonly encryptionService: EncryptionService,
+    private readonly transactionsService: TransactionsService,
+    private readonly vendorLedgerService: VendorLedgerService,
     @Optional() @Inject(NotificationsService) private readonly notificationsService?: NotificationsService,
   ) {}
 
@@ -100,9 +104,59 @@ export class OrderShippingService {
         carrier,
         trackingUrl: response.trackingUrl || null,
         estimatedDeliveryAt: response.estimatedDeliveryDate || null,
+        shippingCost: response.rate ?? null,
+        shippingLabelUrl: response.labels?.[0]?.url || null,
         status: 'SHIPPED',
       },
     });
+
+    if (response.rate && response.rate > 0) {
+      try {
+        await this.transactionsService.createTransaction({
+          type: 'FEE',
+          amount: response.rate,
+          currency: response.currency || order.currency || 'USD',
+          orderId: order.id,
+          sellerId: order.sellerId || undefined,
+          description: `Shipping label cost via ${providerName} (${response.serviceName})`,
+          status: 'COMPLETED',
+          metadata: {
+            shipmentId: response.shipmentId,
+            trackingNumber: response.trackingNumber,
+            carrier,
+            serviceCode: response.serviceCode,
+            provider: providerName,
+          },
+        });
+      } catch (error) {
+        this.logger.warn(
+          `Failed to record shipping cost transaction for order ${order.id}: ${(error as Error).message}`,
+        );
+      }
+
+      if (order.sellerId) {
+        try {
+          await this.vendorLedgerService.recordShippingCost({
+            sellerId: order.sellerId,
+            orderId: order.id,
+            amount: response.rate,
+            currency: response.currency || order.currency || 'USD',
+            description: `Shipping label cost via ${providerName} (${response.serviceName})`,
+            metadata: {
+              shipmentId: response.shipmentId,
+              trackingNumber: response.trackingNumber,
+              carrier,
+              serviceCode: response.serviceCode,
+              provider: providerName,
+            },
+          });
+        } catch (error) {
+          this.logger.warn(
+            `Failed to record vendor shipping cost for order ${order.id}: ${(error as Error).message}`,
+          );
+        }
+      }
+    }
 
     this.notificationsService
       ?.sendOrderShipped(order.id, response.trackingNumber, carrier)
@@ -127,16 +181,37 @@ export class OrderShippingService {
       throw new NotFoundException('Order has no tracking number');
     }
 
+    return this.trackByTrackingCode(order.trackingCode, order.carrier);
+  }
+
+  async trackOrderShipmentByOrderNumber(orderNumber: string) {
+    const order = await this.prisma.order.findFirst({
+      where: { orderNumber: orderNumber.trim() },
+      select: { id: true, trackingCode: true, carrier: true },
+    });
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (!order.trackingCode) {
+      throw new NotFoundException('Order has no tracking number');
+    }
+
+    return this.trackByTrackingCode(order.trackingCode, order.carrier);
+  }
+
+  private async trackByTrackingCode(trackingCode: string, carrier?: string | null) {
     const shippoProvider = this.courierFactory.getProvider('shippo');
     if (shippoProvider) {
       return this.courierFactory.trackShipment(
-        order.trackingCode,
+        trackingCode,
         'shippo',
-        this.normalizeCarrier(order.carrier),
+        this.normalizeCarrier(carrier),
       );
     }
 
-    return this.courierFactory.trackShipment(order.trackingCode);
+    return this.courierFactory.trackShipment(trackingCode);
   }
 
   private normalizeCarrier(carrier?: string | null): string | undefined {

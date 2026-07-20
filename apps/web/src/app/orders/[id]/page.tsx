@@ -34,6 +34,15 @@ interface OrderNote {
   createdBy: string;
 }
 
+interface LiveTrackingEvent {
+  timestamp: string | Date;
+  statusDescription: string;
+  location?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+}
+
 interface Order {
   id: string;
   orderNumber?: string;
@@ -90,6 +99,9 @@ export default function OrderDetailPage() {
   const [cancelReason, setCancelReason] = useState('');
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [liveTrackingEvents, setLiveTrackingEvents] = useState<LiveTrackingEvent[]>([]);
+  const [liveTrackingStatus, setLiveTrackingStatus] = useState<string | null>(null);
+  const [loadingLiveTracking, setLoadingLiveTracking] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -102,9 +114,14 @@ export default function OrderDetailPage() {
     try {
       setLoading(true);
       setError(null);
+      setLiveTrackingEvents([]);
+      setLiveTrackingStatus(null);
       const response = await apiClient.getOrder(orderId);
       if (response?.data) {
         setOrder(response.data);
+        if (response.data.trackingNumber || response.data.trackingCode) {
+          fetchLiveTracking(orderId);
+        }
         try {
           const cancellationRes = await apiClient.getCancellationRequestByOrder(orderId);
           setCancellationRequest(cancellationRes?.data || null);
@@ -121,6 +138,26 @@ export default function OrderDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchLiveTracking = async (id: string) => {
+    try {
+      setLoadingLiveTracking(true);
+      const response = await apiClient.getOrderShipmentTracking(id);
+      const events = Array.isArray(response?.data?.events) ? response.data.events : [];
+      setLiveTrackingEvents(events);
+      setLiveTrackingStatus(response?.data?.statusDescription || response?.data?.status || null);
+    } catch {
+      setLiveTrackingEvents([]);
+      setLiveTrackingStatus(null);
+    } finally {
+      setLoadingLiveTracking(false);
+    }
+  };
+
+  const formatLiveEventLocation = (event: LiveTrackingEvent) => {
+    const parts = [event.location, event.city, event.state, event.country].filter(Boolean);
+    return parts.join(', ');
   };
 
   const getStatusColor = (status: string) => {
@@ -430,6 +467,49 @@ export default function OrderDetailPage() {
                       Track Order
                     </Link>
                   </div>
+                </div>
+              )}
+
+              {(order.trackingNumber || order.trackingCode) && (
+                <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
+                  <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Live Tracking</h2>
+                  {loadingLiveTracking ? (
+                    <div className="flex items-center gap-2 text-sm text-hos-text-muted">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-hos-gold" />
+                      Loading carrier tracking events...
+                    </div>
+                  ) : liveTrackingEvents.length > 0 ? (
+                    <div className="space-y-4">
+                      {liveTrackingStatus && (
+                        <p className="text-sm text-hos-text-secondary">
+                          Current status: <span className="font-medium text-hos-gold">{liveTrackingStatus}</span>
+                        </p>
+                      )}
+                      {liveTrackingEvents.map((event, index) => (
+                        <div key={`${event.timestamp}-${index}`} className="flex gap-4">
+                          <div className="flex flex-col items-center">
+                            <div className={`w-3 h-3 rounded-full ${
+                              index === 0 ? 'bg-hos-gold' : 'bg-hos-bg-tertiary'
+                            }`} />
+                            {index < liveTrackingEvents.length - 1 && (
+                              <div className="w-0.5 h-full bg-hos-bg-tertiary mt-1" />
+                            )}
+                          </div>
+                          <div className="pb-2">
+                            <p className="font-medium text-hos-text-secondary">{event.statusDescription}</p>
+                            <p className="text-sm text-hos-text-muted">
+                              {new Date(event.timestamp).toLocaleString()}
+                              {formatLiveEventLocation(event) && ` • ${formatLiveEventLocation(event)}`}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-hos-text-muted">
+                      Live carrier events are not available yet. Use the tracking link above for the latest updates.
+                    </p>
+                  )}
                 </div>
               )}
 

@@ -1738,6 +1738,12 @@ export class ApiClient {
     return this.request<ApiResponse<Order>>(`/orders/track/${encodeURIComponent(orderNumber)}`);
   }
 
+  async getPublicLiveTracking(orderNumber: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(
+      `/orders/track/${encodeURIComponent(orderNumber)}/live-tracking`,
+    );
+  }
+
   async updateOrderStatus(
     id: string,
     status: string,

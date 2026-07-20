@@ -120,6 +120,58 @@ export class VendorLedgerService {
     );
   }
 
+  async recordShippingCost(params: {
+    sellerId: string;
+    orderId: string;
+    amount: number;
+    currency?: string;
+    description?: string;
+    metadata?: Record<string, unknown>;
+  }) {
+    const { sellerId, orderId, amount, currency = 'USD', description, metadata } = params;
+
+    if (amount <= 0) {
+      throw new BadRequestException('Shipping cost amount must be greater than zero');
+    }
+
+    return this.prisma.$transaction(
+      async (tx) => {
+        const lastEntry = await tx.vendorLedgerEntry.findFirst({
+          where: { sellerId },
+          orderBy: { createdAt: 'desc' },
+        });
+        const currentBalance = lastEntry ? Number(lastEntry.balance) : 0;
+        const newBalance = +(currentBalance - amount).toFixed(2);
+
+        if (newBalance < 0) {
+          this.logger.warn(
+            `Vendor ledger for seller ${sellerId} would go negative (${newBalance}) on shipping cost for order ${orderId}. Capping at 0.`,
+          );
+        }
+        const clampedBalance = Math.max(newBalance, 0);
+        const effectiveDebit = +(currentBalance - clampedBalance).toFixed(2);
+
+        return tx.vendorLedgerEntry.create({
+          data: {
+            sellerId,
+            orderId,
+            type: 'COMMISSION',
+            amount: -effectiveDebit,
+            currency,
+            balance: clampedBalance,
+            description: description || 'Shipping label cost',
+            metadata: {
+              ...metadata,
+              shippingCost: amount,
+              balanceCapped: newBalance < 0,
+            },
+          },
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
+  }
+
   async recordPayout(
     params: {
       sellerId: string;

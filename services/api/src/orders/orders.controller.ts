@@ -116,6 +116,27 @@ export class OrdersController {
     };
   }
 
+  @Public()
+  @Get('track/:orderNumber/live-tracking')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({
+    summary: 'Live carrier tracking by order number (public)',
+    description:
+      'Returns live carrier tracking events for a shipped order. No PII is exposed.',
+  })
+  @ApiParam({ name: 'orderNumber', description: 'Human-readable order number', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Live tracking retrieved successfully' })
+  @SwaggerApiResponse({ status: 404, description: 'Order not found or no tracking number' })
+  async getPublicLiveTracking(
+    @Param('orderNumber') orderNumber: string,
+  ): Promise<ApiResponse<any>> {
+    const tracking = await this.orderShippingService.trackOrderShipmentByOrderNumber(orderNumber);
+    return {
+      data: tracking,
+      message: 'Live shipment tracking retrieved successfully',
+    };
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Get order by ID',
