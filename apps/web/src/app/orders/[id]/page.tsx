@@ -118,8 +118,9 @@ export default function OrderDetailPage() {
       setLiveTrackingStatus(null);
       const response = await apiClient.getOrder(orderId);
       if (response?.data) {
-        setOrder(response.data);
-        if (response.data.trackingNumber || response.data.trackingCode) {
+        const orderData = response.data as Order;
+        setOrder(orderData);
+        if (orderData.trackingNumber || orderData.trackingCode) {
           fetchLiveTracking(orderId);
         }
         try {
