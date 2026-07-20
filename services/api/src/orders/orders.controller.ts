@@ -23,9 +23,11 @@ import {
 } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { CancellationsService } from '../cancellations/cancellations.service';
+import { OrderShippingService } from './order-shipping.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { AddOrderNoteDto } from './dto/add-order-note.dto';
+import { ShipOrderDto, GetOrderShippingRatesDto } from './dto/ship-order.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -40,6 +42,7 @@ export class OrdersController {
   constructor(
     private readonly ordersService: OrdersService,
     private readonly cancellationsService: CancellationsService,
+    private readonly orderShippingService: OrderShippingService,
   ) {}
 
   @Post()
@@ -301,6 +304,74 @@ export class OrdersController {
     return {
       data: result,
       message,
+    };
+  }
+
+  @Get(':id/shipping-rates')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @ApiOperation({
+    summary: 'Get carrier shipping rates for an order',
+    description: 'Returns live carrier rates (Shippo or other configured providers) for the order shipment.',
+  })
+  @ApiParam({ name: 'id', description: 'Order UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Shipping rates retrieved successfully' })
+  async getShippingRates(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: GetOrderShippingRatesDto,
+  ): Promise<ApiResponse<any>> {
+    await this.ordersService.findOne(id, req.user.id, req.user.role);
+    const rates = await this.orderShippingService.getOrderShippingRates(id, query.provider);
+    return {
+      data: rates,
+      message: 'Shipping rates retrieved successfully',
+    };
+  }
+
+  @Post(':id/ship')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Purchase shipping label and ship order',
+    description:
+      'Creates a carrier shipment via Shippo (or configured provider), stores tracking details, and marks the order as shipped.',
+  })
+  @ApiParam({ name: 'id', description: 'Order UUID', type: String })
+  @ApiBody({ type: ShipOrderDto })
+  @SwaggerApiResponse({ status: 200, description: 'Order shipped successfully' })
+  async shipOrder(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() shipOrderDto: ShipOrderDto,
+  ): Promise<ApiResponse<any>> {
+    await this.ordersService.findOne(id, req.user.id, req.user.role);
+    const result = await this.orderShippingService.shipOrder(id, shipOrderDto);
+    return {
+      data: result,
+      message: 'Order shipped successfully',
+    };
+  }
+
+  @Get(':id/shipment-tracking')
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CUSTOMER')
+  @ApiOperation({
+    summary: 'Track order shipment',
+    description: 'Returns live carrier tracking events for the order tracking number.',
+  })
+  @ApiParam({ name: 'id', description: 'Order UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Shipment tracking retrieved successfully' })
+  async getShipmentTracking(
+    @Request() req: any,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiResponse<any>> {
+    await this.ordersService.findOne(id, req.user.id, req.user.role);
+    const tracking = await this.orderShippingService.trackOrderShipment(id);
+    return {
+      data: tracking,
+      message: 'Shipment tracking retrieved successfully',
     };
   }
 }

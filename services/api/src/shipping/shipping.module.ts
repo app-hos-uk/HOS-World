@@ -8,6 +8,6 @@ import { CourierModule } from './courier/courier.module';
   imports: [DatabaseModule, forwardRef(() => CourierModule)],
   controllers: [ShippingController],
   providers: [ShippingService],
-  exports: [ShippingService],
+  exports: [ShippingService, CourierModule],
 })
 export class ShippingModule {}

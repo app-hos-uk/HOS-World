@@ -39,6 +39,7 @@ export enum IntegrationProvider {
   FEDEX = 'fedex',
   DHL = 'dhl',
   UPS = 'ups',
+  SHIPPO = 'shippo',
 
   // Tax
   AVALARA = 'avalara',

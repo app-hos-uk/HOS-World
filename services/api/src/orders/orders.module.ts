@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { OrdersSchedulerService } from './orders-scheduler.service';
+import { OrderShippingService } from './order-shipping.service';
 import { TaxModule } from '../tax/tax.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { CartModule } from '../cart/cart.module';
@@ -35,7 +36,7 @@ import { CancellationsModule } from '../cancellations/cancellations.module';
     forwardRef(() => CancellationsModule),
   ],
   controllers: [OrdersController],
-  providers: [OrdersService, OrdersSchedulerService],
-  exports: [OrdersService],
+  providers: [OrdersService, OrdersSchedulerService, OrderShippingService],
+  exports: [OrdersService, OrderShippingService],
 })
 export class OrdersModule {}

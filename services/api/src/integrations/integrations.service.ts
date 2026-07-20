@@ -52,6 +52,22 @@ const PROVIDER_METADATA: Record<string, ProviderMetadata> = {
     optionalCredentials: ['siteId', 'password'],
     documentationUrl: 'https://developer.dhl.com/',
   },
+  shippo: {
+    displayName: 'Shippo',
+    description: 'Multi-carrier shipping platform for rates, labels, and tracking',
+    requiredCredentials: ['apiToken'],
+    optionalCredentials: [
+      'fromName',
+      'fromStreet',
+      'fromCity',
+      'fromState',
+      'fromPostalCode',
+      'fromCountry',
+      'fromPhone',
+      'fromEmail',
+    ],
+    documentationUrl: 'https://docs.goshippo.com/',
+  },
   // Tax
   avalara: {
     displayName: 'Avalara AvaTax',
@@ -415,7 +431,7 @@ export class IntegrationsService {
    */
   getAvailableProviders(category: string): Array<{ provider: string; metadata: ProviderMetadata }> {
     const categoryProviders: Record<string, string[]> = {
-      [IntegrationCategory.SHIPPING]: ['usps', 'fedex', 'dhl'],
+      [IntegrationCategory.SHIPPING]: ['usps', 'fedex', 'dhl', 'shippo'],
       [IntegrationCategory.TAX]: ['avalara', 'taxjar', 'stripe_tax'],
       [IntegrationCategory.PAYMENT]: ['stripe'],
       [IntegrationCategory.EMAIL]: ['sendgrid'],
@@ -575,6 +591,8 @@ export class IntegrationsService {
         return this.testStripeConnection(credentials, isTestMode);
       case 'sendgrid':
         return this.testSendGridConnection(credentials, isTestMode);
+      case 'shippo':
+        return this.testShippoConnection(credentials, isTestMode);
       default:
         return {
           success: true,
@@ -612,6 +630,25 @@ export class IntegrationsService {
       success: true,
       message: `DHL ${isTestMode ? 'sandbox' : 'production'} connection verified (placeholder)`,
       details: { environment: isTestMode ? 'sandbox' : 'production' },
+    };
+  }
+
+  private async testShippoConnection(
+    credentials: Record<string, any>,
+    isTestMode: boolean,
+  ): Promise<TestConnectionResultDto> {
+    if (!credentials.apiToken?.trim()) {
+      return { success: false, message: 'Missing Shippo API token' };
+    }
+
+    const { ShippoProvider } = await import('../shipping/courier/providers/shippo.provider');
+    const provider = new ShippoProvider(credentials, isTestMode);
+    const result = await provider.testConnection();
+    return {
+      success: result.success,
+      message: result.message,
+      details: result.details,
+      duration: result.duration,
     };
   }
 

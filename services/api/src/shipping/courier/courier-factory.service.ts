@@ -14,6 +14,7 @@ import {
 import { FedExProvider } from './providers/fedex.provider';
 import { DHLProvider } from './providers/dhl.provider';
 import { USPSProvider } from './providers/usps.provider';
+import { ShippoProvider } from './providers/shippo.provider';
 
 /**
  * CourierFactory - Dynamically loads and manages courier providers
@@ -103,6 +104,8 @@ export class CourierFactoryService implements OnModuleInit {
         return new DHLProvider(credentials, isTestMode);
       case 'usps':
         return new USPSProvider(credentials, isTestMode);
+      case 'shippo':
+        return new ShippoProvider(credentials, isTestMode);
       default:
         this.logger.warn(`Unknown provider type: ${providerType}`);
         return null;
@@ -249,11 +252,18 @@ export class CourierFactoryService implements OnModuleInit {
   /**
    * Track a shipment - auto-detects provider if not specified
    */
-  async trackShipment(trackingNumber: string, providerName?: string): Promise<TrackingResponse> {
+  async trackShipment(
+    trackingNumber: string,
+    providerName?: string,
+    carrier?: string,
+  ): Promise<TrackingResponse> {
     if (providerName) {
       const provider = this.getProvider(providerName);
       if (!provider) {
         throw new Error(`Provider ${providerName} not found or not active`);
+      }
+      if (carrier && provider.providerId === 'shippo') {
+        return (provider as ShippoProvider).trackShipment(trackingNumber, carrier);
       }
       return provider.trackShipment(trackingNumber);
     }
@@ -407,7 +417,7 @@ export class CourierFactoryService implements OnModuleInit {
 
   private isValidTrackingNumber(trackingNumber: string): boolean {
     if (!trackingNumber || trackingNumber.trim().length < 6) return false;
-    return /^[A-Za-z0-9]{6,40}$/.test(trackingNumber.trim());
+    return /^[A-Za-z0-9\-_.]{6,60}$/.test(trackingNumber.trim());
   }
 
   /**

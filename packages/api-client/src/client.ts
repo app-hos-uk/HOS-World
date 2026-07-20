@@ -1768,6 +1768,82 @@ export class ApiClient {
     });
   }
 
+  async getOrderShippingRates(
+    orderId: string,
+    provider?: string,
+  ): Promise<ApiResponse<any[]>> {
+    const query = provider ? `?provider=${encodeURIComponent(provider)}` : '';
+    return this.request<ApiResponse<any[]>>(`/orders/${orderId}/shipping-rates${query}`);
+  }
+
+  async shipOrder(
+    orderId: string,
+    data?: {
+      provider?: string;
+      serviceCode?: string;
+      fromAddressId?: string;
+    },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/orders/${orderId}/ship`, {
+      method: 'POST',
+      body: JSON.stringify(data || {}),
+    });
+  }
+
+  async getOrderShipmentTracking(orderId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/orders/${orderId}/shipment-tracking`);
+  }
+
+  async getCourierProviders(): Promise<ApiResponse<string[]>> {
+    return this.request<ApiResponse<string[]>>('/shipping/courier/providers');
+  }
+
+  async calculateCourierRate(
+    provider: string,
+    request: {
+      weight: number;
+      dimensions: { length: number; width: number; height: number };
+      from: Record<string, string>;
+      to: Record<string, string>;
+      service?: string;
+    },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/shipping/courier/rate/${encodeURIComponent(provider)}`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async createCourierLabel(
+    provider: string,
+    request: {
+      orderId: string;
+      shipment: {
+        from: Record<string, any>;
+        to: Record<string, any>;
+        weight: number;
+        dimensions: { length: number; width: number; height: number };
+        service: string;
+      };
+    },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/shipping/courier/label/${encodeURIComponent(provider)}`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async trackCourierShipment(
+    provider: string,
+    trackingNumber: string,
+    carrier?: string,
+  ): Promise<ApiResponse<any>> {
+    const query = carrier ? `?carrier=${encodeURIComponent(carrier)}` : '';
+    return this.request<ApiResponse<any>>(
+      `/shipping/courier/track/${encodeURIComponent(provider)}/${encodeURIComponent(trackingNumber)}${query}`,
+    );
+  }
+
   async requestCancellation(data: { orderId: string; reason?: string }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/cancellations/request', {
       method: 'POST',

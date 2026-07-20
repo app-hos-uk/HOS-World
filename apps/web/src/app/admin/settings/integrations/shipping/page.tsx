@@ -56,6 +56,22 @@ const SHIPPING_PROVIDERS: Record<string, ProviderMetadata> = {
     optionalCredentials: ['siteId', 'password'],
     documentationUrl: 'https://developer.dhl.com/',
   },
+  shippo: {
+    displayName: 'Shippo',
+    description: 'Multi-carrier shipping for live rates, label purchase, and tracking (USPS, UPS, FedEx, DHL, and more)',
+    requiredCredentials: ['apiToken'],
+    optionalCredentials: [
+      'fromName',
+      'fromStreet',
+      'fromCity',
+      'fromState',
+      'fromPostalCode',
+      'fromCountry',
+      'fromPhone',
+      'fromEmail',
+    ],
+    documentationUrl: 'https://docs.goshippo.com/',
+  },
 };
 
 export default function ShippingIntegrationsPage() {
