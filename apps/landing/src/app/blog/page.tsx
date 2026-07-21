@@ -9,6 +9,7 @@ import {
   getBanners,
   getStrapiMediaUrl,
 } from '@/lib/strapi';
+import { sanitizeCmsHtml } from '@/lib/sanitizeHtml';
 
 export const revalidate = 60;
 
@@ -174,7 +175,7 @@ function BannerContent({
         {banner.attributes.content && (
           <div
             className="blog-banner-text"
-            dangerouslySetInnerHTML={{ __html: banner.attributes.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(banner.attributes.content) }}
           />
         )}
       </div>

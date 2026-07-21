@@ -106,6 +106,18 @@ export class StorageService {
     }
   }
 
+  private validateFileContent(buffer: Buffer): boolean {
+    if (!buffer || buffer.length < 12) return false;
+    if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return true;
+    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return true;
+    if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) return true;
+    if (
+      buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+      buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50
+    ) return true;
+    return false;
+  }
+
   async uploadFile(
     file: Express.Multer.File,
     folder: string = 'uploads',
@@ -113,6 +125,17 @@ export class StorageService {
   ): Promise<UploadResult> {
     if (!file) {
       throw new BadRequestException('No file provided');
+    }
+
+    if (file.buffer) {
+      if (file.mimetype === 'application/pdf') {
+        const header = file.buffer.subarray(0, 5).toString('ascii');
+        if (!header.startsWith('%PDF')) {
+          throw new BadRequestException('File content does not match declared type. Invalid PDF.');
+        }
+      } else if (file.mimetype?.startsWith('image/') && !this.validateFileContent(file.buffer)) {
+        throw new BadRequestException('File content does not match declared type. Invalid or unsupported image.');
+      }
     }
 
     const safeFolder = sanitizeUploadFolder(folder);

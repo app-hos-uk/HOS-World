@@ -1,7 +1,10 @@
 -- Update super admin user credentials
+-- IMPORTANT: Generate a fresh bcrypt hash before running:
+--   node -e "require('bcrypt').hash(process.env.SEED_ADMIN_PASSWORD, 12).then(h => console.log(h))"
+-- Replace <GENERATED_BCRYPT_HASH> with the output.
 UPDATE users
 SET 
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '<GENERATED_BCRYPT_HASH>',
   role = 'ADMIN',
   "firstName" = 'Super',
   "lastName" = 'Admin',

@@ -20,11 +20,17 @@ COPY services/strapi/ ./
 ENV NODE_ENV=production
 RUN npm run build
 
+# Create non-root user
+RUN addgroup -S strapi && adduser -S strapi -G strapi
+RUN chown -R strapi:strapi /app
+
+USER strapi
+
 # Expose port
 EXPOSE 1337
 
 # Copy schema script
-COPY services/strapi/scripts ./scripts
+COPY --chown=strapi:strapi services/strapi/scripts ./scripts
 
 # Start: create schema then launch Strapi
 CMD ["sh", "-c", "node scripts/ensure-schema.js && npm run start"]

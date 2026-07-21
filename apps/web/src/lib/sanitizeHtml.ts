@@ -70,3 +70,26 @@ export function sanitizeBlogHtml(html: string): string {
     allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
   });
 }
+
+const SVG_TAGS = [
+  'svg', 'path', 'circle', 'rect', 'line', 'polyline', 'polygon',
+  'ellipse', 'g', 'defs', 'use', 'text', 'tspan', 'clipPath', 'mask',
+  'linearGradient', 'radialGradient', 'stop', 'title', 'desc',
+];
+
+const SVG_ATTRS = [
+  'viewBox', 'xmlns', 'fill', 'stroke', 'stroke-width', 'stroke-linecap',
+  'stroke-linejoin', 'd', 'cx', 'cy', 'r', 'rx', 'ry', 'x', 'y',
+  'x1', 'y1', 'x2', 'y2', 'width', 'height', 'points', 'transform',
+  'opacity', 'clip-path', 'mask', 'id', 'class', 'offset', 'stop-color',
+  'stop-opacity', 'gradientUnits', 'gradientTransform',
+];
+
+export function sanitizeSvgHtml(svg: string): string {
+  return sanitizeHtmlLib(svg, {
+    allowedTags: SVG_TAGS,
+    allowedAttributes: { '*': SVG_ATTRS },
+    allowedSchemes: [],
+    parser: { lowerCaseAttributeNames: false },
+  });
+}

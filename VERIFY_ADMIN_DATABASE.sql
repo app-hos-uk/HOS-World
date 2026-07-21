@@ -35,11 +35,12 @@ SELECT
 FROM users 
 WHERE email = 'app@houseofspells.co.uk';
 
--- If hash is wrong, run this UPDATE:
+-- If hash is wrong, generate a fresh one and run this UPDATE:
+-- node -e "require('bcrypt').hash(process.env.SEED_ADMIN_PASSWORD, 12).then(h => console.log(h))"
 /*
 UPDATE users
 SET 
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '<GENERATED_BCRYPT_HASH>',
   role = 'ADMIN',
   "firstName" = 'Super',
   "lastName" = 'Admin',

@@ -1,13 +1,14 @@
 -- SQL script to create team role users
--- Password for all: Test123!
--- Password hash: $2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy
+-- IMPORTANT: Generate a fresh bcrypt hash from your TEST_SEED_PASSWORD before running:
+--   node -e "require('bcrypt').hash(process.env.TEST_SEED_PASSWORD, 12).then(h => console.log(h))"
+-- Replace <BCRYPT_HASH> below with the generated hash.
 
 -- Create ADMIN user
 INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdAt", "updatedAt")
 VALUES (
   gen_random_uuid(),
   'admin@hos.test',
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  '<BCRYPT_HASH>',
   'Admin',
   'User',
   'ADMIN',
@@ -16,7 +17,7 @@ VALUES (
 )
 ON CONFLICT (email) DO UPDATE SET 
   role = 'ADMIN',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '<BCRYPT_HASH>',
   "updatedAt" = NOW();
 
 -- Create PROCUREMENT user
@@ -24,7 +25,7 @@ INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdA
 VALUES (
   gen_random_uuid(),
   'procurement@hos.test',
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  '<BCRYPT_HASH>',
   'Procurement',
   'Manager',
   'PROCUREMENT',
@@ -33,7 +34,7 @@ VALUES (
 )
 ON CONFLICT (email) DO UPDATE SET 
   role = 'PROCUREMENT',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '<BCRYPT_HASH>',
   "updatedAt" = NOW();
 
 -- Create FULFILLMENT user
@@ -41,7 +42,7 @@ INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdA
 VALUES (
   gen_random_uuid(),
   'fulfillment@hos.test',
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  '<BCRYPT_HASH>',
   'Fulfillment',
   'Staff',
   'FULFILLMENT',
@@ -50,7 +51,7 @@ VALUES (
 )
 ON CONFLICT (email) DO UPDATE SET 
   role = 'FULFILLMENT',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '<BCRYPT_HASH>',
   "updatedAt" = NOW();
 
 -- Create CATALOG user
@@ -58,7 +59,7 @@ INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdA
 VALUES (
   gen_random_uuid(),
   'catalog@hos.test',
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  '<BCRYPT_HASH>',
   'Catalog',
   'Editor',
   'CATALOG',
@@ -67,7 +68,7 @@ VALUES (
 )
 ON CONFLICT (email) DO UPDATE SET 
   role = 'CATALOG',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '<BCRYPT_HASH>',
   "updatedAt" = NOW();
 
 -- Create MARKETING user
@@ -75,7 +76,7 @@ INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdA
 VALUES (
   gen_random_uuid(),
   'marketing@hos.test',
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  '<BCRYPT_HASH>',
   'Marketing',
   'Manager',
   'MARKETING',
@@ -84,7 +85,7 @@ VALUES (
 )
 ON CONFLICT (email) DO UPDATE SET 
   role = 'MARKETING',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '<BCRYPT_HASH>',
   "updatedAt" = NOW();
 
 -- Create FINANCE user
@@ -92,7 +93,7 @@ INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdA
 VALUES (
   gen_random_uuid(),
   'finance@hos.test',
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  '<BCRYPT_HASH>',
   'Finance',
   'Manager',
   'FINANCE',
@@ -101,7 +102,7 @@ VALUES (
 )
 ON CONFLICT (email) DO UPDATE SET 
   role = 'FINANCE',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '<BCRYPT_HASH>',
   "updatedAt" = NOW();
 
 -- Create CMS_EDITOR user
@@ -109,7 +110,7 @@ INSERT INTO users (id, email, password, "firstName", "lastName", role, "createdA
 VALUES (
   gen_random_uuid(),
   'cms@hos.test',
-  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  '<BCRYPT_HASH>',
   'CMS',
   'Editor',
   'CMS_EDITOR',
@@ -118,7 +119,7 @@ VALUES (
 )
 ON CONFLICT (email) DO UPDATE SET 
   role = 'CMS_EDITOR',
-  password = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+  password = '<BCRYPT_HASH>',
   "updatedAt" = NOW();
 
 -- Verify users created

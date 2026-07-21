@@ -264,6 +264,10 @@ async function bootstrap() {
         }),
       );
 
+      // Parse cookies BEFORE CSRF check (CSRF middleware reads req.cookies)
+      app.use(cookieParser());
+      logger.info('✅ Cookie parser enabled', 'Bootstrap');
+
       // CSRF protection: verify Origin header on state-changing requests
       app.use((req: any, res: any, next: any) => {
         if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
@@ -273,7 +277,6 @@ async function bootstrap() {
           logger.warn(`CSRF: Blocked state-changing request from origin ${origin}`, 'Security');
           return res.status(403).json({ error: 'Forbidden: origin not allowed' });
         }
-        // Requests without Origin (some mobile clients, curl): allow if not cookie-only
         const hasAuthCookie = req.cookies?.access_token || req.cookies?.refresh_token;
         const hasBearer = typeof req.headers.authorization === 'string' && req.headers.authorization.startsWith('Bearer ');
         const hasApiKey = !!req.headers['x-api-key'];
@@ -286,10 +289,6 @@ async function bootstrap() {
       });
 
       logger.info('✅ Security headers + CSRF origin check configured', 'Bootstrap');
-
-      // Parse cookies (needed for HttpOnly auth cookies)
-      app.use(cookieParser());
-      logger.info('✅ Cookie parser enabled', 'Bootstrap');
 
       // Add response compression
       app.use(compression());

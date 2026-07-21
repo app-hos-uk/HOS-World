@@ -3,7 +3,10 @@
 # Create Test Users for RBAC Testing
 # This script creates mock users via API registration
 
-API_URL="${API_URL:-https://hos-marketplaceapi-production.up.railway.app/api}"
+if [ -z "$API_URL" ]; then
+  echo "ERROR: Set API_URL environment variable before running."
+  exit 1
+fi
 
 echo "🌱 Creating test users for RBAC testing..."
 echo "API URL: $API_URL"
@@ -72,8 +75,8 @@ EOF
     fi
 }
 
-# Default password for all users
-PASSWORD="Test123!"
+# Password from environment — never hardcode
+PASSWORD="${TEST_SEED_PASSWORD:?ERROR: Set TEST_SEED_PASSWORD environment variable}"
 
 echo "Creating users..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

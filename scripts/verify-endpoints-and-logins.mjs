@@ -6,7 +6,8 @@ const API = (() => {
     const base = process.env.API_URL.replace(/\/$/, '');
     return base.endsWith('/api') ? base : `${base}/api`;
   }
-  return 'https://hos-marketplaceapi-production.up.railway.app/api';
+  console.error('ERROR: Set API_BASE_URL or API_URL environment variable before running.');
+  process.exit(1);
 })();
 
 const results = { passed: 0, failed: 0, errors: [] };
@@ -62,18 +63,25 @@ const tokens = {};
 async function testLogins() {
   console.log('\n═══ PHASE 2: User Role Logins ═══');
   
+  const testPwd = process.env.TEST_SEED_PASSWORD;
+  const adminPwd = process.env.SEED_ADMIN_PASSWORD;
+  if (!testPwd || !adminPwd) {
+    console.error('ERROR: Set TEST_SEED_PASSWORD and SEED_ADMIN_PASSWORD env vars before running.');
+    process.exit(1);
+  }
+
   const users = [
-    { email: 'app@houseofspells.co.uk', password: 'Admin123', role: 'ADMIN (super)', optional: true },
-    { email: 'admin@hos.test', password: 'Test123!', role: 'ADMIN (test)' },
-    { email: 'customer@hos.test', password: 'Test123!', role: 'CUSTOMER' },
-    { email: 'wholesaler@hos.test', password: 'Test123!', role: 'WHOLESALER' },
-    { email: 'seller@hos.test', password: 'Test123!', role: 'B2C_SELLER' },
-    { email: 'procurement@hos.test', password: 'Test123!', role: 'PROCUREMENT' },
-    { email: 'fulfillment@hos.test', password: 'Test123!', role: 'FULFILLMENT' },
-    { email: 'catalog@hos.test', password: 'Test123!', role: 'CATALOG' },
-    { email: 'marketing@hos.test', password: 'Test123!', role: 'MARKETING' },
-    { email: 'finance@hos.test', password: 'Test123!', role: 'FINANCE' },
-    { email: 'cms@hos.test', password: 'Test123!', role: 'CMS_EDITOR' },
+    { email: 'app@houseofspells.co.uk', password: adminPwd, role: 'ADMIN (super)', optional: true },
+    { email: 'admin@hos.test', password: testPwd, role: 'ADMIN (test)' },
+    { email: 'customer@hos.test', password: testPwd, role: 'CUSTOMER' },
+    { email: 'wholesaler@hos.test', password: testPwd, role: 'WHOLESALER' },
+    { email: 'seller@hos.test', password: testPwd, role: 'B2C_SELLER' },
+    { email: 'procurement@hos.test', password: testPwd, role: 'PROCUREMENT' },
+    { email: 'fulfillment@hos.test', password: testPwd, role: 'FULFILLMENT' },
+    { email: 'catalog@hos.test', password: testPwd, role: 'CATALOG' },
+    { email: 'marketing@hos.test', password: testPwd, role: 'MARKETING' },
+    { email: 'finance@hos.test', password: testPwd, role: 'FINANCE' },
+    { email: 'cms@hos.test', password: testPwd, role: 'CMS_EDITOR' },
   ];
 
   for (const u of users) {

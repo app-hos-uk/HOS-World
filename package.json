@@ -26,6 +26,12 @@
     "turbo": "^1.11.2",
     "typescript": "^5.3.3"
   },
+  "pnpm": {
+    "overrides": {
+      "axios": ">=1.18.1",
+      "fast-xml-parser": ">=5.2.5"
+    }
+  },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"

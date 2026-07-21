@@ -63,16 +63,17 @@ export class CreateTeamUsersController {
     private configService: ConfigService,
   ) {}
 
-  /** Dev: DEV_SEED_SECRET + x-dev-seed-secret. Production: PROD_SEED_SECRET + x-prod-seed-secret. */
+  /** Reject ALL seed requests in production. In dev: require DEV_SEED_SECRET header. */
   private guardSeedSecret(req: { headers?: Record<string, string | string[] | undefined> }) {
     const isProd = this.configService.get('NODE_ENV') === 'production';
-    const secretKey = isProd ? 'PROD_SEED_SECRET' : 'DEV_SEED_SECRET';
-    const headerName = isProd ? 'x-prod-seed-secret' : 'x-dev-seed-secret';
-    const expected = this.configService.get<string>(secretKey)?.trim();
-    if (!expected) {
-      throw new ForbiddenException(`${secretKey} is not configured`);
+    if (isProd) {
+      throw new ForbiddenException('Seed endpoints are disabled in production');
     }
-    const provided = req.headers?.[headerName];
+    const expected = this.configService.get<string>('DEV_SEED_SECRET')?.trim();
+    if (!expected) {
+      throw new ForbiddenException('DEV_SEED_SECRET is not configured');
+    }
+    const provided = req.headers?.['x-dev-seed-secret'];
     const value = Array.isArray(provided) ? provided[0] : provided;
     if (value !== expected) {
       throw new ForbiddenException('Invalid seed secret');

@@ -2,8 +2,12 @@
 echo "Verifying dashboard data structure and completeness..."
 echo ""
 
-api_url="https://hos-marketplaceapi-production.up.railway.app/api"
-password="Test123!"
+if [ -z "$API_URL" ] || [ -z "$TEST_SEED_PASSWORD" ]; then
+  echo "ERROR: Set API_URL and TEST_SEED_PASSWORD environment variables before running."
+  exit 1
+fi
+api_url="$API_URL"
+password="$TEST_SEED_PASSWORD"
 
 get_token() {
   local email=$1

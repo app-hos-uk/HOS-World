@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { sanitizeSvgHtml } from '@/lib/sanitizeHtml';
 
 interface Department {
   id: string;
@@ -251,7 +252,7 @@ export default function AdminDepartmentsPage() {
                   {/* Icon preview */}
                   <div className="w-10 h-10 flex items-center justify-center text-hos-gold shrink-0">
                     {dept.iconSvg ? (
-                      <span dangerouslySetInnerHTML={{ __html: dept.iconSvg }} />
+                      <span dangerouslySetInnerHTML={{ __html: sanitizeSvgHtml(dept.iconSvg) }} />
                     ) : (
                       <span className="text-2xl">📦</span>
                     )}
@@ -455,7 +456,7 @@ export default function AdminDepartmentsPage() {
                         <span className="text-xs text-hos-text-secondary">Preview:</span>
                         <span
                           className="text-hos-gold"
-                          dangerouslySetInnerHTML={{ __html: formData.iconSvg }}
+                          dangerouslySetInnerHTML={{ __html: sanitizeSvgHtml(formData.iconSvg) }}
                         />
                       </div>
                     )}

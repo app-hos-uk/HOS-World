@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { LandingShell } from '../components/LandingShell';
 import { LandingFooter } from '../components/LandingFooter';
 import { landingPageMetadata } from '../lib/landingMetadata';
+import { sanitizeCmsHtml } from '../lib/sanitizeHtml';
 
 export const metadata: Metadata = landingPageMetadata({
   title: 'Privacy Policy — House of Spells',
@@ -11,16 +12,6 @@ export const metadata: Metadata = landingPageMetadata({
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL?.trim() || '';
 
-function sanitizeHtml(raw: string): string {
-  return raw
-    .replace(/<script[\s>][\s\S]*?<\/script>/gi, '')
-    .replace(/<iframe[\s>][\s\S]*?<\/iframe>/gi, '')
-    .replace(/<object[\s>][\s\S]*?<\/object>/gi, '')
-    .replace(/<embed[\s>][\s\S]*?<\/embed>/gi, '')
-    .replace(/<form[\s>][\s\S]*?<\/form>/gi, '')
-    .replace(/\bon\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-    .replace(/javascript\s*:/gi, 'blocked:');
-}
 
 async function fetchPrivacyContent(): Promise<string | null> {
   if (!STRAPI_URL) return null;
@@ -31,7 +22,7 @@ async function fetchPrivacyContent(): Promise<string | null> {
     if (!res.ok) return null;
     const json = await res.json();
     const content = json?.data?.[0]?.attributes?.content || json?.data?.[0]?.content;
-    return typeof content === 'string' ? sanitizeHtml(content) : null;
+    return typeof content === 'string' ? sanitizeCmsHtml(content) : null;
   } catch {
     return null;
   }
