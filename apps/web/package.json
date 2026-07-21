@@ -50,7 +50,7 @@
     "xlsx": "npm:@stackline/xlsx@^1.0.4"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "^15.5.18",
+    "@next/bundle-analyzer": "^16.2.11",
     "@playwright/test": "^1.57.0",
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.46",
