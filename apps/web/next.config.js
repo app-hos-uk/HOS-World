@@ -11,9 +11,8 @@ const nextConfig = {
   // Emit a self-contained server bundle (.next/standalone) so the Docker
   // runtime stage needs no `pnpm install` and only copies a minimal tree.
   output: 'standalone',
+  outputFileTracingRoot: path.join(__dirname, '../../'),
   experimental: {
-    // Trace workspace deps from the monorepo root so standalone includes them.
-    outputFileTracingRoot: path.join(__dirname, '../../'),
     optimizePackageImports: [
       '@heroicons/react',
       'recharts',

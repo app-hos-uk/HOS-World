@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
@@ -115,6 +115,14 @@ const ORDER_TABLE_COLUMNS: AdminColumnDef[] = [
 ];
 
 export default function AdminOrdersPage() {
+  return (
+    <Suspense>
+      <AdminOrdersContent />
+    </Suspense>
+  );
+}
+
+function AdminOrdersContent() {
   const searchParams = useSearchParams();
   const sellerIdFilter = searchParams.get('sellerId') || searchParams.get('seller') || '';
   const toast = useToast();

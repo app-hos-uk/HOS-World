@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
@@ -8,6 +8,14 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
 export default function FinancePricingPage() {
+  return (
+    <Suspense>
+      <FinancePricingContent />
+    </Suspense>
+  );
+}
+
+function FinancePricingContent() {
   const searchParams = useSearchParams();
   const viewParam = searchParams.get('view');
   const submissionParam = searchParams.get('submission');

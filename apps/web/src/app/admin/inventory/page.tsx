@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
@@ -39,6 +39,14 @@ interface RecentMovement {
 }
 
 export default function AdminInventoryDashboardPage() {
+  return (
+    <Suspense>
+      <AdminInventoryContent />
+    </Suspense>
+  );
+}
+
+function AdminInventoryContent() {
   const searchParams = useSearchParams();
   const activeTab = searchParams.get('tab') || 'overview';
   const toast = useToast();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
@@ -26,6 +26,14 @@ function resolveBackHref(from: string | null): string {
 }
 
 export default function ReturnDetailPage() {
+  return (
+    <Suspense>
+      <ReturnDetailContent />
+    </Suspense>
+  );
+}
+
+function ReturnDetailContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();

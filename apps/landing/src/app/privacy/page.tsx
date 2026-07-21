@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { LandingShell } from '../components/LandingShell';
 import { LandingFooter } from '../components/LandingFooter';
 import { landingPageMetadata } from '../lib/landingMetadata';
-import { sanitizeCmsHtml } from '../lib/sanitizeHtml';
+import { sanitizeCmsHtml } from '@/lib/sanitizeHtml';
 
 export const metadata: Metadata = landingPageMetadata({
   title: 'Privacy Policy — House of Spells',

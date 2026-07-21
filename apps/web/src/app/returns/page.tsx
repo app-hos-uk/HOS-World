@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
@@ -45,6 +45,14 @@ interface ReturnRequest {
 }
 
 export default function ReturnsPage() {
+  return (
+    <Suspense>
+      <ReturnsContent />
+    </Suspense>
+  );
+}
+
+function ReturnsContent() {
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const searchParams = useSearchParams();
