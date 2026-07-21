@@ -21,8 +21,8 @@
     "verify:api": "node scripts/verify-api-endpoints.mjs"
   },
   "devDependencies": {
-    "baseline-browser-mapping": "^2.9.19",
-    "prettier": "^3.1.1",
+    "baseline-browser-mapping": "^2.11.0",
+    "prettier": "^3.9.6",
     "turbo": "^1.11.2",
     "typescript": "^5.3.3"
   },
