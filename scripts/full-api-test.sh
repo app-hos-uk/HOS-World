@@ -1,6 +1,10 @@
 #!/bin/bash
 # Full API endpoint test script
-API="https://hos-marketplaceapi-production.up.railway.app/api"
+if [ -z "$API_URL" ]; then
+  echo "ERROR: Set API_URL environment variable before running."
+  exit 1
+fi
+API="$API_URL"
 CURL=/usr/bin/curl
 PASS=0
 FAIL=0

@@ -1,5 +1,9 @@
 // Full API Endpoint Test Script
-const API = 'https://hos-marketplaceapi-production.up.railway.app/api';
+const API = process.env.API_URL;
+if (!API) {
+  console.error('ERROR: Set API_URL environment variable before running.');
+  process.exit(1);
+}
 
 let pass = 0, fail = 0, warn = 0;
 

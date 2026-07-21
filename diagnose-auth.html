@@ -51,7 +51,8 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'https://hos-marketplaceapi-production.up.railway.app/api/v1';
+        // IMPORTANT: Update this URL to match your API deployment
+        const API_BASE_URL = prompt('Enter API URL:', 'http://localhost:3001/api/v1') || 'http://localhost:3001/api/v1';
         
         function getToken() {
             try {

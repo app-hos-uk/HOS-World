@@ -14,7 +14,11 @@ if (!token) {
   console.log('✅ Token found! Running migration...');
   console.log('🔑 Token (first 20 chars):', token.substring(0, 20) + '...');
   
-  fetch('https://hos-marketplaceapi-production.up.railway.app/api/admin/migration/run-global-features', {
+  // IMPORTANT: Set this to your API URL before running in browser console
+  const API_URL = prompt('Enter API URL (e.g. https://your-api.railway.app/api):', 'http://localhost:3001/api');
+  if (!API_URL) { console.error('Aborted: no API URL provided'); return; }
+
+  fetch(API_URL + '/admin/migration/run-global-features', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

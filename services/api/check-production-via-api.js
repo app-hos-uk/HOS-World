@@ -4,8 +4,10 @@
 const https = require('https');
 const http = require('http');
 
-const PRODUCTION_URL = 'https://hos-marketplaceapi-production.up.railway.app';
-// Or use: const PRODUCTION_URL = 'http://localhost:3001'; for local testing
+const PRODUCTION_URL = process.env.API_URL || 'http://localhost:3001';
+if (!process.env.API_URL) {
+  console.warn('WARN: API_URL not set, using localhost. Set API_URL for production testing.');
+}
 
 function fetch(url, options = {}) {
   return new Promise((resolve, reject) => {
@@ -57,8 +59,8 @@ async function checkProductionViaAPI(adminToken) {
   if (!adminToken || adminToken === 'YOUR_ADMIN_TOKEN_HERE') {
     console.log('❌ Admin token required!');
     console.log('\n📋 How to get your token:');
-    console.log('   1. Open https://hos-marketplaceweb-production.up.railway.app');
-    console.log('   2. Log in with mail@jsabu.com');
+    console.log('   1. Open the frontend (set FRONTEND_URL env var)');
+    console.log('   2. Log in with your admin account');
     console.log('   3. Open browser DevTools (F12 or Cmd+Option+I)');
     console.log('   4. Go to Application/Storage → Local Storage');
     console.log('   5. Look for keys like: token, accessToken, authToken');

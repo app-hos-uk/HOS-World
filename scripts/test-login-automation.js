@@ -55,7 +55,11 @@ const testUsers = [
   },
 ];
 
-const baseUrl = 'https://hos-marketplaceweb-production.up.railway.app';
+const baseUrl = process.env.FRONTEND_URL;
+if (!baseUrl) {
+  console.error('ERROR: Set FRONTEND_URL environment variable before running.');
+  process.exit(1);
+}
 
 module.exports = {
   testUsers,

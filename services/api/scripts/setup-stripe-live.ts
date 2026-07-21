@@ -12,15 +12,17 @@
  *   railway run -- pnpm exec ts-node scripts/setup-stripe-live.ts
  *
  * Optional: STRIPE_WEBHOOK_SECRET=whsec_... (skip auto webhook creation)
- * Optional: WEBHOOK_URL=https://hos-marketplaceapi-production.up.railway.app/api/payments/webhook
+ * Optional: WEBHOOK_URL=https://<your-api-domain>/api/payments/webhook
  */
 import { PrismaClient } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { EncryptionService } from '../src/integrations/encryption.service';
 
-const WEBHOOK_URL =
-  process.env.WEBHOOK_URL ||
-  'https://hos-marketplaceapi-production.up.railway.app/api/payments/webhook';
+const WEBHOOK_URL = process.env.WEBHOOK_URL;
+if (!WEBHOOK_URL) {
+  console.error('ERROR: Set WEBHOOK_URL environment variable (e.g. https://your-api.railway.app/api/payments/webhook)');
+  process.exit(1);
+}
 
 const WEBHOOK_EVENTS = [
   'payment_intent.succeeded',
@@ -206,7 +208,7 @@ async function main() {
   console.log('\n⚠️  Restart API service or activate integration in admin to hot-reload StripeProvider.');
   console.log('   Or wait for next deploy — credentials are in DB and active.\n');
   console.log('Next: In Stripe Dashboard → Webhooks, confirm endpoint shows Enabled.');
-  console.log('Test: curl https://hos-marketplaceapi-production.up.railway.app/api/payments/config');
+  console.log('Test: curl $WEBHOOK_URL/../config');
   console.log('      (should return stripePublishableKey after API reloads credentials)\n');
 }
 

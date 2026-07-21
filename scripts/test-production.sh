@@ -6,7 +6,7 @@
 # Override: API_BASE_URL=https://custom.railway.app ./scripts/test-production.sh
 
 set -e
-API_BASE_URL="${API_BASE_URL:-https://hos-marketplaceapi-production.up.railway.app}"
+API_BASE_URL="${API_BASE_URL:?Set API_BASE_URL env var before running}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 

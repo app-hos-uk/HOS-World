@@ -5,7 +5,11 @@
  * Tests every public and authenticated endpoint against the live API.
  */
 
-const API_BASE = process.env.API_URL || 'https://hos-marketplaceapi-production.up.railway.app';
+const API_BASE = process.env.API_URL;
+if (!API_BASE) {
+  console.error('ERROR: Set API_URL environment variable before running.');
+  process.exit(1);
+}
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@hos.test';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Test123!';
 
