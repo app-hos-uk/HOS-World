@@ -208,7 +208,10 @@ async function main() {
   console.log('\n⚠️  Restart API service or activate integration in admin to hot-reload StripeProvider.');
   console.log('   Or wait for next deploy — credentials are in DB and active.\n');
   console.log('Next: In Stripe Dashboard → Webhooks, confirm endpoint shows Enabled.');
-  console.log(`Test: curl ${WEBHOOK_URL.replace(/\/webhook$/, '/config')}`);
+  const configUrl = WEBHOOK_URL.endsWith('/webhook')
+    ? WEBHOOK_URL.replace(/\/webhook$/, '/config')
+    : WEBHOOK_URL.replace(/\/[^/]*$/, '/config');
+  console.log(`Test: curl ${configUrl}`);
   console.log('      (should return stripePublishableKey after API reloads credentials)\n');
 }
 
