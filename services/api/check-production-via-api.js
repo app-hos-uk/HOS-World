@@ -4,9 +4,11 @@
 const https = require('https');
 const http = require('http');
 
-const PRODUCTION_URL = process.env.API_URL || 'http://localhost:3001';
-if (!process.env.API_URL) {
-  console.warn('WARN: API_URL not set, using localhost. Set API_URL for production testing.');
+const PRODUCTION_URL = process.env.API_URL;
+if (!PRODUCTION_URL) {
+  console.error('ERROR: API_URL environment variable is required. This script is for production investigation.');
+  console.error('       Set API_URL=https://your-api.railway.app before running.');
+  process.exit(1);
 }
 
 function fetch(url, options = {}) {
