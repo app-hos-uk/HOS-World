@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Optional } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { RefundsService } from '../finance/refunds.service';
 import { RETURN_REFUND_ORDER_INCLUDE } from '../finance/refund-order.include';
@@ -7,6 +8,7 @@ import { RETURN_REFUND_ORDER_INCLUDE } from '../finance/refund-order.include';
 export class ReturnsEnhancementsService {
   constructor(
     private prisma: PrismaService,
+    private configService: ConfigService,
     @Optional() private refundsService?: RefundsService,
   ) {}
 
@@ -63,7 +65,8 @@ export class ReturnsEnhancementsService {
       throw new BadRequestException('Return must be approved before generating a return label');
     }
 
-    const labelUrl = `https://labels.hos-marketplace.com/returns/${returnRequest.id}`;
+    const baseUrl = this.configService.get<string>('RETURN_LABELS_BASE_URL') || this.configService.get<string>('FRONTEND_URL') || 'https://localhost';
+    const labelUrl = `${baseUrl}/returns/${returnRequest.id}`;
     const trackingNumber = `RTN${returnRequest.id.substring(0, 8).toUpperCase()}`;
 
     await this.prisma.returnRequest.update({

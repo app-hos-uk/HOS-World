@@ -783,16 +783,14 @@ export class AuthService {
       });
 
       if (!user) {
+        // Spend time on a dummy hash to prevent timing-based user enumeration
+        await bcrypt.compare(loginDto.password, '$2b$12$000000000000000000000000000000000000000000000000000000');
         throw new UnauthorizedException('Invalid credentials');
       }
 
-      // Check if account is locked
+      // Check if account is locked — use the same message to prevent enumeration
       if (user.lockedUntil && user.lockedUntil > new Date()) {
-        const remainingMs = user.lockedUntil.getTime() - Date.now();
-        const remainingMinutes = Math.ceil(remainingMs / 60000);
-        throw new UnauthorizedException(
-          `Account temporarily locked. Try again in ${remainingMinutes} minute${remainingMinutes === 1 ? '' : 's'}.`,
-        );
+        throw new UnauthorizedException('Invalid credentials');
       }
 
       // Verify password
@@ -1231,7 +1229,7 @@ export class AuthService {
     const crypto = await import('crypto');
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-    const resetExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const resetExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
     await this.prisma.user.update({
       where: { id: user.id },

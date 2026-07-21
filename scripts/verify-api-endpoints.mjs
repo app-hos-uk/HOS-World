@@ -1,11 +1,14 @@
 #!/usr/bin/env node
 /**
  * Smoke test key API endpoints.
- * Run: API_BASE_URL="https://hos-marketplaceapi-production.up.railway.app/api" node scripts/verify-api-endpoints.mjs
- * Or: API_BASE_URL="http://localhost:3001/api" node scripts/verify-api-endpoints.mjs
+ * Run: API_BASE_URL="http://localhost:3001/api" node scripts/verify-api-endpoints.mjs
  */
 
-const baseUrl = process.env.API_BASE_URL || 'https://hos-marketplaceapi-production.up.railway.app/api';
+const baseUrl = process.env.API_BASE_URL;
+if (!baseUrl) {
+  console.error('ERROR: Set API_BASE_URL environment variable before running.');
+  process.exit(1);
+}
 
 const endpoints = [
   { path: '/', method: 'GET', public: true, desc: 'Root/health' },

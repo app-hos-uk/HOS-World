@@ -5,7 +5,11 @@
  * Tests all API endpoints against the production API
  */
 
-const API_BASE_URL = process.env.API_URL || 'https://hos-marketplaceapi-production.up.railway.app/api';
+const API_BASE_URL = process.env.API_URL;
+if (!API_BASE_URL) {
+  console.error('ERROR: Set API_URL environment variable before running.');
+  process.exit(1);
+}
 
 // Test results
 const results = {

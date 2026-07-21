@@ -5,7 +5,7 @@ Since you're logged in to production, here's how to get your token:
 ## Method 1: Browser DevTools (Easiest)
 
 1. **Open the production site:**
-   - Go to: https://hos-marketplaceweb-production.up.railway.app
+   - Go to: `$FRONTEND_URL` (set via environment variable)
    - Make sure you're logged in
 
 2. **Open DevTools:**
@@ -16,7 +16,7 @@ Since you're logged in to production, here's how to get your token:
 3. **Go to Application/Storage tab:**
    - Click **"Application"** tab (Chrome) or **"Storage"** tab (Firefox)
    - In the left sidebar, expand **"Local Storage"**
-   - Click on your domain: `https://hos-marketplaceweb-production.up.railway.app`
+   - Click on your domain
 
 4. **Find the token:**
    - Look for keys like: `token`, `accessToken`, `authToken`, `jwt`, `bearer`
@@ -50,12 +50,12 @@ Since you're logged in to production, here's how to get your token:
 
 ## Method 4: Login via API (Get Fresh Token)
 
-If you know the password for `mail@jsabu.com`:
+If you know the admin password:
 
 ```bash
-curl -X POST https://hos-marketplaceapi-production.up.railway.app/api/auth/login \
+curl -X POST $API_URL/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"mail@jsabu.com","password":"YOUR_PASSWORD"}'
+  -d '{"email":"YOUR_EMAIL","password":"YOUR_PASSWORD"}'
 ```
 
 The response will contain a `token` field - copy that value.

@@ -3,7 +3,10 @@
 # API Endpoints Test Script
 # Tests all API endpoints against the production API
 
-API_URL="${API_URL:-https://hos-marketplaceapi-production.up.railway.app}"
+if [ -z "$API_URL" ]; then
+  echo "ERROR: Set API_URL environment variable before running."
+  exit 1
+fi
 
 echo "🧪 Testing API Endpoints"
 echo "=========================="

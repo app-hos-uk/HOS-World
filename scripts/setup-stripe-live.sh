@@ -42,4 +42,4 @@ railway service restart --service "@hos-marketplace/api" 2>/dev/null || railway 
 
 echo ""
 echo "Done. Verify:"
-echo "  curl -s https://hos-marketplaceapi-production.up.railway.app/api/payments/config"
+echo "  curl -s \$API_URL/payments/config"
