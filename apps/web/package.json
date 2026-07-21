@@ -48,7 +48,7 @@
     "recharts": "^2.10.3",
     "sanitize-html": "^2.17.4",
     "sharp": "^0.33.5",
-    "xlsx": "^0.18.5"
+    "xlsx": "npm:@stackline/xlsx@^1.0.4"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "14.2.35",
