@@ -7,18 +7,20 @@ export const LANDING_REGISTER_PATH = '/founding-members';
 
 export const TICKER_ITEMS = [
   "Earth's Multi-Fandom Universe",
+  'Grand Launch · July 29 · 10:00 AM EDT',
   'Times Square · New York',
   'Marvel · Star Wars · DC Universe',
   'Naruto · Middle Earth · Studio Ghibli',
   'House Of Spells',
   'Every Universe. One Destination.',
   'Game of Thrones · Avatar · The Witcher',
-  'Opening in New York',
 ];
 
+/** Abstract multi-fandom / anime celebration icons (no trademarked logos). */
 export const FLOAT_EMOJIS = [
   '🕷️', '🛸', '🦇', '💍', '⚡', '🐉', '🍥', '🦁', '🦊', '🌊',
-  '🌀', '🗡️', '🎮', '🤖', '🌙', '👾', '🏰', '🔮',
+  '🌀', '🗡️', '🎮', '🤖', '🌙', '👾', '🏰', '🔮', '🪄', '⚔️',
+  '🦸', '🧿', '🌟', '🔥', '💫', '🦄', '🎭', '🧬',
 ];
 
 export const REG_GOOGLE_SCRIPT_URL =

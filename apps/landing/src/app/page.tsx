@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { LandingShell } from './components/LandingShell';
 import { LandingFooter } from './components/LandingFooter';
+import { LaunchCountdown } from './components/LaunchCountdown';
+import { CelebrationSparkles } from './components/CelebrationSparkles';
+import { FanFloaters } from './components/FanFloaters';
 import { Ticker } from './components/Ticker';
 import { GalleryAlbumGrid } from './components/GalleryAlbumGrid';
 import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from './lib/constants';
@@ -12,7 +15,9 @@ export default async function LandingHomePage() {
   return (
     <LandingShell nav="home" mainId="pg-home">
       <main id="pg-home" className="hos-page" tabIndex={-1}>
-        <div className="hero-inner">
+        <div className="hero-inner hero-inner--launch">
+          <CelebrationSparkles />
+          <FanFloaters />
           <div className="hero-brand-lockup">
             <div className="hero-logo-wrap">
               <div className="hero-logo-ring" />
@@ -37,9 +42,7 @@ export default async function LandingHomePage() {
               />
             </h1>
           </div>
-          <p className="h-ny-banner" role="status">
-            A grand launch in <span className="h-ny-place">Times Square, New York</span> &mdash; coming soon.
-          </p>
+          <LaunchCountdown />
           <p className="h-pre">
             <span className="h-pre-line">Earth&apos;s Multi-Fandom Universe</span>
             <span className="h-pre-sep" aria-hidden="true">
@@ -150,7 +153,7 @@ export default async function LandingHomePage() {
           </div>
         </div>
 
-        <Ticker reverse />
+        <Ticker />
 
         {featuredAlbums.length > 0 && (
           <section className="gallery-home-section">
