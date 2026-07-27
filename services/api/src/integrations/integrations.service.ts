@@ -686,26 +686,46 @@ export class IntegrationsService {
     credentials: Record<string, any>,
     isTestMode: boolean,
   ): Promise<TestConnectionResultDto> {
-    if (!credentials.secretKey) {
+    const secretKey = typeof credentials.secretKey === 'string' ? credentials.secretKey.trim() : '';
+    if (!secretKey) {
       return { success: false, message: 'Missing secret key' };
     }
-    const isTestKey = credentials.secretKey.startsWith('sk_test_');
+    if (!secretKey.startsWith('sk_test_') && !secretKey.startsWith('sk_live_')) {
+      return {
+        success: false,
+        message: 'Secret key must start with sk_test_ or sk_live_ (placeholder values like "1" are rejected)',
+      };
+    }
+    const isTestKey = secretKey.startsWith('sk_test_');
     if (isTestMode && !isTestKey) {
       return { success: false, message: 'Test mode requires a test secret key (sk_test_...)' };
     }
 
     try {
-      const response = await fetch('https://api.stripe.com/v1/balance', {
-        headers: { Authorization: `Bearer ${credentials.secretKey}` },
-      });
-      if (!response.ok) {
-        const body = await response.text();
-        return { success: false, message: `Stripe API returned ${response.status}: ${body.slice(0, 200)}` };
+      const headers = { Authorization: `Bearer ${secretKey}` };
+      const balanceRes = await fetch('https://api.stripe.com/v1/balance', { headers });
+      if (!balanceRes.ok) {
+        const body = await balanceRes.text();
+        return {
+          success: false,
+          message: `Stripe API returned ${balanceRes.status}: ${body.slice(0, 200)}`,
+        };
       }
-      const balance = await response.json();
+      const balance = await balanceRes.json();
+
+      // Balance-only checks miss restricted keys that cannot create PaymentIntents.
+      const piRes = await fetch('https://api.stripe.com/v1/payment_intents?limit=1', { headers });
+      if (!piRes.ok) {
+        const body = await piRes.text();
+        return {
+          success: false,
+          message: `Secret key can read balance but cannot access PaymentIntents (${piRes.status}). Use a full secret key or grant payment_intent permissions. ${body.slice(0, 160)}`,
+        };
+      }
+
       return {
         success: true,
-        message: `Stripe ${isTestKey ? 'test' : 'live'} key verified — balance accessible`,
+        message: `Stripe ${isTestKey ? 'test' : 'live'} key verified — balance + PaymentIntents accessible`,
         details: {
           environment: isTestKey ? 'test' : 'live',
           currency: balance.available?.[0]?.currency?.toUpperCase() || 'N/A',

@@ -15,6 +15,11 @@ import {
 import { CircuitBreaker } from '../../common/utils/circuit-breaker';
 import { IntegrationsService } from '../../integrations/integrations.service';
 
+function isValidStripeSecretKey(key?: string | null): key is string {
+  const trimmed = key?.trim();
+  return !!trimmed && (trimmed.startsWith('sk_test_') || trimmed.startsWith('sk_live_'));
+}
+
 @Injectable()
 export class StripeProvider implements PaymentProvider, OnModuleInit {
   readonly name = 'stripe';
@@ -31,18 +36,29 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
   constructor(
     private configService: ConfigService,
     private integrationsService: IntegrationsService,
-  ) {
-    const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY');
-    if (stripeKey) {
-      this.stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
-      this.webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || null;
-      this.logger.log('Stripe provider initialized from env vars');
+  ) {}
+
+  async onModuleInit() {
+    // Prefer admin integrations; env is fallback only. Never keep placeholder keys.
+    await this.initFromIntegrations();
+    if (!this.stripe) {
+      this.initFromEnv();
     }
   }
 
-  async onModuleInit() {
-    if (this.stripe) return;
-    void this.initFromIntegrations();
+  private initFromEnv(): void {
+    const stripeKey = this.configService.get<string>('STRIPE_SECRET_KEY')?.trim();
+    if (!stripeKey) return;
+    if (!isValidStripeSecretKey(stripeKey)) {
+      this.logger.warn(
+        'Ignoring STRIPE_SECRET_KEY env value — expected sk_test_/sk_live_ (placeholder keys are rejected)',
+      );
+      return;
+    }
+    this.stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
+    this.webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || null;
+    this.circuitBreaker.reset();
+    this.logger.log('Stripe provider initialized from env vars');
   }
 
   /**
@@ -53,12 +69,28 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
     try {
       const creds = await this.integrationsService.getDecryptedCredentials('PAYMENT', 'stripe');
       const secretKey = creds.secretKey?.trim();
-      if (secretKey) {
-        this.stripe = new Stripe(secretKey, { apiVersion: '2023-10-16' });
-        this.webhookSecret = creds.webhookSecret?.trim() || null;
-        this.logger.log('Stripe provider initialized from admin integrations DB');
+      if (!secretKey) {
+        this.logger.warn('Stripe integration has no secretKey');
+        this.stripe = null;
+        this.webhookSecret = null;
+        return;
       }
+      if (!isValidStripeSecretKey(secretKey)) {
+        this.logger.error(
+          'Stripe integration secretKey is invalid (expected sk_test_/sk_live_). Payments will fail until a real secret is saved.',
+        );
+        this.stripe = null;
+        this.webhookSecret = null;
+        return;
+      }
+      this.stripe = new Stripe(secretKey, { apiVersion: '2023-10-16' });
+      this.webhookSecret = creds.webhookSecret?.trim() || null;
+      this.circuitBreaker.reset();
+      this.logger.log('Stripe provider initialized from admin integrations DB');
     } catch {
+      // Clear so callers can fall back to env instead of keeping a stale/invalid client.
+      this.stripe = null;
+      this.webhookSecret = null;
       this.logger.log('Stripe integration not configured in admin — provider disabled');
     }
   }
@@ -67,32 +99,52 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
     return this.stripe !== null;
   }
 
+  private async ensureStripeClient(): Promise<void> {
+    if (this.stripe) return;
+    await this.initFromIntegrations();
+    if (!this.stripe) this.initFromEnv();
+  }
+
+  /** Discard current client and rebuild from integrations, then env. */
+  private async reloadStripeClient(): Promise<void> {
+    this.stripe = null;
+    this.webhookSecret = null;
+    await this.initFromIntegrations();
+    if (!this.stripe) this.initFromEnv();
+  }
+
+  private isStripeAuthError(error: any): boolean {
+    const message = String(error?.message || '');
+    return (
+      error?.type === 'StripeAuthenticationError' ||
+      message.includes('Invalid API Key') ||
+      error?.statusCode === 401
+    );
+  }
+
   async createPaymentIntent(params: CreatePaymentIntentParams): Promise<PaymentIntentResult> {
+    await this.ensureStripeClient();
     if (!this.stripe) {
       throw new Error('Stripe provider is not available');
     }
 
     return this.circuitBreaker.execute(async () => {
-      try {
-        const amountCents = Math.round(params.amount * 100);
+      const amountCents = Math.round(params.amount * 100);
+      const createOnce = async (idempotencyKey: string) => {
         const paymentIntent = await this.stripe!.paymentIntents.create(
-        {
-          amount: amountCents,
-          currency: params.currency.toLowerCase(),
-          metadata: {
-            orderId: params.orderId,
-            ...params.metadata,
+          {
+            amount: amountCents,
+            currency: params.currency.toLowerCase(),
+            metadata: {
+              orderId: params.orderId,
+              ...params.metadata,
+            },
+            automatic_payment_methods: {
+              enabled: true,
+            },
           },
-          automatic_payment_methods: {
-            enabled: true,
-          },
-        },
-        {
-          // Include amount so a new intent is created when the payable total changes
-          // (e.g. after gift card partial redemption). Same key still dedupes true retries.
-          idempotencyKey: `order-${params.orderId}-${amountCents}`,
-        },
-      );
+          { idempotencyKey },
+        );
 
         return {
           paymentIntentId: paymentIntent.id,
@@ -102,7 +154,20 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
             ...paymentIntent.metadata,
           },
         };
+      };
+
+      try {
+        return await createOnce(`order-${params.orderId}-${amountCents}`);
       } catch (error: any) {
+        if (this.isStripeAuthError(error)) {
+          // Admin may have rotated keys after boot; IntegrationsController used to miss re-init.
+          this.logger.warn('Stripe auth failed — reloading credentials and retrying once');
+          await this.reloadStripeClient();
+          if (this.stripe) {
+            return await createOnce(`order-${params.orderId}-${amountCents}-reload`);
+          }
+        }
+
         this.logger.error('Failed to create Stripe payment intent:', error);
         throw error;
       }
@@ -343,34 +408,50 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
     applicationFeeAmount: number;
     metadata?: Record<string, string>;
   }): Promise<PaymentIntentResult> {
+    await this.ensureStripeClient();
     if (!this.stripe) throw new Error('Stripe provider is not available');
 
     const amountCents = Math.round(params.amount * 100);
-    const paymentIntent = await this.stripe.paymentIntents.create(
-      {
-        amount: amountCents,
-        currency: params.currency.toLowerCase(),
-        application_fee_amount: Math.round(params.applicationFeeAmount * 100),
-        transfer_data: {
-          destination: params.connectedAccountId,
+    const feeCents = Math.round(params.applicationFeeAmount * 100);
+    const createOnce = async (idempotencyKey: string) => {
+      const paymentIntent = await this.stripe!.paymentIntents.create(
+        {
+          amount: amountCents,
+          currency: params.currency.toLowerCase(),
+          application_fee_amount: feeCents,
+          transfer_data: {
+            destination: params.connectedAccountId,
+          },
+          metadata: {
+            orderId: params.orderId,
+            ...params.metadata,
+          },
+          automatic_payment_methods: { enabled: true },
         },
-        metadata: {
-          orderId: params.orderId,
-          ...params.metadata,
-        },
-        automatic_payment_methods: { enabled: true },
-      },
-      {
-        idempotencyKey: `order-split-${params.orderId}-${amountCents}-${Math.round(params.applicationFeeAmount * 100)}`,
-      },
-    );
+        { idempotencyKey },
+      );
 
-    return {
-      paymentIntentId: paymentIntent.id,
-      clientSecret: paymentIntent.client_secret || undefined,
-      requiresAction: paymentIntent.status === 'requires_action',
-      metadata: { ...paymentIntent.metadata },
+      return {
+        paymentIntentId: paymentIntent.id,
+        clientSecret: paymentIntent.client_secret || undefined,
+        requiresAction: paymentIntent.status === 'requires_action',
+        metadata: { ...paymentIntent.metadata },
+      };
     };
+
+    try {
+      return await createOnce(`order-split-${params.orderId}-${amountCents}-${feeCents}`);
+    } catch (error: any) {
+      if (this.isStripeAuthError(error)) {
+        this.logger.warn('Stripe auth failed on split intent — reloading credentials and retrying once');
+        await this.reloadStripeClient();
+        if (this.stripe) {
+          return await createOnce(`order-split-${params.orderId}-${amountCents}-${feeCents}-reload`);
+        }
+      }
+      this.logger.error('Failed to create Stripe split payment intent:', error);
+      throw error;
+    }
   }
 
   async createTransfer(params: {

@@ -97,4 +97,13 @@ export class CircuitBreaker {
       );
     }
   }
+
+  /** Force-close after credentials/config reload so stale OPEN state cannot block recovery. */
+  reset(): void {
+    this.state = CircuitState.CLOSED;
+    this.failures = 0;
+    this.halfOpenAttempts = 0;
+    this.lastFailureTime = 0;
+    this.logger.log('Circuit forcibly reset to CLOSED');
+  }
 }
