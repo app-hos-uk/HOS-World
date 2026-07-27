@@ -491,7 +491,8 @@ function AdminOrdersContent() {
             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
               <p className="text-red-300">Error: {error}</p>
               <button
-                onClick={fetchOrders}
+                type="button"
+                onClick={() => void fetchOrders()}
                 className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
               >
                 Retry
