@@ -159,22 +159,15 @@ function AdminOrdersContent() {
   });
 
   useEffect(() => {
-    fetchOrders();
-    
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') fetchOrders();
-    };
-    const interval = setInterval(fetchOrders, 60000);
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-    };
+    // Load once when the tab opens / seller filter changes.
+    // No auto-polling — background refresh kept the session warm and flashed the table.
+    void fetchOrders();
   }, [sellerIdFilter]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent === true;
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       // Backend caps at 100 per page; merge all pages so overview stats match the full dataset
@@ -233,9 +226,15 @@ function AdminOrdersContent() {
       });
     } catch (err: any) {
       console.error('Error fetching orders:', err);
-      setError(err.message || 'Failed to load orders');
+      const message = err.message || 'Failed to load orders';
+      // Silent refresh must not blank the table when stale data is still usable.
+      if (silent && orders.length > 0) {
+        toast.error(message);
+      } else {
+        setError(message);
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -260,7 +259,7 @@ function AdminOrdersContent() {
       setUpdatingOrderId(orderId);
       await apiClient.updateOrderStatus(orderId, newStatus);
       toast.success(`Order status updated to ${newStatus}`);
-      fetchOrders();
+      void fetchOrders({ silent: true });
       if (selectedOrder?.id === orderId) {
         setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
@@ -335,11 +334,21 @@ function AdminOrdersContent() {
               <h1 className="text-2xl font-bold text-hos-text-secondary">Orders Management</h1>
               <p className="text-hos-text-secondary mt-1">View and manage all customer orders</p>
             </div>
-            <DataExport
-              data={filteredOrders}
-              columns={exportColumns}
-              filename="orders-export"
-            />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void fetchOrders({ silent: true })}
+                disabled={loading}
+                className="px-3 py-2 text-sm rounded-md border border-hos-border text-hos-text-secondary hover:bg-hos-bg-tertiary disabled:opacity-50"
+              >
+                Refresh
+              </button>
+              <DataExport
+                data={filteredOrders}
+                columns={exportColumns}
+                filename="orders-export"
+              />
+            </div>
           </div>
 
           {/* Stats Cards — counts use normalized status; Confirmed / Processing are separate */}
