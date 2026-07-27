@@ -7,26 +7,40 @@ export class PaymentProviderService implements OnModuleInit {
   private readonly logger = new Logger(PaymentProviderService.name);
   private providers: Map<string, PaymentProvider> = new Map();
 
-  constructor(
-    private stripeProvider: StripeProvider,
-  ) {
-    if (this.stripeProvider.isAvailable()) {
-      this.providers.set('stripe', this.stripeProvider);
-      this.logger.log('Stripe provider registered (from env)');
-    }
-  }
+  constructor(private stripeProvider: StripeProvider) {}
 
   async onModuleInit() {
-    // StripeProvider.onModuleInit fires initFromIntegrations (async). Poll briefly for it.
-    for (let i = 0; i < 10; i++) {
-      if (this.stripeProvider.isAvailable()) break;
+    await this.ensureStripeRegistered();
+    this.logger.log(`${this.providers.size} payment provider(s) available`);
+  }
+
+  /**
+   * Ensure Stripe is initialized from integrations/env and registered.
+   * Safe to call repeatedly (e.g. from /payments/providers after a cold start miss).
+   */
+  async ensureStripeRegistered(): Promise<void> {
+    if (!this.stripeProvider.isAvailable()) {
+      try {
+        await this.stripeProvider.initFromIntegrations();
+      } catch (err: any) {
+        this.logger.warn(`Stripe initFromIntegrations failed: ${err?.message || err}`);
+      }
+    }
+
+    // Brief poll in case another init is still in flight
+    for (let i = 0; i < 10 && !this.stripeProvider.isAvailable(); i++) {
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
-    if (!this.providers.has('stripe') && this.stripeProvider.isAvailable()) {
-      this.providers.set('stripe', this.stripeProvider);
-      this.logger.log('Stripe provider registered (from admin integrations)');
+
+    if (this.stripeProvider.isAvailable()) {
+      if (!this.providers.has('stripe')) {
+        this.providers.set('stripe', this.stripeProvider);
+        this.logger.log('Stripe provider registered');
+      }
+    } else if (this.providers.has('stripe')) {
+      this.providers.delete('stripe');
+      this.logger.warn('Stripe provider removed — client no longer available');
     }
-    this.logger.log(`${this.providers.size} payment provider(s) available`);
   }
 
   /**
@@ -50,14 +64,23 @@ export class PaymentProviderService implements OnModuleInit {
   }
 
   /**
-   * Get all available providers
+   * Get all available providers (sync snapshot). Prefer ensureAvailableProviders() for HTTP.
    */
   getAvailableProviders(): string[] {
-    // Include stripe if it became available after startup
     if (!this.providers.has('stripe') && this.stripeProvider.isAvailable()) {
       this.providers.set('stripe', this.stripeProvider);
     }
     return Array.from(this.providers.keys());
+  }
+
+  /**
+   * Actively (re)initialize Stripe if needed, then return the provider list.
+   */
+  async ensureAvailableProviders(): Promise<string[]> {
+    if (!this.stripeProvider.isAvailable() || !this.providers.has('stripe')) {
+      await this.ensureStripeRegistered();
+    }
+    return this.getAvailableProviders();
   }
 
   /**

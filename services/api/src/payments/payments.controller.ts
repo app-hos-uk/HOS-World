@@ -92,7 +92,7 @@ export class PaymentsController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Payment providers retrieved successfully' })
   async getProviders(): Promise<ApiResponse<string[]>> {
-    const providers = this.paymentsService.getAvailableProviders();
+    const providers = await this.paymentsService.getAvailableProviders();
     return {
       data: providers,
       message: 'Payment providers retrieved successfully',

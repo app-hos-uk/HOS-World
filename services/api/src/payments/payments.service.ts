@@ -126,7 +126,7 @@ export class PaymentsService {
     }
 
     const paymentMethod = createPaymentDto.paymentMethod || 'stripe';
-    const availableProviders = this.paymentProviderService.getAvailableProviders();
+    const availableProviders = await this.paymentProviderService.ensureAvailableProviders();
 
     if (availableProviders.length === 0) {
       throw new BadRequestException('No payment providers are available');
@@ -905,10 +905,10 @@ export class PaymentsService {
   }
 
   /**
-   * Get available payment providers
+   * Get available payment providers (ensures Stripe is initialized first).
    */
-  getAvailableProviders(): string[] {
-    return this.paymentProviderService.getAvailableProviders();
+  async getAvailableProviders(): Promise<string[]> {
+    return this.paymentProviderService.ensureAvailableProviders();
   }
 
   /**

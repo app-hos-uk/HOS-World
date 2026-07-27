@@ -87,11 +87,13 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
       this.webhookSecret = creds.webhookSecret?.trim() || null;
       this.circuitBreaker.reset();
       this.logger.log('Stripe provider initialized from admin integrations DB');
-    } catch {
+    } catch (err: any) {
       // Clear so callers can fall back to env instead of keeping a stale/invalid client.
       this.stripe = null;
       this.webhookSecret = null;
-      this.logger.log('Stripe integration not configured in admin — provider disabled');
+      this.logger.warn(
+        `Stripe integration not loaded from admin: ${err?.message || 'unknown error'}`,
+      );
     }
   }
 

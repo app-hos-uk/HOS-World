@@ -370,19 +370,30 @@ function PaymentForm({ order }: { order: any }) {
         } catch { /* API may not have config endpoint on older deploys */ }
       }
 
-      const response = await apiClient.getPaymentProviders();
-      if (response?.data && response.data.length > 0) {
-        const providers = stripePublishableKey.trim()
-          ? response.data
-          : response.data.filter((p: string) => p !== 'stripe');
-        if (providers.length > 0) {
-          setAvailableProviders(providers);
-          setSelectedProvider(providers[0]);
-        } else {
-          setAvailableProviders([]);
-          setSelectedProvider('');
-          toast.error('No payment methods are available. Please contact support.');
+      // Retry once — Stripe may still be initializing after an API restart.
+      let providerList: string[] = [];
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const response = await apiClient.getPaymentProviders();
+        providerList = Array.isArray(response?.data) ? response.data : [];
+        if (providerList.length > 0) break;
+        if (attempt === 0) {
+          await new Promise((r) => setTimeout(r, 800));
         }
+      }
+
+      const providers = stripePublishableKey.trim()
+        ? providerList
+        : providerList.filter((p: string) => p !== 'stripe');
+
+      // If API returned no providers but we have a publishable key, still offer Stripe —
+      // createPaymentIntent will surface a clearer error if the secret side is down.
+      if (providers.length === 0 && stripePublishableKey.trim()) {
+        providers.push('stripe');
+      }
+
+      if (providers.length > 0) {
+        setAvailableProviders(providers);
+        setSelectedProvider(providers[0]);
       } else {
         setAvailableProviders([]);
         setSelectedProvider('');
