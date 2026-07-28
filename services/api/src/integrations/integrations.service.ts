@@ -296,6 +296,12 @@ export class IntegrationsService {
       const existingCredentials = this.decryptCredentials(existing.credentials);
       const incoming = this.sanitizeCredentialUpdates(updateDto.credentials);
       mergedCredentials = { ...existingCredentials, ...incoming };
+
+      // Same Shippo/provider checks as create() whenever real credential fields change
+      if (Object.keys(incoming).length > 0) {
+        this.validateCredentials(existing.provider, mergedCredentials);
+      }
+
       updateData.credentials = this.encryptionService.encryptJson(mergedCredentials);
 
       // Shippo live/test is determined by the token prefix, not the UI checkbox alone.

@@ -228,13 +228,18 @@ export class CourierFactoryService implements OnModuleInit {
     try {
       return await provider.getRates(request);
     } catch (error: any) {
+      if (error instanceof BadRequestException || error instanceof BadGatewayException) {
+        throw error;
+      }
       const message = error?.message || `Failed to get rates from ${providerName}`;
       this.logger.warn(`getRates(${providerName}) failed: ${message}`);
-      // Carrier/config issues are client-fixable; avoid opaque 500s
+      // Only our local config/validation errors are 400; carrier API "not found" stays 502
+      const lower = message.toLowerCase();
       if (
-        message.toLowerCase().includes('not configured') ||
-        message.toLowerCase().includes('incomplete') ||
-        message.toLowerCase().includes('not found')
+        lower.includes('not configured') ||
+        lower.includes('incomplete') ||
+        lower.includes('looks masked') ||
+        lower.includes('must start with')
       ) {
         throw new BadRequestException(message);
       }
