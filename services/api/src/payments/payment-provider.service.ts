@@ -17,15 +17,21 @@ export class PaymentProviderService implements OnModuleInit {
   /**
    * Ensure Stripe is initialized from integrations/env and registered.
    * Safe to call repeatedly (e.g. from /payments/providers or refunds after a cold start miss).
+   * Pass forceReload after admin create/update/activate so rotated keys replace a live client.
    */
-  async ensureStripeRegistered(): Promise<void> {
-    if (!this.stripeProvider.isAvailable()) {
-      try {
-        // ensureReady: integrations first, then STRIPE_SECRET_KEY env fallback
+  async ensureStripeRegistered(options?: { forceReload?: boolean }): Promise<void> {
+    try {
+      if (options?.forceReload) {
+        // Always rebuild from DB (and re-enable env fallback after an admin activate/update)
+        await this.stripeProvider.ensureReady({
+          forceReload: true,
+          allowEnvFallback: true,
+        });
+      } else if (!this.stripeProvider.isAvailable()) {
         await this.stripeProvider.ensureReady();
-      } catch (err: any) {
-        this.logger.warn(`Stripe ensureReady failed: ${err?.message || err}`);
       }
+    } catch (err: any) {
+      this.logger.warn(`Stripe ensureReady failed: ${err?.message || err}`);
     }
 
     // Brief poll in case another init is still in flight
@@ -46,7 +52,8 @@ export class PaymentProviderService implements OnModuleInit {
 
   /** Clear Stripe from the registry (e.g. after admin deactivates the integration). */
   unregisterStripe(): void {
-    this.stripeProvider.clearClient();
+    // Disable env fallback so deactivate/delete actually stops Stripe until re-activated
+    this.stripeProvider.clearClient({ disableEnvFallback: true });
     if (this.providers.has('stripe')) {
       this.providers.delete('stripe');
       this.logger.warn('Stripe provider unregistered');

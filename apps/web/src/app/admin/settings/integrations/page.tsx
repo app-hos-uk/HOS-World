@@ -198,27 +198,16 @@ export default function IntegrationsPage() {
     return fallback;
   };
 
-  const displayedTestMode = (integration: Integration): boolean =>
-    integration.provider === 'stripe'
-      ? deriveStripeTestMode(
-          (integration.credentials || {}) as Record<string, string>,
-          integration.isTestMode,
-        )
-      : integration.isTestMode;
-
   const handleEditIntegration = (integration: Integration) => {
     setEditingIntegration(integration);
     setSelectedCategory(integration.category);
     setSelectedProvider(integration.provider);
-    // Prefer key-derived mode for Stripe (publishableKey is returned unmasked).
-    const inferredTestMode =
-      integration.provider === 'stripe'
-        ? deriveStripeTestMode(integration.credentials || {}, integration.isTestMode)
-        : integration.isTestMode;
+    // Trust API isTestMode (derived from decrypted secret server-side). Do not
+    // re-infer from masked credentials + publishableKey — that can flip Live→Test.
     setFormData({
       displayName: integration.displayName,
       description: integration.description || '',
-      isTestMode: inferredTestMode,
+      isTestMode: integration.isTestMode,
       credentials: {},
     });
     setShowAddModal(true);
@@ -429,12 +418,12 @@ export default function IntegrationsPage() {
                             <div className="flex items-center gap-2 mb-3">
                               <span
                                 className={`px-2 py-1 text-xs rounded ${
-                                  displayedTestMode(integration)
+                                  integration.isTestMode
                                     ? 'bg-yellow-500/15 text-yellow-300'
                                     : 'bg-hos-gold/20 text-hos-gold'
                                 }`}
                               >
-                                {displayedTestMode(integration) ? 'Test Mode' : 'Production'}
+                                {integration.isTestMode ? 'Test Mode' : 'Production'}
                               </span>
                               <span
                                 className={`px-2 py-1 text-xs rounded ${

@@ -56,8 +56,8 @@ export class IntegrationsController {
   private async reloadRuntimeProviders(integration: IntegrationResponseDto): Promise<void> {
     if (integration.provider === 'stripe' && this.paymentProviderService) {
       if (integration.isActive) {
-        // Await full re-init (integrations → env) so refunds/checkout see the new keys immediately
-        await this.paymentProviderService.ensureStripeRegistered();
+        // Force rebuild so rotated/saved keys replace any in-memory client
+        await this.paymentProviderService.ensureStripeRegistered({ forceReload: true });
       } else {
         this.paymentProviderService.unregisterStripe();
       }

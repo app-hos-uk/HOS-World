@@ -2193,6 +2193,7 @@ export class OrdersService {
       cardRefundAmount = Math.max(0, Number(order.total) - giftCardTotal);
 
       stripeRefundSucceeded = false;
+      let stripeRefundPending = false;
       if (cardRefundAmount > 0 && this.paymentProviderService) {
         try {
           await this.paymentProviderService.ensureAvailableProviders();
@@ -2208,6 +2209,13 @@ export class OrdersService {
               stripeRefundId = result.refundId;
               this.logger.log(
                 `Stripe refund of ${cardRefundAmount} succeeded for cancelled order ${order.orderNumber}`,
+              );
+            } else if (result?.status === 'pending') {
+              // Accepted by Stripe but not settled — keep REFUNDED; do not revert to PAID
+              stripeRefundPending = true;
+              stripeRefundId = result.refundId;
+              this.logger.warn(
+                `Stripe refund pending for cancelled order ${order.orderNumber} (refundId=${stripeRefundId})`,
               );
             } else {
               this.logger.warn(
@@ -2227,8 +2235,9 @@ export class OrdersService {
         stripeRefundSucceeded = true;
       }
 
-      // If Stripe refund did not succeed, revert paymentStatus to PAID so admin knows manual action is needed
-      if (!stripeRefundSucceeded) {
+      // Hard failure only: revert paymentStatus to PAID so admin knows manual action is needed.
+      // Pending refunds stay REFUNDED (funds in flight at Stripe).
+      if (!stripeRefundSucceeded && !stripeRefundPending) {
         await this.prisma.order.update({
           where: { id },
           data: { paymentStatus: 'PAID' as PrismaPaymentStatus },

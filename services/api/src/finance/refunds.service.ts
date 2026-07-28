@@ -226,6 +226,30 @@ export class RefundsService {
         });
         await this.updatePaymentRefundTotal(returnRequest.orderId, data.amount);
         this.logger.log(`Refund processed via Stripe for return ${data.returnId}`);
+      } else if (result?.status === 'pending') {
+        // Refund accepted by Stripe but not settled — keep PENDING; do not ledger/totals yet
+        stripeRefundId = result.refundId;
+        stripeError = result.error || 'Stripe refund is pending confirmation';
+        await this.transactionsService.updateTransactionStatus(transaction.id, 'PENDING', {
+          reason: stripeError,
+        });
+        await this.prisma.transaction.update({
+          where: { id: transaction.id },
+          data: {
+            metadata: {
+              returnRequestId: data.returnId,
+              retryAttempt,
+              source: 'return_refund',
+              stripeRefundId,
+              cardRefundAmount,
+              giftCardRefundAmount,
+              stripeStatus: 'pending',
+            },
+          },
+        });
+        this.logger.warn(
+          `Stripe refund pending for return ${data.returnId} (refundId=${stripeRefundId})`,
+        );
       } else {
         stripeError = result?.error || 'Payment provider refund was not successful';
         await this.transactionsService.updateTransactionStatus(transaction.id, 'FAILED', {

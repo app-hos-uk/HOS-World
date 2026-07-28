@@ -26,6 +26,8 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
   private readonly logger = new Logger(StripeProvider.name);
   private stripe: Stripe | null = null;
   private webhookSecret: string | null = null;
+  /** When false, skip STRIPE_SECRET_KEY fallback (admin deactivated/deleted Stripe). */
+  private allowEnvFallback = true;
   private readonly circuitBreaker = new CircuitBreaker({
     name: 'stripe',
     failureThreshold: 5,
@@ -41,7 +43,7 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
   async onModuleInit() {
     // Prefer admin integrations; env is fallback only. Never keep placeholder keys.
     await this.initFromIntegrations();
-    if (!this.stripe) {
+    if (!this.stripe && this.allowEnvFallback) {
       this.initFromEnv();
     }
   }
@@ -91,9 +93,14 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
       // Clear so callers can fall back to env instead of keeping a stale/invalid client.
       this.stripe = null;
       this.webhookSecret = null;
-      this.logger.warn(
-        `Stripe integration not loaded from admin: ${err?.message || 'unknown error'}`,
-      );
+      const message = String(err?.message || 'unknown error');
+      // Admin deactivated Stripe — do not resurrect via STRIPE_SECRET_KEY
+      if (message.toLowerCase().includes('not active')) {
+        this.allowEnvFallback = false;
+        this.logger.warn('Stripe integration is inactive — env fallback disabled');
+        return;
+      }
+      this.logger.warn(`Stripe integration not loaded from admin: ${message}`);
     }
   }
 
@@ -103,32 +110,45 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
 
   /**
    * Public entry for payment-provider / admin reload paths.
-   * Loads integrations first, then falls back to env vars.
+   * Loads integrations first, then falls back to env vars (unless disabled).
    */
-  async ensureReady(): Promise<boolean> {
-    await this.ensureStripeClient();
+  async ensureReady(options?: {
+    forceReload?: boolean;
+    allowEnvFallback?: boolean;
+  }): Promise<boolean> {
+    if (options?.allowEnvFallback !== undefined) {
+      this.allowEnvFallback = options.allowEnvFallback;
+    }
+    if (options?.forceReload) {
+      await this.reloadStripeClient();
+    } else {
+      await this.ensureStripeClient();
+    }
     return this.isAvailable();
   }
 
   /** Drop the in-memory client (e.g. Stripe integration deactivated). */
-  clearClient(): void {
+  clearClient(options?: { disableEnvFallback?: boolean }): void {
     this.stripe = null;
     this.webhookSecret = null;
     this.circuitBreaker.reset();
+    if (options?.disableEnvFallback) {
+      this.allowEnvFallback = false;
+    }
   }
 
   private async ensureStripeClient(): Promise<void> {
     if (this.stripe) return;
     await this.initFromIntegrations();
-    if (!this.stripe) this.initFromEnv();
+    if (!this.stripe && this.allowEnvFallback) this.initFromEnv();
   }
 
-  /** Discard current client and rebuild from integrations, then env. */
+  /** Discard current client and rebuild from integrations, then env (if allowed). */
   private async reloadStripeClient(): Promise<void> {
     this.stripe = null;
     this.webhookSecret = null;
     await this.initFromIntegrations();
-    if (!this.stripe) this.initFromEnv();
+    if (!this.stripe && this.allowEnvFallback) this.initFromEnv();
   }
 
   private isStripeAuthError(error: any): boolean {
@@ -295,8 +315,9 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
         }
       }
 
+      // Only succeeded is success — pending must not complete ledger/totals early.
       return {
-        success: refund.status === 'succeeded' || refund.status === 'pending',
+        success: refund.status === 'succeeded',
         refundId: refund.id,
         amount: refund.amount / 100,
         status:
@@ -306,6 +327,12 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
               ? 'pending'
               : 'failed',
         metadata: refund.metadata,
+        error:
+          refund.status === 'pending'
+            ? 'Stripe refund is pending confirmation'
+            : refund.status === 'succeeded'
+              ? undefined
+              : `Stripe refund status: ${refund.status}`,
       };
     } catch (error: any) {
       this.logger.error('Failed to refund Stripe payment:', error);
