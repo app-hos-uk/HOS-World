@@ -1,4 +1,10 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  BadGatewayException,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { EncryptionService } from '../../integrations/encryption.service';
 import {
@@ -55,8 +61,12 @@ export class CourierFactoryService implements OnModuleInit {
         orderBy: { priority: 'desc' },
       });
 
-      this.providers.clear();
-      this.providerConfigs.clear();
+      // Build next maps then swap atomically — avoids empty-map race during refresh
+      const nextProviders = new Map<string, ICourierProvider>();
+      const nextConfigs = new Map<
+        string,
+        { isActive: boolean; isTestMode: boolean; priority: number }
+      >();
 
       for (const integration of integrations) {
         try {
@@ -68,8 +78,8 @@ export class CourierFactoryService implements OnModuleInit {
           );
 
           if (provider && provider.isConfigured()) {
-            this.providers.set(integration.provider, provider);
-            this.providerConfigs.set(integration.provider, {
+            nextProviders.set(integration.provider, provider);
+            nextConfigs.set(integration.provider, {
               isActive: integration.isActive,
               isTestMode: integration.isTestMode,
               priority: integration.priority,
@@ -77,11 +87,18 @@ export class CourierFactoryService implements OnModuleInit {
             this.logger.log(
               `Loaded shipping provider: ${integration.provider} (${integration.isTestMode ? 'test' : 'production'})`,
             );
+          } else if (integration.provider === 'shippo') {
+            this.logger.warn(
+              'Shippo integration found but apiToken is missing/invalid/masked — provider not loaded. Re-save a shippo_live_ or shippo_test_ token.',
+            );
           }
         } catch (error: any) {
           this.logger.error(`Failed to load provider ${integration.provider}: ${error.message}`);
         }
       }
+
+      this.providers = nextProviders;
+      this.providerConfigs = nextConfigs;
 
       this.logger.log(`Loaded ${this.providers.size} shipping providers`);
     } catch (error: any) {
@@ -202,10 +219,27 @@ export class CourierFactoryService implements OnModuleInit {
   async getRates(providerName: string, request: RateRequest): Promise<RateResponse[]> {
     const provider = this.getProvider(providerName);
     if (!provider) {
-      throw new Error(`Provider ${providerName} not found or not active`);
+      throw new BadRequestException(
+        `Provider ${providerName} not found or not active. ` +
+          `Active providers: ${this.getAvailableProviderNames().join(', ') || 'none'}`,
+      );
     }
 
-    return provider.getRates(request);
+    try {
+      return await provider.getRates(request);
+    } catch (error: any) {
+      const message = error?.message || `Failed to get rates from ${providerName}`;
+      this.logger.warn(`getRates(${providerName}) failed: ${message}`);
+      // Carrier/config issues are client-fixable; avoid opaque 500s
+      if (
+        message.toLowerCase().includes('not configured') ||
+        message.toLowerCase().includes('incomplete') ||
+        message.toLowerCase().includes('not found')
+      ) {
+        throw new BadRequestException(message);
+      }
+      throw new BadGatewayException(`Shipping rate lookup failed (${providerName}): ${message}`);
+    }
   }
 
   /**

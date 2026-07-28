@@ -203,13 +203,14 @@ export class ShippingService {
           shippingRate = this.calculateRateByType(method.type, matchingRule, cartValue, weight);
           const skipMinimumFloor =
             method.type === 'FREE_SHIPPING' || method.type === 'PICKUP_IN_STORE';
+          const minimumCharge = Number(matchingRule.minimumCharge);
           if (
             !skipMinimumFloor &&
-            matchingRule.minimumCharge != null &&
-            Number(matchingRule.minimumCharge) > 0 &&
-            shippingRate.lt(matchingRule.minimumCharge)
+            Number.isFinite(minimumCharge) &&
+            minimumCharge > 0 &&
+            shippingRate.lt(minimumCharge)
           ) {
-            shippingRate = new Decimal(matchingRule.minimumCharge);
+            shippingRate = new Decimal(minimumCharge);
           }
         }
 

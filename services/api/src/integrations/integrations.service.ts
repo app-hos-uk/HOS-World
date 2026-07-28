@@ -585,14 +585,31 @@ export class IntegrationsService {
       return; // Unknown provider, skip validation
     }
 
-    const missing = metadata.requiredCredentials.filter(
-      (field) => !credentials[field] || credentials[field].trim() === '',
-    );
+    const missing = metadata.requiredCredentials.filter((field) => {
+      const value = credentials[field];
+      if (value === undefined || value === null) return true;
+      if (typeof value === 'string') return value.trim() === '';
+      return false;
+    });
 
     if (missing.length > 0) {
       throw new BadRequestException(
         `Missing required credentials for ${provider}: ${missing.join(', ')}`,
       );
+    }
+
+    if (provider === 'shippo') {
+      const token = String(credentials.apiToken || '').trim();
+      if (this.encryptionService.isMaskedSecret(token)) {
+        throw new BadRequestException(
+          'Shippo apiToken looks masked. Paste the full shippo_live_… or shippo_test_… token.',
+        );
+      }
+      if (!token.startsWith('shippo_live_') && !token.startsWith('shippo_test_')) {
+        throw new BadRequestException(
+          'Shippo apiToken must start with shippo_live_ or shippo_test_',
+        );
+      }
     }
   }
 

@@ -69,7 +69,11 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
   }
 
   isConfigured(): boolean {
-    return !!this.credentials.apiToken?.trim();
+    const token = String(this.credentials?.apiToken || '').trim();
+    if (!token) return false;
+    // Reject masked admin-UI values accidentally persisted earlier
+    if (token === '****' || /^\*{4,}[^*]+$/.test(token)) return false;
+    return token.startsWith('shippo_test_') || token.startsWith('shippo_live_');
   }
 
   protected getBaseUrl(): string {
@@ -103,45 +107,101 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
     }
 
     if (!response.ok) {
-      const message =
-        data?.detail ||
-        data?.message ||
-        (Array.isArray(data?.messages) ? data.messages.map((m: any) => m.text).join('; ') : null) ||
-        text ||
-        `Shippo API error (${response.status})`;
-      throw new Error(message);
+      throw new Error(this.formatShippoError(data, text, response.status));
     }
 
     return data;
   }
 
+  private formatShippoError(data: any, text: string, status: number): string {
+    if (typeof data?.detail === 'string' && data.detail.trim()) return data.detail;
+    if (typeof data?.message === 'string' && data.message.trim()) return data.message;
+    if (Array.isArray(data?.messages) && data.messages.length) {
+      const joined = data.messages
+        .map((m: any) => (typeof m === 'string' ? m : m?.text))
+        .filter(Boolean)
+        .join('; ');
+      if (joined) return joined;
+    }
+    if (data && typeof data === 'object') {
+      const fieldErrors = Object.entries(data)
+        .filter(([key]) => !['detail', 'message', 'messages'].includes(key))
+        .map(([key, value]) => {
+          const rendered = Array.isArray(value)
+            ? value.map((v) => (typeof v === 'string' ? v : JSON.stringify(v))).join(', ')
+            : typeof value === 'string'
+              ? value
+              : JSON.stringify(value);
+          return `${key}: ${rendered}`;
+        })
+        .filter((part) => part.length < 300)
+        .slice(0, 8)
+        .join('; ');
+      if (fieldErrors) return fieldErrors;
+    }
+    if (text?.trim()) return text.trim().slice(0, 500);
+    return `Shippo API error (${status})`;
+  }
+
   private toShippoAddress(address: Address): ShippoAddress {
+    const country = String(address.country || '')
+      .trim()
+      .toUpperCase();
+    // Shippo expects ISO 2-letter country codes
+    const normalizedCountry =
+      country === 'USA' || country === 'UNITED STATES' ? 'US' : country === 'UK' || country === 'GBR' ? 'GB' : country;
+
     return {
-      name: address.name,
+      name: address.name || 'Recipient',
       company: address.company,
       street1: address.street1,
       street2: address.street2,
       city: address.city,
       state: address.state,
       zip: address.postalCode,
-      country: address.country,
+      country: normalizedCountry,
       phone: address.phone,
       email: address.email,
     };
   }
 
+  private safePositive(value: unknown, fallback: number): number {
+    const n = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+  }
+
   private toShippoParcels(packages: RateRequest['packages']): ShippoParcel[] {
-    return packages.map((pkg) => ({
-      length: String(Math.max(1, Math.ceil(pkg.length))),
-      width: String(Math.max(1, Math.ceil(pkg.width))),
-      height: String(Math.max(1, Math.ceil(pkg.height))),
+    const list = Array.isArray(packages) && packages.length > 0 ? packages : [{ length: 30, width: 20, height: 10, weight: 1 }];
+    return list.map((pkg) => ({
+      length: String(Math.max(1, Math.ceil(this.safePositive(pkg.length, 30)))),
+      width: String(Math.max(1, Math.ceil(this.safePositive(pkg.width, 20)))),
+      height: String(Math.max(1, Math.ceil(this.safePositive(pkg.height, 10)))),
       distance_unit: 'cm',
-      weight: String(Math.max(0.01, pkg.weight)),
+      weight: String(Math.max(0.01, this.safePositive(pkg.weight, 1))),
       mass_unit: 'kg',
     }));
   }
 
+  private assertAddress(label: string, address: Address): void {
+    const missing: string[] = [];
+    if (!address?.street1?.trim()) missing.push('street');
+    if (!address?.city?.trim()) missing.push('city');
+    if (!address?.postalCode?.trim()) missing.push('postal code');
+    if (!address?.country?.trim()) missing.push('country');
+    if (missing.length) {
+      throw new Error(`Shippo ${label} address is incomplete (missing ${missing.join(', ')})`);
+    }
+  }
+
   private async createShippoShipment(request: RateRequest): Promise<any> {
+    if (!this.isConfigured()) {
+      throw new Error(
+        'Shippo is not configured with a valid API token (expected shippo_live_… or shippo_test_…). Re-save the token in Admin → Integrations → Shipping.',
+      );
+    }
+    this.assertAddress('origin', request.from);
+    this.assertAddress('destination', request.to);
+
     return this.apiRequest('/shipments/', 'POST', {
       address_from: this.toShippoAddress(request.from),
       address_to: this.toShippoAddress(request.to),

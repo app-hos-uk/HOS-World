@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  BadGatewayException,
   Injectable,
   Logger,
   NotFoundException,
@@ -48,11 +49,22 @@ export class OrderShippingService {
     const { packages, from, to } = await this.buildShipmentContext(orderId);
 
     const provider = this.resolveProvider(providerName);
-    if (provider) {
-      return this.courierFactory.getRates(provider, { from, to, packages });
+    if (!provider) {
+      throw new BadRequestException(
+        'No active shipping provider configured. Add Shippo under Admin → Integrations → Shipping and ensure the API token is saved (shippo_live_… or shippo_test_…).',
+      );
     }
 
-    return this.courierFactory.getAllRates({ from, to, packages });
+    try {
+      return await this.courierFactory.getRates(provider, { from, to, packages });
+    } catch (error: any) {
+      if (error instanceof BadRequestException || error instanceof BadGatewayException) {
+        throw error;
+      }
+      throw new BadGatewayException(
+        error?.message || 'Failed to fetch shipping rates from carrier',
+      );
+    }
   }
 
   async shipOrder(
@@ -389,15 +401,20 @@ export class OrderShippingService {
       return [DEFAULT_PACKAGE];
     }
 
+    const safeDim = (value: unknown, fallback: number) => {
+      const n = Number(value);
+      return Number.isFinite(n) && n > 0 ? n : fallback;
+    };
+
     const packages: PackageDimensions[] = items.map((item) => {
       const product = item.product;
-      const qty = Math.max(1, item.quantity || 1);
-      const unitWeight = product?.weight ? Number(product.weight) : 0.5;
+      const qty = Math.max(1, Number(item.quantity) || 1);
+      const unitWeight = product?.weight != null ? safeDim(product.weight, 0.5) : 0.5;
 
       return {
-        length: product?.length ? Number(product.length) : DEFAULT_PACKAGE.length,
-        width: product?.width ? Number(product.width) : DEFAULT_PACKAGE.width,
-        height: product?.height ? Number(product.height) : DEFAULT_PACKAGE.height,
+        length: product?.length != null ? safeDim(product.length, DEFAULT_PACKAGE.length) : DEFAULT_PACKAGE.length,
+        width: product?.width != null ? safeDim(product.width, DEFAULT_PACKAGE.width) : DEFAULT_PACKAGE.width,
+        height: product?.height != null ? safeDim(product.height, DEFAULT_PACKAGE.height) : DEFAULT_PACKAGE.height,
         weight: Math.max(0.01, unitWeight * qty),
       };
     });
