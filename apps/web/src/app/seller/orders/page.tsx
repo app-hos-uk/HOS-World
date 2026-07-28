@@ -170,7 +170,11 @@ export default function SellerOrdersPage() {
     return payload;
   };
 
-  const syncShippingState = (order: Order, carriers: ShippingCarrierOption[] = shippingCarriers) => {
+  const syncShippingState = (
+    order: Order,
+    carriers: ShippingCarrierOption[] = shippingCarriers,
+    hasShippo: boolean = shippoAvailable,
+  ) => {
     const shipping = applyShippingFromOrder(order, carriers);
     setTrackingNumber(shipping.trackingNumber);
     setShippingCarrier(shipping.carrier);
@@ -179,10 +183,13 @@ export default function SellerOrdersPage() {
     setEstimatedDelivery(shipping.estimatedDelivery);
     setShippingRates([]);
     setSelectedRate(null);
-    setShippingMode(shipping.trackingNumber || !shippoAvailable ? 'manual' : 'shippo');
+    setShippingMode(shipping.trackingNumber || !hasShippo ? 'manual' : 'shippo');
   };
 
-  const fetchShippingCarriers = useCallback(async () => {
+  const fetchShippingCarriers = useCallback(async (): Promise<{
+    carriers: ShippingCarrierOption[];
+    hasShippo: boolean;
+  }> => {
     try {
       setLoadingCarriers(true);
       const [carriersRes, providersRes] = await Promise.all([
@@ -200,12 +207,12 @@ export default function SellerOrdersPage() {
       if (!hasShippo) {
         setShippingMode('manual');
       }
-      return carriers;
+      return { carriers, hasShippo };
     } catch {
       setShippingCarriers([]);
       setShippoAvailable(false);
       setShippingMode('manual');
-      return [];
+      return { carriers: [], hasShippo: false };
     } finally {
       setLoadingCarriers(false);
     }
@@ -299,16 +306,30 @@ export default function SellerOrdersPage() {
 
   // Auto-open order details when deep-linked via ?id= param
   useEffect(() => {
-    if (deepLinkId && allOrders.length > 0 && !selectedOrder) {
-      const target = allOrders.find(o => o.id === deepLinkId);
-      if (target) {
-        setSelectedOrder(target);
-        syncShippingState(target);
-        setShowDetailsModal(true);
-        setDeepLinkId(null);
+    if (!deepLinkId || allOrders.length === 0 || selectedOrder) return;
+    const target = allOrders.find((o) => o.id === deepLinkId);
+    if (!target) return;
+
+    let cancelled = false;
+    (async () => {
+      let carriers = shippingCarriers;
+      let hasShippo = shippoAvailable;
+      if (carriers.length === 0) {
+        const fetched = await fetchShippingCarriers();
+        carriers = fetched.carriers;
+        hasShippo = fetched.hasShippo;
       }
-    }
-  }, [deepLinkId, allOrders, selectedOrder]);
+      if (cancelled) return;
+      setSelectedOrder(target);
+      syncShippingState(target, carriers, hasShippo);
+      setShowDetailsModal(true);
+      setDeepLinkId(null);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [deepLinkId, allOrders, selectedOrder, shippingCarriers, shippoAvailable, fetchShippingCarriers]);
 
   // Calculate stats from all orders
   const stats = useMemo(() => {
@@ -344,9 +365,14 @@ export default function SellerOrdersPage() {
     setSelectedOrder(order);
     setRejectionReason('');
     setShowDetailsModal(true);
-    const carriers =
-      shippingCarriers.length > 0 ? shippingCarriers : await fetchShippingCarriers();
-    syncShippingState(order, carriers);
+    let carriers = shippingCarriers;
+    let hasShippo = shippoAvailable;
+    if (carriers.length === 0) {
+      const fetched = await fetchShippingCarriers();
+      carriers = fetched.carriers;
+      hasShippo = fetched.hasShippo;
+    }
+    syncShippingState(order, carriers, hasShippo);
     try {
       const response = await apiClient.getCancellationRequestByOrder(order.id);
       setOrderCancellationRequest(response?.data || null);
@@ -515,8 +541,16 @@ export default function SellerOrdersPage() {
       toast.error('Please select a shipping carrier before marking as shipped');
       return;
     }
-    if (normalized === 'SHIPPED' && shippingCarrier === 'Other' && !customCarrier.trim()) {
+    if (
+      normalized === 'SHIPPED' &&
+      selectedCarrierOption?.allowCustomName &&
+      !customCarrier.trim()
+    ) {
       toast.error('Please enter the carrier name before marking as shipped');
+      return;
+    }
+    if (normalized === 'SHIPPED' && !resolveCarrier()) {
+      toast.error('Please select a shipping carrier before marking as shipped');
       return;
     }
     
@@ -1179,7 +1213,7 @@ export default function SellerOrdersPage() {
                                   );
                                 }
                               }}
-                              disabled={loadingCarriers || shippingCarriers.length === 0}
+                              disabled={loadingCarriers || (shippingCarriers.length === 0 && !shippingCarrier)}
                               className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none disabled:opacity-60"
                             >
                               <option value="">
@@ -1194,6 +1228,10 @@ export default function SellerOrdersPage() {
                                   {carrier.name}
                                 </option>
                               ))}
+                              {shippingCarrier &&
+                                !shippingCarriers.some((c) => c.name === shippingCarrier) && (
+                                  <option value={shippingCarrier}>{shippingCarrier}</option>
+                                )}
                             </select>
                             {shippingCarriers.length === 0 && !loadingCarriers && (
                               <p className="text-xs text-amber-400 mt-1">
