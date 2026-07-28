@@ -143,13 +143,58 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
     return `Shippo API error (${status})`;
   }
 
+  /**
+   * Fix common bad inputs like postalCode="NY 10036" (state mashed into ZIP).
+   * USPS/Shippo require zip like 10036 or 10036-1234 only.
+   */
+  private normalizePostalAndState(
+    postalCode?: string,
+    state?: string,
+    country?: string,
+  ): { zip: string; state?: string } {
+    const rawZip = String(postalCode || '').trim();
+    let nextState = state?.trim() || undefined;
+    const isUs = ['US', 'USA', 'UNITED STATES'].includes(String(country || '').trim().toUpperCase());
+
+    // "NY 10036" / "NY10036" / "ny-10036"
+    const stateZip = rawZip.match(/^([A-Za-z]{2})[\s,.-]*(\d{5}(?:[-\s]?\d{4})?)$/);
+    if (stateZip) {
+      if (!nextState) nextState = stateZip[1].toUpperCase();
+      return { zip: stateZip[2].replace(/\s+/g, '-'), state: nextState };
+    }
+
+    // Pull a ZIP out of mixed strings ("New York NY 10036")
+    const zipOnly = rawZip.match(/\b(\d{5}(?:[-\s]?\d{4})?)\b/);
+    if (zipOnly) {
+      return { zip: zipOnly[1].replace(/\s+/g, '-'), state: nextState };
+    }
+
+    if (isUs && rawZip && !/^\d{5}(-\d{4})?$/.test(rawZip)) {
+      this.logger.warn(
+        `Suspicious US postal code "${rawZip}" — carriers may return 0 rates. Expected 5-digit ZIP.`,
+      );
+    }
+
+    return { zip: rawZip, state: nextState };
+  }
+
   private toShippoAddress(address: Address): ShippoAddress {
     const country = String(address.country || '')
       .trim()
       .toUpperCase();
     // Shippo expects ISO 2-letter country codes
     const normalizedCountry =
-      country === 'USA' || country === 'UNITED STATES' ? 'US' : country === 'UK' || country === 'GBR' ? 'GB' : country;
+      country === 'USA' || country === 'UNITED STATES'
+        ? 'US'
+        : country === 'UK' || country === 'GBR'
+          ? 'GB'
+          : country;
+
+    const { zip, state } = this.normalizePostalAndState(
+      address.postalCode,
+      address.state,
+      normalizedCountry,
+    );
 
     return {
       name: address.name || 'Recipient',
@@ -157,8 +202,8 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
       street1: address.street1,
       street2: address.street2,
       city: address.city,
-      state: address.state,
-      zip: address.postalCode,
+      state,
+      zip,
       country: normalizedCountry,
       phone: address.phone,
       email: address.email,
@@ -314,12 +359,25 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
       this.logger.warn(
         `Shippo returned 0 rates (token=${tokenMode}). ${messages || 'No carrier messages returned.'}`,
       );
-    } else {
-      const testCount = mapped.filter((r) => r.metadata?.shippoTest === true).length;
-      this.logger.log(
-        `Shippo returned ${mapped.length} rates (token=${tokenMode}, testFlag=${testCount}/${mapped.length})`,
+
+      const zipHint =
+        /originZIPCode|postal|zip/i.test(messages) || /[A-Z]{2}\s+\d{5}/.test(messages)
+          ? ' Origin/destination ZIP must be digits only (e.g. 10036), not "NY 10036".'
+          : '';
+      const tokenHint =
+        tokenMode === 'test'
+          ? ' A shippo_test_ token is configured — use shippo_live_ for production carrier rates.'
+          : '';
+      const detail = messages ? ` Details: ${messages.slice(0, 350)}` : '';
+      throw new Error(
+        `Shippo returned no rates for this shipment.${zipHint}${tokenHint}${detail}`.trim(),
       );
     }
+
+    const testCount = mapped.filter((r) => r.metadata?.shippoTest === true).length;
+    this.logger.log(
+      `Shippo returned ${mapped.length} rates (token=${tokenMode}, testFlag=${testCount}/${mapped.length})`,
+    );
 
     return mapped;
   }

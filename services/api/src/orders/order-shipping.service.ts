@@ -300,17 +300,45 @@ export class OrderShippingService {
     country: string;
     phone?: string | null;
   }): Address {
+    const { postalCode, state } = this.normalizePostalAndState(
+      addr.postalCode,
+      addr.state || undefined,
+      addr.country,
+    );
     return {
       name: `${addr.firstName} ${addr.lastName}`.trim(),
       company: addr.company || undefined,
       street1: addr.street,
       street2: addr.addressLine2 || undefined,
       city: addr.city,
-      state: addr.state || undefined,
-      postalCode: addr.postalCode,
+      state,
+      postalCode,
       country: addr.country,
       phone: addr.phone || undefined,
     };
+  }
+
+  /** Fix postalCode values like "NY 10036" that break USPS/Shippo ZIP validation. */
+  private normalizePostalAndState(
+    postalCode?: string | null,
+    state?: string | null,
+    _country?: string | null,
+  ): { postalCode: string; state?: string } {
+    const rawZip = String(postalCode || '').trim();
+    let nextState = state?.trim() || undefined;
+
+    const stateZip = rawZip.match(/^([A-Za-z]{2})[\s,.-]*(\d{5}(?:[-\s]?\d{4})?)$/);
+    if (stateZip) {
+      if (!nextState) nextState = stateZip[1].toUpperCase();
+      return { postalCode: stateZip[2].replace(/\s+/g, '-'), state: nextState };
+    }
+
+    const zipOnly = rawZip.match(/\b(\d{5}(?:[-\s]?\d{4})?)\b/);
+    if (zipOnly) {
+      return { postalCode: zipOnly[1].replace(/\s+/g, '-'), state: nextState };
+    }
+
+    return { postalCode: rawZip, state: nextState };
   }
 
   private async resolveFromAddress(order: any, fromAddressId?: string): Promise<Address> {
@@ -357,14 +385,19 @@ export class OrderShippingService {
           : null);
       if (!from?.street1 && !from?.street) return null;
 
+      const { postalCode, state } = this.normalizePostalAndState(
+        from.postalCode || from.zip,
+        from.state,
+        from.country,
+      );
       return {
         name: from.name || 'House of Spells',
         company: from.company,
         street1: from.street1 || from.street,
         street2: from.street2 || from.addressLine2,
         city: from.city,
-        state: from.state,
-        postalCode: from.postalCode || from.zip,
+        state,
+        postalCode,
         country: from.country,
         phone: from.phone,
         email: from.email,

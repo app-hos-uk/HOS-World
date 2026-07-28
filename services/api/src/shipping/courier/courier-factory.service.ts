@@ -255,7 +255,9 @@ export class CourierFactoryService implements OnModuleInit {
         lower.includes('not configured') ||
         lower.includes('incomplete') ||
         lower.includes('looks masked') ||
-        lower.includes('must start with')
+        lower.includes('must start with') ||
+        lower.includes('address rejected') ||
+        lower.includes('returned no rates')
       ) {
         throw new BadRequestException(message);
       }
