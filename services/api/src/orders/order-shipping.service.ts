@@ -94,15 +94,39 @@ export class OrderShippingService {
       );
     }
 
-    const response = await this.courierFactory.createShipment(providerName, {
-      orderId: order.id,
-      from,
-      to,
-      packages,
-      serviceCode: options.serviceCode || '',
-      reference1: order.orderNumber || order.id,
-      labelFormat: 'PDF',
-    });
+    const fromWithContact = this.ensureShipFromContact(from, order);
+    const toWithContact = {
+      ...to,
+      phone: to.phone || order.shippingAddress?.phone || undefined,
+      email: to.email || undefined,
+    };
+
+    if (!fromWithContact.phone?.trim() || !fromWithContact.email?.trim()) {
+      throw new BadRequestException(
+        'Origin address needs both phone and email for carrier labels (USPS requirement). ' +
+          'Set seller Ops Contact phone/email, or Shippo fromPhone/fromEmail under Admin → Integrations → Shipping.',
+      );
+    }
+
+    let response;
+    try {
+      response = await this.courierFactory.createShipment(providerName, {
+        orderId: order.id,
+        from: fromWithContact,
+        to: toWithContact,
+        packages,
+        serviceCode: options.serviceCode || '',
+        reference1: order.orderNumber || order.id,
+        labelFormat: 'PDF',
+      });
+    } catch (error: any) {
+      if (error instanceof BadRequestException || error instanceof BadGatewayException) {
+        throw error;
+      }
+      throw new BadGatewayException(
+        error?.message || 'Failed to purchase shipping label',
+      );
+    }
 
     const carrier =
       (response.metadata?.carrier as string | undefined) ||
@@ -268,6 +292,11 @@ export class OrderShippingService {
         seller: {
           select: {
             warehouseAddressId: true,
+            storeName: true,
+            opsContactName: true,
+            opsContactEmail: true,
+            opsContactPhone: true,
+            user: { select: { email: true, phone: true } },
           },
         },
       },
@@ -346,7 +375,18 @@ export class OrderShippingService {
     if (addressId) {
       const warehouse = await this.prisma.address.findUnique({ where: { id: addressId } });
       if (warehouse) {
-        return this.addressFromRecord(warehouse);
+        const base = this.addressFromRecord(warehouse);
+        // Warehouse addresses often lack email; prefer ops/user contact for carriers
+        return {
+          ...base,
+          name:
+            order.seller?.opsContactName?.trim() ||
+            base.name ||
+            order.seller?.storeName ||
+            'Shipper',
+          phone: base.phone || order.seller?.opsContactPhone || order.seller?.user?.phone || undefined,
+          email: base.email || order.seller?.opsContactEmail || order.seller?.user?.email || undefined,
+        };
       }
     }
 
@@ -359,6 +399,27 @@ export class OrderShippingService {
     throw new BadRequestException(
       'No origin address configured. Set a seller warehouse address or configure Shippo fromAddress in integrations.',
     );
+  }
+
+  /** Ensure Shippo/USPS get phone + email on the from address. */
+  private ensureShipFromContact(from: Address, order: any): Address {
+    const envPhone = this.configService.get<string>('SHIPPO_FROM_PHONE')?.trim();
+    const envEmail = this.configService.get<string>('SHIPPO_FROM_EMAIL')?.trim();
+    return {
+      ...from,
+      phone:
+        from.phone?.trim() ||
+        order.seller?.opsContactPhone?.trim() ||
+        order.seller?.user?.phone?.trim() ||
+        envPhone ||
+        undefined,
+      email:
+        from.email?.trim() ||
+        order.seller?.opsContactEmail?.trim() ||
+        order.seller?.user?.email?.trim() ||
+        envEmail ||
+        undefined,
+    };
   }
 
   private async getShippoDefaultFromAddress(): Promise<Address | null> {

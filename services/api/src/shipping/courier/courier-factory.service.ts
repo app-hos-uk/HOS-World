@@ -271,7 +271,10 @@ export class CourierFactoryService implements OnModuleInit {
   async createShipment(providerName: string, request: ShipmentRequest): Promise<ShipmentResponse> {
     const provider = this.getProvider(providerName);
     if (!provider) {
-      throw new Error(`Provider ${providerName} not found or not active`);
+      throw new BadRequestException(
+        `Provider ${providerName} not found or not active. ` +
+          `Active providers: ${this.getAvailableProviderNames().join(', ') || 'none'}`,
+      );
     }
 
     await this.logApiCall(providerName, 'CREATE_SHIPMENT', request.orderId);
@@ -294,15 +297,35 @@ export class CourierFactoryService implements OnModuleInit {
       });
       return response;
     } catch (error: any) {
+      if (error instanceof BadRequestException || error instanceof BadGatewayException) {
+        throw error;
+      }
+      const message = error?.message || 'Unknown carrier error';
       await this.logApiCall(providerName, 'CREATE_SHIPMENT_FAILED', request.orderId, {
-        error: error.message,
+        error: message,
       });
-      if (error.message?.includes('label') || error.message?.includes('Label')) {
-        throw new Error(
-          `Shipping label generation failed for ${providerName}. Order ${request.orderId} was not shipped. Please retry or choose another carrier.`,
+      this.logger.warn(`createShipment(${providerName}) failed: ${message}`);
+
+      const lower = message.toLowerCase();
+      // Config / account / address problems — surface the real Shippo text (was previously
+      // rewritten to a generic message because it matched the word "Label").
+      if (
+        lower.includes('email') ||
+        lower.includes('phone') ||
+        lower.includes('past due') ||
+        lower.includes('invoice') ||
+        lower.includes('incomplete') ||
+        lower.includes('not configured') ||
+        lower.includes('returned no rates') ||
+        lower.includes('address')
+      ) {
+        throw new BadRequestException(
+          `Shipping label failed (${providerName}): ${message}. Order was not shipped.`,
         );
       }
-      throw error;
+      throw new BadGatewayException(
+        `Shipping label failed (${providerName}): ${message}. Order ${request.orderId} was not shipped.`,
+      );
     }
   }
 
