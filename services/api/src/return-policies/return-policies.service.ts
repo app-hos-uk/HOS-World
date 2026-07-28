@@ -147,27 +147,45 @@ export class ReturnPoliciesService {
    * Get applicable return policy for a product/order
    */
   async getApplicablePolicy(productId: string, sellerId?: string, categoryId?: string) {
-    // Find policies in priority order:
+    // Prefer specificity first, then numeric priority within the same tier:
     // 1. Product-specific
     // 2. Category-specific
     // 3. Seller-specific
     // 4. Platform-wide
-
     const policies = await this.prisma.returnPolicy.findMany({
       where: {
         isActive: true,
         OR: [
           { productId },
-          { categoryId },
-          { sellerId },
+          ...(categoryId ? [{ categoryId }] : []),
+          ...(sellerId ? [{ sellerId }] : []),
           { sellerId: null, productId: null, categoryId: null }, // Platform-wide
         ],
       },
       orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
     });
 
-    // Return the first matching policy (highest priority)
-    return policies[0] || null;
+    const rank = (p: {
+      productId: string | null;
+      categoryId: string | null;
+      sellerId: string | null;
+    }) => {
+      if (productId && p.productId === productId) return 0;
+      if (categoryId && p.categoryId === categoryId) return 1;
+      if (sellerId && p.sellerId === sellerId) return 2;
+      if (!p.productId && !p.categoryId && !p.sellerId) return 3;
+      return 99;
+    };
+
+    const sorted = [...policies].sort((a, b) => {
+      const rankDiff = rank(a) - rank(b);
+      if (rankDiff !== 0) return rankDiff;
+      const priorityDiff = Number(b.priority || 0) - Number(a.priority || 0);
+      if (priorityDiff !== 0) return priorityDiff;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return sorted[0] || null;
   }
 
   /**

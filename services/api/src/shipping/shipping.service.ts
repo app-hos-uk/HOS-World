@@ -84,6 +84,7 @@ export class ShippingService {
       rules: (method.rules || []).map((rule: any) => ({
         ...rule,
         rate: Number(rule.rate),
+        minimumCharge: rule.minimumCharge != null ? Number(rule.minimumCharge) : null,
         freeShippingThreshold: rule.freeShippingThreshold != null
           ? Number(rule.freeShippingThreshold)
           : null,
@@ -121,6 +122,7 @@ export class ShippingService {
       rules: (method.rules || []).map((rule: any) => ({
         ...rule,
         rate: Number(rule.rate),
+        minimumCharge: rule.minimumCharge != null ? Number(rule.minimumCharge) : null,
         freeShippingThreshold: rule.freeShippingThreshold != null
           ? Number(rule.freeShippingThreshold)
           : null,
@@ -143,6 +145,8 @@ export class ShippingService {
         priority: createDto.priority || 0,
         conditions: (createDto.conditions || {}) as any,
         rate: new Decimal(createDto.rate),
+        minimumCharge:
+          createDto.minimumCharge != null ? new Decimal(createDto.minimumCharge) : null,
         freeShippingThreshold: createDto.freeShippingThreshold != null
           ? new Decimal(createDto.freeShippingThreshold)
           : null,
@@ -175,6 +179,7 @@ export class ShippingService {
       const rulesWithDetails: ShippingRuleWithDetails[] = (method.rules || []).map((rule: any) => ({
         ...rule,
         rate: Number(rule.rate),
+        minimumCharge: rule.minimumCharge != null ? Number(rule.minimumCharge) : null,
         freeShippingThreshold: rule.freeShippingThreshold != null
           ? Number(rule.freeShippingThreshold)
           : null,
@@ -194,8 +199,18 @@ export class ShippingService {
         ) {
           shippingRate = new Decimal(0);
         } else {
-          // Calculate rate based on method type
+          // Calculate rate based on method type, then enforce minimum charge floor
           shippingRate = this.calculateRateByType(method.type, matchingRule, cartValue, weight);
+          const skipMinimumFloor =
+            method.type === 'FREE_SHIPPING' || method.type === 'PICKUP_IN_STORE';
+          if (
+            !skipMinimumFloor &&
+            matchingRule.minimumCharge != null &&
+            Number(matchingRule.minimumCharge) > 0 &&
+            shippingRate.lt(matchingRule.minimumCharge)
+          ) {
+            shippingRate = new Decimal(matchingRule.minimumCharge);
+          }
         }
 
         availableOptions.push({
@@ -219,48 +234,7 @@ export class ShippingService {
     // Sort by rate (lowest first)
     availableOptions.sort((a, b) => a.rate - b.rate);
 
-    // If no shipping options are available, provide a default standard shipping option
-    if (availableOptions.length === 0) {
-      const defaultRate = this.getDefaultShippingRate(cartValue, destination);
-      availableOptions.push({
-        method: {
-          id: 'default-standard',
-          name: 'Standard Shipping',
-          description: 'Default shipping rate',
-          type: 'STANDARD' as any,
-        },
-        rule: {
-          id: 'default-rule',
-          name: 'Default Rate',
-          estimatedDays: 7,
-        },
-        rate: defaultRate,
-        freeShipping: defaultRate === 0,
-      });
-    }
-
     return availableOptions;
-  }
-
-  /**
-   * Get default shipping rate when no configured methods match
-   */
-  private getDefaultShippingRate(cartValue: number, destination: ShippingDestination): number {
-    // Free shipping threshold (can be made configurable)
-    const freeShippingThreshold = 100;
-    if (cartValue >= freeShippingThreshold) {
-      return 0;
-    }
-
-    // Default shipping rates by region
-    const domesticCountries = ['US', 'USA', 'GB', 'UK', 'GBR'];
-    const isDomestic = domesticCountries.includes(destination.country?.toUpperCase() || '');
-
-    // Base rates (can be made configurable via env vars)
-    const domesticRate = 5.99;
-    const internationalRate = 12.99;
-
-    return isDomestic ? domesticRate : internationalRate;
   }
 
   /**
@@ -446,6 +420,10 @@ export class ShippingService {
     if (updateDto.rate !== undefined) {
       updateData.rate = new Decimal(updateDto.rate);
     }
+    if (updateDto.minimumCharge !== undefined) {
+      updateData.minimumCharge =
+        updateDto.minimumCharge != null ? new Decimal(updateDto.minimumCharge) : null;
+    }
     if (updateDto.freeShippingThreshold !== undefined) {
       updateData.freeShippingThreshold = updateDto.freeShippingThreshold != null
         ? new Decimal(updateDto.freeShippingThreshold)
@@ -484,14 +462,27 @@ export class ShippingService {
   }
 
   /** Admin: list all platform shipping methods including inactive */
-  async findAllShippingMethodsAdmin() {
-    return this.prisma.shippingMethod.findMany({
+  async findAllShippingMethodsAdmin(): Promise<ShippingMethodWithRules[]> {
+    const methods = await this.prisma.shippingMethod.findMany({
       where: { sellerId: null },
       include: {
         rules: { orderBy: { priority: 'desc' } },
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return methods.map((method) => ({
+      ...method,
+      rules: (method.rules || []).map((rule: any) => ({
+        ...rule,
+        rate: Number(rule.rate),
+        minimumCharge: rule.minimumCharge != null ? Number(rule.minimumCharge) : null,
+        freeShippingThreshold: rule.freeShippingThreshold != null
+          ? Number(rule.freeShippingThreshold)
+          : null,
+        conditions: rule.conditions as ShippingRuleConditions,
+      })) as ShippingRuleWithDetails[],
+    })) as ShippingMethodWithRules[];
   }
 
   // ─── Manual shipping carriers (admin-managed) ───────────────────────────

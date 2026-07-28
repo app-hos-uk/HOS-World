@@ -150,12 +150,15 @@ export class IntegrationsService {
     // Encrypt credentials
     const encryptedCredentials = this.encryptionService.encryptJson(createDto.credentials);
 
-    // Shippo live/test is determined by the token prefix.
+    // Shippo/Stripe live/test is determined by credential prefixes, not the UI checkbox alone.
     let isTestMode = createDto.isTestMode ?? true;
     if (createDto.provider === 'shippo') {
       const token = String(createDto.credentials?.apiToken || '');
       if (token.startsWith('shippo_live_')) isTestMode = false;
       else if (token.startsWith('shippo_test_')) isTestMode = true;
+    } else if (createDto.provider === 'stripe') {
+      const derived = this.resolveStripeTestMode(createDto.credentials);
+      if (derived !== null) isTestMode = derived;
     }
 
     // Generate webhook URL and secret
@@ -288,10 +291,11 @@ export class IntegrationsService {
 
     // Handle credentials update (merge with existing).
     // Ignore empty / masked values so admin "edit & save" doesn't corrupt secrets.
+    let mergedCredentials: Record<string, any> | null = null;
     if (updateDto.credentials) {
       const existingCredentials = this.decryptCredentials(existing.credentials);
       const incoming = this.sanitizeCredentialUpdates(updateDto.credentials);
-      const mergedCredentials = { ...existingCredentials, ...incoming };
+      mergedCredentials = { ...existingCredentials, ...incoming };
       updateData.credentials = this.encryptionService.encryptJson(mergedCredentials);
 
       // Shippo live/test is determined by the token prefix, not the UI checkbox alone.
@@ -302,6 +306,17 @@ export class IntegrationsService {
         } else if (token.startsWith('shippo_test_')) {
           updateData.isTestMode = true;
         }
+      }
+    }
+
+    // Stripe mode always follows key prefixes (sk_/pk_ live|test), even when only the
+    // checkbox is submitted — prevents "Test Mode" default from flipping live configs.
+    if (existing.provider === 'stripe') {
+      const creds =
+        mergedCredentials || this.decryptCredentials(existing.credentials);
+      const derived = this.resolveStripeTestMode(creds);
+      if (derived !== null) {
+        updateData.isTestMode = derived;
       }
     }
 
@@ -360,22 +375,35 @@ export class IntegrationsService {
       // Get credentials (use test credentials if provided, otherwise use stored)
       const credentials = testCredentials || this.decryptCredentials(integration.credentials);
 
+      let effectiveTestMode = integration.isTestMode;
+      if (integration.provider === 'stripe') {
+        const derived = this.resolveStripeTestMode(credentials);
+        if (derived !== null) effectiveTestMode = derived;
+      }
+
       // Perform provider-specific test
       result = await this.performProviderTest(
         integration.category,
         integration.provider,
         credentials,
-        integration.isTestMode,
+        effectiveTestMode,
       );
 
-      // Update test status
+      // Update test status (and heal Stripe mode drift from key prefixes)
+      const statusUpdate: Record<string, any> = {
+        lastTestedAt: new Date(),
+        testStatus: result.success ? 'SUCCESS' : 'FAILED',
+        testMessage: result.message,
+      };
+      if (
+        integration.provider === 'stripe' &&
+        effectiveTestMode !== integration.isTestMode
+      ) {
+        statusUpdate.isTestMode = effectiveTestMode;
+      }
       await this.prisma.integrationConfig.update({
         where: { id },
-        data: {
-          lastTestedAt: new Date(),
-          testStatus: result.success ? 'SUCCESS' : 'FAILED',
-          testMessage: result.message,
-        },
+        data: statusUpdate,
       });
 
       // Log the test
@@ -509,6 +537,26 @@ export class IntegrationsService {
       this.logger.error('Failed to decrypt credentials');
       return {};
     }
+  }
+
+  /**
+   * Derive Stripe test/live mode from key prefixes.
+   * Returns null when keys are missing/ambiguous so callers can keep the existing flag.
+   */
+  private resolveStripeTestMode(credentials?: Record<string, any> | null): boolean | null {
+    if (!credentials) return null;
+    const secretKey =
+      typeof credentials.secretKey === 'string' ? credentials.secretKey.trim() : '';
+    const publishableKey =
+      typeof credentials.publishableKey === 'string' ? credentials.publishableKey.trim() : '';
+
+    if (secretKey.startsWith('sk_live_') || publishableKey.startsWith('pk_live_')) {
+      return false;
+    }
+    if (secretKey.startsWith('sk_test_') || publishableKey.startsWith('pk_test_')) {
+      return true;
+    }
+    return null;
   }
 
   private sanitizeCredentialUpdates(credentials: Record<string, any>): Record<string, any> {
@@ -734,9 +782,9 @@ export class IntegrationsService {
       };
     }
     const isTestKey = secretKey.startsWith('sk_test_');
-    if (isTestMode && !isTestKey) {
-      return { success: false, message: 'Test mode requires a test secret key (sk_test_...)' };
-    }
+    // Mode is derived from the key; warn if the stored checkbox disagrees but still test the key.
+    const modeMismatch =
+      (isTestMode && !isTestKey) || (!isTestMode && isTestKey);
 
     try {
       const headers = { Authorization: `Bearer ${secretKey}` };
@@ -762,7 +810,9 @@ export class IntegrationsService {
 
       return {
         success: true,
-        message: `Stripe ${isTestKey ? 'test' : 'live'} key verified — balance + PaymentIntents accessible`,
+        message: modeMismatch
+          ? `Stripe ${isTestKey ? 'test' : 'live'} key verified — mode flag was out of sync and will follow the key`
+          : `Stripe ${isTestKey ? 'test' : 'live'} key verified — balance + PaymentIntents accessible`,
         details: {
           environment: isTestKey ? 'test' : 'live',
           currency: balance.available?.[0]?.currency?.toUpperCase() || 'N/A',

@@ -172,16 +172,38 @@ export default function IntegrationsPage() {
     }
   };
 
+  const deriveStripeTestMode = (
+    credentials: Record<string, string>,
+    fallback: boolean,
+  ): boolean => {
+    const secret = (credentials.secretKey || '').trim();
+    const publishable = (credentials.publishableKey || '').trim();
+    if (secret.startsWith('sk_live_') || publishable.startsWith('pk_live_')) return false;
+    if (secret.startsWith('sk_test_') || publishable.startsWith('pk_test_')) return true;
+    return fallback;
+  };
+
   const handleEditIntegration = (integration: Integration) => {
     setEditingIntegration(integration);
     setSelectedCategory(integration.category);
     setSelectedProvider(integration.provider);
+    // Prefer key-derived mode for Stripe (publishableKey is returned unmasked).
+    const inferredTestMode =
+      integration.provider === 'stripe'
+        ? deriveStripeTestMode(integration.credentials || {}, integration.isTestMode)
+        : integration.isTestMode;
     setFormData({
       displayName: integration.displayName,
       description: integration.description || '',
-      isTestMode: integration.isTestMode,
+      isTestMode: inferredTestMode,
       credentials: {},
     });
+    setShowAddModal(true);
+  };
+
+  const openAddModal = (category?: string) => {
+    resetForm();
+    if (category) setSelectedCategory(category);
     setShowAddModal(true);
   };
 
@@ -191,15 +213,26 @@ export default function IntegrationsPage() {
 
     setSubmitting(true);
     try {
+      const nonEmptyCreds = Object.fromEntries(
+        Object.entries(formData.credentials).filter(([, v]) => typeof v === 'string' && v.trim() !== ''),
+      );
+      const effectiveTestMode =
+        selectedProvider === 'stripe'
+          ? deriveStripeTestMode(
+              {
+                ...((editingIntegration?.credentials as Record<string, string>) || {}),
+                ...nonEmptyCreds,
+              },
+              formData.isTestMode,
+            )
+          : formData.isTestMode;
+
       if (editingIntegration) {
         const updatePayload: Record<string, any> = {
           displayName: formData.displayName,
           description: formData.description || undefined,
-          isTestMode: formData.isTestMode,
+          isTestMode: effectiveTestMode,
         };
-        const nonEmptyCreds = Object.fromEntries(
-          Object.entries(formData.credentials).filter(([, v]) => v.trim() !== ''),
-        );
         if (Object.keys(nonEmptyCreds).length > 0) {
           updatePayload.credentials = nonEmptyCreds;
         }
@@ -211,7 +244,7 @@ export default function IntegrationsPage() {
           provider: selectedProvider,
           displayName: formData.displayName,
           description: formData.description || undefined,
-          isTestMode: formData.isTestMode,
+          isTestMode: effectiveTestMode,
           isActive: true,
           credentials: formData.credentials,
         });
@@ -298,7 +331,7 @@ export default function IntegrationsPage() {
               <p className="text-hos-text-secondary mt-1">Manage third-party service connections</p>
             </div>
             <button
-              onClick={() => setShowAddModal(true)}
+              onClick={() => openAddModal()}
               className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover font-medium"
             >
               + Add Integration
@@ -340,10 +373,7 @@ export default function IntegrationsPage() {
                         <p>No integrations configured for this category.</p>
                         {categoryProviders.length > 0 && (
                           <button
-                            onClick={() => {
-                              setSelectedCategory(category);
-                              setShowAddModal(true);
-                            }}
+                            onClick={() => openAddModal(category)}
                             className="mt-2 text-hos-gold hover:text-hos-gold-hover font-medium"
                           >
                             Add {info.name.toLowerCase()} integration
@@ -446,7 +476,14 @@ export default function IntegrationsPage() {
 
         {/* Add Integration Modal */}
         <Transition appear show={showAddModal} as={Fragment}>
-          <Dialog as="div" className="relative z-50" onClose={() => setShowAddModal(false)}>
+          <Dialog
+            as="div"
+            className="relative z-50"
+            onClose={() => {
+              setShowAddModal(false);
+              resetForm();
+            }}
+          >
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -552,19 +589,33 @@ export default function IntegrationsPage() {
                             />
                           </div>
 
-                          {/* Test Mode Toggle */}
-                          <div className="flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              id="testMode"
-                              checked={formData.isTestMode}
-                              onChange={(e) => setFormData({ ...formData, isTestMode: e.target.checked })}
-                              className="h-4 w-4 text-hos-gold rounded"
-                            />
-                            <label htmlFor="testMode" className="text-sm">
-                              Test/Sandbox Mode
-                            </label>
-                          </div>
+                          {/* Test Mode Toggle — Stripe mode is driven by key prefixes */}
+                          {selectedProvider === 'stripe' ? (
+                            <div className="rounded-lg border border-hos-border bg-hos-bg-tertiary/40 px-3 py-2">
+                              <p className="text-sm text-hos-text-secondary">
+                                Mode:{' '}
+                                <span className="font-medium text-hos-text-primary">
+                                  {formData.isTestMode ? 'Test' : 'Live / Production'}
+                                </span>
+                              </p>
+                              <p className="text-xs text-hos-text-muted mt-1">
+                                Determined automatically from your Stripe keys (sk_live_/pk_live_ vs sk_test_/pk_test_). Saving always follows the keys.
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                id="testMode"
+                                checked={formData.isTestMode}
+                                onChange={(e) => setFormData({ ...formData, isTestMode: e.target.checked })}
+                                className="h-4 w-4 text-hos-gold rounded"
+                              />
+                              <label htmlFor="testMode" className="text-sm">
+                                Test/Sandbox Mode
+                              </label>
+                            </div>
+                          )}
 
                           {/* Credentials */}
                           {getProviderMetadata() && (
@@ -578,12 +629,29 @@ export default function IntegrationsPage() {
                                   <input
                                     type={field.toLowerCase().includes('secret') || (field.toLowerCase().includes('key') && !field.toLowerCase().includes('publishable')) || field.toLowerCase().includes('password') ? 'password' : 'text'}
                                     value={formData.credentials[field] || ''}
-                                    onChange={(e) =>
-                                      setFormData({
+                                    onChange={(e) => {
+                                      const nextCreds = {
+                                        ...formData.credentials,
+                                        [field]: e.target.value,
+                                      };
+                                      const next: typeof formData = {
                                         ...formData,
-                                        credentials: { ...formData.credentials, [field]: e.target.value },
-                                      })
-                                    }
+                                        credentials: nextCreds,
+                                      };
+                                      if (selectedProvider === 'stripe') {
+                                        next.isTestMode = deriveStripeTestMode(
+                                          {
+                                            ...((editingIntegration?.credentials as Record<
+                                              string,
+                                              string
+                                            >) || {}),
+                                            ...nextCreds,
+                                          },
+                                          formData.isTestMode,
+                                        );
+                                      }
+                                      setFormData(next);
+                                    }}
                                     placeholder={editingIntegration ? '(leave blank to keep current)' : ''}
                                     className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                                     required={!editingIntegration}

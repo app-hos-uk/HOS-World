@@ -52,7 +52,11 @@ export class CreateShippingRuleDto {
 
   @IsOptional()
   @IsNumber()
-  freeShippingThreshold?: number;
+  minimumCharge?: number | null;
+
+  @IsOptional()
+  @IsNumber()
+  freeShippingThreshold?: number | null;
 
   @IsOptional()
   @IsInt()

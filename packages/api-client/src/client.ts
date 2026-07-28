@@ -5130,7 +5130,8 @@ export class ApiClient {
     rate: number;
     priority?: number;
     estimatedDays?: number;
-    freeShippingThreshold?: number;
+    minimumCharge?: number | null;
+    freeShippingThreshold?: number | null;
     conditions?: Record<string, unknown>;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/shipping/rules', {

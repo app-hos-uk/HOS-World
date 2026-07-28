@@ -31,6 +31,7 @@ interface ShippingRule {
   rate: number | string;
   priority: number;
   estimatedDays?: number | null;
+  minimumCharge?: number | string | null;
   freeShippingThreshold?: number | string | null;
   isActive: boolean;
   conditions?: ShippingRuleConditions;
@@ -56,6 +57,7 @@ interface MethodFormData {
 interface RuleFormData {
   name: string;
   rate: string;
+  minimumCharge: string;
   freeShippingThreshold: string;
   estimatedDays: string;
   priority: string;
@@ -80,6 +82,7 @@ const emptyMethodForm: MethodFormData = {
 const emptyRuleForm: RuleFormData = {
   name: '',
   rate: '',
+  minimumCharge: '',
   freeShippingThreshold: '',
   estimatedDays: '',
   priority: '0',
@@ -268,6 +271,7 @@ export default function AdminShippingPage() {
     setRuleForm({
       name: rule.name,
       rate: String(rule.rate),
+      minimumCharge: rule.minimumCharge != null ? String(rule.minimumCharge) : '',
       freeShippingThreshold: rule.freeShippingThreshold != null ? String(rule.freeShippingThreshold) : '',
       estimatedDays: rule.estimatedDays != null ? String(rule.estimatedDays) : '',
       priority: String(rule.priority),
@@ -321,6 +325,11 @@ export default function AdminShippingPage() {
         isActive: ruleForm.isActive,
         conditions: buildConditions(),
       };
+      if (ruleForm.minimumCharge) {
+        payload.minimumCharge = Number(ruleForm.minimumCharge);
+      } else {
+        payload.minimumCharge = null;
+      }
       if (ruleForm.freeShippingThreshold) {
         payload.freeShippingThreshold = Number(ruleForm.freeShippingThreshold);
       } else {
@@ -378,9 +387,12 @@ export default function AdminShippingPage() {
               {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-hos-text-secondary">Shipping Methods & Rules</h1>
-            <p className="text-hos-text-muted text-sm mt-1">
-              Manage shipping methods, rules, and conditions for the marketplace
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Standard Shipping Charges</h1>
+            <p className="text-hos-text-muted text-sm mt-1 max-w-2xl">
+              Rates configured here drive checkout and the public shipping page. Set a{' '}
+              <span className="text-hos-text-secondary">Base Rate</span>, optional{' '}
+              <span className="text-hos-text-secondary">Minimum Shipping Charge</span>, and{' '}
+              <span className="text-hos-text-secondary">Free Shipping Threshold</span> on each rule.
             </p>
             <Link
               href="/admin/shipping/carriers"
@@ -418,7 +430,12 @@ export default function AdminShippingPage() {
             <svg className="w-12 h-12 mx-auto text-hos-text-muted mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
-            <p className="text-hos-text-muted mb-4">No platform shipping methods configured.</p>
+            <p className="text-hos-text-muted mb-2">
+              No platform shipping methods configured. Checkout will not show standard shipping until you add methods and rules.
+            </p>
+            <p className="text-hos-text-muted text-sm mb-4 max-w-md mx-auto">
+              Create Standard and Express methods with country rules, or use Seed Defaults to add starter rates you can edit.
+            </p>
             <div className="flex gap-3 justify-center">
               <button
                 type="button"
@@ -528,6 +545,7 @@ export default function AdminShippingPage() {
                               <tr className="border-b border-hos-border text-hos-text-muted text-left">
                                 <th className="py-2 px-3 font-medium">Name</th>
                                 <th className="py-2 px-3 font-medium">Rate</th>
+                                <th className="py-2 px-3 font-medium">Min Charge</th>
                                 <th className="py-2 px-3 font-medium">Free Over</th>
                                 <th className="py-2 px-3 font-medium">Est. Days</th>
                                 <th className="py-2 px-3 font-medium">Priority</th>
@@ -541,6 +559,9 @@ export default function AdminShippingPage() {
                                 <tr key={rule.id} className="border-b border-hos-border/50 hover:bg-hos-bg-tertiary/30">
                                   <td className="py-2 px-3 text-hos-text-secondary font-medium">{rule.name}</td>
                                   <td className="py-2 px-3">{formatPrice(Number(rule.rate))}</td>
+                                  <td className="py-2 px-3 text-hos-text-muted">
+                                    {rule.minimumCharge != null ? formatPrice(Number(rule.minimumCharge)) : '—'}
+                                  </td>
                                   <td className="py-2 px-3 text-hos-text-muted">
                                     {rule.freeShippingThreshold != null ? formatPrice(Number(rule.freeShippingThreshold)) : '—'}
                                   </td>
@@ -689,7 +710,9 @@ export default function AdminShippingPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-hos-text-muted mb-1">Rate ($) *</label>
+                    <label className="block text-sm font-medium text-hos-text-muted mb-1">
+                      Base Rate ($) *
+                    </label>
                     <input
                       type="number"
                       step="0.01"
@@ -699,11 +722,33 @@ export default function AdminShippingPage() {
                       className="w-full px-3 py-2 bg-hos-bg-tertiary border border-hos-border rounded-lg text-hos-text-secondary placeholder:text-hos-text-muted focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="0.00"
                     />
+                    <p className="text-xs text-hos-text-muted mt-1">
+                      Flat charge, or per-kg rate for weight-based methods.
+                    </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-hos-text-muted mb-1">Free Shipping Threshold ($)</label>
+                    <label className="block text-sm font-medium text-hos-text-muted mb-1">
+                      Minimum Shipping Charge ($)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={ruleForm.minimumCharge}
+                      onChange={(e) => setRuleForm({ ...ruleForm, minimumCharge: e.target.value })}
+                      className="w-full px-3 py-2 bg-hos-bg-tertiary border border-hos-border rounded-lg text-hos-text-secondary placeholder:text-hos-text-muted focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                      placeholder="e.g., 4.99"
+                    />
+                    <p className="text-xs text-hos-text-muted mt-1">
+                      Never charge less than this (unless free-shipping threshold is met).
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-hos-text-muted mb-1">
+                      Free Shipping Threshold ($)
+                    </label>
                     <input
                       type="number"
                       step="0.01"
@@ -713,7 +758,12 @@ export default function AdminShippingPage() {
                       className="w-full px-3 py-2 bg-hos-bg-tertiary border border-hos-border rounded-lg text-hos-text-secondary placeholder:text-hos-text-muted focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                       placeholder="e.g., 75"
                     />
+                    <p className="text-xs text-hos-text-muted mt-1">
+                      Cart subtotal at/above this amount ships free.
+                    </p>
                   </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-hos-text-muted mb-1">Estimated Days</label>
                     <input

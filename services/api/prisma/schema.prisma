@@ -2773,6 +2773,7 @@ model ShippingRule {
   priority              Int            @default(0)
   conditions            Json // Conditions (weight range, cart value, country, etc.)
   rate                  Decimal        @db.Decimal(10, 2)
+  minimumCharge         Decimal?       @db.Decimal(10, 2) // Floor for calculated shipping (ignored when free shipping applies)
   freeShippingThreshold Decimal?       @db.Decimal(10, 2) // Free shipping if cart value >= this
   estimatedDays         Int? // Estimated delivery days
   isActive              Boolean        @default(true)

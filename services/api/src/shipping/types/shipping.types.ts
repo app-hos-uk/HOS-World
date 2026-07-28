@@ -28,6 +28,7 @@ export interface ShippingRuleWithDetails {
   priority: number;
   conditions: ShippingRuleConditions;
   rate: number;
+  minimumCharge?: number | null;
   freeShippingThreshold?: number | null;
   estimatedDays?: number | null;
   isActive: boolean;

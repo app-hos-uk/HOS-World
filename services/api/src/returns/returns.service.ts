@@ -393,7 +393,16 @@ export class ReturnsService {
     const returnRequest = await this.prisma.returnRequest.findUnique({
       where: { id },
       include: {
-        order: { include: { items: true, seller: true } },
+        order: {
+          include: {
+            items: {
+              include: {
+                product: { select: { id: true, categoryId: true } },
+              },
+            },
+            seller: true,
+          },
+        },
         items: true,
       },
     });
@@ -437,10 +446,12 @@ export class ReturnsService {
     // is required, approve without processing refund/restock (those happen at
     // COMPLETED). Otherwise, process refund immediately on approval.
     if (newStatus === 'APPROVED') {
+      const policyProduct = this.resolveReturnPolicyProduct(returnRequest);
       const policy = returnRequest.order
         ? await this.returnPoliciesService.getApplicablePolicy(
-            returnRequest.order.items[0]?.productId || '',
+            policyProduct?.id || returnRequest.order.items[0]?.productId || '',
             returnRequest.order.sellerId || undefined,
+            policyProduct?.categoryId || undefined,
           )
         : null;
 
@@ -477,13 +488,20 @@ export class ReturnsService {
 
       const maxRefundable = this.calculateReturnRefundAmount(returnRequest);
       let amount = Math.min(refundAmount ?? maxRefundable, maxRefundable);
+      const restockingFee =
+        policy?.restockingFee != null ? Number(policy.restockingFee) : 0;
 
-      if (policy?.restockingFee) {
-        amount = Math.max(0, Math.round((amount - Number(policy.restockingFee)) * 100) / 100);
+      if (restockingFee > 0) {
+        amount = Math.max(0, Math.round((amount - restockingFee) * 100) / 100);
       }
       if (amount <= 0) {
         throw new BadRequestException('No refundable amount for the returned items');
       }
+
+      const refundBreakdown =
+        restockingFee > 0
+          ? `Refund $${amount.toFixed(2)} = order share $${maxRefundable.toFixed(2)} − restocking fee $${restockingFee.toFixed(2)} (${policy?.name || 'return policy'})`
+          : `Refund $${amount.toFixed(2)} (order share $${maxRefundable.toFixed(2)})`;
 
       const refundResult = await this.refundsService.processRefund({
         returnId: id,
@@ -501,14 +519,15 @@ export class ReturnsService {
             status: 'APPROVED' as any,
             refundAmount: amount,
             refundMethod: refundMethod || 'ORIGINAL_PAYMENT',
-            notes: refundSucceeded
-              ? returnRequest.notes
-              : [
-                  returnRequest.notes || '',
-                  `[Refund pending: ${refundResult.error || 'Stripe refund failed — manual retry required'}]`,
-                ]
-                  .filter(Boolean)
-                  .join(' '),
+            notes: [
+              returnRequest.notes || '',
+              `[${refundBreakdown}]`,
+              refundSucceeded
+                ? ''
+                : `[Refund pending: ${refundResult.error || 'Stripe refund failed — manual retry required'}]`,
+            ]
+              .filter(Boolean)
+              .join(' '),
           },
         });
 
@@ -589,15 +608,23 @@ export class ReturnsService {
     // If transitioning to COMPLETED and no successful refund exists yet
     // (inspection flow), process refund + restock + mark order now.
     if (newStatus === 'COMPLETED' && returnRequest.order && !refundFullyProcessed) {
+      const policyProduct = this.resolveReturnPolicyProduct(returnRequest);
       const policy = await this.returnPoliciesService.getApplicablePolicy(
-        returnRequest.order.items[0]?.productId || '',
+        policyProduct?.id || returnRequest.order.items[0]?.productId || '',
         returnRequest.order.sellerId || undefined,
+        policyProduct?.categoryId || undefined,
       );
       const maxRefundable = this.calculateReturnRefundAmount(returnRequest);
       let amount = Math.min(refundAmount ?? maxRefundable, maxRefundable);
-      if (policy?.restockingFee) {
-        amount = Math.max(0, Math.round((amount - Number(policy.restockingFee)) * 100) / 100);
+      const restockingFee =
+        policy?.restockingFee != null ? Number(policy.restockingFee) : 0;
+      if (restockingFee > 0) {
+        amount = Math.max(0, Math.round((amount - restockingFee) * 100) / 100);
       }
+      const refundBreakdown =
+        restockingFee > 0
+          ? `Refund $${amount.toFixed(2)} = order share $${maxRefundable.toFixed(2)} − restocking fee $${restockingFee.toFixed(2)} (${policy?.name || 'return policy'})`
+          : `Refund $${amount.toFixed(2)} (order share $${maxRefundable.toFixed(2)})`;
       if (amount > 0) {
         try {
           const refundResult = await this.refundsService.processRefund({
@@ -615,7 +642,11 @@ export class ReturnsService {
             });
             await this.prisma.returnRequest.update({
               where: { id },
-              data: { refundAmount: amount, refundMethod: refundMethod || 'ORIGINAL_PAYMENT' },
+              data: {
+                refundAmount: amount,
+                refundMethod: refundMethod || 'ORIGINAL_PAYMENT',
+                notes: [returnRequest.notes || '', `[${refundBreakdown}]`].filter(Boolean).join(' '),
+              },
             });
             try {
               await this.getOrdersService().reverseInfluencerAttribution(returnRequest.orderId);
@@ -631,6 +662,7 @@ export class ReturnsService {
                 refundAmount: amount,
                 notes: [
                   returnRequest.notes || '',
+                  `[${refundBreakdown}]`,
                   `[Refund pending: ${refundResult.error || 'Stripe refund failed — manual retry required'}]`,
                 ].filter(Boolean).join(' '),
               },
@@ -830,6 +862,18 @@ export class ReturnsService {
     }
   }
 
+  /** Prefer the returned line item's product when resolving category-specific policies. */
+  private resolveReturnPolicyProduct(
+    returnRequest: any,
+  ): { id: string; categoryId?: string | null } | undefined {
+    const orderItems = returnRequest.order?.items || [];
+    const returnedOrderItemId = returnRequest.items?.[0]?.orderItemId;
+    const matched = returnedOrderItemId
+      ? orderItems.find((oi: any) => oi.id === returnedOrderItemId)
+      : undefined;
+    return (matched || orderItems[0])?.product;
+  }
+
   private calculateReturnRefundAmount(returnRequest: any): number {
     const returnItems = returnRequest.items;
     if (returnItems && returnItems.length > 0) {
@@ -849,8 +893,12 @@ export class ReturnsService {
       }
 
       if (itemsTotal > 0 && orderItemsTotal > 0) {
-        // Add proportional tax and shipping
         const proportion = itemsTotal / orderItemsTotal;
+        // Prefer order.total so discounts are reflected in the refund base.
+        const orderTotal = Number(returnRequest.order?.total ?? 0);
+        if (orderTotal > 0) {
+          return Math.round(orderTotal * proportion * 100) / 100;
+        }
         const tax = Number(returnRequest.order?.tax || 0) * proportion;
         const shipping =
           Number(returnRequest.order?.shippingAmount ?? returnRequest.order?.shippingCost ?? 0) *
