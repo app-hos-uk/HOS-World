@@ -539,8 +539,11 @@ export class IntegrationsService {
   private decryptCredentials(encryptedCredentials: string): Record<string, any> {
     try {
       return this.encryptionService.decryptJson(encryptedCredentials);
-    } catch (error) {
-      this.logger.error('Failed to decrypt credentials');
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to decrypt credentials: ${error?.message || error}. ` +
+          'If INTEGRATION_ENCRYPTION_KEY changed, re-save integration credentials in Admin.',
+      );
       return {};
     }
   }

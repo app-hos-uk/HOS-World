@@ -12,6 +12,17 @@ export class PaymentProviderService implements OnModuleInit {
   async onModuleInit() {
     await this.ensureStripeRegistered();
     this.logger.log(`${this.providers.size} payment provider(s) available`);
+
+    // Retry once if boot raced encryption/integrations (eager EncryptionService should prevent this)
+    if (this.providers.size === 0) {
+      setTimeout(() => {
+        void this.ensureStripeRegistered({ forceReload: true }).then(() => {
+          this.logger.log(
+            `Payment provider retry: ${this.providers.size} provider(s) available`,
+          );
+        });
+      }, 500);
+    }
   }
 
   /**

@@ -15,10 +15,16 @@ export class EncryptionService implements OnModuleInit {
   private readonly authTagLength = 16; // 128 bits
   private readonly saltLength = 32; // 256 bits
 
-  constructor(private configService: ConfigService) {}
+  constructor(private configService: ConfigService) {
+    // Eager init: Stripe/Shippo/CourierFactory decrypt during their onModuleInit.
+    // Nest does not guarantee EncryptionService.onModuleInit runs first, which previously
+    // caused "Failed to decrypt credentials" → 0 payment/shipping providers at boot.
+    this.initializeEncryptionKey();
+  }
 
   onModuleInit() {
-    this.initializeEncryptionKey();
+    // Idempotent — key is already set in the constructor.
+    this.ensureKey();
   }
 
   /**
@@ -26,6 +32,8 @@ export class EncryptionService implements OnModuleInit {
    * Key should be a 64-character hex string (32 bytes)
    */
   private initializeEncryptionKey(): void {
+    if (this.encryptionKey) return;
+
     const keyHex = this.configService.get<string>('INTEGRATION_ENCRYPTION_KEY');
 
     if (!keyHex) {
@@ -58,11 +66,18 @@ export class EncryptionService implements OnModuleInit {
     }
   }
 
+  private ensureKey(): void {
+    if (!this.encryptionKey) {
+      this.initializeEncryptionKey();
+    }
+  }
+
   /**
    * Encrypt sensitive data (e.g., API credentials)
    * Returns a base64-encoded string containing: salt + iv + authTag + ciphertext
    */
   encrypt(plaintext: string): string {
+    this.ensureKey();
     if (!this.encryptionKey) {
       throw new Error('Encryption key not initialized');
     }
@@ -111,6 +126,7 @@ export class EncryptionService implements OnModuleInit {
    * Expects base64-encoded string containing: salt + iv + authTag + ciphertext
    */
   decrypt(encryptedData: string): string {
+    this.ensureKey();
     if (!this.encryptionKey) {
       throw new Error('Encryption key not initialized');
     }

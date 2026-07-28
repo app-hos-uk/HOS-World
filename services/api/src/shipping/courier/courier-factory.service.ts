@@ -47,6 +47,19 @@ export class CourierFactoryService implements OnModuleInit {
 
   async onModuleInit() {
     await this.loadProviders();
+    // If encryption was not ready on a prior race (should not happen after eager key init),
+    // retry once shortly after the module graph finishes initializing.
+    if (this.providers.size === 0) {
+      setTimeout(() => {
+        void this.loadProviders().then(() => {
+          if (this.providers.size > 0) {
+            this.logger.log(
+              `Shipping providers recovered on retry: ${this.getAvailableProviderNames().join(', ')}`,
+            );
+          }
+        });
+      }, 500);
+    }
   }
 
   /**
@@ -132,8 +145,11 @@ export class CourierFactoryService implements OnModuleInit {
   private decryptCredentials(encryptedCredentials: string): Record<string, any> {
     try {
       return this.encryptionService.decryptJson(encryptedCredentials);
-    } catch (error) {
-      this.logger.error('Failed to decrypt credentials');
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to decrypt credentials: ${error?.message || error}. ` +
+          'If INTEGRATION_ENCRYPTION_KEY changed, re-save Shippo credentials in Admin.',
+      );
       return {};
     }
   }
