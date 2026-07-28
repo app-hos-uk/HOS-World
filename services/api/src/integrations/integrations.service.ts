@@ -541,6 +541,8 @@ export class IntegrationsService {
 
   /**
    * Derive Stripe test/live mode from key prefixes.
+   * Secret key is authoritative (API uses it); publishable is fallback only.
+   * Ignores masked secrets so admin UI values cannot flip mode incorrectly.
    * Returns null when keys are missing/ambiguous so callers can keep the existing flag.
    */
   private resolveStripeTestMode(credentials?: Record<string, any> | null): boolean | null {
@@ -550,12 +552,13 @@ export class IntegrationsService {
     const publishableKey =
       typeof credentials.publishableKey === 'string' ? credentials.publishableKey.trim() : '';
 
-    if (secretKey.startsWith('sk_live_') || publishableKey.startsWith('pk_live_')) {
-      return false;
-    }
-    if (secretKey.startsWith('sk_test_') || publishableKey.startsWith('pk_test_')) {
-      return true;
-    }
+    const usableSecret =
+      secretKey && !this.encryptionService.isMaskedSecret(secretKey) ? secretKey : '';
+
+    if (usableSecret.startsWith('sk_live_')) return false;
+    if (usableSecret.startsWith('sk_test_')) return true;
+    if (publishableKey.startsWith('pk_live_')) return false;
+    if (publishableKey.startsWith('pk_test_')) return true;
     return null;
   }
 
@@ -597,6 +600,13 @@ export class IntegrationsService {
     const decryptedCredentials = this.decryptCredentials(integration.credentials);
     const maskedCredentials = this.encryptionService.maskCredentials(decryptedCredentials);
 
+    // Prefer key-derived mode for Stripe so the admin UI never shows a stale Test/Live badge
+    let isTestMode = integration.isTestMode;
+    if (integration.provider === 'stripe') {
+      const derived = this.resolveStripeTestMode(decryptedCredentials);
+      if (derived !== null) isTestMode = derived;
+    }
+
     return {
       id: integration.id,
       category: integration.category as IntegrationCategory,
@@ -604,7 +614,7 @@ export class IntegrationsService {
       displayName: integration.displayName,
       description: integration.description,
       isActive: integration.isActive,
-      isTestMode: integration.isTestMode,
+      isTestMode,
       credentials: maskedCredentials,
       settings: integration.settings,
       webhookUrl: integration.webhookUrl,

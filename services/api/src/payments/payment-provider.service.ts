@@ -16,14 +16,15 @@ export class PaymentProviderService implements OnModuleInit {
 
   /**
    * Ensure Stripe is initialized from integrations/env and registered.
-   * Safe to call repeatedly (e.g. from /payments/providers after a cold start miss).
+   * Safe to call repeatedly (e.g. from /payments/providers or refunds after a cold start miss).
    */
   async ensureStripeRegistered(): Promise<void> {
     if (!this.stripeProvider.isAvailable()) {
       try {
-        await this.stripeProvider.initFromIntegrations();
+        // ensureReady: integrations first, then STRIPE_SECRET_KEY env fallback
+        await this.stripeProvider.ensureReady();
       } catch (err: any) {
-        this.logger.warn(`Stripe initFromIntegrations failed: ${err?.message || err}`);
+        this.logger.warn(`Stripe ensureReady failed: ${err?.message || err}`);
       }
     }
 
@@ -40,6 +41,15 @@ export class PaymentProviderService implements OnModuleInit {
     } else if (this.providers.has('stripe')) {
       this.providers.delete('stripe');
       this.logger.warn('Stripe provider removed — client no longer available');
+    }
+  }
+
+  /** Clear Stripe from the registry (e.g. after admin deactivates the integration). */
+  unregisterStripe(): void {
+    this.stripeProvider.clearClient();
+    if (this.providers.has('stripe')) {
+      this.providers.delete('stripe');
+      this.logger.warn('Stripe provider unregistered');
     }
   }
 
@@ -84,15 +94,24 @@ export class PaymentProviderService implements OnModuleInit {
   }
 
   /**
-   * Check if a provider is available (includes lazy registration for stripe)
+   * Check if a provider is available (includes lazy registration for stripe).
+   * Does not re-init from DB/env — call ensureAvailableProviders() first for recovery.
    */
   isProviderAvailable(name: string): boolean {
-    if (this.providers.has(name.toLowerCase())) return true;
-    if (name.toLowerCase() === 'stripe' && this.stripeProvider.isAvailable()) {
-      this.providers.set('stripe', this.stripeProvider);
-      return true;
+    if (name.toLowerCase() === 'stripe') {
+      if (this.stripeProvider.isAvailable()) {
+        if (!this.providers.has('stripe')) {
+          this.providers.set('stripe', this.stripeProvider);
+        }
+        return true;
+      }
+      // Drop stale map entries when the underlying client was cleared
+      if (this.providers.has('stripe')) {
+        this.providers.delete('stripe');
+      }
+      return false;
     }
-    return false;
+    return this.providers.has(name.toLowerCase());
   }
 
   /**

@@ -172,16 +172,39 @@ export default function IntegrationsPage() {
     }
   };
 
+  const isMaskedSecret = (value: string): boolean => {
+    const trimmed = value.trim();
+    if (!trimmed) return false;
+    if (trimmed === '****') return true;
+    // Backend maskSecret => asterisks + last few chars (no leading unmasked prefix)
+    return /^\*{4,}[^*]+$/.test(trimmed);
+  };
+
+  /**
+   * Secret key is authoritative (matches API). Ignore masked secrets from the list
+   * response so a pk_test_ publishable key cannot flip a live integration to "Test".
+   */
   const deriveStripeTestMode = (
     credentials: Record<string, string>,
     fallback: boolean,
   ): boolean => {
     const secret = (credentials.secretKey || '').trim();
     const publishable = (credentials.publishableKey || '').trim();
-    if (secret.startsWith('sk_live_') || publishable.startsWith('pk_live_')) return false;
-    if (secret.startsWith('sk_test_') || publishable.startsWith('pk_test_')) return true;
+    const usableSecret = secret && !isMaskedSecret(secret) ? secret : '';
+    if (usableSecret.startsWith('sk_live_')) return false;
+    if (usableSecret.startsWith('sk_test_')) return true;
+    if (publishable.startsWith('pk_live_')) return false;
+    if (publishable.startsWith('pk_test_')) return true;
     return fallback;
   };
+
+  const displayedTestMode = (integration: Integration): boolean =>
+    integration.provider === 'stripe'
+      ? deriveStripeTestMode(
+          (integration.credentials || {}) as Record<string, string>,
+          integration.isTestMode,
+        )
+      : integration.isTestMode;
 
   const handleEditIntegration = (integration: Integration) => {
     setEditingIntegration(integration);
@@ -406,12 +429,12 @@ export default function IntegrationsPage() {
                             <div className="flex items-center gap-2 mb-3">
                               <span
                                 className={`px-2 py-1 text-xs rounded ${
-                                  integration.isTestMode
+                                  displayedTestMode(integration)
                                     ? 'bg-yellow-500/15 text-yellow-300'
                                     : 'bg-hos-gold/20 text-hos-gold'
                                 }`}
                               >
-                                {integration.isTestMode ? 'Test Mode' : 'Production'}
+                                {displayedTestMode(integration) ? 'Test Mode' : 'Production'}
                               </span>
                               <span
                                 className={`px-2 py-1 text-xs rounded ${

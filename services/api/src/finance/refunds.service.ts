@@ -186,6 +186,13 @@ export class RefundsService {
     let stripeRefundId: string | undefined;
 
     const stripePaymentId = returnRequest.order.stripePaymentIntentId;
+
+    // Match checkout: actively re-init Stripe (integrations/env) before gating on availability.
+    // Sync isProviderAvailable() alone misses cold starts / post-deploy process restarts.
+    if (stripePaymentId && cardRefundAmount > 0) {
+      await this.paymentProviderService.ensureAvailableProviders();
+    }
+
     if (stripePaymentId && cardRefundAmount > 0 && this.paymentProviderService.isProviderAvailable('stripe')) {
       const provider = this.paymentProviderService.getProvider('stripe');
       const result = await provider.refundPayment({

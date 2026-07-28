@@ -24,7 +24,16 @@ describe('RefundsService', () => {
   };
 
   const mockPaymentProviderService = {
-    refundPayment: jest.fn().mockResolvedValue({ success: true }),
+    ensureAvailableProviders: jest.fn().mockResolvedValue(['stripe']),
+    isProviderAvailable: jest.fn().mockReturnValue(true),
+    getProvider: jest.fn().mockReturnValue({
+      refundPayment: jest.fn().mockResolvedValue({
+        success: true,
+        refundId: 're_test',
+        amount: 100,
+        status: 'succeeded',
+      }),
+    }),
   };
 
   beforeEach(async () => {

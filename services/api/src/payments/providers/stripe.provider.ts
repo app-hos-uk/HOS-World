@@ -101,6 +101,22 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
     return this.stripe !== null;
   }
 
+  /**
+   * Public entry for payment-provider / admin reload paths.
+   * Loads integrations first, then falls back to env vars.
+   */
+  async ensureReady(): Promise<boolean> {
+    await this.ensureStripeClient();
+    return this.isAvailable();
+  }
+
+  /** Drop the in-memory client (e.g. Stripe integration deactivated). */
+  clearClient(): void {
+    this.stripe = null;
+    this.webhookSecret = null;
+    this.circuitBreaker.reset();
+  }
+
   private async ensureStripeClient(): Promise<void> {
     if (this.stripe) return;
     await this.initFromIntegrations();
@@ -233,25 +249,54 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
   }
 
   async refundPayment(params: RefundPaymentParams): Promise<RefundResult> {
+    await this.ensureStripeClient();
     if (!this.stripe) {
-      throw new Error('Stripe provider is not available');
+      return {
+        success: false,
+        refundId: '',
+        amount: 0,
+        status: 'failed',
+        error: 'Stripe provider is not available',
+      };
     }
 
-    try {
-      const refund = await this.stripe.refunds.create(
+    const idempotencyKey = `refund-${params.paymentId}-${params.amount || 'full'}-${params.metadata?.returnId || params.metadata?.reason || 'cancel'}-${params.metadata?.retryAttempt || '0'}`;
+    const createRefund = async () =>
+      this.stripe!.refunds.create(
         {
           payment_intent: params.paymentId,
           amount: params.amount ? Math.round(params.amount * 100) : undefined,
           reason: params.reason as any,
           metadata: params.metadata,
         },
-        {
-          idempotencyKey: `refund-${params.paymentId}-${params.amount || 'full'}-${params.metadata?.returnId || params.metadata?.reason || 'cancel'}-${params.metadata?.retryAttempt || '0'}`,
-        },
+        { idempotencyKey },
       );
 
+    try {
+      let refund;
+      try {
+        refund = await createRefund();
+      } catch (error: any) {
+        if (this.isStripeAuthError(error)) {
+          this.logger.warn('Stripe auth failed on refund — reloading credentials and retrying once');
+          await this.reloadStripeClient();
+          if (!this.stripe) throw error;
+          refund = await this.stripe.refunds.create(
+            {
+              payment_intent: params.paymentId,
+              amount: params.amount ? Math.round(params.amount * 100) : undefined,
+              reason: params.reason as any,
+              metadata: params.metadata,
+            },
+            { idempotencyKey: `${idempotencyKey}-reload` },
+          );
+        } else {
+          throw error;
+        }
+      }
+
       return {
-        success: refund.status === 'succeeded',
+        success: refund.status === 'succeeded' || refund.status === 'pending',
         refundId: refund.id,
         amount: refund.amount / 100,
         status:

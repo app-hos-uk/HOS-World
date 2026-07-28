@@ -33,7 +33,7 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { StripeProvider } from '../payments/providers/stripe.provider';
+import { PaymentProviderService } from '../payments/payment-provider.service';
 import { CourierFactoryService } from '../shipping/courier/courier-factory.service';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
@@ -45,15 +45,22 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 export class IntegrationsController {
   constructor(
     private readonly integrationsService: IntegrationsService,
-    @Optional() private readonly stripeProvider?: StripeProvider,
+    @Optional()
+    @Inject(forwardRef(() => PaymentProviderService))
+    private readonly paymentProviderService?: PaymentProviderService,
     @Optional()
     @Inject(forwardRef(() => CourierFactoryService))
     private readonly courierFactory?: CourierFactoryService,
   ) {}
 
   private async reloadRuntimeProviders(integration: IntegrationResponseDto): Promise<void> {
-    if (integration.provider === 'stripe' && integration.isActive && this.stripeProvider) {
-      void this.stripeProvider.initFromIntegrations();
+    if (integration.provider === 'stripe' && this.paymentProviderService) {
+      if (integration.isActive) {
+        // Await full re-init (integrations → env) so refunds/checkout see the new keys immediately
+        await this.paymentProviderService.ensureStripeRegistered();
+      } else {
+        this.paymentProviderService.unregisterStripe();
+      }
     }
     if (integration.category === IntegrationCategory.SHIPPING && this.courierFactory) {
       await this.courierFactory.refreshProviders();
@@ -223,6 +230,9 @@ export class IntegrationsController {
   async delete(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<null>> {
     const existing = await this.integrationsService.findById(id);
     await this.integrationsService.delete(id);
+    if (existing.provider === 'stripe' && this.paymentProviderService) {
+      this.paymentProviderService.unregisterStripe();
+    }
     if (existing.category === IntegrationCategory.SHIPPING && this.courierFactory) {
       await this.courierFactory.refreshProviders();
     }

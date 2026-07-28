@@ -2193,23 +2193,30 @@ export class OrdersService {
       cardRefundAmount = Math.max(0, Number(order.total) - giftCardTotal);
 
       stripeRefundSucceeded = false;
-      if (cardRefundAmount > 0 && this.paymentProviderService?.isProviderAvailable('stripe')) {
+      if (cardRefundAmount > 0 && this.paymentProviderService) {
         try {
-          const provider = this.paymentProviderService.getProvider('stripe');
-          const result = await provider.refundPayment({
-            paymentId: order.stripePaymentIntentId,
-            amount: cardRefundAmount,
-            metadata: { currency: order.currency, reason: 'order_cancelled' },
-          });
-          if (result?.success) {
-            stripeRefundSucceeded = true;
-            stripeRefundId = result.refundId;
-            this.logger.log(
-              `Stripe refund of ${cardRefundAmount} succeeded for cancelled order ${order.orderNumber}`,
-            );
+          await this.paymentProviderService.ensureAvailableProviders();
+          if (this.paymentProviderService.isProviderAvailable('stripe')) {
+            const provider = this.paymentProviderService.getProvider('stripe');
+            const result = await provider.refundPayment({
+              paymentId: order.stripePaymentIntentId,
+              amount: cardRefundAmount,
+              metadata: { currency: order.currency, reason: 'order_cancelled' },
+            });
+            if (result?.success) {
+              stripeRefundSucceeded = true;
+              stripeRefundId = result.refundId;
+              this.logger.log(
+                `Stripe refund of ${cardRefundAmount} succeeded for cancelled order ${order.orderNumber}`,
+              );
+            } else {
+              this.logger.warn(
+                `Stripe refund returned non-success for order ${order.orderNumber}: ${result?.error || 'unknown'} — reverting paymentStatus`,
+              );
+            }
           } else {
             this.logger.warn(
-              `Stripe refund returned non-success for order ${order.orderNumber} — reverting paymentStatus`,
+              `Stripe provider unavailable for cancelled order ${order.orderNumber} — reverting paymentStatus`,
             );
           }
         } catch (err) {
