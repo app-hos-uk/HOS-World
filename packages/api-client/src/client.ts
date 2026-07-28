@@ -5165,6 +5165,52 @@ export class ApiClient {
     });
   }
 
+  /** Active carriers for seller/admin manual tracking entry */
+  async getShippingCarriers(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/shipping/carriers');
+  }
+
+  async getAdminShippingCarriers(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/shipping/admin/carriers');
+  }
+
+  async createShippingCarrier(data: {
+    name: string;
+    code?: string;
+    trackingUrlTemplate?: string;
+    isActive?: boolean;
+    allowCustomName?: boolean;
+    sortOrder?: number;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/shipping/admin/carriers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateShippingCarrier(
+    id: string,
+    data: {
+      name?: string;
+      code?: string | null;
+      trackingUrlTemplate?: string | null;
+      isActive?: boolean;
+      allowCustomName?: boolean;
+      sortOrder?: number;
+    },
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/shipping/admin/carriers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteShippingCarrier(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/shipping/admin/carriers/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   async getVerificationDocuments(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/sellers/verification/documents');
   }

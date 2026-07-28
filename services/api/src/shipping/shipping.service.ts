@@ -2,6 +2,10 @@ import { Injectable, NotFoundException, BadRequestException, Logger } from '@nes
 import { PrismaService } from '../database/prisma.service';
 import { CreateShippingMethodDto } from './dto/create-shipping-method.dto';
 import { CreateShippingRuleDto } from './dto/create-shipping-rule.dto';
+import {
+  CreateShippingCarrierDto,
+  UpdateShippingCarrierDto,
+} from './dto/create-shipping-carrier.dto';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ShippingMethodType } from '@prisma/client';
 import {
@@ -488,6 +492,119 @@ export class ShippingService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  // ─── Manual shipping carriers (admin-managed) ───────────────────────────
+
+  async findActiveShippingCarriers() {
+    return this.prisma.shippingCarrier.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        trackingUrlTemplate: true,
+        allowCustomName: true,
+        sortOrder: true,
+      },
+    });
+  }
+
+  async findAllShippingCarriersAdmin() {
+    return this.prisma.shippingCarrier.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+    });
+  }
+
+  async createShippingCarrier(dto: CreateShippingCarrierDto) {
+    const name = dto.name.trim();
+    if (!name) {
+      throw new BadRequestException('Carrier name is required');
+    }
+
+    const existing = await this.prisma.shippingCarrier.findUnique({ where: { name } });
+    if (existing) {
+      throw new BadRequestException(`Carrier "${name}" already exists`);
+    }
+
+    const code = dto.code?.trim() || null;
+    if (code) {
+      const codeTaken = await this.prisma.shippingCarrier.findUnique({ where: { code } });
+      if (codeTaken) {
+        throw new BadRequestException(`Carrier code "${code}" already exists`);
+      }
+    }
+
+    return this.prisma.shippingCarrier.create({
+      data: {
+        name,
+        code,
+        trackingUrlTemplate: dto.trackingUrlTemplate?.trim() || null,
+        isActive: dto.isActive ?? true,
+        allowCustomName: dto.allowCustomName ?? false,
+        sortOrder: dto.sortOrder ?? 0,
+      },
+    });
+  }
+
+  async updateShippingCarrier(id: string, dto: UpdateShippingCarrierDto) {
+    const carrier = await this.prisma.shippingCarrier.findUnique({ where: { id } });
+    if (!carrier) {
+      throw new NotFoundException('Shipping carrier not found');
+    }
+
+    if (dto.name !== undefined) {
+      const name = dto.name.trim();
+      if (!name) {
+        throw new BadRequestException('Carrier name is required');
+      }
+      const nameTaken = await this.prisma.shippingCarrier.findFirst({
+        where: { name, NOT: { id } },
+      });
+      if (nameTaken) {
+        throw new BadRequestException(`Carrier "${name}" already exists`);
+      }
+    }
+
+    if (dto.code !== undefined && dto.code !== null && String(dto.code).trim()) {
+      const code = String(dto.code).trim();
+      const codeTaken = await this.prisma.shippingCarrier.findFirst({
+        where: { code, NOT: { id } },
+      });
+      if (codeTaken) {
+        throw new BadRequestException(`Carrier code "${code}" already exists`);
+      }
+    }
+
+    return this.prisma.shippingCarrier.update({
+      where: { id },
+      data: {
+        ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
+        ...(dto.code !== undefined
+          ? { code: dto.code === null || !String(dto.code).trim() ? null : String(dto.code).trim() }
+          : {}),
+        ...(dto.trackingUrlTemplate !== undefined
+          ? {
+              trackingUrlTemplate:
+                dto.trackingUrlTemplate === null || !String(dto.trackingUrlTemplate).trim()
+                  ? null
+                  : String(dto.trackingUrlTemplate).trim(),
+            }
+          : {}),
+        ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
+        ...(dto.allowCustomName !== undefined ? { allowCustomName: dto.allowCustomName } : {}),
+        ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
+      },
+    });
+  }
+
+  async deleteShippingCarrier(id: string) {
+    const carrier = await this.prisma.shippingCarrier.findUnique({ where: { id } });
+    if (!carrier) {
+      throw new NotFoundException('Shipping carrier not found');
+    }
+    await this.prisma.shippingCarrier.delete({ where: { id } });
   }
 
   /** Seed default platform shipping options when none exist */

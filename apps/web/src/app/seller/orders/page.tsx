@@ -59,28 +59,59 @@ interface Order {
   estimatedDelivery?: string;
 }
 
-const SHIPPING_CARRIERS = [
-  'USPS',
-  'UPS',
-  'FedEx',
-  'DHL',
-  'Royal Mail',
-  'Canada Post',
-  'Australia Post',
-  'Other',
-] as const;
+interface ShippingCarrierOption {
+  id: string;
+  name: string;
+  code?: string | null;
+  trackingUrlTemplate?: string | null;
+  allowCustomName?: boolean;
+}
 
-function applyShippingFromOrder(order: Order) {
-  const knownCarrier = SHIPPING_CARRIERS.includes((order.carrier || '') as (typeof SHIPPING_CARRIERS)[number]);
+function applyShippingFromOrder(order: Order, carriers: ShippingCarrierOption[]) {
+  const existingCarrier = (order.carrier || '').trim();
+  const matched = carriers.find(
+    (c) => c.name.toLowerCase() === existingCarrier.toLowerCase(),
+  );
+  const customOption = carriers.find((c) => c.allowCustomName);
+
+  if (matched && !matched.allowCustomName) {
+    return {
+      trackingNumber: order.trackingNumber || order.trackingCode || '',
+      carrier: matched.name,
+      customCarrier: '',
+      trackingUrl: order.trackingUrl || '',
+      estimatedDelivery: order.estimatedDelivery
+        ? String(order.estimatedDelivery).slice(0, 10)
+        : '',
+    };
+  }
+
+  if (existingCarrier && customOption && !matched) {
+    return {
+      trackingNumber: order.trackingNumber || order.trackingCode || '',
+      carrier: customOption.name,
+      customCarrier: existingCarrier,
+      trackingUrl: order.trackingUrl || '',
+      estimatedDelivery: order.estimatedDelivery
+        ? String(order.estimatedDelivery).slice(0, 10)
+        : '',
+    };
+  }
+
   return {
     trackingNumber: order.trackingNumber || order.trackingCode || '',
-    carrier: knownCarrier ? order.carrier || '' : order.carrier ? 'Other' : '',
-    customCarrier: knownCarrier ? '' : order.carrier || '',
+    carrier: matched?.name || existingCarrier,
+    customCarrier: '',
     trackingUrl: order.trackingUrl || '',
     estimatedDelivery: order.estimatedDelivery
       ? String(order.estimatedDelivery).slice(0, 10)
       : '',
   };
+}
+
+function buildTrackingUrlFromTemplate(template: string | null | undefined, trackingNumber: string) {
+  if (!template?.trim() || !trackingNumber.trim()) return '';
+  return template.replace(/\{trackingNumber\}/gi, encodeURIComponent(trackingNumber.trim()));
 }
 
 export default function SellerOrdersPage() {
@@ -100,10 +131,13 @@ export default function SellerOrdersPage() {
   const [trackingUrl, setTrackingUrl] = useState('');
   const [estimatedDelivery, setEstimatedDelivery] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [shippingMode, setShippingMode] = useState<'shippo' | 'manual'>('shippo');
+  const [shippingMode, setShippingMode] = useState<'shippo' | 'manual'>('manual');
   const [shippingRates, setShippingRates] = useState<any[]>([]);
   const [selectedRate, setSelectedRate] = useState<any | null>(null);
   const [loadingRates, setLoadingRates] = useState(false);
+  const [shippingCarriers, setShippingCarriers] = useState<ShippingCarrierOption[]>([]);
+  const [loadingCarriers, setLoadingCarriers] = useState(false);
+  const [shippoAvailable, setShippoAvailable] = useState(false);
   const [deepLinkId, setDeepLinkId] = useState<string | null>(null);
   const [cancellationRequests, setCancellationRequests] = useState<any[]>([]);
   const [orderCancellationRequest, setOrderCancellationRequest] = useState<any | null>(null);
@@ -111,8 +145,13 @@ export default function SellerOrdersPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
 
+  const selectedCarrierOption = useMemo(
+    () => shippingCarriers.find((c) => c.name === shippingCarrier),
+    [shippingCarriers, shippingCarrier],
+  );
+
   const resolveCarrier = () =>
-    shippingCarrier === 'Other' ? customCarrier.trim() : shippingCarrier.trim();
+    selectedCarrierOption?.allowCustomName ? customCarrier.trim() : shippingCarrier.trim();
 
   const buildShippingPayload = () => {
     const payload: {
@@ -131,8 +170,8 @@ export default function SellerOrdersPage() {
     return payload;
   };
 
-  const syncShippingState = (order: Order) => {
-    const shipping = applyShippingFromOrder(order);
+  const syncShippingState = (order: Order, carriers: ShippingCarrierOption[] = shippingCarriers) => {
+    const shipping = applyShippingFromOrder(order, carriers);
     setTrackingNumber(shipping.trackingNumber);
     setShippingCarrier(shipping.carrier);
     setCustomCarrier(shipping.customCarrier);
@@ -140,8 +179,37 @@ export default function SellerOrdersPage() {
     setEstimatedDelivery(shipping.estimatedDelivery);
     setShippingRates([]);
     setSelectedRate(null);
-    setShippingMode(shipping.trackingNumber ? 'manual' : 'shippo');
+    setShippingMode(shipping.trackingNumber || !shippoAvailable ? 'manual' : 'shippo');
   };
+
+  const fetchShippingCarriers = useCallback(async () => {
+    try {
+      setLoadingCarriers(true);
+      const [carriersRes, providersRes] = await Promise.all([
+        apiClient.getShippingCarriers().catch(() => null),
+        apiClient.getCourierProviders().catch(() => null),
+      ]);
+      const carriers = Array.isArray(carriersRes?.data) ? carriersRes.data : [];
+      setShippingCarriers(carriers);
+
+      const providers = Array.isArray(providersRes?.data) ? providersRes.data : [];
+      const hasShippo = providers.some(
+        (p: string) => String(p).toLowerCase() === 'shippo',
+      );
+      setShippoAvailable(hasShippo);
+      if (!hasShippo) {
+        setShippingMode('manual');
+      }
+      return carriers;
+    } catch {
+      setShippingCarriers([]);
+      setShippoAvailable(false);
+      setShippingMode('manual');
+      return [];
+    } finally {
+      setLoadingCarriers(false);
+    }
+  }, []);
 
   const menuItems = getSellerMenuItems(false);
 
@@ -212,7 +280,8 @@ export default function SellerOrdersPage() {
   useEffect(() => {
     fetchAllOrders();
     fetchCancellationRequests();
-  }, [fetchAllOrders]);
+    fetchShippingCarriers();
+  }, [fetchAllOrders, fetchShippingCarriers]);
 
   const fetchCancellationRequests = useCallback(async () => {
     try {
@@ -273,9 +342,11 @@ export default function SellerOrdersPage() {
 
   const openOrderDetails = async (order: Order) => {
     setSelectedOrder(order);
-    syncShippingState(order);
     setRejectionReason('');
     setShowDetailsModal(true);
+    const carriers =
+      shippingCarriers.length > 0 ? shippingCarriers : await fetchShippingCarriers();
+    syncShippingState(order, carriers);
     try {
       const response = await apiClient.getCancellationRequestByOrder(order.id);
       setOrderCancellationRequest(response?.data || null);
@@ -379,18 +450,36 @@ export default function SellerOrdersPage() {
       toast.error('Please enter a tracking number');
       return;
     }
+    if (shippingCarriers.length === 0) {
+      toast.error('No shipping carriers are configured. Ask an admin to add carriers under Manual Carriers.');
+      return;
+    }
     if (!shippingCarrier) {
       toast.error('Please select a shipping carrier');
       return;
     }
-    if (shippingCarrier === 'Other' && !customCarrier.trim()) {
+    if (selectedCarrierOption?.allowCustomName && !customCarrier.trim()) {
       toast.error('Please enter the carrier name');
+      return;
+    }
+    if (!resolveCarrier()) {
+      toast.error('Please select a shipping carrier');
       return;
     }
 
     try {
       setUpdatingStatus(true);
       const shipping = buildShippingPayload();
+      if (
+        !shipping.trackingUrl &&
+        selectedCarrierOption?.trackingUrlTemplate &&
+        trackingNumber.trim()
+      ) {
+        shipping.trackingUrl = buildTrackingUrlFromTemplate(
+          selectedCarrierOption.trackingUrlTemplate,
+          trackingNumber,
+        );
+      }
       await apiClient.updateOrderStatus(selectedOrder.id, selectedOrder.status, shipping);
       toast.success('Shipping details saved');
       setSelectedOrder({
@@ -972,22 +1061,24 @@ export default function SellerOrdersPage() {
                       <h3 className="font-medium text-hos-text-secondary">Shipping Details</h3>
                       {!selectedOrder.trackingNumber && !selectedOrder.trackingCode && (
                         <div className="inline-flex rounded-lg border border-hos-border overflow-hidden">
-                          <button
-                            type="button"
-                            onClick={() => setShippingMode('shippo')}
-                            className={`px-3 py-1.5 text-sm ${
-                              shippingMode === 'shippo'
-                                ? 'bg-hos-gold text-[#1a1406]'
-                                : 'bg-hos-bg-secondary text-hos-text-secondary'
-                            }`}
-                          >
-                            Ship via Shippo
-                          </button>
+                          {shippoAvailable && (
+                            <button
+                              type="button"
+                              onClick={() => setShippingMode('shippo')}
+                              className={`px-3 py-1.5 text-sm ${
+                                shippingMode === 'shippo'
+                                  ? 'bg-hos-gold text-[#1a1406]'
+                                  : 'bg-hos-bg-secondary text-hos-text-secondary'
+                              }`}
+                            >
+                              Ship via Shippo
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => setShippingMode('manual')}
                             className={`px-3 py-1.5 text-sm ${
-                              shippingMode === 'manual'
+                              shippingMode === 'manual' || !shippoAvailable
                                 ? 'bg-hos-gold text-[#1a1406]'
                                 : 'bg-hos-bg-secondary text-hos-text-secondary'
                             }`}
@@ -999,6 +1090,7 @@ export default function SellerOrdersPage() {
                     </div>
 
                     {shippingMode === 'shippo' &&
+                    shippoAvailable &&
                     !selectedOrder.trackingNumber &&
                     !selectedOrder.trackingCode ? (
                       <div className="space-y-4">
@@ -1071,18 +1163,45 @@ export default function SellerOrdersPage() {
                             </label>
                             <select
                               value={shippingCarrier}
-                              onChange={(e) => setShippingCarrier(e.target.value)}
-                              className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
+                              onChange={(e) => {
+                                const next = e.target.value;
+                                setShippingCarrier(next);
+                                const option = shippingCarriers.find((c) => c.name === next);
+                                if (!option?.allowCustomName) {
+                                  setCustomCarrier('');
+                                }
+                                if (option?.trackingUrlTemplate && trackingNumber.trim()) {
+                                  setTrackingUrl(
+                                    buildTrackingUrlFromTemplate(
+                                      option.trackingUrlTemplate,
+                                      trackingNumber,
+                                    ),
+                                  );
+                                }
+                              }}
+                              disabled={loadingCarriers || shippingCarriers.length === 0}
+                              className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none disabled:opacity-60"
                             >
-                              <option value="">Select carrier</option>
-                              {SHIPPING_CARRIERS.map((carrier) => (
-                                <option key={carrier} value={carrier}>
-                                  {carrier}
+                              <option value="">
+                                {loadingCarriers
+                                  ? 'Loading carriers...'
+                                  : shippingCarriers.length === 0
+                                    ? 'No carriers configured'
+                                    : 'Select carrier'}
+                              </option>
+                              {shippingCarriers.map((carrier) => (
+                                <option key={carrier.id} value={carrier.name}>
+                                  {carrier.name}
                                 </option>
                               ))}
                             </select>
+                            {shippingCarriers.length === 0 && !loadingCarriers && (
+                              <p className="text-xs text-amber-400 mt-1">
+                                Ask an admin to add carriers under Admin → Manual Carriers.
+                              </p>
+                            )}
                           </div>
-                          {shippingCarrier === 'Other' && (
+                          {selectedCarrierOption?.allowCustomName && (
                             <div>
                               <label className="block text-xs font-medium text-hos-text-muted mb-1">
                                 Carrier name
@@ -1103,7 +1222,18 @@ export default function SellerOrdersPage() {
                             <input
                               type="text"
                               value={trackingNumber}
-                              onChange={(e) => setTrackingNumber(e.target.value)}
+                              onChange={(e) => {
+                                const next = e.target.value;
+                                setTrackingNumber(next);
+                                if (selectedCarrierOption?.trackingUrlTemplate) {
+                                  setTrackingUrl(
+                                    buildTrackingUrlFromTemplate(
+                                      selectedCarrierOption.trackingUrlTemplate,
+                                      next,
+                                    ),
+                                  );
+                                }
+                              }}
                               placeholder="Enter tracking number"
                               className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                             />

@@ -139,12 +139,13 @@ export default function ShippingIntegrationsPage() {
     setEditingIntegration(integration || null);
     
     if (integration) {
+      // Never prefill secret fields with masked values — that can overwrite real tokens on save.
       setFormData({
         displayName: integration.displayName,
         description: integration.description || '',
         isTestMode: integration.isTestMode,
         isActive: integration.isActive,
-        credentials: integration.credentials || {},
+        credentials: {},
         priority: integration.priority,
       });
     } else {
@@ -167,15 +168,30 @@ export default function ShippingIntegrationsPage() {
 
     setSubmitting(true);
     try {
+      const credentialEntries = Object.entries(formData.credentials).filter(([, v]) => {
+        if (typeof v !== 'string') return v != null;
+        const trimmed = v.trim();
+        if (!trimmed) return false;
+        // Skip values that look like masked secrets (e.g. ****abcd)
+        if (/^\*{4,}[^*]+$/.test(trimmed) || trimmed === '****') return false;
+        return true;
+      });
+      const credentialsPayload = Object.fromEntries(
+        credentialEntries.map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]),
+      );
+
       if (editingIntegration) {
-        await apiClient.updateIntegration(editingIntegration.id, {
+        const updatePayload: Record<string, any> = {
           displayName: formData.displayName,
           description: formData.description || undefined,
           isTestMode: formData.isTestMode,
           isActive: formData.isActive,
-          credentials: formData.credentials,
           priority: formData.priority,
-        });
+        };
+        if (Object.keys(credentialsPayload).length > 0) {
+          updatePayload.credentials = credentialsPayload;
+        }
+        await apiClient.updateIntegration(editingIntegration.id, updatePayload);
         toast.success('Integration updated successfully!');
       } else {
         await apiClient.createIntegration({
@@ -185,7 +201,7 @@ export default function ShippingIntegrationsPage() {
           description: formData.description || undefined,
           isTestMode: formData.isTestMode,
           isActive: formData.isActive,
-          credentials: formData.credentials,
+          credentials: credentialsPayload,
           priority: formData.priority,
         });
         toast.success('Integration configured successfully!');
@@ -257,8 +273,16 @@ export default function ShippingIntegrationsPage() {
             <span>/</span>
             <span>Shipping</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Shipping Carriers</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Shipping Integrations</h1>
           <p className="text-hos-text-secondary mt-1">Configure shipping carrier integrations for label generation, rates, and tracking</p>
+          <div className="mt-3">
+            <Link
+              href="/admin/shipping/carriers"
+              className="inline-flex items-center text-sm text-hos-gold hover:text-hos-gold-hover font-medium"
+            >
+              Manage manual tracking carriers →
+            </Link>
+          </div>
         </div>
 
         {loading ? (
@@ -303,12 +327,16 @@ export default function ShippingIntegrationsPage() {
                           </span>
                           <span
                             className={`px-2 py-1 text-xs rounded ${
-                              integration.isTestMode
+                              integration.isTestMode ||
+                              String(integration.testMessage || '').toLowerCase().includes('test token')
                                 ? 'bg-yellow-500/15 text-yellow-300'
                                 : 'bg-hos-gold/20 text-hos-gold'
                             }`}
                           >
-                            {integration.isTestMode ? 'Test Mode' : 'Production'}
+                            {integration.isTestMode ||
+                            String(integration.testMessage || '').toLowerCase().includes('test token')
+                              ? 'Test Token / Sandbox Rates'
+                              : 'Live Token'}
                           </span>
                           <span
                             className={`px-2 py-1 text-xs rounded ${
@@ -322,9 +350,12 @@ export default function ShippingIntegrationsPage() {
                         </div>
 
                         {integration.lastTestedAt && (
-                          <p className="text-xs text-hos-text-muted mb-4">
+                          <p className="text-xs text-hos-text-muted mb-1">
                             Last tested: {new Date(integration.lastTestedAt).toLocaleString()}
                           </p>
+                        )}
+                        {integration.testMessage && (
+                          <p className="text-xs text-hos-text-muted mb-4">{integration.testMessage}</p>
                         )}
 
                         <div className="flex flex-wrap gap-2">
@@ -482,10 +513,22 @@ export default function ShippingIntegrationsPage() {
                                     credentials: { ...formData.credentials, [field]: e.target.value },
                                   })
                                 }
-                                placeholder={editingIntegration ? '(unchanged)' : ''}
+                                placeholder={
+                                  editingIntegration
+                                    ? '(leave blank to keep current)'
+                                    : selectedProvider === 'shippo'
+                                      ? 'shippo_live_... or shippo_test_...'
+                                      : ''
+                                }
                                 className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                                 required={!editingIntegration}
                               />
+                              {selectedProvider === 'shippo' && field === 'apiToken' && (
+                                <p className="text-xs text-hos-text-muted mt-1">
+                                  Live rates require a <code className="text-hos-gold">shippo_live_</code> token.
+                                  A <code className="text-hos-gold">shippo_test_</code> token always returns sandbox rates.
+                                </p>
+                              )}
                             </div>
                           ))}
                           {SHIPPING_PROVIDERS[selectedProvider]?.optionalCredentials.map((field) => (
@@ -502,6 +545,7 @@ export default function ShippingIntegrationsPage() {
                                     credentials: { ...formData.credentials, [field]: e.target.value },
                                   })
                                 }
+                                placeholder={editingIntegration ? '(leave blank to keep current)' : ''}
                                 className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                               />
                             </div>

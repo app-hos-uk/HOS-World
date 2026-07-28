@@ -10,6 +10,10 @@ import {
 import { ShippingService } from './shipping.service';
 import { CreateShippingMethodDto } from './dto/create-shipping-method.dto';
 import { CreateShippingRuleDto } from './dto/create-shipping-rule.dto';
+import {
+  CreateShippingCarrierDto,
+  UpdateShippingCarrierDto,
+} from './dto/create-shipping-carrier.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -220,6 +224,67 @@ export class ShippingController {
   async deleteShippingRule(@Param('id') id: string): Promise<ApiResponse<any>> {
     await this.shippingService.deleteRule(id);
     return { data: null, message: 'Shipping rule deleted' };
+  }
+
+  @Get('carriers')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FINANCE')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'List active shipping carriers for manual tracking entry',
+    description: 'Returns admin-configured active carriers used in seller manual shipment entry.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Active shipping carriers retrieved successfully' })
+  async findActiveShippingCarriers(): Promise<ApiResponse<any[]>> {
+    const carriers = await this.shippingService.findActiveShippingCarriers();
+    return { data: carriers, message: 'Shipping carriers retrieved successfully' };
+  }
+
+  @Get('admin/carriers')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'List all shipping carriers (Admin)' })
+  async findAllShippingCarriersAdmin(): Promise<ApiResponse<any[]>> {
+    const carriers = await this.shippingService.findAllShippingCarriersAdmin();
+    return { data: carriers, message: 'Shipping carriers retrieved successfully' };
+  }
+
+  @Post('admin/carriers')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Create shipping carrier (Admin)' })
+  async createShippingCarrier(
+    @Body() createDto: CreateShippingCarrierDto,
+  ): Promise<ApiResponse<any>> {
+    const carrier = await this.shippingService.createShippingCarrier(createDto);
+    return { data: carrier, message: 'Shipping carrier created successfully' };
+  }
+
+  @Put('admin/carriers/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update shipping carrier (Admin)' })
+  @ApiParam({ name: 'id', description: 'Shipping carrier UUID', type: String })
+  async updateShippingCarrier(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateShippingCarrierDto,
+  ): Promise<ApiResponse<any>> {
+    const carrier = await this.shippingService.updateShippingCarrier(id, updateDto);
+    return { data: carrier, message: 'Shipping carrier updated successfully' };
+  }
+
+  @Delete('admin/carriers/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete shipping carrier (Admin)' })
+  @ApiParam({ name: 'id', description: 'Shipping carrier UUID', type: String })
+  async deleteShippingCarrier(@Param('id') id: string): Promise<ApiResponse<any>> {
+    await this.shippingService.deleteShippingCarrier(id);
+    return { data: null, message: 'Shipping carrier deleted' };
   }
 
   @Post('options')

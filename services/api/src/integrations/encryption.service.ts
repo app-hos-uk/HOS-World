@@ -187,6 +187,19 @@ export class EncryptionService implements OnModuleInit {
   }
 
   /**
+   * Detect values that were previously returned by maskSecret / maskCredentials.
+   * Prevents accidental overwrite of real secrets when admin forms re-submit masked fields.
+   */
+  isMaskedSecret(value: unknown): boolean {
+    if (typeof value !== 'string') return false;
+    const trimmed = value.trim();
+    if (!trimmed) return false;
+    if (trimmed === '****') return true;
+    // maskSecret => "****…****" + last visible chars (no leading unmasked segment)
+    return /^\*{4,}[^*]+$/.test(trimmed);
+  }
+
+  /**
    * Mask all sensitive fields in a credentials object
    */
   maskCredentials(credentials: Record<string, any>): Record<string, any> {

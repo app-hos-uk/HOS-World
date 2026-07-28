@@ -150,6 +150,14 @@ export class IntegrationsService {
     // Encrypt credentials
     const encryptedCredentials = this.encryptionService.encryptJson(createDto.credentials);
 
+    // Shippo live/test is determined by the token prefix.
+    let isTestMode = createDto.isTestMode ?? true;
+    if (createDto.provider === 'shippo') {
+      const token = String(createDto.credentials?.apiToken || '');
+      if (token.startsWith('shippo_live_')) isTestMode = false;
+      else if (token.startsWith('shippo_test_')) isTestMode = true;
+    }
+
     // Generate webhook URL and secret
     const webhookSecret = this.encryptionService.generateWebhookSecret();
     const webhookUrl = `/api/webhooks/integrations/${createDto.category.toLowerCase()}/${createDto.provider}`;
@@ -161,7 +169,7 @@ export class IntegrationsService {
         displayName: createDto.displayName,
         description: createDto.description,
         isActive: createDto.isActive ?? false,
-        isTestMode: createDto.isTestMode ?? true,
+        isTestMode,
         credentials: encryptedCredentials,
         settings: createDto.settings || {},
         webhookUrl,
@@ -278,11 +286,23 @@ export class IntegrationsService {
       updateData.priority = updateDto.priority;
     }
 
-    // Handle credentials update (merge with existing)
+    // Handle credentials update (merge with existing).
+    // Ignore empty / masked values so admin "edit & save" doesn't corrupt secrets.
     if (updateDto.credentials) {
       const existingCredentials = this.decryptCredentials(existing.credentials);
-      const mergedCredentials = { ...existingCredentials, ...updateDto.credentials };
+      const incoming = this.sanitizeCredentialUpdates(updateDto.credentials);
+      const mergedCredentials = { ...existingCredentials, ...incoming };
       updateData.credentials = this.encryptionService.encryptJson(mergedCredentials);
+
+      // Shippo live/test is determined by the token prefix, not the UI checkbox alone.
+      if (existing.provider === 'shippo') {
+        const token = String(mergedCredentials.apiToken || '');
+        if (token.startsWith('shippo_live_')) {
+          updateData.isTestMode = false;
+        } else if (token.startsWith('shippo_test_')) {
+          updateData.isTestMode = true;
+        }
+      }
     }
 
     const updated = await this.prisma.integrationConfig.update({
@@ -489,6 +509,23 @@ export class IntegrationsService {
       this.logger.error('Failed to decrypt credentials');
       return {};
     }
+  }
+
+  private sanitizeCredentialUpdates(credentials: Record<string, any>): Record<string, any> {
+    const cleaned: Record<string, any> = {};
+    for (const [key, value] of Object.entries(credentials || {})) {
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) continue;
+        if (this.encryptionService.isMaskedSecret(trimmed)) continue;
+        cleaned[key] = trimmed;
+        continue;
+      }
+      if (value !== undefined && value !== null) {
+        cleaned[key] = value;
+      }
+    }
+    return cleaned;
   }
 
   private validateCredentials(provider: string, credentials: Record<string, any>): void {

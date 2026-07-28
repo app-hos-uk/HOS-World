@@ -2784,6 +2784,22 @@ model ShippingRule {
   @@map("shipping_rules")
 }
 
+// Admin-managed carriers for seller manual tracking entry
+model ShippingCarrier {
+  id                  String   @id @default(uuid())
+  name                String   @unique
+  code                String?  @unique
+  trackingUrlTemplate String? // e.g. https://track.example.com/?n={trackingNumber}
+  isActive            Boolean  @default(true)
+  allowCustomName     Boolean  @default(false) // when true, seller can type a custom carrier name
+  sortOrder           Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+  @@map("shipping_carriers")
+}
+
 // Warehouse model
 model Warehouse {
   id            String              @id @default(uuid())

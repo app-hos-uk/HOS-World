@@ -52,7 +52,20 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
   private readonly logger = new Logger(ShippoProvider.name);
 
   constructor(credentials: Record<string, any>, isTestMode: boolean = true) {
-    super(credentials, isTestMode);
+    // Shippo environment is token-driven; align in-memory flag with the token when possible.
+    const tokenMode = ShippoProvider.detectTokenMode(credentials?.apiToken);
+    super(credentials, tokenMode === 'unknown' ? isTestMode : tokenMode === 'test');
+  }
+
+  private static detectTokenMode(token?: string): 'live' | 'test' | 'unknown' {
+    const value = String(token || '').trim();
+    if (value.startsWith('shippo_live_')) return 'live';
+    if (value.startsWith('shippo_test_')) return 'test';
+    return 'unknown';
+  }
+
+  private getTokenMode(): 'live' | 'test' | 'unknown' {
+    return ShippoProvider.detectTokenMode(this.credentials?.apiToken);
   }
 
   isConfigured(): boolean {
@@ -139,6 +152,7 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
 
   private mapRates(shipment: any): RateResponse[] {
     const rates = Array.isArray(shipment?.rates) ? shipment.rates : [];
+    const tokenMode = this.getTokenMode();
 
     return rates
       .filter((rate: any) => rate?.amount && rate?.object_id)
@@ -160,6 +174,8 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
           carrier: rate.provider,
           serviceToken: rate.servicelevel?.token,
           serviceName: rate.servicelevel?.name,
+          shippoTest: rate.test === true,
+          tokenEnvironment: tokenMode,
         },
       }))
       .sort((a, b) => a.rate - b.rate);
@@ -171,28 +187,81 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
       return { success: false, message: 'Missing Shippo API token' };
     }
 
+    const tokenMode = this.getTokenMode();
     try {
-      await this.apiRequest('/carrier_accounts/');
+      const accounts = await this.apiRequest('/carrier_accounts/');
+      const accountCount = Array.isArray(accounts?.results)
+        ? accounts.results.length
+        : Array.isArray(accounts)
+          ? accounts.length
+          : 0;
+
+      if (tokenMode === 'test') {
+        return {
+          success: true,
+          message:
+            'Shippo test token verified. Rates from this token are sandbox/mock and will not match live pricing.',
+          duration: Date.now() - start,
+          details: {
+            environment: 'test',
+            carrierAccounts: accountCount,
+            hint: 'Replace apiToken with a shippo_live_ key for real carrier rates.',
+          },
+        };
+      }
+
+      if (tokenMode === 'unknown') {
+        return {
+          success: true,
+          message:
+            'Shippo connection verified, but token prefix is unrecognized. Use shippo_live_ for live rates.',
+          duration: Date.now() - start,
+          details: { environment: 'unknown', carrierAccounts: accountCount },
+        };
+      }
+
       return {
         success: true,
-        message: `Shippo ${this.isTestMode ? 'test' : 'live'} connection verified`,
+        message: `Shippo live connection verified (${accountCount} carrier account${accountCount === 1 ? '' : 's'})`,
         duration: Date.now() - start,
-        details: {
-          environment: this.credentials.apiToken?.startsWith('shippo_live_') ? 'live' : 'test',
-        },
+        details: { environment: 'live', carrierAccounts: accountCount },
       };
     } catch (error: any) {
       return {
         success: false,
         message: error.message || 'Shippo connection failed',
         duration: Date.now() - start,
+        details: { environment: tokenMode },
       };
     }
   }
 
   async getRates(request: RateRequest): Promise<RateResponse[]> {
+    const tokenMode = this.getTokenMode();
+    if (tokenMode === 'test') {
+      this.logger.warn(
+        'Requesting Shippo rates with a shippo_test_ token — response will be sandbox/mock rates, not live carrier pricing.',
+      );
+    }
+
     const shipment = await this.createShippoShipment(request);
-    return this.mapRates(shipment);
+    const mapped = this.mapRates(shipment);
+
+    if (mapped.length === 0) {
+      const messages = Array.isArray(shipment?.messages)
+        ? shipment.messages.map((m: any) => m.text || m).filter(Boolean).join('; ')
+        : '';
+      this.logger.warn(
+        `Shippo returned 0 rates (token=${tokenMode}). ${messages || 'No carrier messages returned.'}`,
+      );
+    } else {
+      const testCount = mapped.filter((r) => r.metadata?.shippoTest === true).length;
+      this.logger.log(
+        `Shippo returned ${mapped.length} rates (token=${tokenMode}, testFlag=${testCount}/${mapped.length})`,
+      );
+    }
+
+    return mapped;
   }
 
   async createShipment(request: ShipmentRequest): Promise<ShipmentResponse> {

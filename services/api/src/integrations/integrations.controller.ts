@@ -9,6 +9,9 @@ import {
   Query,
   UseGuards,
   ParseUUIDPipe,
+  Inject,
+  Optional,
+  forwardRef,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -31,7 +34,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { StripeProvider } from '../payments/providers/stripe.provider';
-import { Optional } from '@nestjs/common';
+import { CourierFactoryService } from '../shipping/courier/courier-factory.service';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('integrations')
@@ -43,7 +46,19 @@ export class IntegrationsController {
   constructor(
     private readonly integrationsService: IntegrationsService,
     @Optional() private readonly stripeProvider?: StripeProvider,
+    @Optional()
+    @Inject(forwardRef(() => CourierFactoryService))
+    private readonly courierFactory?: CourierFactoryService,
   ) {}
+
+  private async reloadRuntimeProviders(integration: IntegrationResponseDto): Promise<void> {
+    if (integration.provider === 'stripe' && integration.isActive && this.stripeProvider) {
+      void this.stripeProvider.initFromIntegrations();
+    }
+    if (integration.category === IntegrationCategory.SHIPPING && this.courierFactory) {
+      await this.courierFactory.refreshProviders();
+    }
+  }
 
   @Post()
   @ApiOperation({
@@ -57,9 +72,7 @@ export class IntegrationsController {
     @Body() createDto: CreateIntegrationDto,
   ): Promise<ApiResponse<IntegrationResponseDto>> {
     const integration = await this.integrationsService.create(createDto);
-    if (integration.provider === 'stripe' && integration.isActive && this.stripeProvider) {
-      void this.stripeProvider.initFromIntegrations();
-    }
+    await this.reloadRuntimeProviders(integration);
     return {
       data: integration,
       message: 'Integration created successfully',
@@ -192,9 +205,7 @@ export class IntegrationsController {
     @Body() updateDto: UpdateIntegrationDto,
   ): Promise<ApiResponse<IntegrationResponseDto>> {
     const integration = await this.integrationsService.update(id, updateDto);
-    if (integration.provider === 'stripe' && integration.isActive && this.stripeProvider) {
-      void this.stripeProvider.initFromIntegrations();
-    }
+    await this.reloadRuntimeProviders(integration);
     return {
       data: integration,
       message: 'Integration updated successfully',
@@ -210,7 +221,11 @@ export class IntegrationsController {
   @SwaggerApiResponse({ status: 200, description: 'Integration deleted successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Integration not found' })
   async delete(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<null>> {
+    const existing = await this.integrationsService.findById(id);
     await this.integrationsService.delete(id);
+    if (existing.category === IntegrationCategory.SHIPPING && this.courierFactory) {
+      await this.courierFactory.refreshProviders();
+    }
     return {
       data: null,
       message: 'Integration deleted successfully',
@@ -275,9 +290,7 @@ export class IntegrationsController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ApiResponse<IntegrationResponseDto>> {
     const integration = await this.integrationsService.update(id, { isActive: true });
-    if (integration.provider === 'stripe' && this.stripeProvider) {
-      void this.stripeProvider.initFromIntegrations();
-    }
+    await this.reloadRuntimeProviders(integration);
     return {
       data: integration,
       message: 'Integration activated successfully',
@@ -295,6 +308,7 @@ export class IntegrationsController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ApiResponse<IntegrationResponseDto>> {
     const integration = await this.integrationsService.update(id, { isActive: false });
+    await this.reloadRuntimeProviders(integration);
     return {
       data: integration,
       message: 'Integration deactivated successfully',

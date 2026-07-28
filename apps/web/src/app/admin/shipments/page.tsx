@@ -82,6 +82,21 @@ export default function AdminShipmentsPage() {
     carrier: '',
     notes: '',
   });
+  const [managedCarriers, setManagedCarriers] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    apiClient
+      .getAdminShippingCarriers()
+      .then((res) => {
+        const list = Array.isArray(res?.data) ? res.data : [];
+        setManagedCarriers(
+          list
+            .filter((c: any) => c.isActive !== false)
+            .map((c: any) => ({ id: c.id, name: c.name })),
+        );
+      })
+      .catch(() => setManagedCarriers([]));
+  }, []);
 
   const fetchShipments = useCallback(async () => {
     try {
@@ -711,13 +726,32 @@ export default function AdminShipmentsPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-hos-text-secondary mb-1">Carrier</label>
-                      <input
-                        type="text"
-                        value={updateForm.carrier}
-                        onChange={(e) => setUpdateForm({ ...updateForm, carrier: e.target.value })}
-                        placeholder="e.g., USPS, FedEx, DHL, UPS"
-                        className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                      />
+                      {managedCarriers.length > 0 ? (
+                        <select
+                          value={updateForm.carrier}
+                          onChange={(e) => setUpdateForm({ ...updateForm, carrier: e.target.value })}
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:border-hos-gold"
+                        >
+                          <option value="">Select carrier</option>
+                          {managedCarriers.map((c) => (
+                            <option key={c.id} value={c.name}>
+                              {c.name}
+                            </option>
+                          ))}
+                          {updateForm.carrier &&
+                            !managedCarriers.some((c) => c.name === updateForm.carrier) && (
+                              <option value={updateForm.carrier}>{updateForm.carrier}</option>
+                            )}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={updateForm.carrier}
+                          onChange={(e) => setUpdateForm({ ...updateForm, carrier: e.target.value })}
+                          placeholder="Add carriers under Admin → Manual Carriers"
+                          className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                        />
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-hos-text-secondary mb-1">Tracking Number</label>

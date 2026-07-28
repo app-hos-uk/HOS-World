@@ -154,13 +154,32 @@ export default function AdminSettingsPage() {
           >
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl">🚚</span>
-              <h3 className="font-semibold text-hos-text-secondary group-hover:text-hos-gold-hover">Shipping Carriers</h3>
+              <h3 className="font-semibold text-hos-text-secondary group-hover:text-hos-gold-hover">Shipping Integrations</h3>
             </div>
             <p className="text-sm text-hos-text-secondary">
-              USPS, FedEx, DHL - Generate labels and track shipments
+              Shippo and carrier APIs for live rates, labels, and tracking
             </p>
             <span className="inline-flex items-center mt-3 text-sm text-hos-gold font-medium group-hover:gap-2 transition-all">
-              Configure Carriers
+              Configure Integrations
+              <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </Link>
+
+          <Link
+            href="/admin/shipping/carriers"
+            className="group bg-gradient-to-br from-hos-bg-secondary to-hos-bg-tertiary border border-hos-border-accent rounded-lg p-5 hover:shadow-md transition-all"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-2xl">🏷️</span>
+              <h3 className="font-semibold text-hos-text-secondary group-hover:text-hos-gold-hover">Manual Carriers</h3>
+            </div>
+            <p className="text-sm text-hos-text-secondary">
+              Manage the carrier list sellers use for Enter Tracking Manually
+            </p>
+            <span className="inline-flex items-center mt-3 text-sm text-hos-gold font-medium group-hover:gap-2 transition-all">
+              Manage Carrier List
               <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>

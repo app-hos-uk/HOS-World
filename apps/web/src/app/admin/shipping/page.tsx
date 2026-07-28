@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
@@ -381,6 +382,12 @@ export default function AdminShippingPage() {
             <p className="text-hos-text-muted text-sm mt-1">
               Manage shipping methods, rules, and conditions for the marketplace
             </p>
+            <Link
+              href="/admin/shipping/carriers"
+              className="inline-flex mt-2 text-sm text-hos-gold hover:text-hos-gold-hover font-medium"
+            >
+              Manage manual tracking carriers →
+            </Link>
           </div>
           <div className="flex gap-3">
             <button
