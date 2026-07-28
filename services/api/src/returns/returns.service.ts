@@ -111,7 +111,10 @@ export class ReturnsService {
     if (!eligibility.eligible) {
       throw new BadRequestException(eligibility.reason || 'Return is not allowed for this order');
     }
-    const applicablePolicyId = eligibility.policy?.id;
+    const applicablePolicyId =
+      eligibility.policy?.id && typeof eligibility.policy.id === 'string'
+        ? eligibility.policy.id
+        : undefined;
 
     // If item-level returns are specified, validate them
     if (createReturnDto.items && createReturnDto.items.length > 0) {

@@ -192,7 +192,7 @@ function ReturnsContent() {
                 .filter((item) => returnForm.selectedItems.includes(item.id))
                 .map((item) => ({
                   orderItemId: item.id,
-                  quantity: item.quantity,
+                  quantity: Math.max(1, Number(item.quantity) || 1),
                   reason: returnForm.reason,
                 }))
             : undefined,

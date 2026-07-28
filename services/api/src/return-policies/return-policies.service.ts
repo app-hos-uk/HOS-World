@@ -227,34 +227,38 @@ export class ReturnPoliciesService {
       product.categoryRelation?.id || undefined,
     );
 
-    if (!policy) {
-      return {
-        eligible: false,
-        reason: 'No return policy found',
-      };
-    }
+    // Fallback when admin has not configured any return policy yet.
+    // Prevents customer return requests from hard-failing on a missing policy row.
+    const effectivePolicy =
+      policy ||
+      ({
+        id: null,
+        isReturnable: true,
+        returnWindowDays: 30,
+        name: 'Default platform return window',
+      } as const);
 
-    if (!policy.isReturnable) {
+    if (!effectivePolicy.isReturnable) {
       return {
         eligible: false,
-        policy,
+        policy: policy || undefined,
         reason: 'Product is not returnable',
       };
     }
 
-    if (daysSinceDelivery > policy.returnWindowDays) {
+    if (daysSinceDelivery > effectivePolicy.returnWindowDays) {
       return {
         eligible: false,
-        policy,
-        reason: `Return window expired. Return must be initiated within ${policy.returnWindowDays} days of delivery.`,
-        returnWindowDays: policy.returnWindowDays,
+        policy: policy || undefined,
+        reason: `Return window expired. Return must be initiated within ${effectivePolicy.returnWindowDays} days of delivery.`,
+        returnWindowDays: effectivePolicy.returnWindowDays,
       };
     }
 
     return {
       eligible: true,
-      policy,
-      returnWindowDays: policy.returnWindowDays,
+      policy: policy || undefined,
+      returnWindowDays: effectivePolicy.returnWindowDays,
     };
   }
 
