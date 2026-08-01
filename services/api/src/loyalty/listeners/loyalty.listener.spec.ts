@@ -12,9 +12,10 @@ function makeMocks() {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
-    loyaltyEarnRule: { findFirst: jest.fn() },
+    loyaltyEarnRule: { findFirst: jest.fn(), findUnique: jest.fn() },
     loyaltyTransaction: { findFirst: jest.fn(), count: jest.fn().mockResolvedValue(0) },
     productReview: { findUnique: jest.fn() },
+    $executeRaw: jest.fn().mockResolvedValue(undefined),
     $transaction: jest.fn((fn: any) => fn(prisma)),
   };
   const wallet: any = {
@@ -31,6 +32,9 @@ function makeMocks() {
       return undefined;
     }),
   };
+  const featureFlags: any = {
+    isEnabled: jest.fn().mockReturnValue(true),
+  };
   const segmentation = { touchActivity: jest.fn().mockResolvedValue(undefined) };
   const ambassador = { onLoyaltyReferralConverted: jest.fn().mockResolvedValue(undefined) };
   const listener = new LoyaltyListener(
@@ -38,10 +42,11 @@ function makeMocks() {
     wallet,
     tiers,
     config,
+    featureFlags,
     segmentation as any,
     ambassador as any,
   );
-  return { listener, prisma, wallet, tiers, config, segmentation, ambassador };
+  return { listener, prisma, wallet, tiers, config, featureFlags, segmentation, ambassador };
 }
 
 describe('LoyaltyListener', () => {
@@ -54,11 +59,15 @@ describe('LoyaltyListener', () => {
   it('onUserRegistered converts referral and credits both', async () => {
     const { listener, prisma, wallet } = makeMocks();
     prisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'mem-new' });
-    prisma.loyaltyReferral.findFirst.mockResolvedValue({
-      id: 'ref1',
-      status: 'PENDING',
-      referrerId: 'mem-ref',
-      referrer: {},
+    prisma.loyaltyTransaction.findFirst.mockResolvedValue(null);
+    prisma.loyaltyReferral.findFirst.mockImplementation(async (args: any) => {
+      if (args?.where?.refereeId) return null;
+      return {
+        id: 'ref1',
+        status: 'PENDING',
+        referrerId: 'mem-ref',
+        referrer: {},
+      };
     });
     await listener.onUserRegistered('u1', 'HOS-TEST-AB');
     expect(prisma.$transaction).toHaveBeenCalled();
@@ -72,14 +81,31 @@ describe('LoyaltyListener', () => {
     expect(prisma.loyaltyReferral.findFirst).not.toHaveBeenCalled();
   });
 
+  it('onUserRegistered skips when member already claimed a referral', async () => {
+    const { listener, prisma, wallet } = makeMocks();
+    prisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'mem-new' });
+    prisma.loyaltyReferral.findFirst.mockResolvedValue({
+      id: 'prior',
+      refereeId: 'mem-new',
+      status: 'CONVERTED',
+    });
+    await listener.onUserRegistered('u1', 'HOS-OTHER');
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(wallet.applyDelta).not.toHaveBeenCalled();
+  });
+
   it('onUserRegistered skips self-referral', async () => {
     const { listener, prisma, wallet } = makeMocks();
     prisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'same-mem' });
-    prisma.loyaltyReferral.findFirst.mockResolvedValue({
-      id: 'ref1',
-      status: 'PENDING',
-      referrerId: 'same-mem',
-      referrer: {},
+    prisma.loyaltyTransaction.findFirst.mockResolvedValue(null);
+    prisma.loyaltyReferral.findFirst.mockImplementation(async (args: any) => {
+      if (args?.where?.refereeId) return null;
+      return {
+        id: 'ref1',
+        status: 'PENDING',
+        referrerId: 'same-mem',
+        referrer: {},
+      };
     });
     await listener.onUserRegistered('u1', 'HOS-SELF');
     expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -89,11 +115,15 @@ describe('LoyaltyListener', () => {
   it('onUserRegistered skips non-pending referral', async () => {
     const { listener, prisma, wallet } = makeMocks();
     prisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'mem-new' });
-    prisma.loyaltyReferral.findFirst.mockResolvedValue({
-      id: 'ref1',
-      status: 'CONVERTED',
-      referrerId: 'mem-ref',
-      referrer: {},
+    prisma.loyaltyTransaction.findFirst.mockResolvedValue(null);
+    prisma.loyaltyReferral.findFirst.mockImplementation(async (args: any) => {
+      if (args?.where?.refereeId) return null;
+      return {
+        id: 'ref1',
+        status: 'CONVERTED',
+        referrerId: 'mem-ref',
+        referrer: {},
+      };
     });
     await listener.onUserRegistered('u1', 'HOS-OLD');
     expect(prisma.$transaction).not.toHaveBeenCalled();

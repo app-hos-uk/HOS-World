@@ -1,5 +1,4 @@
 import { LoyaltyEarnEngine } from './earn.engine';
-import { Decimal } from '@prisma/client/runtime/library';
 
 const mockBrandPartnerships = {
   applyBrandOrderBoostInTx: jest.fn().mockResolvedValue({ brandPoints: 0 }),
@@ -15,15 +14,21 @@ const mockProductCampaigns = {
   }),
 };
 
+const mockFeatureFlags = {
+  isEnabled: jest.fn().mockReturnValue(true),
+};
+
 describe('LoyaltyEarnEngine', () => {
   describe('processOrderComplete', () => {
     it('skips when loyalty is disabled', async () => {
       const mockConfig = {
         get: jest.fn().mockReturnValue('false'),
       };
+      const flags = { isEnabled: jest.fn().mockReturnValue(true) };
       const engine = new LoyaltyEarnEngine(
         null as any,
         mockConfig as any,
+        flags as any,
         null as any,
         null as any,
         null as any,
@@ -62,6 +67,7 @@ describe('LoyaltyEarnEngine', () => {
       const engine = new LoyaltyEarnEngine(
         mockPrisma as any,
         mockConfig as any,
+        mockFeatureFlags as any,
         null as any,
         null as any,
         null as any,
@@ -100,6 +106,7 @@ describe('LoyaltyEarnEngine', () => {
       const engine = new LoyaltyEarnEngine(
         mockPrisma as any,
         mockConfig as any,
+        mockFeatureFlags as any,
         null as any,
         null as any,
         null as any,

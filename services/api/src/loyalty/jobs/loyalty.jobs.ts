@@ -8,7 +8,8 @@ import { LoyaltyTierEngine } from '../engines/tier.engine';
 import { LoyaltyWalletService } from '../services/wallet.service';
 import { FandomProfileService } from '../services/fandom-profile.service';
 import { MarketingEventBus } from '../../journeys/marketing-event.bus';
-import { isTruthy } from '../../common/utils/config';
+import { FeatureFlagsService } from '../../config/feature-flags.service';
+import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 
 @Injectable()
 export class LoyaltyJobsService implements OnModuleInit {
@@ -20,14 +21,15 @@ export class LoyaltyJobsService implements OnModuleInit {
     private tiers: LoyaltyTierEngine,
     private wallet: LoyaltyWalletService,
     private config: ConfigService,
+    private featureFlags: FeatureFlagsService,
     private fandomProfiles: FandomProfileService,
     @Optional() @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
   ) {}
 
   async onModuleInit() {
-    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) {
-      this.logger.log('Loyalty jobs skipped (LOYALTY_ENABLED not set to true/1/yes)');
+    if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
+      this.logger.log('Loyalty jobs skipped (LOYALTY_ENABLED / LOYALTY_PROGRAMME not enabled)');
       return;
     }
 
@@ -99,33 +101,47 @@ export class LoyaltyJobsService implements OnModuleInit {
       const bonusRule = await this.prisma.loyaltyEarnRule.findUnique({
         where: { action: 'BIRTHDAY' },
       });
-      const pts = bonusRule?.pointsAmount ?? 50;
+      if (bonusRule && !bonusRule.isActive) {
+        this.logger.log('Birthday bonus skipped (BIRTHDAY earn rule inactive)');
+        return;
+      }
+      const envPtsRaw = this.config.get<string | number>('LOYALTY_BIRTHDAY_BONUS', 200);
+      const envPts = typeof envPtsRaw === 'number' ? envPtsRaw : Number(envPtsRaw);
+      const pts = Number(
+        bonusRule?.pointsAmount ?? (Number.isFinite(envPts) && envPts > 0 ? envPts : 200),
+      );
+      if (!Number.isFinite(pts) || pts <= 0) {
+        this.logger.log('Birthday bonus skipped (points resolved to 0)');
+        return;
+      }
 
+      // Date-only profile birthdays are stored as UTC midnight (`new Date('YYYY-MM-DD')`).
+      // Compare in UTC so negative-offset hosts do not shift the calendar day.
+      // Cron hosts should run in UTC (Railway default).
       const today = new Date();
-      const month = today.getMonth() + 1;
-      const day = today.getDate();
+      const month = today.getUTCMonth() + 1;
+      const day = today.getUTCDate();
 
-      // Birthday stored in LoyaltyMembership.birthday (Date?) — filter in app
-      // because SQL date-part filtering varies. If birthday column doesn't exist
-      // yet, the query returns all memberships and we filter on the JS side.
-      const members = await this.prisma.loyaltyMembership
-        .findMany({
-          include: { user: { select: { firstName: true } } },
-        })
-        .catch(() => [] as { id: string; birthday: Date | null; userId: string; user: { firstName: string | null } }[]);
+      // Prefer User.birthday (profile), fall back to membership.birthday.
+      // Do not swallow query failures — empty catch previously wiped the entire run.
+      const members = await this.prisma.loyaltyMembership.findMany({
+        include: {
+          user: { select: { firstName: true, birthday: true } },
+        },
+      });
 
       let awarded = 0;
       for (const m of members) {
-        const dob = m.birthday;
+        const dob = m.user?.birthday ?? m.birthday;
         if (!dob) continue;
-        if (dob.getMonth() + 1 !== month || dob.getDate() !== day) continue;
+        if (dob.getUTCMonth() + 1 !== month || dob.getUTCDate() !== day) continue;
 
         const alreadyAwarded = await this.prisma.loyaltyTransaction.count({
           where: {
             membershipId: m.id,
             source: 'BIRTHDAY',
             createdAt: {
-              gte: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+              gte: new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())),
             },
           },
         });
@@ -144,6 +160,8 @@ export class LoyaltyJobsService implements OnModuleInit {
               data: {
                 totalPointsEarned: { increment: pts },
                 engagementCount: { increment: 1 },
+                // Keep membership birthday aligned when only user profile had it
+                ...(m.birthday ? {} : dob ? { birthday: dob } : {}),
               },
             });
           });
@@ -160,6 +178,79 @@ export class LoyaltyJobsService implements OnModuleInit {
         }
       }
       this.logger.log(`Birthday bonus: ${awarded} members rewarded`);
+    });
+
+    this.queue.registerProcessor(JobType.LOYALTY_ANNIVERSARY_BONUS, async () => {
+      const bonusRule = await this.prisma.loyaltyEarnRule.findUnique({
+        where: { action: 'ANNIVERSARY' },
+      });
+      if (bonusRule && !bonusRule.isActive) {
+        this.logger.log('Anniversary bonus skipped (ANNIVERSARY earn rule inactive)');
+        return;
+      }
+      const envPtsRaw = this.config.get<string | number>('LOYALTY_ANNIVERSARY_BONUS', 150);
+      const envPts = typeof envPtsRaw === 'number' ? envPtsRaw : Number(envPtsRaw);
+      const pts = Number(
+        bonusRule?.pointsAmount ?? (Number.isFinite(envPts) && envPts > 0 ? envPts : 150),
+      );
+      if (!Number.isFinite(pts) || pts <= 0) {
+        this.logger.log('Anniversary bonus skipped (points resolved to 0)');
+        return;
+      }
+
+      // Use UTC calendar day (same as birthday job / date-only storage).
+      const today = new Date();
+      const month = today.getUTCMonth() + 1;
+      const day = today.getUTCDate();
+      const year = today.getUTCFullYear();
+
+      const members = await this.prisma.loyaltyMembership.findMany({
+        include: {
+          user: { select: { firstName: true } },
+        },
+      });
+
+      let awarded = 0;
+      for (const m of members) {
+        // Membership anniversary is based on enrollment date only (full year of tenure).
+        const anniversary = m.enrolledAt;
+        if (!anniversary) continue;
+        if (anniversary.getUTCFullYear() >= year) continue;
+        if (anniversary.getUTCMonth() + 1 !== month || anniversary.getUTCDate() !== day) continue;
+
+        const alreadyAwarded = await this.prisma.loyaltyTransaction.count({
+          where: {
+            membershipId: m.id,
+            source: 'ANNIVERSARY',
+            createdAt: {
+              gte: new Date(Date.UTC(year, today.getUTCMonth(), today.getUTCDate())),
+            },
+          },
+        });
+        if (alreadyAwarded > 0) continue;
+
+        try {
+          await this.prisma.$transaction(async (ptx) => {
+            await this.wallet.applyDelta(ptx, m.id, pts, LoyaltyTxType.BONUS, {
+              source: 'ANNIVERSARY',
+              channel: 'SYSTEM',
+              earnRuleId: bonusRule?.id,
+              description: 'Membership anniversary bonus',
+            });
+            await ptx.loyaltyMembership.update({
+              where: { id: m.id },
+              data: {
+                totalPointsEarned: { increment: pts },
+                engagementCount: { increment: 1 },
+              },
+            });
+          });
+          awarded++;
+        } catch (e) {
+          this.logger.warn(`Anniversary bonus failed for ${m.id}: ${(e as Error).message}`);
+        }
+      }
+      this.logger.log(`Anniversary bonus: ${awarded} members rewarded`);
     });
 
     this.queue.registerProcessor(JobType.FANDOM_PROFILE_RECOMPUTE, async () => {
@@ -182,6 +273,11 @@ export class LoyaltyJobsService implements OnModuleInit {
         JobType.LOYALTY_BIRTHDAY_BONUS,
         {},
         this.config.get<string>('LOYALTY_BIRTHDAY_CRON', '0 6 * * *'),
+      );
+      await this.queue.addRepeatable(
+        JobType.LOYALTY_ANNIVERSARY_BONUS,
+        {},
+        this.config.get<string>('LOYALTY_ANNIVERSARY_CRON', '0 6 * * *'),
       );
       await this.queue.addRepeatable(
         JobType.FANDOM_PROFILE_RECOMPUTE,

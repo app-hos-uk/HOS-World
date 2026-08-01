@@ -6,7 +6,8 @@ import { LoyaltyTxType, Prisma } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { SegmentationService } from '../../segmentation/segmentation.service';
 import { AmbassadorService } from '../../ambassador/ambassador.service';
-import { isTruthy } from '../../common/utils/config';
+import { FeatureFlagsService } from '../../config/feature-flags.service';
+import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 
 const PHOTO_IN_REVIEW = /\bhttps?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?\b/i;
 
@@ -23,10 +24,15 @@ export class LoyaltyListener {
     private wallet: LoyaltyWalletService,
     private tiers: LoyaltyTierEngine,
     private config: ConfigService,
+    private featureFlags: FeatureFlagsService,
     private segmentation: SegmentationService,
     @Optional() @Inject(forwardRef(() => AmbassadorService))
     private ambassador?: AmbassadorService,
   ) {}
+
+  private runtimeEnabled(): boolean {
+    return isLoyaltyRuntimeEnabled(this.config, this.featureFlags);
+  }
 
   private async isWithinLimits(
     membershipId: string,
@@ -66,24 +72,44 @@ export class LoyaltyListener {
 
   /**
    * Apply referral signup bonuses. Requires an existing loyalty membership (call after enroll).
+   * @returns applied | already_applied | not_applied — so clients can clear stashed codes safely.
    */
-  async onUserRegistered(userId: string, referralCode?: string): Promise<void> {
-    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) return;
+  async onUserRegistered(
+    userId: string,
+    referralCode?: string,
+  ): Promise<'applied' | 'already_applied' | 'not_applied'> {
+    if (!this.runtimeEnabled()) return 'not_applied';
     const code = referralCode?.trim();
-    if (!code) return;
+    if (!code) return 'not_applied';
 
     const refereeMembership = await this.prisma.loyaltyMembership.findUnique({
       where: { userId },
     });
-    if (!refereeMembership) return;
+    if (!refereeMembership) return 'not_applied';
 
     try {
+      // One referral conversion per member — re-enroll with a different code
+      // must not collect multiple REFERRAL_BONUS payouts.
+      const alreadyReferee = await this.prisma.loyaltyReferral.findFirst({
+        where: { refereeId: refereeMembership.id },
+      });
+      if (alreadyReferee) return 'already_applied';
+
+      const alreadyBonus = await this.prisma.loyaltyTransaction.findFirst({
+        where: {
+          membershipId: refereeMembership.id,
+          source: 'REFERRAL_BONUS',
+          type: LoyaltyTxType.BONUS,
+        },
+      });
+      if (alreadyBonus) return 'already_applied';
+
       const referral = await this.prisma.loyaltyReferral.findFirst({
         where: { referralCode: { equals: code, mode: 'insensitive' } },
         include: { referrer: true },
       });
-      if (!referral || referral.status !== 'PENDING') return;
-      if (referral.referrerId === refereeMembership.id) return;
+      if (!referral || referral.status !== 'PENDING') return 'not_applied';
+      if (referral.referrerId === refereeMembership.id) return 'not_applied';
 
       const [refereeRule, referrerRule] = await Promise.all([
         this.prisma.loyaltyEarnRule.findUnique({ where: { action: 'REFERRAL_REFEREE' } }),
@@ -96,6 +122,7 @@ export class LoyaltyListener {
         ? referrerRule.pointsAmount
         : this.config.get<number>('LOYALTY_REFERRAL_REFERRER_BONUS', 200);
 
+      let claimedOk = false;
       await this.prisma.$transaction(async (tx) => {
         // Only the first successful claim should award points; concurrent
         // signups with the same code must not double-pay.
@@ -139,14 +166,26 @@ export class LoyaltyListener {
             engagementCount: { increment: 1 },
           },
         });
+        claimedOk = true;
       });
 
-      await this.tiers.recalculateTier(refereeMembership.id);
-      await this.tiers.recalculateTier(referral.referrerId);
+      if (!claimedOk) return 'not_applied';
+
+      // Conversion already committed — don't report not_applied if post-steps fail.
+      try {
+        await this.tiers.recalculateTier(refereeMembership.id);
+        await this.tiers.recalculateTier(referral.referrerId);
+      } catch (tierErr) {
+        this.logger.warn(
+          `Referral tier recalculation failed after convert: ${(tierErr as Error).message}`,
+        );
+      }
       void this.segmentation.touchActivity(userId);
       void this.ambassador?.onLoyaltyReferralConverted(referral.referrerId);
+      return 'applied';
     } catch (e) {
       this.logger.warn(`Referral conversion failed: ${(e as Error).message}`);
+      return 'not_applied';
     }
   }
 
@@ -154,7 +193,7 @@ export class LoyaltyListener {
    * @returns Points awarded (0 if skipped).
    */
   async onReviewSubmitted(userId: string, reviewId: string): Promise<number> {
-    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) return 0;
+    if (!this.runtimeEnabled()) return 0;
 
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) return 0;
@@ -215,7 +254,7 @@ export class LoyaltyListener {
    * @returns Points awarded (0 if skipped / over daily cap).
    */
   async onSocialShare(userId: string, platform: string): Promise<number> {
-    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) return 0;
+    if (!this.runtimeEnabled()) return 0;
 
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) return 0;
@@ -253,7 +292,7 @@ export class LoyaltyListener {
   }
 
   async onQuestCompleted(userId: string, questId: string, questPoints: number): Promise<number> {
-    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) return 0;
+    if (!this.runtimeEnabled()) return 0;
 
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) return 0;
@@ -297,7 +336,7 @@ export class LoyaltyListener {
   }
 
   async onQuizCompleted(userId: string, quizId: string, points: number): Promise<number> {
-    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) return 0;
+    if (!this.runtimeEnabled()) return 0;
     if (points <= 0) return 0;
 
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
@@ -335,6 +374,103 @@ export class LoyaltyListener {
       return points;
     } catch (e) {
       this.logger.warn(`Quiz loyalty earn failed: ${(e as Error).message}`);
+      return 0;
+    }
+  }
+
+  /**
+   * Sync birthday onto membership and award PROFILE_COMPLETE once when
+   * first name, last name, and birthday are all present.
+   */
+  async onProfileUpdated(userId: string): Promise<number> {
+    if (!this.runtimeEnabled()) return 0;
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        firstName: true,
+        lastName: true,
+        birthday: true,
+        phone: true,
+        whatsappNumber: true,
+      },
+    });
+    if (!user) return 0;
+
+    const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
+    if (!membership) return 0;
+
+    const userBirthdayMs = user.birthday?.getTime() ?? null;
+    const membershipBirthdayMs = membership.birthday?.getTime() ?? null;
+    if (userBirthdayMs !== membershipBirthdayMs) {
+      await this.prisma.loyaltyMembership.update({
+        where: { id: membership.id },
+        data: { birthday: user.birthday ?? null },
+      });
+    }
+
+    const profileComplete =
+      Boolean(user.firstName?.trim()) &&
+      Boolean(user.lastName?.trim()) &&
+      Boolean(user.birthday);
+
+    if (!profileComplete) return 0;
+
+    const rule = await this.prisma.loyaltyEarnRule.findFirst({
+      where: { action: 'PROFILE_COMPLETE', isActive: true },
+    });
+    let pts = 0;
+    if (rule) {
+      pts = rule.pointsAmount ?? 0;
+      if (pts <= 0) return 0;
+    } else {
+      // Inactive PROFILE_COMPLETE rule means intentional disable (same as SIGNUP).
+      const inactive = await this.prisma.loyaltyEarnRule.findFirst({
+        where: { action: 'PROFILE_COMPLETE', isActive: false },
+      });
+      if (inactive) return 0;
+      pts = this.config.get<number>('LOYALTY_PROFILE_COMPLETE_BONUS', 50);
+      if (pts <= 0) return 0;
+    }
+
+    try {
+      let awarded = false;
+      await this.prisma.$transaction(async (tx) => {
+        // Serialize concurrent profile updates on the membership row, then
+        // re-check for an existing bonus inside the transaction.
+        await tx.$executeRaw(
+          Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membership.id}::uuid FOR UPDATE`,
+        );
+        const dup = await tx.loyaltyTransaction.findFirst({
+          where: {
+            membershipId: membership.id,
+            source: 'PROFILE_COMPLETE',
+            type: { in: [LoyaltyTxType.BONUS, LoyaltyTxType.EARN] },
+          },
+        });
+        if (dup) return;
+
+        await this.wallet.applyDelta(tx, membership.id, pts, LoyaltyTxType.BONUS, {
+          source: 'PROFILE_COMPLETE',
+          channel: 'WEB',
+          earnRuleId: rule?.id,
+          description: 'Profile completion bonus',
+        });
+        await tx.loyaltyMembership.update({
+          where: { id: membership.id },
+          data: {
+            totalPointsEarned: { increment: pts },
+            engagementCount: { increment: 1 },
+          },
+        });
+        awarded = true;
+      });
+      if (!awarded) return 0;
+      await this.tiers.recalculateTier(membership.id);
+      void this.segmentation.touchActivity(userId);
+      return pts;
+    } catch (e) {
+      this.logger.warn(`Profile complete bonus failed: ${(e as Error).message}`);
       return 0;
     }
   }

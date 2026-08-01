@@ -343,6 +343,7 @@ export class ApiClient {
     gdprConsent: boolean;
     dataProcessingConsent?: Record<string, boolean>;
     inviteCode?: string;
+    referralCode?: string;
   }): Promise<ApiResponse<AuthResponse>> {
     return this.request<ApiResponse<AuthResponse>>('/auth/register', {
       method: 'POST',

@@ -1,14 +1,21 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, BadRequestException, Optional, forwardRef, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 import { PrismaService } from '../database/prisma.service';
 import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';
 import type { User } from '@hos-marketplace/shared-types';
 import { isProtectedAdminEmail } from '../config/protected-admin-emails';
+import { LoyaltyListener } from '../loyalty/listeners/loyalty.listener';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(UsersService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    @Optional() @Inject(forwardRef(() => LoyaltyListener))
+    private loyaltyListener?: LoyaltyListener,
+  ) {}
 
   async getProfile(userId: string): Promise<User> {
     const user = await this.prisma.user.findUnique({
@@ -187,6 +194,19 @@ export class UsersService {
         },
       },
     });
+
+    // Sync birthday / award PROFILE_COMPLETE when loyalty membership exists
+    if (
+      updateProfileDto.birthday !== undefined ||
+      updateProfileDto.firstName !== undefined ||
+      updateProfileDto.lastName !== undefined
+    ) {
+      void this.loyaltyListener?.onProfileUpdated(userId).catch((e: unknown) => {
+        this.logger.warn(
+          `Loyalty profile update side-effect failed for ${userId}: ${e instanceof Error ? e.message : 'unknown'}`,
+        );
+      });
+    }
 
     return updated as User;
   }

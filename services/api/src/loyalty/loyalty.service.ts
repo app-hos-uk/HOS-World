@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
-  ConflictException,
   Inject,
   forwardRef,
   Optional,
@@ -91,8 +90,32 @@ export class LoyaltyService implements OnModuleInit {
       throw new BadRequestException('Only customers can enroll');
     }
 
-    const existing = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
-    if (existing) throw new ConflictException('Already enrolled');
+    const existing = await this.prisma.loyaltyMembership.findUnique({
+      where: { userId },
+      include: { tier: true },
+    });
+
+    // Idempotent: already enrolled → still apply referral + repair missing bonuses.
+    if (existing) {
+      await this.ensureSignupBonus(existing.id, userId);
+      try {
+        await this.loyaltyListener.onProfileUpdated(userId);
+      } catch (profileErr: unknown) {
+        this.logger.warn(
+          `Profile-complete bonus check failed for ${userId}: ${profileErr instanceof Error ? profileErr.message : 'unknown'}`,
+        );
+      }
+      const ref = dto?.referralCode?.trim();
+      let referralStatus: 'applied' | 'already_applied' | 'not_applied' | undefined;
+      if (ref) {
+        referralStatus = await this.loyaltyListener.onUserRegistered(userId, ref);
+      }
+      const membership = await this.prisma.loyaltyMembership.findUnique({
+        where: { userId },
+        include: { tier: true },
+      });
+      return membership ? { ...membership, referralStatus } : membership;
+    }
 
     const tier = await this.ensureInitiateTier();
 
@@ -107,31 +130,19 @@ export class LoyaltyService implements OnModuleInit {
         preferredCurrency: dto?.preferredCurrency || user.currencyPreference || 'USD',
         enrollmentChannel: dto?.enrollmentChannel || 'WEB',
         cardNumber,
+        // Profile birthday is the source of truth for birthday jobs
+        birthday: user.birthday ?? undefined,
       },
       include: { tier: true },
     });
 
-    // Award SIGNUP earn rule bonus if configured
+    await this.ensureSignupBonus(membership.id, userId);
+    // Customers who already completed profile before enroll still get PROFILE_COMPLETE.
     try {
-      const signupRule = await this.prisma.loyaltyEarnRule.findFirst({
-        where: { action: 'SIGNUP', isActive: true },
-      });
-      if (signupRule && signupRule.pointsAmount > 0) {
-        const existingSignup = await this.prisma.loyaltyTransaction.findFirst({
-          where: { membershipId: membership.id, source: 'SIGNUP', type: LoyaltyTxType.BONUS },
-        });
-        if (!existingSignup) {
-          await this.awardBonus(
-            membership.id,
-            signupRule.pointsAmount,
-            'SIGNUP',
-            'Welcome bonus for joining The Enchanted Circle',
-          );
-        }
-      }
-    } catch (signupErr: unknown) {
+      await this.loyaltyListener.onProfileUpdated(userId);
+    } catch (profileErr: unknown) {
       this.logger.warn(
-        `Signup bonus failed for user ${userId}: ${signupErr instanceof Error ? signupErr.message : 'unknown'}`,
+        `Profile-complete bonus check failed for ${userId}: ${profileErr instanceof Error ? profileErr.message : 'unknown'}`,
       );
     }
 
@@ -155,20 +166,125 @@ export class LoyaltyService implements OnModuleInit {
     }
 
     const ref = dto?.referralCode?.trim();
+    let referralStatus: 'applied' | 'already_applied' | 'not_applied' | undefined;
     if (ref) {
-      await this.loyaltyListener.onUserRegistered(userId, ref);
+      referralStatus = await this.loyaltyListener.onUserRegistered(userId, ref);
     }
 
-    return membership;
+    // Return refreshed membership so clients see signup / referral balance immediately.
+    const refreshed = await this.prisma.loyaltyMembership.findUnique({
+      where: { id: membership.id },
+      include: { tier: true },
+    });
+    return refreshed ? { ...refreshed, referralStatus } : refreshed;
+  }
+
+  /**
+   * Award the joining (SIGNUP) bonus once per membership.
+   * Respects admin earn-rule config: active rule wins; inactive/zero disables;
+   * env/default 100 only when no SIGNUP rule exists at all.
+   */
+  /** @returns true if a new SIGNUP bonus was awarded */
+  private async ensureSignupBonus(membershipId: string, userId: string): Promise<boolean> {
+    const signupRule = await this.prisma.loyaltyEarnRule.findFirst({
+      where: { action: 'SIGNUP', isActive: true },
+    });
+
+    let points = 0;
+    if (signupRule) {
+      points = signupRule.pointsAmount ?? 0;
+      if (points <= 0) {
+        this.logger.debug(`Signup bonus skipped for user ${userId}: active SIGNUP rule has 0 points`);
+        return false;
+      }
+    } else {
+      // If a SIGNUP rule exists but is inactive, treat that as an intentional disable.
+      const inactiveSignupRule = await this.prisma.loyaltyEarnRule.findFirst({
+        where: { action: 'SIGNUP', isActive: false },
+      });
+      if (inactiveSignupRule) {
+        this.logger.debug(`Signup bonus skipped for user ${userId}: SIGNUP rule is inactive`);
+        return false;
+      }
+
+      const envBonusRaw = this.config.get<string | number>('LOYALTY_SIGNUP_BONUS');
+      const envBonus =
+        typeof envBonusRaw === 'number' ? envBonusRaw : Number(envBonusRaw);
+      points = Number.isFinite(envBonus) && envBonus > 0 ? envBonus : 100;
+      this.logger.warn(
+        `No SIGNUP earn rule configured; awarding fallback ${points} pts for user ${userId}`,
+      );
+    }
+
+    try {
+      let awarded = false;
+      await this.prisma.$transaction(async (tx) => {
+        // Lock + in-tx duplicate check so concurrent getMembership/enroll
+        // paths cannot both award the welcome bonus.
+        await tx.$executeRaw(
+          Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membershipId}::uuid FOR UPDATE`,
+        );
+        const existingSignup = await tx.loyaltyTransaction.findFirst({
+          where: { membershipId, source: 'SIGNUP', type: LoyaltyTxType.BONUS },
+        });
+        if (existingSignup) return;
+
+        await this.wallet.applyDelta(tx, membershipId, points, LoyaltyTxType.BONUS, {
+          source: 'SIGNUP',
+          channel: 'WEB',
+          description: 'Welcome bonus for joining The Enchanted Circle',
+        });
+        await tx.loyaltyMembership.update({
+          where: { id: membershipId },
+          data: { totalPointsEarned: { increment: points } },
+        });
+        awarded = true;
+      });
+      if (awarded) {
+        try {
+          await this.tiers.recalculateTier(membershipId);
+        } catch (tierErr: unknown) {
+          this.logger.warn(
+            `Signup bonus awarded but tier recalculation failed for user ${userId}: ${tierErr instanceof Error ? tierErr.message : 'unknown'}`,
+          );
+        }
+      }
+      return awarded;
+    } catch (signupErr: unknown) {
+      this.logger.error(
+        `Signup bonus failed for user ${userId}: ${signupErr instanceof Error ? signupErr.message : 'unknown'}`,
+        signupErr instanceof Error ? signupErr.stack : undefined,
+      );
+      return false;
+    }
   }
 
   async getMembership(userId: string) {
     this.assertEnabled();
     await this.ensureInitiateTier();
-    return this.prisma.loyaltyMembership.findUnique({
+    const membership = await this.prisma.loyaltyMembership.findUnique({
       where: { userId },
       include: { tier: true },
     });
+    // Repair missing joining / profile bonuses for members enrolled before reliability fixes
+    if (membership) {
+      const awardedSignup = await this.ensureSignupBonus(membership.id, userId);
+      let awardedProfile = 0;
+      try {
+        awardedProfile = await this.loyaltyListener.onProfileUpdated(userId);
+      } catch (profileErr: unknown) {
+        this.logger.warn(
+          `Profile-complete bonus repair failed for ${userId}: ${profileErr instanceof Error ? profileErr.message : 'unknown'}`,
+        );
+      }
+      if (awardedSignup || awardedProfile > 0) {
+        return this.prisma.loyaltyMembership.findUnique({
+          where: { userId },
+          include: { tier: true },
+        });
+      }
+    }
+    return membership;
   }
 
   async getPreferences(userId: string) {

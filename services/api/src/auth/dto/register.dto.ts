@@ -119,4 +119,10 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   inviteCode?: string;
+
+  /** Loyalty referral code (Enchanted Circle), e.g. from ?ref= / hos_ref cookie. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  referralCode?: string;
 }

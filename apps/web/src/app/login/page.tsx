@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth, setFrontendSessionCookie } from '@/lib/api';
-import { stashReferralFromQuery } from '@/lib/referralAttribution';
+import { clearPendingReferral, getPendingReferralCode, stashReferralFromQuery } from '@/lib/referralAttribution';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
 import { getDirectApiBaseUrl } from '@/lib/apiBaseUrl';
@@ -262,6 +262,8 @@ function LoginPageInner() {
       const role = isLogin ? undefined : 'customer'; // For now, registration is customer only
       // Seller registration will be handled separately
       
+      const pendingReferral = getPendingReferralCode();
+
       const response = await apiClient.register({
         email,
         password,
@@ -274,6 +276,7 @@ function LoginPageInner() {
         gdprConsent,
         dataProcessingConsent,
         ...(inviteCode ? { inviteCode } : {}),
+        ...(pendingReferral ? { referralCode: pendingReferral } : {}),
       });
       if (!response || !response.data) {
         throw new Error('Invalid response from server');
@@ -281,6 +284,21 @@ function LoginPageInner() {
       const { user } = response.data;
       if (!user) {
         throw new Error('Registration failed — no user profile returned');
+      }
+
+      // Confirm loyalty enroll + referral after register. Backend may have already
+      // enrolled (idempotent). Only clear the stashed code when conversion actually
+      // applied (or was already applied) — enroll can succeed while referral fails.
+      if (pendingReferral) {
+        try {
+          const enrollRes = await apiClient.enrollLoyalty({ referralCode: pendingReferral });
+          const status = (enrollRes?.data as { referralStatus?: string } | undefined)?.referralStatus;
+          if (status === 'applied' || status === 'already_applied') {
+            clearPendingReferral();
+          }
+        } catch {
+          // Keep pending referral for loyalty page / later enroll retry
+        }
       }
 
       setFrontendSessionCookie();

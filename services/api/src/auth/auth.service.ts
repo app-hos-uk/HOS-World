@@ -284,7 +284,11 @@ export class AuthService {
 
       if (this.loyaltyService?.isEnabled()) {
         try {
-          await this.loyaltyService.enroll(user.id);
+          const referralCode = registerDto.referralCode?.trim();
+          await this.loyaltyService.enroll(
+            user.id,
+            referralCode ? { referralCode } : undefined,
+          );
         } catch (loyaltyErr: unknown) {
           this.logger.warn(
             `Customer loyalty auto-enroll failed for ${user.email}: ${loyaltyErr instanceof Error ? loyaltyErr.message : 'unknown'}`,

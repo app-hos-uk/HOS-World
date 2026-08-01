@@ -15,6 +15,7 @@ export enum JobType {
   LOYALTY_TIER_REVIEW = 'loyalty:tier-review',
   LOYALTY_POINTS_EXPIRY = 'loyalty:points-expiry',
   LOYALTY_BIRTHDAY_BONUS = 'loyalty:birthday-bonus',
+  LOYALTY_ANNIVERSARY_BONUS = 'loyalty:anniversary-bonus',
   FANDOM_PROFILE_RECOMPUTE = 'loyalty:fandom-profile-recompute',
   POS_PRODUCT_SYNC = 'pos:product-sync',
   POS_INVENTORY_SYNC = 'pos:inventory-sync',

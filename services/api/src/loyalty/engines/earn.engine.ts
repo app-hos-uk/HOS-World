@@ -8,7 +8,8 @@ import { LoyaltyCampaignService } from '../services/campaign.service';
 import { LoyaltyTierEngine } from './tier.engine';
 import { BrandPartnershipsService } from '../../brand-partnerships/brand-partnerships.service';
 import { ProductCampaignsService } from '../../product-campaigns/product-campaigns.service';
-import { isTruthy } from '../../common/utils/config';
+import { FeatureFlagsService } from '../../config/feature-flags.service';
+import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 
 @Injectable()
 export class LoyaltyEarnEngine {
@@ -17,6 +18,7 @@ export class LoyaltyEarnEngine {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    private featureFlags: FeatureFlagsService,
     private wallet: LoyaltyWalletService,
     private campaigns: LoyaltyCampaignService,
     private tiers: LoyaltyTierEngine,
@@ -177,7 +179,7 @@ export class LoyaltyEarnEngine {
    * When payment credited loyalty before click & collect existed, apply configured C&C bonus once.
    */
   async applyDeferredClickCollectBonus(orderId: string): Promise<void> {
-    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) {
+    if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
       return;
     }
     if (this.config.get<string>('CC_BONUS_POINTS', '0') === '0') {
@@ -256,7 +258,7 @@ export class LoyaltyEarnEngine {
   }
 
   async processOrderComplete(orderId: string): Promise<void> {
-    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) {
+    if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
       return;
     }
 
@@ -299,12 +301,17 @@ export class LoyaltyEarnEngine {
       quantity: number;
     }> = [];
 
+    let skippedDisabledSeller = 0;
     for (const line of order.items) {
       const p = line.product;
       if (!p) continue;
 
       const seller = await this.resolveSellerForItem(p, hosSellerId);
-      if (!seller?.loyaltyEnabled) continue;
+      if (!seller) continue;
+      if (!seller.loyaltyEnabled) {
+        skippedDisabledSeller++;
+        continue;
+      }
 
       sellerIds.push(seller.id);
       const itemTotal = new Decimal(line.price).mul(line.quantity);
@@ -332,6 +339,11 @@ export class LoyaltyEarnEngine {
     }
 
     if (basePoints.lte(0)) {
+      if (skippedDisabledSeller > 0) {
+        this.logger.warn(
+          `Order ${order.id}: no loyalty earn — ${skippedDisabledSeller} line(s) from sellers with loyaltyEnabled=false`,
+        );
+      }
       await this.prisma.order.update({
         where: { id: order.id },
         data: { loyaltyPointsEarned: 0 },
@@ -495,7 +507,7 @@ export class LoyaltyEarnEngine {
   }
 
   async processPosSale(posSaleId: string): Promise<void> {
-    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) {
+    if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
       return;
     }
 
@@ -532,12 +544,17 @@ export class LoyaltyEarnEngine {
       quantity: number;
     }> = [];
 
+    let skippedDisabledSeller = 0;
     for (const line of sale.items) {
       const p = line.product;
       if (!p) continue;
 
       const seller = await this.resolveSellerForItem(p, hosSellerId);
-      if (!seller?.loyaltyEnabled) continue;
+      if (!seller) continue;
+      if (!seller.loyaltyEnabled) {
+        skippedDisabledSeller++;
+        continue;
+      }
 
       sellerIds.push(seller.id);
       const itemTotal = new Decimal(line.unitPrice).mul(line.quantity);
@@ -565,6 +582,11 @@ export class LoyaltyEarnEngine {
     }
 
     if (basePoints.lte(0)) {
+      if (skippedDisabledSeller > 0) {
+        this.logger.warn(
+          `POS sale ${sale.id}: no loyalty earn — ${skippedDisabledSeller} line(s) from sellers with loyaltyEnabled=false`,
+        );
+      }
       await this.prisma.pOSSale.update({
         where: { id: sale.id },
         data: { loyaltyPointsEarned: 0 },
