@@ -6,6 +6,7 @@ import { apiClient } from '@/lib/api';
 import {
   downloadCsvTemplate,
   downloadExcelTemplate,
+  FOUNDING_MEMBER_COLUMN_GUIDE,
   parseImportFile,
   rowsToMembers,
   type ParsedFoundingMember,
@@ -313,11 +314,20 @@ export default function AdminFoundingMembersPage() {
   return (
     <RouteGuard allowedRoles={[...ALLOWED_ROLES]}>
               <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold text-hos-text-secondary">Founding Members</h1>
-            <p className="mt-1 text-sm text-hos-text-muted">
-              View, manually add, or bulk import founding members from CSV or Excel files.
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-hos-text-secondary">Founding Members</h1>
+              <p className="mt-1 text-sm text-hos-text-muted">
+                View, manually add, or bulk import founding members from CSV or Excel files.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setTab('import')}
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm font-medium hover:bg-hos-gold-hover shrink-0"
+            >
+              Bulk Import CSV / Excel
+            </button>
           </div>
 
           {stats && (
@@ -521,26 +531,61 @@ export default function AdminFoundingMembersPage() {
 
           {tab === 'import' && (
             <div className="space-y-6">
-              <div className="rounded-xl border border-hos-border bg-hos-bg-secondary p-5 space-y-4 max-w-3xl">
+              <div className="rounded-xl border border-hos-border bg-hos-bg-secondary p-5 space-y-4 max-w-4xl">
                 <div>
                   <h2 className="text-lg font-semibold text-hos-text-secondary">Import from CSV or Excel</h2>
                   <p className="text-sm text-hos-text-muted mt-1">
-                    Upload a spreadsheet from another source. Preview validates rows before anything is saved.
+                    Use this for founding-member lists collected outside the app. Download a sample file,
+                    map your columns, preview (dry run), then confirm import.
                   </p>
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <button type="button" onClick={downloadCsvTemplate} className="text-sm text-hos-gold hover:text-hos-gold-hover underline">
-                    Download CSV template
+                  <button
+                    type="button"
+                    onClick={downloadCsvTemplate}
+                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm font-medium hover:bg-hos-gold-hover"
+                  >
+                    Download sample CSV
                   </button>
-                  <button type="button" onClick={downloadExcelTemplate} className="text-sm text-hos-gold hover:text-hos-gold-hover underline">
-                    Download Excel template
+                  <button
+                    type="button"
+                    onClick={downloadExcelTemplate}
+                    className="px-4 py-2 border border-hos-gold text-hos-gold rounded-lg text-sm font-medium hover:bg-hos-gold/10"
+                  >
+                    Download sample Excel
                   </button>
+                </div>
+
+                <div className="overflow-x-auto rounded-lg border border-hos-border">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-hos-bg-tertiary/60">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-hos-text-muted">Column</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-hos-text-muted">Required</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-hos-text-muted">Example</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium uppercase text-hos-text-muted">Notes / aliases</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-hos-border">
+                      {FOUNDING_MEMBER_COLUMN_GUIDE.map((col) => (
+                        <tr key={col.key}>
+                          <td className="px-3 py-2 font-mono text-hos-text-secondary">{col.key}</td>
+                          <td className="px-3 py-2 text-hos-text-secondary">{col.required ? 'Yes' : 'No'}</td>
+                          <td className="px-3 py-2 text-hos-text-muted">{col.example}</td>
+                          <td className="px-3 py-2 text-hos-text-muted">
+                            {col.description}
+                            {col.aliases ? ` · Also: ${col.aliases}` : ''}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
 
                 <p className="text-xs text-hos-text-muted">
                   Accepted formats: <code>.csv</code>, <code>.xlsx</code>, <code>.xls</code>.
-                  Fandoms can be pipe- or comma-separated. Column names like &quot;First Name&quot; are auto-normalized.
+                  Fandoms can be pipe- or comma-separated. Headers like &quot;First Name&quot; or &quot;Full Name&quot; are auto-mapped.
                 </p>
 
                 <input

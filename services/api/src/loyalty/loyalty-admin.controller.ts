@@ -230,6 +230,27 @@ export class LoyaltyAdminController {
     return { data, message: 'OK' };
   }
 
+  @Delete('members/:userId')
+  @ApiOperation({
+    summary: 'Delete a loyalty membership (optionally the user account for test cleanup)',
+  })
+  async deleteMember(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Query('deleteUser') deleteUserRaw?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const deleteUser =
+      deleteUserRaw === '1' ||
+      deleteUserRaw === 'true' ||
+      deleteUserRaw === 'yes';
+    const data = await this.loyalty.adminDeleteMember(userId, { deleteUser });
+    return {
+      data,
+      message: deleteUser
+        ? 'Loyalty membership and user account deleted'
+        : 'Loyalty membership deleted',
+    };
+  }
+
   @Get('fandom-profile/:userId')
   @ApiOperation({ summary: 'Member fandom affinity profile (JSON)' })
   async fandomProfile(@Param('userId', ParseUUIDPipe) userId: string): Promise<ApiResponse<unknown>> {

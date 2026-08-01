@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
@@ -38,6 +39,9 @@ export default function AdminLoyaltyMembersPage() {
   const [selectedMember, setSelectedMember] = useState<LoyaltyMember | null>(null);
   const [adjustForm, setAdjustForm] = useState({ pointsDelta: 0, reason: '' });
   const [adjusting, setAdjusting] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<LoyaltyMember | null>(null);
+  const [alsoDeleteUser, setAlsoDeleteUser] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const toast = useToast();
   const loadSeq = useRef(0);
 
@@ -209,6 +213,32 @@ export default function AdminLoyaltyMembersPage() {
     }
   };
 
+  const confirmDeleteMember = async () => {
+    if (!memberToDelete) return;
+    setDeleting(true);
+    try {
+      await apiClient.adminDeleteLoyaltyMember(memberToDelete.userId, {
+        deleteUser: alsoDeleteUser,
+      });
+      toast.success(
+        alsoDeleteUser
+          ? 'Loyalty membership and user account deleted'
+          : 'Loyalty membership deleted',
+      );
+      if (selectedMember?.userId === memberToDelete.userId) {
+        setSelectedMember(null);
+      }
+      setMemberToDelete(null);
+      setAlsoDeleteUser(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to delete member');
+    } finally {
+      setDeleting(false);
+      // Refresh even on failure — membership may have been removed server-side.
+      await load({ q: activeQuery, page: currentPage });
+    }
+  };
+
   const safePage = Math.min(Math.max(1, currentPage), totalPages);
   const showingFrom = total === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
   const showingTo = Math.min(safePage * PAGE_SIZE, total);
@@ -219,7 +249,10 @@ export default function AdminLoyaltyMembersPage() {
         <div>
           <h1 className="text-2xl font-bold text-hos-text-secondary">Loyalty Members</h1>
           <p className="text-hos-text-secondary mt-1">
-            Search members, view details, adjust points, and export
+            Enchanted Circle members — points, tiers, and adjustments.{' '}
+            <Link href="/admin/founding-members" className="text-hos-gold hover:text-hos-gold-hover underline">
+              Looking for Founding Members?
+            </Link>
           </p>
         </div>
         <DataExport
@@ -342,15 +375,28 @@ export default function AdminLoyaltyMembersPage() {
                       {m.enrolledAt ? new Date(m.enrolledAt).toLocaleDateString() : '—'}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => {
-                          setSelectedMember(m);
-                          setAdjustForm({ pointsDelta: 0, reason: '' });
-                        }}
-                        className="text-hos-gold hover:text-hos-gold-hover font-medium"
-                      >
-                        Adjust
-                      </button>
+                      <div className="flex items-center justify-end gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedMember(m);
+                            setAdjustForm({ pointsDelta: 0, reason: '' });
+                          }}
+                          className="text-hos-gold hover:text-hos-gold-hover font-medium"
+                        >
+                          Adjust
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMemberToDelete(m);
+                            setAlsoDeleteUser(false);
+                          }}
+                          className="text-red-400 hover:text-red-300 font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -434,6 +480,69 @@ export default function AdminLoyaltyMembersPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {memberToDelete && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-loyalty-member-title"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' && !deleting) {
+              setMemberToDelete(null);
+              setAlsoDeleteUser(false);
+            }
+          }}
+        >
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg max-w-md w-full p-6">
+            <h2 id="delete-loyalty-member-title" className="text-xl font-bold text-hos-text-secondary mb-3">
+              Delete loyalty member
+            </h2>
+            <p className="text-sm text-hos-text-secondary mb-4">
+              Remove loyalty membership for{' '}
+              <strong>
+                {memberToDelete.user?.firstName} {memberToDelete.user?.lastName}
+              </strong>{' '}
+              (<span className="font-mono text-xs">{memberToDelete.user?.email}</span>)? This clears
+              their points, card, referrals, and transactions. This cannot be undone.
+            </p>
+            <label className="flex items-start gap-2 mb-6 text-sm text-hos-text-secondary cursor-pointer">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={alsoDeleteUser}
+                onChange={(e) => setAlsoDeleteUser(e.target.checked)}
+                disabled={deleting}
+              />
+              <span>
+                Also delete the user account (use for test accounts only). Admins and protected
+                accounts cannot be deleted.
+              </span>
+            </label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={confirmDeleteMember}
+                disabled={deleting}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm font-medium"
+              >
+                {deleting ? 'Deleting…' : alsoDeleteUser ? 'Delete membership + user' : 'Delete membership'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMemberToDelete(null);
+                  setAlsoDeleteUser(false);
+                }}
+                disabled={deleting}
+                className="px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary text-sm font-medium disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </RouteGuard>

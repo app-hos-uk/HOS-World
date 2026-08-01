@@ -1659,6 +1659,16 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>(`/admin/loyalty/members/${userId}`);
   }
 
+  async adminDeleteLoyaltyMember(
+    userId: string,
+    opts?: { deleteUser?: boolean },
+  ): Promise<ApiResponse<unknown>> {
+    const qs = opts?.deleteUser ? '?deleteUser=true' : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/members/${userId}${qs}`, {
+      method: 'DELETE',
+    });
+  }
+
   async adminAdjustLoyaltyPoints(userId: string, pointsDelta: number, reason: string): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>('/admin/loyalty/adjust', {
       method: 'POST',

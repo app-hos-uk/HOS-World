@@ -1,0 +1,4 @@
+email,firstName,lastName,phone,country,fandoms,otherFranchises,source,spendBracket,registeredAt
+"jane@example.com","Jane","Doe","+1234567890","US","Harry Potter|Marvel","","external_form","$100-$500","2026-01-15T10:00:00.000Z"
+"alex@example.com","Alex","Rivera","+447700900123","GB","Lord of the Rings, Disney","Studio Ghibli","event_signup","$50-$100","2026-02-01"
+"sam.patel@example.com","Sam","Patel","","IN","Anime","","partner_list","",""

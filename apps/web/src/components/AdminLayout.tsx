@@ -134,6 +134,8 @@ const menuItems: MenuItem[] = [
       { title: 'Redemption Options', href: '/admin/loyalty/redemption-options', icon: '🎁' },
       { title: 'Bonus Campaigns', href: '/admin/loyalty/campaigns', icon: '🎯' },
       { title: 'Members', href: '/admin/loyalty/members', icon: '👥' },
+      // Also listed under Marketing & Engagement — kept here for discoverability.
+      { title: 'Founding Members', href: '/admin/founding-members', icon: '🌟' },
       { title: 'Transactions', href: '/admin/loyalty/transactions', icon: '💳' },
       { title: 'Program Health', href: '/admin/loyalty-analytics', icon: '💡' },
       { title: 'CLV Report', href: '/admin/loyalty-analytics/clv', icon: '👤' },

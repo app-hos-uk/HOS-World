@@ -26,6 +26,7 @@ import { LoyaltyPreferencesDto } from './dto/loyalty-preferences.dto';
 import { MarketingEventBus } from '../journeys/marketing-event.bus';
 import { isTruthy } from '../common/utils/config';
 import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
+import { isProtectedAdminEmail } from '../config/protected-admin-emails';
 
 @Injectable()
 export class LoyaltyService implements OnModuleInit {
@@ -792,6 +793,84 @@ export class LoyaltyService implements OnModuleInit {
 
     await this.tiers.recalculateTier(membership.id);
     return this.getMembership(userId);
+  }
+
+  /**
+   * Remove a loyalty membership (and related loyalty data). Optionally delete the
+   * underlying user account for test-account cleanup.
+   */
+  async adminDeleteMember(
+    userId: string,
+    opts?: { deleteUser?: boolean },
+  ): Promise<{ membershipDeleted: boolean; userDeleted: boolean }> {
+    const membership = await this.prisma.loyaltyMembership.findUnique({
+      where: { userId },
+      include: { user: { select: { id: true, email: true, role: true } } },
+    });
+    if (!membership) throw new NotFoundException('Member not found');
+
+    const user = membership.user;
+    const deleteUser = Boolean(opts?.deleteUser);
+
+    if (deleteUser) {
+      if (!user) throw new NotFoundException('User not found');
+      if (isProtectedAdminEmail(user.email)) {
+        throw new BadRequestException('Cannot delete a protected admin user');
+      }
+      if (user.role === UserRole.ADMIN) {
+        throw new BadRequestException('Cannot delete admin users');
+      }
+      // Orders (and similar) block hard user deletes — fail fast with a clear message.
+      const orderCount = await this.prisma.order.count({ where: { userId } });
+      if (orderCount > 0) {
+        throw new BadRequestException(
+          `Cannot delete user account: ${orderCount} order(s) still exist. Uncheck “Also delete user” to remove only the loyalty membership, or delete the user from Admin → Users after clearing related records.`,
+        );
+      }
+    }
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        // Referrals have no onDelete cascade — detach/delete before membership removal.
+        await tx.loyaltyReferral.updateMany({
+          where: { refereeId: membership.id },
+          data: { refereeId: null },
+        });
+        await tx.loyaltyReferral.deleteMany({
+          where: { referrerId: membership.id },
+        });
+        await tx.loyaltyMembership.delete({
+          where: { id: membership.id },
+        });
+        // Keep user delete in the same transaction so a FK failure rolls membership back too.
+        if (deleteUser) {
+          await tx.user.delete({ where: { id: userId } });
+        }
+      });
+    } catch (err: unknown) {
+      if (err instanceof BadRequestException || err instanceof NotFoundException) {
+        throw err;
+      }
+      const detail = err instanceof Error ? err.message : 'unknown error';
+      this.logger.warn(
+        `Failed to delete loyalty member ${user?.email || userId}` +
+          (deleteUser ? ' (+ user)' : '') +
+          `: ${detail}`,
+      );
+      if (deleteUser) {
+        throw new BadRequestException(
+          `Delete failed: ${detail}. If the user has related records, uncheck “Also delete user” to remove only the loyalty membership, or clear those records first.`,
+        );
+      }
+      throw new BadRequestException(`Failed to delete loyalty membership: ${detail}`);
+    }
+
+    this.logger.warn(
+      `Admin deleted loyalty membership for ${user?.email || userId}` +
+        (deleteUser ? ' (user account also deleted)' : ''),
+    );
+
+    return { membershipDeleted: true, userDeleted: deleteUser };
   }
 
   /** Ensure the Initiate tier exists; safe under concurrent enrollment. */
