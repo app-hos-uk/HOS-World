@@ -175,21 +175,50 @@ export class LoyaltyAdminController {
   // ── Members ────────────────────────────────────────────
 
   @Get('members')
-  async members(@Query('q') q?: string): Promise<ApiResponse<unknown>> {
-    const data = await this.prisma.loyaltyMembership.findMany({
-      where: q
-        ? {
-            OR: [
-              { user: { email: { contains: q, mode: 'insensitive' } } },
-              { cardNumber: { contains: q, mode: 'insensitive' } },
-            ],
-          }
-        : undefined,
-      take: 50,
-      include: { user: { select: { id: true, email: true, firstName: true, lastName: true } }, tier: true },
-      orderBy: { enrolledAt: 'desc' },
-    });
-    return { data, message: 'OK' };
+  @ApiOperation({ summary: 'List loyalty members (paginated)' })
+  async members(
+    @Query('q') q?: string,
+    @Query('page') pageRaw?: string,
+    @Query('limit') limitRaw?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const page = Math.max(1, parseInt(pageRaw || '1', 10) || 1);
+    // Allow larger batches for CSV/Excel export; UI list uses ~25.
+    const limit = Math.min(5000, Math.max(1, parseInt(limitRaw || '25', 10) || 25));
+    const where = q?.trim()
+      ? {
+          OR: [
+            { user: { email: { contains: q.trim(), mode: 'insensitive' as const } } },
+            { user: { firstName: { contains: q.trim(), mode: 'insensitive' as const } } },
+            { user: { lastName: { contains: q.trim(), mode: 'insensitive' as const } } },
+            { cardNumber: { contains: q.trim(), mode: 'insensitive' as const } },
+          ],
+        }
+      : undefined;
+
+    const [total, data] = await this.prisma.$transaction([
+      this.prisma.loyaltyMembership.count({ where }),
+      this.prisma.loyaltyMembership.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          user: { select: { id: true, email: true, firstName: true, lastName: true } },
+          tier: true,
+        },
+        orderBy: { enrolledAt: 'desc' },
+      }),
+    ]);
+
+    return {
+      data,
+      message: 'OK',
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
+    };
   }
 
   @Get('members/:userId')

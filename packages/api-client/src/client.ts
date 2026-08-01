@@ -1642,9 +1642,17 @@ export class ApiClient {
     });
   }
 
-  async adminGetLoyaltyMembers(q?: string): Promise<ApiResponse<unknown>> {
-    const qs = q ? `?q=${encodeURIComponent(q)}` : '';
-    return this.request<ApiResponse<unknown>>(`/admin/loyalty/members${qs}`);
+  async adminGetLoyaltyMembers(params?: {
+    q?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const qs = new URLSearchParams();
+    if (params?.q?.trim()) qs.set('q', params.q.trim());
+    if (params?.page != null) qs.set('page', String(params.page));
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    const query = qs.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/members${query ? `?${query}` : ''}`);
   }
 
   async adminGetLoyaltyMember(userId: string): Promise<ApiResponse<unknown>> {
