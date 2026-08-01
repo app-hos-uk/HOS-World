@@ -1,20 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { isShopPubliclyEnabled } from '@/lib/shopAccess';
 
-const ENV_FALLBACK = process.env.NEXT_PUBLIC_SHOP_ENABLED === 'true';
+const ENV_FALLBACK = isShopPubliclyEnabled();
 
 /**
- * Returns whether the e-commerce shop is enabled.
- * Fetches the live value from `/api/shop-status` and falls back
- * to the build-time env var while loading or on error.
+ * Returns whether the e-commerce shop is available to this visitor.
+ * True when the shop is publicly enabled, OR when the visitor has unlocked
+ * a tester preview session (cookie set via /shop?preview=<secret>).
  */
 export function useShopEnabled(): boolean {
   const [enabled, setEnabled] = useState(ENV_FALLBACK);
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/shop-status')
+    fetch('/api/shop-status', { cache: 'no-store' })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();

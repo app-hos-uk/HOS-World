@@ -19,6 +19,8 @@ import {
 } from '@/lib/storefrontNavigation';
 import { StorefrontNavMore } from '@/components/storefront/StorefrontNavMore';
 import { useLoyaltyEnabled } from '@/hooks/useLoyaltyEnabled';
+import { useShopEnabled } from '@/hooks/useShopEnabled';
+import { resolveShopNavHref } from '@/lib/shopAccess';
 
 const ROLE_QUICK_LINKS: Record<string, Array<{ title: string; href: string; icon: string }>> = {
   ADMIN: [
@@ -78,6 +80,10 @@ export function Header() {
   const [navPrimary, setNavPrimary] = useState<NavLink[]>(getNavPrimary());
   const [navMore, setNavMore] = useState<NavLink[]>(getNavMore());
   const loyaltyEnabled = useLoyaltyEnabled();
+  const shopEnabled = useShopEnabled();
+  const homeHref = shopEnabled ? '/shop' : '/coming-soon';
+  const cartHref = resolveShopNavHref('/cart', shopEnabled);
+  const wishlistHref = resolveShopNavHref('/wishlist', shopEnabled);
 
   useEffect(() => {
     loadNavigationFromApi().then(() => {
@@ -85,6 +91,19 @@ export function Header() {
       setNavMore(getNavMore());
     });
   }, []);
+
+  const mapShopNav = (links: NavLink[]): NavLink[] =>
+    links.map((link) => ({
+      ...link,
+      href: resolveShopNavHref(link.href, shopEnabled),
+      label:
+        !shopEnabled && /shop now|shop by franchise/i.test(link.label)
+          ? 'Coming Soon'
+          : link.label,
+    }));
+
+  const visibleNavPrimary = mapShopNav(navPrimary);
+  const visibleNavMore = mapShopNav(navMore);
 
   const currentRole = effectiveRole || user?.role;
   const isCustomerRole = !isAuthenticated || currentRole === 'CUSTOMER';
@@ -170,7 +189,7 @@ export function Header() {
               Marketplace: Shop multiple vendors · Secure checkout · US shipping
             </p>
             <div className="flex items-center gap-5 shrink-0">
-              <Link href="/sellers" className="text-hos-text-muted text-sm hover:text-hos-gold transition-colors duration-200">
+              <Link href={resolveShopNavHref('/sellers', shopEnabled)} className="text-hos-text-muted text-sm hover:text-hos-gold transition-colors duration-200">
                 Store locations
               </Link>
               <Link href="/seller/onboarding" className="text-hos-text-muted text-xs hover:text-hos-gold transition-colors duration-200">
@@ -188,7 +207,7 @@ export function Header() {
       <div className="w-full bg-hos-bg border-b border-hos-border">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
           {/* Logo — round emblem + wordmark (horizontal) */}
-          <BrandLogo variant="horizontal" linked href="/shop" priority />
+          <BrandLogo variant="horizontal" linked href={homeHref} priority />
 
           {/* Search (Desktop/Tablet) */}
           {showCustomerNav && (
@@ -219,13 +238,13 @@ export function Header() {
                   <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">Profile</span>
                 </Link>
               )}
-              <Link href="/wishlist" className="flex flex-col items-center gap-1 group" aria-label="Wishlist">
+              <Link href={wishlistHref} className="flex flex-col items-center gap-1 group" aria-label="Wishlist">
                 <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
                 <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">Wishlist</span>
               </Link>
-              <Link href="/cart" className="relative flex flex-col items-center gap-1 group" aria-label={`Basket${cartItemCount > 0 ? `, ${cartItemCount} items` : ''}`}>
+              <Link href={cartHref} className="relative flex flex-col items-center gap-1 group" aria-label={`Basket${cartItemCount > 0 ? `, ${cartItemCount} items` : ''}`}>
                 <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
@@ -261,12 +280,12 @@ export function Header() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </Link>
-              <Link href="/wishlist" className="p-2 rounded-lg text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-secondary transition-colors" aria-label="Wishlist">
+              <Link href={wishlistHref} className="p-2 rounded-lg text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-secondary transition-colors" aria-label="Wishlist">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </Link>
-              <Link href="/cart" className="relative p-2 rounded-lg text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-secondary transition-colors" aria-label="Basket">
+              <Link href={cartHref} className="relative p-2 rounded-lg text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-secondary transition-colors" aria-label="Basket">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
@@ -361,7 +380,7 @@ export function Header() {
           {/* Mobile: cart + menu (visible below md) */}
           {showCustomerNav && (
             <Link
-              href="/cart"
+              href={cartHref}
               className="md:hidden relative p-2 rounded-lg text-hos-gold hover:bg-hos-bg-secondary transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hos-gold-ring"
               aria-label={`Basket${cartItemCount > 0 ? `, ${cartItemCount} items` : ''}`}
             >
@@ -403,16 +422,16 @@ export function Header() {
             <nav className="flex items-center justify-start gap-x-8 xl:gap-x-10 gap-y-2 py-3 overflow-x-auto scrollbar-thin px-1 min-w-0" role="navigation" aria-label="Main navigation">
               {showCustomerNav && (
                 <>
-                  {navPrimary.map((item) => (
+                  {visibleNavPrimary.map((item) => (
                     <Link
-                      key={item.href}
+                      key={`${item.href}-${item.label}`}
                       href={item.href}
                       className="text-hos-text-secondary text-sm hover:text-hos-gold transition-colors duration-200 whitespace-nowrap shrink-0"
                     >
                       {item.label}
                     </Link>
                   ))}
-                  <StorefrontNavMore items={navMore} />
+                  <StorefrontNavMore items={visibleNavMore} />
                 </>
               )}
               {showAuthCustomerNav && (
@@ -454,11 +473,11 @@ export function Header() {
                     <SearchBar compact />
                   </Suspense>
                 </div>
-                {navPrimary.map((item) => (
-                  <MobileNavLink key={item.href} href={item.href} icon="·" label={item.label} onClick={() => setIsMobileMenuOpen(false)} />
+                {visibleNavPrimary.map((item) => (
+                  <MobileNavLink key={`${item.href}-${item.label}`} href={item.href} icon="·" label={item.label} onClick={() => setIsMobileMenuOpen(false)} />
                 ))}
-                {navMore.map((item) => (
-                  <MobileNavLink key={`more-${item.href}`} href={item.href} icon="·" label={item.label} onClick={() => setIsMobileMenuOpen(false)} />
+                {visibleNavMore.map((item) => (
+                  <MobileNavLink key={`more-${item.href}-${item.label}`} href={item.href} icon="·" label={item.label} onClick={() => setIsMobileMenuOpen(false)} />
                 ))}
               </>
             )}
@@ -466,12 +485,12 @@ export function Header() {
               <>
                 <div className="border-t border-hos-border my-2" />
                 <MobileNavLink href="/profile" icon="⚙️" label="Manage Profile" onClick={() => setIsMobileMenuOpen(false)} />
-                <MobileNavLink href="/wishlist" icon="❤️" label="Wishlist" onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href={resolveShopNavHref('/wishlist', shopEnabled)} icon="❤️" label="Wishlist" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href="/orders" icon="📦" label="My Orders" onClick={() => setIsMobileMenuOpen(false)} />
                 {loyaltyEnabled && (
                   <MobileNavLink href="/loyalty" icon="✨" label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />
                 )}
-                <MobileNavLink href="/cart" icon="🛒" label={`Basket${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href={resolveShopNavHref('/cart', shopEnabled)} icon="🛒" label={`Basket${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
                 {!isDashboardPage && (
                   <div className="px-3 py-2">
                     <CurrencySelector />
@@ -496,7 +515,7 @@ export function Header() {
             {showGuestNav && (
               <>
                 <div className="border-t border-hos-border my-2" />
-                <MobileNavLink href="/cart" icon="🛒" label={`Basket${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href={cartHref} icon="🛒" label={`Basket${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
               </>
             )}
 

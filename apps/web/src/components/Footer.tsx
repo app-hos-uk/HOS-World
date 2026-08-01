@@ -15,6 +15,8 @@ import {
 } from '@/lib/storefrontNavigation';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 import { brandDisplayName } from '@/lib/siteSettingsDefaults';
+import { useShopEnabled } from '@/hooks/useShopEnabled';
+import { resolveShopNavHref } from '@/lib/shopAccess';
 
 type SocialEntry = { platform: SocialPlatform; label: string; ariaLabel: string; href: string };
 
@@ -164,6 +166,8 @@ function FooterNewsletter({ brandName }: { brandName: string }) {
 export function Footer() {
   const site = useSiteSettings();
   const brandName = brandDisplayName(site.platformName);
+  const shopEnabled = useShopEnabled();
+  const homeHref = shopEnabled ? '/shop' : '/coming-soon';
   const [shopLinks, setShopLinks] = useState<NavLink[]>(getFooterShopLinks());
   const [policyLinks, setPolicyLinks] = useState<NavLink[]>(getFooterPolicyLinks());
 
@@ -173,6 +177,15 @@ export function Footer() {
       setPolicyLinks(getFooterPolicyLinks());
     });
   }, []);
+
+  const visibleShopLinks = shopLinks.map((link) => ({
+    ...link,
+    href: resolveShopNavHref(link.href, shopEnabled),
+    label:
+      !shopEnabled && /shop now|shop by franchise/i.test(link.label)
+        ? 'Coming Soon'
+        : link.label,
+  }));
 
   const socialEntries = useMemo(() => {
     const settingsHref: Record<SocialPlatform, string> = {
@@ -207,7 +220,7 @@ export function Footer() {
         {/* Row 1: brand, shop, policies, newsletter */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-10 lg:gap-x-14 items-start [&>div]:min-w-0">
           <div className="flex flex-col">
-            <BrandLogo variant="stacked" linked href="/shop" />
+            <BrandLogo variant="stacked" linked href={homeHref} />
             <p className="text-hos-text-muted text-[13px] leading-relaxed mt-4">{site.footerAbout}</p>
 
             <div className="flex flex-wrap gap-3 mt-4 text-hos-text-muted">
@@ -230,7 +243,7 @@ export function Footer() {
           <FooterNavColumn
             title="Main Menu"
             ariaLabel="Shop and main navigation"
-            links={shopLinks}
+            links={visibleShopLinks}
           />
 
           <FooterNavColumn

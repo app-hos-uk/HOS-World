@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 import { brandDisplayName } from '@/lib/siteSettingsDefaults';
 import { BRAND_LOGOS } from '@/lib/referenceAssets';
+import { useShopEnabled } from '@/hooks/useShopEnabled';
+import { resolveShopNavHref } from '@/lib/shopAccess';
 
 export type BrandLogoVariant = 'horizontal' | 'stacked' | 'emblem';
 
@@ -48,6 +50,8 @@ export function BrandLogo({
   className = '',
 }: BrandLogoProps) {
   const site = useSiteSettings();
+  const shopEnabled = useShopEnabled();
+  const resolvedHref = resolveShopNavHref(href, shopEnabled);
   const altText = brandDisplayName(site.platformName);
   const sizes = VARIANT_SIZES[variant];
 
@@ -89,7 +93,7 @@ export function BrandLogo({
 
   if (linked) {
     return (
-      <Link href={href} className="inline-flex shrink-0 group">
+      <Link href={resolvedHref} className="inline-flex shrink-0 group">
         {content}
       </Link>
     );
