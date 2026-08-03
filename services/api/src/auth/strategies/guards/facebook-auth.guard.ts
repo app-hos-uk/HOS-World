@@ -1,6 +1,7 @@
 import { Injectable, ExecutionContext, NotImplementedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
+import { encodeOAuthState } from '../../oauth-state.util';
 
 const OAUTH_NOT_CONFIGURED_MSG = 'Social login is not configured';
 
@@ -8,6 +9,12 @@ const OAUTH_NOT_CONFIGURED_MSG = 'Social login is not configured';
 export class FacebookAuthGuard extends AuthGuard('facebook') {
   constructor(private readonly configService: ConfigService) {
     super();
+  }
+
+  getAuthenticateOptions(context: ExecutionContext) {
+    const req = context.switchToHttp().getRequest();
+    const invite = typeof req.query?.invite === 'string' ? req.query.invite.trim() : '';
+    return { state: encodeOAuthState(invite || undefined) };
   }
 
   canActivate(context: ExecutionContext) {

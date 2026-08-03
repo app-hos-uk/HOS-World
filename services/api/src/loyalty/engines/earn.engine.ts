@@ -412,15 +412,17 @@ export class LoyaltyEarnEngine {
       const p = line.product;
       if (!p) continue;
 
-      const seller = await this.resolveSellerForItem(p, hosSellerId);
-      if (!seller) continue;
+      const seller =
+        (await this.resolveSellerForItem(p, hosSellerId)) ??
+        // Unresolved seller: still apply platform PURCHASE rule / default rate
+        { id: null as string | null, loyaltyEnabled: true, loyaltyEarnRate: null };
 
-      sellerIds.push(seller.id);
+      if (seller.id) sellerIds.push(seller.id);
       const itemTotal = new Decimal(line.price).mul(line.quantity);
       const { pts, skippedDisabledSeller: skipped } = this.computeLinePoints(
         itemTotal,
         line.quantity,
-        seller,
+        { loyaltyEnabled: seller.loyaltyEnabled, loyaltyEarnRate: seller.loyaltyEarnRate },
         purchaseRule,
         platformDefaultRate,
       );
@@ -649,15 +651,16 @@ export class LoyaltyEarnEngine {
       const p = line.product;
       if (!p) continue;
 
-      const seller = await this.resolveSellerForItem(p, hosSellerId);
-      if (!seller) continue;
+      const seller =
+        (await this.resolveSellerForItem(p, hosSellerId)) ??
+        { id: null as string | null, loyaltyEnabled: true, loyaltyEarnRate: null };
 
-      sellerIds.push(seller.id);
+      if (seller.id) sellerIds.push(seller.id);
       const itemTotal = new Decimal(line.unitPrice).mul(line.quantity);
       const { pts, skippedDisabledSeller: skipped } = this.computeLinePoints(
         itemTotal,
         line.quantity,
-        seller,
+        { loyaltyEnabled: seller.loyaltyEnabled, loyaltyEarnRate: seller.loyaltyEarnRate },
         purchaseRule,
         platformDefaultRate,
       );

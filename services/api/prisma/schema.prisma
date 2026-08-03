@@ -26,9 +26,10 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Email verification
-  emailVerified     Boolean   @default(false)
-  emailVerifiedAt   DateTime?
-  emailVerifyToken  String?   @unique
+  emailVerified           Boolean   @default(false)
+  emailVerifiedAt         DateTime?
+  emailVerifyToken        String?   @unique
+  emailVerifyTokenExpires DateTime?
 
   // Global Platform Features
   country                      String?

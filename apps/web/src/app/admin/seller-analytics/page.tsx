@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 import {
   ComposedChart,
   BarChart,
@@ -49,10 +50,12 @@ interface AnalyticsData {
 const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
 
 export default function AdminSellerAnalyticsPage() {
+  const toast = useToast();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
+  const fetchSeqRef = useRef(0);
 
   useEffect(() => {
     fetchAnalytics();
@@ -60,20 +63,47 @@ export default function AdminSellerAnalyticsPage() {
   }, [timeRange]);
 
   const fetchAnalytics = async () => {
+    const fetchSeq = ++fetchSeqRef.current;
     try {
       setLoading(true);
       setError(null);
 
       const now = new Date();
 
-      // Fetch sellers from admin endpoint
-      const sellersResponse = await apiClient.getAdminSellers({ page: 1, limit: 500 });
-      const payload = sellersResponse?.data as any;
-      const rawSellers = Array.isArray(payload)
-        ? payload
-        : Array.isArray(payload?.data)
-          ? payload.data
-          : [];
+      // Page through sellers so chart/card totals stay consistent beyond one page
+      const PAGE_LIMIT = 100;
+      const MAX_PAGES = 50;
+      const rawSellers: any[] = [];
+      let page = 1;
+      let totalPages = 1;
+      let serverTotal: number | undefined;
+      while (page <= totalPages && page <= MAX_PAGES) {
+        const sellersResponse = await apiClient.getAdminSellers({ page, limit: PAGE_LIMIT });
+        const payload = sellersResponse?.data as any;
+        const batch = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.data)
+            ? payload.data
+            : [];
+        rawSellers.push(...batch);
+        const pagination = payload?.pagination || (sellersResponse as any)?.pagination;
+        if (typeof pagination?.total === 'number') serverTotal = pagination.total;
+        if (typeof pagination?.totalPages === 'number' && pagination.totalPages > 0) {
+          totalPages = pagination.totalPages;
+        } else if (batch.length < PAGE_LIMIT) {
+          totalPages = page;
+        } else {
+          totalPages = page + 1;
+        }
+        if (batch.length === 0) break;
+        page += 1;
+      }
+      const incompleteWarning =
+        typeof serverTotal === 'number' && rawSellers.length < serverTotal
+          ? `Loaded ${rawSellers.length.toLocaleString()} of ${serverTotal.toLocaleString()} sellers. Totals may be incomplete.`
+          : page > MAX_PAGES && totalPages > MAX_PAGES
+            ? `Loaded first ${(MAX_PAGES * PAGE_LIMIT).toLocaleString()} sellers. Totals may be incomplete.`
+            : null;
 
       // Map seller profile data to the format expected by analytics
       const mappedSellers = rawSellers.map((seller: any) => ({
@@ -86,7 +116,8 @@ export default function AdminSellerAnalyticsPage() {
         storeName: seller.storeName || '',
         storeDescription: seller.storeDescription || '',
         isVerified: seller.verified !== false,
-        createdAt: seller.createdAt || seller.user?.createdAt || new Date().toISOString(),
+        // Prefer real createdAt; omit fake "now" so missing dates don't inflate current period
+        createdAt: seller.createdAt || seller.user?.createdAt || null,
         totalRevenue: seller.totalRevenue || 0,
         _count: seller._count || {
           products: seller.totalProducts || 0,
@@ -149,11 +180,13 @@ export default function AdminSellerAnalyticsPage() {
         }
         // Count new sellers in this period (not cumulative)
         const newCount = allSellers.filter((s: any) => {
+          if (!s.createdAt) return false;
           const createdAt = new Date(s.createdAt);
           return createdAt > periodStart && createdAt <= periodEnd;
         }).length;
         // Also track cumulative total for reference
         const cumulativeCount = allSellers.filter((s: any) => {
+          if (!s.createdAt) return false;
           const createdAt = new Date(s.createdAt);
           return createdAt <= periodEnd;
         }).length;
@@ -170,6 +203,8 @@ export default function AdminSellerAnalyticsPage() {
         .sort((a: any, b: any) => b.revenue - a.revenue)
         .slice(0, 5);
 
+      if (fetchSeq !== fetchSeqRef.current) return;
+      if (incompleteWarning) toast.error(incompleteWarning);
       setAnalytics({
         // Absolute totals stay stable across time ranges; growth chart uses period windows
         totalSellers: allSellers.length,
@@ -182,10 +217,11 @@ export default function AdminSellerAnalyticsPage() {
         topSellers,
       });
     } catch (err: any) {
+      if (fetchSeq !== fetchSeqRef.current) return;
       console.error('Error fetching seller analytics:', err);
       setError(err.message || 'Failed to load seller analytics');
     } finally {
-      setLoading(false);
+      if (fetchSeq === fetchSeqRef.current) setLoading(false);
     }
   };
 

@@ -545,19 +545,35 @@ export class OrdersService {
         );
         if (shippingOptions.length > 0) {
           const selectedOption = createOrderDto.shippingMethodId
-            ? shippingOptions.find((o: any) => o.method?.id === createOrderDto.shippingMethodId)
+            ? shippingOptions.find(
+                (o: any) =>
+                  o.method?.id === createOrderDto.shippingMethodId ||
+                  o.id === createOrderDto.shippingMethodId ||
+                  o.methodId === createOrderDto.shippingMethodId,
+              )
             : null;
-          const serverRate = new Decimal(selectedOption?.rate ?? shippingOptions[0]?.rate ?? 0);
-          resolvedShippingCost = serverRate;
+          if (createOrderDto.shippingMethodId && !selectedOption) {
+            this.logger.warn(
+              `Shipping method ${createOrderDto.shippingMethodId} not in re-quote; using first available rate`,
+            );
+          }
+          // Always use server-quoted rates — never trust client-provided shippingCost.
+          resolvedShippingCost = new Decimal(selectedOption?.rate ?? shippingOptions[0]?.rate ?? 0);
         } else {
-          this.logger.warn(
-            `Shipping options empty for order address; falling back to cart.shipping=${cart.shipping}`,
+          throw new BadRequestException(
+            'No shipping options are available for this address. Shipping is not free — update the address or contact support.',
           );
-          resolvedShippingCost = new Decimal(cart.shipping ?? 0);
         }
       } catch (err) {
+        if (err instanceof BadRequestException) throw err;
         this.logger.warn(`Shipping re-validation failed, falling back to cart.shipping: ${err}`);
-        resolvedShippingCost = new Decimal(cart.shipping ?? 0);
+        // cart.shipping is set by the shipping quote API (server-side), not the raw client DTO.
+        if (cart.shipping == null) {
+          throw new BadRequestException(
+            'Unable to calculate shipping for this address. Please try again or contact support.',
+          );
+        }
+        resolvedShippingCost = new Decimal(cart.shipping);
       }
     } else if (!cart.promotionFreeShipping && shippingAddress) {
       resolvedShippingCost = new Decimal(cart.shipping ?? 0);

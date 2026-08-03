@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 
 interface SettlementRecord {
@@ -35,10 +36,12 @@ function toNumber(value: number | string | undefined): number {
 
 export default function SellerEarningsPage() {
   const { formatPrice } = useCurrency();
+  const { user } = useAuth();
+  const isWholesaler = user?.role === 'WHOLESALER';
   const [data, setData] = useState<EarningsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const menuItems = getSellerMenuItems(false);
+  const menuItems = getSellerMenuItems(isWholesaler);
 
   const fetchEarnings = useCallback(async () => {
     try {
@@ -83,7 +86,7 @@ export default function SellerEarningsPage() {
 
   return (
     <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER']}>
-      <DashboardLayout role="SELLER" menuItems={menuItems} title="Earnings & Payouts" backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}>
+      <DashboardLayout role={isWholesaler ? 'WHOLESALER' : 'SELLER'} menuItems={menuItems} title="Earnings & Payouts" backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}>
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-8 h-8 border-4 border-hos-gold border-t-transparent rounded-full animate-spin" />

@@ -14,6 +14,8 @@ interface OAuthUserData {
   avatar?: string;
   accessToken?: string;
   refreshToken?: string;
+  /** Optional invite code from OAuth state / query */
+  inviteCode?: string;
 }
 
 export type OAuthTokenGenerator = (user: {
@@ -25,6 +27,8 @@ export type OAuthTokenGenerator = (user: {
 
 export type OAuthTokenEncryptor = (value: string) => string;
 
+export type OAuthRegistrationGate = (email: string, inviteCode?: string | null) => Promise<void>;
+
 @Injectable()
 export class AuthOAuthService {
   constructor(
@@ -33,6 +37,7 @@ export class AuthOAuthService {
     private _configService: ConfigService,
     private generateTokensForUser: OAuthTokenGenerator,
     private encryptSensitive?: OAuthTokenEncryptor,
+    private assertRegistrationAllowed?: OAuthRegistrationGate,
   ) {}
 
   private protectToken(value?: string | null): string | null | undefined {
@@ -101,6 +106,9 @@ export class AuthOAuthService {
         throw new BadRequestException('Failed to load user after OAuth link');
       }
     } else {
+      if (this.assertRegistrationAllowed) {
+        await this.assertRegistrationAllowed(email, oauthData.inviteCode);
+      }
       user = await this.prisma.user.create({
         data: {
           email,

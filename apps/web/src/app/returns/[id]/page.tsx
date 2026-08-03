@@ -122,7 +122,7 @@ function ReturnDetailContent() {
       awaiting_customer_return: 'Awaiting Customer Return',
       item_received: 'Item Received',
       refund_pending: 'Refund Pending',
-      processing: 'Refund Pending',
+      processing: 'Processing',
       completed: 'Return Completed',
       cancelled: 'Cancelled',
     };

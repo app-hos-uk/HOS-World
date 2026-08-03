@@ -173,7 +173,11 @@ export default function AdminLogisticsPage() {
                         {partner.name || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                        {partner.type || 'N/A'}
+                        {partner.type
+                          || (typeof partner.description === 'string' && partner.description.startsWith('Type: ')
+                            ? partner.description.slice(6)
+                            : null)
+                          || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span

@@ -79,4 +79,9 @@ export class GuestCheckoutDto {
 
   @IsBoolean()
   gdprConsent: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  inviteCode?: string;
 }

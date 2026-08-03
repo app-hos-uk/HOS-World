@@ -9,6 +9,7 @@ import {
   LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { todayDateInputValue } from '@/lib/formFieldValidation';
 
 const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
@@ -638,9 +639,14 @@ export default function AdminFinancePage() {
 function RevenueReportsTab() {
   const [reportData, setReportData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0],
+  const [dateRange, setDateRange] = useState(() => {
+    const end = todayDateInputValue();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+    const y = startDate.getFullYear();
+    const m = String(startDate.getMonth() + 1).padStart(2, '0');
+    const d = String(startDate.getDate()).padStart(2, '0');
+    return { startDate: `${y}-${m}-${d}`, endDate: end };
   });
   const toast = useToast();
 
@@ -673,12 +679,14 @@ function RevenueReportsTab() {
           <input
             type="date"
             value={dateRange.startDate}
+            max={todayDateInputValue()}
             onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
             className="px-3 py-2 border border-hos-border rounded-lg text-sm"
           />
           <input
             type="date"
             value={dateRange.endDate}
+            max={todayDateInputValue()}
             onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
             className="px-3 py-2 border border-hos-border rounded-lg text-sm"
           />

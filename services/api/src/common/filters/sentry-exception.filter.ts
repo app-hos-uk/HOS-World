@@ -61,11 +61,17 @@ export class SentryExceptionFilter implements ExceptionFilter {
       );
     }
 
-    // In production, suppress internal details for 5xx errors
+    // In production, scrub unexpected 500s but preserve intentional HttpException messages
+    // (e.g. BadGateway 502 from reconciliation/CMS so clients see actionable errors).
     const isProduction = process.env.NODE_ENV === 'production';
-    const safeMessage = (isProduction && status >= 500)
-      ? { message: 'Internal server error', statusCode: status }
-      : { ...message, statusCode: status };
+    const preserveHttpMessage =
+      exception instanceof HttpException &&
+      status >= 500 &&
+      status !== HttpStatus.INTERNAL_SERVER_ERROR;
+    const safeMessage =
+      isProduction && status >= 500 && !preserveHttpMessage
+        ? { message: 'Internal server error', statusCode: status }
+        : { ...message, statusCode: status };
 
     response.status(status).json({
       ...safeMessage,

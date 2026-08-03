@@ -4,6 +4,7 @@ import { Strategy, VerifyCallback } from 'passport-apple';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../auth.service';
 import { verifyAppleIdToken } from '../utils/apple-id-token';
+import { decodeOAuthInvite } from '../oauth-state.util';
 
 @Injectable()
 export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
@@ -18,10 +19,12 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
       privateKeyLocation: configService.get<string>('APPLE_PRIVATE_KEY_PATH'),
       callbackURL: configService.get<string>('APPLE_CALLBACK_URL') || '/api/auth/apple/callback',
       scope: ['name', 'email'],
+      passReqToCallback: true,
     });
   }
 
   async validate(
+    req: any,
     accessToken: string,
     refreshToken: string,
     idToken: string,
@@ -35,6 +38,13 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
 
     try {
       const decoded = await verifyAppleIdToken(idToken, clientId);
+      const rawState =
+        typeof req?.query?.state === 'string'
+          ? req.query.state
+          : typeof req?.body?.state === 'string'
+            ? req.body.state
+            : undefined;
+      const inviteFromState = decodeOAuthInvite(rawState);
       const user = {
         provider: 'apple' as const,
         providerId: String(decoded.sub),
@@ -43,6 +53,7 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
         lastName: profile?.name?.lastName,
         accessToken,
         refreshToken,
+        inviteCode: inviteFromState,
       };
 
       const result = await this.authService.validateOrCreateOAuthUser(user);

@@ -19,9 +19,9 @@ export function getSellerMenuItems(isWholesaler: boolean): SellerMenuItem[] {
       { title: 'My Products', href: '/wholesaler/products', icon: '📦' },
       { title: 'Bulk upload (CSV)', href: '/wholesaler/bulk', icon: '📤' },
       { title: 'Bulk Orders', href: '/wholesaler/orders', icon: '🛒' },
-      { title: 'Product Analytics', href: '/seller/analytics', icon: '📈' },
-      { title: 'Returns', href: '/seller/returns', icon: '↩️' },
-      { title: 'Earnings', href: '/seller/earnings', icon: '💰' },
+      { title: 'Product Analytics', href: '/wholesaler/analytics', icon: '📈', activePathnames: ['/seller/analytics'] },
+      { title: 'Returns', href: '/wholesaler/returns', icon: '↩️', activePathnames: ['/seller/returns'] },
+      { title: 'Earnings', href: '/wholesaler/earnings', icon: '💰', activePathnames: ['/seller/earnings'] },
       { title: 'Submissions', href: '/wholesaler/submissions', icon: '📝' },
       { title: 'Profile', href: '/wholesaler/profile', icon: '👤' },
     ];

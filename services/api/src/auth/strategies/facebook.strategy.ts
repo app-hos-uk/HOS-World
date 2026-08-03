@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, Profile } from 'passport-facebook';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../auth.service';
+import { decodeOAuthInvite } from '../oauth-state.util';
 
 @Injectable()
 export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
@@ -17,16 +18,21 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
         configService.get<string>('FACEBOOK_CALLBACK_URL') || '/api/auth/facebook/callback',
       scope: ['email', 'public_profile'],
       profileFields: ['emails', 'name', 'picture.type(large)'],
+      passReqToCallback: true,
     });
   }
 
   async validate(
+    req: any,
     accessToken: string,
     refreshToken: string,
     profile: Profile,
     done: (error: any, user?: any) => void,
   ): Promise<any> {
     const { id, name, emails, photos } = profile;
+    const inviteFromState = decodeOAuthInvite(
+      typeof req?.query?.state === 'string' ? req.query.state : undefined,
+    );
 
     const user = {
       provider: 'facebook',
@@ -37,6 +43,7 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
       avatar: photos?.[0]?.value,
       accessToken,
       refreshToken,
+      inviteCode: inviteFromState,
     };
 
     const result = await this.authService.validateOrCreateOAuthUser(user);

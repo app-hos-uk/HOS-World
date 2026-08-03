@@ -60,14 +60,26 @@ function LocationMarker({ onLocationChange, initialLat, initialLng }: {
   );
 }
 
-/** Invalidate map size after layout settles so tiles paint correctly in flex containers. */
+/** Invalidate map size after layout settles / container resizes (Leaflet often measures 0 initially). */
 function MapResizeFix() {
   const map = useMap();
   useEffect(() => {
-    const t = window.setTimeout(() => {
-      map.invalidateSize();
-    }, 100);
-    return () => window.clearTimeout(t);
+    const invalidate = () => map.invalidateSize({ animate: false });
+    const t1 = window.setTimeout(invalidate, 50);
+    const t2 = window.setTimeout(invalidate, 250);
+    const container = map.getContainer()?.parentElement;
+    let observer: ResizeObserver | undefined;
+    if (container && typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(() => invalidate());
+      observer.observe(container);
+    }
+    window.addEventListener('resize', invalidate);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      observer?.disconnect();
+      window.removeEventListener('resize', invalidate);
+    };
   }, [map]);
   return null;
 }
@@ -160,7 +172,7 @@ export default function MapPickerClient({
   return (
     <div className={`rounded-lg overflow-hidden border border-hos-border flex flex-col ${className}`} style={{ height }}>
       {/* Map fills remaining height; footer stays outside the tile viewport */}
-      <div className="relative flex-1 min-h-0 w-full">
+      <div className="relative flex-1 min-h-[240px] w-full">
         {mapError ? (
           <div className="absolute inset-0 z-[500] flex items-center justify-center bg-hos-bg-tertiary p-4 text-center">
             <div>
@@ -179,7 +191,7 @@ export default function MapPickerClient({
         <MapContainer
           center={currentPosition}
           zoom={initialZoom}
-          style={{ height: '100%', width: '100%' }}
+          style={{ position: 'absolute', inset: 0, height: '100%', width: '100%' }}
           scrollWheelZoom={true}
         >
           <MapResizeFix />

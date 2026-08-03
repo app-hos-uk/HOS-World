@@ -59,17 +59,26 @@ export default function CheckoutPage() {
   const [guestSubmitting, setGuestSubmitting] = useState(false);
   const [guestError, setGuestError] = useState<string | null>(null);
   const [showGuestForm, setShowGuestForm] = useState(true);
-  const [guestForm, setGuestForm] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-    street: '',
-    city: '',
-    state: '',
-    postalCode: '',
-    country: '',
-    phone: '',
-    gdprConsent: false,
+  const [guestForm, setGuestForm] = useState(() => {
+    let inviteCode = '';
+    try {
+      inviteCode = sessionStorage.getItem('hos_invite_code')?.trim() || '';
+    } catch {
+      /* ignore */
+    }
+    return {
+      email: '',
+      firstName: '',
+      lastName: '',
+      street: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: '',
+      phone: '',
+      inviteCode,
+      gdprConsent: false,
+    };
   });
   const checkoutSteps = useMemo(
     () => [
@@ -80,6 +89,19 @@ export default function CheckoutPage() {
     ],
     [],
   );
+
+  useEffect(() => {
+    // Persist invite from URL so guest checkout can honor invite-only mode
+    try {
+      const invite = new URLSearchParams(window.location.search).get('invite')?.trim();
+      if (invite) {
+        sessionStorage.setItem('hos_invite_code', invite);
+        setGuestForm((prev) => ({ ...prev, inviteCode: invite }));
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   useEffect(() => {
     if (authLoading || !isAuthenticated) return;
@@ -372,9 +394,19 @@ export default function CheckoutPage() {
       toast.error('Please select a shipping address');
       return;
     }
-    if (checkoutStep === 2 && shippingOptions.length > 0 && !selectedShippingMethod) {
-      toast.error('Please select a shipping method');
-      return;
+    if (checkoutStep === 2) {
+      if (calculatingShipping) {
+        toast.error('Please wait for shipping options to finish loading');
+        return;
+      }
+      if (shippingOptions.length === 0 && !cart?.promotionFreeShipping) {
+        toast.error('No shipping options available for this address. Please update your address or try again later.');
+        return;
+      }
+      if (shippingOptions.length > 0 && !selectedShippingMethod) {
+        toast.error('Please select a shipping method');
+        return;
+      }
     }
     if (checkoutStep === 3 && hasCriticalStockIssues) {
       toast.error('Please resolve stock issues before continuing');
@@ -410,6 +442,22 @@ export default function CheckoutPage() {
     try {
       setGuestSubmitting(true);
       const guestSessionId = getOrCreateGuestCartSessionId();
+      const inviteCode =
+        guestForm.inviteCode.trim() ||
+        (() => {
+          try {
+            return sessionStorage.getItem('hos_invite_code')?.trim() || undefined;
+          } catch {
+            return undefined;
+          }
+        })();
+      if (inviteCode) {
+        try {
+          sessionStorage.setItem('hos_invite_code', inviteCode);
+        } catch {
+          /* ignore */
+        }
+      }
       const response = await apiClient.guestCheckout({
         email: guestForm.email.trim(),
         firstName: guestForm.firstName.trim(),
@@ -422,6 +470,7 @@ export default function CheckoutPage() {
         phone: guestForm.phone.trim() || undefined,
         guestSessionId,
         gdprConsent: true,
+        ...(inviteCode ? { inviteCode } : {}),
       });
 
       if (!response?.data?.user) {
@@ -460,9 +509,15 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!selectedShippingMethod && shippingOptions.length > 0) {
-      toast.error('Please select a shipping method');
-      return;
+    if (!cart?.promotionFreeShipping) {
+      if (shippingOptions.length === 0) {
+        toast.error('No shipping options available for this address. Shipping is not free — please update your address or try again later.');
+        return;
+      }
+      if (!selectedShippingMethod) {
+        toast.error('Please select a shipping method');
+        return;
+      }
     }
 
     if (!cart || !cart.items || cart.items.length === 0) {
@@ -646,6 +701,21 @@ export default function CheckoutPage() {
                         required
                         value={guestForm.email}
                         onChange={(e) => setGuestForm({ ...guestForm, email: e.target.value })}
+                        className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="guest-invite" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                        Invite code (if required)
+                      </label>
+                      <input
+                        id="guest-invite"
+                        type="text"
+                        autoComplete="off"
+                        value={guestForm.inviteCode}
+                        onChange={(e) => setGuestForm({ ...guestForm, inviteCode: e.target.value })}
+                        placeholder="Enter invite code if registration is invite-only"
                         className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                       />
                     </div>
@@ -1205,9 +1275,14 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={goNextStep}
-                  className="px-5 py-2.5 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold font-medium"
+                  disabled={checkoutStep === 2 && (calculatingShipping || isCalculating)}
+                  className="px-5 py-2.5 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {checkoutStep === 3 ? 'Continue to confirm' : 'Continue'}
+                  {checkoutStep === 2 && calculatingShipping
+                    ? 'Loading shipping…'
+                    : checkoutStep === 3
+                      ? 'Continue to confirm'
+                      : 'Continue'}
                 </button>
               </div>
             )}
@@ -1375,7 +1450,8 @@ export default function CheckoutPage() {
                   creatingOrder ||
                   checkoutStep !== 4 ||
                   !shippingAddressId ||
-                  (shippingOptions.length > 0 && !selectedShippingMethod) ||
+                  (!cart?.promotionFreeShipping &&
+                    (shippingOptions.length === 0 || !selectedShippingMethod)) ||
                   hasCriticalStockIssues
                 }
                 className="w-full px-6 py-3 btn-gold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"

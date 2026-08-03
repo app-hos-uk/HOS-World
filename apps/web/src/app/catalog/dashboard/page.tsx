@@ -51,18 +51,6 @@ export default function CatalogDashboardPage() {
   useEffect(() => {
     fetchDashboardData(true);
   }, [fetchDashboardData]);
-
-  useEffect(() => {
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') fetchDashboardData(false);
-    };
-    const interval = setInterval(() => fetchDashboardData(false), 30_000);
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-    };
-  }, [fetchDashboardData]);
   const completedToday = dashboardData?.completedToday || 0;
   const totalCompleted = dashboardData?.totalCompleted || 0;
   const totalEntries = dashboardData?.totalEntries || 0;

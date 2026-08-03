@@ -79,7 +79,7 @@ export class CMSService {
     }
     const detail = error instanceof Error ? error.message : String(error);
     this.logger.warn(`CMS unexpected: ${userMessage} (${detail})`);
-    throw new HttpException(userMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+    throw new HttpException(userMessage, HttpStatus.BAD_GATEWAY);
   }
 
   /** Strapi down / misconfigured — prefer empty list over 5xx for CMS portal GETs */

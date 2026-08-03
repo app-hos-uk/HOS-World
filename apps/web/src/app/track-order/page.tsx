@@ -219,15 +219,13 @@ function TrackOrderContent() {
     return parts.join(', ');
   };
 
-  const timelineEvents = order
-    ? liveTrackingEvents.length > 0
-      ? liveTrackingEvents.map((event) => ({
-          date: String(event.timestamp),
-          description: event.statusDescription,
-          location: formatLiveEventLocation(event) || undefined,
-        }))
-      : generateTrackingEvents(order)
-    : [];
+  // Order milestones are the source of truth for progress; carrier events are secondary.
+  const timelineEvents = order ? generateTrackingEvents(order) : [];
+  const carrierTimelineEvents = liveTrackingEvents.map((event) => ({
+    date: String(event.timestamp),
+    description: event.statusDescription,
+    location: formatLiveEventLocation(event) || undefined,
+  }));
 
   return (
     <div className="min-h-screen bg-hos-bg-secondary">
@@ -421,22 +419,13 @@ function TrackOrderContent() {
 
             {/* Timeline */}
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
-              <h3 className="font-semibold text-hos-text-secondary mb-4">
-                {liveTrackingEvents.length > 0 ? 'Carrier Tracking Updates' : 'Tracking History'}
-              </h3>
-              {liveTrackingEvents.length > 0 && (
-                <p className="text-sm text-hos-text-muted mb-4">
-                  Order status: <span className="font-medium text-hos-gold">{getOrderStatusLabel(order.status)}</span>
-                  {orderIsShippedOnly
-                    ? '. Carrier updates below are informational and do not mark the order as Delivered until the order status is updated.'
-                    : '.'}
-                </p>
-              )}
+              <h3 className="font-semibold text-hos-text-secondary mb-4">Order Progress</h3>
+              <p className="text-sm text-hos-text-muted mb-4">
+                Current status:{' '}
+                <span className="font-medium text-hos-gold">{getOrderStatusLabel(order.status)}</span>
+              </p>
               <div className="space-y-4">
-                {timelineEvents.map((event, index) => {
-                  const looksDelivered =
-                    /delivered/i.test(event.description || '') && orderIsShippedOnly;
-                  return (
+                {timelineEvents.map((event, index) => (
                   <div key={index} className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <div className={`w-3 h-3 rounded-full ${
@@ -447,23 +436,48 @@ function TrackOrderContent() {
                       )}
                     </div>
                     <div className="pb-4">
-                      <p className="font-medium text-hos-text-secondary">
-                        {event.description}
-                        {looksDelivered && (
-                          <span className="ml-2 text-xs font-normal text-hos-text-muted">
-                            (carrier update — order still Shipped)
-                          </span>
-                        )}
-                      </p>
+                      <p className="font-medium text-hos-text-secondary">{event.description}</p>
                       <p className="text-sm text-hos-text-muted">
                         {new Date(event.date).toLocaleString()}
                         {event.location && ` • ${event.location}`}
                       </p>
                     </div>
                   </div>
-                  );
-                })}
+                ))}
               </div>
+              {carrierTimelineEvents.length > 0 && (
+                <div className="mt-8 border-t border-hos-border pt-6">
+                  <h4 className="font-semibold text-hos-text-secondary mb-2">Carrier Updates</h4>
+                  <p className="text-xs text-hos-text-muted mb-4">
+                    Informational only
+                    {orderIsShippedOnly
+                      ? ' — a carrier “Delivered” scan does not change the order status until it is marked Delivered.'
+                      : '.'}
+                  </p>
+                  <div className="space-y-3">
+                    {carrierTimelineEvents.map((event, index) => {
+                      const looksDelivered =
+                        /delivered/i.test(event.description || '') && orderIsShippedOnly;
+                      return (
+                        <div key={`carrier-${index}`} className="text-sm">
+                          <p className="text-hos-text-secondary">
+                            {event.description}
+                            {looksDelivered && (
+                              <span className="ml-2 text-xs text-hos-text-muted">
+                                (order still Shipped)
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-hos-text-muted text-xs">
+                            {new Date(event.date).toLocaleString()}
+                            {event.location && ` • ${event.location}`}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Shipping Address */}

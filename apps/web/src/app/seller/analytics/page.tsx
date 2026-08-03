@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { clampDateInputToToday, todayDateInputValue } from '@/lib/formFieldValidation';
 
@@ -24,7 +25,9 @@ type SortKey = keyof Pick<ProductPerformanceRow, 'name' | 'sku' | 'views' | 'ord
 
 export default function SellerAnalyticsPage() {
   const { formatPrice } = useCurrency();
-  const menuItems = getSellerMenuItems(false);
+  const { user } = useAuth();
+  const isWholesaler = user?.role === 'WHOLESALER';
+  const menuItems = getSellerMenuItems(isWholesaler);
 
   const [data, setData] = useState<ProductPerformanceRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +122,7 @@ export default function SellerAnalyticsPage() {
 
   return (
     <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER']} showAccessDenied={true}>
-      <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller">
+      <DashboardLayout role={isWholesaler ? 'WHOLESALER' : 'SELLER'} menuItems={menuItems} title={isWholesaler ? 'Wholesaler' : 'Seller'}>
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold">Product Analytics</h1>
           <p className="text-hos-text-secondary mt-1">Track your product performance and conversion rates</p>

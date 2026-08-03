@@ -28,7 +28,7 @@ const STATUS_LABELS: Record<string, string> = {
   awaiting_customer_return: 'Awaiting Customer Return',
   item_received: 'Item Received',
   refund_pending: 'Refund Pending',
-  processing: 'Refund Pending',
+  processing: 'Processing',
   completed: 'Return Completed',
   cancelled: 'Cancelled',
 };
@@ -40,7 +40,7 @@ const STATUS_COLORS: Record<string, string> = {
   awaiting_customer_return: 'bg-orange-500/15 text-orange-300',
   item_received: 'bg-hos-gold/20 text-hos-gold',
   refund_pending: 'bg-cyan-500/15 text-cyan-300',
-  processing: 'bg-cyan-500/15 text-cyan-300',
+  processing: 'bg-blue-500/15 text-blue-300',
   completed: 'bg-emerald-500/15 text-emerald-300',
   cancelled: 'bg-hos-bg-tertiary text-hos-text-secondary',
 };

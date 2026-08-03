@@ -4,6 +4,7 @@ import {
   BadRequestException,
   BadGatewayException,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
@@ -407,26 +408,40 @@ export class ReconciliationService {
   }
 
   async resolveItem(itemId: string, resolvedById: string, resolution: string) {
-    return this.prisma.reconciliationItem.update({
-      where: { id: itemId },
-      data: {
-        status: 'RESOLVED',
-        resolvedById,
-        resolvedAt: new Date(),
-        resolution,
-      },
-    });
+    try {
+      return await this.prisma.reconciliationItem.update({
+        where: { id: itemId },
+        data: {
+          status: 'RESOLVED',
+          resolvedById,
+          resolvedAt: new Date(),
+          resolution,
+        },
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+        throw new NotFoundException('Reconciliation item not found');
+      }
+      throw err;
+    }
   }
 
   async ignoreItem(itemId: string, resolvedById: string, reason: string) {
-    return this.prisma.reconciliationItem.update({
-      where: { id: itemId },
-      data: {
-        status: 'IGNORED',
-        resolvedById,
-        resolvedAt: new Date(),
-        resolution: reason,
-      },
-    });
+    try {
+      return await this.prisma.reconciliationItem.update({
+        where: { id: itemId },
+        data: {
+          status: 'IGNORED',
+          resolvedById,
+          resolvedAt: new Date(),
+          resolution: reason,
+        },
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+        throw new NotFoundException('Reconciliation item not found');
+      }
+      throw err;
+    }
   }
 }

@@ -90,6 +90,10 @@ export function validateNameLike(
   if (!hasLetter(t)) {
     return `${label} must include at least one letter`;
   }
+  // Allow letters, numbers, spaces, and common label/merch punctuation; reject symbols like @#$%.
+  if (/[^\p{L}\p{N}\s.'&\-():,#/"®™]/u.test(t)) {
+    return `${label} contains invalid characters`;
+  }
   return null;
 }
 

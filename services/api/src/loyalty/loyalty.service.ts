@@ -802,10 +802,17 @@ export class LoyaltyService implements OnModuleInit {
       if (/loyalty membership not found/i.test(message)) {
         throw new NotFoundException('Loyalty membership not found');
       }
-      throw err;
+      this.logger.error(`adminAdjustPoints failed for ${userId}: ${message}`);
+      throw new BadRequestException('Failed to adjust loyalty points. Please try again.');
     }
 
-    await this.tiers.recalculateTier(membership.id);
+    try {
+      await this.tiers.recalculateTier(membership.id);
+    } catch (tierErr) {
+      this.logger.warn(
+        `Tier recalculation failed after adjust for ${userId}: ${tierErr instanceof Error ? tierErr.message : tierErr}`,
+      );
+    }
     return this.getMembership(userId);
   }
 

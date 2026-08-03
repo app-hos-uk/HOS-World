@@ -127,55 +127,57 @@ export class AuthService {
     return 'US';
   }
 
+  /**
+   * Shared invite-only / founding-member gate for register, guest checkout, and OAuth signup.
+   */
+  async assertRegistrationAllowed(email: string, inviteCode?: string | null): Promise<void> {
+    const registrationMode = this.configService.get<string>('REGISTRATION_MODE', 'open');
+    if (registrationMode !== 'invite_only') return;
+
+    let bypassInviteGate = false;
+    const inviteCodeNormalized = inviteCode?.trim().toLowerCase() || '';
+
+    if (this.foundingMembersService) {
+      const fm = await this.foundingMembersService.findByEmail(email);
+      if (fm) {
+        if (fm.status === 'LINKED') {
+          throw new ConflictException(
+            'This founding member email has already been used to create an account. Please log in instead.',
+          );
+        }
+        bypassInviteGate = true;
+      } else if (inviteCodeNormalized === 'founding') {
+        throw new ForbiddenException(
+          'This email is not registered as a founding member. Please use the email address you registered with.',
+        );
+      }
+    } else if (inviteCodeNormalized === 'founding') {
+      this.logger.error(
+        'FoundingMembersService unavailable during invite-only registration with invite=founding',
+      );
+      throw new ForbiddenException(
+        'Founding member registration is temporarily unavailable. Please try again shortly.',
+      );
+    }
+
+    if (!bypassInviteGate) {
+      const validCodes = (this.configService.get<string>('REGISTRATION_INVITE_CODES', '') || '')
+        .split(',')
+        .map((c) => c.trim())
+        .filter(Boolean);
+      const validCodesNormalized = new Set(validCodes.map((c) => c.toLowerCase()));
+      if (!inviteCodeNormalized || !validCodesNormalized.has(inviteCodeNormalized)) {
+        throw new ForbiddenException(
+          'Registration is currently invite-only. Please provide a valid invite code.',
+        );
+      }
+    }
+  }
+
   async register(registerDto: RegisterDto, ipAddress?: string, userAgent?: string): Promise<AuthResponse> {
     registerDto.email = registerDto.email?.trim().toLowerCase();
 
-    // Invite-only registration gate
-    const registrationMode = this.configService.get<string>('REGISTRATION_MODE', 'open');
-    if (registrationMode === 'invite_only') {
-      let bypassInviteGate = false;
-      const inviteCode = registerDto.inviteCode?.trim();
-      const inviteCodeNormalized = inviteCode?.toLowerCase();
-
-      if (this.foundingMembersService) {
-        const fm = await this.foundingMembersService.findByEmail(registerDto.email);
-        if (fm) {
-          if (fm.status === 'LINKED') {
-            throw new ConflictException(
-              'This founding member email has already been used to create an account. Please log in instead.',
-            );
-          }
-          // Allow founding members in any non-LINKED status (REGISTERED, INVITED, etc.)
-          bypassInviteGate = true;
-        } else if (inviteCodeNormalized === 'founding') {
-          // User has founding invite code but email not found in founding members list
-          throw new ForbiddenException(
-            'This email is not registered as a founding member. Please use the email address you registered with.',
-          );
-        }
-      } else if (inviteCodeNormalized === 'founding') {
-        // Service unavailable — do not silently fall through to generic invite-only error
-        this.logger.error(
-          'FoundingMembersService unavailable during invite-only registration with invite=founding',
-        );
-        throw new ForbiddenException(
-          'Founding member registration is temporarily unavailable. Please try again shortly.',
-        );
-      }
-
-      if (!bypassInviteGate) {
-        const validCodes = (this.configService.get<string>('REGISTRATION_INVITE_CODES', '') || '')
-          .split(',')
-          .map((c) => c.trim())
-          .filter(Boolean);
-        const validCodesNormalized = new Set(validCodes.map((c) => c.toLowerCase()));
-        if (!inviteCodeNormalized || !validCodesNormalized.has(inviteCodeNormalized)) {
-          throw new ForbiddenException(
-            'Registration is currently invite-only. Please provide a valid invite code.',
-          );
-        }
-      }
-    }
+    await this.assertRegistrationAllowed(registerDto.email, registerDto.inviteCode);
 
     // Check if user already exists
     const existingUser = await this.prisma.user.findUnique({
@@ -489,6 +491,9 @@ export class AuthService {
         'An account with this email already exists. Please sign in.',
       );
     }
+
+    // Guest checkout creates a customer account — honor invite-only mode.
+    await this.assertRegistrationAllowed(email, guestCheckoutDto.inviteCode);
 
     const countryCode = this.getCountryCode(guestCheckoutDto.country);
     const currencyPreference = this.geolocationService.getCurrencyForCountry(countryCode) || 'USD';
@@ -1224,6 +1229,7 @@ export class AuthService {
       this.configService,
       (user) => this.generateTokens(user),
       (value) => encryption.encrypt(value),
+      (email, inviteCode) => this.assertRegistrationAllowed(email, inviteCode),
     );
     return oauthService.validateOrCreateOAuthUser(oauthData);
   }
@@ -1400,9 +1406,13 @@ export class AuthService {
     const token = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
+    const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
     await this.prisma.user.update({
       where: { id: userId },
-      data: { emailVerifyToken: tokenHash, updatedAt: new Date() },
+      data: {
+        emailVerifyToken: tokenHash,
+        emailVerifyTokenExpires: new Date(Date.now() + TOKEN_EXPIRY_MS),
+      },
     });
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
@@ -1440,13 +1450,15 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired verification token.');
     }
 
-    // Token expires after 24 hours (updatedAt is set when token is created)
-    const tokenAge = Date.now() - new Date(user.updatedAt).getTime();
+    // Prefer dedicated expiry; fall back to updatedAt only for legacy tokens.
     const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
-    if (tokenAge > TOKEN_EXPIRY_MS) {
+    const expiresAt = user.emailVerifyTokenExpires
+      ? new Date(user.emailVerifyTokenExpires).getTime()
+      : new Date(user.updatedAt).getTime() + TOKEN_EXPIRY_MS;
+    if (Date.now() > expiresAt) {
       await this.prisma.user.update({
         where: { id: user.id },
-        data: { emailVerifyToken: null },
+        data: { emailVerifyToken: null, emailVerifyTokenExpires: null },
       });
       throw new BadRequestException('Verification token has expired. Please request a new one.');
     }
@@ -1457,6 +1469,7 @@ export class AuthService {
         emailVerified: true,
         emailVerifiedAt: new Date(),
         emailVerifyToken: null,
+        emailVerifyTokenExpires: null,
       },
     });
 

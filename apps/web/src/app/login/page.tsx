@@ -10,6 +10,7 @@ import { getDirectApiBaseUrl } from '@/lib/apiBaseUrl';
 import { resolvePostAuthRedirect, resolvePostRegisterRedirect, getSafeReturnUrl, stashAuthReturnUrl } from '@/lib/authRedirect';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { validatePhoneMaxDigits } from '@/lib/formFieldValidation';
 
 function LoginPageInner() {
   const router = useRouter();
@@ -122,7 +123,16 @@ function LoginPageInner() {
 
   const startOAuth = (provider: 'google' | 'facebook' | 'apple') => {
     stashAuthReturnUrl(searchParams.get('returnUrl') ?? searchParams.get('redirect'));
-    window.location.href = `${oauthBaseUrl}/auth/${provider}`;
+    let invite = (inviteCode || searchParams.get('invite') || '').trim();
+    if (!invite) {
+      try {
+        invite = (sessionStorage.getItem('hos_invite_code') || '').trim();
+      } catch {
+        /* ignore */
+      }
+    }
+    const qs = invite ? `?invite=${encodeURIComponent(invite)}` : '';
+    window.location.href = `${oauthBaseUrl}/auth/${provider}${qs}`;
   };
 
   // Detect country on mount (for registration)
@@ -254,6 +264,12 @@ function LoginPageInner() {
     const phoneRegex = /^\+?[\d\s\-()]+$/;
     if (whatsappNumber && !phoneRegex.test(whatsappNumber)) {
       setError('WhatsApp number must contain only digits, spaces, hyphens, and an optional leading +');
+      setLoading(false);
+      return;
+    }
+    const phoneLengthErr = validatePhoneMaxDigits(whatsappNumber, 'Phone number', 15);
+    if (phoneLengthErr) {
+      setError(phoneLengthErr);
       setLoading(false);
       return;
     }
@@ -793,7 +809,7 @@ function LoginPageInner() {
                       }}
                       className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
                       placeholder="+1 555 123 4567"
-                      
+                      maxLength={20}
                     />
                     <p className="mt-1 text-xs text-hos-text-muted">
                       Include country code (e.g., +1 for US)

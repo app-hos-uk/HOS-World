@@ -370,6 +370,7 @@ export class ApiClient {
     phone?: string;
     guestSessionId: string;
     gdprConsent: boolean;
+    inviteCode?: string;
   }): Promise<ApiResponse<AuthResponse>> {
     return this.request<ApiResponse<AuthResponse>>('/auth/guest-checkout', {
       method: 'POST',

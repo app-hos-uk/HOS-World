@@ -5,6 +5,11 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { FileUpload } from '@/components/FileUpload';
+import {
+  normalizeWhitespace,
+  validateNameLike,
+  validateOptionalDescriptiveText,
+} from '@/lib/formFieldValidation';
 
 interface UniverseRow {
   id: string;
@@ -89,18 +94,24 @@ export default function AdminUniversesPage() {
   };
 
   const handleSave = async () => {
-    if (!formData.name.trim()) {
-      toast.error('Name is required');
+    const name = normalizeWhitespace(formData.name);
+    const tag = normalizeWhitespace(formData.tag || '');
+    const description = normalizeWhitespace(formData.description || '');
+    const nameErr = validateNameLike(name, 'Universe name');
+    const tagErr = validateNameLike(tag, 'Tag', { required: false });
+    const descriptionErr = validateOptionalDescriptiveText(description, 'Description');
+    if (nameErr || tagErr || descriptionErr) {
+      toast.error(nameErr || tagErr || descriptionErr || 'Please fix the form fields');
       return;
     }
 
     setSaving(true);
     try {
       const payload = {
-        name: formData.name.trim(),
+        name,
         logo: formData.logo || undefined,
-        tag: formData.tag || undefined,
-        description: formData.description || undefined,
+        tag: tag || undefined,
+        description: description || undefined,
         accentColor: formData.accentColor || undefined,
         gradientColors: formData.gradientColors,
         order: formData.order,

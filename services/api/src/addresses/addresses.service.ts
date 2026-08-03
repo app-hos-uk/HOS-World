@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { GeocodingService } from '../inventory/geocoding.service';
 import { CreateAddressDto } from './dto/create-address.dto';
@@ -206,11 +206,21 @@ export class AddressesService {
           err instanceof Prisma.PrismaClientKnownRequestError &&
           err.code === 'P2003'
         ) {
-          throw new ConflictException(
-            'This address is linked to existing orders and cannot be permanently deleted. It has been removed from your address book.',
-          );
+          // Race: order linked after the count check — soft-hide instead of failing.
+          await this.prisma.address.update({
+            where: { id },
+            data: {
+              label: address.label ? `[Removed] ${address.label}` : '[Removed]',
+              isDefault: false,
+              firstName: address.firstName?.startsWith('__deleted__')
+                ? address.firstName
+                : `__deleted__${address.firstName || ''}`,
+            },
+          });
+          // Fall through so default-address reassignment still runs.
+        } else {
+          throw err;
         }
-        throw err;
       }
     }
 
