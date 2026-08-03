@@ -4,6 +4,12 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import {
+  normalizeWhitespace,
+  validateHttpUrl,
+  validateNameLike,
+  validateOptionalDescriptiveText,
+} from '@/lib/formFieldValidation';
 import { SafeImage } from '@/components/SafeImage';
 
 interface Category {
@@ -143,6 +149,19 @@ export default function AdminCategoriesPage() {
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (savingCategory) return;
+    const name = normalizeWhitespace(formData.name);
+    const description = normalizeWhitespace(formData.description);
+    const metaTitle = normalizeWhitespace(formData.metaTitle || '');
+    const metaDescription = normalizeWhitespace(formData.metaDescription || '');
+    const nameErr = validateNameLike(name, 'Fandom name');
+    const descriptionErr = validateOptionalDescriptiveText(description, 'Description');
+    const metaTitleErr = validateOptionalDescriptiveText(metaTitle, 'SEO title');
+    const metaDescErr = validateOptionalDescriptiveText(metaDescription, 'SEO description');
+    const imageErr = validateHttpUrl(formData.image || '', 'Image URL');
+    if (nameErr || descriptionErr || metaTitleErr || metaDescErr || imageErr) {
+      toast.error(nameErr || descriptionErr || metaTitleErr || metaDescErr || imageErr || 'Invalid fields');
+      return;
+    }
     try {
       setSavingCategory(true);
       let level = 0;
@@ -158,8 +177,8 @@ export default function AdminCategoriesPage() {
       }
 
       await apiClient.createCategory({
-        name: formData.name,
-        description: formData.description || undefined,
+        name,
+        description: description || undefined,
         parentId: formData.parentId || undefined,
         level,
         image: formData.image || undefined,
@@ -179,11 +198,24 @@ export default function AdminCategoriesPage() {
   const handleUpdateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCategory || savingCategory) return;
+    const name = normalizeWhitespace(formData.name);
+    const description = normalizeWhitespace(formData.description);
+    const metaTitle = normalizeWhitespace(formData.metaTitle || '');
+    const metaDescription = normalizeWhitespace(formData.metaDescription || '');
+    const nameErr = validateNameLike(name, 'Fandom name');
+    const descriptionErr = validateOptionalDescriptiveText(description, 'Description');
+    const metaTitleErr = validateOptionalDescriptiveText(metaTitle, 'SEO title');
+    const metaDescErr = validateOptionalDescriptiveText(metaDescription, 'SEO description');
+    const imageErr = validateHttpUrl(formData.image || '', 'Image URL');
+    if (nameErr || descriptionErr || metaTitleErr || metaDescErr || imageErr) {
+      toast.error(nameErr || descriptionErr || metaTitleErr || metaDescErr || imageErr || 'Invalid fields');
+      return;
+    }
     try {
       setSavingCategory(true);
       await apiClient.updateCategory(editingCategory.id, {
-        name: formData.name,
-        description: formData.description || undefined,
+        name,
+        description: description || undefined,
         parentId: formData.parentId || undefined,
         image: formData.image || undefined,
         order: formData.order,

@@ -242,7 +242,7 @@ export default function CatalogDashboardPage() {
                     </p>
                   </Link>
                   <Link
-                    href="/procurement/submissions?view=cross-seller"
+                    href="/catalog/duplicates"
                     className="block p-4 border-2 border-dashed border-amber-500/40 rounded-lg hover:border-amber-500 hover:bg-amber-500/10 transition-colors text-center"
                   >
                     <div className="text-2xl mb-2">🔄</div>

@@ -6,6 +6,11 @@ import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import {
+  normalizeWhitespace,
+  validateNameLike,
+  validateOptionalDescriptiveText,
+} from '@/lib/formFieldValidation';
 
 const defaultSteps = `[
   { "stepIndex": 0, "type": "SEND", "channel": "EMAIL", "templateSlug": "welcome_loyalty" }
@@ -20,6 +25,7 @@ export default function AdminJourneyNewPage() {
   const [description, setDescription] = useState('');
   const [stepsJson, setStepsJson] = useState(defaultSteps);
   const [saving, setSaving] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const save = async () => {
     let steps: unknown;
@@ -29,16 +35,24 @@ export default function AdminJourneyNewPage() {
       toast.error('Steps must be valid JSON');
       return;
     }
-    if (!slug.trim() || !name.trim()) {
+    if (!slug.trim()) {
       toast.error('Slug and name are required');
+      return;
+    }
+    const normalizedName = normalizeWhitespace(name);
+    const nameErr = validateNameLike(normalizedName, 'Journey name');
+    const descErr = validateOptionalDescriptiveText(description, 'Description');
+    setNameError(nameErr);
+    if (nameErr || descErr) {
+      toast.error(nameErr || descErr || 'Please fix the form fields');
       return;
     }
     setSaving(true);
     try {
       await apiClient.adminCreateJourney({
         slug: slug.trim(),
-        name: name.trim(),
-        description: description.trim() || undefined,
+        name: normalizedName,
+        description: normalizeWhitespace(description) || undefined,
         triggerEvent: triggerEvent.trim(),
         steps,
         isActive: true,
@@ -71,10 +85,19 @@ export default function AdminJourneyNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Name</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
+              className={`mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none ${
+                nameError ? 'border-red-500' : 'border-hos-border'
+              }`}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (nameError) setNameError(null);
+              }}
+              aria-invalid={!!nameError}
             />
+            {nameError && (
+              <span className="mt-1 block text-sm text-red-400" role="alert">{nameError}</span>
+            )}
           </label>
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Trigger event</span>

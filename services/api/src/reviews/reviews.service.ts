@@ -132,6 +132,24 @@ export class ReviewsService {
       { reviewId: review.id, productId, productName: product.name },
     ).catch((e) => this.logger.warn(`Review moderation notification failed: ${(e as Error).message}`));
 
+    // Award loyalty points on submit (idempotent if also awarded on approve)
+    this.loyaltyListener
+      .onReviewSubmitted(userId, review.id)
+      .then((pts) => {
+        if (pts > 0) {
+          this.notificationsService
+            .sendNotificationToUser(
+              userId,
+              'GENERAL',
+              'Loyalty Points Earned',
+              `You earned ${pts} Enchanted Circle points for reviewing "${product.name}".`,
+              { reviewId: review.id, productId, points: pts },
+            )
+            .catch((e) => this.logger.warn(`Review earn notification failed: ${(e as Error).message}`));
+        }
+      })
+      .catch((e) => this.logger.warn(`Loyalty review earn on submit: ${(e as Error).message}`));
+
     return this.mapToReviewType(review);
   }
 
@@ -414,13 +432,16 @@ export class ReviewsService {
     });
 
     // Update product rating if approved
+    let pointsAwarded = 0;
     if (newStatus === 'APPROVED') {
       await this.updateProductRating(review.productId);
 
-      // Award loyalty points for approved review
-      this.loyaltyListener.onReviewSubmitted(review.userId, review.id).catch((e) => {
+      // Idempotent: awards only if submit path did not already credit this review
+      try {
+        pointsAwarded = await this.loyaltyListener.onReviewSubmitted(review.userId, review.id);
+      } catch (e) {
         this.logger.warn(`Loyalty review earn: ${(e as Error).message}`);
-      });
+      }
     }
 
     // Log moderation activity
@@ -430,12 +451,14 @@ export class ReviewsService {
       entityType: 'ProductReview',
       entityId: reviewId,
       description: `Review for "${review.product.name}" was ${action === 'approve' ? 'approved' : 'rejected'} by moderator`,
-      metadata: { productId: review.productId, reviewUserId: review.userId, action },
+      metadata: { productId: review.productId, reviewUserId: review.userId, action, pointsAwarded },
     }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
-    // Notify the review author about the moderation decision
+    // Notify the review author about the moderation decision (include points when newly awarded)
     const statusMessage = action === 'approve'
-      ? `Your review for "${review.product.name}" has been approved and is now visible.`
+      ? pointsAwarded > 0
+        ? `Your review for "${review.product.name}" has been approved and is now visible. You earned ${pointsAwarded} Enchanted Circle points.`
+        : `Your review for "${review.product.name}" has been approved and is now visible.`
       : `Your review for "${review.product.name}" was not approved. Please ensure your review follows our community guidelines.`;
 
     this.notificationsService.sendNotificationToUser(
@@ -443,7 +466,7 @@ export class ReviewsService {
       'GENERAL',
       action === 'approve' ? 'Your Review Has Been Approved' : 'Review Update',
       statusMessage,
-      { reviewId, productId: review.productId, action },
+      { reviewId, productId: review.productId, action, pointsAwarded },
     ).catch((e) => this.logger.warn(`Review notification failed: ${(e as Error).message}`));
 
     return this.mapToReviewType(updated);

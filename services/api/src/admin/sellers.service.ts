@@ -74,6 +74,15 @@ export class AdminSellersService {
   }
 
   async getInvitations(status?: 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'CANCELLED') {
+    // Persist date-based expiry so counts/filters include invitations past expiresAt
+    await this.prisma.sellerInvitation.updateMany({
+      where: {
+        status: 'PENDING',
+        expiresAt: { lt: new Date() },
+      },
+      data: { status: 'EXPIRED' },
+    });
+
     const where: any = {};
     if (status) {
       where.status = status;

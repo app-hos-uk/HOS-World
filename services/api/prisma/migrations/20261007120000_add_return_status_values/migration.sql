@@ -1,0 +1,4 @@
+-- Extend ReturnStatus with richer return-tracking milestones
+ALTER TYPE "ReturnStatus" ADD VALUE IF NOT EXISTS 'AWAITING_CUSTOMER_RETURN';
+ALTER TYPE "ReturnStatus" ADD VALUE IF NOT EXISTS 'ITEM_RECEIVED';
+ALTER TYPE "ReturnStatus" ADD VALUE IF NOT EXISTS 'REFUND_PENDING';

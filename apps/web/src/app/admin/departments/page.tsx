@@ -5,6 +5,14 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { sanitizeSvgHtml } from '@/lib/sanitizeHtml';
+import {
+  normalizeWhitespace,
+  validateCtaUrl,
+  validateHttpUrl,
+  validateNameLike,
+  validateOptionalDescriptiveText,
+  validateSvgMarkupOrSvgUrl,
+} from '@/lib/formFieldValidation';
 
 interface Department {
   id: string;
@@ -117,14 +125,23 @@ export default function AdminDepartmentsPage() {
   }
 
   async function handleSave() {
-    if (!formData.name.trim() || !formData.ctaUrl.trim()) {
-      toast.error('Name and CTA URL are required');
+    const name = normalizeWhitespace(formData.name);
+    const nameErr = validateNameLike(name, 'Name');
+    const ctaErr = validateCtaUrl(formData.ctaUrl, 'CTA URL', { required: true });
+    const iconErr = validateSvgMarkupOrSvgUrl(formData.iconSvg, 'Icon SVG');
+    const imageErr = validateHttpUrl(formData.image, 'Image URL');
+    const descErr = validateOptionalDescriptiveText(formData.description, 'Description');
+    const err = nameErr || ctaErr || iconErr || imageErr || descErr;
+    if (err) {
+      toast.error(err);
       return;
     }
     try {
       setSaving(true);
       const payload = {
         ...formData,
+        name,
+        description: normalizeWhitespace(formData.description),
         categoryId: formData.categoryId || undefined,
         slug: formData.slug || undefined,
       };

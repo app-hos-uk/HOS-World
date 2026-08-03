@@ -240,6 +240,7 @@ export default function CartPage() {
 
   const handleRemoveItem = async (itemId: string) => {
     if (removingItemId === itemId) return;
+    if (!window.confirm('Remove this item from your cart?')) return;
     const item = cart?.items.find((i) => i.id === itemId);
     if (!item || !cart) return;
 

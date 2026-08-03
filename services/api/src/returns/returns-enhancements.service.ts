@@ -61,7 +61,11 @@ export class ReturnsEnhancementsService {
       throw new NotFoundException('Return request not found');
     }
 
-    if (!['APPROVED', 'PROCESSING'].includes(returnRequest.status)) {
+    if (
+      !['APPROVED', 'PROCESSING', 'AWAITING_CUSTOMER_RETURN', 'ITEM_RECEIVED'].includes(
+        returnRequest.status,
+      )
+    ) {
       throw new BadRequestException('Return must be approved before generating a return label');
     }
 

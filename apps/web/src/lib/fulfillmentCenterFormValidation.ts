@@ -1,17 +1,17 @@
 /** Shared validation for fulfillment center forms (admin + fulfillment UI). */
 
-export function validateCenterName(name: string): string | null {
+export function validateCenterName(name: string, label = 'Center name'): string | null {
   const t = name.trim();
-  if (!t) return 'Name is required';
-  if (/^\d+$/.test(t)) return 'Name cannot be numbers only';
-  if (!/\p{L}/u.test(t)) return 'Name must include at least one letter';
+  if (!t) return `${label} is required`;
+  if (/^\d+$/.test(t) || /^\p{Nd}+$/u.test(t)) return `${label} cannot be numbers only`;
+  if (!/\p{L}/u.test(t)) return `${label} must include at least one letter`;
   return null;
 }
 
 export function validateCityOrCountry(value: string, label: string): string | null {
   const t = value.trim();
   if (!t) return `${label} is required`;
-  if (/^\d+$/.test(t)) return `${label} cannot be numbers only`;
+  if (/^\d+$/.test(t) || /^\p{Nd}+$/u.test(t)) return `${label} cannot be numbers only`;
   if (!/\p{L}/u.test(t)) return `${label} must include at least one letter`;
   return null;
 }
@@ -27,10 +27,11 @@ export function validateContactPhone(phone: string): string | null {
   return null;
 }
 
-/** Optional; reject letter-only strings (e.g. "abcdef"). */
+/** Optional; reject letter-only strings (e.g. "abcdef") and excessively long values. */
 export function validatePostalCode(postalCode: string): string | null {
   const t = postalCode.trim();
   if (!t) return null;
+  if (t.length > 16) return 'Postal code must be 16 characters or fewer';
   if (/^[A-Za-z\s-]+$/i.test(t)) return 'Postal code cannot be letters only';
   if (!/^(?!^[A-Za-z\s-]+$)[A-Za-z0-9](?:[A-Za-z0-9 -]*[A-Za-z0-9])?$/i.test(t)) {
     return 'Invalid postal code format';

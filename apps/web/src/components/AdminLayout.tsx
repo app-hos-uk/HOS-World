@@ -291,9 +291,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     };
   }, []);
 
-  // Restore sidebar scroll position after navigation (runs after auto-expand settles the DOM)
+  // Restore sidebar scroll after navigation once menu expand has settled (double rAF + timeout)
   useEffect(() => {
-    const raf = requestAnimationFrame(() => {
+    let cancelled = false;
+    let timeoutEarly: ReturnType<typeof setTimeout> | undefined;
+    let timeoutLate: ReturnType<typeof setTimeout> | undefined;
+    let raf2 = 0;
+
+    const restoreScroll = () => {
+      if (cancelled) return;
       const nav = navScrollRef.current;
       if (!nav) return;
       try {
@@ -302,8 +308,28 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       } catch {
         // ignore storage errors
       }
+      const activeLink = nav.querySelector<HTMLElement>('[data-active-nav="true"]');
+      if (activeLink) {
+        activeLink.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
+    };
+
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        restoreScroll();
+        // Extra passes after auto-expand re-renders settle the submenu height
+        timeoutEarly = setTimeout(restoreScroll, 50);
+        timeoutLate = setTimeout(restoreScroll, 150);
+      });
     });
-    return () => cancelAnimationFrame(raf);
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      if (timeoutEarly) clearTimeout(timeoutEarly);
+      if (timeoutLate) clearTimeout(timeoutLate);
+    };
   }, [pathname]);
 
   const handleNavScroll = useCallback(() => {
@@ -383,6 +409,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }, [router]);
 
   const handleLogout = async () => {
+    if (!window.confirm('Are you sure you want to log out?')) return;
     await logout();
   };
 
@@ -555,6 +582,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                                 {child.href ? (
                                   <Link
                                     href={child.href}
+                                    data-active-nav={isActive(child.href) ? 'true' : undefined}
                                     className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
                                       isActive(child.href)
                                         ? 'bg-hos-gold/20 text-hos-gold-hover font-medium'
@@ -583,6 +611,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     ) : item.href ? (
                       <Link
                         href={item.href}
+                        data-active-nav={isActive(item.href) ? 'true' : undefined}
                         className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                           isActive(item.href)
                             ? 'bg-hos-gold/20 text-hos-gold-hover'

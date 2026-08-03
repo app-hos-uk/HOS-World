@@ -474,22 +474,22 @@ export default function AdminDomainsPage() {
           {/* Search & Filters */}
           <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 flex flex-col">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Search</label>
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Store name, email, domain..."
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="w-full h-10 px-4 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 />
               </div>
-              <div>
+              <div className="flex flex-col">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Seller Type</label>
                 <select
                   value={typeFilter}
                   onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="w-full h-10 px-4 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="ALL">All Types</option>
                   {sellerTypes.map(type => (
@@ -497,7 +497,7 @@ export default function AdminDomainsPage() {
                   ))}
                 </select>
               </div>
-              <div>
+              <div className="flex flex-col">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Sort By</label>
                 <select
                   value={`${sortBy}-${sortOrder}`}
@@ -506,7 +506,7 @@ export default function AdminDomainsPage() {
                     setSortBy(field as any);
                     setSortOrder(order as any);
                   }}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                  className="w-full h-10 px-4 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                 >
                   <option value="name-asc">Name A-Z</option>
                   <option value="name-desc">Name Z-A</option>
@@ -515,12 +515,12 @@ export default function AdminDomainsPage() {
                   <option value="domain-asc">Domain A-Z</option>
                 </select>
               </div>
-              <div>
+              <div className="flex flex-col">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Bulk Actions</label>
                 <button
                   onClick={handleBulkGenerateSubdomains}
                   disabled={selectedSellers.size === 0 || actionLoading}
-                  className="w-full h-[42px] px-4 py-2 text-sm bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
+                  className="w-full h-10 px-4 text-sm bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 inline-flex items-center justify-center"
                 >
                   Generate Subdomains ({selectedSellers.size})
                 </button>

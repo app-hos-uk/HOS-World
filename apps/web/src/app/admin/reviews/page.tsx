@@ -397,7 +397,7 @@ function ReviewsByProduct() {
           onChange={(e) => setSelectedProduct(e.target.value)}
           className="w-full max-w-md px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
         >
-          <option value="">-- Select a product --</option>
+          <option value="">Select a Product</option>
           {products.map((product) => (
             <option key={product.id} value={product.id}>
               {product.name} ({product.sku || 'No SKU'})

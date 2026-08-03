@@ -7,6 +7,11 @@ import { CMSLayout } from '@/components/CMSLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { cmsActionToastMessage, cmsLoadingErrorMessage } from '@/lib/cmsPortalFeedback';
+import {
+  normalizeWhitespace,
+  validateNameLike,
+  validateOptionalDescriptiveText,
+} from '@/lib/formFieldValidation';
 
 interface Category {
   id: string;
@@ -23,6 +28,7 @@ export default function BlogCategoriesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', slug: '', description: '' });
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; description?: string }>({});
   const [saving, setSaving] = useState(false);
 
   const loadCategories = async () => {
@@ -41,19 +47,33 @@ export default function BlogCategoriesPage() {
 
   const resetForm = () => {
     setForm({ name: '', slug: '', description: '' });
+    setFieldErrors({});
     setEditingId(null);
     setShowForm(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const name = normalizeWhitespace(form.name);
+    const description = normalizeWhitespace(form.description);
+    const nameErr = validateNameLike(name, 'Category name');
+    const descriptionErr = validateOptionalDescriptiveText(description, 'Description');
+    setFieldErrors({
+      name: nameErr || undefined,
+      description: descriptionErr || undefined,
+    });
+    if (nameErr || descriptionErr) {
+      toast.error(nameErr || descriptionErr || 'Please fix the highlighted fields');
+      return;
+    }
+    const payload = { ...form, name, description };
     try {
       setSaving(true);
       if (editingId) {
-        await apiClient.updateBlogCategory(editingId, form);
+        await apiClient.updateBlogCategory(editingId, payload);
         toast.success('Category updated');
       } else {
-        await apiClient.createBlogCategory(form);
+        await apiClient.createBlogCategory(payload);
         toast.success('Category created');
       }
       resetForm();
@@ -103,14 +123,25 @@ export default function BlogCategoriesPage() {
             <div className="bg-hos-bg-secondary rounded-lg p-6 border border-hos-border">
               <h2 className="text-lg font-semibold mb-4">{editingId ? 'Edit' : 'New'} Category</h2>
               <form onSubmit={handleSubmit} className="space-y-4 max-w-md">
-                <input
-                  type="text"
-                  required
-                  placeholder="Category name"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary"
-                />
+                <div>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Category name"
+                    value={form.name}
+                    onChange={(e) => {
+                      setForm({ ...form, name: e.target.value });
+                      if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: undefined }));
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg bg-hos-bg-secondary text-hos-text-secondary ${
+                      fieldErrors.name ? 'border-red-500' : 'border-hos-border'
+                    }`}
+                    aria-invalid={!!fieldErrors.name}
+                  />
+                  {fieldErrors.name && (
+                    <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.name}</p>
+                  )}
+                </div>
                 <input
                   type="text"
                   placeholder="Slug (auto-generated if empty)"
@@ -118,13 +149,26 @@ export default function BlogCategoriesPage() {
                   onChange={(e) => setForm({ ...form, slug: e.target.value })}
                   className="w-full px-3 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary"
                 />
-                <textarea
-                  placeholder="Description (optional)"
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary"
-                />
+                <div>
+                  <textarea
+                    placeholder="Description (optional)"
+                    value={form.description}
+                    onChange={(e) => {
+                      setForm({ ...form, description: e.target.value });
+                      if (fieldErrors.description) {
+                        setFieldErrors((prev) => ({ ...prev, description: undefined }));
+                      }
+                    }}
+                    rows={2}
+                    className={`w-full px-3 py-2 border rounded-lg bg-hos-bg-secondary text-hos-text-secondary ${
+                      fieldErrors.description ? 'border-red-500' : 'border-hos-border'
+                    }`}
+                    aria-invalid={!!fieldErrors.description}
+                  />
+                  {fieldErrors.description && (
+                    <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.description}</p>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <button type="submit" disabled={saving} className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg disabled:opacity-50">
                     {saving ? 'Saving...' : 'Save'}

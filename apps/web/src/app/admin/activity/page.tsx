@@ -108,6 +108,10 @@ export default function AdminActivityPage() {
   const [entityFilter, setEntityFilter] = useState<string>('ALL');
   const [dateFilter, setDateFilter] = useState<string>('7d');
   const [userFilter, setUserFilter] = useState<string>('');
+  /** Persist filter option lists so selecting a filter doesn't empty the dropdown/chips. */
+  const [availableActions, setAvailableActions] = useState<string[]>([]);
+  const [availableEntities, setAvailableEntities] = useState<string[]>([]);
+  const [actionCounts, setActionCounts] = useState<Record<string, number>>({});
   
   // Pagination
   const [page, setPage] = useState(1);
@@ -122,12 +126,11 @@ export default function AdminActivityPage() {
       setLoading(true);
       setError(null);
 
+      // Fetch by date only; action/entity filters are applied client-side so option lists stay stable.
       const filters: Parameters<typeof apiClient.getActivityLogs>[0] = {
-        page,
-        limit: pageSize,
+        page: 1,
+        limit: 500,
       };
-      if (actionFilter !== 'ALL') filters.action = actionFilter;
-      if (entityFilter !== 'ALL') filters.entityType = entityFilter;
 
       if (dateFilter !== 'ALL') {
         const now = new Date();
@@ -163,6 +166,15 @@ export default function AdminActivityPage() {
         }
       }
       setLogs(logData);
+      const byAction: Record<string, number> = {};
+      const entities = new Set<string>();
+      logData.forEach((log) => {
+        byAction[log.action] = (byAction[log.action] || 0) + 1;
+        if (log.entityType) entities.add(log.entityType);
+      });
+      setActionCounts(byAction);
+      setAvailableActions((prev) => [...new Set([...prev, ...Object.keys(byAction)])].sort());
+      setAvailableEntities((prev) => [...new Set([...prev, ...entities])].sort());
       calculateStats(logData);
     } catch (err: any) {
       console.error('Error fetching logs:', err);
@@ -173,7 +185,7 @@ export default function AdminActivityPage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateFilter, actionFilter, entityFilter, page]);
+  }, [dateFilter]);
 
   const calculateStats = (logData: ActivityLog[]) => {
     const now = new Date();
@@ -201,14 +213,17 @@ export default function AdminActivityPage() {
     fetchLogs();
   }, [fetchLogs]);
 
-  // Get unique values for filters
-  const uniqueActions = useMemo(() => {
-    return [...new Set(logs.map(l => l.action))].sort();
-  }, [logs]);
-
   const uniqueEntities = useMemo(() => {
-    return [...new Set(logs.map(l => l.entityType))].sort();
-  }, [logs]);
+    const fromLogs = logs.map((l) => l.entityType).filter(Boolean);
+    return [...new Set([...availableEntities, ...fromLogs])].sort();
+  }, [logs, availableEntities]);
+
+  const filterActionEntries = useMemo(() => {
+    const keys = [...new Set([...availableActions, ...Object.keys(actionCounts)])].sort(
+      (a, b) => (actionCounts[b] || 0) - (actionCounts[a] || 0),
+    );
+    return keys.slice(0, 12).map((action) => [action, actionCounts[action] || 0] as const);
+  }, [availableActions, actionCounts]);
 
   // Filtered logs
   const filteredLogs = useMemo(() => {
@@ -364,23 +379,23 @@ export default function AdminActivityPage() {
             </div>
           )}
 
-          {/* Quick Filters - Actions */}
-          {stats && Object.keys(stats.byAction).length > 0 && (
+          {/* Quick Filters - Actions (stable options; do not collapse after select) */}
+          {(filterActionEntries.length > 0 || actionFilter !== 'ALL') && (
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="text-sm font-medium text-hos-text-secondary mb-3">Filter by Action</h3>
               <div className="flex flex-wrap gap-2">
                 <button
-                  onClick={() => setActionFilter('ALL')}
+                  onClick={() => { setActionFilter('ALL'); setPage(1); }}
                   className={`px-3 py-1 text-sm rounded-full transition-colors ${
                     actionFilter === 'ALL' ? 'bg-hos-gold text-[#1a1406]' : 'bg-hos-bg-tertiary hover:bg-hos-bg-tertiary'
                   }`}
                 >
-                  All ({stats.total})
+                  All ({logs.length})
                 </button>
-                {Object.entries(stats.byAction).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([action, count]) => (
+                {filterActionEntries.map(([action, count]) => (
                   <button
                     key={action}
-                    onClick={() => setActionFilter(action)}
+                    onClick={() => { setActionFilter(action); setPage(1); }}
                     className={`px-3 py-1 text-sm rounded-full transition-colors ${
                       actionFilter === action ? 'bg-hos-gold text-[#1a1406]' : 'bg-hos-bg-tertiary hover:bg-hos-bg-tertiary'
                     }`}

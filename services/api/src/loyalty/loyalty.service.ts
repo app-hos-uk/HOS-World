@@ -774,22 +774,36 @@ export class LoyaltyService implements OnModuleInit {
   async adminAdjustPoints(userId: string, delta: number, reason?: string) {
     this.assertEnabled();
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
-    if (!membership) throw new NotFoundException('Member not found');
+    if (!membership) throw new NotFoundException('Loyalty membership not found');
 
-    await this.prisma.$transaction(async (tx) => {
-      const type = LoyaltyTxType.ADJUST;
-      await this.wallet.applyDelta(tx, membership.id, delta, type, {
-        source: 'ADMIN',
-        channel: 'SYSTEM',
-        description: reason || 'Manual adjustment',
-      });
-      if (delta > 0) {
-        await tx.loyaltyMembership.update({
-          where: { id: membership.id },
-          data: { totalPointsEarned: { increment: delta } },
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        const type = LoyaltyTxType.ADJUST;
+        await this.wallet.applyDelta(tx, membership.id, delta, type, {
+          source: 'ADMIN',
+          channel: 'SYSTEM',
+          description: reason || 'Manual adjustment',
         });
+        if (delta > 0) {
+          await tx.loyaltyMembership.update({
+            where: { id: membership.id },
+            data: { totalPointsEarned: { increment: delta } },
+          });
+        }
+      });
+    } catch (err) {
+      if (err instanceof BadRequestException || err instanceof NotFoundException) {
+        throw err;
       }
-    });
+      const message = err instanceof Error ? err.message : 'Failed to adjust loyalty points';
+      if (/insufficient loyalty balance/i.test(message)) {
+        throw new BadRequestException('Insufficient loyalty balance');
+      }
+      if (/loyalty membership not found/i.test(message)) {
+        throw new NotFoundException('Loyalty membership not found');
+      }
+      throw err;
+    }
 
     await this.tiers.recalculateTier(membership.id);
     return this.getMembership(userId);

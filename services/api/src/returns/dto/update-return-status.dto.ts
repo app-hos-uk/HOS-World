@@ -3,7 +3,17 @@ import { IsString, IsNotEmpty, IsOptional, IsNumber, IsIn, Min } from 'class-val
 export class UpdateReturnStatusDto {
   @IsString()
   @IsNotEmpty()
-  @IsIn(['PENDING', 'APPROVED', 'REJECTED', 'PROCESSING', 'COMPLETED', 'CANCELLED'])
+  @IsIn([
+    'PENDING',
+    'APPROVED',
+    'REJECTED',
+    'PROCESSING',
+    'AWAITING_CUSTOMER_RETURN',
+    'ITEM_RECEIVED',
+    'REFUND_PENDING',
+    'COMPLETED',
+    'CANCELLED',
+  ])
   status: string;
 
   @IsOptional()

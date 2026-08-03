@@ -134,8 +134,13 @@ function StripeCardCheckout({
             style: {
               base: {
                 fontSize: '16px',
-                color: '#1f2937',
-                '::placeholder': { color: '#9ca3af' },
+                color: '#e8e4dc',
+                iconColor: '#c9a227',
+                '::placeholder': { color: '#9a958a' },
+              },
+              invalid: {
+                color: '#f87171',
+                iconColor: '#f87171',
               },
             },
           }}
@@ -886,7 +891,19 @@ function PaymentForm({ order }: { order: any }) {
         <Elements
           key={stripePaymentIntentId || stripeClientSecret}
           stripe={stripePromise}
-          options={{ clientSecret: stripeClientSecret }}
+          options={{
+            clientSecret: stripeClientSecret,
+            appearance: {
+              theme: 'night',
+              variables: {
+                colorPrimary: '#c9a227',
+                colorText: '#e8e4dc',
+                colorBackground: '#1a1814',
+                colorDanger: '#f87171',
+                borderRadius: '8px',
+              },
+            },
+          }}
         >
           <StripeCardCheckout
             order={order}

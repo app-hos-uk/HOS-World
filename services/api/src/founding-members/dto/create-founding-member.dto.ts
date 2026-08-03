@@ -1,18 +1,29 @@
-import { IsEmail, IsString, IsOptional, IsArray, MinLength, MaxLength } from 'class-validator';
+import { IsEmail, IsString, IsOptional, IsArray, MinLength, MaxLength, Matches } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+/** Reject numeric-only / symbol-only names; require at least one letter. */
+const NAME_WITH_LETTER = /^(?=.*\p{L}).+$/u;
+
 export class CreateFoundingMemberDto {
   @ApiProperty({ example: 'John' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : value))
   @IsString()
   @MinLength(1)
   @MaxLength(100)
+  @Matches(NAME_WITH_LETTER, { message: 'First name must include at least one letter' })
   firstName: string;
 
   @ApiPropertyOptional({ example: 'Doe' })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
+    const t = value.trim().replace(/\s+/g, ' ');
+    return t.length ? t : undefined;
+  })
   @IsString()
   @MaxLength(100)
+  @Matches(NAME_WITH_LETTER, { message: 'Last name must include at least one letter' })
   lastName?: string;
 
   @ApiProperty({ example: 'john@example.com' })
@@ -22,8 +33,16 @@ export class CreateFoundingMemberDto {
 
   @ApiPropertyOptional({ example: '+1234567890' })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
+    const t = value.trim();
+    return t.length ? t : undefined;
+  })
   @IsString()
   @MaxLength(20)
+  @Matches(/^(?=.*\d)(?!(?:\D*\d){16})[\d\s+\-().]{1,20}$/, {
+    message: 'Phone may only contain digits and + ( ) - . spaces (max 15 digits)',
+  })
   phone?: string;
 
   @ApiPropertyOptional({ example: 'US' })

@@ -41,6 +41,7 @@ export function DashboardLayout({ children, role, menuItems, title, dashboardHre
     pathnameMatchesAny(pathname, [item.href, ...(item.activePathnames ?? [])]);
 
   const handleLogout = async () => {
+    if (!window.confirm('Are you sure you want to log out?')) return;
     await logout();
   };
 

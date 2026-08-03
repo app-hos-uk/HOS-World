@@ -8,6 +8,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import { normalizeWhitespace, validateNameLike } from '@/lib/formFieldValidation';
 
 const CATEGORIES = [
   { value: 'ORDER_INQUIRY', label: 'Order Inquiry' },
@@ -40,20 +41,30 @@ export default function SubmitTicketPage() {
     description: '',
     orderId: '',
   });
+  const [fieldErrors, setFieldErrors] = useState<{ subject?: string; description?: string }>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.subject.trim() || !formData.description.trim()) {
-      toast.error('Please fill in all required fields');
+    const subject = normalizeWhitespace(formData.subject);
+    const description = normalizeWhitespace(formData.description);
+    const subjectErr = validateNameLike(subject, 'Subject', { maxLength: 200 });
+    const descriptionErr = !description ? 'Description is required' : null;
+    const nextErrors = {
+      subject: subjectErr || undefined,
+      description: descriptionErr || undefined,
+    };
+    setFieldErrors(nextErrors);
+    if (subjectErr || descriptionErr) {
+      toast.error(subjectErr || descriptionErr || 'Please fix the highlighted fields');
       return;
     }
     try {
       setSubmitting(true);
       const payload: Record<string, string> = {
-        subject: formData.subject.trim(),
+        subject,
         category: formData.category,
         priority: formData.priority,
-        initialMessage: formData.description.trim(),
+        initialMessage: description,
       };
       if (formData.orderId.trim()) {
         payload.orderId = formData.orderId.trim();
@@ -151,11 +162,20 @@ export default function SubmitTicketPage() {
                   type="text"
                   required
                   value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
+                  onChange={(e) => {
+                    setFormData({ ...formData, subject: e.target.value });
+                    if (fieldErrors.subject) setFieldErrors((prev) => ({ ...prev, subject: undefined }));
+                  }}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold ${
+                    fieldErrors.subject ? 'border-red-500' : 'border-hos-border'
+                  }`}
                   placeholder="Brief summary of your issue"
                   maxLength={200}
+                  aria-invalid={!!fieldErrors.subject}
                 />
+                {fieldErrors.subject && (
+                  <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.subject}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -214,12 +234,23 @@ export default function SubmitTicketPage() {
                   id="description"
                   required
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
+                  onChange={(e) => {
+                    setFormData({ ...formData, description: e.target.value });
+                    if (fieldErrors.description) {
+                      setFieldErrors((prev) => ({ ...prev, description: undefined }));
+                    }
+                  }}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold ${
+                    fieldErrors.description ? 'border-red-500' : 'border-hos-border'
+                  }`}
                   rows={6}
                   placeholder="Please describe your issue in detail..."
                   maxLength={5000}
+                  aria-invalid={!!fieldErrors.description}
                 />
+                {fieldErrors.description && (
+                  <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.description}</p>
+                )}
                 <p className="text-xs text-hos-text-muted mt-1">
                   {formData.description.length}/5000 characters
                 </p>

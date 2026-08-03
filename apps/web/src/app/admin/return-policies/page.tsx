@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { normalizeWhitespace, validateNameLike } from '@/lib/formFieldValidation';
 
 interface ReturnPolicy {
   id: string;
@@ -40,6 +41,8 @@ export default function AdminReturnPoliciesPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState<ReturnPolicy | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [createNameError, setCreateNameError] = useState<string | null>(null);
+  const [editNameError, setEditNameError] = useState<string | null>(null);
 
   const [createForm, setCreateForm] = useState({
     name: '',
@@ -99,8 +102,11 @@ export default function AdminReturnPoliciesPage() {
   };
 
   const handleCreate = async () => {
-    if (!createForm.name.trim()) {
-      toast.error('Policy name is required');
+    const policyName = normalizeWhitespace(createForm.name);
+    const nameErr = validateNameLike(policyName, 'Policy name');
+    setCreateNameError(nameErr);
+    if (nameErr) {
+      toast.error(nameErr);
       return;
     }
 
@@ -115,7 +121,7 @@ export default function AdminReturnPoliciesPage() {
       setActionLoading(true);
       await toast.promise(
         apiClient.createReturnPolicy({
-          name: createForm.name.trim(),
+          name: policyName,
           description: createForm.description.trim() || undefined,
           sellerId: createForm.sellerId.trim() || undefined,
           productId: createForm.productId.trim() || undefined,
@@ -182,8 +188,11 @@ export default function AdminReturnPoliciesPage() {
   const handleUpdate = async () => {
     if (!selectedPolicy) return;
 
-    if (!editForm.name.trim()) {
-      toast.error('Policy name is required');
+    const policyName = normalizeWhitespace(editForm.name);
+    const nameErr = validateNameLike(policyName, 'Policy name');
+    setEditNameError(nameErr);
+    if (nameErr) {
+      toast.error(nameErr);
       return;
     }
 
@@ -198,7 +207,7 @@ export default function AdminReturnPoliciesPage() {
       setActionLoading(true);
       await toast.promise(
         apiClient.updateReturnPolicy(selectedPolicy.id, {
-          name: editForm.name.trim(),
+          name: policyName,
           description: editForm.description.trim() || undefined,
           sellerId: editForm.sellerId.trim() || undefined,
           productId: editForm.productId.trim() || undefined,
@@ -389,10 +398,19 @@ export default function AdminReturnPoliciesPage() {
                     <input
                       type="text"
                       value={createForm.name}
-                      onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                      onChange={(e) => {
+                        setCreateForm({ ...createForm, name: e.target.value });
+                        if (createNameError) setCreateNameError(null);
+                      }}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none ${
+                        createNameError ? 'border-red-500' : 'border-hos-border'
+                      }`}
                       placeholder="e.g., Standard Return Policy"
+                      aria-invalid={!!createNameError}
                     />
+                    {createNameError && (
+                      <p className="mt-1 text-sm text-red-400" role="alert">{createNameError}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-hos-text-secondary mb-1">

@@ -64,25 +64,7 @@ export default function AdminSellerAnalyticsPage() {
       setLoading(true);
       setError(null);
 
-      // Calculate date range based on timeRange selection
       const now = new Date();
-      let startDate: Date;
-      switch (timeRange) {
-        case '7d':
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          break;
-        case '30d':
-          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          break;
-        case '90d':
-          startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-          break;
-        case '1y':
-          startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-          break;
-        default:
-          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      }
 
       // Fetch sellers from admin endpoint
       const sellersResponse = await apiClient.getAdminSellers({ page: 1, limit: 500 });
@@ -115,24 +97,14 @@ export default function AdminSellerAnalyticsPage() {
       // Calculate analytics from seller data
       const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
       const allSellers = mappedSellers.filter((s: any) => sellerRoles.includes(s.role));
-      
-      // Filter sellers created within the time range for metrics
-      const sellersInRange = allSellers.filter((s: any) => {
-        const createdAt = new Date(s.createdAt);
-        return createdAt >= startDate;
-      });
-      
       const activeSellers = allSellers.filter((s: any) => s.isVerified);
       const pendingSellers = allSellers.filter((s: any) => !s.isVerified);
       
-      // New sellers in range
-      const newSellersInRange = sellersInRange.length;
-
-      // Group by type (sellers in selected range)
+      // Group by type — always all sellers so totals stay consistent across time ranges
       const sellersByType = [
-        { type: 'B2C Seller', count: sellersInRange.filter((s: any) => s.role === 'B2C_SELLER').length },
-        { type: 'Wholesaler', count: sellersInRange.filter((s: any) => s.role === 'WHOLESALER').length },
-        { type: 'Seller', count: sellersInRange.filter((s: any) => s.role === 'SELLER').length },
+        { type: 'B2C Seller', count: allSellers.filter((s: any) => s.role === 'B2C_SELLER').length },
+        { type: 'Wholesaler', count: allSellers.filter((s: any) => s.role === 'WHOLESALER').length },
+        { type: 'Seller', count: allSellers.filter((s: any) => s.role === 'SELLER').length },
       ].filter(t => t.count > 0);
 
       // Generate growth data based on time range
@@ -188,7 +160,7 @@ export default function AdminSellerAnalyticsPage() {
         sellerGrowth.push({ month: label, count: cumulativeCount, newSellers: newCount });
       }
 
-      const topSellers = sellersInRange
+      const topSellers = allSellers
         .map((s: any) => ({
           name: s.storeName || `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.email,
           revenue: Number(s.totalRevenue || 0),
@@ -199,11 +171,12 @@ export default function AdminSellerAnalyticsPage() {
         .slice(0, 5);
 
       setAnalytics({
-        totalSellers: sellersInRange.length,
-        activeSellers: sellersInRange.filter((s: any) => s.isVerified).length,
-        pendingSellers: sellersInRange.filter((s: any) => !s.isVerified).length,
-        totalRevenue: sellersInRange.reduce((sum: number, s: any) => sum + Number(s.totalRevenue || 0), 0),
-        sellers: sellersInRange,
+        // Absolute totals stay stable across time ranges; growth chart uses period windows
+        totalSellers: allSellers.length,
+        activeSellers: activeSellers.length,
+        pendingSellers: pendingSellers.length,
+        totalRevenue: allSellers.reduce((sum: number, s: any) => sum + Number(s.totalRevenue || 0), 0),
+        sellers: allSellers,
         sellersByType,
         sellerGrowth,
         topSellers,
@@ -340,24 +313,26 @@ export default function AdminSellerAnalyticsPage() {
                 </div>
 
                 {/* Sellers by Type */}
-                <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-6 overflow-hidden">
                   <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Sellers by Type</h2>
                   <div className="h-64 flex flex-col">
                     {analytics.sellersByType.length > 0 ? (
                       <>
-                        <div className="flex-1">
+                        <div className="flex-1 min-h-0 px-2">
                           <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
+                            <PieChart margin={{ top: 12, right: 12, bottom: 12, left: 12 }}>
                               <Pie
                                 data={analytics.sellersByType}
                                 cx="50%"
                                 cy="50%"
-                                innerRadius={50}
-                                outerRadius={70}
+                                innerRadius={46}
+                                outerRadius={64}
                                 fill="#8884d8"
                                 paddingAngle={5}
                                 dataKey="count"
+                                nameKey="type"
                                 label={false}
+                                labelLine={false}
                               >
                                 {analytics.sellersByType.map((entry, index) => (
                                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -370,14 +345,14 @@ export default function AdminSellerAnalyticsPage() {
                             </PieChart>
                           </ResponsiveContainer>
                         </div>
-                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
+                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5 mt-2 px-1">
                           {analytics.sellersByType.map((entry, index) => (
                             <div key={entry.type} className="flex items-center gap-1.5 text-xs">
                               <span 
-                                className="w-2.5 h-2.5 rounded-sm" 
+                                className="w-2.5 h-2.5 rounded-sm shrink-0" 
                                 style={{ backgroundColor: COLORS[index % COLORS.length] }}
                               />
-                              <span className="text-hos-text-secondary">{entry.type}</span>
+                              <span className="text-hos-text-secondary whitespace-nowrap">{entry.type}</span>
                               <span className="text-hos-text-muted">({entry.count})</span>
                             </div>
                           ))}

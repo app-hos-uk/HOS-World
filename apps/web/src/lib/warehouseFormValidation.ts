@@ -39,7 +39,7 @@ export function validateWarehouseForm(input: {
   managerName?: string;
 }): string | null {
   return (
-    validateCenterName(input.name) ||
+    validateCenterName(input.name, 'Warehouse name') ||
     validateCityOrCountry(input.city, 'City') ||
     validateCityOrCountry(input.country, 'Country') ||
     validateOptionalStateRegion(input.state ?? '') ||

@@ -50,6 +50,23 @@ interface AdminDashboardData {
 
 const COLORS = ['#c9a227', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#8B5CF6', '#94a3b8', '#ec4899'];
 
+/** Distinct colors per order status for the donut chart */
+const ORDER_STATUS_COLORS: Record<string, string> = {
+  PENDING: '#f59e0b',
+  CONFIRMED: '#3b82f6',
+  PROCESSING: '#06b6d4',
+  PACKED: '#8b5cf6',
+  SHIPPED: '#6366f1',
+  OUT_FOR_DELIVERY: '#a78bfa',
+  DELIVERED: '#10b981',
+  COMPLETED: '#059669',
+  CANCELLED: '#ef4444',
+  REFUNDED: '#f97316',
+  RETURNED: '#ec4899',
+  ON_HOLD: '#94a3b8',
+  FAILED: '#dc2626',
+};
+
 const DARK_CHART_TOOLTIP = {
   backgroundColor: '#14141a',
   border: '1px solid rgba(201, 162, 39, 0.22)',
@@ -132,10 +149,12 @@ export default function AdminDashboardPage() {
 
   const salesTrendData = dashboardData?.salesTrends ?? [];
 
-  const orderStatusData = dashboardData?.ordersByStatus?.map(item => ({
+  const orderStatusData = dashboardData?.ordersByStatus?.map((item, index) => ({
     name: item.status,
     value: item._count,
+    fill: ORDER_STATUS_COLORS[item.status] || COLORS[index % COLORS.length],
   })) || [];
+  const orderStatusTotal = orderStatusData.reduce((sum, d) => sum + d.value, 0);
 
   const topProductsData = dashboardData?.topProducts || [];
 
@@ -295,24 +314,24 @@ export default function AdminDashboardPage() {
               </ChartCard>
 
               {/* Order Status Pie Chart */}
-              <ChartCard title="Orders by Status" subtitle="Current order distribution">
+              <ChartCard title="Orders by Status" subtitle="Current order distribution" height="h-80" className="[&>div:first-child]:mb-6">
                 {orderStatusData.length > 0 ? (
-                <div className="relative h-full w-full">
+                <div className="relative h-full w-full pt-2">
                   {/* Total count in donut center */}
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ paddingBottom: 44 }}>
+                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ paddingBottom: 56 }}>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-hos-text-secondary">{stats.totalOrders}</p>
+                      <p className="text-2xl font-bold text-hos-text-secondary tabular-nums">{orderStatusTotal}</p>
                       <p className="text-[10px] text-hos-text-muted uppercase tracking-wide">Total</p>
                     </div>
                   </div>
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ top: 16, right: 8, left: 8, bottom: 8 }}>
+                    <PieChart margin={{ top: 12, right: 16, left: 16, bottom: 4 }}>
                       <Pie
                         data={orderStatusData}
                         cx="50%"
-                        cy="44%"
-                        innerRadius="55%"
-                        outerRadius="78%"
+                        cy="42%"
+                        innerRadius="48%"
+                        outerRadius="68%"
                         fill="#8884d8"
                         paddingAngle={3}
                         dataKey="value"
@@ -320,26 +339,37 @@ export default function AdminDashboardPage() {
                         labelLine={false}
                       >
                         {orderStatusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
                         ))}
                       </Pie>
                       <Tooltip
-                        offset={20}
-                        contentStyle={{ ...DARK_CHART_TOOLTIP, padding: '6px 10px', fontSize: 12 }}
-                        itemStyle={DARK_CHART_TOOLTIP_ITEM}
-                        labelStyle={{ ...DARK_CHART_TOOLTIP_LABEL, fontSize: 11 }}
-                        formatter={(value: number, name: string) => [`${value} order${value !== 1 ? 's' : ''}`, name]}
+                        allowEscapeViewBox={{ x: true, y: true }}
+                        offset={28}
+                        wrapperStyle={{ zIndex: 30, outline: 'none' }}
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.[0]) return null;
+                          const d = payload[0].payload as { name: string; value: number };
+                          const pct = orderStatusTotal ? ((d.value / orderStatusTotal) * 100).toFixed(0) : '0';
+                          return (
+                            <div style={{ ...DARK_CHART_TOOLTIP, padding: '8px 12px', fontSize: 12 }}>
+                              <p style={{ ...DARK_CHART_TOOLTIP_LABEL, fontSize: 11, marginBottom: 4 }}>{d.name}</p>
+                              <p style={DARK_CHART_TOOLTIP_ITEM}>
+                                {d.value} order{d.value !== 1 ? 's' : ''} ({pct}%)
+                              </p>
+                            </div>
+                          );
+                        }}
                       />
                       <Legend
                         verticalAlign="bottom"
                         align="center"
                         layout="horizontal"
                         iconSize={10}
-                        wrapperStyle={{ paddingTop: 10, lineHeight: '24px' }}
+                        wrapperStyle={{ paddingTop: 16, lineHeight: '28px' }}
                         formatter={(value, entry) => {
                           const percent = (entry?.payload as { percent?: number })?.percent;
                           return (
-                            <span className="text-xs text-hos-text-secondary" style={{ marginRight: 8 }}>
+                            <span className="text-xs text-hos-text-secondary" style={{ marginRight: 16, marginLeft: 4 }}>
                               {value}
                               {typeof percent === 'number' ? ` ${(percent * 100).toFixed(0)}%` : ''}
                             </span>
@@ -488,7 +518,7 @@ export default function AdminDashboardPage() {
                         <div className="flex items-center gap-3">
                           <span 
                             className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                            style={{ backgroundColor: ORDER_STATUS_COLORS[item.status] || COLORS[index % COLORS.length] }}
                           />
                           <span className="text-sm font-medium text-hos-text-secondary">{item.status}</span>
                         </div>

@@ -365,7 +365,11 @@ export default function AdminSubmissionsPage() {
 
   const getStatusBadge = (status: string) => {
     const statusInfo = STATUSES.find(s => s.value === status) || { label: formatStatusLabel(status), color: 'bg-hos-bg-tertiary text-hos-text-secondary' };
-    return <span className={`px-2 py-0.5 text-xs rounded-full ${statusInfo.color}`}>{statusInfo.label}</span>;
+    return (
+      <span className={`inline-flex items-center max-w-full px-2 py-0.5 text-xs rounded-full whitespace-nowrap ${statusInfo.color}`}>
+        {statusInfo.label}
+      </span>
+    );
   };
 
   const getWorkflowStep = (status: string): number => {
@@ -515,14 +519,20 @@ export default function AdminSubmissionsPage() {
                         ))}
                       </Pie>
                       <Tooltip
-                        contentStyle={{ ...DARK_CHART_TOOLTIP, padding: '6px 10px', fontSize: 12 }}
-                        itemStyle={DARK_CHART_TOOLTIP_ITEM}
-                        labelStyle={{ ...DARK_CHART_TOOLTIP_LABEL, fontSize: 11 }}
-                        formatter={(value: number | string, _name: string, props: any) => {
-                          const v = Number(value);
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.[0]) return null;
+                          const d = payload[0].payload as { name?: string; value?: number };
+                          const statusName = d.name || 'Submissions';
+                          const v = Number(d.value ?? 0);
                           const pct = chartTotal ? ((v / chartTotal) * 100).toFixed(1) : '0';
-                          const statusName = props?.payload?.name || 'Submissions';
-                          return [`${v} (${pct}%)`, statusName];
+                          return (
+                            <div style={{ ...DARK_CHART_TOOLTIP, padding: '8px 12px', fontSize: 12 }}>
+                              <p style={{ ...DARK_CHART_TOOLTIP_LABEL, fontSize: 11, marginBottom: 4 }}>{statusName}</p>
+                              <p style={DARK_CHART_TOOLTIP_ITEM}>
+                                {v} ({pct}%)
+                              </p>
+                            </div>
+                          );
                         }}
                       />
                     </PieChart>
@@ -651,13 +661,13 @@ export default function AdminSubmissionsPage() {
                 />
               </div>
               <div className="overflow-x-auto">
-                <table className="admin-table min-w-full divide-y divide-hos-border">
+                <table className="admin-table table-auto min-w-full divide-y divide-hos-border">
                   <thead className="bg-hos-bg-secondary">
                     <tr>
                       {isSubmissionColumnVisible('product') && <th className="px-4 py-3 text-left">Product</th>}
                       {isSubmissionColumnVisible('seller') && <th className="px-4 py-3 text-left">Seller</th>}
                       {isSubmissionColumnVisible('price') && <th className="px-4 py-3 text-left">Price</th>}
-                      {isSubmissionColumnVisible('status') && <th className="px-4 py-3 text-left">Status</th>}
+                      {isSubmissionColumnVisible('status') && <th className="px-4 py-3 text-left min-w-[10rem]">Status</th>}
                       {isSubmissionColumnVisible('submitted') && <th className="px-4 py-3 text-left">Submitted</th>}
                       {isSubmissionColumnVisible('actions') && <th className="px-4 py-3 text-right">Actions</th>}
                     </tr>
@@ -679,11 +689,7 @@ export default function AdminSubmissionsPage() {
                       </tr>
                     ) : (
                       paginatedSubmissions.map((submission) => (
-                        <tr
-                          key={submission.id}
-                          className="admin-table-row-clickable"
-                          onClick={() => handleViewDetails(submission)}
-                        >
+                        <tr key={submission.id}>
                           {isSubmissionColumnVisible('product') && (
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
@@ -738,7 +744,7 @@ export default function AdminSubmissionsPage() {
                           </td>
                           )}
                           {isSubmissionColumnVisible('status') && (
-                          <td className="px-4 py-3">{getStatusBadge(submission.status)}</td>
+                          <td className="px-4 py-3 align-middle min-w-[10rem]">{getStatusBadge(submission.status)}</td>
                           )}
                           {isSubmissionColumnVisible('submitted') && (
                           <td className="px-4 py-3 text-sm text-hos-text-muted">
@@ -746,8 +752,8 @@ export default function AdminSubmissionsPage() {
                           </td>
                           )}
                           {isSubmissionColumnVisible('actions') && (
-                          <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex justify-end gap-1">
+                          <td className="px-4 py-3 text-right align-middle">
+                            <div className="flex justify-end items-center gap-1">
                               <button
                                 type="button"
                                 onClick={() => handleViewDetails(submission)}

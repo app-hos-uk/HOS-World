@@ -8,8 +8,9 @@ import {
   IsObject,
   IsDateString,
   Min,
+  Matches,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class UpdateLoyaltyTierDto {
   @IsOptional() @IsString() name?: string;
@@ -30,7 +31,12 @@ export class UpdateLoyaltyTierDto {
 
 export class CreateEarnRuleDto {
   @IsString() name!: string;
-  @IsString() action!: string;
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value))
+  @IsString()
+  @Matches(/^[A-Za-z][A-Za-z0-9_]*$/, {
+    message: 'Action may only use letters, numbers, and underscores, and must start with a letter',
+  })
+  action!: string;
   @IsInt() @Min(0) pointsAmount!: number;
   @IsOptional() @IsString() pointsType?: string;
   @IsOptional() @IsBoolean() multiplierStack?: boolean;
@@ -91,7 +97,10 @@ export class UpdateRedemptionOptionDto {
 }
 
 export class CreateCampaignDto {
-  @IsString() name!: string;
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : value))
+  @IsString()
+  @Matches(/^(?=.*\p{L}).+$/u, { message: 'Campaign name must include at least one letter' })
+  name!: string;
   @IsOptional() @IsString() description?: string;
   @IsString() type!: string;
   @IsOptional() @IsNumber() @Type(() => Number) multiplier?: number;

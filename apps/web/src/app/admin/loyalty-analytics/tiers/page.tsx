@@ -25,9 +25,18 @@ export default function TierAnalysisPage() {
           <h1 className="text-2xl font-semibold text-hos-text-secondary">Tier analysis</h1>
           {loading ? <p className="text-hos-text-muted">Loading…</p> : error ? <p className="text-red-400 text-sm">{error}</p> : (
             <div className="overflow-x-auto">
-              <table className="admin-table rounded min-w-full">
+              <table className="admin-table rounded w-full !table-fixed min-w-[720px]">
+                <colgroup>
+                  <col className="w-[18%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[18%]" />
+                </colgroup>
                 <thead><tr>
-                  <th className="whitespace-nowrap">Tier</th>
+                  <th className="text-left whitespace-nowrap">Tier</th>
                   <th className="text-right whitespace-nowrap">Members</th>
                   <th className="text-right whitespace-nowrap">Avg spend</th>
                   <th className="text-right whitespace-nowrap">Avg CLV</th>
@@ -38,7 +47,7 @@ export default function TierAnalysisPage() {
                 <tbody>
                   {data.map((t: any) => (
                     <tr key={t.tier}>
-                      <td className="font-medium whitespace-nowrap">{t.tier}</td>
+                      <td className="font-medium whitespace-nowrap text-left">{t.tier}</td>
                       <td className="text-right tabular-nums">{t.memberCount}</td>
                       <td className="text-right tabular-nums">${Number(t.avgSpend).toFixed(2)}</td>
                       <td className="text-right tabular-nums">${Number(t.avgClv).toFixed(2)}</td>

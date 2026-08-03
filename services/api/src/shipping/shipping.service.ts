@@ -239,6 +239,47 @@ export class ShippingService {
   }
 
   /**
+   * Normalize country values so "United States" matches rule country "US", etc.
+   */
+  private normalizeCountryCode(country?: string | null): string | undefined {
+    if (!country) return undefined;
+    const trimmed = country.trim();
+    if (!trimmed) return undefined;
+    if (/^[A-Za-z]{2}$/.test(trimmed)) {
+      return trimmed.toUpperCase();
+    }
+    const aliases: Record<string, string> = {
+      'UNITED STATES': 'US',
+      'UNITED STATES OF AMERICA': 'US',
+      USA: 'US',
+      'U.S.': 'US',
+      'U.S.A.': 'US',
+      'U.S.A': 'US',
+      'UNITED KINGDOM': 'GB',
+      UK: 'GB',
+      'GREAT BRITAIN': 'GB',
+      ENGLAND: 'GB',
+      CANADA: 'CA',
+      AUSTRALIA: 'AU',
+      GERMANY: 'DE',
+      FRANCE: 'FR',
+      IRELAND: 'IE',
+      'NEW ZEALAND': 'NZ',
+      INDIA: 'IN',
+      'UNITED ARAB EMIRATES': 'AE',
+      UAE: 'AE',
+    };
+    return aliases[trimmed.toUpperCase()] || trimmed.toUpperCase();
+  }
+
+  private countriesMatch(ruleCountry: string, destinationCountry?: string): boolean {
+    const normalizedRule = this.normalizeCountryCode(ruleCountry);
+    const normalizedDest = this.normalizeCountryCode(destinationCountry);
+    if (!normalizedRule || !normalizedDest) return false;
+    return normalizedRule === normalizedDest;
+  }
+
+  /**
    * Find matching shipping rule based on conditions
    */
   private findMatchingRule(
@@ -283,14 +324,13 @@ export class ShippingService {
         continue;
       }
 
-      // Check country (supports both single country and countries array)
-      const destCountry = destination.country?.toUpperCase();
-      if (conditions.country && conditions.country.toUpperCase() !== destCountry) {
+      // Check country (supports ISO codes and full names on either side)
+      if (conditions.country && !this.countriesMatch(conditions.country, destination.country)) {
         continue;
       }
       if (extConditions.countries && extConditions.countries.length > 0) {
-        const countryMatches = extConditions.countries.some(
-          (c) => c.toUpperCase() === destCountry
+        const countryMatches = extConditions.countries.some((c) =>
+          this.countriesMatch(c, destination.country),
         );
         if (!countryMatches) {
           continue;

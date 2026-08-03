@@ -11,6 +11,11 @@ import {
   rowsToMembers,
   type ParsedFoundingMember,
 } from '@/lib/foundingMemberImport';
+import {
+  normalizeWhitespace,
+  validateNameLike,
+  validatePhoneMaxDigits,
+} from '@/lib/formFieldValidation';
 
 const ALLOWED_ROLES = ['ADMIN', 'MARKETING'] as const;
 
@@ -209,14 +214,23 @@ export default function AdminFoundingMembersPage() {
 
   const handleManualAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    setManualLoading(true);
     setManualMessage(null);
     setError(null);
+    const firstName = normalizeWhitespace(manualForm.firstName);
+    const lastName = normalizeWhitespace(manualForm.lastName);
+    const firstNameErr = validateNameLike(firstName, 'First name');
+    const lastNameErr = validateNameLike(lastName, 'Last name', { required: false });
+    const phoneErr = validatePhoneMaxDigits(manualForm.phone, 'Phone number', 15);
+    if (firstNameErr || lastNameErr || phoneErr) {
+      setError(firstNameErr || lastNameErr || phoneErr || 'Invalid fields');
+      return;
+    }
+    setManualLoading(true);
     try {
       await apiClient.createFoundingMemberAdmin({
         email: manualForm.email.trim(),
-        firstName: manualForm.firstName.trim(),
-        lastName: manualForm.lastName.trim() || undefined,
+        firstName,
+        lastName: lastName || undefined,
         phone: manualForm.phone.trim() || undefined,
         country: manualForm.country.trim() || undefined,
         fandoms: manualForm.fandoms

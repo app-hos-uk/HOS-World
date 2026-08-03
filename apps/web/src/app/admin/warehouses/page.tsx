@@ -7,6 +7,7 @@ import {
   sanitizePostalInput,
   isLabelInvalid,
   isPostalInvalid,
+  POSTAL_CODE_MAX_LENGTH,
 } from '@/lib/sellerProfileFieldValidation';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
@@ -61,11 +62,44 @@ export default function AdminWarehousesPage() {
     isActive: true,
   });
   const [submitting, setSubmitting] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   useEffect(() => {
     fetchWarehouses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleGetLiveLocation = () => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      toast.error('Geolocation is not supported by this browser');
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setFormData((prev) => ({
+          ...prev,
+          latitude: pos.coords.latitude.toFixed(6),
+          longitude: pos.coords.longitude.toFixed(6),
+        }));
+        toast.success('Live location captured');
+        setLocating(false);
+      },
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          toast.error('Location permission denied. Enable location access in your browser settings.');
+        } else if (err.code === err.POSITION_UNAVAILABLE) {
+          toast.error('Location unavailable. Please try again.');
+        } else if (err.code === err.TIMEOUT) {
+          toast.error('Location request timed out. Please try again.');
+        } else {
+          toast.error(err.message || 'Failed to get live location');
+        }
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    );
+  };
 
   const fetchWarehouses = async () => {
     try {
@@ -154,7 +188,7 @@ export default function AdminWarehousesPage() {
       city: warehouse.city,
       state: warehouse.state || '',
       country: warehouse.country,
-      postalCode: warehouse.postalCode,
+      postalCode: sanitizePostalInput(warehouse.postalCode || ''),
       latitude: warehouse.latitude?.toString() || '',
       longitude: warehouse.longitude?.toString() || '',
       contactEmail: warehouse.contactEmail || '',
@@ -361,7 +395,7 @@ export default function AdminWarehousesPage() {
 
           {/* Create/Edit Modal */}
           <Transition appear show={isModalOpen} as={Fragment}>
-            <Dialog as="div" className="relative z-50" onClose={handleCloseModal}>
+            <Dialog as="div" className="relative z-[100]" onClose={handleCloseModal}>
               <Transition.Child
                 as={Fragment}
                 enter="ease-out duration-300"
@@ -375,7 +409,7 @@ export default function AdminWarehousesPage() {
               </Transition.Child>
 
               <div className="fixed inset-0 overflow-y-auto">
-                <div className="flex min-h-full items-center justify-center p-4 text-center">
+                <div className="flex min-h-full items-start justify-center p-4 pt-16 sm:pt-20 text-center">
                   <Transition.Child
                     as={Fragment}
                     enter="ease-out duration-300"
@@ -385,7 +419,7 @@ export default function AdminWarehousesPage() {
                     leaveFrom="opacity-100 scale-100"
                     leaveTo="opacity-0 scale-95"
                   >
-                    <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 text-left align-middle shadow-xl transition-all max-h-[90vh] overflow-y-auto">
+                    <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 text-left align-middle shadow-xl transition-all max-h-[calc(100vh-6rem)] overflow-y-auto">
                       <Dialog.Title
                         as="h3"
                         className="text-lg font-medium leading-6 text-hos-text-secondary mb-4"
@@ -406,7 +440,7 @@ export default function AdminWarehousesPage() {
                             className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.name) ? 'border-red-500/40' : 'border-hos-border'}`}
                           />
                           {isLabelInvalid(formData.name) && (
-                            <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
+                            <p className="text-xs text-red-400 mt-1">Warehouse name cannot be numbers only</p>
                           )}
                         </div>
 
@@ -451,7 +485,7 @@ export default function AdminWarehousesPage() {
                               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.city) ? 'border-red-500/40' : 'border-hos-border'}`}
                             />
                             {isLabelInvalid(formData.city) && (
-                              <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
+                              <p className="text-xs text-red-400 mt-1">City cannot be numbers only</p>
                             )}
                           </div>
                           <div>
@@ -465,7 +499,7 @@ export default function AdminWarehousesPage() {
                               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isLabelInvalid(formData.state) ? 'border-red-500/40' : 'border-hos-border'}`}
                             />
                             {isLabelInvalid(formData.state) && (
-                              <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
+                              <p className="text-xs text-red-400 mt-1">State/Region cannot be numbers only</p>
                             )}
                           </div>
                         </div>
@@ -484,7 +518,7 @@ export default function AdminWarehousesPage() {
                               placeholder="e.g., GB, US"
                             />
                             {isLabelInvalid(formData.country) && (
-                              <p className="text-xs text-red-400 mt-1">Must include at least one letter</p>
+                              <p className="text-xs text-red-400 mt-1">Country cannot be numbers only</p>
                             )}
                           </div>
                           <div>
@@ -494,6 +528,7 @@ export default function AdminWarehousesPage() {
                             <input
                               type="text"
                               required
+                              maxLength={POSTAL_CODE_MAX_LENGTH}
                               value={formData.postalCode}
                               onChange={(e) => setFormData({ ...formData, postalCode: sanitizePostalInput(e.target.value) })}
                               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50 ${isPostalInvalid(formData.postalCode) ? 'border-red-500/40' : 'border-hos-border'}`}
@@ -504,32 +539,47 @@ export default function AdminWarehousesPage() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
-                              Latitude
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="block text-sm font-medium text-hos-text-secondary">
+                              Coordinates
                             </label>
-                            <input
-                              type="number"
-                              step="any"
-                              value={formData.latitude}
-                              onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-                              className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
-                              placeholder="e.g., 51.5074"
-                            />
+                            <button
+                              type="button"
+                              onClick={handleGetLiveLocation}
+                              disabled={locating}
+                              className="text-xs font-medium text-hos-gold hover:text-hos-gold-hover disabled:opacity-50"
+                            >
+                              {locating ? 'Getting location…' : 'Get Live Location'}
+                            </button>
                           </div>
-                          <div>
-                            <label className="block text-sm font-medium text-hos-text-secondary mb-1">
-                              Longitude
-                            </label>
-                            <input
-                              type="number"
-                              step="any"
-                              value={formData.longitude}
-                              onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                              className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
-                              placeholder="e.g., -0.1278"
-                            />
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-hos-text-muted mb-1">
+                                Latitude
+                              </label>
+                              <input
+                                type="number"
+                                step="any"
+                                value={formData.latitude}
+                                onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                                className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                                placeholder="e.g., 51.5074"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-hos-text-muted mb-1">
+                                Longitude
+                              </label>
+                              <input
+                                type="number"
+                                step="any"
+                                value={formData.longitude}
+                                onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                                className="w-full px-3 py-2 border border-hos-border rounded-md focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                                placeholder="e.g., -0.1278"
+                              />
+                            </div>
                           </div>
                         </div>
 

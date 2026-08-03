@@ -58,11 +58,14 @@ export default function AdminLogisticsPage() {
       // API client internally transforms contactEmail/contactPhone to contactInfo
       const response = await apiClient.createLogisticsPartner({
         name: formData.name,
-        type: formData.type,
         website: formData.website || undefined,
         contactEmail: formData.contactEmail || undefined,
         contactPhone: formData.contactPhone || undefined,
         isActive: formData.active !== undefined ? formData.active : true,
+        // Persist selected partner type in description until a dedicated column exists
+        ...(formData.type
+          ? { description: `Type: ${formData.type}` }
+          : {}),
       });
       if (response?.data) {
         toast.success('Logistics partner created successfully!');

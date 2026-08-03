@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
+import { clampDateInputToToday, todayDateInputValue } from '@/lib/formFieldValidation';
 
 interface ProductPerformanceRow {
   productId: string;
@@ -131,7 +132,8 @@ export default function SellerAnalyticsPage() {
             <input
               type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              max={todayDateInputValue()}
+              onChange={(e) => setStartDate(clampDateInputToToday(e.target.value))}
               className="px-3 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-primary focus:outline-none focus:border-hos-gold"
             />
           </div>
@@ -140,7 +142,8 @@ export default function SellerAnalyticsPage() {
             <input
               type="date"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              max={todayDateInputValue()}
+              onChange={(e) => setEndDate(clampDateInputToToday(e.target.value))}
               className="px-3 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-primary focus:outline-none focus:border-hos-gold"
             />
           </div>

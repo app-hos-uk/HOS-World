@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/useToast';
 import Image from 'next/image';
 import { ImageSpecsHint } from '@/components/ImageSpecsHint';
 import Link from 'next/link';
+import { normalizeWhitespace, validateNameLike } from '@/lib/formFieldValidation';
 
 interface ImageUpload {
   url: string;
@@ -433,8 +434,10 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
     setSuccess(false);
     setLoading(true);
 
-    if (!formData.name.trim()) {
-      setError('Product name is required');
+    const productName = normalizeWhitespace(formData.name);
+    const nameErr = validateNameLike(productName, 'Product name');
+    if (nameErr) {
+      setError(nameErr);
       setLoading(false);
       submittingRef.current = false;
       return;
@@ -499,7 +502,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
 
     try {
       const submissionData = {
-        name: formData.name.trim(),
+        name: productName,
         description: formData.description.trim(),
         sku: formData.sku.trim() || undefined,
         barcode: formData.barcode.trim() || undefined,
@@ -957,6 +960,9 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                       className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       placeholder="Enter product name"
                     />
+                    <p className="mt-1 text-xs text-hos-text-muted">
+                      Must include letters — not numbers-only or special characters only.
+                    </p>
                   </div>
 
                   <div>

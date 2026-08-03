@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { LoyaltyTxType } from '@prisma/client';
 import { LoyaltyWalletService } from './wallet.service';
 
@@ -51,6 +52,6 @@ describe('LoyaltyWalletService', () => {
         source: 'REDEMPTION',
         channel: 'MARKETPLACE_CHECKOUT',
       }),
-    ).rejects.toThrow('Insufficient loyalty balance');
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

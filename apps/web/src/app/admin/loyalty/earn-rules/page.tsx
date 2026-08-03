@@ -4,6 +4,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import {
+  normalizeWhitespace,
+  validateActionCode,
+  validateOptionalDescriptiveText,
+} from '@/lib/formFieldValidation';
 
 export default function AdminLoyaltyEarnRulesPage() {
   const [rules, setRules] = useState<any[]>([]);
@@ -11,6 +16,7 @@ export default function AdminLoyaltyEarnRulesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState({ action: '', pointsAmount: 0, name: '', isActive: true });
+  const [fieldErrors, setFieldErrors] = useState<{ action?: string; name?: string }>({});
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
@@ -46,14 +52,26 @@ export default function AdminLoyaltyEarnRulesPage() {
   };
 
   const handleSave = async () => {
-    if (!form.action.trim()) { toast.error('Action is required'); return; }
+    const action = form.action.trim().toUpperCase();
+    const name = normalizeWhitespace(form.name);
+    const actionErr = validateActionCode(action, 'Action');
+    const nameErr = validateOptionalDescriptiveText(name, 'Description');
+    setFieldErrors({
+      action: actionErr || undefined,
+      name: nameErr || undefined,
+    });
+    if (actionErr || nameErr) {
+      toast.error(actionErr || nameErr || 'Please fix the form fields');
+      return;
+    }
+    const payload = { ...form, action, name };
     setSaving(true);
     try {
       if (editing) {
-        await apiClient.adminUpdateLoyaltyEarnRule(editing.id, form);
+        await apiClient.adminUpdateLoyaltyEarnRule(editing.id, payload);
         toast.success('Rule updated');
       } else {
-        await apiClient.adminCreateLoyaltyEarnRule(form);
+        await apiClient.adminCreateLoyaltyEarnRule(payload);
         toast.success('Rule created');
       }
       resetForm();
@@ -94,7 +112,8 @@ export default function AdminLoyaltyEarnRulesPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Action</label>
-                <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="e.g. PURCHASE, REVIEW, REFERRAL" value={form.action} onChange={(e) => setForm({ ...form, action: e.target.value.toUpperCase() })} />
+                <input className={`w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none ${fieldErrors.action ? 'border-red-500' : 'border-hos-border'}`} placeholder="e.g. PURCHASE, REVIEW, REFERRAL" value={form.action} onChange={(e) => { setForm({ ...form, action: e.target.value.toUpperCase() }); if (fieldErrors.action) setFieldErrors((p) => ({ ...p, action: undefined })); }} aria-invalid={!!fieldErrors.action} />
+                {fieldErrors.action && <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.action}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Points Awarded</label>

@@ -1014,10 +1014,10 @@ export default function CheckoutPage() {
             {checkoutStep === 2 && shippingAddressId && shippingOptions.length === 0 && (
               <section className="bg-hos-bg-secondary rounded-lg shadow-sm border border-yellow-500/30 p-4 sm:p-6">
                 <h2 className="text-lg font-semibold mb-2">Shipping Method</h2>
-                <p className="text-sm font-medium text-yellow-300">Shipping not configured</p>
+                <p className="text-sm font-medium text-yellow-300">No shipping options available</p>
                 <p className="text-sm text-hos-text-secondary mt-1">
-                  No shipping rates were returned for this address. Checkout will proceed with $0 shipping.
-                  Contact support if you expected a shipping charge.
+                  Shipping will be calculated once rates are available for this address.
+                  No shipping methods currently match your destination — this is not free shipping.
                 </p>
               </section>
             )}
@@ -1292,7 +1292,15 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-sm">
                   <span className="text-hos-text-secondary">Shipping</span>
-                  <span>{effectiveShippingCost > 0 ? formatPrice(effectiveShippingCost) : shippingOptions.length > 0 || cart?.promotionFreeShipping ? 'Free' : 'TBC'}</span>
+                  <span>
+                    {cart?.promotionFreeShipping
+                      ? 'Free'
+                      : effectiveShippingCost > 0
+                        ? formatPrice(effectiveShippingCost)
+                        : shippingOptions.length > 0
+                          ? 'Free'
+                          : 'To be calculated'}
+                  </span>
                 </div>
 
                 <div className="flex justify-between text-sm">

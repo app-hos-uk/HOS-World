@@ -57,9 +57,16 @@ export default function AdminSellerApplicationsPage() {
     }
   };
 
-  // Filter invitations based on statusFilter
-  const invitations = statusFilter 
-    ? allInvitations.filter(inv => inv.status === statusFilter)
+  const isExpiredByDate = (inv: SellerInvitation) =>
+    inv.status === 'EXPIRED' ||
+    (inv.status === 'PENDING' && new Date(inv.expiresAt).getTime() < Date.now());
+
+  const getEffectiveStatus = (inv: SellerInvitation): SellerInvitation['status'] =>
+    isExpiredByDate(inv) && inv.status === 'PENDING' ? 'EXPIRED' : inv.status;
+
+  // Filter invitations based on statusFilter (include date-expired as EXPIRED)
+  const invitations = statusFilter
+    ? allInvitations.filter((inv) => getEffectiveStatus(inv) === statusFilter)
     : allInvitations;
 
   const handleInviteSeller = async (e: React.FormEvent) => {
@@ -124,12 +131,12 @@ export default function AdminSellerApplicationsPage() {
     }
   };
 
-  // Stats always show overall counts from all invitations
+  // Stats always show overall counts from all invitations (expired includes past expiresAt)
   const stats = {
     total: allInvitations.length,
-    pending: allInvitations.filter(i => i.status === 'PENDING').length,
-    accepted: allInvitations.filter(i => i.status === 'ACCEPTED').length,
-    expired: allInvitations.filter(i => i.status === 'EXPIRED').length,
+    pending: allInvitations.filter((i) => getEffectiveStatus(i) === 'PENDING').length,
+    accepted: allInvitations.filter((i) => i.status === 'ACCEPTED').length,
+    expired: allInvitations.filter((i) => isExpiredByDate(i)).length,
   };
 
   return (
@@ -269,8 +276,8 @@ export default function AdminSellerApplicationsPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(invitation.status)}`}>
-                              {invitation.status}
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(getEffectiveStatus(invitation))}`}>
+                              {getEffectiveStatus(invitation)}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
@@ -280,7 +287,7 @@ export default function AdminSellerApplicationsPage() {
                             {new Date(invitation.expiresAt).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            {invitation.status === 'PENDING' && (
+                            {getEffectiveStatus(invitation) === 'PENDING' && (
                               <div className="flex justify-end gap-2">
                                 <button
                                   onClick={() => handleResendInvitation(invitation.id)}
@@ -296,7 +303,7 @@ export default function AdminSellerApplicationsPage() {
                                 </button>
                               </div>
                             )}
-                            {invitation.status === 'EXPIRED' && (
+                            {getEffectiveStatus(invitation) === 'EXPIRED' && (
                               <button
                                 onClick={() => handleResendInvitation(invitation.id)}
                                 className="text-hos-gold hover:text-hos-gold"

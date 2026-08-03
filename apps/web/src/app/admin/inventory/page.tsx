@@ -200,13 +200,21 @@ function AdminInventoryContent() {
           <div className="flex gap-2 mb-6">
             <Link
               href="/admin/inventory"
-              className={`px-4 py-2 text-sm rounded-lg font-medium ${activeTab === 'overview' ? 'bg-hos-gold text-[#1a1406]' : 'bg-hos-bg-secondary text-hos-text-secondary hover:bg-hos-bg-tertiary'}`}
+              className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
+                activeTab === 'overview'
+                  ? 'bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover hover:text-[#1a1406]'
+                  : 'bg-hos-bg-secondary text-hos-text-secondary hover:bg-hos-bg-tertiary hover:text-hos-text-secondary'
+              }`}
             >
               Overview
             </Link>
             <Link
               href="/admin/inventory?tab=movements"
-              className={`px-4 py-2 text-sm rounded-lg font-medium ${activeTab === 'movements' ? 'bg-hos-gold text-[#1a1406]' : 'bg-hos-bg-secondary text-hos-text-secondary hover:bg-hos-bg-tertiary'}`}
+              className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
+                activeTab === 'movements'
+                  ? 'bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover hover:text-[#1a1406]'
+                  : 'bg-hos-bg-secondary text-hos-text-secondary hover:bg-hos-bg-tertiary hover:text-hos-text-secondary'
+              }`}
             >
               Stock Movements
             </Link>
@@ -256,39 +264,39 @@ function AdminInventoryContent() {
           ) : (
             <div className="space-y-6">
               {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-                  <div className="text-sm text-hos-text-secondary mb-1">Total Warehouses</div>
-                  <div className="text-2xl font-bold text-hos-gold">{stats?.totalWarehouses || 0}</div>
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4 min-h-[5.5rem] flex flex-col justify-between">
+                  <div className="text-sm text-hos-text-secondary">Total Warehouses</div>
+                  <div className="text-2xl font-bold text-hos-gold tabular-nums">{stats?.totalWarehouses || 0}</div>
                 </div>
-                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-                  <div className="text-sm text-hos-text-secondary mb-1">Active Warehouses</div>
-                  <div className="text-2xl font-bold text-green-400">{stats?.activeWarehouses || 0}</div>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4 min-h-[5.5rem] flex flex-col justify-between">
+                  <div className="text-sm text-hos-text-secondary">Active Warehouses</div>
+                  <div className="text-2xl font-bold text-green-400 tabular-nums">{stats?.activeWarehouses || 0}</div>
                 </div>
-                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-                  <div className="text-sm text-hos-text-secondary mb-1">Pending Transfers</div>
-                  <div className="text-2xl font-bold text-yellow-400">{stats?.pendingTransfers || 0}</div>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4 min-h-[5.5rem] flex flex-col justify-between">
+                  <div className="text-sm text-hos-text-secondary">Pending Transfers</div>
+                  <div className="text-2xl font-bold text-yellow-400 tabular-nums">{stats?.pendingTransfers || 0}</div>
                 </div>
-                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-                  <div className="text-sm text-hos-text-secondary mb-1">Total Products</div>
-                  <div className="text-2xl font-bold text-hos-gold">{(stats?.totalProducts ?? 0).toLocaleString()}</div>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4 min-h-[5.5rem] flex flex-col justify-between">
+                  <div className="text-sm text-hos-text-secondary">Total Products</div>
+                  <div className="text-2xl font-bold text-hos-gold tabular-nums">{(stats?.totalProducts ?? 0).toLocaleString()}</div>
                 </div>
-                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-                  <div className="text-sm text-hos-text-secondary mb-1">Low Stock Items</div>
-                  <div className="text-2xl font-bold text-red-400">{(stats?.lowStockProducts ?? 0).toLocaleString()}</div>
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4 min-h-[5.5rem] flex flex-col justify-between">
+                  <div className="text-sm text-hos-text-secondary">Low Stock Items</div>
+                  <div className="text-2xl font-bold text-red-400 tabular-nums">{(stats?.lowStockProducts ?? 0).toLocaleString()}</div>
                 </div>
-                <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-                  <div className="text-sm text-hos-text-secondary mb-1">Total Stock Value</div>
-                  <div className="text-2xl font-bold text-hos-gold">
+                <div className="bg-hos-bg-secondary rounded-lg shadow p-4 min-h-[5.5rem] flex flex-col justify-between">
+                  <div className="text-sm text-hos-text-secondary">Total Stock Value</div>
+                  <div className="text-2xl font-bold text-hos-gold tabular-nums">
                     ${(stats?.totalStockValue ?? 0).toLocaleString()}
                   </div>
                 </div>
               </div>
 
-              {/* Quick Actions */}
+              {/* Quick Actions — Stock Movements lives in the tab nav above */}
               <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                 <h2 className="text-xl font-semibold text-hos-text-secondary mb-4">Quick Actions</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <Link
                     href="/admin/warehouses"
                     className="p-4 border border-hos-border rounded-lg hover:bg-hos-gold/10 hover:border-hos-border-accent transition-colors text-center"
@@ -302,13 +310,6 @@ function AdminInventoryContent() {
                   >
                     <div className="text-2xl mb-2">🔄</div>
                     <div className="text-sm font-medium text-hos-text-secondary">Stock Transfers</div>
-                  </Link>
-                  <Link
-                    href="/admin/inventory?tab=movements"
-                    className="p-4 border border-hos-border rounded-lg hover:bg-hos-gold/10 hover:border-hos-border-accent transition-colors text-center"
-                  >
-                    <div className="text-2xl mb-2">📊</div>
-                    <div className="text-sm font-medium text-hos-text-secondary">Stock Movements</div>
                   </Link>
                   <Link
                     href="/admin/products"

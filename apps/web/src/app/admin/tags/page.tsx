@@ -4,6 +4,11 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import {
+  normalizeWhitespace,
+  validateNameLike,
+  validateOptionalDescriptiveText,
+} from '@/lib/formFieldValidation';
 
 interface Tag {
   id: string;
@@ -133,6 +138,14 @@ export default function AdminTagsPage() {
   const handleCreateTag = async (e: React.FormEvent) => {
     e.preventDefault();
     if (savingTag) return;
+    const name = normalizeWhitespace(formData.name);
+    const description = normalizeWhitespace(formData.description);
+    const nameErr = validateNameLike(name, 'Tag name');
+    const descriptionErr = validateOptionalDescriptiveText(description, 'Description');
+    if (nameErr || descriptionErr) {
+      toast.error(nameErr || descriptionErr || 'Please fix the form fields');
+      return;
+    }
     try {
       setSavingTag(true);
       const synonyms = formData.synonyms
@@ -140,9 +153,9 @@ export default function AdminTagsPage() {
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
       await apiClient.createTag({
-        name: formData.name,
+        name,
         category: formData.category,
-        description: formData.description || undefined,
+        description: description || undefined,
         synonyms: synonyms.length > 0 ? synonyms : undefined,
         isActive: formData.isActive,
       });
@@ -159,6 +172,14 @@ export default function AdminTagsPage() {
   const handleUpdateTag = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTag || savingTag) return;
+    const name = normalizeWhitespace(formData.name);
+    const description = normalizeWhitespace(formData.description);
+    const nameErr = validateNameLike(name, 'Tag name');
+    const descriptionErr = validateOptionalDescriptiveText(description, 'Description');
+    if (nameErr || descriptionErr) {
+      toast.error(nameErr || descriptionErr || 'Please fix the form fields');
+      return;
+    }
     try {
       setSavingTag(true);
       const synonyms = formData.synonyms
@@ -166,9 +187,9 @@ export default function AdminTagsPage() {
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
       await apiClient.updateTag(editingTag.id, {
-        name: formData.name,
+        name,
         category: formData.category,
-        description: formData.description || undefined,
+        description: description || undefined,
         synonyms: synonyms.length > 0 ? synonyms : undefined,
         isActive: formData.isActive,
       });

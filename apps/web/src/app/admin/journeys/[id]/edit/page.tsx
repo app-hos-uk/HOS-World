@@ -6,6 +6,11 @@ import { useParams, useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import {
+  normalizeWhitespace,
+  validateNameLike,
+  validateOptionalDescriptiveText,
+} from '@/lib/formFieldValidation';
 
 export default function AdminJourneyEditPage() {
   const params = useParams();
@@ -51,15 +56,18 @@ export default function AdminJourneyEditPage() {
       toast.error('Steps must be valid JSON');
       return;
     }
-    if (!name.trim()) {
-      toast.error('Name is required');
+    const normalizedName = normalizeWhitespace(name);
+    const nameErr = validateNameLike(normalizedName, 'Journey name');
+    const descErr = validateOptionalDescriptiveText(description, 'Description');
+    if (nameErr || descErr) {
+      toast.error(nameErr || descErr || 'Please fix the form fields');
       return;
     }
     setSaving(true);
     try {
       await apiClient.adminUpdateJourney(id, {
-        name: name.trim(),
-        description: description.trim() || undefined,
+        name: normalizedName,
+        description: normalizeWhitespace(description) || undefined,
         triggerEvent: triggerEvent.trim(),
         steps,
         isActive,

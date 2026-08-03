@@ -27,10 +27,15 @@ export default function DoNotSellPage() {
       const apiUrl = getPublicApiBaseUrl();
       const res = await fetch(`${apiUrl}/gdpr/do-not-sell`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          // Required by /api/proxy CSRF gate for state-changing requests
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'include',
         body: JSON.stringify({
           optOut: optOut,
-          email: email.trim(),
+          email: email.trim().toLowerCase(),
         }),
       });
 
@@ -38,7 +43,10 @@ export default function DoNotSellPage() {
 
       if (!res.ok) {
         setStatus('error');
-        setMessage(data?.message || 'Request failed. Please try again.');
+        const msg = Array.isArray(data?.message)
+          ? data.message.join(', ')
+          : data?.message;
+        setMessage(msg || 'Request failed. Please try again.');
         return;
       }
 

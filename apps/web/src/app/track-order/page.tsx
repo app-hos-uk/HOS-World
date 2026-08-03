@@ -165,13 +165,26 @@ function TrackOrderContent() {
 
   const getStatusIndex = (status: string) => {
     const upper = (status || '').toUpperCase();
-    const index = ORDER_STATUSES.findIndex(s => s.key === upper);
-    // COMPLETED maps to DELIVERED (the last status in the timeline)
+    // Milestone progress is driven only by order.status — never by carrier event copy.
     if (upper === 'COMPLETED') return ORDER_STATUSES.length - 1;
+    if (upper === 'ACCEPTED') {
+      return ORDER_STATUSES.findIndex((s) => s.key === 'CONFIRMED');
+    }
+    const index = ORDER_STATUSES.findIndex((s) => s.key === upper);
     return index >= 0 ? index : 0;
   };
 
+  const getOrderStatusLabel = (status: string) => {
+    const upper = (status || '').toUpperCase();
+    if (upper === 'COMPLETED') return 'Delivered';
+    if (upper === 'ACCEPTED') return 'Confirmed';
+    const matched = ORDER_STATUSES.find((s) => s.key === upper);
+    return matched?.label || status;
+  };
+
   const currentStatusIndex = order ? getStatusIndex(order.status) : 0;
+  const orderIsShippedOnly =
+    !!order && ['SHIPPED'].includes((order.status || '').toUpperCase());
 
   const generateTrackingEvents = (trackedOrder: Order): TrackingEvent[] => {
     const events: TrackingEvent[] = [];
@@ -293,8 +306,13 @@ function TrackOrderContent() {
                   <p className="text-xl font-bold text-hos-gold">
                     {formatPrice(order.total, order.currency || 'USD')}
                   </p>
+                  <p className="mt-1">
+                    <span className="inline-block px-3 py-1 text-sm font-medium rounded-full bg-hos-gold/20 text-hos-gold">
+                      {getOrderStatusLabel(order.status)}
+                    </span>
+                  </p>
                   {order.estimatedDelivery && (
-                    <p className="text-sm text-hos-text-muted">
+                    <p className="text-sm text-hos-text-muted mt-1">
                       Est. Delivery: {new Date(order.estimatedDelivery).toLocaleDateString()}
                     </p>
                   )}
@@ -404,10 +422,21 @@ function TrackOrderContent() {
             {/* Timeline */}
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="font-semibold text-hos-text-secondary mb-4">
-                {liveTrackingEvents.length > 0 ? 'Live Tracking History' : 'Tracking History'}
+                {liveTrackingEvents.length > 0 ? 'Carrier Tracking Updates' : 'Tracking History'}
               </h3>
+              {liveTrackingEvents.length > 0 && (
+                <p className="text-sm text-hos-text-muted mb-4">
+                  Order status: <span className="font-medium text-hos-gold">{getOrderStatusLabel(order.status)}</span>
+                  {orderIsShippedOnly
+                    ? '. Carrier updates below are informational and do not mark the order as Delivered until the order status is updated.'
+                    : '.'}
+                </p>
+              )}
               <div className="space-y-4">
-                {timelineEvents.map((event, index) => (
+                {timelineEvents.map((event, index) => {
+                  const looksDelivered =
+                    /delivered/i.test(event.description || '') && orderIsShippedOnly;
+                  return (
                   <div key={index} className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <div className={`w-3 h-3 rounded-full ${
@@ -418,14 +447,22 @@ function TrackOrderContent() {
                       )}
                     </div>
                     <div className="pb-4">
-                      <p className="font-medium text-hos-text-secondary">{event.description}</p>
+                      <p className="font-medium text-hos-text-secondary">
+                        {event.description}
+                        {looksDelivered && (
+                          <span className="ml-2 text-xs font-normal text-hos-text-muted">
+                            (carrier update — order still Shipped)
+                          </span>
+                        )}
+                      </p>
                       <p className="text-sm text-hos-text-muted">
                         {new Date(event.date).toLocaleString()}
                         {event.location && ` • ${event.location}`}
                       </p>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

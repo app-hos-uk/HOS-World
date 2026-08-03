@@ -21,15 +21,34 @@ interface ReturnsManagementProps {
   mode: 'admin' | 'seller';
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  pending: 'Return Requested',
+  approved: 'Return Approved',
+  rejected: 'Return Rejected',
+  awaiting_customer_return: 'Awaiting Customer Return',
+  item_received: 'Item Received',
+  refund_pending: 'Refund Pending',
+  processing: 'Refund Pending',
+  completed: 'Return Completed',
+  cancelled: 'Cancelled',
+};
+
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-yellow-500/15 text-yellow-300',
   approved: 'bg-green-500/15 text-green-300',
   rejected: 'bg-red-500/15 text-red-300',
-  processing: 'bg-hos-gold/20 text-hos-gold',
+  awaiting_customer_return: 'bg-orange-500/15 text-orange-300',
+  item_received: 'bg-hos-gold/20 text-hos-gold',
+  refund_pending: 'bg-cyan-500/15 text-cyan-300',
+  processing: 'bg-cyan-500/15 text-cyan-300',
   completed: 'bg-emerald-500/15 text-emerald-300',
-  refunded: 'bg-cyan-500/15 text-cyan-300',
   cancelled: 'bg-hos-bg-tertiary text-hos-text-secondary',
 };
+
+function formatReturnStatus(status: string): string {
+  const key = (status || '').toLowerCase();
+  return STATUS_LABELS[key] || status;
+}
 
 export function ReturnsManagement({ mode }: ReturnsManagementProps) {
   const toast = useToast();
@@ -62,18 +81,22 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
     ? returns.filter((r) => r.status.toLowerCase() === statusFilter.toLowerCase())
     : returns;
 
-  const handleApprove = async (row: ReturnRow) => {
-    if (!window.confirm('Approve this return and process the refund?')) return;
+  const updateStatus = async (row: ReturnRow, status: string, successMessage: string) => {
     try {
       setActionLoading(row.id);
-      await apiClient.updateReturnStatus(row.id, { status: 'APPROVED' });
-      toast.success('Return approved and refund initiated');
+      await apiClient.updateReturnStatus(row.id, { status });
+      toast.success(successMessage);
       fetchReturns();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to approve return');
+      toast.error(err.message || 'Failed to update return');
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const handleApprove = async (row: ReturnRow) => {
+    if (!window.confirm('Approve this return and process the refund?')) return;
+    await updateStatus(row, 'APPROVED', 'Return approved and refund initiated');
   };
 
   const handleReject = async () => {
@@ -96,31 +119,7 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
     }
   };
 
-  const handleMarkProcessing = async (row: ReturnRow) => {
-    try {
-      setActionLoading(row.id);
-      await apiClient.updateReturnStatus(row.id, { status: 'PROCESSING' });
-      toast.success('Return marked as processing');
-      fetchReturns();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update return');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleMarkCompleted = async (row: ReturnRow) => {
-    try {
-      setActionLoading(row.id);
-      await apiClient.updateReturnStatus(row.id, { status: 'COMPLETED' });
-      toast.success('Return completed');
-      fetchReturns();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to complete return');
-    } finally {
-      setActionLoading(null);
-    }
-  };
+  const statusKey = (row: ReturnRow) => (row.status || '').toLowerCase();
 
   return (
     <div>
@@ -139,11 +138,14 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
           className="px-3 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-sm"
         >
           <option value="">All statuses</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
+          <option value="pending">Return Requested</option>
+          <option value="approved">Return Approved</option>
+          <option value="awaiting_customer_return">Awaiting Customer Return</option>
+          <option value="item_received">Item Received</option>
+          <option value="refund_pending">Refund Pending</option>
           <option value="processing">Processing</option>
-          <option value="completed">Completed</option>
-          <option value="rejected">Rejected</option>
+          <option value="completed">Return Completed</option>
+          <option value="rejected">Return Rejected</option>
           <option value="cancelled">Cancelled</option>
         </select>
       </div>
@@ -180,11 +182,11 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
-                        STATUS_COLORS[row.status.toLowerCase()] || STATUS_COLORS.pending
+                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                        STATUS_COLORS[statusKey(row)] || STATUS_COLORS.pending
                       }`}
                     >
-                      {row.status}
+                      {formatReturnStatus(row.status)}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
@@ -205,7 +207,7 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
                       >
                         View
                       </Link>
-                      {row.status === 'pending' && (
+                      {statusKey(row) === 'pending' && (
                         <>
                           <button
                             type="button"
@@ -229,28 +231,72 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
                           </button>
                         </>
                       )}
-                      {row.status === 'approved' && (
+                      {statusKey(row) === 'approved' && (
                         <button
                           type="button"
                           disabled={actionLoading === row.id}
-                          onClick={() => handleMarkProcessing(row)}
-                          className="text-hos-gold text-xs font-medium disabled:opacity-50"
+                          onClick={() =>
+                            updateStatus(
+                              row,
+                              'AWAITING_CUSTOMER_RETURN',
+                              'Marked as awaiting customer return',
+                            )
+                          }
+                          className="text-orange-400 text-xs font-medium disabled:opacity-50"
                         >
-                          Processing
+                          Awaiting return
                         </button>
                       )}
-                      {['approved', 'processing'].includes(row.status) && (
+                      {['approved', 'awaiting_customer_return'].includes(statusKey(row)) && (
                         <button
                           type="button"
                           disabled={actionLoading === row.id}
-                          onClick={() => handleMarkCompleted(row)}
+                          onClick={() =>
+                            updateStatus(row, 'ITEM_RECEIVED', 'Marked as item received')
+                          }
+                          className="text-hos-gold text-xs font-medium disabled:opacity-50"
+                        >
+                          Item received
+                        </button>
+                      )}
+                      {['approved', 'awaiting_customer_return', 'item_received', 'processing'].includes(
+                        statusKey(row),
+                      ) && (
+                        <button
+                          type="button"
+                          disabled={actionLoading === row.id}
+                          onClick={() =>
+                            updateStatus(row, 'REFUND_PENDING', 'Marked as refund pending')
+                          }
+                          className="text-cyan-400 text-xs font-medium disabled:opacity-50"
+                        >
+                          Refund pending
+                        </button>
+                      )}
+                      {[
+                        'approved',
+                        'awaiting_customer_return',
+                        'item_received',
+                        'refund_pending',
+                        'processing',
+                      ].includes(statusKey(row)) && (
+                        <button
+                          type="button"
+                          disabled={actionLoading === row.id}
+                          onClick={() => updateStatus(row, 'COMPLETED', 'Return completed')}
                           className="text-emerald-400 text-xs font-medium disabled:opacity-50"
                         >
                           Complete
                         </button>
                       )}
                       {mode === 'admin' &&
-                        ['approved', 'processing'].includes(row.status) && (
+                        [
+                          'approved',
+                          'awaiting_customer_return',
+                          'item_received',
+                          'refund_pending',
+                          'processing',
+                        ].includes(statusKey(row)) && (
                           <button
                             type="button"
                             disabled={actionLoading === row.id}

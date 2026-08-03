@@ -5,6 +5,11 @@ import { useSearchParams } from 'next/navigation';
 import { OTHER_UNIVERSE_NAME } from '../lib/fandoms';
 import { useCatalogFandoms } from '@/hooks/useCatalogFandoms';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
+import {
+  normalizeWhitespace,
+  validateNameLike,
+  validatePhoneMaxDigits,
+} from '@/lib/formFieldValidation';
 
 const REG_MIN_HUMAN_FILL_MS = 1800;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -176,8 +181,28 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
     }
 
     const fandoms = Array.from(selected);
-    const firstName = (form.querySelector<HTMLInputElement>('#fn')?.value || '').trim();
+    const firstName = normalizeWhitespace(form.querySelector<HTMLInputElement>('#fn')?.value || '');
+    const lastName = normalizeWhitespace(form.querySelector<HTMLInputElement>('#ln')?.value || '');
     const email = (form.querySelector<HTMLInputElement>('#em')?.value || '').trim();
+    const phone = form.querySelector<HTMLInputElement>('#ph')?.value || '';
+    const firstNameErr = validateNameLike(firstName, 'First name');
+    if (firstNameErr) {
+      showError(firstNameErr);
+      form.querySelector<HTMLInputElement>('#fn')?.focus();
+      return;
+    }
+    const lastNameErr = validateNameLike(lastName, 'Last name', { required: false });
+    if (lastNameErr) {
+      showError(lastNameErr);
+      form.querySelector<HTMLInputElement>('#ln')?.focus();
+      return;
+    }
+    const phoneErr = validatePhoneMaxDigits(phone, 'Phone number', 15);
+    if (phoneErr) {
+      showError(phoneErr);
+      form.querySelector<HTMLInputElement>('#ph')?.focus();
+      return;
+    }
     if (!EMAIL_RE.test(email)) {
       showError('Please enter a valid email address.');
       form.querySelector<HTMLInputElement>('#em')?.focus();
@@ -186,9 +211,9 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
 
     const data = {
       firstName,
-      lastName: (form.querySelector<HTMLInputElement>('#ln')?.value || '').trim(),
+      lastName,
       email,
-      phone: form.querySelector<HTMLInputElement>('#ph')?.value || '',
+      phone,
       country: (form.querySelector<HTMLSelectElement>('#co')?.value || ''),
       source: (form.querySelector<HTMLSelectElement>('#src')?.value || ''),
       spend: (form.querySelector<HTMLSelectElement>('#sp')?.value || ''),
@@ -314,7 +339,33 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
               </div>
               <div className="f-g">
                 <label htmlFor="ph">Phone (Optional)</label>
-                <input type="tel" id="ph" name="phone" autoComplete="tel" placeholder="+1 (000) 000-0000" />
+                <input
+                  type="tel"
+                  id="ph"
+                  name="phone"
+                  autoComplete="tel"
+                  placeholder="+1 (000) 000-0000"
+                  inputMode="tel"
+                  maxLength={20}
+                  onInput={(e) => {
+                    const el = e.currentTarget;
+                    const digits = el.value.replace(/\D/g, '');
+                    if (digits.length > 15) {
+                      // Keep formatting chars but cap total digits at 15
+                      let kept = 0;
+                      el.value = el.value
+                        .split('')
+                        .filter((ch) => {
+                          if (/\d/.test(ch)) {
+                            if (kept >= 15) return false;
+                            kept += 1;
+                          }
+                          return true;
+                        })
+                        .join('');
+                    }
+                  }}
+                />
               </div>
               <div className="f-row">
                 <div className="f-g">

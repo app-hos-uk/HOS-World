@@ -184,13 +184,26 @@ export class LoyaltyAdminController {
     const page = Math.max(1, parseInt(pageRaw || '1', 10) || 1);
     // Allow larger batches for CSV/Excel export; UI list uses ~25.
     const limit = Math.min(5000, Math.max(1, parseInt(limitRaw || '25', 10) || 25));
-    const where = q?.trim()
+    const term = q?.trim() || '';
+    const parts = term.split(/\s+/).filter(Boolean);
+    const where = term
       ? {
           OR: [
-            { user: { email: { contains: q.trim(), mode: 'insensitive' as const } } },
-            { user: { firstName: { contains: q.trim(), mode: 'insensitive' as const } } },
-            { user: { lastName: { contains: q.trim(), mode: 'insensitive' as const } } },
-            { cardNumber: { contains: q.trim(), mode: 'insensitive' as const } },
+            { user: { email: { contains: term, mode: 'insensitive' as const } } },
+            { user: { firstName: { contains: term, mode: 'insensitive' as const } } },
+            { user: { lastName: { contains: term, mode: 'insensitive' as const } } },
+            { cardNumber: { contains: term, mode: 'insensitive' as const } },
+            // Support "First Last" queries across separate name columns
+            ...(parts.length >= 2
+              ? [
+                  {
+                    AND: [
+                      { user: { firstName: { contains: parts[0], mode: 'insensitive' as const } } },
+                      { user: { lastName: { contains: parts.slice(1).join(' '), mode: 'insensitive' as const } } },
+                    ],
+                  },
+                ]
+              : []),
           ],
         }
       : undefined;

@@ -8,6 +8,11 @@ import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+import {
+  normalizeWhitespace,
+  validateNameLike,
+  validateOptionalDescriptiveText,
+} from '@/lib/formFieldValidation';
 
 export default function NewCollectionPage() {
   const router = useRouter();
@@ -18,20 +23,28 @@ export default function NewCollectionPage() {
     description: '',
     isPublic: false,
   });
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; description?: string }>({});
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.name.trim()) {
-      toast.error('Collection name is required');
+    const name = normalizeWhitespace(formData.name);
+    const description = normalizeWhitespace(formData.description);
+    const nameErr = validateNameLike(name, 'Collection name');
+    const descriptionErr = validateOptionalDescriptiveText(description, 'Description');
+    setFieldErrors({
+      name: nameErr || undefined,
+      description: descriptionErr || undefined,
+    });
+    if (nameErr || descriptionErr) {
+      toast.error(nameErr || descriptionErr || 'Please fix the highlighted fields');
       return;
     }
 
     try {
       setCreating(true);
       const response = await apiClient.createCollection({
-        name: formData.name,
-        description: formData.description || undefined,
+        name,
+        description: description || undefined,
         isPublic: formData.isPublic,
       });
 
@@ -69,11 +82,20 @@ export default function NewCollectionPage() {
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 border border-hos-border rounded-lg"
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: undefined }));
+                    }}
+                    className={`w-full px-4 py-2 border rounded-lg ${
+                      fieldErrors.name ? 'border-red-500' : 'border-hos-border'
+                    }`}
                     placeholder="My Favorite Products"
                     required
+                    aria-invalid={!!fieldErrors.name}
                   />
+                  {fieldErrors.name && (
+                    <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.name}</p>
+                  )}
                 </div>
 
                 <div>
@@ -82,11 +104,22 @@ export default function NewCollectionPage() {
                   </label>
                   <textarea
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-4 py-2 border border-hos-border rounded-lg"
+                    onChange={(e) => {
+                      setFormData({ ...formData, description: e.target.value });
+                      if (fieldErrors.description) {
+                        setFieldErrors((prev) => ({ ...prev, description: undefined }));
+                      }
+                    }}
+                    className={`w-full px-4 py-2 border rounded-lg ${
+                      fieldErrors.description ? 'border-red-500' : 'border-hos-border'
+                    }`}
                     rows={4}
                     placeholder="Describe your collection..."
+                    aria-invalid={!!fieldErrors.description}
                   />
+                  {fieldErrors.description && (
+                    <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.description}</p>
+                  )}
                 </div>
 
                 <div className="flex items-center">

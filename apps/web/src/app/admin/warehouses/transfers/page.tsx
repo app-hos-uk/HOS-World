@@ -25,6 +25,7 @@ export default function AdminStockTransfersPage() {
   const [transfers, setTransfers] = useState<StockTransfer[]>([]);
   const [warehouses, setWarehouses] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [productsUsingFallback, setProductsUsingFallback] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -87,22 +88,90 @@ export default function AdminStockTransfersPage() {
     }
   };
 
-  const fetchProductsForWarehouse = async (warehouseId: string) => {
-    try {
-      const response = await apiClient.getInventoryLocations(warehouseId);
-      if (response?.data && Array.isArray(response.data)) {
-        // Get unique products from inventory locations
-        const productIds = [...new Set(response.data.map((loc: any) => loc.productId))];
-        // Fetch product details (simplified - would need a bulk product endpoint)
-        setProducts(response.data.map((loc: any) => ({
-          id: loc.productId,
+  const mapInventoryRows = (rows: any[]) => {
+    const byProduct = new Map<string, { id: string; name: string; sku?: string; available: number }>();
+    for (const loc of rows) {
+      const id = loc.productId || loc.product?.id;
+      if (!id) continue;
+      const available = (loc.quantity ?? 0) - (loc.reserved || 0);
+      const existing = byProduct.get(id);
+      if (existing) {
+        existing.available += available;
+      } else {
+        byProduct.set(id, {
+          id,
           name: loc.product?.name || 'Unknown Product',
           sku: loc.product?.sku,
-          available: loc.quantity - (loc.reserved || 0),
-        })));
+          available,
+        });
       }
+    }
+    return Array.from(byProduct.values());
+  };
+
+  const fetchProductsForWarehouse = async (warehouseId: string) => {
+    setProducts([]);
+    setProductsUsingFallback(false);
+    try {
+      // 1) Inventory locations for source warehouse
+      try {
+        const response = await apiClient.getInventoryLocations(warehouseId);
+        const locations = Array.isArray(response?.data) ? response.data : [];
+        const mapped = mapInventoryRows(locations);
+        const withStock = mapped.filter((p) => p.available > 0);
+        if (withStock.length > 0) {
+          setProducts(withStock);
+          return;
+        }
+        if (mapped.length > 0) {
+          setProducts(mapped);
+          return;
+        }
+      } catch (locErr) {
+        console.warn('getInventoryLocations failed, trying warehouse inventory:', locErr);
+      }
+
+      // 2) Warehouse detail (includes inventory relation)
+      try {
+        const whRes = await apiClient.getWarehouse(warehouseId);
+        const inventory = whRes?.data?.inventory;
+        if (Array.isArray(inventory) && inventory.length > 0) {
+          const mapped = mapInventoryRows(inventory);
+          const withStock = mapped.filter((p) => p.available > 0);
+          setProducts(withStock.length > 0 ? withStock : mapped);
+          return;
+        }
+      } catch (whErr) {
+        console.warn('getWarehouse failed, trying warehouses list inventory:', whErr);
+      }
+
+      // 3) Inventory already loaded on warehouses list
+      const fromList = warehouses.find((w) => w.id === warehouseId)?.inventory;
+      if (Array.isArray(fromList) && fromList.length > 0) {
+        const mapped = mapInventoryRows(fromList);
+        const withStock = mapped.filter((p) => p.available > 0);
+        setProducts(withStock.length > 0 ? withStock : mapped);
+        return;
+      }
+
+      // 4) Last resort: active products (stock may be unknown)
+      const prodRes = await apiClient.getAdminProducts({ status: 'ACTIVE', page: 1, limit: 200 });
+      const raw = prodRes?.data;
+      const list = Array.isArray(raw) ? raw : raw?.products || raw?.data || [];
+      const active = (Array.isArray(list) ? list : [])
+        .filter((p: any) => p?.id && (p.status === 'ACTIVE' || !p.status))
+        .map((p: any) => ({
+          id: p.id,
+          name: p.name || 'Unknown Product',
+          sku: p.sku,
+          available: typeof p.stock === 'number' ? p.stock : typeof p.quantity === 'number' ? p.quantity : '—',
+        }));
+      setProducts(active);
+      setProductsUsingFallback(true);
     } catch (err: any) {
       console.error('Error fetching products:', err);
+      setProducts([]);
+      toast.error(err.message || 'Failed to load products for warehouse');
     }
   };
 
@@ -442,12 +511,25 @@ export default function AdminStockTransfersPage() {
                             <option value="">Select product</option>
                             {products.map((p) => (
                               <option key={p.id} value={p.id}>
-                                {p.name} {p.sku && `(${p.sku})`} - Available: {p.available}
+                                {p.name} {p.sku && `(${p.sku})`}
+                                {p.available !== undefined && p.available !== '—'
+                                  ? ` - Available: ${p.available}`
+                                  : productsUsingFallback
+                                    ? ' - Stock unknown'
+                                    : ''}
                               </option>
                             ))}
                           </select>
                           {!formData.fromWarehouseId && (
                             <p className="mt-1 text-xs text-hos-text-muted">Select source warehouse first</p>
+                          )}
+                          {formData.fromWarehouseId && productsUsingFallback && products.length > 0 && (
+                            <p className="mt-1 text-xs text-amber-400">
+                              No stocked inventory found at source warehouse. Showing all active products — verify stock before transferring.
+                            </p>
+                          )}
+                          {formData.fromWarehouseId && products.length === 0 && (
+                            <p className="mt-1 text-xs text-hos-text-muted">No products available for this warehouse.</p>
                           )}
                         </div>
 

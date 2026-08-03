@@ -228,6 +228,7 @@ export default function AdminPlatformMetricsPage() {
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Start Date</label>
                 <input
                   type="date"
+                  max={format(new Date(), 'yyyy-MM-dd')}
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                   className="px-3 py-2 border border-hos-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
@@ -237,6 +238,7 @@ export default function AdminPlatformMetricsPage() {
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">End Date</label>
                 <input
                   type="date"
+                  max={format(new Date(), 'yyyy-MM-dd')}
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   className="px-3 py-2 border border-hos-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-hos-gold/50"

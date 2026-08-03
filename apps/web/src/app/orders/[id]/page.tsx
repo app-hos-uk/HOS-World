@@ -147,13 +147,46 @@ export default function OrderDetailPage() {
       const response = await apiClient.getOrderShipmentTracking(id);
       const events = Array.isArray(response?.data?.events) ? response.data.events : [];
       setLiveTrackingEvents(events);
-      setLiveTrackingStatus(response?.data?.statusDescription || response?.data?.status || null);
+      // Carrier copy is informational only — do not promote it as the order milestone.
+      const carrierStatus =
+        response?.data?.statusDescription || response?.data?.status || null;
+      setLiveTrackingStatus(carrierStatus ? String(carrierStatus) : null);
     } catch {
       setLiveTrackingEvents([]);
       setLiveTrackingStatus(null);
     } finally {
       setLoadingLiveTracking(false);
     }
+  };
+
+  const formatOrderStatusLabel = (status?: string) => {
+    const upper = (status || '').toUpperCase();
+    switch (upper) {
+      case 'SHIPPED':
+        return 'Shipped';
+      case 'DELIVERED':
+      case 'COMPLETED':
+        return 'Delivered';
+      case 'FULFILLED':
+        return 'Packed';
+      case 'PROCESSING':
+        return 'Processing';
+      case 'CONFIRMED':
+      case 'ACCEPTED':
+        return 'Confirmed';
+      default:
+        return status || 'Unknown';
+    }
+  };
+
+  const displayLiveTrackingStatus = () => {
+    if (!liveTrackingStatus) return null;
+    const orderStatus = (order?.status || '').toUpperCase();
+    const carrierSaysDelivered = /delivered/i.test(liveTrackingStatus);
+    if (orderStatus === 'SHIPPED' && carrierSaysDelivered) {
+      return `Carrier: ${liveTrackingStatus} (order still Shipped)`;
+    }
+    return `Carrier: ${liveTrackingStatus}`;
   };
 
   const formatLiveEventLocation = (event: LiveTrackingEvent) => {
@@ -342,7 +375,7 @@ export default function OrderDetailPage() {
                 </p>
               </div>
               <span className={`px-4 py-2 text-sm font-medium rounded-full ${getStatusColor(order.status)}`}>
-                {order.status}
+                {formatOrderStatusLabel(order.status)}
               </span>
             </div>
           </div>
@@ -481,12 +514,22 @@ export default function OrderDetailPage() {
                     </div>
                   ) : liveTrackingEvents.length > 0 ? (
                     <div className="space-y-4">
-                      {liveTrackingStatus && (
+                      <p className="text-sm text-hos-text-secondary">
+                        Order status:{' '}
+                        <span className="font-medium text-hos-gold">
+                          {formatOrderStatusLabel(order.status)}
+                        </span>
+                      </p>
+                      {displayLiveTrackingStatus() && (
                         <p className="text-sm text-hos-text-secondary">
-                          Current status: <span className="font-medium text-hos-gold">{liveTrackingStatus}</span>
+                          {displayLiveTrackingStatus()}
                         </p>
                       )}
-                      {liveTrackingEvents.map((event, index) => (
+                      {liveTrackingEvents.map((event, index) => {
+                        const looksDelivered =
+                          /delivered/i.test(event.statusDescription || '') &&
+                          (order.status || '').toUpperCase() === 'SHIPPED';
+                        return (
                         <div key={`${event.timestamp}-${index}`} className="flex gap-4">
                           <div className="flex flex-col items-center">
                             <div className={`w-3 h-3 rounded-full ${
@@ -497,14 +540,22 @@ export default function OrderDetailPage() {
                             )}
                           </div>
                           <div className="pb-2">
-                            <p className="font-medium text-hos-text-secondary">{event.statusDescription}</p>
+                            <p className="font-medium text-hos-text-secondary">
+                              {event.statusDescription}
+                              {looksDelivered && (
+                                <span className="ml-2 text-xs font-normal text-hos-text-muted">
+                                  (carrier update — order still Shipped)
+                                </span>
+                              )}
+                            </p>
                             <p className="text-sm text-hos-text-muted">
                               {new Date(event.timestamp).toLocaleString()}
                               {formatLiveEventLocation(event) && ` • ${formatLiveEventLocation(event)}`}
                             </p>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-sm text-hos-text-muted">

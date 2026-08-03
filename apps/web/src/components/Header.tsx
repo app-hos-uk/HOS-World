@@ -160,6 +160,7 @@ export function Header() {
   } as Record<UserRole, string>;
 
   const handleLogout = async () => {
+    if (!window.confirm('Are you sure you want to log out?')) return;
     await logout();
   };
 

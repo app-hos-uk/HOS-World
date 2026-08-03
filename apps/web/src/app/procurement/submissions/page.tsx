@@ -73,7 +73,7 @@ function ProcurementSubmissionsContent() {
   const menuItems = isCatalogContext
     ? [
         { title: 'Dashboard', href: '/catalog/dashboard', icon: '📊' },
-        { title: 'Same product from multiple sellers', href: '/procurement/submissions?view=cross-seller', icon: '🔄', badge: duplicateGroups.length },
+        { title: 'Same product from multiple sellers', href: '/catalog/duplicates', icon: '🔄', badge: duplicateGroups.length },
       ]
     : [
         { title: 'Dashboard', href: '/procurement/dashboard', icon: '📊' },
@@ -99,7 +99,12 @@ function ProcurementSubmissionsContent() {
   }, [statusFilter]);
 
   useEffect(() => {
-    if (searchParams.get('view') === 'cross-seller') setShowDuplicateGroups(true);
+    // Enable cross-seller view via query param or catalog-scoped /catalog/duplicates route
+    const isCatalogDuplicatesPath =
+      typeof window !== 'undefined' && window.location.pathname.startsWith('/catalog/duplicates');
+    if (searchParams.get('view') === 'cross-seller' || isCatalogDuplicatesPath) {
+      setShowDuplicateGroups(true);
+    }
   }, [searchParams]);
 
   const fetchDuplicateGroups = useCallback(async () => {
@@ -502,8 +507,8 @@ function ProcurementSubmissionsContent() {
                   >
                     <div className="flex flex-col sm:flex-row justify-between gap-4">
                       <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <div className="min-w-0 flex-1">
                             <h3 className="text-lg font-semibold text-hos-text-secondary">
                               {productData.name || 'Untitled Product'}
                             </h3>
@@ -512,7 +517,7 @@ function ProcurementSubmissionsContent() {
                             </p>
                           </div>
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadgeColor(
+                            className={`shrink-0 inline-flex items-center self-start px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusBadgeColor(
                               submission.status
                             )}`}
                           >

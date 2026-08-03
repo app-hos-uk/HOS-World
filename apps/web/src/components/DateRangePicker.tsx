@@ -13,6 +13,20 @@ interface DateRangePickerProps {
   onChange: (range: DateRange) => void;
   onCompareChange?: (enabled: boolean) => void;
   compareEnabled?: boolean;
+  /** When true (default), start/end cannot be after today. */
+  disallowFutureDates?: boolean;
+}
+
+function startOfLocalDay(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function clampToToday(date: Date | null, disallowFuture: boolean): Date | null {
+  if (!date || !disallowFuture) return date;
+  const today = startOfLocalDay(new Date());
+  return startOfLocalDay(date) > today ? today : date;
 }
 
 export function DateRangePicker({
@@ -20,8 +34,10 @@ export function DateRangePicker({
   onChange,
   onCompareChange,
   compareEnabled = false,
+  disallowFutureDates = true,
 }: DateRangePickerProps) {
   const [showPresets, setShowPresets] = useState(false);
+  const todayMax = format(new Date(), 'yyyy-MM-dd');
 
   const presets = [
     { label: 'Today', getRange: () => ({ startDate: new Date(), endDate: new Date() }) },
@@ -75,7 +91,10 @@ export function DateRangePicker({
 
   const applyPreset = (preset: typeof presets[0]) => {
     const range = preset.getRange();
-    onChange(range);
+    onChange({
+      startDate: clampToToday(range.startDate, disallowFutureDates),
+      endDate: clampToToday(range.endDate, disallowFutureDates),
+    });
     setShowPresets(false);
   };
 
@@ -86,9 +105,11 @@ export function DateRangePicker({
           <label className="text-sm font-medium text-hos-text-secondary">Start Date:</label>
           <input
             type="date"
+            max={disallowFutureDates ? todayMax : undefined}
             value={value.startDate ? format(value.startDate, 'yyyy-MM-dd') : ''}
             onChange={(e) => {
-              onChange({ ...value, startDate: e.target.value ? new Date(e.target.value) : null });
+              const next = e.target.value ? new Date(e.target.value) : null;
+              onChange({ ...value, startDate: clampToToday(next, disallowFutureDates) });
             }}
             className="px-3 py-1.5 border border-hos-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
           />
@@ -97,9 +118,11 @@ export function DateRangePicker({
           <label className="text-sm font-medium text-hos-text-secondary">End Date:</label>
           <input
             type="date"
+            max={disallowFutureDates ? todayMax : undefined}
             value={value.endDate ? format(value.endDate, 'yyyy-MM-dd') : ''}
             onChange={(e) => {
-              onChange({ ...value, endDate: e.target.value ? new Date(e.target.value) : null });
+              const next = e.target.value ? new Date(e.target.value) : null;
+              onChange({ ...value, endDate: clampToToday(next, disallowFutureDates) });
             }}
             className="px-3 py-1.5 border border-hos-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
           />

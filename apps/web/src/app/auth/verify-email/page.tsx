@@ -25,7 +25,11 @@ function VerifyEmailContent() {
           `${getPublicApiBaseUrl()}/auth/verify-email`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              // Required by apps/web API proxy for mutating requests
+              'X-Requested-With': 'XMLHttpRequest',
+            },
             body: JSON.stringify({ token }),
           },
         );

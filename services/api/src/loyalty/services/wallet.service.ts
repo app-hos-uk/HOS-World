@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { LoyaltyTxType, Prisma } from '@prisma/client';
 import { SegmentationService } from '../../segmentation/segmentation.service';
 
@@ -37,12 +37,12 @@ export class LoyaltyWalletService {
       where: { id: membershipId },
     });
     if (!membership) {
-      throw new Error('Loyalty membership not found');
+      throw new NotFoundException('Loyalty membership not found');
     }
     const balanceBefore = membership.currentBalance;
     const balanceAfter = balanceBefore + delta;
     if (balanceAfter < 0) {
-      throw new Error('Insufficient loyalty balance');
+      throw new BadRequestException('Insufficient loyalty balance');
     }
 
     await tx.loyaltyMembership.update({

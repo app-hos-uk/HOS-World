@@ -43,11 +43,27 @@ export default function CMSMediaPage() {
 
     try {
       setUploading(true);
+      setError(null);
       const formData = new FormData();
       formData.append('file', file);
-      
+      formData.append('folder', 'cms');
+
       const response = await apiClient.uploadCMSMedia(formData);
-      if (response?.data) {
+      const url = response?.data?.url || response?.data?.original?.url;
+      if (url) {
+        // Uploads go through Nest /uploads; Strapi media list may be empty — show local result.
+        setMedia((prev) => [
+          {
+            id: `local-${Date.now()}`,
+            name: file.name,
+            url,
+            mime: file.type,
+            size: file.size,
+          },
+          ...prev,
+        ]);
+        toast.success('Media uploaded successfully');
+      } else {
         await fetchMedia();
       }
     } catch (err: unknown) {
@@ -55,6 +71,7 @@ export default function CMSMediaPage() {
       toast.error(cmsActionToastMessage(err, 'Failed to upload media'));
     } finally {
       setUploading(false);
+      event.target.value = '';
     }
   };
 
@@ -74,7 +91,7 @@ export default function CMSMediaPage() {
                 type="file"
                 className="hidden"
                 onChange={handleFileUpload}
-                accept="image/*,video/*"
+                accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
                 disabled={uploading}
               />
             </label>
@@ -85,7 +102,7 @@ export default function CMSMediaPage() {
               <button
                 type="button"
                 onClick={fetchMedia}
-                className="inline-flex rounded-md bg-hos-gold px-4 py-2 text-sm font-medium text-hos-text-secondary hover:bg-hos-gold-hover"
+                className="inline-flex rounded-md bg-hos-gold px-4 py-2 text-sm font-medium text-[#1a1406] hover:bg-hos-gold-hover"
               >
                 Retry loading
               </button>
@@ -105,7 +122,7 @@ export default function CMSMediaPage() {
                   type="file"
                   className="hidden"
                   onChange={handleFileUpload}
-                  accept="image/*,video/*"
+                  accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
                 />
               </label>
             </div>

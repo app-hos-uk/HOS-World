@@ -134,29 +134,45 @@ export class AuthService {
     const registrationMode = this.configService.get<string>('REGISTRATION_MODE', 'open');
     if (registrationMode === 'invite_only') {
       let bypassInviteGate = false;
-      const inviteCode = registerDto.inviteCode;
-      
+      const inviteCode = registerDto.inviteCode?.trim();
+      const inviteCodeNormalized = inviteCode?.toLowerCase();
+
       if (this.foundingMembersService) {
         const fm = await this.foundingMembersService.findByEmail(registerDto.email);
         if (fm) {
           if (fm.status === 'LINKED') {
-            throw new ConflictException('This founding member email has already been used to create an account. Please log in instead.');
+            throw new ConflictException(
+              'This founding member email has already been used to create an account. Please log in instead.',
+            );
           }
           // Allow founding members in any non-LINKED status (REGISTERED, INVITED, etc.)
           bypassInviteGate = true;
-        } else if (inviteCode?.toLowerCase() === 'founding') {
+        } else if (inviteCodeNormalized === 'founding') {
           // User has founding invite code but email not found in founding members list
-          throw new ForbiddenException('This email is not registered as a founding member. Please use the email address you registered with.');
+          throw new ForbiddenException(
+            'This email is not registered as a founding member. Please use the email address you registered with.',
+          );
         }
+      } else if (inviteCodeNormalized === 'founding') {
+        // Service unavailable — do not silently fall through to generic invite-only error
+        this.logger.error(
+          'FoundingMembersService unavailable during invite-only registration with invite=founding',
+        );
+        throw new ForbiddenException(
+          'Founding member registration is temporarily unavailable. Please try again shortly.',
+        );
       }
-      
+
       if (!bypassInviteGate) {
         const validCodes = (this.configService.get<string>('REGISTRATION_INVITE_CODES', '') || '')
           .split(',')
           .map((c) => c.trim())
           .filter(Boolean);
-        if (!inviteCode || !validCodes.includes(inviteCode)) {
-          throw new ForbiddenException('Registration is currently invite-only. Please provide a valid invite code.');
+        const validCodesNormalized = new Set(validCodes.map((c) => c.toLowerCase()));
+        if (!inviteCodeNormalized || !validCodesNormalized.has(inviteCodeNormalized)) {
+          throw new ForbiddenException(
+            'Registration is currently invite-only. Please provide a valid invite code.',
+          );
         }
       }
     }

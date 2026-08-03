@@ -5,6 +5,13 @@ import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import {
+  isDateInputInPast,
+  normalizeWhitespace,
+  todayDateInputValue,
+  validateNameLike,
+  validateOptionalDescriptiveText,
+} from '@/lib/formFieldValidation';
 
 type CampaignStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED';
 
@@ -190,12 +197,24 @@ function MarketingCampaignsPageContent() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.name.trim()) {
-      setFormError('Campaign name is required');
+    const name = normalizeWhitespace(formData.name);
+    const description = normalizeWhitespace(formData.description);
+    const nameErr = validateNameLike(name, 'Campaign name');
+    if (nameErr) {
+      setFormError(nameErr);
+      return;
+    }
+    const descErr = validateOptionalDescriptiveText(description, 'Description');
+    if (descErr) {
+      setFormError(descErr);
       return;
     }
     if (!formData.startDate) {
       setFormError('Start date is required');
+      return;
+    }
+    if (!editingCampaign && isDateInputInPast(formData.startDate)) {
+      setFormError('Start date cannot be in the past');
       return;
     }
     if (!formData.endDate) {
@@ -224,8 +243,8 @@ function MarketingCampaignsPageContent() {
 
       if (editingCampaign) {
         await apiClient.updateMarketingCampaign(editingCampaign.id, {
-          name: formData.name.trim(),
-          description: formData.description.trim() || undefined,
+          name,
+          description: description || undefined,
           startDate: formData.startDate,
           endDate: formData.endDate,
           status: formData.status,
@@ -234,8 +253,8 @@ function MarketingCampaignsPageContent() {
       } else {
         await apiClient.createMarketingCampaign({
           influencerId: formData.influencerId,
-          name: formData.name.trim(),
-          description: formData.description.trim() || undefined,
+          name,
+          description: description || undefined,
           startDate: formData.startDate,
           endDate: formData.endDate,
           status: formData.status,
@@ -542,9 +561,13 @@ function MarketingCampaignsPageContent() {
                       <input
                         type="date"
                         value={formData.startDate}
+                        min={editingCampaign ? undefined : todayDateInputValue()}
                         onChange={(e) => handleFormChange('startDate', e.target.value)}
                         className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       />
+                      {!editingCampaign && (
+                        <p className="mt-1 text-xs text-hos-text-muted">Past start dates are not allowed for new campaigns.</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-hos-text-secondary mb-1">
@@ -553,6 +576,7 @@ function MarketingCampaignsPageContent() {
                       <input
                         type="date"
                         value={formData.endDate}
+                        min={formData.startDate || todayDateInputValue()}
                         onChange={(e) => handleFormChange('endDate', e.target.value)}
                         className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
                       />

@@ -118,6 +118,14 @@ export default function AdminLoyaltyMembersPage() {
     setActiveQuery(q);
   };
 
+  // Keep results in sync when the search box is cleared without submitting
+  useEffect(() => {
+    if (searchQuery === '' && activeQuery !== '') {
+      setCurrentPage(1);
+      setActiveQuery('');
+    }
+  }, [searchQuery, activeQuery]);
+
   const fetchAllForExport = useCallback(async () => {
     const all: LoyaltyMember[] = [];
     let page = 1;

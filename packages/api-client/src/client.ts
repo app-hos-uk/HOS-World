@@ -3706,6 +3706,7 @@ export class ApiClient {
   async createLogisticsPartner(data: {
     name: string;
     type?: string;
+    description?: string;
     contactEmail?: string;
     contactPhone?: string;
     website?: string;
@@ -3715,7 +3716,9 @@ export class ApiClient {
     const payload: any = {
       name: data.name,
     };
-    if (data.type) payload.type = data.type;
+    // Backend CreateLogisticsPartnerDto has no `type` field (forbidNonWhitelisted).
+    // Keep `type` optional on the client for UI form state only; do not send it.
+    if (data.description) payload.description = data.description;
     if (data.website) payload.website = data.website;
     if (data.contactEmail || data.contactPhone) {
       payload.contactInfo = {
@@ -4817,7 +4820,10 @@ export class ApiClient {
       throw new Error('API base URL is not configured. Please set NEXT_PUBLIC_API_URL environment variable.');
     }
     
-    // Use the uploads endpoint instead of non-existent /cms/media
+    // Use Nest uploads (not Strapi) — CMS portal media storage
+    if (!formData.has('folder')) {
+      formData.append('folder', 'cms');
+    }
     const token = this.getToken();
     const headers: Record<string, string> = {
       'X-Requested-With': 'XMLHttpRequest',
@@ -5279,6 +5285,10 @@ export class ApiClient {
 
   async getWarehouses(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/inventory/warehouses');
+  }
+
+  async getWarehouse(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/inventory/warehouses/${id}`);
   }
 
   async createWarehouse(data: {

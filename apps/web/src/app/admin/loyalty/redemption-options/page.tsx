@@ -4,6 +4,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import {
+  normalizeWhitespace,
+  validateNameLike,
+  validateOptionalDescriptiveText,
+} from '@/lib/formFieldValidation';
 
 export default function AdminLoyaltyRedemptionPage() {
   const [options, setOptions] = useState<any[]>([]);
@@ -11,6 +16,7 @@ export default function AdminLoyaltyRedemptionPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [form, setForm] = useState({ name: '', description: '', pointsCost: 0, type: 'DISCOUNT', value: 0, isActive: true });
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; description?: string; type?: string }>({});
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
@@ -48,14 +54,31 @@ export default function AdminLoyaltyRedemptionPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) { toast.error('Name is required'); return; }
+    const name = normalizeWhitespace(form.name);
+    const description = normalizeWhitespace(form.description);
+    const type = String(form.type || '').trim();
+    const nameErr = validateNameLike(name, 'Name');
+    const descriptionErr = validateOptionalDescriptiveText(description, 'Description');
+    const typeErr = !/^[A-Za-z][A-Za-z0-9_]*$/.test(type)
+      ? 'Type/action may only use letters, numbers, and underscores'
+      : null;
+    setFieldErrors({
+      name: nameErr || undefined,
+      description: descriptionErr || undefined,
+      type: typeErr || undefined,
+    });
+    if (nameErr || descriptionErr || typeErr) {
+      toast.error(nameErr || descriptionErr || typeErr || 'Please fix the form fields');
+      return;
+    }
+    const payload = { ...form, name, description, type };
     setSaving(true);
     try {
       if (editing) {
-        await apiClient.adminUpdateLoyaltyRedemptionOption(editing.id, form);
+        await apiClient.adminUpdateLoyaltyRedemptionOption(editing.id, payload);
         toast.success('Option updated');
       } else {
-        await apiClient.adminCreateLoyaltyRedemptionOption(form);
+        await apiClient.adminCreateLoyaltyRedemptionOption(payload);
         toast.success('Option created');
       }
       resetForm();

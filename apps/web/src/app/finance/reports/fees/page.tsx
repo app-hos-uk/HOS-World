@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { clampDateInputToToday, todayDateInputValue } from '@/lib/formFieldValidation';
 
 function getDefaultDateRange() {
   const end = new Date();
@@ -94,8 +95,12 @@ export default function FinanceFeesPage() {
               <input
                 type="date"
                 value={dateRange.startDate}
+                max={todayDateInputValue()}
                 onChange={(e) =>
-                  setDateRange((prev) => ({ ...prev, startDate: e.target.value }))
+                  setDateRange((prev) => ({
+                    ...prev,
+                    startDate: clampDateInputToToday(e.target.value),
+                  }))
                 }
                 className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
               />
@@ -105,8 +110,12 @@ export default function FinanceFeesPage() {
               <input
                 type="date"
                 value={dateRange.endDate}
+                max={todayDateInputValue()}
                 onChange={(e) =>
-                  setDateRange((prev) => ({ ...prev, endDate: e.target.value }))
+                  setDateRange((prev) => ({
+                    ...prev,
+                    endDate: clampDateInputToToday(e.target.value),
+                  }))
                 }
                 className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-transparent"
               />

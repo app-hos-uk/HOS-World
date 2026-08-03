@@ -9,6 +9,7 @@ import { DataExport } from '@/components/DataExport';
 import { Modal } from '@/components/ui/Modal';
 import { PortalMobileCard } from '@/components/ui/PortalMobileCard';
 import { formatAdminPrice } from '@/lib/adminFormat';
+import { clampDateInputToToday, todayDateInputValue } from '@/lib/formFieldValidation';
 import {
   AdminColumnToggle,
   useAdminColumnVisibility,
@@ -448,7 +449,10 @@ function AdminOrdersContent() {
                 <input
                   type="date"
                   value={dateRange.start}
-                  onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
+                  max={todayDateInputValue()}
+                  onChange={(e) =>
+                    setDateRange({ ...dateRange, start: clampDateInputToToday(e.target.value) })
+                  }
                   className="input"
                 />
               </div>
@@ -457,7 +461,10 @@ function AdminOrdersContent() {
                 <input
                   type="date"
                   value={dateRange.end}
-                  onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
+                  max={todayDateInputValue()}
+                  onChange={(e) =>
+                    setDateRange({ ...dateRange, end: clampDateInputToToday(e.target.value) })
+                  }
                   className="input"
                 />
               </div>
@@ -545,7 +552,7 @@ function AdminOrdersContent() {
                 />
               </div>
               <div className="hidden md:block overflow-x-auto">
-                <table className="admin-table min-w-full divide-y divide-hos-border">
+                <table className="admin-table table-auto min-w-full divide-y divide-hos-border">
                   <thead className="bg-hos-bg-secondary">
                     <tr>
                       {isOrderColumnVisible('order') && <th className="px-6 py-3 text-left">Order</th>}
@@ -573,11 +580,7 @@ function AdminOrdersContent() {
                       </tr>
                     ) : (
                       paginatedOrders.map((order) => (
-                        <tr
-                          key={order.id}
-                          className="admin-table-row-clickable"
-                          onClick={() => openOrderDetails(order)}
-                        >
+                        <tr key={order.id}>
                           {isOrderColumnVisible('order') && (
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-hos-text-secondary">
@@ -605,7 +608,7 @@ function AdminOrdersContent() {
                           </td>
                           )}
                           {isOrderColumnVisible('status') && (
-                          <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <select
                               value={order.status}
                               onChange={(e) => handleStatusChange(order.id, e.target.value, order.orderNumber || order.id.substring(0, 8), order.status)}
@@ -626,7 +629,7 @@ function AdminOrdersContent() {
                           </td>
                           )}
                           {isOrderColumnVisible('actions') && (
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button
                               type="button"
                               onClick={() => openOrderDetails(order)}

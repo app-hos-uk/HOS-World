@@ -1,6 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  BadGatewayException,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { PaymentProviderService } from '../payments/payment-provider.service';
+
+type ReconciliationItemType = 'MATCHED' | 'AMOUNT_MISMATCH' | 'MISSING_INTERNAL' | 'MISSING_STRIPE';
 
 @Injectable()
 export class ReconciliationService {
@@ -16,14 +25,34 @@ export class ReconciliationService {
     periodEnd: Date;
     startedById?: string;
   }) {
-    const run = await this.prisma.reconciliationRun.create({
-      data: {
-        periodStart: params.periodStart,
-        periodEnd: params.periodEnd,
-        startedById: params.startedById,
-        status: 'RUNNING',
-      },
-    });
+    if (!(params.periodStart instanceof Date) || Number.isNaN(params.periodStart.getTime())) {
+      throw new BadRequestException('Invalid periodStart');
+    }
+    if (!(params.periodEnd instanceof Date) || Number.isNaN(params.periodEnd.getTime())) {
+      throw new BadRequestException('Invalid periodEnd');
+    }
+    if (params.periodStart >= params.periodEnd) {
+      throw new BadRequestException('periodStart must be before periodEnd');
+    }
+
+    let run: { id: string };
+    try {
+      run = await this.prisma.reconciliationRun.create({
+        data: {
+          periodStart: params.periodStart,
+          periodEnd: params.periodEnd,
+          startedById: params.startedById || null,
+          status: 'RUNNING',
+        },
+      });
+    } catch (err: any) {
+      this.logger.error(`Failed to create reconciliation run: ${err?.message}`, err?.stack);
+      throw new BadRequestException(
+        err?.message?.includes('Foreign key') || err?.code === 'P2003'
+          ? 'Invalid startedBy user for reconciliation run'
+          : `Could not start reconciliation: ${err?.message || 'database error'}`,
+      );
+    }
 
     try {
       // Get internal PAYMENT transactions for the period
@@ -39,21 +68,36 @@ export class ReconciliationService {
       });
 
       // Build lookup map by stripePaymentIntentId
-      const internalByStripeId = new Map<string, typeof internalTransactions[0]>();
+      const internalByStripeId = new Map<string, (typeof internalTransactions)[0]>();
       for (const tx of internalTransactions) {
-        const stripeId = tx.order?.stripePaymentIntentId || (tx.metadata as any)?.stripePaymentId;
-        if (stripeId) {
+        const stripeId =
+          tx.order?.stripePaymentIntentId ||
+          (typeof tx.metadata === 'object' && tx.metadata
+            ? (tx.metadata as any).stripePaymentId || (tx.metadata as any).stripePaymentIntentId
+            : null);
+        if (stripeId && typeof stripeId === 'string') {
           internalByStripeId.set(stripeId, tx);
         }
       }
 
       // Get Stripe payments for the period (if provider available)
-      let stripeCharges: Array<{ id: string; amount: number; currency: string; payment_intent: string }> = [];
+      let stripeCharges: Array<{
+        id: string;
+        amount: number;
+        currency: string;
+        payment_intent: string | null;
+      }> = [];
+      let stripeFetchFailed = false;
+      let stripeFetchError: string | undefined;
+
       if (this.paymentProviderService.isProviderAvailable('stripe')) {
         try {
           const stripe = this.paymentProviderService.getProvider('stripe');
           const stripeInstance = (stripe as any).getStripeInstance?.();
-          if (stripeInstance) {
+          if (!stripeInstance) {
+            stripeFetchFailed = true;
+            stripeFetchError = 'Stripe provider is configured but the Stripe SDK instance is unavailable';
+          } else {
             const periodStart = Math.floor(params.periodStart.getTime() / 1000);
             const periodEnd = Math.floor(params.periodEnd.getTime() / 1000);
             let startingAfter: string | undefined;
@@ -66,13 +110,18 @@ export class ReconciliationService {
               });
               stripeCharges.push(
                 ...charges.data.map((c: any) => ({
-                  id: c.id,
-                  amount: c.amount / 100,
-                  currency: c.currency.toUpperCase(),
-                  payment_intent: c.payment_intent,
+                  id: String(c.id),
+                  amount: Number(c.amount) / 100,
+                  currency: String(c.currency || 'usd').toUpperCase(),
+                  payment_intent:
+                    typeof c.payment_intent === 'string'
+                      ? c.payment_intent
+                      : c.payment_intent?.id
+                        ? String(c.payment_intent.id)
+                        : null,
                 })),
               );
-              hasMore = charges.has_more;
+              hasMore = Boolean(charges.has_more);
               if (charges.data.length > 0) {
                 startingAfter = charges.data[charges.data.length - 1].id;
               } else {
@@ -81,27 +130,44 @@ export class ReconciliationService {
             }
           }
         } catch (err: any) {
-          this.logger.warn(`Could not fetch Stripe charges: ${err.message}`);
+          stripeFetchFailed = true;
+          stripeFetchError = err?.message || 'Failed to fetch Stripe charges';
+          this.logger.warn(`Could not fetch Stripe charges: ${stripeFetchError}`);
         }
       }
 
-      let matched = 0, mismatched = 0, missingInternal = 0, missingStripe = 0;
+      // If Stripe was expected but failed and we have nothing to compare, fail the run clearly
+      if (
+        stripeFetchFailed &&
+        stripeCharges.length === 0 &&
+        internalTransactions.length === 0
+      ) {
+        throw new BadGatewayException(
+          `Unable to reach Stripe for reconciliation: ${stripeFetchError || 'unknown error'}`,
+        );
+      }
+
+      let matched = 0,
+        mismatched = 0,
+        missingInternal = 0,
+        missingStripe = 0;
       const stripeProcessed = new Set<string>();
       const items: Array<{
         runId: string;
-        type: string;
-        transactionId?: string;
-        stripeChargeId?: string;
-        internalAmount?: number;
-        stripeAmount?: number;
-        currency?: string;
-        discrepancyAmount?: number;
+        type: ReconciliationItemType;
+        transactionId?: string | null;
+        stripeChargeId?: string | null;
+        internalAmount?: number | null;
+        stripeAmount?: number | null;
+        currency?: string | null;
+        discrepancyAmount?: number | null;
       }> = [];
 
       // Match Stripe charges against internal transactions
       for (const charge of stripeCharges) {
-        stripeProcessed.add(charge.payment_intent);
-        const internal = internalByStripeId.get(charge.payment_intent);
+        const pi = charge.payment_intent;
+        if (pi) stripeProcessed.add(pi);
+        const internal = pi ? internalByStripeId.get(pi) : undefined;
 
         if (!internal) {
           missingInternal++;
@@ -109,13 +175,14 @@ export class ReconciliationService {
             runId: run.id,
             type: 'MISSING_INTERNAL',
             stripeChargeId: charge.id,
-            stripeAmount: charge.amount,
+            stripeAmount: this.toMoney(charge.amount),
             currency: charge.currency,
           });
         } else {
-          const internalAmt = Number(internal.amount);
+          const internalAmt = this.toMoney(Number(internal.amount));
           const internalCurrency = String(internal.currency || 'USD').toUpperCase();
-          const diff = Math.abs(internalAmt - charge.amount);
+          const stripeAmt = this.toMoney(charge.amount);
+          const diff = Math.abs(internalAmt - stripeAmt);
           if (diff < 0.02 && internalCurrency === charge.currency) {
             matched++;
             items.push({
@@ -124,7 +191,7 @@ export class ReconciliationService {
               transactionId: internal.id,
               stripeChargeId: charge.id,
               internalAmount: internalAmt,
-              stripeAmount: charge.amount,
+              stripeAmount: stripeAmt,
               currency: charge.currency,
             });
           } else {
@@ -135,24 +202,24 @@ export class ReconciliationService {
               transactionId: internal.id,
               stripeChargeId: charge.id,
               internalAmount: internalAmt,
-              stripeAmount: charge.amount,
+              stripeAmount: stripeAmt,
               currency: charge.currency,
-              discrepancyAmount: internalAmt - charge.amount,
+              discrepancyAmount: this.toMoney(internalAmt - stripeAmt),
             });
           }
         }
       }
 
       // Find internal PAYMENT transactions with no Stripe match
-      for (const [stripeId, tx] of internalByStripeId.entries()) {
+      for (const [stripeId, txRow] of internalByStripeId.entries()) {
         if (!stripeProcessed.has(stripeId)) {
           missingStripe++;
           items.push({
             runId: run.id,
             type: 'MISSING_STRIPE',
-            transactionId: tx.id,
-            internalAmount: Number(tx.amount),
-            currency: tx.currency,
+            transactionId: txRow.id,
+            internalAmount: this.toMoney(Number(txRow.amount)),
+            currency: String(txRow.currency || 'USD').toUpperCase(),
           });
         }
       }
@@ -181,8 +248,8 @@ export class ReconciliationService {
             runId: run.id,
             type: 'MATCHED',
             transactionId: refundTx.id,
-            internalAmount: actual,
-            currency: refundTx.currency,
+            internalAmount: this.toMoney(actual),
+            currency: String(refundTx.currency || 'USD').toUpperCase(),
           });
         } else {
           mismatched++;
@@ -190,32 +257,61 @@ export class ReconciliationService {
             runId: run.id,
             type: 'AMOUNT_MISMATCH',
             transactionId: refundTx.id,
-            internalAmount: actual,
-            stripeAmount: expected,
-            currency: refundTx.currency,
-            discrepancyAmount: actual - expected,
+            internalAmount: this.toMoney(actual),
+            stripeAmount: this.toMoney(expected),
+            currency: String(refundTx.currency || 'USD').toUpperCase(),
+            discrepancyAmount: this.toMoney(actual - expected),
           });
         }
       }
 
       // When Stripe is unavailable, record internal-only summary so runs aren't empty
       if (stripeCharges.length === 0 && internalTransactions.length > 0) {
-        for (const tx of internalTransactions) {
-          if (!items.some((i) => i.transactionId === tx.id && i.type === 'MATCHED')) {
+        for (const txRow of internalTransactions) {
+          if (!items.some((i) => i.transactionId === txRow.id)) {
+            missingStripe++;
             items.push({
               runId: run.id,
               type: 'MISSING_STRIPE',
-              transactionId: tx.id,
-              internalAmount: Number(tx.amount),
-              currency: tx.currency,
+              transactionId: txRow.id,
+              internalAmount: this.toMoney(Number(txRow.amount)),
+              currency: String(txRow.currency || 'USD').toUpperCase(),
             });
           }
         }
+        if (stripeFetchFailed) {
+          this.logger.warn(
+            `Reconciliation ${run.id} completed with internal-only items (Stripe unavailable: ${stripeFetchError})`,
+          );
+        }
       }
 
-      // Batch create items
+      // Batch create items — coerce to Prisma-safe scalars
       if (items.length > 0) {
-        await this.prisma.reconciliationItem.createMany({ data: items as any });
+        const data: Prisma.ReconciliationItemCreateManyInput[] = items.map((item) => ({
+          runId: item.runId,
+          type: item.type,
+          transactionId: item.transactionId ?? null,
+          stripeChargeId: item.stripeChargeId ?? null,
+          internalAmount:
+            item.internalAmount == null ? null : new Prisma.Decimal(item.internalAmount),
+          stripeAmount: item.stripeAmount == null ? null : new Prisma.Decimal(item.stripeAmount),
+          currency: item.currency ?? null,
+          discrepancyAmount:
+            item.discrepancyAmount == null ? null : new Prisma.Decimal(item.discrepancyAmount),
+        }));
+
+        try {
+          await this.prisma.reconciliationItem.createMany({ data });
+        } catch (createErr: any) {
+          this.logger.error(
+            `reconciliationItem.createMany failed: ${createErr?.message}`,
+            createErr?.stack,
+          );
+          throw new BadRequestException(
+            `Failed to save reconciliation items: ${createErr?.message || 'invalid item data'}`,
+          );
+        }
       }
 
       // Update run with results
@@ -228,6 +324,9 @@ export class ReconciliationService {
           totalMissing: missingInternal,
           totalExtra: missingStripe,
           completedAt: new Date(),
+          notes: stripeFetchFailed
+            ? `Completed with Stripe fetch warning: ${stripeFetchError}`
+            : undefined,
         },
         include: { items: true },
       });
@@ -237,16 +336,44 @@ export class ReconciliationService {
       );
       return updated;
     } catch (err: any) {
-      const errorMessage = err.message || 'Unknown error occurred';
-      await this.prisma.reconciliationRun.update({
-        where: { id: run.id },
-        data: { status: 'FAILED', notes: errorMessage },
-      });
-      this.logger.error(`Reconciliation failed: ${errorMessage}`, err.stack);
-      
-      // Re-throw with more context for the API response
-      throw new Error(`Reconciliation failed: ${errorMessage}`);
+      const errorMessage = err?.message || 'Unknown error occurred';
+      try {
+        await this.prisma.reconciliationRun.update({
+          where: { id: run.id },
+          data: { status: 'FAILED', notes: errorMessage },
+        });
+      } catch (updateErr: any) {
+        this.logger.error(`Failed to mark reconciliation run FAILED: ${updateErr?.message}`);
+      }
+      this.logger.error(`Reconciliation failed: ${errorMessage}`, err?.stack);
+
+      if (
+        err instanceof BadRequestException ||
+        err instanceof BadGatewayException ||
+        err instanceof InternalServerErrorException
+      ) {
+        throw err;
+      }
+
+      // Upstream / network style failures → 502; validation-ish → 400
+      const msg = String(errorMessage).toLowerCase();
+      if (
+        msg.includes('stripe') ||
+        msg.includes('econn') ||
+        msg.includes('timeout') ||
+        msg.includes('network') ||
+        msg.includes('503') ||
+        msg.includes('502')
+      ) {
+        throw new BadGatewayException(`Reconciliation failed: ${errorMessage}`);
+      }
+      throw new BadRequestException(`Reconciliation failed: ${errorMessage}`);
     }
+  }
+
+  private toMoney(n: number): number {
+    if (!Number.isFinite(n)) return 0;
+    return Math.round(n * 100) / 100;
   }
 
   async getRuns(filters?: { status?: string; page?: number; limit?: number }) {

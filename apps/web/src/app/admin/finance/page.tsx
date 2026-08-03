@@ -21,6 +21,8 @@ export default function AdminFinancePage() {
   const [platformFeeRate, setPlatformFeeRate] = useState(0.15);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState('30d');
+  const [txPage, setTxPage] = useState(1);
+  const txPageSize = 25;
 
   const extractData = (response: any) => {
     if (!response?.data) return [];
@@ -66,6 +68,13 @@ export default function AdminFinancePage() {
   const rangedTransactions = safeTransactions;
   const rangedPayouts = safePayouts;
   const rangedRefunds = safeRefunds;
+
+  const txTotalPages = Math.max(1, Math.ceil(rangedTransactions.length / txPageSize));
+  const pagedTransactions = useMemo(() => {
+    const page = Math.min(Math.max(1, txPage), txTotalPages);
+    const start = (page - 1) * txPageSize;
+    return rangedTransactions.slice(start, start + txPageSize);
+  }, [rangedTransactions, txPage, txTotalPages]);
 
   // Note: toast is NOT included in deps because useToast() returns a new object each render
   // The toast methods themselves are stable; including toast would cause infinite re-fetches
@@ -130,6 +139,7 @@ export default function AdminFinancePage() {
 
   useEffect(() => {
     fetchAllData();
+    setTxPage(1);
   }, [fetchAllData]);
 
   useEffect(() => {
@@ -137,6 +147,7 @@ export default function AdminFinancePage() {
     if (activeTab !== 'overview' && activeTab !== 'reports') {
       fetchDataForTab(activeTab);
     }
+    if (activeTab === 'transactions') setTxPage(1);
     // intentionally omit dateRange to avoid dual-fetch race with fetchAllData
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, fetchDataForTab]);
@@ -431,7 +442,7 @@ export default function AdminFinancePage() {
                           <td colSpan={4} className="px-6 py-8 text-center text-hos-text-muted">No transactions found</td>
                         </tr>
                       ) : (
-                        rangedTransactions.map((tx) => (
+                        pagedTransactions.map((tx) => (
                           <tr key={tx.id} className="hover:bg-hos-bg-tertiary">
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{tx.type}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -454,6 +465,29 @@ export default function AdminFinancePage() {
                       )}
                     </tbody>
                   </table>
+                  {rangedTransactions.length > txPageSize && (
+                    <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-hos-border">
+                      <button
+                        type="button"
+                        disabled={txPage <= 1}
+                        onClick={() => setTxPage((p) => Math.max(1, p - 1))}
+                        className="px-3 py-1.5 text-sm rounded-lg border border-hos-border disabled:opacity-50"
+                      >
+                        Previous
+                      </button>
+                      <span className="text-sm text-hos-text-secondary">
+                        Page {Math.min(txPage, txTotalPages)} of {txTotalPages} · {rangedTransactions.length} total
+                      </span>
+                      <button
+                        type="button"
+                        disabled={txPage >= txTotalPages}
+                        onClick={() => setTxPage((p) => Math.min(txTotalPages, p + 1))}
+                        className="px-3 py-1.5 text-sm rounded-lg border border-hos-border disabled:opacity-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 

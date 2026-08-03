@@ -1,41 +1,32 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { SubmitProductForm } from '../../seller/submit-product/SubmitProductForm';
+import { SubmissionViewMode } from '../../seller/submit-product/SubmissionViewMode';
 
-function WholesalerSubmitProductRedirect() {
-  const router = useRouter();
+function WholesalerSubmitProductContent() {
   const searchParams = useSearchParams();
+  const viewId = searchParams.get('id');
+  const editId = searchParams.get('edit');
 
-  useEffect(() => {
-    const id = searchParams.get('id');
-    const edit = searchParams.get('edit');
-    const qs = new URLSearchParams();
-    if (id) qs.set('id', id);
-    if (edit) qs.set('edit', edit);
-    const suffix = qs.toString();
-    router.replace(suffix ? `/seller/submit-product?${suffix}` : '/seller/submit-product');
-  }, [router, searchParams]);
+  if (viewId) {
+    return <SubmissionViewMode submissionId={viewId} />;
+  }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
-        <p className="text-hos-text-secondary">Loading...</p>
-      </div>
-    </div>
-  );
+  return <SubmitProductForm editSubmissionId={editId || undefined} />;
 }
 
 export default function WholesalerSubmitProductPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto"></div>
-      </div>
-    }>
-      <WholesalerSubmitProductRedirect />
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
+        </div>
+      }
+    >
+      <WholesalerSubmitProductContent />
     </Suspense>
   );
 }

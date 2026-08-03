@@ -82,6 +82,21 @@ export class CMSService {
     throw new HttpException(userMessage, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
+  /** Strapi down / misconfigured — prefer empty list over 5xx for CMS portal GETs */
+  private isUpstreamUnavailable(error: unknown): boolean {
+    if (!(error instanceof HttpException)) return false;
+    const status = error.getStatus();
+    return (
+      status === HttpStatus.BAD_GATEWAY ||
+      status === HttpStatus.SERVICE_UNAVAILABLE ||
+      status === HttpStatus.GATEWAY_TIMEOUT
+    );
+  }
+
+  private emptyList(message: string): ApiResponse<any[]> {
+    return { data: [], message };
+  }
+
   private mapPage(raw: Record<string, unknown>) {
     return normalizePageRecord(normalizeStrapiEntity(raw) ?? raw);
   }
@@ -100,6 +115,10 @@ export class CMSService {
         message: 'Pages retrieved successfully',
       };
     } catch (error: unknown) {
+      if (this.isUpstreamUnavailable(error)) {
+        this.logger.warn('CMS pages list: content service unavailable, returning empty list');
+        return this.emptyList('Pages could not be loaded from the content service.');
+      }
       this.rethrowAsClientSafe(error, 'Pages could not be loaded.');
     }
   }
@@ -254,6 +273,10 @@ export class CMSService {
         message: 'Banners retrieved successfully',
       };
     } catch (error: unknown) {
+      if (this.isUpstreamUnavailable(error)) {
+        this.logger.warn('CMS banners list: content service unavailable, returning empty list');
+        return this.emptyList('Banners could not be loaded from the content service.');
+      }
       this.rethrowAsClientSafe(error, 'Banners could not be loaded.');
     }
   }
@@ -371,7 +394,7 @@ export class CMSService {
     }
   }
 
-  // Blog Posts
+  // Blog Posts (legacy Strapi path — portal uses Prisma /blog/admin/*)
   async getBlogPosts(limit?: number): Promise<ApiResponse<any[]>> {
     try {
       const pagination = limit ? `?pagination[limit]=${limit}&populate=*` : '?populate=*';
@@ -381,6 +404,10 @@ export class CMSService {
         message: 'Blog posts retrieved successfully',
       };
     } catch (error: unknown) {
+      if (this.isUpstreamUnavailable(error)) {
+        this.logger.warn('CMS Strapi blog list unavailable, returning empty list');
+        return this.emptyList('Blog posts could not be loaded from the content service.');
+      }
       this.rethrowAsClientSafe(error, 'Blog posts could not be loaded.');
     }
   }
@@ -500,11 +527,25 @@ export class CMSService {
   async getMedia(): Promise<ApiResponse<any[]>> {
     try {
       const data = await this.strapiRequest<any>('/upload/files');
+      const files = Array.isArray(data) ? data : data?.data ?? [];
       return {
-        data: Array.isArray(data) ? data : data?.data ?? [],
+        data: files.map((f: any) => ({
+          id: f.id,
+          name: f.name || f.hash || 'Untitled',
+          url: f.url,
+          mime: f.mime,
+          size: f.size,
+        })),
         message: 'Media retrieved successfully',
       };
     } catch (error: unknown) {
+      // Media uploads go through Nest /uploads/single; listing via Strapi is optional.
+      if (this.isUpstreamUnavailable(error)) {
+        this.logger.warn('CMS media list: Strapi unavailable, returning empty library');
+        return this.emptyList(
+          'Media library listing is unavailable; new uploads still work via platform storage.',
+        );
+      }
       this.rethrowAsClientSafe(error, 'Media library could not be loaded.');
     }
   }

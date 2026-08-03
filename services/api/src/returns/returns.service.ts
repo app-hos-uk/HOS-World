@@ -136,7 +136,14 @@ export class ReturnsService {
             orderItemId: returnItem.orderItemId,
             returnRequest: {
               status: {
-                in: ['PENDING', 'APPROVED', 'PROCESSING'],
+                in: [
+                  'PENDING',
+                  'APPROVED',
+                  'PROCESSING',
+                  'AWAITING_CUSTOMER_RETURN',
+                  'ITEM_RECEIVED',
+                  'REFUND_PENDING',
+                ],
               },
             },
           },
@@ -151,7 +158,16 @@ export class ReturnsService {
       const existingReturn = await this.prisma.returnRequest.findFirst({
         where: {
           orderId: createReturnDto.orderId,
-          status: { in: ['PENDING', 'APPROVED', 'PROCESSING'] },
+          status: {
+            in: [
+              'PENDING',
+              'APPROVED',
+              'PROCESSING',
+              'AWAITING_CUSTOMER_RETURN',
+              'ITEM_RECEIVED',
+              'REFUND_PENDING',
+            ],
+          },
         },
       });
 
@@ -429,9 +445,18 @@ export class ReturnsService {
     }
 
     const validTransitions: Record<string, string[]> = {
-      PENDING: ['APPROVED', 'REJECTED'],
-      APPROVED: ['PROCESSING', 'COMPLETED', 'CANCELLED'],
-      PROCESSING: ['COMPLETED', 'CANCELLED'],
+      PENDING: ['APPROVED', 'REJECTED', 'CANCELLED'],
+      APPROVED: [
+        'AWAITING_CUSTOMER_RETURN',
+        'PROCESSING',
+        'REFUND_PENDING',
+        'COMPLETED',
+        'CANCELLED',
+      ],
+      AWAITING_CUSTOMER_RETURN: ['ITEM_RECEIVED', 'PROCESSING', 'CANCELLED'],
+      ITEM_RECEIVED: ['REFUND_PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED'],
+      REFUND_PENDING: ['COMPLETED', 'CANCELLED'],
+      PROCESSING: ['ITEM_RECEIVED', 'REFUND_PENDING', 'COMPLETED', 'CANCELLED'],
     };
     const currentStatus = returnRequest.status;
     const newStatus = status.toUpperCase();
@@ -918,13 +943,30 @@ export class ReturnsService {
     const failedRefundTx = returnRequest.transactions?.find(
       (t: any) => String(t.status).toUpperCase() === 'FAILED',
     );
+    const afterApproved = [
+      'APPROVED',
+      'AWAITING_CUSTOMER_RETURN',
+      'ITEM_RECEIVED',
+      'REFUND_PENDING',
+      'PROCESSING',
+      'COMPLETED',
+    ];
+    const afterAwaitingReturn = [
+      'AWAITING_CUSTOMER_RETURN',
+      'ITEM_RECEIVED',
+      'REFUND_PENDING',
+      'PROCESSING',
+      'COMPLETED',
+    ];
+    const afterItemReceived = ['ITEM_RECEIVED', 'REFUND_PENDING', 'PROCESSING', 'COMPLETED'];
+    const afterRefundPending = ['REFUND_PENDING', 'PROCESSING', 'COMPLETED'];
 
     // Handle cancelled returns
     if (status === 'CANCELLED') {
       return [
         {
           step: 'REQUESTED',
-          label: 'Return requested',
+          label: 'Return Requested',
           at: returnRequest.createdAt,
           completed: true,
         },
@@ -942,19 +984,19 @@ export class ReturnsService {
       return [
         {
           step: 'REQUESTED',
-          label: 'Return requested',
+          label: 'Return Requested',
           at: returnRequest.createdAt,
           completed: true,
         },
         {
           step: 'REVIEW',
-          label: 'Under review',
+          label: 'Under Review',
           at: returnRequest.createdAt,
           completed: true,
         },
         {
           step: 'REJECTED',
-          label: 'Return rejected',
+          label: 'Return Rejected',
           at: returnRequest.updatedAt,
           completed: true,
         },
@@ -965,59 +1007,55 @@ export class ReturnsService {
     const steps: ReturnTimelineStep[] = [
       {
         step: 'REQUESTED',
-        label: 'Return requested',
+        label: 'Return Requested',
         at: returnRequest.createdAt,
         completed: true,
       },
       {
         step: 'REVIEW',
-        label: 'Under review',
+        label: 'Under Review',
         at: returnRequest.createdAt,
         completed: status !== 'PENDING',
       },
       {
         step: 'APPROVED',
-        label: 'Return approved',
-        at: ['APPROVED', 'PROCESSING', 'COMPLETED'].includes(status)
-          ? returnRequest.updatedAt
-          : undefined,
-        completed: ['APPROVED', 'PROCESSING', 'COMPLETED'].includes(status),
+        label: 'Return Approved',
+        at: afterApproved.includes(status) ? returnRequest.updatedAt : undefined,
+        completed: afterApproved.includes(status),
       },
       {
-        step: 'SHIPPED',
+        step: 'AWAITING_CUSTOMER_RETURN',
         label: returnRequest.trackingNumber
-          ? `Shipped (${returnRequest.carrier || 'Tracking'}: ${returnRequest.trackingNumber})`
-          : (['PROCESSING', 'COMPLETED'].includes(status) || returnRequest.shippedAt ? 'Shipped' : 'Awaiting shipment'),
-        at: returnRequest.shippedAt || (['PROCESSING', 'COMPLETED'].includes(status) ? returnRequest.updatedAt : undefined),
-        // Mark completed if we have shipping evidence OR status indicates shipping has occurred
-        completed: !!returnRequest.shippedAt || ['PROCESSING', 'COMPLETED'].includes(status),
+          ? `Awaiting Customer Return (${returnRequest.carrier || 'Tracking'}: ${returnRequest.trackingNumber})`
+          : 'Awaiting Customer Return',
+        at:
+          returnRequest.shippedAt ||
+          (afterAwaitingReturn.includes(status) ? returnRequest.updatedAt : undefined),
+        completed:
+          !!returnRequest.shippedAt || afterAwaitingReturn.includes(status),
       },
       {
-        step: 'RECEIVED',
-        label: 'Package received',
-        at: returnRequest.receivedAt || (['PROCESSING', 'COMPLETED'].includes(status) ? returnRequest.updatedAt : undefined),
-        // Mark completed if we have received evidence OR status indicates item was received
-        completed: !!returnRequest.receivedAt || ['PROCESSING', 'COMPLETED'].includes(status),
+        step: 'ITEM_RECEIVED',
+        label: 'Item Received',
+        at:
+          returnRequest.receivedAt ||
+          (afterItemReceived.includes(status) ? returnRequest.updatedAt : undefined),
+        completed: !!returnRequest.receivedAt || afterItemReceived.includes(status),
       },
       {
-        step: 'INSPECTED',
-        label: 'Inspection complete',
-        at: returnRequest.inspectedAt || (status === 'COMPLETED' ? returnRequest.processedAt || returnRequest.updatedAt : undefined),
-        completed: !!returnRequest.inspectedAt || status === 'COMPLETED',
-      },
-      {
-        step: 'REFUND',
+        step: 'REFUND_PENDING',
         label: failedRefundTx
           ? 'Refund failed — retry required'
           : refundTx
-            ? 'Refund processed'
-            : 'Refund pending',
-        at: refundTx?.createdAt || failedRefundTx?.createdAt,
+            ? 'Refund Completed'
+            : 'Refund Pending',
+        at: refundTx?.createdAt || failedRefundTx?.createdAt ||
+          (afterRefundPending.includes(status) ? returnRequest.updatedAt : undefined),
         completed: !!refundTx || status === 'COMPLETED',
       },
       {
         step: 'COMPLETED',
-        label: 'Return completed',
+        label: 'Return Completed',
         at: returnRequest.processedAt || undefined,
         completed: status === 'COMPLETED',
       },

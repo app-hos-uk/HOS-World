@@ -85,19 +85,6 @@ function CatalogEntriesContent() {
   }, []);
 
   useEffect(() => {
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') fetchData();
-    };
-    const interval = setInterval(fetchData, 30_000);
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
     if (statusFilter === 'completed') {
       setActiveTab('completed');
     } else if (statusFilter === 'in_progress') {
@@ -368,7 +355,7 @@ function CatalogEntriesContent() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleCreateEntry(submission.id)}
-                          className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm whitespace-nowrap"
+                          className="px-4 py-2 text-sm font-medium bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors whitespace-nowrap"
                         >
                           Create Entry
                         </button>
@@ -674,7 +661,7 @@ function CatalogEntriesContent() {
                       <button
                         onClick={handleSubmit}
                         disabled={actionLoading || !canSubmitEntry}
-                        className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
+                        className="px-4 py-2 text-sm font-medium bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors disabled:opacity-50"
                       >
                         {actionLoading ? 'Creating...' : 'Create Entry'}
                       </button>
@@ -684,7 +671,7 @@ function CatalogEntriesContent() {
                           setSelectedSubmission(null);
                         }}
                         disabled={actionLoading}
-                        className="px-6 py-2 bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors font-medium"
+                        className="px-4 py-2 text-sm font-medium bg-hos-bg-tertiary text-hos-text-secondary rounded-lg hover:bg-hos-text-muted transition-colors"
                       >
                         Cancel
                       </button>

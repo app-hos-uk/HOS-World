@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ServiceUnavailableException,
+  Logger,
+} from '@nestjs/common';
 import { BlogStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { slugify } from '@hos-marketplace/utils';
@@ -37,7 +43,24 @@ const SANITIZE_OPTIONS: sanitizeHtmlModule.IOptions = {
 
 @Injectable()
 export class BlogService {
+  private readonly logger = new Logger(BlogService.name);
+
   constructor(private prisma: PrismaService) {}
+
+  /** Map missing-table / schema errors to a clear 503 instead of opaque 500 */
+  private rethrowPrisma(error: unknown, action: string): never {
+    const code =
+      error && typeof error === 'object' && 'code' in error
+        ? String((error as { code?: string }).code)
+        : '';
+    if (code === 'P2021' || code === 'P2010' || /does not exist|relation .*blog_/i.test(String(error))) {
+      this.logger.error(`Blog ${action} failed — blog tables missing or outdated: ${code || error}`);
+      throw new ServiceUnavailableException(
+        'Blog content tables are not available. Run database migrations and try again.',
+      );
+    }
+    throw error;
+  }
 
   private sanitizeContent(html: string): string {
     return sanitizeHtml(html, SANITIZE_OPTIONS);
@@ -192,11 +215,15 @@ export class BlogService {
   // ── Admin ───────────────────────────────────────────────────────────
 
   async getAllPosts(limit = 100) {
-    return this.prisma.blogPost.findMany({
-      include: { category: true },
-      orderBy: { updatedAt: 'desc' },
-      take: limit,
-    });
+    try {
+      return await this.prisma.blogPost.findMany({
+        include: { category: true },
+        orderBy: { updatedAt: 'desc' },
+        take: limit,
+      });
+    } catch (error: unknown) {
+      this.rethrowPrisma(error, 'getAllPosts');
+    }
   }
 
   async getPostById(id: string) {
@@ -227,32 +254,37 @@ export class BlogService {
     const baseSlug = data.slug?.trim() || slugify(data.title);
     if (!baseSlug) throw new BadRequestException('A valid slug is required');
 
-    const slug = await this.ensureUniqueSlug(baseSlug);
-    const contentHtml = this.sanitizeContent(data.content);
-    const readingTime = this.calculateReadingTime(contentHtml);
+    try {
+      const slug = await this.ensureUniqueSlug(baseSlug);
+      const contentHtml = this.sanitizeContent(data.content);
+      const readingTime = this.calculateReadingTime(contentHtml);
 
-    return this.prisma.blogPost.create({
-      data: {
-        title: data.title,
-        slug,
-        excerpt: data.excerpt,
-        content: contentHtml,
-        contentHtml,
-        coverImage: data.coverImage,
-        coverImageAlt: data.coverImageAlt,
-        coverImageTitle: data.coverImageTitle,
-        author: data.author,
-        seoTitle: data.seoTitle,
-        metaDescription: data.metaDescription,
-        focusKeyword: data.focusKeyword,
-        canonicalUrl: data.canonicalUrl,
-        categoryId: data.categoryId || null,
-        status: data.status || BlogStatus.DRAFT,
-        readingTime,
-        publishedAt: data.status === BlogStatus.PUBLISHED ? new Date() : null,
-      },
-      include: { category: true },
-    });
+      return await this.prisma.blogPost.create({
+        data: {
+          title: data.title,
+          slug,
+          excerpt: data.excerpt,
+          content: contentHtml,
+          contentHtml,
+          coverImage: data.coverImage,
+          coverImageAlt: data.coverImageAlt,
+          coverImageTitle: data.coverImageTitle,
+          author: data.author,
+          seoTitle: data.seoTitle,
+          metaDescription: data.metaDescription,
+          focusKeyword: data.focusKeyword,
+          canonicalUrl: data.canonicalUrl,
+          categoryId: data.categoryId || null,
+          status: data.status || BlogStatus.DRAFT,
+          readingTime,
+          publishedAt: data.status === BlogStatus.PUBLISHED ? new Date() : null,
+        },
+        include: { category: true },
+      });
+    } catch (error: unknown) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) throw error;
+      this.rethrowPrisma(error, 'createPost');
+    }
   }
 
   async updatePost(
@@ -324,16 +356,21 @@ export class BlogService {
   }
 
   async createCategory(data: { name: string; slug?: string; description?: string }) {
-    const baseSlug = data.slug?.trim() || slugify(data.name);
-    const slug = await this.ensureUniqueCategorySlug(baseSlug);
+    try {
+      const baseSlug = data.slug?.trim() || slugify(data.name);
+      const slug = await this.ensureUniqueCategorySlug(baseSlug);
 
-    return this.prisma.blogCategory.create({
-      data: {
-        name: data.name,
-        slug,
-        description: data.description,
-      },
-    });
+      return await this.prisma.blogCategory.create({
+        data: {
+          name: data.name,
+          slug,
+          description: data.description,
+        },
+      });
+    } catch (error: unknown) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) throw error;
+      this.rethrowPrisma(error, 'createCategory');
+    }
   }
 
   async updateCategory(
@@ -369,9 +406,13 @@ export class BlogService {
   }
 
   async getAllCategories() {
-    return this.prisma.blogCategory.findMany({
-      orderBy: { name: 'asc' },
-      include: { _count: { select: { posts: true } } },
-    });
+    try {
+      return await this.prisma.blogCategory.findMany({
+        orderBy: { name: 'asc' },
+        include: { _count: { select: { posts: true } } },
+      });
+    } catch (error: unknown) {
+      this.rethrowPrisma(error, 'getAllCategories');
+    }
   }
 }

@@ -15,10 +15,16 @@ function RegisterRedirectInner() {
     const invite = sp.get('invite');
     const params = new URLSearchParams({ register: '1' });
     if (ref) params.set('ref', ref);
-    if (invite) params.set('invite', invite);
+    if (invite) {
+      params.set('invite', invite);
+      try {
+        sessionStorage.setItem('hos_invite_code', invite);
+      } catch {
+        /* ignore */
+      }
+    }
     router.replace(`/login?${params.toString()}`);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [sp, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-hos-bg text-hos-text-muted font-body text-sm">

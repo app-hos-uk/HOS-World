@@ -6,6 +6,12 @@ import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import {
+  isDateInputInPast,
+  normalizeWhitespace,
+  nowDateTimeLocalValue,
+  validateNameLike,
+} from '@/lib/formFieldValidation';
 
 export default function AdminProductCampaignNewPage() {
   const router = useRouter();
@@ -17,16 +23,31 @@ export default function AdminProductCampaignNewPage() {
   const [fandoms, setFandoms] = useState('');
   const [applyToAllProducts, setApplyToAllProducts] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [startError, setStartError] = useState<string | null>(null);
 
   const save = async () => {
-    if (!name.trim() || !startsAt || !endsAt) {
+    const normalizedName = normalizeWhitespace(name);
+    const nameErr = validateNameLike(normalizedName, 'Campaign name');
+    setNameError(nameErr);
+    if (nameErr) {
+      toast.error(nameErr);
+      return;
+    }
+    if (!startsAt || !endsAt) {
       toast.error('Name and dates required');
       return;
     }
+    if (isDateInputInPast(startsAt)) {
+      setStartError('Start date cannot be in the past');
+      toast.error('Start date cannot be in the past');
+      return;
+    }
+    setStartError(null);
     setSaving(true);
     try {
       const body: Record<string, unknown> = {
-        name: name.trim(),
+        name: normalizedName,
         startsAt: new Date(startsAt).toISOString(),
         endsAt: new Date(endsAt).toISOString(),
         bonusPoints: parseInt(bonusPoints, 10) || 0,
@@ -64,10 +85,19 @@ export default function AdminProductCampaignNewPage() {
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Name</span>
             <input
-              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
+              className={`mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none ${
+                nameError ? 'border-red-500' : 'border-hos-border'
+              }`}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (nameError) setNameError(null);
+              }}
+              aria-invalid={!!nameError}
             />
+            {nameError && (
+              <span className="mt-1 block text-sm text-red-400" role="alert">{nameError}</span>
+            )}
           </label>
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Bonus points (per qualifying unit)</span>
@@ -82,15 +112,26 @@ export default function AdminProductCampaignNewPage() {
             <span className="text-hos-text-secondary">Starts (local)</span>
             <input
               type="datetime-local"
-              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
+              min={nowDateTimeLocalValue()}
+              className={`mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none ${
+                startError ? 'border-red-500' : 'border-hos-border'
+              }`}
               value={startsAt}
-              onChange={(e) => setStartsAt(e.target.value)}
+              onChange={(e) => {
+                setStartsAt(e.target.value);
+                if (startError) setStartError(null);
+              }}
+              aria-invalid={!!startError}
             />
+            {startError && (
+              <span className="mt-1 block text-sm text-red-400" role="alert">{startError}</span>
+            )}
           </label>
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Ends (local)</span>
             <input
               type="datetime-local"
+              min={startsAt || nowDateTimeLocalValue()}
               className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={endsAt}
               onChange={(e) => setEndsAt(e.target.value)}

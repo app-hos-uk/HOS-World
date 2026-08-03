@@ -114,6 +114,21 @@ function ReturnDetailContent() {
 
   const currency = returnRequest.order?.currency || 'USD';
 
+  const formatReturnStatus = (status: string) => {
+    const labels: Record<string, string> = {
+      pending: 'Return Requested',
+      approved: 'Return Approved',
+      rejected: 'Return Rejected',
+      awaiting_customer_return: 'Awaiting Customer Return',
+      item_received: 'Item Received',
+      refund_pending: 'Refund Pending',
+      processing: 'Refund Pending',
+      completed: 'Return Completed',
+      cancelled: 'Cancelled',
+    };
+    return labels[(status || '').toLowerCase()] || status;
+  };
+
   return shell(
     <div className="max-w-2xl mx-auto">
       <Link href={backHref} className="text-hos-gold hover:text-hos-gold-hover mb-4 inline-block">
@@ -166,8 +181,8 @@ function ReturnDetailContent() {
           <div>
             <dt className="text-sm font-medium text-hos-text-muted">Status</dt>
             <dd className="mt-1">
-              <span className="px-2 py-1 text-xs font-medium rounded-full bg-hos-bg-tertiary text-hos-text-secondary capitalize">
-                {returnRequest.status || 'N/A'}
+              <span className="px-2 py-1 text-xs font-medium rounded-full bg-hos-bg-tertiary text-hos-text-secondary">
+                {formatReturnStatus(returnRequest.status || 'N/A')}
               </span>
             </dd>
           </div>

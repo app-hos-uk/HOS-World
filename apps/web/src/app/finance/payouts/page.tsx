@@ -84,11 +84,14 @@ export default function FinancePayoutsPage() {
     };
   }, [fetchPayouts]);
 
+  const normalizePayoutStatus = (status: string) =>
+    status === 'COMPLETED' ? 'PAID' : status;
+
   const payoutList = Array.isArray(payouts) ? payouts : [];
   const filteredPayouts =
     activeTab === 'ALL'
       ? payoutList
-      : payoutList.filter((p) => p.status === activeTab);
+      : payoutList.filter((p) => normalizePayoutStatus(p.status) === activeTab);
 
   const handleSchedulePayout = async () => {
     if (!scheduleForm.sellerId.trim()) {
@@ -171,7 +174,7 @@ export default function FinancePayoutsPage() {
             const count =
               tab === 'ALL'
                 ? payoutList.length
-                : payoutList.filter((p) => p.status === tab).length;
+                : payoutList.filter((p) => normalizePayoutStatus(p.status) === tab).length;
             return (
               <button
                 key={tab}
@@ -286,10 +289,11 @@ export default function FinancePayoutsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2.5 py-1 text-xs font-medium rounded-full ${
-                            STATUS_STYLES[payout.status] || 'bg-hos-bg-tertiary text-hos-text-secondary'
+                            STATUS_STYLES[normalizePayoutStatus(payout.status)] ||
+                            'bg-hos-bg-tertiary text-hos-text-secondary'
                           }`}
                         >
-                          {payout.status}
+                          {normalizePayoutStatus(payout.status)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">

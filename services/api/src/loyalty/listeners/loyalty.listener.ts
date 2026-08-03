@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger, Optional, forwardRef } from '@nestjs/common';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { LoyaltyWalletService } from '../services/wallet.service';
 import { LoyaltyTierEngine } from '../engines/tier.engine';
@@ -190,16 +191,44 @@ export class LoyaltyListener {
   }
 
   /**
+   * Award review points on submit (PENDING) or approve (APPROVED).
+   * Idempotent by review id — approve after submit will not double-award.
    * @returns Points awarded (0 if skipped).
    */
   async onReviewSubmitted(userId: string, reviewId: string): Promise<number> {
     if (!this.runtimeEnabled()) return 0;
 
-    const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
-    if (!membership) return 0;
+    let membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
+    if (!membership) {
+      // Auto-enroll customers who review before joining so REVIEW earn rules still fire
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (!user || user.role !== 'CUSTOMER') return 0;
+      let tier = await this.prisma.loyaltyTier.findFirst({
+        where: { slug: 'initiate', isActive: true },
+      });
+      if (!tier) return 0;
+      try {
+        const prefix = this.config.get<string>('LOYALTY_CARD_PREFIX', 'HOS');
+        membership = await this.prisma.loyaltyMembership.create({
+          data: {
+            userId,
+            tierId: tier.id,
+            regionCode: user.country || 'GB',
+            preferredCurrency: user.currencyPreference || 'USD',
+            enrollmentChannel: 'AUTO_REVIEW',
+            cardNumber: `${prefix}-${randomBytes(4).toString('hex').toUpperCase()}-${randomBytes(2).toString('hex').toUpperCase()}`,
+            birthday: user.birthday ?? undefined,
+          },
+        });
+      } catch {
+        membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
+        if (!membership) return 0;
+      }
+    }
 
     const review = await this.prisma.productReview.findUnique({ where: { id: reviewId } });
-    if (!review || review.status !== 'APPROVED') return 0;
+    // Award on submit (PENDING) or approve; ignore rejected reviews
+    if (!review || (review.status !== 'APPROVED' && review.status !== 'PENDING')) return 0;
 
     const text = `${review.comment ?? ''} ${review.title ?? ''}`;
     const isPhoto =
@@ -220,13 +249,15 @@ export class LoyaltyListener {
     const rule = await this.prisma.loyaltyEarnRule.findFirst({
       where: { action, isActive: true },
     });
+    // Prefer configured active rule; fall back so reviews still earn without admin seed
     const fallback = isPhoto ? 50 : 25;
     const pts = rule?.pointsAmount ?? fallback;
+    if (pts <= 0) return 0;
     if (!(await this.isWithinLimits(membership.id, action, rule))) return 0;
 
     try {
       await this.prisma.$transaction(async (tx) => {
-        await this.wallet.applyDelta(tx, membership.id, pts, LoyaltyTxType.EARN, {
+        await this.wallet.applyDelta(tx, membership!.id, pts, LoyaltyTxType.EARN, {
           source: action,
           sourceId: reviewId,
           channel: 'WEB',
@@ -234,7 +265,7 @@ export class LoyaltyListener {
           description: isPhoto ? 'Photo product review' : 'Product review reward',
         });
         await tx.loyaltyMembership.update({
-          where: { id: membership.id },
+          where: { id: membership!.id },
           data: {
             totalPointsEarned: { increment: pts },
             engagementCount: { increment: 1 },

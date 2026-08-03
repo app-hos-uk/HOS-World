@@ -10,6 +10,7 @@ import { isProtectedAdminEmail, isSuperAdminEmail } from '@/lib/protectedAdminEm
 import { DataExport } from '@/components/DataExport';
 import { VirtualizedTableBody } from '@/components/VirtualizedTableBody';
 import { avatarColorClass } from '@/lib/adminFormat';
+import { normalizeWhitespace, validateNameLike } from '@/lib/formFieldValidation';
 import {
   AdminColumnToggle,
   useAdminColumnVisibility,
@@ -356,6 +357,16 @@ export default function AdminUsersPage() {
         return;
       }
 
+      const firstName = normalizeWhitespace(createForm.firstName);
+      const lastName = normalizeWhitespace(createForm.lastName);
+      const firstNameErr = validateNameLike(firstName, 'First name', { required: false });
+      const lastNameErr = validateNameLike(lastName, 'Last name', { required: false });
+      if (firstNameErr || lastNameErr) {
+        toast.error(firstNameErr || lastNameErr || 'Invalid name');
+        setActionLoading(false);
+        return;
+      }
+
       const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
       if (sellerRoles.includes(createForm.role) && !createForm.storeName) {
         toast.error('Store name is required for seller roles');
@@ -366,8 +377,8 @@ export default function AdminUsersPage() {
       const payload: any = {
         email: createForm.email,
         password: createForm.password,
-        firstName: createForm.firstName || undefined,
-        lastName: createForm.lastName || undefined,
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
         phone: createForm.phone || undefined,
         role: createForm.role,
         // Admin specific
@@ -844,13 +855,10 @@ export default function AdminUsersPage() {
                     onToggle={toggleUserColumn}
                     onReset={resetUserColumns}
                   />
-                  <button onClick={selectAll} className="text-sm text-hos-gold hover:text-hos-gold-hover">
-                    {selectedUsers.size === filteredUsers.length ? 'Deselect All' : 'Select All'}
-                  </button>
                 </div>
               </div>
               <div ref={tableScrollRef} className="overflow-auto max-h-[500px] overflow-x-auto">
-                <table className="admin-table min-w-full divide-y divide-hos-border">
+                <table className="admin-table table-auto min-w-full divide-y divide-hos-border">
                   <thead className="bg-hos-bg-secondary sticky top-0 z-10">
                     <tr>
                       {isUserColumnVisible('select') && (
@@ -875,9 +883,8 @@ export default function AdminUsersPage() {
                     items={filteredUsers}
                     scrollRef={tableScrollRef}
                     getRowClassName={(user) =>
-                      `admin-table-row-clickable ${selectedUsers.has(user.id) ? 'bg-hos-gold/10' : ''}`
+                      selectedUsers.has(user.id) ? 'bg-hos-gold/10' : ''
                     }
-                    onRowClick={(user) => handleViewDetails(user)}
                     renderRow={(user) => (
                       <>
                         {isUserColumnVisible('select') && (

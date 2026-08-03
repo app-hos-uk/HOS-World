@@ -5,6 +5,12 @@ import { TipTapEditor } from './TipTapEditor';
 import { SEOPanel } from './SEOPanel';
 import { ImageUploader } from './ImageUploader';
 import { apiClient } from '@/lib/api';
+import {
+  normalizeWhitespace,
+  validateHttpUrl,
+  validateNameLike,
+  validateOptionalDescriptiveText,
+} from '@/lib/formFieldValidation';
 
 export interface BlogFormData {
   title: string;
@@ -50,6 +56,8 @@ export function BlogEditor({
 }: BlogEditorProps) {
   const [form, setForm] = useState<BlogFormData>(initialData);
   const [slugManual, setSlugManual] = useState(Boolean(initialData.slug));
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof BlogFormData, string>>>({});
+  const [formError, setFormError] = useState<string | null>(null);
 
   const updateField = (field: keyof BlogFormData, value: string) => {
     setForm((prev) => {
@@ -59,6 +67,13 @@ export function BlogEditor({
       }
       return next;
     });
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
   };
 
   const handleSeoChange = (field: string, value: string) => {
@@ -98,11 +113,66 @@ export function BlogEditor({
 
   const handleSubmit = async (e: React.FormEvent, status?: 'DRAFT' | 'PUBLISHED') => {
     e.preventDefault();
-    await onSave({ ...form, status: status || form.status });
+    const title = normalizeWhitespace(form.title);
+    const author = normalizeWhitespace(form.author);
+    const excerpt = normalizeWhitespace(form.excerpt);
+    const seoTitle = normalizeWhitespace(form.seoTitle);
+    const metaDescription = normalizeWhitespace(form.metaDescription);
+    const focusKeyword = normalizeWhitespace(form.focusKeyword);
+    const coverImageAlt = normalizeWhitespace(form.coverImageAlt);
+    const coverImageTitle = normalizeWhitespace(form.coverImageTitle);
+
+    const nextErrors: Partial<Record<keyof BlogFormData, string>> = {};
+    const titleErr = validateNameLike(title, 'Title');
+    if (titleErr) nextErrors.title = titleErr;
+    const authorErr = validateNameLike(author, 'Author');
+    if (authorErr) nextErrors.author = authorErr;
+    const excerptErr = validateNameLike(excerpt, 'Excerpt');
+    if (excerptErr) nextErrors.excerpt = excerptErr;
+    if (!form.content.replace(/<[^>]*>/g, '').trim()) {
+      nextErrors.content = 'Content is required';
+    }
+    const seoTitleErr = validateOptionalDescriptiveText(seoTitle, 'SEO title');
+    if (seoTitleErr) nextErrors.seoTitle = seoTitleErr;
+    const metaErr = validateOptionalDescriptiveText(metaDescription, 'Meta description');
+    if (metaErr) nextErrors.metaDescription = metaErr;
+    const focusErr = validateOptionalDescriptiveText(focusKeyword, 'Focus keyword');
+    if (focusErr) nextErrors.focusKeyword = focusErr;
+    const altErr = validateOptionalDescriptiveText(coverImageAlt, 'Cover image alt');
+    if (altErr) nextErrors.coverImageAlt = altErr;
+    const imgTitleErr = validateOptionalDescriptiveText(coverImageTitle, 'Cover image title');
+    if (imgTitleErr) nextErrors.coverImageTitle = imgTitleErr;
+    const canonicalErr = validateHttpUrl(form.canonicalUrl, 'Canonical URL');
+    if (canonicalErr) nextErrors.canonicalUrl = canonicalErr;
+
+    setFieldErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      setFormError(Object.values(nextErrors)[0] || 'Please fix the highlighted fields');
+      return;
+    }
+    setFormError(null);
+
+    await onSave({
+      ...form,
+      title,
+      author,
+      excerpt,
+      seoTitle,
+      metaDescription,
+      focusKeyword,
+      coverImageAlt,
+      coverImageTitle,
+      status: status || form.status,
+    });
   };
 
   return (
     <form onSubmit={(e) => handleSubmit(e)} className="space-y-6">
+      {formError && (
+        <div className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300" role="alert">
+          {formError}
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
           <div>
@@ -112,8 +182,14 @@ export function BlogEditor({
               required
               value={form.title}
               onChange={(e) => updateField('title', e.target.value)}
-              className="w-full px-3 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:border-hos-gold"
+              className={`w-full px-3 py-2 border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:border-hos-gold ${
+                fieldErrors.title ? 'border-red-500' : 'border-hos-border'
+              }`}
+              aria-invalid={!!fieldErrors.title}
             />
+            {fieldErrors.title && (
+              <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.title}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -137,8 +213,14 @@ export function BlogEditor({
                 required
                 value={form.author}
                 onChange={(e) => updateField('author', e.target.value)}
-                className="w-full px-3 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:border-hos-gold"
+                className={`w-full px-3 py-2 border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:border-hos-gold ${
+                  fieldErrors.author ? 'border-red-500' : 'border-hos-border'
+                }`}
+                aria-invalid={!!fieldErrors.author}
               />
+              {fieldErrors.author && (
+                <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.author}</p>
+              )}
             </div>
           </div>
 
@@ -149,8 +231,14 @@ export function BlogEditor({
               value={form.excerpt}
               onChange={(e) => updateField('excerpt', e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:border-hos-gold"
+              className={`w-full px-3 py-2 border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:border-hos-gold ${
+                fieldErrors.excerpt ? 'border-red-500' : 'border-hos-border'
+              }`}
+              aria-invalid={!!fieldErrors.excerpt}
             />
+            {fieldErrors.excerpt && (
+              <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.excerpt}</p>
+            )}
           </div>
 
           <div>
@@ -160,6 +248,9 @@ export function BlogEditor({
               onChange={(html) => updateField('content', html)}
               onImageUpload={handleImageUpload}
             />
+            {fieldErrors.content && (
+              <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.content}</p>
+            )}
           </div>
         </div>
 

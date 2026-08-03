@@ -20,6 +20,11 @@ describe('PayoutsService', () => {
     transactionAuditLog: {
       create: jest.fn(),
     },
+    settlement: {
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
     $transaction: jest.fn(async (fn: (tx: any) => Promise<any>) => fn(mockPrismaService)),
   };
 
@@ -99,7 +104,7 @@ describe('PayoutsService', () => {
   });
 
   describe('processPayout', () => {
-    it('should process payout successfully', async () => {
+    it('should process payout successfully and create PAID settlement', async () => {
       const transactionId = 'transaction-1';
       const mockTransaction = {
         id: transactionId,
@@ -107,23 +112,43 @@ describe('PayoutsService', () => {
         status: 'PENDING',
         amount: 100,
         currency: 'USD',
-        sellerId: null,
+        sellerId: 'seller-1',
+        settlementId: null,
+        description: 'Monthly payout',
+        metadata: {},
+        createdAt: new Date(),
       };
+      const createdSettlement = { id: 'settlement-1', status: 'PAID' };
       const updatedTransaction = {
         ...mockTransaction,
         status: 'COMPLETED',
+        settlementId: createdSettlement.id,
       };
 
       mockPrismaService.transaction.findUnique.mockResolvedValue(mockTransaction);
+      mockPrismaService.settlement.findFirst.mockResolvedValue(null);
+      mockPrismaService.settlement.create.mockResolvedValue(createdSettlement);
       mockPrismaService.transaction.update.mockResolvedValue(updatedTransaction);
       mockPrismaService.transactionAuditLog.create.mockResolvedValue({});
 
       const result = await service.processPayout(transactionId);
 
+      expect(mockPrismaService.settlement.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            sellerId: 'seller-1',
+            status: 'PAID',
+            netAmount: 100,
+          }),
+        }),
+      );
       expect(mockPrismaService.transaction.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: transactionId },
-          data: { status: 'COMPLETED' },
+          data: expect.objectContaining({
+            status: 'COMPLETED',
+            settlementId: createdSettlement.id,
+          }),
         }),
       );
       expect(result.status).toBe('COMPLETED');

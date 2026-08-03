@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LoyaltyTxType, Prisma } from '@prisma/client';
+import { LoyaltyTxType, Prisma, UserRole } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { LoyaltyWalletService } from '../services/wallet.service';
 import { LoyaltyCampaignService } from '../services/campaign.service';
@@ -25,6 +26,114 @@ export class LoyaltyEarnEngine {
     private brandPartnerships: BrandPartnershipsService,
     private productCampaigns: ProductCampaignsService,
   ) {}
+
+  /**
+   * Auto-enroll a customer into loyalty on first qualifying earn if they have
+   * no membership yet. Quiet (no welcome side-effects) so payment/POS paths
+   * are not blocked by notification failures.
+   */
+  private async ensureMembershipForUser(userId: string) {
+    const existing = await this.prisma.loyaltyMembership.findUnique({
+      where: { userId },
+      include: { tier: true },
+    });
+    if (existing) return existing;
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.role !== UserRole.CUSTOMER) return null;
+
+    let tier = await this.prisma.loyaltyTier.findFirst({
+      where: { slug: 'initiate', isActive: true },
+    });
+    if (!tier) {
+      try {
+        tier = await this.prisma.loyaltyTier.create({
+          data: {
+            name: 'Initiate',
+            slug: 'initiate',
+            level: 1,
+            pointsThreshold: 0,
+            multiplier: new Decimal(1),
+            benefits: { freeShipping: false, earlyAccessHours: 0 },
+            isActive: true,
+          },
+        });
+      } catch {
+        tier = await this.prisma.loyaltyTier.findFirst({
+          where: { slug: 'initiate', isActive: true },
+        });
+      }
+    }
+    if (!tier) {
+      this.logger.warn(`Cannot auto-enroll user ${userId}: Initiate tier missing`);
+      return null;
+    }
+
+    const prefix = this.config.get<string>('LOYALTY_CARD_PREFIX', 'HOS');
+    const cardNumber = `${prefix}-${randomBytes(4).toString('hex').toUpperCase()}-${randomBytes(2).toString('hex').toUpperCase()}`;
+
+    try {
+      return await this.prisma.loyaltyMembership.create({
+        data: {
+          userId,
+          tierId: tier.id,
+          regionCode: user.country || 'GB',
+          preferredCurrency: user.currencyPreference || 'USD',
+          enrollmentChannel: 'AUTO_PURCHASE',
+          cardNumber,
+          birthday: user.birthday ?? undefined,
+        },
+        include: { tier: true },
+      });
+    } catch {
+      // Concurrent enroll — return whatever now exists
+      return this.prisma.loyaltyMembership.findUnique({
+        where: { userId },
+        include: { tier: true },
+      });
+    }
+  }
+
+  /**
+   * Compute base points for a line. Seller.loyaltyEnabled gates seller-specific
+   * earn rates only; platform PURCHASE rules / default rate still apply.
+   */
+  private computeLinePoints(
+    itemTotal: Decimal,
+    quantity: number,
+    seller: { loyaltyEnabled: boolean; loyaltyEarnRate: Prisma.Decimal | null },
+    purchaseRule: {
+      isActive: boolean;
+      pointsType: string;
+      pointsAmount: number;
+    } | null,
+    platformDefaultRate: number,
+  ): { pts: Decimal; skippedDisabledSeller: boolean } {
+    if (seller.loyaltyEnabled && seller.loyaltyEarnRate != null) {
+      return { pts: itemTotal.mul(new Decimal(seller.loyaltyEarnRate)), skippedDisabledSeller: false };
+    }
+
+    const platformRule =
+      purchaseRule && purchaseRule.isActive !== false ? purchaseRule : null;
+
+    if (platformRule?.pointsType === 'PER_CURRENCY_UNIT') {
+      return { pts: itemTotal.mul(platformRule.pointsAmount), skippedDisabledSeller: false };
+    }
+    if (platformRule) {
+      return {
+        pts: new Decimal(platformRule.pointsAmount).mul(quantity),
+        skippedDisabledSeller: false,
+      };
+    }
+
+    // No active platform rule: only use default rate when seller participates,
+    // or when a positive platform default is configured (platform-wide earn).
+    if (seller.loyaltyEnabled || platformDefaultRate > 0) {
+      return { pts: itemTotal.mul(platformDefaultRate), skippedDisabledSeller: false };
+    }
+
+    return { pts: new Decimal(0), skippedDisabledSeller: !seller.loyaltyEnabled };
+  }
 
   /**
    * Resolve the "economic seller" for an order item, mirroring the checkout
@@ -278,16 +387,13 @@ export class LoyaltyEarnEngine {
     if (!order?.userId || order.items.length === 0) return;
     if (order.loyaltyPointsEarned > 0) return;
 
-    const membership = await this.prisma.loyaltyMembership.findUnique({
-      where: { userId: order.userId },
-      include: { tier: true },
-    });
+    const membership = await this.ensureMembershipForUser(order.userId);
     if (!membership) return;
 
     const purchaseRule = await this.prisma.loyaltyEarnRule.findUnique({
       where: { action: 'PURCHASE' },
     });
-    const platformDefaultRate = this.config.get<number>('LOYALTY_DEFAULT_EARN_RATE', 1);
+    const platformDefaultRate = Number(this.config.get('LOYALTY_DEFAULT_EARN_RATE', 1)) || 0;
     const hosSellerId = this.config.get<string>('HOS_SELLER_ID') || '';
 
     let basePoints = new Decimal(0);
@@ -308,24 +414,21 @@ export class LoyaltyEarnEngine {
 
       const seller = await this.resolveSellerForItem(p, hosSellerId);
       if (!seller) continue;
-      if (!seller.loyaltyEnabled) {
-        skippedDisabledSeller++;
-        continue;
-      }
 
       sellerIds.push(seller.id);
       const itemTotal = new Decimal(line.price).mul(line.quantity);
-
-      let pts: Decimal;
-      if (seller.loyaltyEarnRate != null) {
-        pts = itemTotal.mul(new Decimal(seller.loyaltyEarnRate));
-      } else if (purchaseRule?.pointsType === 'PER_CURRENCY_UNIT') {
-        pts = itemTotal.mul(purchaseRule.pointsAmount);
-      } else if (purchaseRule) {
-        pts = new Decimal(purchaseRule.pointsAmount).mul(line.quantity);
-      } else {
-        pts = itemTotal.mul(platformDefaultRate);
+      const { pts, skippedDisabledSeller: skipped } = this.computeLinePoints(
+        itemTotal,
+        line.quantity,
+        seller,
+        purchaseRule,
+        platformDefaultRate,
+      );
+      if (skipped) {
+        skippedDisabledSeller++;
+        continue;
       }
+      if (pts.lte(0)) continue;
 
       basePoints = basePoints.add(pts);
       lines.push({
@@ -521,16 +624,13 @@ export class LoyaltyEarnEngine {
     if (!sale?.customerId || sale.items.length === 0) return;
     if (sale.loyaltyPointsEarned > 0) return;
 
-    const membership = await this.prisma.loyaltyMembership.findUnique({
-      where: { userId: sale.customerId },
-      include: { tier: true },
-    });
+    const membership = await this.ensureMembershipForUser(sale.customerId);
     if (!membership) return;
 
     const purchaseRule = await this.prisma.loyaltyEarnRule.findUnique({
       where: { action: 'PURCHASE' },
     });
-    const platformDefaultRate = this.config.get<number>('LOYALTY_DEFAULT_EARN_RATE', 1);
+    const platformDefaultRate = Number(this.config.get('LOYALTY_DEFAULT_EARN_RATE', 1)) || 0;
     const hosSellerId = this.config.get<string>('HOS_SELLER_ID') || '';
 
     let basePoints = new Decimal(0);
@@ -551,24 +651,21 @@ export class LoyaltyEarnEngine {
 
       const seller = await this.resolveSellerForItem(p, hosSellerId);
       if (!seller) continue;
-      if (!seller.loyaltyEnabled) {
-        skippedDisabledSeller++;
-        continue;
-      }
 
       sellerIds.push(seller.id);
       const itemTotal = new Decimal(line.unitPrice).mul(line.quantity);
-
-      let pts: Decimal;
-      if (seller.loyaltyEarnRate != null) {
-        pts = itemTotal.mul(new Decimal(seller.loyaltyEarnRate));
-      } else if (purchaseRule?.pointsType === 'PER_CURRENCY_UNIT') {
-        pts = itemTotal.mul(purchaseRule.pointsAmount);
-      } else if (purchaseRule) {
-        pts = new Decimal(purchaseRule.pointsAmount).mul(line.quantity);
-      } else {
-        pts = itemTotal.mul(platformDefaultRate);
+      const { pts, skippedDisabledSeller: skipped } = this.computeLinePoints(
+        itemTotal,
+        line.quantity,
+        seller,
+        purchaseRule,
+        platformDefaultRate,
+      );
+      if (skipped) {
+        skippedDisabledSeller++;
+        continue;
       }
+      if (pts.lte(0)) continue;
 
       basePoints = basePoints.add(pts);
       lines.push({

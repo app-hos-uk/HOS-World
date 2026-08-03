@@ -178,27 +178,49 @@ select option {
   color: var(--color-text-primary);
 }
 
-a {
-  color: var(--color-accent-gold);
-  text-decoration: none;
-  transition: color 0.2s ease;
+/* Keep default link styles in @layer base so Tailwind text-* / hover:text-* utilities can override them.
+   Unlayered a:hover previously beat text-[#1a1406] on gold CTAs and made hover text invisible. */
+@layer base {
+  a {
+    color: var(--color-accent-gold);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  a:hover {
+    color: var(--color-accent-gold-hover);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--color-text-primary);
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    line-height: 1.28;
+  }
 }
 
-a:hover {
-  color: var(--color-accent-gold-hover);
+/* Gold CTAs: always keep dark text on gold backgrounds (hover included). */
+a.bg-hos-gold,
+a[class*='bg-hos-gold'],
+button.bg-hos-gold,
+button[class*='bg-hos-gold'],
+label.bg-hos-gold,
+label[class*='bg-hos-gold'] {
+  color: #1a1406;
 }
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  color: var(--color-text-primary);
-  font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: 0.02em;
-  line-height: 1.28;
+a.bg-hos-gold:hover,
+a[class*='bg-hos-gold']:hover,
+button.bg-hos-gold:hover,
+button[class*='bg-hos-gold']:hover,
+label.bg-hos-gold:hover,
+label[class*='bg-hos-gold']:hover {
+  color: #1a1406;
 }
 
 /* Tabular numbers for stats and metrics */
@@ -274,6 +296,7 @@ h6 {
   /* Table Improvements */
   .admin-table {
     @apply min-w-full divide-y divide-hos-border;
+    table-layout: auto;
   }
   
   .admin-table thead {

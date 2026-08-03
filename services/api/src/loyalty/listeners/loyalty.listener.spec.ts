@@ -10,8 +10,11 @@ function makeMocks() {
     },
     loyaltyMembership: {
       findUnique: jest.fn(),
+      create: jest.fn(),
       update: jest.fn(),
     },
+    loyaltyTier: { findFirst: jest.fn() },
+    user: { findUnique: jest.fn() },
     loyaltyEarnRule: { findFirst: jest.fn(), findUnique: jest.fn() },
     loyaltyTransaction: { findFirst: jest.fn(), count: jest.fn().mockResolvedValue(0) },
     productReview: { findUnique: jest.fn() },
@@ -130,11 +133,41 @@ describe('LoyaltyListener', () => {
     expect(wallet.applyDelta).not.toHaveBeenCalled();
   });
 
-  it('onReviewSubmitted skips when no membership', async () => {
+  it('onReviewSubmitted skips when no membership and user cannot enroll', async () => {
     const { listener, prisma } = makeMocks();
     prisma.loyaltyMembership.findUnique.mockResolvedValue(null);
+    prisma.user.findUnique.mockResolvedValue(null);
     const n = await listener.onReviewSubmitted('u1', 'r1');
     expect(n).toBe(0);
+  });
+
+  it('onReviewSubmitted awards on PENDING submit', async () => {
+    const { listener, prisma, wallet } = makeMocks();
+    prisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'm1' });
+    prisma.productReview.findUnique.mockResolvedValue({
+      id: 'r1',
+      status: 'PENDING',
+      comment: 'Great product',
+      title: null,
+      images: [],
+    });
+    prisma.loyaltyTransaction.findFirst.mockResolvedValue(null);
+    prisma.loyaltyEarnRule.findFirst.mockResolvedValue({
+      id: 'rule1',
+      action: 'REVIEW',
+      pointsAmount: 25,
+      maxPerDay: null,
+      maxPerMonth: null,
+    });
+    const n = await listener.onReviewSubmitted('u1', 'r1');
+    expect(n).toBe(25);
+    expect(wallet.applyDelta).toHaveBeenCalledWith(
+      expect.anything(),
+      'm1',
+      25,
+      LoyaltyTxType.EARN,
+      expect.objectContaining({ source: 'REVIEW', sourceId: 'r1' }),
+    );
   });
 
   it('onReviewSubmitted skips duplicate review earn', async () => {

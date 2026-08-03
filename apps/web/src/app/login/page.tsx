@@ -90,7 +90,21 @@ function LoginPageInner() {
     const returnParam = searchParams.get('returnUrl') ?? searchParams.get('redirect');
     stashAuthReturnUrl(returnParam);
     const inviteParam = searchParams.get('invite');
-    if (inviteParam) setInviteCode(inviteParam);
+    if (inviteParam) {
+      setInviteCode(inviteParam);
+      try {
+        sessionStorage.setItem('hos_invite_code', inviteParam);
+      } catch {
+        /* ignore */
+      }
+    } else {
+      try {
+        const stashed = sessionStorage.getItem('hos_invite_code');
+        if (stashed) setInviteCode(stashed);
+      } catch {
+        /* ignore */
+      }
+    }
     try {
       const checkoutEmail = sessionStorage.getItem('hos_checkout_email');
       if (checkoutEmail) {
@@ -264,6 +278,16 @@ function LoginPageInner() {
       
       const pendingReferral = getPendingReferralCode();
 
+      // Always prefer live query param, then state, then session stash — never drop invite=founding.
+      let resolvedInvite = (inviteCode || searchParams.get('invite') || '').trim();
+      if (!resolvedInvite) {
+        try {
+          resolvedInvite = (sessionStorage.getItem('hos_invite_code') || '').trim();
+        } catch {
+          /* ignore */
+        }
+      }
+
       const response = await apiClient.register({
         email,
         password,
@@ -275,7 +299,7 @@ function LoginPageInner() {
         preferredCommunicationMethod,
         gdprConsent,
         dataProcessingConsent,
-        ...(inviteCode ? { inviteCode } : {}),
+        ...(resolvedInvite ? { inviteCode: resolvedInvite } : {}),
         ...(pendingReferral ? { referralCode: pendingReferral } : {}),
       });
       if (!response || !response.data) {
@@ -303,6 +327,11 @@ function LoginPageInner() {
 
       setFrontendSessionCookie();
       markLoginSuccess();
+      try {
+        sessionStorage.removeItem('hos_invite_code');
+      } catch {
+        /* ignore */
+      }
 
       const returnParam = searchParams.get('returnUrl') ?? searchParams.get('redirect');
       const redirectPath = resolvePostRegisterRedirect(user?.role?.toUpperCase(), returnParam);
@@ -901,8 +930,9 @@ function LoginPageInner() {
                 onClick={() => {
                   setIsLogin(!isLogin);
                   setError('');
-                  // Reset registration fields when switching to login
-                  if (isLogin) {
+                  // Reset registration fields when switching away from signup → login.
+                  // Never clear inviteCode: founding invite links must survive Login ↔ Sign up toggles.
+                  if (!isLogin) {
                     setFirstName('');
                     setLastName('');
                     setCountry('');
@@ -911,7 +941,19 @@ function LoginPageInner() {
                     setGdprConsent(false);
                     setDataProcessingConsent({ marketing: false, analytics: false, essential: true });
                     setDetectedCountry(null);
-                    setInviteCode('');
+                  } else {
+                    // Switching login → signup: restore invite from URL / session if state was empty
+                    const fromUrl = searchParams.get('invite');
+                    if (fromUrl) {
+                      setInviteCode(fromUrl);
+                    } else if (!inviteCode) {
+                      try {
+                        const stashed = sessionStorage.getItem('hos_invite_code');
+                        if (stashed) setInviteCode(stashed);
+                      } catch {
+                        /* ignore */
+                      }
+                    }
                   }
                 }}
                 className="text-hos-gold hover:underline text-sm"

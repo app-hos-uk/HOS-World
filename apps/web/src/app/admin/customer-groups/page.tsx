@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import {
+  normalizeWhitespace,
+  validateNameLike,
+  validateOptionalDescriptiveText,
+} from '@/lib/formFieldValidation';
 
 interface CustomerGroup {
   id: string;
@@ -48,6 +53,7 @@ export default function AdminCustomerGroupsPage() {
     type: 'REGULAR',
     isActive: true,
   });
+  const [createErrors, setCreateErrors] = useState<{ name?: string; description?: string }>({});
 
   const [editForm, setEditForm] = useState({
     name: '',
@@ -55,6 +61,7 @@ export default function AdminCustomerGroupsPage() {
     type: 'REGULAR',
     isActive: true,
   });
+  const [editErrors, setEditErrors] = useState<{ name?: string; description?: string }>({});
 
   useEffect(() => {
     fetchGroups();
@@ -82,8 +89,16 @@ export default function AdminCustomerGroupsPage() {
   };
 
   const handleCreate = async () => {
-    if (!createForm.name.trim()) {
-      toast.error('Group name is required');
+    const name = normalizeWhitespace(createForm.name);
+    const description = normalizeWhitespace(createForm.description);
+    const nameErr = validateNameLike(name, 'Group name');
+    const descriptionErr = validateOptionalDescriptiveText(description, 'Description');
+    setCreateErrors({
+      name: nameErr || undefined,
+      description: descriptionErr || undefined,
+    });
+    if (nameErr || descriptionErr) {
+      toast.error(nameErr || descriptionErr || 'Please fix the highlighted fields');
       return;
     }
 
@@ -91,8 +106,8 @@ export default function AdminCustomerGroupsPage() {
       setActionLoading(true);
       await toast.promise(
         apiClient.createCustomerGroup({
-          name: createForm.name.trim(),
-          description: createForm.description.trim() || undefined,
+          name,
+          description: description || undefined,
           type: createForm.type,
           isActive: createForm.isActive,
         }),
@@ -104,6 +119,7 @@ export default function AdminCustomerGroupsPage() {
       );
       setShowCreateModal(false);
       setCreateForm({ name: '', description: '', type: 'REGULAR', isActive: true });
+      setCreateErrors({});
       await fetchGroups();
     } catch (err: any) {
       console.error('Error creating customer group:', err);
@@ -126,8 +142,16 @@ export default function AdminCustomerGroupsPage() {
   const handleUpdate = async () => {
     if (!selectedGroup) return;
 
-    if (!editForm.name.trim()) {
-      toast.error('Group name is required');
+    const name = normalizeWhitespace(editForm.name);
+    const description = normalizeWhitespace(editForm.description);
+    const nameErr = validateNameLike(name, 'Group name');
+    const descriptionErr = validateOptionalDescriptiveText(description, 'Description');
+    setEditErrors({
+      name: nameErr || undefined,
+      description: descriptionErr || undefined,
+    });
+    if (nameErr || descriptionErr) {
+      toast.error(nameErr || descriptionErr || 'Please fix the highlighted fields');
       return;
     }
 
@@ -135,8 +159,8 @@ export default function AdminCustomerGroupsPage() {
       setActionLoading(true);
       await toast.promise(
         apiClient.updateCustomerGroup(selectedGroup.id, {
-          name: editForm.name.trim(),
-          description: editForm.description.trim() || undefined,
+          name,
+          description: description || undefined,
           type: editForm.type,
           isActive: editForm.isActive,
         }),
@@ -322,10 +346,19 @@ export default function AdminCustomerGroupsPage() {
                     <input
                       type="text"
                       value={createForm.name}
-                      onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                      onChange={(e) => {
+                        setCreateForm({ ...createForm, name: e.target.value });
+                        if (createErrors.name) setCreateErrors((p) => ({ ...p, name: undefined }));
+                      }}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none ${
+                        createErrors.name ? 'border-red-500' : 'border-hos-border'
+                      }`}
                       placeholder="e.g., VIP Customers"
+                      aria-invalid={!!createErrors.name}
                     />
+                    {createErrors.name && (
+                      <p className="mt-1 text-sm text-red-400" role="alert">{createErrors.name}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-hos-text-secondary mb-1">
@@ -333,11 +366,20 @@ export default function AdminCustomerGroupsPage() {
                     </label>
                     <textarea
                       value={createForm.description}
-                      onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                      onChange={(e) => {
+                        setCreateForm({ ...createForm, description: e.target.value });
+                        if (createErrors.description) setCreateErrors((p) => ({ ...p, description: undefined }));
+                      }}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none ${
+                        createErrors.description ? 'border-red-500' : 'border-hos-border'
+                      }`}
                       rows={3}
                       placeholder="Group description..."
+                      aria-invalid={!!createErrors.description}
                     />
+                    {createErrors.description && (
+                      <p className="mt-1 text-sm text-red-400" role="alert">{createErrors.description}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-hos-text-secondary mb-1">
@@ -398,9 +440,18 @@ export default function AdminCustomerGroupsPage() {
                     <input
                       type="text"
                       value={editForm.name}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                      onChange={(e) => {
+                        setEditForm({ ...editForm, name: e.target.value });
+                        if (editErrors.name) setEditErrors((p) => ({ ...p, name: undefined }));
+                      }}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none ${
+                        editErrors.name ? 'border-red-500' : 'border-hos-border'
+                      }`}
+                      aria-invalid={!!editErrors.name}
                     />
+                    {editErrors.name && (
+                      <p className="mt-1 text-sm text-red-400" role="alert">{editErrors.name}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-hos-text-secondary mb-1">
@@ -408,10 +459,19 @@ export default function AdminCustomerGroupsPage() {
                     </label>
                     <textarea
                       value={editForm.description}
-                      onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                      className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                      onChange={(e) => {
+                        setEditForm({ ...editForm, description: e.target.value });
+                        if (editErrors.description) setEditErrors((p) => ({ ...p, description: undefined }));
+                      }}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none ${
+                        editErrors.description ? 'border-red-500' : 'border-hos-border'
+                      }`}
                       rows={3}
+                      aria-invalid={!!editErrors.description}
                     />
+                    {editErrors.description && (
+                      <p className="mt-1 text-sm text-red-400" role="alert">{editErrors.description}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-hos-text-secondary mb-1">

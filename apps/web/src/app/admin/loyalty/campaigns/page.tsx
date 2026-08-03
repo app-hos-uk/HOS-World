@@ -4,13 +4,29 @@ import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import {
+  isDateInputInPast,
+  normalizeWhitespace,
+  nowDateTimeLocalValue,
+  validateNameLike,
+  validateOptionalDescriptiveText,
+} from '@/lib/formFieldValidation';
 
 export default function AdminLoyaltyCampaignsPage() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
-  const [form, setForm] = useState({ name: '', description: '', multiplier: 2, startsAt: '', endsAt: '', isActive: true });
+  const [form, setForm] = useState({
+    name: '',
+    description: '',
+    type: 'MULTIPLIER',
+    multiplier: 2,
+    startsAt: '',
+    endsAt: '',
+    isActive: true,
+  });
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; description?: string; startsAt?: string; endsAt?: string }>({});
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
@@ -29,7 +45,8 @@ export default function AdminLoyaltyCampaignsPage() {
   useEffect(() => { load(); }, [load]);
 
   const resetForm = () => {
-    setForm({ name: '', description: '', multiplier: 2, startsAt: '', endsAt: '', isActive: true });
+    setForm({ name: '', description: '', type: 'MULTIPLIER', multiplier: 2, startsAt: '', endsAt: '', isActive: true });
+    setFieldErrors({});
     setEditing(null);
     setShowForm(false);
   };
@@ -39,6 +56,7 @@ export default function AdminLoyaltyCampaignsPage() {
     setForm({
       name: c.name || '',
       description: c.description || '',
+      type: c.type || 'MULTIPLIER',
       multiplier: c.multiplier || 2,
       startsAt: c.startsAt ? new Date(c.startsAt).toISOString().slice(0, 16) : '',
       endsAt: c.endsAt ? new Date(c.endsAt).toISOString().slice(0, 16) : '',
@@ -48,13 +66,39 @@ export default function AdminLoyaltyCampaignsPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) { toast.error('Name is required'); return; }
+    const name = normalizeWhitespace(form.name);
+    const description = normalizeWhitespace(form.description);
+    const nameErr = validateNameLike(name, 'Campaign name');
+    const descriptionErr = validateOptionalDescriptiveText(description, 'Description');
+    let startsAtErr: string | null = null;
+    let endsAtErr: string | null = null;
+    if (!form.startsAt) startsAtErr = 'Start date is required';
+    else if (!editing && isDateInputInPast(form.startsAt)) startsAtErr = 'Start date cannot be in the past';
+    if (!form.endsAt) endsAtErr = 'End date is required';
+    else if (!editing && isDateInputInPast(form.endsAt)) endsAtErr = 'End date cannot be in the past';
+    else if (form.startsAt && form.endsAt && form.endsAt < form.startsAt) {
+      endsAtErr = 'End date must be after start date';
+    }
+    setFieldErrors({
+      name: nameErr || undefined,
+      description: descriptionErr || undefined,
+      startsAt: startsAtErr || undefined,
+      endsAt: endsAtErr || undefined,
+    });
+    if (nameErr || descriptionErr || startsAtErr || endsAtErr) {
+      toast.error(nameErr || descriptionErr || startsAtErr || endsAtErr || 'Please fix the form fields');
+      return;
+    }
     setSaving(true);
     try {
       const payload = {
-        ...form,
-        startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : undefined,
-        endsAt: form.endsAt ? new Date(form.endsAt).toISOString() : undefined,
+        name,
+        description: description || undefined,
+        type: form.type || 'MULTIPLIER',
+        multiplier: form.multiplier,
+        isActive: form.isActive,
+        startsAt: new Date(form.startsAt).toISOString(),
+        endsAt: new Date(form.endsAt).toISOString(),
       };
       if (editing) {
         await apiClient.adminUpdateLoyaltyCampaign(editing.id, payload);
@@ -109,19 +153,29 @@ export default function AdminLoyaltyCampaignsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Name</label>
-                <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="e.g. Double Points Weekend" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                <input className={`w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none ${fieldErrors.name ? 'border-red-500' : 'border-hos-border'}`} placeholder="e.g. Double Points Weekend" value={form.name} onChange={(e) => { setForm({ ...form, name: e.target.value }); if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: undefined })); }} aria-invalid={!!fieldErrors.name} />
+                {fieldErrors.name && <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.name}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Multiplier</label>
                 <input type="number" step="0.5" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.multiplier} onChange={(e) => setForm({ ...form, multiplier: parseFloat(e.target.value) || 1 })} />
               </div>
               <div>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Type</label>
+                <select className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+                  <option value="MULTIPLIER">Multiplier</option>
+                  <option value="BONUS_POINTS">Bonus Points</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Starts At</label>
-                <input type="datetime-local" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} />
+                <input type="datetime-local" min={editing ? undefined : nowDateTimeLocalValue()} className={`w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none ${fieldErrors.startsAt ? 'border-red-500' : 'border-hos-border'}`} value={form.startsAt} onChange={(e) => { setForm({ ...form, startsAt: e.target.value }); if (fieldErrors.startsAt) setFieldErrors((p) => ({ ...p, startsAt: undefined })); }} aria-invalid={!!fieldErrors.startsAt} />
+                {fieldErrors.startsAt && <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.startsAt}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Ends At</label>
-                <input type="datetime-local" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.endsAt} onChange={(e) => setForm({ ...form, endsAt: e.target.value })} />
+                <input type="datetime-local" min={editing ? undefined : nowDateTimeLocalValue()} className={`w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none ${fieldErrors.endsAt ? 'border-red-500' : 'border-hos-border'}`} value={form.endsAt} onChange={(e) => { setForm({ ...form, endsAt: e.target.value }); if (fieldErrors.endsAt) setFieldErrors((p) => ({ ...p, endsAt: undefined })); }} aria-invalid={!!fieldErrors.endsAt} />
+                {fieldErrors.endsAt && <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.endsAt}</p>}
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>

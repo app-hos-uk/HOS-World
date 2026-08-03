@@ -39,8 +39,10 @@ export function sanitizeOpsPhoneInput(value: string): string {
   return value.replace(/\u00A0/g, ' ').replace(/[^\d\s\-+().]/g, '');
 }
 
+export const POSTAL_CODE_MAX_LENGTH = 16;
+
 export function sanitizePostalInput(value: string): string {
-  return value.replace(/[^\p{L}\p{N}\s\-]/gu, '');
+  return value.replace(/[^\p{L}\p{N}\s\-]/gu, '').slice(0, POSTAL_CODE_MAX_LENGTH);
 }
 
 /**
@@ -51,16 +53,10 @@ export function sanitizePostalInput(value: string): string {
 export function sanitizeLabelInput(value: string, prevValue: string = ''): string {
   // Allow common label characters
   const sanitized = value.replace(/[^\p{L}\p{N}\s\-&.,'']/gu, '');
-  // If result would be numeric-only and non-empty, reject the change
+  // Never allow a numeric-only result (blocks typing/pasting digits-only and deleting letters away)
   const trimmed = sanitized.trim();
   if (trimmed.length > 0 && /^\p{Nd}+$/u.test(trimmed)) {
-    // Check if user is trying to add more digits to an already numeric-only string
-    // Allow if prev had letters (user is deleting), reject if adding digits to numeric
-    const prevTrimmed = prevValue.trim();
-    if (prevTrimmed.length === 0 || /^\p{Nd}+$/u.test(prevTrimmed)) {
-      // Prev was empty or numeric-only, don't allow more numeric-only
-      return prevValue;
-    }
+    return prevValue;
   }
   return sanitized;
 }

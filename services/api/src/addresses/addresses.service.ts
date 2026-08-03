@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { GeocodingService } from '../inventory/geocoding.service';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import type { Address } from '@hos-marketplace/shared-types';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AddressesService {
@@ -65,7 +66,11 @@ export class AddressesService {
 
   async findAll(userId: string): Promise<Address[]> {
     const addresses = await this.prisma.address.findMany({
-      where: { userId },
+      where: {
+        userId,
+        // Soft-deleted addresses (still referenced by orders) stay hidden from the book
+        NOT: { firstName: { startsWith: '__deleted__' } },
+      },
       orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
     });
 
@@ -169,14 +174,53 @@ export class AddressesService {
       throw new NotFoundException('Address not found');
     }
 
-    await this.prisma.address.delete({
-      where: { id },
+    // Orders retain FK references to shipping/billing addresses. If referenced,
+    // anonymize the saved address instead of hard-deleting (avoids 500 FK errors).
+    const orderRefs = await this.prisma.order.count({
+      where: {
+        OR: [{ shippingAddressId: id }, { billingAddressId: id }],
+      },
     });
 
-    // If this was the default address, set the most recent as default
+    if (orderRefs > 0) {
+      await this.prisma.address.update({
+        where: { id },
+        data: {
+          // Detach from the user's address book while preserving order history
+          userId: address.userId,
+          label: address.label ? `[Removed] ${address.label}` : '[Removed]',
+          isDefault: false,
+          // Soft-hide: mark with a sentinel firstName so list endpoints can filter
+          firstName: address.firstName?.startsWith('__deleted__')
+            ? address.firstName
+            : `__deleted__${address.firstName || ''}`,
+        },
+      });
+    } else {
+      try {
+        await this.prisma.address.delete({
+          where: { id },
+        });
+      } catch (err) {
+        if (
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === 'P2003'
+        ) {
+          throw new ConflictException(
+            'This address is linked to existing orders and cannot be permanently deleted. It has been removed from your address book.',
+          );
+        }
+        throw err;
+      }
+    }
+
+    // If this was the default address, set the most recent remaining as default
     if (address.isDefault) {
       const mostRecent = await this.prisma.address.findFirst({
-        where: { userId },
+        where: {
+          userId,
+          NOT: { firstName: { startsWith: '__deleted__' } },
+        },
         orderBy: { createdAt: 'desc' },
       });
 

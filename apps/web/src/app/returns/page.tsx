@@ -218,11 +218,30 @@ function ReturnsContent() {
       pending: 'bg-yellow-500/15 text-yellow-300',
       approved: 'bg-green-500/15 text-green-300',
       rejected: 'bg-red-500/15 text-red-300',
-      processing: 'bg-hos-gold/20 text-hos-gold',
-      completed: 'bg-hos-gold/20 text-hos-gold',
+      awaiting_customer_return: 'bg-orange-500/15 text-orange-300',
+      item_received: 'bg-hos-gold/20 text-hos-gold',
+      refund_pending: 'bg-cyan-500/15 text-cyan-300',
+      processing: 'bg-cyan-500/15 text-cyan-300',
+      completed: 'bg-emerald-500/15 text-emerald-300',
       refunded: 'bg-green-500/15 text-green-300',
+      cancelled: 'bg-hos-bg-tertiary text-hos-text-secondary',
     };
     return colors[(status || '').toLowerCase()] || 'bg-hos-bg-tertiary text-hos-text-secondary';
+  };
+
+  const formatReturnStatus = (status: string) => {
+    const labels: Record<string, string> = {
+      pending: 'Return Requested',
+      approved: 'Return Approved',
+      rejected: 'Return Rejected',
+      awaiting_customer_return: 'Awaiting Customer Return',
+      item_received: 'Item Received',
+      refund_pending: 'Refund Pending',
+      processing: 'Refund Pending',
+      completed: 'Return Completed',
+      cancelled: 'Cancelled',
+    };
+    return labels[(status || '').toLowerCase()] || status;
   };
 
   const canReturnOrder = (order: Order) => {
@@ -374,7 +393,7 @@ function ReturnsContent() {
                         </p>
                       </div>
                       <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full mt-2 sm:mt-0 ${getStatusColor(returnRequest.status)}`}>
-                        {returnRequest.status}
+                        {formatReturnStatus(returnRequest.status)}
                       </span>
                     </div>
 

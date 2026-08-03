@@ -120,18 +120,24 @@ export default function AdminSellersPage() {
       const response = await apiClient.getAdminSellers({ page: sellersPage, limit: sellersLimit });
 
       const raw = response?.data as
-        | { data?: unknown[]; pagination?: { total?: number } }
+        | { data?: unknown[]; pagination?: { total?: number; totalPages?: number } }
         | unknown[]
         | undefined;
+      const topPagination = (response as { pagination?: { total?: number } } | undefined)?.pagination;
       const payload = raw && !Array.isArray(raw) && 'data' in raw ? raw : null;
       const sellerData = Array.isArray(raw)
         ? raw
         : Array.isArray(payload?.data)
           ? payload.data
           : [];
-      const pTotal = payload?.pagination?.total;
-      if (pTotal != null) {
+      const pTotal = payload?.pagination?.total ?? topPagination?.total;
+      if (typeof pTotal === 'number') {
         setSellersTotal(pTotal);
+      } else if (sellerData.length < sellersLimit && sellersPage === 1) {
+        setSellersTotal(sellerData.length);
+      } else if (sellerData.length > 0) {
+        // Unknown total but clearly paginated — keep navigating enabled
+        setSellersTotal((prev) => Math.max(prev, sellersPage * sellersLimit + (sellerData.length === sellersLimit ? 1 : 0)));
       }
       
       // Map seller profile data to the Seller interface expected by the UI
@@ -734,7 +740,7 @@ export default function AdminSellersPage() {
                       </tbody>
                     </table>
                   </div>
-                  {sellersTotal > sellersLimit && (
+                  {(sellersTotal > sellersLimit || sellersPage > 1 || sellers.length === sellersLimit) && (
                     <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-hos-border bg-hos-bg-secondary">
                       <button
                         type="button"
@@ -745,13 +751,19 @@ export default function AdminSellersPage() {
                         Previous
                       </button>
                       <span className="text-sm text-hos-text-secondary">
-                        Page {sellersPage} of {Math.max(1, Math.ceil(sellersTotal / sellersLimit))}
-                        {' · '}
-                        {sellersTotal} total
+                        Page {sellersPage}
+                        {sellersTotal > 0
+                          ? ` of ${Math.max(1, Math.ceil(sellersTotal / sellersLimit))} · ${sellersTotal} total`
+                          : ''}
                       </span>
                       <button
                         type="button"
-                        disabled={loading || sellersPage * sellersLimit >= sellersTotal}
+                        disabled={
+                          loading ||
+                          (sellersTotal > 0
+                            ? sellersPage * sellersLimit >= sellersTotal
+                            : sellers.length < sellersLimit)
+                        }
                         onClick={() => setSellersPage((p) => p + 1)}
                         className="px-3 py-1.5 text-sm rounded-lg border border-hos-border bg-hos-bg-secondary text-hos-text-secondary disabled:opacity-50"
                       >

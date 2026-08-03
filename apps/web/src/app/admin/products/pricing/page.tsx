@@ -321,26 +321,26 @@ export default function PriceManagementPage() {
                   ) : (
                     paginatedProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-hos-bg-tertiary">
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 align-middle">
                           <div className="text-sm font-medium text-hos-text-secondary">
                             {product.name}
                           </div>
                           <div className="text-sm text-hos-text-muted">{product.sku || 'No SKU'}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary align-middle">
                           {product.currency || 'USD'} {Number(product.price || 0).toFixed(2)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary align-middle">
                           {product.stock || 0}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary align-middle">
                           {product.taxClassId
                             ? getTaxClassDisplay(product.taxClassId)
                             : product.taxRate != null
                               ? `${(Number(product.taxRate) * 100).toFixed(0)}% (override)`
                               : getTaxClassDisplay(undefined)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 whitespace-nowrap align-middle">
                           <span
                             className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                               product.status === 'ACTIVE'
@@ -353,18 +353,18 @@ export default function PriceManagementPage() {
                             {product.status || 'UNKNOWN'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex justify-end gap-2">
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium align-middle">
+                          <div className="flex justify-end items-center gap-2 min-h-[2rem]">
                             <button
                               onClick={() => handleEditPricing(product)}
-                              className="text-hos-gold hover:text-hos-gold px-2 py-1 rounded hover:bg-hos-gold/10 transition-colors"
+                              className="text-hos-gold hover:text-hos-gold px-2 py-1 rounded hover:bg-hos-gold/10 transition-colors inline-flex items-center"
                             >
                               Edit Pricing
                             </button>
                             {product.status === 'DRAFT' && product.price > 0 && (
                               <button
                                 onClick={() => handleActivateProduct(product)}
-                                className="text-green-400 hover:text-green-300 px-2 py-1 rounded hover:bg-green-500/10 transition-colors"
+                                className="text-green-400 hover:text-green-300 px-2 py-1 rounded hover:bg-green-500/10 transition-colors inline-flex items-center"
                               >
                                 Activate
                               </button>

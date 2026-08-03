@@ -37,18 +37,6 @@ export default function AdminCatalogPage() {
     fetchEntries(true);
   }, [fetchEntries]);
 
-  useEffect(() => {
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') fetchEntries(false);
-    };
-    const interval = setInterval(() => fetchEntries(false), 60_000);
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-    };
-  }, [fetchEntries]);
-
   if (loading) {
     return (
       <RouteGuard allowedRoles={['ADMIN']}>
