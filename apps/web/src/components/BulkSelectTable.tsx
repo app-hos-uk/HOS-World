@@ -191,7 +191,7 @@ export function BulkSelectTable<T>({
         <table className="min-w-full divide-y divide-hos-border">
           <thead className="bg-hos-bg-secondary">
             <tr>
-              <th className="w-12 px-4 py-3">
+              <th className="w-12 px-4 py-3 text-center">
                 <input
                   type="checkbox"
                   checked={allSelected}

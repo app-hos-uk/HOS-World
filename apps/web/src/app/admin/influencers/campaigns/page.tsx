@@ -244,7 +244,7 @@ export default function AdminInfluencerCampaignsPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Campaign</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Influencer</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Period</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Commission</th>
+                    <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase">Commission</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Performance</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Actions</th>
@@ -265,7 +265,7 @@ export default function AdminInfluencerCampaignsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {formatDate(campaign.startDate)} - {formatDate(campaign.endDate)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-gold">
+                      <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-gold">
                         {campaign.overrideCommissionRate != null
                           ? `${(Number(campaign.overrideCommissionRate) * 100).toFixed(1)}%`
                           : 'Default'}
@@ -374,7 +374,7 @@ export default function AdminInfluencerCampaignsPage() {
                               <tr>
                                 <th className="px-3 py-2 text-left">Date</th>
                                 <th className="px-3 py-2 text-right">Conversions</th>
-                                <th className="px-3 py-2 text-right">Sales</th>
+                                <th className="tabular-nums text-right px-3 py-2">Sales</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -382,7 +382,7 @@ export default function AdminInfluencerCampaignsPage() {
                                 <tr key={row.date} className="border-t">
                                   <td className="px-3 py-2">{row.date}</td>
                                   <td className="px-3 py-2 text-right">{row.conversions}</td>
-                                  <td className="px-3 py-2 text-right">{formatCurrency(row.sales)}</td>
+                                  <td className="tabular-nums text-right px-3 py-2">{formatCurrency(row.sales)}</td>
                                 </tr>
                               ))}
                             </tbody>

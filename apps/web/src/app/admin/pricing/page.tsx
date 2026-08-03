@@ -528,7 +528,7 @@ export default function AdminPricingPage() {
               <table className="min-w-full divide-y divide-hos-border">
                 <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">
+                    <th className="px-4 py-3 text-xs font-medium text-hos-text-muted uppercase text-center">
                       <input
                         type="checkbox"
                         checked={selectedProducts.size === filteredProducts.length && filteredProducts.length > 0}
@@ -538,12 +538,12 @@ export default function AdminPricingPage() {
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Product</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Seller</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Price</th>
+                    <th className="tabular-nums text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase">Price</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Trade</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">RRP</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Margin</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Stock</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Tax</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase">Stock</th>
+                    <th className="tabular-nums text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase">Tax</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                   </tr>
@@ -584,7 +584,7 @@ export default function AdminPricingPage() {
                             <span className="text-xs text-hos-text-muted">—</span>
                           )}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="tabular-nums text-right px-4 py-3">
                           <input
                             type="number"
                             step="0.01"
@@ -609,7 +609,7 @@ export default function AdminPricingPage() {
                             </span>
                           ) : '-'}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="text-right px-4 py-3">
                           <div className="flex items-center gap-2">
                             <input
                               type="number"
@@ -620,7 +620,7 @@ export default function AdminPricingPage() {
                             {getStockBadge(product.stock)}
                           </div>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="tabular-nums text-right px-4 py-3">
                           <input
                             type="number"
                             step="0.01"

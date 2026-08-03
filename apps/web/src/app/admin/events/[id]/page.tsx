@@ -213,7 +213,7 @@ export default function AdminEventDetailPage() {
                   <thead className="bg-hos-bg-secondary">
                     <tr>
                       <th className="px-2 py-1 text-left">User</th>
-                      <th className="px-2 py-1">Points</th>
+                      <th className="text-right px-2 py-1">Points</th>
                       <th className="px-2 py-1">At</th>
                     </tr>
                   </thead>
@@ -221,7 +221,7 @@ export default function AdminEventDetailPage() {
                     {att.map((a) => (
                       <tr key={a.id} className="border-t">
                         <td className="px-2 py-1">{a.user?.email ?? a.userId}</td>
-                        <td className="px-2 py-1">{a.pointsAwarded}</td>
+                        <td className="text-right px-2 py-1">{a.pointsAwarded}</td>
                         <td className="px-2 py-1">{new Date(a.checkedInAt).toLocaleString()}</td>
                       </tr>
                     ))}

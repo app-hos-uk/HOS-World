@@ -219,13 +219,13 @@ export default function FinanceFeesPage() {
                         <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Period
                         </th>
-                        <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                        <th className="text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Platform Fees
                         </th>
-                        <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                        <th className="text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Transaction Count
                         </th>
-                        <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                        <th className="text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                           Average Fee
                         </th>
                       </tr>
@@ -240,16 +240,16 @@ export default function FinanceFeesPage() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
                               {row.period || row.date || `Period ${idx + 1}`}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm tabular-nums text-hos-text-secondary">
                               ${fees.toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm tabular-nums text-hos-text-secondary">
                               {txCount.toLocaleString()}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm tabular-nums text-hos-text-secondary">
                               ${avgFee.toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,

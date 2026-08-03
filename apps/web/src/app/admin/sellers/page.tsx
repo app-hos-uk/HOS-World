@@ -675,9 +675,9 @@ export default function AdminSellersPage() {
                           <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Seller</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Type</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Products</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Orders</th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Revenue</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Products</th>
+                          <th className="text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase">Orders</th>
+                          <th className="tabular-nums text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase">Revenue</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Joined</th>
                           <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                         </tr>
@@ -722,9 +722,9 @@ export default function AdminSellersPage() {
                                   )}
                                 </div>
                               </td>
-                              <td className="px-4 py-3 text-sm text-hos-text-secondary">{seller.totalProducts || 0}</td>
-                              <td className="px-4 py-3 text-sm text-hos-text-secondary">{seller.totalOrders || 0}</td>
-                              <td className="px-4 py-3 text-sm font-medium text-hos-text-secondary">
+                              <td className="px-4 py-3 text-right text-sm tabular-nums text-hos-text-secondary">{seller.totalProducts || 0}</td>
+                              <td className="text-right px-4 py-3 text-sm tabular-nums text-hos-text-secondary">{seller.totalOrders || 0}</td>
+                              <td className="text-right px-4 py-3 text-sm tabular-nums font-medium text-hos-text-secondary">
                                 {formatPrice(seller.totalRevenue || 0)}
                               </td>
                               <td className="px-4 py-3 text-sm text-hos-text-muted">

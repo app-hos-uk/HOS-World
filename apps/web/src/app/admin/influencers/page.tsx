@@ -195,7 +195,7 @@ export default function AdminInfluencersPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Tier</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Performance</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Earnings</th>
+                    <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase">Earnings</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                   </tr>
                 </thead>
@@ -233,7 +233,7 @@ export default function AdminInfluencersPage() {
                             : 0}% conversion
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap">
                         <div className="font-medium text-hos-text-secondary">
                           {formatCurrency(influencer.totalCommission)}
                         </div>

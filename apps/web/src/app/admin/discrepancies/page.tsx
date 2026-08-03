@@ -51,7 +51,7 @@ export default function AdminDiscrepanciesPage() {
               <table className="min-w-full divide-y divide-hos-border">
                 <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Type</th>
+                    <th className="px-6 py-3 text-xs font-medium text-hos-text-muted uppercase text-left">Type</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Severity</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Description</th>

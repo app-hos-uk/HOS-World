@@ -147,7 +147,7 @@ export default function AdminLoyaltyEarnRulesPage() {
               <thead className="bg-hos-bg-secondary border-b">
                 <tr>
                   <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Action</th>
-                  <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Points</th>
+                  <th className="text-right px-4 py-3 font-medium text-hos-text-secondary">Points</th>
                   <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Description</th>
                   <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Status</th>
                   <th className="text-right px-4 py-3 font-medium text-hos-text-secondary">Actions</th>
@@ -157,7 +157,7 @@ export default function AdminLoyaltyEarnRulesPage() {
                 {rules.map((rule) => (
                   <tr key={rule.id} className="hover:bg-hos-bg-tertiary">
                     <td className="px-4 py-3 font-medium text-hos-text-secondary">{rule.action}</td>
-                    <td className="px-4 py-3">{rule.pointsAmount ?? rule.pointsAwarded}</td>
+                    <td className="text-right px-4 py-3">{rule.pointsAmount ?? rule.pointsAwarded}</td>
                     <td className="px-4 py-3 text-hos-text-secondary">{rule.name ?? rule.description ?? '—'}</td>
                     <td className="px-4 py-3">
                       <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${rule.isActive !== false ? 'bg-green-500/15 text-green-400' : 'bg-hos-bg-tertiary text-hos-text-secondary'}`}>

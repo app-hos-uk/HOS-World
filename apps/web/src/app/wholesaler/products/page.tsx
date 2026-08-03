@@ -221,10 +221,10 @@ export default function WholesalerProductsPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                      <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Price
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                      <th className="text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Stock
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
@@ -271,10 +271,10 @@ export default function WholesalerProductsPage() {
                             {product.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                        <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {formatPrice(parseFloat(product.price || 0))}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                        <td className="text-right px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {product.stock ?? 0}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">

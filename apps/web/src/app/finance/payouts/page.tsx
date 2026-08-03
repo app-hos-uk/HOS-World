@@ -235,7 +235,7 @@ export default function FinancePayoutsPage() {
                     <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Seller
                     </th>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                    <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Amount
                     </th>
                     <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
@@ -278,7 +278,7 @@ export default function FinancePayoutsPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap">
                         <p className="text-sm font-semibold text-hos-text-secondary">
                           ${(payout.amount || 0).toLocaleString(undefined, {
                             minimumFractionDigits: 2,

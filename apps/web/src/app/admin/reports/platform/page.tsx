@@ -316,7 +316,7 @@ export default function AdminPlatformMetricsPage() {
               <table className="min-w-full divide-y divide-hos-border">
                 <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">Period</th>
+                    <th className="px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider text-left">Period</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Signups</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Cumulative</th>
                   </tr>
@@ -350,8 +350,8 @@ export default function AdminPlatformMetricsPage() {
               <table className="min-w-full divide-y divide-hos-border">
                 <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">Period</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Orders</th>
+                    <th className="px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider text-left">Period</th>
+                    <th className="text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Orders</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Cumulative</th>
                   </tr>
                 </thead>
@@ -366,7 +366,7 @@ export default function AdminPlatformMetricsPage() {
                       return (
                         <tr key={row.label} className="hover:bg-hos-bg-tertiary">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">{row.label}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary text-right">{row.count}</td>
+                          <td className="text-right px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">{row.count}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted text-right">{cumulative}</td>
                         </tr>
                       );
@@ -384,9 +384,9 @@ export default function AdminPlatformMetricsPage() {
               <table className="min-w-full divide-y divide-hos-border">
                 <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">Period</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Orders</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Revenue</th>
+                    <th className="px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider text-left">Period</th>
+                    <th className="text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Orders</th>
+                    <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Revenue</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Avg Order Value</th>
                   </tr>
                 </thead>
@@ -401,8 +401,8 @@ export default function AdminPlatformMetricsPage() {
                       return (
                         <tr key={row.label} className="hover:bg-hos-bg-tertiary">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">{row.label}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary text-right">{row.count}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-green-400 font-medium text-right">${row.revenue.toFixed(2)}</td>
+                          <td className="text-right px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">{row.count}</td>
+                          <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm text-green-400 font-medium">${row.revenue.toFixed(2)}</td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted text-right">${avg.toFixed(2)}</td>
                         </tr>
                       );

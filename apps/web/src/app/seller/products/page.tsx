@@ -516,8 +516,8 @@ export default function SellerProductsPage() {
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Product</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Price</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Stock</th>
+                        <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase">Price</th>
+                        <th className="text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase">Stock</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Fandom</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Created</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Actions</th>
@@ -563,10 +563,10 @@ export default function SellerProductsPage() {
                               {product._isSubmission ? 'Pending review' : getDisplayStatus(product.status, product.stock || 0)}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
+                          <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
                             {formatPrice(Number(product.price || 0))}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="text-right px-6 py-4 whitespace-nowrap">
                             {!product._isSubmission ? (
                               <input
                                 type="number"

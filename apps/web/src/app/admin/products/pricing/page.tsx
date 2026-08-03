@@ -289,13 +289,13 @@ export default function PriceManagementPage() {
               <table className="min-w-full divide-y divide-hos-border">
                 <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                    <th className="px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider text-center">
                       Product
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Current Price
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                    <th className="text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Stock
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
@@ -330,7 +330,7 @@ export default function PriceManagementPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary align-middle">
                           {product.currency || 'USD'} {Number(product.price || 0).toFixed(2)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary align-middle">
+                        <td className="text-right px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary align-middle">
                           {product.stock || 0}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary align-middle">

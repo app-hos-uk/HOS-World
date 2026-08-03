@@ -273,7 +273,7 @@ export default function ShipmentDetailPage() {
                         <th className="text-left py-3 px-4 font-medium text-hos-text-secondary">Item</th>
                         <th className="text-left py-3 px-4 font-medium text-hos-text-secondary">SKU</th>
                         <th className="text-right py-3 px-4 font-medium text-hos-text-secondary">Quantity</th>
-                        <th className="text-right py-3 px-4 font-medium text-hos-text-secondary">Price</th>
+                        <th className="tabular-nums text-right py-3 px-4 font-medium text-hos-text-secondary">Price</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -281,8 +281,8 @@ export default function ShipmentDetailPage() {
                         <tr key={item.id || index} className="border-b border-hos-border hover:bg-hos-bg-tertiary">
                           <td className="py-3 px-4 text-hos-text-secondary">{item.name || item.productName || 'Unknown'}</td>
                           <td className="py-3 px-4 text-hos-text-muted">{item.sku || 'N/A'}</td>
-                          <td className="py-3 px-4 text-right text-hos-text-secondary">{item.quantity || 1}</td>
-                          <td className="py-3 px-4 text-right text-hos-text-secondary">
+                          <td className="text-right py-3 px-4 text-hos-text-secondary">{item.quantity || 1}</td>
+                          <td className="tabular-nums text-right py-3 px-4 text-hos-text-secondary">
                             {item.price != null ? `$${Number(item.price).toFixed(2)}` : 'N/A'}
                           </td>
                         </tr>

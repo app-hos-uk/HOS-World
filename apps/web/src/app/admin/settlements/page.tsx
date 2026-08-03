@@ -527,7 +527,7 @@ export default function AdminSettlementsPage() {
               <table className="min-w-full divide-y divide-hos-border">
                 <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">
+                    <th className="px-4 py-3 text-xs font-medium text-hos-text-muted uppercase text-center">
                       <input
                         type="checkbox"
                         checked={selectedSettlements.size === filteredSettlements.filter(s => s.status === 'PENDING').length && filteredSettlements.filter(s => s.status === 'PENDING').length > 0}
@@ -537,10 +537,10 @@ export default function AdminSettlementsPage() {
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Seller</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Period</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Orders</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Gross</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Fees</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Net</th>
+                    <th className="text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase">Orders</th>
+                    <th className="tabular-nums text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase">Gross</th>
+                    <th className="tabular-nums text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase">Fees</th>
+                    <th className="tabular-nums text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase">Net</th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
                     <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                   </tr>
@@ -572,10 +572,10 @@ export default function AdminSettlementsPage() {
                         <td className="px-4 py-3 text-sm text-hos-text-secondary">
                           {new Date(settlement.periodStart).toLocaleDateString()} - {new Date(settlement.periodEnd).toLocaleDateString()}
                         </td>
-                        <td className="px-4 py-3 text-sm text-hos-text-secondary">{getOrdersCount(settlement)}</td>
-                        <td className="px-4 py-3 text-sm text-hos-text-secondary">{formatPrice(getGrossAmount(settlement))}</td>
-                        <td className="px-4 py-3 text-sm text-red-400">-{formatPrice(settlement.platformFee)}</td>
-                        <td className="px-4 py-3 text-sm font-medium text-green-400">{formatPrice(settlement.netAmount)}</td>
+                        <td className="text-right px-4 py-3 text-sm tabular-nums text-hos-text-secondary">{getOrdersCount(settlement)}</td>
+                        <td className="text-right px-4 py-3 text-sm tabular-nums text-hos-text-secondary">{formatPrice(getGrossAmount(settlement))}</td>
+                        <td className="text-right px-4 py-3 text-sm tabular-nums text-red-400">-{formatPrice(settlement.platformFee)}</td>
+                        <td className="text-right px-4 py-3 text-sm tabular-nums font-medium text-green-400">{formatPrice(settlement.netAmount)}</td>
                         <td className="px-4 py-3">{getStatusBadge(settlement.status)}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-1">

@@ -49,7 +49,7 @@ export default function LoyaltyRewardsPage() {
                   <tr>
                     <th className="p-2">Action</th>
                     <th className="p-2">Details</th>
-                    <th className="p-2 text-right">Points</th>
+                    <th className="text-right p-2">Points</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -57,7 +57,7 @@ export default function LoyaltyRewardsPage() {
                     <tr key={ea.action} className="border-t border-stone-800">
                       <td className="p-2 font-secondary">{ea.action}</td>
                       <td className="p-2 text-stone-400 font-secondary">{ea.description}</td>
-                      <td className="p-2 text-right text-amber-200 font-secondary whitespace-nowrap">{ea.pointsExample}</td>
+                      <td className="text-right p-2 text-amber-200 font-secondary whitespace-nowrap">{ea.pointsExample}</td>
                     </tr>
                   ))}
                 </tbody>

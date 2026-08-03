@@ -227,6 +227,30 @@ label.bg-hos-gold:hover {
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * Table cell alignment — unlayered + !important so utilities always win over
+ * .admin-table th { text-align: left } and thead text-left inheritance.
+ * Without this, numeric headers stay left while cells are right-aligned.
+ */
+table th.text-right,
+table td.text-right,
+.admin-table th.text-right,
+.admin-table td.text-right {
+  text-align: right !important;
+}
+table th.text-center,
+table td.text-center,
+.admin-table th.text-center,
+.admin-table td.text-center {
+  text-align: center !important;
+}
+table th.text-left,
+table td.text-left,
+.admin-table th.text-left,
+.admin-table td.text-left {
+  text-align: left !important;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -303,8 +327,9 @@ label.bg-hos-gold:hover {
   }
   
   .admin-table th {
-    @apply px-4 py-3 text-left text-xs font-semibold text-hos-text-secondary 
+    @apply px-4 py-3 text-xs font-semibold text-hos-text-secondary
            uppercase tracking-wide;
+    text-align: left;
   }
   
   .admin-table tbody {

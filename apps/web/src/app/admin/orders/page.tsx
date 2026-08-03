@@ -557,7 +557,7 @@ function AdminOrdersContent() {
                     <tr>
                       {isOrderColumnVisible('order') && <th className="px-6 py-3 text-left">Order</th>}
                       {isOrderColumnVisible('customer') && <th className="px-6 py-3 text-left">Customer</th>}
-                      {isOrderColumnVisible('total') && <th className="px-6 py-3 text-left">Total</th>}
+                      {isOrderColumnVisible('total') && <th className="tabular-nums text-right px-6 py-3">Total</th>}
                       {isOrderColumnVisible('status') && <th className="px-6 py-3 text-left">Status</th>}
                       {isOrderColumnVisible('date') && <th className="px-6 py-3 text-left">Date</th>}
                       {isOrderColumnVisible('actions') && <th className="px-6 py-3 text-right">Actions</th>}
@@ -603,7 +603,7 @@ function AdminOrdersContent() {
                           </td>
                           )}
                           {isOrderColumnVisible('total') && (
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
+                          <td className="text-right px-6 py-4 whitespace-nowrap text-sm tabular-nums font-medium text-hos-text-secondary">
                             {formatAdminPrice(order.total || 0, order.currency || 'USD')}
                           </td>
                           )}
@@ -818,9 +818,9 @@ function AdminOrdersContent() {
                           <thead className="bg-hos-bg-secondary">
                             <tr>
                               <th className="px-4 py-2 text-left text-xs font-medium text-hos-text-muted">Product</th>
-                              <th className="px-4 py-2 text-center text-xs font-medium text-hos-text-muted">Qty</th>
-                              <th className="px-4 py-2 text-right text-xs font-medium text-hos-text-muted">Price</th>
-                              <th className="px-4 py-2 text-right text-xs font-medium text-hos-text-muted">Total</th>
+                              <th className="text-right px-4 py-2 text-xs font-medium text-hos-text-muted">Qty</th>
+                              <th className="tabular-nums text-right px-4 py-2 text-xs font-medium text-hos-text-muted">Price</th>
+                              <th className="tabular-nums text-right px-4 py-2 text-xs font-medium text-hos-text-muted">Total</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-hos-border">
@@ -832,9 +832,9 @@ function AdminOrdersContent() {
                                     <div className="text-xs text-hos-text-muted">SKU: {item.product.sku}</div>
                                   )}
                                 </td>
-                                <td className="px-4 py-3 text-sm text-center">{item.quantity}</td>
-                                <td className="px-4 py-3 text-sm text-right">${Number(item.price).toFixed(2)}</td>
-                                <td className="px-4 py-3 text-sm text-right font-medium">
+                                <td className="text-right px-4 py-3 text-sm">{item.quantity}</td>
+                                <td className="tabular-nums text-right px-4 py-3 text-sm">${Number(item.price).toFixed(2)}</td>
+                                <td className="tabular-nums text-right px-4 py-3 text-sm font-medium">
                                   ${(Number(item.price) * item.quantity).toFixed(2)}
                                 </td>
                               </tr>

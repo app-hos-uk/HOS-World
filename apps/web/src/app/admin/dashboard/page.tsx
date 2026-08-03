@@ -20,7 +20,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   LabelList,
 } from 'recharts';
@@ -313,71 +312,87 @@ export default function AdminDashboardPage() {
                 )}
               </ChartCard>
 
-              {/* Order Status Pie Chart */}
-              <ChartCard title="Orders by Status" subtitle="Current order distribution" height="h-80" className="[&>div:first-child]:mb-6">
+              {/* Order Status Pie Chart — donut + side legend (avoids header clip & tooltip overlap) */}
+              <ChartCard title="Orders by Status" subtitle="Current order distribution" height="h-[22rem]">
                 {orderStatusData.length > 0 ? (
-                <div className="relative h-full w-full pt-2">
-                  {/* Total count in donut center */}
-                  <div className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ paddingBottom: 56 }}>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-hos-text-secondary tabular-nums">{orderStatusTotal}</p>
-                      <p className="text-[10px] text-hos-text-muted uppercase tracking-wide">Total</p>
+                <div className="flex h-full w-full items-center gap-3 pt-1">
+                  <div className="relative h-full min-w-0 flex-1">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                        <Pie
+                          data={orderStatusData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius="58%"
+                          outerRadius="82%"
+                          paddingAngle={2}
+                          dataKey="value"
+                          nameKey="name"
+                          stroke="none"
+                          isAnimationActive={false}
+                        >
+                          {orderStatusData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        {/* Center total is an HTML overlay — SVG <Label> baselines often collide in Recharts */}
+                        <Tooltip
+                          allowEscapeViewBox={{ x: true, y: true }}
+                          offset={16}
+                          wrapperStyle={{ zIndex: 40, outline: 'none', pointerEvents: 'none' }}
+                          content={({ active, payload }) => {
+                            if (!active || !payload?.[0]) return null;
+                            const d = payload[0].payload as { name: string; value: number; fill: string };
+                            const pct = orderStatusTotal ? ((d.value / orderStatusTotal) * 100).toFixed(0) : '0';
+                            return (
+                              <div
+                                style={{
+                                  ...DARK_CHART_TOOLTIP,
+                                  padding: '10px 14px',
+                                  fontSize: 12,
+                                  minWidth: 140,
+                                  borderLeft: `3px solid ${d.fill || '#c9a227'}`,
+                                }}
+                              >
+                                <p style={{ color: '#e8e4dc', fontWeight: 600, marginBottom: 4 }}>{d.name}</p>
+                                <p style={{ color: '#c9a227' }}>
+                                  {d.value} order{d.value !== 1 ? 's' : ''} · {pct}%
+                                </p>
+                              </div>
+                            );
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-[1.75rem] font-bold leading-none tabular-nums text-hos-text-secondary">
+                        {orderStatusTotal}
+                      </span>
+                      <span className="mt-1.5 text-[10px] font-medium uppercase tracking-[0.12em] text-hos-text-muted">
+                        Total
+                      </span>
                     </div>
                   </div>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart margin={{ top: 12, right: 16, left: 16, bottom: 4 }}>
-                      <Pie
-                        data={orderStatusData}
-                        cx="50%"
-                        cy="42%"
-                        innerRadius="48%"
-                        outerRadius="68%"
-                        fill="#8884d8"
-                        paddingAngle={3}
-                        dataKey="value"
-                        nameKey="name"
-                        labelLine={false}
-                      >
-                        {orderStatusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        allowEscapeViewBox={{ x: true, y: true }}
-                        offset={28}
-                        wrapperStyle={{ zIndex: 30, outline: 'none' }}
-                        content={({ active, payload }) => {
-                          if (!active || !payload?.[0]) return null;
-                          const d = payload[0].payload as { name: string; value: number };
-                          const pct = orderStatusTotal ? ((d.value / orderStatusTotal) * 100).toFixed(0) : '0';
-                          return (
-                            <div style={{ ...DARK_CHART_TOOLTIP, padding: '8px 12px', fontSize: 12 }}>
-                              <p style={{ ...DARK_CHART_TOOLTIP_LABEL, fontSize: 11, marginBottom: 4 }}>{d.name}</p>
-                              <p style={DARK_CHART_TOOLTIP_ITEM}>
-                                {d.value} order{d.value !== 1 ? 's' : ''} ({pct}%)
-                              </p>
-                            </div>
-                          );
-                        }}
-                      />
-                      <Legend
-                        verticalAlign="bottom"
-                        align="center"
-                        layout="horizontal"
-                        iconSize={10}
-                        wrapperStyle={{ paddingTop: 16, lineHeight: '28px' }}
-                        formatter={(value, entry) => {
-                          const percent = (entry?.payload as { percent?: number })?.percent;
-                          return (
-                            <span className="text-xs text-hos-text-secondary" style={{ marginRight: 16, marginLeft: 4 }}>
-                              {value}
-                              {typeof percent === 'number' ? ` ${(percent * 100).toFixed(0)}%` : ''}
+                  <ul className="flex h-full w-[9.5rem] shrink-0 flex-col justify-center gap-2.5 overflow-y-auto py-1 pl-1">
+                    {orderStatusData.map((item) => {
+                      const pct = orderStatusTotal ? ((item.value / orderStatusTotal) * 100).toFixed(0) : '0';
+                      return (
+                        <li key={item.name} className="flex items-start gap-2 text-xs leading-snug">
+                          <span
+                            className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-sm"
+                            style={{ backgroundColor: item.fill }}
+                            aria-hidden
+                          />
+                          <span className="min-w-0">
+                            <span className="block truncate font-medium text-hos-text-secondary">{item.name}</span>
+                            <span className="text-hos-text-muted tabular-nums">
+                              {item.value} ({pct}%)
                             </span>
-                          );
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center px-4 text-center text-hos-text-muted">

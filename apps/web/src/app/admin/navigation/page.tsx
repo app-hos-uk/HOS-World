@@ -175,7 +175,7 @@ export default function AdminNavigationPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-hos-border bg-hos-bg-tertiary/50">
-                    <th className="text-left px-4 py-3 font-medium text-hos-text-muted w-10">#</th>
+                    <th className="px-4 py-3 font-medium text-hos-text-muted w-10 text-center">#</th>
                     <th className="text-left px-4 py-3 font-medium text-hos-text-muted">Label</th>
                     <th className="text-left px-4 py-3 font-medium text-hos-text-muted">URL</th>
                     <th className="text-left px-4 py-3 font-medium text-hos-text-muted w-20">Status</th>

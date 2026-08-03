@@ -280,8 +280,8 @@ function VendorProductsContent() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">Status</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Vendor Price</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Platform Price</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Stock</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">Sales</th>
+                  <th className="text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Stock</th>
+                  <th className="tabular-nums text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Sales</th>
                   <th className="px-4 py-3 text-center text-xs font-medium text-hos-text-muted uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -328,12 +328,12 @@ function VendorProductsContent() {
                     <td className="px-4 py-3 text-right text-sm text-hos-text-secondary">
                       {listing.platformPrice ? formatPrice(Number(listing.platformPrice)) : '—'}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="text-right px-4 py-3">
                       <span className={`text-sm font-medium ${listing.vendorStock <= listing.lowStockThreshold ? 'text-orange-400' : 'text-hos-text-secondary'}`}>
                         {listing.vendorStock}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-hos-text-secondary">
+                    <td className="tabular-nums text-right px-4 py-3 text-sm text-hos-text-secondary">
                       {listing.totalUnitsSold}
                     </td>
                     <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>

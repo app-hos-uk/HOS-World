@@ -77,7 +77,7 @@ export default function AdminPosConnectionsPage() {
               <table className="min-w-full divide-y divide-hos-border">
                 <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">
+                    <th className="px-4 py-3 text-xs font-medium uppercase text-hos-text-muted text-center">
                       Store
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">

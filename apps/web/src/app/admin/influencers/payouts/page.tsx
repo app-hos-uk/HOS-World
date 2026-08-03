@@ -200,8 +200,8 @@ export default function AdminInfluencerPayoutsPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Date</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Influencer</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Period</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Commissions</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Amount</th>
+                    <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase">Commissions</th>
+                    <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase">Amount</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                   </tr>
@@ -218,10 +218,10 @@ export default function AdminInfluencerPayoutsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {formatDate(payout.periodStart)} - {formatDate(payout.periodEnd)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
+                      <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {payout._count.commissions} commissions
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-400">
+                      <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-400">
                         {formatCurrency(payout.totalAmount, payout.currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

@@ -431,7 +431,7 @@ export default function AdminFinancePage() {
                     <thead className="bg-hos-bg-secondary">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Type</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Amount</th>
+                        <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase">Amount</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Date</th>
                       </tr>
@@ -445,7 +445,7 @@ export default function AdminFinancePage() {
                         pagedTransactions.map((tx) => (
                           <tr key={tx.id} className="hover:bg-hos-bg-tertiary">
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{tx.type}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <td className="text-right px-6 py-4 whitespace-nowrap text-sm tabular-nums font-medium">
                               {tx.currency || 'USD'} {Number(tx.amount).toFixed(2)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -517,7 +517,7 @@ export default function AdminFinancePage() {
                     <thead className="bg-hos-bg-secondary">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Seller</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Amount</th>
+                        <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase">Amount</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Date</th>
                       </tr>
@@ -546,7 +546,7 @@ export default function AdminFinancePage() {
                                 Seller ID: {payout.sellerId || '—'}
                               </p>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <td className="text-right px-6 py-4 whitespace-nowrap text-sm tabular-nums font-medium">
                               {payout.currency || 'USD'} {Number(payout.amount).toFixed(2)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -588,7 +588,7 @@ export default function AdminFinancePage() {
                     <thead className="bg-hos-bg-secondary">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Order</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Amount</th>
+                        <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase">Amount</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Date</th>
                       </tr>
@@ -602,7 +602,7 @@ export default function AdminFinancePage() {
                         rangedRefunds.map((refund) => (
                           <tr key={refund.id} className="hover:bg-hos-bg-tertiary">
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{refund.orderId}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <td className="text-right px-6 py-4 whitespace-nowrap text-sm tabular-nums font-medium">
                               {refund.currency || 'USD'} {Number(refund.amount).toFixed(2)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">

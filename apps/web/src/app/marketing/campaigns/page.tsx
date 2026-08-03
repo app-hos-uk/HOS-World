@@ -395,7 +395,7 @@ function MarketingCampaignsPageContent() {
                     <th className="px-4 py-3 text-xs font-semibold text-hos-text-secondary uppercase tracking-wider">
                       Conv.
                     </th>
-                    <th className="px-4 py-3 text-xs font-semibold text-hos-text-secondary uppercase tracking-wider">
+                    <th className="tabular-nums text-right px-4 py-3 text-xs font-semibold text-hos-text-secondary uppercase tracking-wider">
                       Sales
                     </th>
                     <th className="px-4 py-3 text-xs font-semibold text-hos-text-secondary uppercase tracking-wider text-right">
@@ -428,7 +428,7 @@ function MarketingCampaignsPageContent() {
                       </td>
                       <td className="px-4 py-3 text-sm text-hos-text-secondary">{campaign.totalClicks ?? 0}</td>
                       <td className="px-4 py-3 text-sm text-hos-text-secondary">{campaign.totalConversions ?? 0}</td>
-                      <td className="px-4 py-3 text-sm font-medium text-hos-text-secondary">
+                      <td className="tabular-nums text-right px-4 py-3 text-sm font-medium text-hos-text-secondary">
                         $
                         {Number(campaign.totalSales ?? 0).toLocaleString(undefined, {
                           minimumFractionDigits: 2,

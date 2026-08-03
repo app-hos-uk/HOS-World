@@ -299,7 +299,7 @@ export default function AdminSearchPage() {
                         <tr>
                           <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">ID</th>
                           <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Name</th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Price</th>
+                          <th className="tabular-nums text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase">Price</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-hos-border">
@@ -311,7 +311,7 @@ export default function AdminSearchPage() {
                             <td className="px-4 py-3 text-sm font-medium text-hos-text-secondary">
                               {item.name || item.title || '—'}
                             </td>
-                            <td className="px-4 py-3 text-sm text-hos-text-secondary text-right">
+                            <td className="tabular-nums text-right px-4 py-3 text-sm text-hos-text-secondary">
                               {item.price != null ? `$${Number(item.price).toFixed(2)}` : '—'}
                             </td>
                           </tr>

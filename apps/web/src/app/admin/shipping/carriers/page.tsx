@@ -208,7 +208,7 @@ export default function AdminShippingCarriersPage() {
             <table className="min-w-full divide-y divide-hos-border">
               <thead className="bg-hos-bg-tertiary/40">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">
+                  <th className="px-4 py-3 text-xs font-medium text-hos-text-muted uppercase text-center">
                     Name
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">

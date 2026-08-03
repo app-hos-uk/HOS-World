@@ -272,7 +272,7 @@ export default function AdminQuizPage() {
                   <tr>
                     <th className="p-2">Title</th>
                     <th className="p-2">Fandom</th>
-                    <th className="p-2">Points</th>
+                    <th className="text-right p-2">Points</th>
                     <th className="p-2">Attempts</th>
                     <th className="p-2">Active</th>
                     <th className="p-2" />
@@ -283,7 +283,7 @@ export default function AdminQuizPage() {
                     <tr key={q.id} className="border-t border-stone-800">
                       <td className="p-2">{q.title}</td>
                       <td className="p-2">{q.fandom?.name ?? '—'}</td>
-                      <td className="p-2">{q.pointsReward}</td>
+                      <td className="text-right p-2">{q.pointsReward}</td>
                       <td className="p-2">{q._count?.attempts ?? 0}</td>
                       <td className="p-2">{q.isActive ? 'Yes' : 'No'}</td>
                       <td className="p-2">

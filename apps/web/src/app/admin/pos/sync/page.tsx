@@ -42,7 +42,7 @@ export default function AdminPosSyncPage() {
               <table className="min-w-full divide-y divide-hos-border text-sm">
                 <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">
+                    <th className="px-4 py-3 text-xs font-medium uppercase text-hos-text-muted text-center">
                       Provider
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">

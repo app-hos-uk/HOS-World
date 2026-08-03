@@ -156,7 +156,7 @@ export default function WholesalerSubmissionsPage() {
                       <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Product
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                      <th className="text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Stock
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
@@ -184,7 +184,7 @@ export default function WholesalerSubmissionsPage() {
                             {submission.productData?.description?.substring(0, 50)}...
                           </div>
                         </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                        <td className="text-right px-4 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {submission.productData?.stock ?? 'N/A'}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-hos-text-secondary">

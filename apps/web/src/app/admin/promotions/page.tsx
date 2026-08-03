@@ -382,7 +382,7 @@ export default function AdminPromotionsPage() {
             <table className="w-full">
               <thead className="bg-hos-bg-secondary">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider text-left">Name</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">Type</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">Value</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">Conditions</th>

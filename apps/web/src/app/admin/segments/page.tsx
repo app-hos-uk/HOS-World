@@ -87,7 +87,7 @@ export default function AdminSegmentsPage() {
                     <th className="px-4 py-2">Status</th>
                     <th className="px-4 py-2">Members</th>
                     <th className="px-4 py-2">Last evaluated</th>
-                    <th className="px-4 py-2" />
+                    <th className="px-4 py-2 text-right" />
                   </tr>
                 </thead>
                 <tbody>

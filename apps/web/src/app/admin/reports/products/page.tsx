@@ -223,16 +223,16 @@ export default function AdminProductAnalyticsPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       SKU
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                    <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Revenue
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                    <th className="text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Orders
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                    <th className="text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Quantity
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Avg Price
                     </th>
                   </tr>
@@ -246,16 +246,16 @@ export default function AdminProductAnalyticsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {product.sku || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                      <td className="text-right px-6 py-4 whitespace-nowrap text-sm tabular-nums text-hos-text-secondary">
                         ${Number(product.revenue || 0).toFixed(2)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                      <td className="text-right px-6 py-4 whitespace-nowrap text-sm tabular-nums text-hos-text-secondary">
                         {product.orders || 0}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                      <td className="text-right px-6 py-4 whitespace-nowrap text-sm tabular-nums text-hos-text-secondary">
                         {product.quantity || 0}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm tabular-nums text-hos-text-secondary">
                         ${Number(product.averagePrice || 0).toFixed(2)}
                       </td>
                     </tr>

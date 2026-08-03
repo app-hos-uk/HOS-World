@@ -108,7 +108,7 @@ export default function AdminAmbassadorsPage() {
                     <th className="text-left p-2">Tier</th>
                     <th className="text-left p-2">Status</th>
                     <th className="text-left p-2">Referrals</th>
-                    <th className="text-left p-2">Points</th>
+                    <th className="text-right p-2">Points</th>
                     <th className="text-left p-2">Actions</th>
                   </tr>
                 </thead>
@@ -131,7 +131,7 @@ export default function AdminAmbassadorsPage() {
                         <td className="p-2">{String(row.tier)}</td>
                         <td className="p-2">{String(row.status)}</td>
                         <td className="p-2">{String(row.totalReferralSignups ?? 0)}</td>
-                        <td className="p-2">{String(row.totalPointsEarnedAsAmb ?? 0)}</td>
+                        <td className="text-right p-2">{String(row.totalPointsEarnedAsAmb ?? 0)}</td>
                         <td className="p-2 space-x-2">
                           {row.status === 'ACTIVE' ? (
                             <button

@@ -121,7 +121,7 @@ export default function SellerEarningsPage() {
                     <thead>
                       <tr className="border-b border-hos-border text-hos-text-muted text-left">
                         <th className="py-3 px-4 font-medium">Period</th>
-                        <th className="py-3 px-4 font-medium">Net Amount</th>
+                        <th className="tabular-nums text-right py-3 px-4 font-medium">Net Amount</th>
                         <th className="py-3 px-4 font-medium">Status</th>
                         <th className="py-3 px-4 font-medium">Paid</th>
                       </tr>
@@ -134,7 +134,7 @@ export default function SellerEarningsPage() {
                               ? `${new Date(settlement.periodStart).toLocaleDateString()} – ${new Date(settlement.periodEnd).toLocaleDateString()}`
                               : new Date(settlement.createdAt).toLocaleDateString()}
                           </td>
-                          <td className="py-3 px-4 text-hos-text-secondary font-medium">
+                          <td className="tabular-nums text-right py-3 px-4 text-hos-text-secondary font-medium">
                             {formatPrice(toNumber(settlement.netAmount), settlement.currency || 'USD')}
                           </td>
                           <td className="py-3 px-4">{statusBadge(settlement.status)}</td>

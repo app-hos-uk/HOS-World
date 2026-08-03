@@ -158,9 +158,9 @@ export default function AdminInfluencerCommissionsPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Date</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Influencer</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Order</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Order Total</th>
+                    <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase">Order Total</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Rate</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Commission</th>
+                    <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase">Commission</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                   </tr>
@@ -178,13 +178,13 @@ export default function AdminInfluencerCommissionsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-hos-text-secondary">
                         {commission.orderId.slice(0, 8)}...
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                      <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                         {formatCurrency(commission.orderTotal, commission.currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {(commission.rateApplied * 100).toFixed(0)}% ({commission.rateSource})
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-400">
+                      <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-400">
                         {formatCurrency(commission.amount, commission.currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

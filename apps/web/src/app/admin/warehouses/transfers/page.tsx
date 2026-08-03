@@ -339,13 +339,13 @@ export default function AdminStockTransfersPage() {
               <table className="min-w-full divide-y divide-hos-border">
                 <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                    <th className="px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider text-center">
                       Product
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       From → To
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                    <th className="text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                       Quantity
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
@@ -384,7 +384,7 @@ export default function AdminStockTransfersPage() {
                             {transfer.toWarehouse.name} ({transfer.toWarehouse.code})
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="text-right px-6 py-4 whitespace-nowrap">
                           <span className="text-sm font-medium text-hos-text-secondary">{transfer.quantity}</span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

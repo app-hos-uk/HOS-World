@@ -117,7 +117,7 @@ export default function RevenueRecognitionPage() {
                       <thead>
                         <tr className="border-b border-hos-border">
                           <th className="text-left py-2 text-hos-text-muted font-medium">Order</th>
-                          <th className="text-left py-2 text-hos-text-muted font-medium">Amount</th>
+                          <th className="tabular-nums text-right py-2 text-hos-text-muted font-medium">Amount</th>
                           <th className="text-left py-2 text-hos-text-muted font-medium">Status</th>
                           <th className="text-left py-2 text-hos-text-muted font-medium">Seller</th>
                           <th className="text-left py-2 text-hos-text-muted font-medium">Age</th>
@@ -127,7 +127,7 @@ export default function RevenueRecognitionPage() {
                         {deferred.map((order: any) => (
                           <tr key={order.id} className="border-b border-hos-border/50">
                             <td className="py-2 font-medium">{order.orderNumber || order.id.slice(0, 8)}</td>
-                            <td className="py-2">{formatPrice(order.total)}</td>
+                            <td className="tabular-nums text-right py-2">{formatPrice(order.total)}</td>
                             <td className="py-2"><span className="px-2 py-0.5 text-xs rounded bg-yellow-500/20 text-yellow-400">{order.status}</span></td>
                             <td className="py-2 text-hos-text-muted">{order.seller?.storeName || '—'}</td>
                             <td className="py-2 text-hos-text-muted">{order.ageInDays}d</td>

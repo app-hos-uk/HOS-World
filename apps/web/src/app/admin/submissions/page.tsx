@@ -666,7 +666,7 @@ export default function AdminSubmissionsPage() {
                     <tr>
                       {isSubmissionColumnVisible('product') && <th className="px-4 py-3 text-left">Product</th>}
                       {isSubmissionColumnVisible('seller') && <th className="px-4 py-3 text-left">Seller</th>}
-                      {isSubmissionColumnVisible('price') && <th className="px-4 py-3 text-left">Price</th>}
+                      {isSubmissionColumnVisible('price') && <th className="tabular-nums text-right px-4 py-3">Price</th>}
                       {isSubmissionColumnVisible('status') && <th className="px-4 py-3 text-left min-w-[10rem]">Status</th>}
                       {isSubmissionColumnVisible('submitted') && <th className="px-4 py-3 text-left">Submitted</th>}
                       {isSubmissionColumnVisible('actions') && <th className="px-4 py-3 text-right">Actions</th>}
@@ -737,7 +737,7 @@ export default function AdminSubmissionsPage() {
                           </td>
                           )}
                           {isSubmissionColumnVisible('price') && (
-                          <td className="px-4 py-3 text-sm text-hos-text-secondary">
+                          <td className="tabular-nums text-right px-4 py-3 text-sm text-hos-text-secondary">
                             {submission.productData?.price
                               ? formatAdminPrice(submission.productData.price, submission.productData.currency || 'USD')
                               : 'N/A'}

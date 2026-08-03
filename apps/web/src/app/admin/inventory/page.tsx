@@ -252,7 +252,7 @@ function AdminInventoryContent() {
                         <td className="font-medium">{m.product.name}</td>
                         <td>{m.inventoryLocation.warehouse.name} ({m.inventoryLocation.warehouse.code})</td>
                         <td><span className={`font-semibold ${getMovementTypeColor(m.movementType)}`}>{m.movementType}</span></td>
-                        <td className={`text-right font-semibold ${getMovementTypeColor(m.movementType)}`}>{m.quantity > 0 ? '+' : ''}{m.quantity}</td>
+                        <td className={`text-right tabular-nums font-semibold ${getMovementTypeColor(m.movementType)}`}>{m.quantity > 0 ? '+' : ''}{m.quantity}</td>
                         <td className="text-hos-text-muted">{m.referenceType || '—'}</td>
                         <td className="text-hos-text-muted">{formatDate(m.createdAt)}</td>
                       </tr>

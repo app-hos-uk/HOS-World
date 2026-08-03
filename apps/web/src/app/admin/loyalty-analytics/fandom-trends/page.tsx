@@ -1,12 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
+import { AlignedDataTable, type AlignedColumn } from '@/components/ui/AlignedDataTable';
+
+type FandomRow = {
+  fandom: string;
+  members: number;
+  revenue: number;
+  orders: number;
+  avgSpend: number;
+  growth: number;
+};
 
 export default function FandomTrendsPage() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<FandomRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -18,46 +28,75 @@ export default function FandomTrendsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const columns = useMemo<AlignedColumn<FandomRow>[]>(
+    () => [
+      {
+        key: 'fandom',
+        header: 'Fandom',
+        width: '1.8fr',
+        align: 'left',
+        cell: (f) => <span className="font-medium">{f.fandom}</span>,
+      },
+      {
+        key: 'members',
+        header: 'Members',
+        width: '1fr',
+        align: 'right',
+        cell: (f) => f.members,
+      },
+      {
+        key: 'revenue',
+        header: 'Revenue',
+        width: '1.1fr',
+        align: 'right',
+        cell: (f) => `$${Number(f.revenue).toFixed(2)}`,
+      },
+      {
+        key: 'orders',
+        header: 'Orders',
+        width: '1fr',
+        align: 'right',
+        cell: (f) => f.orders,
+      },
+      {
+        key: 'avgSpend',
+        header: 'Avg spend',
+        width: '1.1fr',
+        align: 'right',
+        cell: (f) => `$${Number(f.avgSpend).toFixed(2)}`,
+      },
+      {
+        key: 'growth',
+        header: 'Growth',
+        width: '1fr',
+        align: 'right',
+        cell: (f) => `${f.growth > 0 ? '+' : ''}${f.growth}%`,
+      },
+    ],
+    [],
+  );
+
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-              <div className="p-6 max-w-5xl mx-auto space-y-4">
-          <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">← Health</Link>
-          <h1 className="text-2xl font-semibold text-hos-text-secondary">Fandom trends (30d)</h1>
-          {loading ? <p className="text-hos-text-muted">Loading…</p> : error ? <p className="text-red-400 text-sm">{error}</p> : (
-            <div className="overflow-x-auto">
-              <table className="admin-table rounded w-full !table-fixed min-w-[640px]">
-                <colgroup>
-                  <col className="w-[28%]" />
-                  <col className="w-[14%]" />
-                  <col className="w-[16%]" />
-                  <col className="w-[14%]" />
-                  <col className="w-[16%]" />
-                  <col className="w-[12%]" />
-                </colgroup>
-                <thead><tr>
-                  <th className="text-left whitespace-nowrap">Fandom</th>
-                  <th className="text-right whitespace-nowrap">Members</th>
-                  <th className="text-right whitespace-nowrap">Revenue</th>
-                  <th className="text-right whitespace-nowrap">Orders</th>
-                  <th className="text-right whitespace-nowrap">Avg spend</th>
-                  <th className="text-right whitespace-nowrap">Growth</th>
-                </tr></thead>
-                <tbody>
-                  {data.map((f: any) => (
-                    <tr key={f.fandom}>
-                      <td className="font-medium whitespace-nowrap text-left">{f.fandom}</td>
-                      <td className="text-right tabular-nums">{f.members}</td>
-                      <td className="text-right tabular-nums">${Number(f.revenue).toFixed(2)}</td>
-                      <td className="text-right tabular-nums">{f.orders}</td>
-                      <td className="text-right tabular-nums">${Number(f.avgSpend).toFixed(2)}</td>
-                      <td className="text-right tabular-nums">{f.growth > 0 ? '+' : ''}{f.growth}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-          </RouteGuard>
+      <div className="mx-auto max-w-5xl space-y-4 p-6">
+        <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">
+          ← Health
+        </Link>
+        <h1 className="text-2xl font-semibold text-hos-text-secondary">Fandom trends (30d)</h1>
+        {loading ? (
+          <p className="text-hos-text-muted">Loading…</p>
+        ) : error ? (
+          <p className="text-sm text-red-400">{error}</p>
+        ) : (
+          <AlignedDataTable
+            columns={columns}
+            rows={data}
+            rowKey={(f) => f.fandom}
+            minWidth={640}
+            emptyMessage="No fandom trend data available."
+          />
+        )}
+      </div>
+    </RouteGuard>
   );
 }

@@ -197,7 +197,7 @@ export default function AdminSegmentDetailPage() {
                     <th className="px-3 py-2">Name</th>
                     <th className="px-3 py-2">Email</th>
                     <th className="px-3 py-2">Tier</th>
-                    <th className="px-3 py-2">Points</th>
+                    <th className="text-right px-3 py-2">Points</th>
                     <th className="px-3 py-2">Country</th>
                     <th className="px-3 py-2">Joined segment</th>
                   </tr>
@@ -210,7 +210,7 @@ export default function AdminSegmentDetailPage() {
                       </td>
                       <td className="px-3 py-2">{m.email}</td>
                       <td className="px-3 py-2">{m.tierName}</td>
-                      <td className="px-3 py-2">{m.points}</td>
+                      <td className="text-right px-3 py-2">{m.points}</td>
                       <td className="px-3 py-2">{m.country}</td>
                       <td className="px-3 py-2">{new Date(m.joinedAt).toLocaleString()}</td>
                     </tr>

@@ -163,10 +163,10 @@ export default function WholesalerOrdersPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Customer
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                      <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Total
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                      <th className="text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Quantity
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
@@ -186,10 +186,10 @@ export default function WholesalerOrdersPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {order.user?.firstName} {order.user?.lastName}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                        <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {formatPrice(parseFloat(order.total || 0))}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
+                        <td className="text-right px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
                           {order.items?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

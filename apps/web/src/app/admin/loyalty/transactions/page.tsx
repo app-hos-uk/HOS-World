@@ -67,7 +67,7 @@ export default function AdminLoyaltyTransactionsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-hos-text-secondary">{tx.source || tx.action || '—'}</td>
-                      <td className={`px-4 py-3 text-right font-semibold ${tx.points > 0 ? 'text-green-400' : tx.points < 0 ? 'text-red-400' : 'text-hos-text-secondary'}`}>
+                      <td className={`px-4 py-3 text-right tabular-nums font-semibold ${tx.points > 0 ? 'text-green-400' : tx.points < 0 ? 'text-red-400' : 'text-hos-text-secondary'}`}>
                         {tx.points > 0 ? '+' : ''}{tx.points}
                       </td>
                       <td className="px-4 py-3 text-right text-hos-text-secondary">{tx.balanceAfter != null ? Number(tx.balanceAfter).toLocaleString() : '—'}</td>

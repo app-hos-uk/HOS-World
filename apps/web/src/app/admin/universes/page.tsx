@@ -184,7 +184,7 @@ export default function AdminUniversesPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-hos-border bg-hos-bg-tertiary/50">
-                    <th className="text-left px-4 py-3 font-medium text-hos-text-muted w-10">#</th>
+                    <th className="px-4 py-3 font-medium text-hos-text-muted w-10 text-center">#</th>
                     <th className="text-left px-4 py-3 font-medium text-hos-text-muted w-16">Logo</th>
                     <th className="text-left px-4 py-3 font-medium text-hos-text-muted">Name</th>
                     <th className="text-left px-4 py-3 font-medium text-hos-text-muted">Tag</th>

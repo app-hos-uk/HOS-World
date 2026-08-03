@@ -178,7 +178,7 @@ export default function AdminInfluencerInvitationsPage() {
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Email</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Invited By</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Commission</th>
+                    <th className="tabular-nums text-right px-6 py-3 text-xs font-medium text-hos-text-muted uppercase">Commission</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Expires</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Actions</th>
@@ -193,7 +193,7 @@ export default function AdminInfluencerInvitationsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {invitation.user.firstName} {invitation.user.lastName}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
+                      <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {invitation.baseCommissionRate
                           ? `${(invitation.baseCommissionRate * 100).toFixed(0)}%`
                           : 'Default'}

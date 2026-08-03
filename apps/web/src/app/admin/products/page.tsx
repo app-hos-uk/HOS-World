@@ -1108,7 +1108,7 @@ function AdminProductsContent() {
                 </colgroup>
                 <thead className="bg-hos-bg-secondary sticky top-0 z-10">
                   <tr>
-                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-hos-text-muted uppercase align-middle">
+                    <th scope="col" className="px-3 py-3 text-xs font-medium text-hos-text-muted uppercase align-middle text-center">
                       <input
                         ref={selectAllCheckboxRef}
                         type="checkbox"
@@ -1121,10 +1121,10 @@ function AdminProductsContent() {
                     <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase align-middle">
                       Product
                     </th>
-                    <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-hos-text-muted uppercase align-middle">
+                    <th scope="col" className="tabular-nums text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase align-middle">
                       Price
                     </th>
-                    <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-hos-text-muted uppercase align-middle">
+                    <th scope="col" className="text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase align-middle">
                       Stock
                     </th>
                     <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase align-middle">
@@ -1187,10 +1187,10 @@ function AdminProductsContent() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 align-middle text-right text-sm text-hos-text-secondary tabular-nums whitespace-nowrap">
+                        <td className="text-right px-4 py-3 align-middle text-sm text-hos-text-secondary tabular-nums whitespace-nowrap">
                           {formatPrice(Number(product.price) || 0, product.currency || 'USD')}
                         </td>
-                        <td className="px-4 py-3 align-middle text-center">{getStockBadge(product.stock)}</td>
+                        <td className="text-right px-4 py-3 align-middle">{getStockBadge(product.stock)}</td>
                         <td className="px-4 py-3 align-middle">
                           <span
                             className={`inline-flex max-w-full px-2 py-0.5 text-xs rounded truncate ${

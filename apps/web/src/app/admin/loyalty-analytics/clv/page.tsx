@@ -1,13 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
+import { AlignedDataTable, type AlignedColumn } from '@/components/ui/AlignedDataTable';
+
+type TopMember = {
+  membershipId: string;
+  name: string;
+  clvScore: number;
+  tier: string;
+  totalSpend: number;
+  purchaseCount: number;
+};
 
 export default function ClvReportPage() {
   const [dist, setDist] = useState<any[]>([]);
-  const [top, setTop] = useState<any[]>([]);
+  const [top, setTop] = useState<TopMember[]>([]);
   const [churn, setChurn] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<string[]>([]);
@@ -28,74 +38,113 @@ export default function ClvReportPage() {
         return null;
       }),
     ]).then(([d, t, c]) => {
-      setDist(Array.isArray(d?.data) ? d.data : []);
-      setTop(Array.isArray(t?.data) ? t.data : []);
-      setChurn(c?.data ?? null);
-      if (errs.length) setErrors(errs);
-      setLoading(false);
-    });
+      const distData = d?.data;
+      setDist(Array.isArray(distData) ? distData : (distData as any)?.buckets || []);
+      setTop(Array.isArray(t?.data) ? (t.data as TopMember[]) : []);
+      setChurn(c?.data || null);
+      setErrors(errs);
+    }).finally(() => setLoading(false));
   }, []);
+
+  const columns = useMemo<AlignedColumn<TopMember>[]>(
+    () => [
+      {
+        key: 'name',
+        header: 'Name',
+        width: '1.6fr',
+        align: 'left',
+        cell: (m) => <span className="font-medium">{m.name}</span>,
+      },
+      {
+        key: 'clv',
+        header: 'CLV',
+        width: '1fr',
+        align: 'right',
+        cell: (m) => `$${Number(m.clvScore).toFixed(2)}`,
+      },
+      {
+        key: 'tier',
+        header: 'Tier',
+        width: '1fr',
+        align: 'left',
+        cell: (m) => m.tier,
+      },
+      {
+        key: 'spend',
+        header: 'Spend',
+        width: '1fr',
+        align: 'right',
+        cell: (m) => `$${Number(m.totalSpend).toFixed(2)}`,
+      },
+      {
+        key: 'orders',
+        header: 'Orders',
+        width: '0.8fr',
+        align: 'right',
+        cell: (m) => m.purchaseCount,
+      },
+    ],
+    [],
+  );
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-              <div className="p-6 max-w-5xl mx-auto space-y-6">
-          <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">← Health</Link>
-          <h1 className="text-2xl font-semibold text-hos-text-secondary">CLV report</h1>
-          {loading ? <p className="text-hos-text-muted">Loading…</p> : (
-            <>
-              {errors.length > 0 && (
-                <div className="rounded border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400 space-y-1">
-                  {errors.map((e, i) => <p key={i}>{e}</p>)}
-                </div>
-              )}
-              <div>
-                <h2 className="text-lg font-medium mb-2">Distribution</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                  {dist.map((b: any) => (
-                    <div key={b.bucket} className="border rounded-lg p-3 bg-hos-bg-secondary">
-                      <p className="text-hos-text-muted">{b.bucket}</p>
-                      <p className="text-xl font-semibold">{b.count}</p>
-                      <p className="text-xs text-hos-text-muted">avg ${Number(b.avgClv).toFixed(2)}</p>
-                    </div>
-                  ))}
-                </div>
+      <div className="mx-auto max-w-5xl space-y-4 p-6">
+        <Link href="/admin/loyalty-analytics" className="text-sm text-violet-400">
+          ← Health
+        </Link>
+        <h1 className="text-2xl font-semibold text-hos-text-secondary">CLV report</h1>
+        {loading ? (
+          <p className="text-hos-text-muted">Loading…</p>
+        ) : (
+          <>
+            {errors.length > 0 && (
+              <p className="text-sm text-red-400">{errors.join(' · ')}</p>
+            )}
+            <div>
+              <h2 className="mb-2 text-lg font-medium">Distribution</h2>
+              <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+                {dist.map((b: any) => (
+                  <div key={b.bucket} className="rounded-lg border border-hos-border bg-hos-bg-secondary p-3">
+                    <p className="text-hos-text-muted">{b.bucket}</p>
+                    <p className="text-xl font-semibold">{b.count}</p>
+                    <p className="text-xs text-hos-text-muted">avg ${Number(b.avgClv).toFixed(2)}</p>
+                  </div>
+                ))}
               </div>
+            </div>
+            <div>
+              <h2 className="mb-2 text-lg font-medium">Top members</h2>
+              <AlignedDataTable
+                columns={columns}
+                rows={top}
+                rowKey={(m) => m.membershipId}
+                minWidth={640}
+                emptyMessage="No member CLV data available."
+              />
+            </div>
+            {churn && (
               <div>
-                <h2 className="text-lg font-medium mb-2">Top members</h2>
-                <table className="admin-table border rounded bg-hos-bg-secondary">
-                  <thead className="bg-hos-bg-secondary"><tr>
-                    <th>Name</th>
-                    <th>CLV</th>
-                    <th>Tier</th>
-                    <th>Spend</th>
-                    <th>Orders</th>
-                  </tr></thead>
-                  <tbody>
-                    {top.map((m: any) => (
-                      <tr key={m.membershipId} className="border-t">
-                        <td>{m.name}</td>
-                        <td>${Number(m.clvScore).toFixed(2)}</td>
-                        <td>{m.tier}</td>
-                        <td>${Number(m.totalSpend).toFixed(2)}</td>
-                        <td>{m.purchaseCount}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {churn && (
-                <div>
-                  <h2 className="text-lg font-medium mb-2">Churn risk</h2>
-                  <div className="grid grid-cols-3 gap-3 text-sm mb-3">
-                    <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">Healthy</p><p className="text-xl font-semibold text-emerald-400">{churn.healthy}</p></div>
-                    <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">At risk</p><p className="text-xl font-semibold text-amber-400">{churn.atRisk}</p></div>
-                    <div className="border rounded p-3 bg-hos-bg-secondary"><p className="text-hos-text-muted">Churned</p><p className="text-xl font-semibold text-red-400">{churn.churned}</p></div>
+                <h2 className="mb-2 text-lg font-medium">Churn risk</h2>
+                <div className="mb-3 grid grid-cols-3 gap-3 text-sm">
+                  <div className="rounded border border-hos-border bg-hos-bg-secondary p-3">
+                    <p className="text-hos-text-muted">Healthy</p>
+                    <p className="text-xl font-semibold text-emerald-400">{churn.healthy}</p>
+                  </div>
+                  <div className="rounded border border-hos-border bg-hos-bg-secondary p-3">
+                    <p className="text-hos-text-muted">At risk</p>
+                    <p className="text-xl font-semibold text-amber-400">{churn.atRisk}</p>
+                  </div>
+                  <div className="rounded border border-hos-border bg-hos-bg-secondary p-3">
+                    <p className="text-hos-text-muted">Churned</p>
+                    <p className="text-xl font-semibold text-red-400">{churn.churned}</p>
                   </div>
                 </div>
-              )}
-            </>
-          )}
-        </div>
-          </RouteGuard>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </RouteGuard>
   );
 }

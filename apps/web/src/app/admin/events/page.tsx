@@ -60,7 +60,7 @@ export default function AdminEventsPage() {
                     <th className="px-4 py-2">Status</th>
                     <th className="px-4 py-2">Starts</th>
                     <th className="px-4 py-2">Store</th>
-                    <th className="px-4 py-2" />
+                    <th className="px-4 py-2 text-right" />
                   </tr>
                 </thead>
                 <tbody>
