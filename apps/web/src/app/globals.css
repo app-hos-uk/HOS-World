@@ -205,21 +205,20 @@ select option {
   }
 }
 
-/* Gold CTAs: always keep dark text on gold backgrounds (hover included). */
+/*
+ * Solid gold CTAs only — keep dark text on hover.
+ * Do NOT use [class*='bg-hos-gold']: that also matches admin nav tints like
+ * bg-hos-gold/10, bg-hos-gold/20, and hover:bg-hos-gold/10, which forced
+ * #1a1406 text onto dark sidebar backgrounds and made menus look missing.
+ */
 a.bg-hos-gold,
-a[class*='bg-hos-gold'],
 button.bg-hos-gold,
-button[class*='bg-hos-gold'],
-label.bg-hos-gold,
-label[class*='bg-hos-gold'] {
+label.bg-hos-gold {
   color: #1a1406;
 }
 a.bg-hos-gold:hover,
-a[class*='bg-hos-gold']:hover,
 button.bg-hos-gold:hover,
-button[class*='bg-hos-gold']:hover,
-label.bg-hos-gold:hover,
-label[class*='bg-hos-gold']:hover {
+label.bg-hos-gold:hover {
   color: #1a1406;
 }
 

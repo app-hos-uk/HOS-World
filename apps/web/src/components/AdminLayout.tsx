@@ -108,8 +108,11 @@ const menuItems: MenuItem[] = [
     children: [
       { title: 'Promotions', href: '/admin/promotions', icon: '🎁' },
       { title: 'Journeys', href: '/admin/journeys', icon: '🗺️' },
+      { title: 'Marketing Materials', href: '/admin/marketing', icon: '📢' },
       { title: 'Newsletter', href: '/admin/newsletter', icon: '📧' },
       { title: 'Founding Members', href: '/admin/founding-members', icon: '🌟' },
+      { title: 'Message Logs', href: '/admin/messaging', icon: '📨' },
+      { title: 'Delivery Dashboard', href: '/admin/notifications/delivery', icon: '📡' },
       { title: 'All Influencers', href: '/admin/influencers', icon: '⭐' },
       { title: 'Influencer Invitations', href: '/admin/influencers/invitations', icon: '✉️' },
       { title: 'Influencer Commissions', href: '/admin/influencers/commissions', icon: '💰' },
@@ -206,6 +209,9 @@ const menuItems: MenuItem[] = [
       { title: 'Activity Logs', href: '/admin/activity', icon: '📝' },
       { title: 'Discrepancies', href: '/admin/discrepancies', icon: '⚠️' },
       { title: 'POS Integration', href: '/admin/pos', icon: '🏪' },
+      { title: 'Privacy Audit', href: '/admin/privacy-audit', icon: '🛡️' },
+      { title: 'WhatsApp', href: '/admin/whatsapp', icon: '💬' },
+      { title: 'Quiz', href: '/admin/quiz', icon: '❓' },
     ],
   },
 ];
@@ -220,7 +226,7 @@ const TEAM_ADMIN_SHELL_MENUS: Record<string, MenuItem[]> = {
     { title: 'Catalog Workflow', href: '/catalog/entries', icon: '📝', zone: 'quickAccess' },
     {
       title: 'Cross-seller Duplicates',
-      href: '/procurement/submissions?view=cross-seller',
+      href: '/catalog/duplicates',
       icon: '🔄',
       zone: 'commerce',
     },
@@ -269,18 +275,22 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { logout, user } = useAuth();
+  const { logout, user, effectiveRole } = useAuth();
   const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navScrollRef = useRef<HTMLElement | null>(null);
   const SIDEBAR_SCROLL_KEY = 'admin-sidebar-scroll';
 
   const visibleMenuItems = useMemo((): MenuItem[] => {
-    const role = String(user?.role ?? '').toUpperCase();
-    if (role === 'ADMIN') return menuItems;
+    // Full admin nav for ADMIN. When an admin uses role impersonation, show that
+    // team's shell menu. Other roles get their team shell (or dashboard only).
+    const actualRole = String(user?.role ?? '').toUpperCase();
+    const role = String(effectiveRole ?? user?.role ?? '').toUpperCase();
+    if (actualRole === 'ADMIN' && role === 'ADMIN') return menuItems;
     const teamNav = TEAM_ADMIN_SHELL_MENUS[role];
     if (teamNav) return teamNav;
+    if (actualRole === 'ADMIN') return menuItems;
     return [{ title: 'Dashboard', href: '/admin/dashboard', icon: '📊' }];
-  }, [user?.role]);
+  }, [user?.role, effectiveRole]);
 
   // Cleanup blur timeout on unmount
   useEffect(() => {
