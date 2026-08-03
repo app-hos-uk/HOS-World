@@ -3,7 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { LoyaltyTxType, Prisma, SellerType } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { LoyaltyWalletService } from '../services/wallet.service';
-import { isTruthy } from '../../common/utils/config';
+import { FeatureFlagsService } from '../../config/feature-flags.service';
+import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 
 export type BurnChannel = 'MARKETPLACE_CHECKOUT' | 'HOS_OUTLET_POS';
 
@@ -13,6 +14,7 @@ export class LoyaltyBurnEngine {
     private prisma: PrismaService,
     private wallet: LoyaltyWalletService,
     private config: ConfigService,
+    private featureFlags: FeatureFlagsService,
   ) {}
 
   assertChannelAllowed(channel: string, storeId?: string | null): void {
@@ -44,7 +46,7 @@ export class LoyaltyBurnEngine {
     regionCode?: string | null;
     prismaTx?: Prisma.TransactionClient;
   }): Promise<{ redemptionId: string; couponCode?: string }> {
-    if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) {
+    if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
       throw new BadRequestException('Loyalty programme is not enabled');
     }
 

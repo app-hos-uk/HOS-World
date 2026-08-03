@@ -586,6 +586,18 @@ export class OrdersService {
       new Decimal(0),
     );
 
+    // A pending loyalty redemption is already discounted into cart.discount above. If the
+    // points can no longer be burned, the discount would be given away for free — so refuse
+    // checkout rather than silently skipping the burn.
+    const loyaltyRedemptionActive =
+      !!this.loyaltyService?.isEnabled() &&
+      isTruthy(this.configService.get<string>('LOYALTY_REDEMPTION_AT_CHECKOUT'));
+    if ((cart.pendingLoyaltyPoints || 0) > 0 && !loyaltyRedemptionActive) {
+      throw new BadRequestException(
+        'Loyalty point redemption is currently unavailable. Please remove the points discount from your cart and try again.',
+      );
+    }
+
     let skipPromotionUsageRecording = false;
 
     // Pre-compute warehouse routing OUTSIDE the transaction to avoid holding DB connections
@@ -803,12 +815,7 @@ export class OrdersService {
       const pendingLoyaltyPoints = cart.pendingLoyaltyPoints || 0;
       const pendingLoyaltyOptionId = cart.pendingLoyaltyOptionId || null;
       const loyaltyDisc = cart.loyaltyDiscountAmount || new Decimal(0);
-      if (
-        pendingLoyaltyPoints > 0 &&
-        this.loyaltyService &&
-        isTruthy(process.env.LOYALTY_ENABLED) &&
-        isTruthy(process.env.LOYALTY_REDEMPTION_AT_CHECKOUT)
-      ) {
+      if (pendingLoyaltyPoints > 0 && loyaltyRedemptionActive) {
         await this.loyaltyService.finalizeCheckoutRedemption(
           tx,
           userId,

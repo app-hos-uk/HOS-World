@@ -1,12 +1,14 @@
 import { BadRequestException } from '@nestjs/common';
 import { LoyaltyBurnEngine } from './burn.engine';
 
+const mockFeatureFlags = { isEnabled: jest.fn().mockReturnValue(true) };
+
 describe('LoyaltyBurnEngine', () => {
   describe('assertChannelAllowed', () => {
     let engine: LoyaltyBurnEngine;
 
     beforeEach(() => {
-      engine = new LoyaltyBurnEngine(null as any, null as any, null as any);
+      engine = new LoyaltyBurnEngine(null as any, null as any, null as any, null as any);
     });
 
     it('accepts MARKETPLACE_CHECKOUT', () => {
@@ -62,6 +64,7 @@ describe('LoyaltyBurnEngine', () => {
         mockPrisma as any,
         null as any,
         mockConfig as any,
+        mockFeatureFlags as any,
       );
 
       await expect(
@@ -110,6 +113,7 @@ describe('LoyaltyBurnEngine', () => {
         mockPrisma as any,
         null as any,
         mockConfig as any,
+        mockFeatureFlags as any,
       );
 
       await expect(

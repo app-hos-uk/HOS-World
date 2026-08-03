@@ -199,6 +199,7 @@ describe('TicketsService', () => {
       const mockTicket = {
         id: ticketId,
         status: 'OPEN',
+        userId: 'user-1',
       };
       const mockMessage = {
         id: 'msg-1',
@@ -224,6 +225,7 @@ describe('TicketsService', () => {
       const mockTicket = {
         id: ticketId,
         status: 'OPEN',
+        userId: 'user-1',
       };
 
       mockPrismaService.supportTicket.findUnique.mockResolvedValue(mockTicket);

@@ -13,7 +13,7 @@ describe('ChatbotService', () => {
       findUnique: jest.fn(),
     },
     order: {
-      findUnique: jest.fn(),
+      findFirst: jest.fn(),
     },
     product: {
       findUnique: jest.fn(),
@@ -50,6 +50,7 @@ describe('ChatbotService', () => {
     it('should process message and return response', async () => {
       const messageData = {
         userId: 'user-1',
+        authenticatedUserId: 'user-1',
         message: 'Hello, I need help',
       };
       const mockUser = {
@@ -73,6 +74,7 @@ describe('ChatbotService', () => {
     it('should include user context in prompt', async () => {
       const messageData = {
         userId: 'user-1',
+        authenticatedUserId: 'user-1',
         message: 'Test message',
       };
       const mockUser = {
@@ -96,6 +98,7 @@ describe('ChatbotService', () => {
     it('should include order context if orderId provided', async () => {
       const messageData = {
         userId: 'user-1',
+        authenticatedUserId: 'user-1',
         message: 'Where is my order?',
         context: { orderId: 'order-1' },
       };
@@ -107,13 +110,14 @@ describe('ChatbotService', () => {
         items: [{ product: { name: 'Product 1', price: 100 } }],
       };
 
-      mockPrismaService.order.findUnique.mockResolvedValue(mockOrder);
+      mockPrismaService.order.findFirst.mockResolvedValue(mockOrder);
       mockGeminiService.generateChatResponse.mockResolvedValue('Response');
 
       await service.processMessage(messageData);
 
-      expect(mockPrismaService.order.findUnique).toHaveBeenCalledWith({
-        where: { id: 'order-1' },
+      // Order lookup is scoped to the authenticated user to prevent cross-account access.
+      expect(mockPrismaService.order.findFirst).toHaveBeenCalledWith({
+        where: { id: 'order-1', userId: 'user-1' },
         include: expect.any(Object),
       });
     });
@@ -121,6 +125,7 @@ describe('ChatbotService', () => {
     it('should include product context if productId provided', async () => {
       const messageData = {
         userId: 'user-1',
+        authenticatedUserId: 'user-1',
         message: 'Tell me about this product',
         context: { productId: 'product-1' },
       };
@@ -146,6 +151,7 @@ describe('ChatbotService', () => {
     it('should detect escalation needs', async () => {
       const messageData = {
         userId: 'user-1',
+        authenticatedUserId: 'user-1',
         message: 'I want to speak to a human',
       };
 

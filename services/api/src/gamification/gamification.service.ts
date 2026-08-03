@@ -4,7 +4,8 @@ import { LoyaltyTxType } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { LoyaltyWalletService } from '../loyalty/services/wallet.service';
 import { LoyaltyTierEngine } from '../loyalty/engines/tier.engine';
-import { isTruthy } from '../common/utils/config';
+import { FeatureFlagsService } from '../config/feature-flags.service';
+import { isLoyaltyRuntimeEnabled } from '../loyalty/loyalty-enabled';
 
 export interface LeaderboardEntry {
   rank: number;
@@ -33,6 +34,7 @@ export class GamificationService {
     private config: ConfigService,
     private loyaltyWallet: LoyaltyWalletService,
     private loyaltyTiers: LoyaltyTierEngine,
+    private featureFlags: FeatureFlagsService,
   ) {}
 
   /**
@@ -201,7 +203,7 @@ export class GamificationService {
       },
     });
 
-    if (isTruthy(this.config.get<string>('LOYALTY_ENABLED')) && points > 0) {
+    if (isLoyaltyRuntimeEnabled(this.config, this.featureFlags) && points > 0) {
       const membership = await this.prisma.loyaltyMembership.findUnique({
         where: { userId },
       });

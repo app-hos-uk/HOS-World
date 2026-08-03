@@ -12,7 +12,7 @@ describe('EventsService', () => {
   let prisma: any;
   let wallet: { applyDelta: jest.Mock };
   let tiers: { recalculateTier: jest.Mock };
-  let notifications: { sendNotificationToUser: jest.Mock };
+  let notifications: { sendNotificationToUser: jest.Mock; queueNotification: jest.Mock };
   let templates: { render: jest.Mock };
   let config: { get: jest.Mock };
   let marketingBus: { emit: jest.Mock; broadcast: jest.Mock };
@@ -37,7 +37,10 @@ describe('EventsService', () => {
   beforeEach(() => {
     wallet = { applyDelta: jest.fn().mockResolvedValue({ balanceBefore: 0, balanceAfter: 100 }) };
     tiers = { recalculateTier: jest.fn().mockResolvedValue(undefined) };
-    notifications = { sendNotificationToUser: jest.fn().mockResolvedValue(undefined) };
+    notifications = {
+      sendNotificationToUser: jest.fn().mockResolvedValue(undefined),
+      queueNotification: jest.fn().mockResolvedValue(undefined),
+    };
     templates = {
       render: jest.fn().mockResolvedValue({ subject: 'S', body: '<p>Hi</p>', channel: 'EMAIL' }),
     };
@@ -87,6 +90,7 @@ describe('EventsService', () => {
       loyaltyEarnRule: { findFirst: jest.fn() },
       loyaltyTransaction: { findFirst: jest.fn() },
       user: { findUnique: jest.fn().mockResolvedValue({ firstName: 'A', email: 'a@b.c' }) },
+      notification: { create: jest.fn().mockResolvedValue({ id: 'n1' }) },
       fandom: { findUnique: jest.fn() },
       $transaction: jest.fn(async (fn: (tx: any) => Promise<unknown>) => {
         const tx = {
@@ -377,7 +381,13 @@ describe('EventsService', () => {
       await service.sendRemindersWindow();
 
       expect(templates.render).toHaveBeenCalledWith('event_reminder_24h', expect.any(Object));
-      expect(notifications.sendNotificationToUser).toHaveBeenCalled();
+      // Reminders go out via the queue so the rendered HTML template is not double-wrapped.
+      expect(notifications.queueNotification).toHaveBeenCalledWith(
+        'a@b.c',
+        'S',
+        '<p>Hi</p>',
+        'n1',
+      );
       expect(prisma.eventRSVP.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({

@@ -15,12 +15,29 @@ describe('RefundsService', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
     },
+    giftCardTransaction: {
+      findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(0),
+    },
+    transaction: {
+      update: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+    seller: {
+      findUnique: jest.fn().mockResolvedValue(null),
+    },
+    payment: {
+      findFirst: jest.fn().mockResolvedValue(null),
+      update: jest.fn(),
+    },
+    $transaction: jest.fn().mockImplementation(async (fn: any) => fn(mockPrismaService)),
   };
 
   const mockTransactionsService = {
     createTransaction: jest.fn(),
     updateTransactionStatus: jest.fn(),
     getTransactions: jest.fn(),
+    getTransactionById: jest.fn(),
   };
 
   const mockPaymentProviderService = {
@@ -60,6 +77,15 @@ describe('RefundsService', () => {
     transactionsService = module.get<TransactionsService>(TransactionsService);
 
     jest.clearAllMocks();
+
+    mockPrismaService.giftCardTransaction.findMany.mockResolvedValue([]);
+    mockPrismaService.giftCardTransaction.count.mockResolvedValue(0);
+    mockPrismaService.transaction.findMany.mockResolvedValue([]);
+    mockPrismaService.seller.findUnique.mockResolvedValue(null);
+    mockPrismaService.payment.findFirst.mockResolvedValue(null);
+    mockPrismaService.$transaction.mockImplementation(async (fn: any) => fn(mockPrismaService));
+    mockPaymentProviderService.ensureAvailableProviders.mockResolvedValue(['stripe']);
+    mockPaymentProviderService.isProviderAvailable.mockReturnValue(true);
   });
 
   describe('processRefund', () => {
@@ -79,6 +105,10 @@ describe('RefundsService', () => {
         order: {
           id: 'order-1',
           currency: 'USD',
+          total: 100,
+          sellerId: null,
+          childOrders: [],
+          stripePaymentIntentId: 'pi_test',
         },
       };
       const mockTransaction = {
@@ -89,8 +119,10 @@ describe('RefundsService', () => {
       };
 
       mockPrismaService.returnRequest.findUnique.mockResolvedValue(mockReturnRequest);
+      mockTransactionsService.getTransactions.mockResolvedValue({ transactions: [] });
       mockTransactionsService.createTransaction.mockResolvedValue(mockTransaction);
       mockTransactionsService.updateTransactionStatus.mockResolvedValue(mockTransaction);
+      mockTransactionsService.getTransactionById.mockResolvedValue(mockTransaction);
       mockPrismaService.returnRequest.update.mockResolvedValue({
         ...mockReturnRequest,
         refundAmount: 100,
@@ -110,7 +142,13 @@ describe('RefundsService', () => {
         status: 'PENDING',
         metadata: expect.any(Object),
       });
-      expect(result).toEqual(mockTransaction);
+      expect(result).toEqual({
+        transaction: mockTransaction,
+        stripeRefundSucceeded: true,
+        cardRefundAmount: 100,
+        giftCardRefundAmount: 0,
+        error: undefined,
+      });
     });
 
     it('should throw NotFoundException if return request not found', async () => {
@@ -119,11 +157,24 @@ describe('RefundsService', () => {
       await expect(service.processRefund(refundData)).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw BadRequestException if return not approved', async () => {
+    it('should throw BadRequestException if return is in a non-refundable status', async () => {
       const mockReturnRequest = {
         id: 'return-1',
-        status: 'PENDING',
-        order: { currency: 'USD' },
+        status: 'REJECTED',
+        order: { currency: 'USD', total: 100 },
+      };
+
+      mockPrismaService.returnRequest.findUnique.mockResolvedValue(mockReturnRequest);
+
+      await expect(service.processRefund(refundData)).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if refund exceeds order total', async () => {
+      const mockReturnRequest = {
+        id: 'return-1',
+        status: 'APPROVED',
+        orderId: 'order-1',
+        order: { currency: 'USD', total: 50 },
       };
 
       mockPrismaService.returnRequest.findUnique.mockResolvedValue(mockReturnRequest);
@@ -171,6 +222,7 @@ describe('RefundsService', () => {
       expect(mockTransactionsService.updateTransactionStatus).toHaveBeenCalledWith(
         transactionId,
         status,
+        undefined,
       );
       expect(result).toEqual(mockTransaction);
     });

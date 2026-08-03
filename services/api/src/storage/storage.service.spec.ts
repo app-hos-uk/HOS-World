@@ -60,13 +60,19 @@ describe('StorageService', () => {
     }),
   };
 
+  // Uploads are validated against magic bytes, so the buffer needs a real JPEG header.
+  const jpegBuffer = Buffer.concat([
+    Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]),
+    Buffer.from('test file content'),
+  ]);
+
   const mockFile: Express.Multer.File = {
     fieldname: 'file',
     originalname: 'test.jpg',
     encoding: '7bit',
     mimetype: 'image/jpeg',
     size: 1024,
-    buffer: Buffer.from('test file content'),
+    buffer: jpegBuffer,
     destination: '',
     filename: '',
     path: '',

@@ -26,6 +26,8 @@ describe('CartService - Phase 1 Tests', () => {
     product: {
       findUnique: jest.fn(),
     },
+    // Cart writes run inside a serializable transaction; run the callback against the same mock.
+    $transaction: jest.fn().mockImplementation(async (fn: any) => fn(mockPrismaService)),
   };
 
   beforeEach(async () => {
@@ -43,6 +45,7 @@ describe('CartService - Phase 1 Tests', () => {
     prismaService = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
+    mockPrismaService.$transaction.mockImplementation(async (fn: any) => fn(mockPrismaService));
   });
 
   describe('addItem', () => {

@@ -44,6 +44,18 @@ describe('AdminService', () => {
       findMany: jest.fn(),
       groupBy: jest.fn(),
     },
+    productReview: {
+      count: jest.fn(),
+    },
+    notification: {
+      count: jest.fn(),
+    },
+    activityLog: {
+      findMany: jest.fn(),
+    },
+    discrepancy: {
+      count: jest.fn(),
+    },
   };
 
   beforeEach(async () => {
@@ -216,6 +228,11 @@ describe('AdminService', () => {
         { status: 'COMPLETED', _count: 40 },
       ]);
       mockPrismaService.productSubmission.findMany.mockResolvedValue([]);
+      mockPrismaService.user.count.mockResolvedValue(210);
+      mockPrismaService.productReview.count.mockResolvedValue(3);
+      mockPrismaService.notification.count.mockResolvedValue(1);
+      mockPrismaService.activityLog.findMany.mockResolvedValue([]);
+      mockPrismaService.discrepancy.count.mockResolvedValue(0);
 
       const result = await service.getDashboardStats();
 
@@ -223,6 +240,8 @@ describe('AdminService', () => {
       expect(result).toHaveProperty('submissionsByStatus');
       expect(result).toHaveProperty('ordersByStatus');
       expect(result).toHaveProperty('recentActivity');
+      expect(result).toHaveProperty('recentActivityLogs');
+      expect(result.notifications).toEqual({ pending: 1, failed: 1 });
     });
   });
 });
