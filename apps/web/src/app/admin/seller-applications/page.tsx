@@ -287,7 +287,9 @@ export default function AdminSellerApplicationsPage() {
                             {new Date(invitation.expiresAt).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            {getEffectiveStatus(invitation) === 'PENDING' && (
+                            {/* Cancel uses DB status PENDING (backend allows cancel only for PENDING),
+                                even when the UI label shows EXPIRED due to past expiresAt. */}
+                            {invitation.status === 'PENDING' && (
                               <div className="flex justify-end gap-2">
                                 <button
                                   onClick={() => handleResendInvitation(invitation.id)}
@@ -303,7 +305,7 @@ export default function AdminSellerApplicationsPage() {
                                 </button>
                               </div>
                             )}
-                            {getEffectiveStatus(invitation) === 'EXPIRED' && (
+                            {invitation.status !== 'PENDING' && getEffectiveStatus(invitation) === 'EXPIRED' && (
                               <button
                                 onClick={() => handleResendInvitation(invitation.id)}
                                 className="text-hos-gold hover:text-hos-gold"

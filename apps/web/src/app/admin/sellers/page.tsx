@@ -104,6 +104,8 @@ export default function AdminSellersPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [sellersPage, setSellersPage] = useState(1);
   const [sellersTotal, setSellersTotal] = useState(0);
+  const [sellersHasMore, setSellersHasMore] = useState(false);
+  const [sellersTotalExact, setSellersTotalExact] = useState(false);
   const sellersLimit = 50;
 
   // Invite form
@@ -133,11 +135,22 @@ export default function AdminSellersPage() {
       const pTotal = payload?.pagination?.total ?? topPagination?.total;
       if (typeof pTotal === 'number') {
         setSellersTotal(pTotal);
-      } else if (sellerData.length < sellersLimit && sellersPage === 1) {
-        setSellersTotal(sellerData.length);
+        setSellersTotalExact(true);
+        setSellersHasMore(sellersPage * sellersLimit < pTotal);
+      } else if (sellerData.length < sellersLimit) {
+        // Last page — exact known total, no phantom extra page
+        setSellersTotal((sellersPage - 1) * sellersLimit + sellerData.length);
+        setSellersTotalExact(true);
+        setSellersHasMore(false);
       } else if (sellerData.length > 0) {
-        // Unknown total but clearly paginated — keep navigating enabled
-        setSellersTotal((prev) => Math.max(prev, sellersPage * sellersLimit + (sellerData.length === sellersLimit ? 1 : 0)));
+        // Full page without server total — known count so far; Next via hasMore only
+        setSellersTotal((sellersPage - 1) * sellersLimit + sellerData.length);
+        setSellersTotalExact(false);
+        setSellersHasMore(true);
+      } else {
+        setSellersTotal((sellersPage - 1) * sellersLimit);
+        setSellersTotalExact(true);
+        setSellersHasMore(false);
       }
       
       // Map seller profile data to the Seller interface expected by the UI
@@ -740,7 +753,7 @@ export default function AdminSellersPage() {
                       </tbody>
                     </table>
                   </div>
-                  {(sellersTotal > sellersLimit || sellersPage > 1 || sellers.length === sellersLimit) && (
+                  {(sellersHasMore || sellersPage > 1 || sellersTotal > sellersLimit) && (
                     <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-hos-border bg-hos-bg-secondary">
                       <button
                         type="button"
@@ -752,18 +765,15 @@ export default function AdminSellersPage() {
                       </button>
                       <span className="text-sm text-hos-text-secondary">
                         Page {sellersPage}
-                        {sellersTotal > 0
+                        {sellersTotalExact && sellersTotal > 0
                           ? ` of ${Math.max(1, Math.ceil(sellersTotal / sellersLimit))} · ${sellersTotal} total`
-                          : ''}
+                          : sellersTotal > 0
+                            ? ` · ${sellersTotal}${sellersHasMore ? '+' : ''} shown`
+                            : ''}
                       </span>
                       <button
                         type="button"
-                        disabled={
-                          loading ||
-                          (sellersTotal > 0
-                            ? sellersPage * sellersLimit >= sellersTotal
-                            : sellers.length < sellersLimit)
-                        }
+                        disabled={loading || !sellersHasMore}
                         onClick={() => setSellersPage((p) => p + 1)}
                         className="px-3 py-1.5 text-sm rounded-lg border border-hos-border bg-hos-bg-secondary text-hos-text-secondary disabled:opacity-50"
                       >

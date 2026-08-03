@@ -6,7 +6,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import {
   normalizeWhitespace,
-  validateHttpUrl,
+  validateCtaUrl,
   validateNameLike,
   validateOptionalDescriptiveText,
 } from '@/lib/formFieldValidation';
@@ -157,7 +157,8 @@ export default function AdminCategoriesPage() {
     const descriptionErr = validateOptionalDescriptiveText(description, 'Description');
     const metaTitleErr = validateOptionalDescriptiveText(metaTitle, 'SEO title');
     const metaDescErr = validateOptionalDescriptiveText(metaDescription, 'SEO description');
-    const imageErr = validateHttpUrl(formData.image || '', 'Image URL');
+    // Allow absolute http(s) or site-relative paths like /uploads/...
+    const imageErr = validateCtaUrl(formData.image || '', 'Image URL', { required: false });
     if (nameErr || descriptionErr || metaTitleErr || metaDescErr || imageErr) {
       toast.error(nameErr || descriptionErr || metaTitleErr || metaDescErr || imageErr || 'Invalid fields');
       return;
@@ -206,7 +207,7 @@ export default function AdminCategoriesPage() {
     const descriptionErr = validateOptionalDescriptiveText(description, 'Description');
     const metaTitleErr = validateOptionalDescriptiveText(metaTitle, 'SEO title');
     const metaDescErr = validateOptionalDescriptiveText(metaDescription, 'SEO description');
-    const imageErr = validateHttpUrl(formData.image || '', 'Image URL');
+    const imageErr = validateCtaUrl(formData.image || '', 'Image URL', { required: false });
     if (nameErr || descriptionErr || metaTitleErr || metaDescErr || imageErr) {
       toast.error(nameErr || descriptionErr || metaTitleErr || metaDescErr || imageErr || 'Invalid fields');
       return;

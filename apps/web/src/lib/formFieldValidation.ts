@@ -133,7 +133,8 @@ export function validateCtaUrl(
   label = 'CTA URL',
   opts: { required?: boolean } = {},
 ): string | null {
-  const required = opts.required !== false;
+  // Default optional unless explicitly required (image/CTA fields are often blank).
+  const required = opts.required === true;
   const t = value.trim();
   if (!t) return required ? `${label} is required` : null;
   if (t.startsWith('/')) {

@@ -127,10 +127,8 @@ export default function AdminActivityPage() {
       setError(null);
 
       // Fetch by date only; action/entity filters are applied client-side so option lists stay stable.
-      const filters: Parameters<typeof apiClient.getActivityLogs>[0] = {
-        page: 1,
-        limit: 500,
-      };
+      // Page through the API so large ranges are not silently truncated at a single hard limit.
+      const baseFilters: Parameters<typeof apiClient.getActivityLogs>[0] = {};
 
       if (dateFilter !== 'ALL') {
         const now = new Date();
@@ -148,23 +146,62 @@ export default function AdminActivityPage() {
           default:
             start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         }
-        filters.startDate = start.toISOString();
-        filters.endDate = now.toISOString();
+        baseFilters.startDate = start.toISOString();
+        baseFilters.endDate = now.toISOString();
       }
 
-      const response = await apiClient.getActivityLogs(filters);
-      let logData: ActivityLog[] = [];
-      if (response && 'data' in response) {
-        const responseData = response.data as any;
-        if (Array.isArray(responseData)) {
-          logData = responseData;
-        } else if (responseData?.logs && Array.isArray(responseData.logs)) {
-          // GET /activity/logs returns { logs, pagination }
-          logData = responseData.logs;
-        } else if (responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)) {
-          logData = responseData.data;
+      const PAGE_LIMIT = 100;
+      const MAX_PAGES = 100; // safety cap (10k); warn if more remain
+      const logData: ActivityLog[] = [];
+      let pageNum = 1;
+      let totalPages = 1;
+      let serverTotal: number | undefined;
+
+      const parseResponse = (response: Awaited<ReturnType<typeof apiClient.getActivityLogs>>) => {
+        let batch: ActivityLog[] = [];
+        let pagination: { total?: number; totalPages?: number; page?: number; limit?: number } | undefined;
+        if (response && 'data' in response) {
+          const responseData = response.data as any;
+          if (Array.isArray(responseData)) {
+            batch = responseData;
+          } else if (responseData?.logs && Array.isArray(responseData.logs)) {
+            batch = responseData.logs;
+            pagination = responseData.pagination;
+          } else if (responseData && typeof responseData === 'object' && Array.isArray(responseData.data)) {
+            batch = responseData.data;
+            pagination = responseData.pagination;
+          }
         }
+        const topPagination = (response as { pagination?: typeof pagination } | undefined)?.pagination;
+        return { batch, pagination: pagination ?? topPagination };
+      };
+
+      while (pageNum <= totalPages && pageNum <= MAX_PAGES) {
+        const response = await apiClient.getActivityLogs({
+          ...baseFilters,
+          page: pageNum,
+          limit: PAGE_LIMIT,
+        });
+        const { batch, pagination } = parseResponse(response);
+        logData.push(...batch);
+        if (typeof pagination?.total === 'number') serverTotal = pagination.total;
+        if (typeof pagination?.totalPages === 'number' && pagination.totalPages > 0) {
+          totalPages = pagination.totalPages;
+        } else if (batch.length < PAGE_LIMIT) {
+          totalPages = pageNum;
+        } else {
+          totalPages = pageNum + 1;
+        }
+        if (batch.length === 0) break;
+        pageNum += 1;
       }
+
+      if (typeof serverTotal === 'number' && logData.length < serverTotal) {
+        toast.error(
+          `Loaded ${logData.length.toLocaleString()} of ${serverTotal.toLocaleString()} logs. Narrow the date range to see older entries.`,
+        );
+      }
+
       setLogs(logData);
       const byAction: Record<string, number> = {};
       const entities = new Set<string>();
