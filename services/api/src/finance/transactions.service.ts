@@ -433,6 +433,7 @@ export class TransactionsService implements OnModuleInit {
     endDate?: Date;
     page?: number;
     limit?: number;
+    format?: string;
   }) {
     const where: any = {};
 
@@ -462,9 +463,86 @@ export class TransactionsService implements OnModuleInit {
       }
     }
 
+    const asCsv = (filters?.format || '').toLowerCase() === 'csv';
+    const CSV_MAX_ROWS = 5000;
     const page = filters?.page || 1;
-    const limit = Math.min(filters?.limit || 1000, 5000);
-    const skip = (page - 1) * limit;
+    const limit = Math.min(filters?.limit || (asCsv ? CSV_MAX_ROWS : 1000), CSV_MAX_ROWS);
+    const skip = asCsv ? 0 : (page - 1) * limit;
+
+    if (asCsv) {
+      const total = await this.prisma.transaction.count({ where });
+      if (total > limit) {
+        throw new BadRequestException(
+          `Export matches ${total} transactions; maximum is ${limit}. Narrow the date range and try again.`,
+        );
+      }
+
+      const transactions = await this.prisma.transaction.findMany({
+        where,
+        include: {
+          seller: {
+            select: {
+              storeName: true,
+              slug: true,
+            },
+          },
+          customer: {
+            select: {
+              email: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+          order: {
+            select: {
+              orderNumber: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: limit,
+      });
+
+      const header = [
+        'id',
+        'type',
+        'status',
+        'amount',
+        'currency',
+        'seller',
+        'customerEmail',
+        'orderNumber',
+        'createdAt',
+      ];
+      const rows = transactions.map((t) =>
+        [
+          t.id,
+          t.type,
+          t.status,
+          t.amount,
+          t.currency,
+          t.seller?.storeName ?? '',
+          t.customer?.email ?? '',
+          t.order?.orderNumber ?? '',
+          t.createdAt instanceof Date ? t.createdAt.toISOString() : String(t.createdAt ?? ''),
+        ]
+          .map((cell) => this.escapeCsvCell(cell))
+          .join(','),
+      );
+      const csv = [header.join(','), ...rows].join('\n');
+      const dateStamp = new Date().toISOString().slice(0, 10);
+      const filename = `transactions-${dateStamp}.csv`;
+      return {
+        format: 'csv' as const,
+        filename,
+        csv,
+        url: `data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`,
+        count: transactions.length,
+        total,
+      };
+    }
 
     const [transactions, total] = await Promise.all([
       this.prisma.transaction.findMany({
@@ -507,6 +585,23 @@ export class TransactionsService implements OnModuleInit {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  private escapeCsvCell(value: unknown): string {
+    if (value === null || value === undefined) return '';
+    let s = String(value);
+
+    // Neutralise spreadsheet formula injection (=cmd, +HYPERLINK, @SUM, -2+3) without
+    // mangling genuine numeric cells such as negative refund amounts.
+    const isNumericLiteral = /^-?\d+(?:\.\d+)?$/.test(s);
+    if (!isNumericLiteral && /^[=+\-@\t\r]/.test(s)) {
+      s = `'${s}`;
+    }
+
+    if (/[",\n\r]/.test(s)) {
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
   }
 
   /**

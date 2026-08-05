@@ -79,6 +79,7 @@ import { LoyaltyModule } from './loyalty/loyalty.module';
 import { QuizModule } from './quiz/quiz.module';
 import { ChannelsModule } from './channels/channels.module';
 import { PosModule } from './pos/pos.module';
+import { AccountingModule } from './accounting/accounting.module';
 import { JourneyModule } from './journeys/journey.module';
 import { EventsModule } from './events/events.module';
 import { SegmentationModule } from './segmentation/segmentation.module';
@@ -223,6 +224,7 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     QuizModule,
     ChannelsModule,
     PosModule,
+    AccountingModule,
     JourneyModule,
     EventsModule,
     SegmentationModule,

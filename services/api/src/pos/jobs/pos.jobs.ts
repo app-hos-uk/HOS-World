@@ -7,6 +7,8 @@ import { PosProductSyncService } from '../sync/product-sync.service';
 import { PosInventorySyncService } from '../sync/inventory-sync.service';
 import { PosSalesImportService } from '../sync/sales-import.service';
 import { PosCustomerSyncService } from '../sync/customer-sync.service';
+import { PosCustomerIdentityBackfillService } from '../sync/customer-identity-backfill.service';
+import { PosGiftCardReconService } from '../sync/gift-card-recon.service';
 import type { POSSale as ParsedSale } from '../interfaces/pos-types';
 
 @Injectable()
@@ -20,6 +22,8 @@ export class PosJobsService implements OnModuleInit {
     private inventorySync: PosInventorySyncService,
     private salesImport: PosSalesImportService,
     private customerSync: PosCustomerSyncService,
+    private customerIdentityBackfill: PosCustomerIdentityBackfillService,
+    private giftCardRecon: PosGiftCardReconService,
     private config: ConfigService,
   ) {}
 
@@ -60,16 +64,35 @@ export class PosJobsService implements OnModuleInit {
       await this.customerSync.syncMembershipToAllPosStores(userId);
     });
 
+    this.queue.registerProcessor(
+      JobType.POS_CUSTOMER_IDENTITY_BACKFILL,
+      async (job: Job<{ dryRun?: boolean; connectionId?: string }>) => {
+        // Default dry-run=true — live mutation requires an explicit dryRun:false payload.
+        const dryRun = job.data?.dryRun !== false;
+        const connectionId = job.data?.connectionId;
+        const summary = await this.customerIdentityBackfill.run({ dryRun, connectionId });
+        this.logger.log(`POS customer identity backfill: ${JSON.stringify(summary)}`);
+        return summary;
+      },
+    );
+
     this.queue.registerProcessor(JobType.POS_SALES_POLL, async () => {
       const conns = await this.prisma.pOSConnection.findMany({ where: { isActive: true } });
       for (const c of conns) {
         try {
-          const n = await this.salesImport.pollStoreSales(c.storeId, 24);
+          // Cold-start sinceHours default lives in sales-import; durable cursor is source of truth.
+          const n = await this.salesImport.pollStoreSales(c.storeId);
           this.logger.log(`POS poll store ${c.storeId}: ${n} new sales`);
         } catch (e) {
           this.logger.warn(`POS poll failed ${c.storeId}: ${(e as Error).message}`);
         }
       }
+    });
+
+    this.queue.registerProcessor(JobType.POS_GIFT_CARD_RECON, async () => {
+      const summary = await this.giftCardRecon.reconcile();
+      this.logger.log(`POS gift card recon: ${JSON.stringify(summary)}`);
+      return summary;
     });
 
     void this.scheduleCrons();
@@ -86,6 +109,11 @@ export class PosJobsService implements OnModuleInit {
         JobType.POS_SALES_POLL,
         {},
         this.config.get<string>('POS_SALES_POLL_CRON', '*/15 * * * *'),
+      );
+      await this.queue.addRepeatable(
+        JobType.POS_GIFT_CARD_RECON,
+        {},
+        this.config.get<string>('POS_GIFT_CARD_RECON_CRON', '0 */6 * * *'),
       );
       this.logger.log('POS cron jobs scheduled');
     } catch (e) {

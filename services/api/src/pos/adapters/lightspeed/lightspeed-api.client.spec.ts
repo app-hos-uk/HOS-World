@@ -9,11 +9,14 @@ const baseCreds = {
   tokenExpiresAt: Date.now() + 3_600_000,
 };
 
-function createClient(overrides: Partial<typeof baseCreds> = {}) {
+function createClient(
+  overrides: Partial<typeof baseCreds> = {},
+  refreshAuth?: () => Promise<void>,
+) {
   const creds = { ...baseCreds, ...overrides };
   const getToken = jest.fn(() => creds.accessToken);
-  const client = new LightspeedApiClient(creds as any, getToken);
-  return { client, getToken };
+  const client = new LightspeedApiClient(creds as any, getToken, undefined, refreshAuth);
+  return { client, getToken, creds };
 }
 
 describe('LightspeedApiClient', () => {
@@ -184,5 +187,64 @@ describe('LightspeedApiClient', () => {
     const newCreds = { ...baseCreds, accessToken: 'new' };
     client.updateCredentials(newCreds as any);
     expect(callback).toHaveBeenCalledWith(newCreds);
+  });
+
+  it('on 401 refreshes once and retries the request', async () => {
+    const creds = { ...baseCreds };
+    const getToken = jest.fn(() => creds.accessToken);
+    const refreshSpy = jest.fn(async () => {
+      creds.accessToken = 'tok-refreshed';
+    });
+    const client2 = new LightspeedApiClient(creds as any, getToken, undefined, refreshSpy);
+
+    let call = 0;
+    globalThis.fetch = jest.fn().mockImplementation(async (_url, opts) => {
+      call++;
+      if (call === 1) {
+        expect(opts.headers.Authorization).toBe('Bearer tok123');
+        return {
+          ok: false,
+          status: 401,
+          headers: new Map(),
+          text: async () => 'unauthorized',
+        };
+      }
+      expect(opts.headers.Authorization).toBe('Bearer tok-refreshed');
+      return {
+        ok: true,
+        status: 200,
+        headers: new Map(),
+        json: async () => ({ data: [{ id: '1' }] }),
+      };
+    });
+
+    const r = await drainAndCollect(client2.request('GET', '/register_sales'));
+    expect(r.error).toBeUndefined();
+    expect(refreshSpy).toHaveBeenCalledTimes(1);
+    expect(call).toBe(2);
+    expect(r.value!.data).toEqual({ data: [{ id: '1' }] });
+    // Ensure refresh errors/messages never include secrets
+    expect(JSON.stringify(refreshSpy.mock.calls)).not.toContain('cs');
+  });
+
+  it('does not refresh more than once per request chain on repeated 401', async () => {
+    const refreshSpy = jest.fn().mockResolvedValue(undefined);
+    const client = new LightspeedApiClient(
+      baseCreds as any,
+      jest.fn(() => 'tok123'),
+      undefined,
+      refreshSpy,
+    );
+
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      headers: new Map(),
+      text: async () => 'unauthorized',
+    });
+
+    const r = await drainAndCollect(client.request('GET', '/products'));
+    expect(r.error).toBeDefined();
+    expect(refreshSpy).toHaveBeenCalledTimes(1);
   });
 });

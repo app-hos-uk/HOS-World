@@ -49,6 +49,10 @@ echo "=== Step 2e: Product review images migration ==="
 npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260714120000_add_product_review_images/migration.sql 2>&1 || echo "WARN: product review images migration had issues (may be OK if already applied)"
 npx prisma migrate resolve --applied 20260714120000_add_product_review_images 2>/dev/null || true
 
+echo "=== Step 2f: Loyalty / POS / Xero consolidated schema ==="
+npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20261008120000_loyalty_pos_xero_schema_consolidation/migration.sql 2>&1 || echo "WARN: loyalty_pos_xero_schema_consolidation migration had issues (may be OK if already applied)"
+npx prisma migrate resolve --applied 20261008120000_loyalty_pos_xero_schema_consolidation 2>/dev/null || true
+
 echo "=== Step 3: Run migrate deploy (authoritative) ==="
 # Fail closed: if migrations cannot be applied the schema is in an unknown state and the app
 # must NOT start (silently starting on a drifted schema previously caused production outages

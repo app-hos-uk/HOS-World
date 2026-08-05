@@ -106,6 +106,15 @@ const PROVIDER_METADATA: Record<string, ProviderMetadata> = {
     optionalCredentials: ['fromEmail', 'fromName'],
     documentationUrl: 'https://docs.sendgrid.com/',
   },
+  // Accounting — tokens normally written by XeroAuthService OAuth flow
+  xero: {
+    displayName: 'Xero',
+    description:
+      'HOS → Xero daily summary manual journals (online sales + liabilities; never POSSale)',
+    requiredCredentials: ['accessToken', 'refreshToken'],
+    optionalCredentials: ['expiresAt', 'tenantId', 'tokenType', 'scope'],
+    documentationUrl: 'https://developer.xero.com/documentation/guides/oauth2/overview/',
+  },
 };
 
 @Injectable()
@@ -489,6 +498,7 @@ export class IntegrationsService {
       [IntegrationCategory.TAX]: ['avalara', 'taxjar', 'stripe_tax'],
       [IntegrationCategory.PAYMENT]: ['stripe'],
       [IntegrationCategory.EMAIL]: ['sendgrid'],
+      [IntegrationCategory.ACCOUNTING]: ['xero'],
     };
 
     const providers = categoryProviders[category] || [];

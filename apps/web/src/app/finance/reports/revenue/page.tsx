@@ -73,10 +73,23 @@ export default function FinanceRevenuePage() {
         dateRange.startDate,
         dateRange.endDate
       );
-      if (response?.data?.url) {
-        window.open(response.data.url, '_blank');
+      const payload = response?.data;
+      if (payload?.csv) {
+        const blob = new Blob([payload.csv], { type: 'text/csv;charset=utf-8;' });
+        const objectUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = objectUrl;
+        anchor.download = payload.filename || 'transactions.csv';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(objectUrl);
+      } else if (payload?.url) {
+        window.open(payload.url, '_blank');
+      } else {
+        throw new Error('Export response did not include CSV data');
       }
-      toast.success('Export started successfully');
+      toast.success('Export downloaded');
     } catch (err: any) {
       console.error('Error exporting:', err);
       toast.error(err.message || 'Failed to export transactions');

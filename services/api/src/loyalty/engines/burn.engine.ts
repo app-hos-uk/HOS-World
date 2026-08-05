@@ -1,6 +1,7 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { LoyaltyTxType, Prisma, SellerType } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { LoyaltyWalletService } from '../services/wallet.service';
 import { FeatureFlagsService } from '../../config/feature-flags.service';
@@ -43,7 +44,14 @@ export class LoyaltyBurnEngine {
     storeId?: string | null;
     optionId?: string | null;
     orderId?: string | null;
+    /** When set with HOS_OUTLET_POS, increments POSSale.loyaltyPointsRedeemed. */
+    posSaleId?: string | null;
     regionCode?: string | null;
+    /**
+     * Caller-supplied replay key for burns with no orderId (e.g. POS terminal + till sale ref).
+     * A repeated call returns the original redemption instead of burning again.
+     */
+    idempotencyKey?: string | null;
     prismaTx?: Prisma.TransactionClient;
   }): Promise<{ redemptionId: string; couponCode?: string }> {
     if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
@@ -64,8 +72,34 @@ export class LoyaltyBurnEngine {
       const membership = await tx.loyaltyMembership.findUnique({
         where: { id: params.membershipId },
       });
-      if (!membership || membership.currentBalance < params.points) {
-        throw new BadRequestException('Insufficient points balance');
+      if (!membership) {
+        throw new NotFoundException('Loyalty membership not found');
+      }
+
+      // Idempotent replay: return the prior redemption before balance / wallet work.
+      const callerBurnKey = params.idempotencyKey
+        ? `burn:key:${params.membershipId}:${params.idempotencyKey}`
+        : null;
+      if (params.orderId) {
+        const prior = await this.findCompletedOrderRedemption(
+          tx,
+          params.membershipId,
+          params.orderId,
+        );
+        if (prior) {
+          return {
+            redemptionId: prior.id,
+            couponCode: prior.couponCode ?? undefined,
+          };
+        }
+      } else if (callerBurnKey) {
+        const prior = await this.findRedemptionByWalletKey(tx, callerBurnKey);
+        if (prior) {
+          return {
+            redemptionId: prior.id,
+            couponCode: prior.couponCode ?? undefined,
+          };
+        }
       }
 
       let option: Awaited<ReturnType<typeof tx.loyaltyRedemptionOption.findUnique>> = null;
@@ -101,14 +135,62 @@ export class LoyaltyBurnEngine {
       const optionIdForRow =
         params.optionId ?? (await this.ensureGenericBurnOption(tx as Prisma.TransactionClient));
 
-      await this.wallet.applyDelta(tx, params.membershipId, -params.points, LoyaltyTxType.BURN, {
-        source: 'REDEMPTION',
-        sourceId: params.orderId ?? undefined,
-        channel: params.channel,
-        storeId: params.storeId ?? undefined,
-        description: option ? `Redeemed: ${option.type}` : 'Points redemption',
-        metadata: option ? { optionId: option.id } : { checkout: true },
-      });
+      const redemptionId = randomUUID();
+      const idempotencyKey = params.orderId
+        ? `burn:order:${params.orderId}:${params.optionId ?? optionIdForRow}`
+        : (callerBurnKey ?? `burn:${redemptionId}`);
+
+      // Skip balance gate when wallet already recorded this burn (retry after debit).
+      // Only order/caller keys are deterministic; `burn:${redemptionId}` can never pre-exist.
+      const priorWalletTx =
+        params.orderId || callerBurnKey
+          ? await tx.loyaltyTransaction.findUnique({ where: { idempotencyKey } })
+          : null;
+      if (!priorWalletTx && membership.currentBalance < params.points) {
+        throw new BadRequestException('Insufficient points balance');
+      }
+
+      const deltaResult = await this.wallet.applyDelta(
+        tx,
+        params.membershipId,
+        -params.points,
+        LoyaltyTxType.BURN,
+        {
+          source: 'REDEMPTION',
+          sourceId: params.orderId ?? redemptionId,
+          channel: params.channel,
+          storeId: params.storeId ?? undefined,
+          description: option ? `Redeemed: ${option.type}` : 'Points redemption',
+          metadata: option ? { optionId: option.id } : { checkout: true },
+          idempotencyKey,
+        },
+      );
+
+      if (!deltaResult.applied) {
+        const existing = params.orderId
+          ? await this.findCompletedOrderRedemption(tx, params.membershipId, params.orderId)
+          : await this.findRedemptionByWalletKey(tx, idempotencyKey);
+        if (existing) {
+          return {
+            redemptionId: existing.id,
+            couponCode: existing.couponCode ?? undefined,
+          };
+        }
+        // Wallet burn already applied but redemption row missing — heal once, no coupon/stock.
+        const healed = await tx.loyaltyRedemption.create({
+          data: {
+            id: redemptionId,
+            membershipId: params.membershipId,
+            optionId: optionIdForRow,
+            pointsSpent: params.points,
+            channel: params.channel,
+            storeId: params.storeId ?? undefined,
+            orderId: params.orderId ?? undefined,
+            status: 'COMPLETED',
+          },
+        });
+        return { redemptionId: healed.id };
+      }
 
       await tx.loyaltyMembership.update({
         where: { id: params.membershipId },
@@ -122,6 +204,7 @@ export class LoyaltyBurnEngine {
 
       const redemption = await tx.loyaltyRedemption.create({
         data: {
+          id: redemptionId,
           membershipId: params.membershipId,
           optionId: optionIdForRow,
           pointsSpent: params.points,
@@ -137,6 +220,15 @@ export class LoyaltyBurnEngine {
         await tx.loyaltyRedemptionOption.update({
           where: { id: option.id },
           data: { stock: { decrement: 1 } },
+        });
+      }
+
+      // In-store burn: only stamp POSSale when caller supplies a concrete sale link.
+      // Standalone outlet redemptions (no posSaleId) have no clear sale row to update.
+      if (params.channel === 'HOS_OUTLET_POS' && params.posSaleId) {
+        await tx.pOSSale.update({
+          where: { id: params.posSaleId },
+          data: { loyaltyPointsRedeemed: { increment: params.points } },
         });
       }
 
@@ -194,5 +286,37 @@ export class LoyaltyBurnEngine {
       });
     }
     return opt.id;
+  }
+
+  private findCompletedOrderRedemption(
+    tx: Prisma.TransactionClient,
+    membershipId: string,
+    orderId: string,
+  ) {
+    return tx.loyaltyRedemption.findFirst({
+      where: {
+        membershipId,
+        orderId,
+        status: 'COMPLETED',
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /**
+   * Resolve the redemption minted by an earlier burn carrying the same wallet key.
+   * Non-order burns record `sourceId = redemptionId`, so the wallet row points back to it.
+   * Returns the row whatever its status — a REVERSED redemption still has a voucher the
+   * caller should retry rather than burning a second time.
+   */
+  private async findRedemptionByWalletKey(
+    tx: Prisma.TransactionClient,
+    idempotencyKey: string,
+  ) {
+    const walletTx = await tx.loyaltyTransaction.findUnique({
+      where: { idempotencyKey },
+    });
+    if (!walletTx?.sourceId) return null;
+    return tx.loyaltyRedemption.findUnique({ where: { id: walletTx.sourceId } });
   }
 }

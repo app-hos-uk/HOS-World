@@ -133,6 +133,78 @@ describe('TransactionsService', () => {
     });
   });
 
+  describe('exportTransactions', () => {
+    const csvRow = {
+      id: 'transaction-1',
+      type: 'PAYMENT',
+      status: 'COMPLETED',
+      amount: 100.5,
+      currency: 'GBP',
+      seller: { storeName: 'Wands, Robes & More', slug: 'wands' },
+      customer: { email: 'a@b.com', firstName: 'A', lastName: 'B' },
+      order: { orderNumber: 'HOS-1' },
+      createdAt: new Date('2026-01-02T03:04:05.000Z'),
+    };
+
+    it('returns paginated JSON when format is omitted', async () => {
+      mockPrismaService.transaction.findMany.mockResolvedValue([csvRow]);
+      mockPrismaService.transaction.count.mockResolvedValue(1);
+
+      const result: any = await service.exportTransactions({});
+
+      expect(result).toHaveProperty('transactions');
+      expect(result.pagination.total).toBe(1);
+      expect(result.csv).toBeUndefined();
+    });
+
+    it('builds a CSV payload with quoted cells for format=csv', async () => {
+      mockPrismaService.transaction.count.mockResolvedValue(1);
+      mockPrismaService.transaction.findMany.mockResolvedValue([csvRow]);
+
+      const result: any = await service.exportTransactions({ format: 'CSV' });
+
+      expect(result.format).toBe('csv');
+      expect(result.count).toBe(1);
+      expect(result.filename).toMatch(/^transactions-\d{4}-\d{2}-\d{2}\.csv$/);
+
+      const [header, row] = result.csv.split('\n');
+      expect(header).toBe('id,type,status,amount,currency,seller,customerEmail,orderNumber,createdAt');
+      expect(row).toBe(
+        'transaction-1,PAYMENT,COMPLETED,100.5,GBP,"Wands, Robes & More",a@b.com,HOS-1,2026-01-02T03:04:05.000Z',
+      );
+      expect(result.url).toContain('data:text/csv;charset=utf-8,');
+    });
+
+    it('neutralises spreadsheet formulas but leaves negative amounts intact', async () => {
+      mockPrismaService.transaction.count.mockResolvedValue(1);
+      mockPrismaService.transaction.findMany.mockResolvedValue([
+        {
+          ...csvRow,
+          type: 'REFUND',
+          amount: -50.25,
+          seller: { storeName: '=HYPERLINK("http://evil","click")', slug: 'x' },
+          customer: { email: '@SUM(A1:A9)', firstName: 'A', lastName: 'B' },
+        },
+      ]);
+
+      const result: any = await service.exportTransactions({ format: 'csv' });
+      const row = result.csv.split('\n')[1];
+
+      expect(row).toContain(`"'=HYPERLINK(""http://evil"",""click"")"`);
+      expect(row).toContain(`'@SUM(A1:A9)`);
+      expect(row).toContain(',-50.25,');
+    });
+
+    it('rejects a CSV export that exceeds the row cap instead of truncating', async () => {
+      mockPrismaService.transaction.count.mockResolvedValue(5001);
+
+      await expect(service.exportTransactions({ format: 'csv' })).rejects.toThrow(
+        /Export matches 5001 transactions; maximum is 5000/,
+      );
+      expect(mockPrismaService.transaction.findMany).not.toHaveBeenCalled();
+    });
+  });
+
   describe('getTransactionById', () => {
     it('should return transaction by id', async () => {
       const transactionId = 'transaction-1';

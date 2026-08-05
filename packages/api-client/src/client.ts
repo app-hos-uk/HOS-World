@@ -6754,15 +6754,74 @@ export class ApiClient {
     return this.request<ApiResponse<any>>(`/finance/reports/seller-performance${qs ? `?${qs}` : ''}`, { method: 'GET' });
   }
 
+  /**
+   * Export finance transactions.
+   * Pass format='csv' for CSV payload ({ format, filename, csv, url, count }); other/omit returns JSON pagination.
+   */
   async exportTransactions(format: string, startDate?: string, endDate?: string): Promise<ApiResponse<any>> {
-    const params = new URLSearchParams({ format });
+    const params = new URLSearchParams();
+    if (format) params.append('format', format);
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
-    return this.request<ApiResponse<any>>(`/finance/transactions/export?${params.toString()}`, { method: 'GET' });
+    const qs = params.toString();
+    return this.request<ApiResponse<any>>(`/finance/transactions/export${qs ? `?${qs}` : ''}`, { method: 'GET' });
   }
 
   async backfillTransactions(): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/finance/transactions/backfill', { method: 'POST' });
+  }
+
+  // ===== Admin Accounting / Xero =====
+  async getAccountingStatus(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/accounting/status', { method: 'GET' });
+  }
+
+  async listAccountingOutbox(params?: {
+    status?: string;
+    entryType?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const qs = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) qs.append(k, String(v));
+      });
+    }
+    const query = qs.toString();
+    return this.request<ApiResponse<any>>(
+      `/admin/accounting/outbox${query ? `?${query}` : ''}`,
+      { method: 'GET' },
+    );
+  }
+
+  async retryAccountingOutbox(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/accounting/outbox/${id}/retry`, {
+      method: 'POST',
+    });
+  }
+
+  async drainAccountingOutbox(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/accounting/outbox/drain', { method: 'POST' });
+  }
+
+  async getAccountingCoaMapping(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/accounting/coa-mapping', { method: 'GET' });
+  }
+
+  async updateAccountingCoaMapping(body: Record<string, unknown>): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/accounting/coa-mapping', {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async getAccountingConnectUrl(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/accounting/oauth/connect-url', { method: 'GET' });
+  }
+
+  async getThreeWayRecon(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/accounting/three-way-recon', { method: 'GET' });
   }
 
   // ===== Meilisearch / Search =====

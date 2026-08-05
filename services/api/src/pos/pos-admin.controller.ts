@@ -25,6 +25,7 @@ import { PosSalesFilterDto } from './dto/pos-sales-filter.dto';
 import { PosProductSyncService } from './sync/product-sync.service';
 import { PosInventorySyncService } from './sync/inventory-sync.service';
 import { PosCustomerSyncService } from './sync/customer-sync.service';
+import { PosCustomerIdentityBackfillService } from './sync/customer-identity-backfill.service';
 import { PosSalesImportService } from './sync/sales-import.service';
 import { QueueService, JobType } from '../queue/queue.service';
 import { DiscrepanciesService } from '../discrepancies/discrepancies.service';
@@ -42,6 +43,7 @@ export class PosAdminController {
     private productSync: PosProductSyncService,
     private inventorySync: PosInventorySyncService,
     private customerSync: PosCustomerSyncService,
+    private customerIdentityBackfill: PosCustomerIdentityBackfillService,
     private salesImport: PosSalesImportService,
     private queue: QueueService,
     private discrepancies: DiscrepanciesService,
@@ -184,6 +186,37 @@ export class PosAdminController {
       await this.queue.addJob(JobType.POS_CUSTOMER_SYNC, { userId: m.userId });
     }
     return { data: { queued: memberships.length }, message: 'Queued' };
+  }
+
+  /**
+   * Queue (or run) Lightspeed → HOS customer identity backfill for a connection.
+   * Body: `{ "dryRun": true }` logs/counts only; `{ "dryRun": false }` applies stamps + mappings.
+   * Pass `?sync=true` to run inline instead of queueing.
+   */
+  @Post('connections/:id/backfill/customer-identity')
+  async backfillCustomerIdentity(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { dryRun?: boolean },
+    @Query('sync') sync?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const conn = await this.prisma.pOSConnection.findUnique({ where: { id } });
+    if (!conn) return { data: null, message: 'Not found' };
+    // Default dryRun=true when omitted (safer).
+    const dryRun = body?.dryRun === undefined ? true : !!body.dryRun;
+
+    if (sync === 'true') {
+      const summary = await this.customerIdentityBackfill.run({
+        dryRun,
+        connectionId: id,
+      });
+      return { data: summary, message: dryRun ? 'Dry run complete' : 'Backfill complete' };
+    }
+
+    const jobId = await this.queue.addJob(JobType.POS_CUSTOMER_IDENTITY_BACKFILL, {
+      connectionId: id,
+      dryRun,
+    });
+    return { data: { jobId, dryRun }, message: 'Queued' };
   }
 
   @Get('sales')

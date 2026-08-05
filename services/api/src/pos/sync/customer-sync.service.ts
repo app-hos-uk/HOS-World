@@ -3,6 +3,9 @@ import { PrismaService } from '../../database/prisma.service';
 import { EncryptionService } from '../../integrations/encryption.service';
 import { POSAdapterFactory } from '../pos-adapter.factory';
 
+/** Account-level ExternalEntityMapping.storeId sentinel (closes Postgres NULL unique hole). */
+const ACCOUNT_LEVEL_STORE_ID = '';
+
 @Injectable()
 export class PosCustomerSyncService {
   private readonly logger = new Logger(PosCustomerSyncService.name);
@@ -25,7 +28,16 @@ export class PosCustomerSyncService {
     });
     if (!membership?.user?.email) return;
 
+    // Skip when member has not consented to any contact channel used for POS push.
+    if (!membership.optInEmail && !membership.optInSms) {
+      this.logger.debug(
+        `Skipping POS customer sync for user ${userId}: no email/sms opt-in`,
+      );
+      return;
+    }
+
     const creds = this.encryption.decryptJson<Record<string, unknown>>(connection.credentials);
+    const accountKey = String(creds.domainPrefix || '') || null;
     const adapter = this.factory.create(connection.provider, connection.credentials);
     try {
       await adapter.authenticate(creds);
@@ -44,7 +56,7 @@ export class PosCustomerSyncService {
             provider: connection.provider,
             entityType: 'CUSTOMER',
             internalId: membership.id,
-            storeId,
+            storeId: ACCOUNT_LEVEL_STORE_ID,
           },
         },
         create: {
@@ -52,14 +64,17 @@ export class PosCustomerSyncService {
           entityType: 'CUSTOMER',
           internalId: membership.id,
           externalId,
-          storeId,
+          storeId: ACCOUNT_LEVEL_STORE_ID,
+          accountKey,
           syncStatus: 'SYNCED',
           lastSyncedAt: new Date(),
         },
         update: {
           externalId,
+          accountKey,
           syncStatus: 'SYNCED',
           lastSyncedAt: new Date(),
+          syncError: null,
         },
       });
     } catch (e) {
@@ -67,12 +82,27 @@ export class PosCustomerSyncService {
     }
   }
 
+  /**
+   * Push membership once per distinct Lightspeed account (domainPrefix),
+   * not once per store connection sharing the same account.
+   */
   async syncMembershipToAllPosStores(userId: string): Promise<void> {
     const connections = await this.prisma.pOSConnection.findMany({
       where: { isActive: true },
-      select: { storeId: true },
+      select: { storeId: true, credentials: true },
     });
+
+    const seenAccountKeys = new Set<string>();
     for (const c of connections) {
+      let accountKey: string;
+      try {
+        const creds = this.encryption.decryptJson<Record<string, unknown>>(c.credentials);
+        accountKey = String(creds.domainPrefix || '').trim() || c.storeId;
+      } catch {
+        accountKey = c.storeId;
+      }
+      if (seenAccountKeys.has(accountKey)) continue;
+      seenAccountKeys.add(accountKey);
       await this.syncMembershipToStore(userId, c.storeId);
     }
   }

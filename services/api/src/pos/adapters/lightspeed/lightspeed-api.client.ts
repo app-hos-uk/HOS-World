@@ -12,6 +12,7 @@ export class LightspeedApiClient {
     private creds: LightspeedCredentials,
     private getAccessToken: () => string | undefined,
     private onTokenRefresh?: (c: LightspeedCredentials) => void,
+    private refreshAuth?: () => Promise<void>,
   ) {}
 
   private baseUrl(): string {
@@ -33,6 +34,7 @@ export class LightspeedApiClient {
   ): Promise<{ data: T; status: number }> {
     let attempt = 0;
     let lastErr: Error | null = null;
+    let refreshed = false;
 
     while (attempt < MAX_RETRIES) {
       attempt++;
@@ -59,6 +61,13 @@ export class LightspeedApiClient {
         const retryAfter = res.headers.get('retry-after');
         if (res.status === 429 && retryAfter && attempt < MAX_RETRIES) {
           await new Promise((r) => setTimeout(r, parseInt(retryAfter, 10) * 1000 || 5000));
+          continue;
+        }
+
+        if (res.status === 401 && !refreshed && this.refreshAuth) {
+          refreshed = true;
+          await res.text().catch(() => '');
+          await this.refreshAuth();
           continue;
         }
 

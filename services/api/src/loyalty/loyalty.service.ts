@@ -22,11 +22,13 @@ import { LoyaltyEventService } from './services/loyalty-event.service';
 import { QueueService, JobType } from '../queue/queue.service';
 import { LoyaltyListener } from './listeners/loyalty.listener';
 import { EnrollLoyaltyDto } from './dto/enroll.dto';
+import { StaffEnrollDto } from './dto/staff-enroll.dto';
 import { LoyaltyPreferencesDto } from './dto/loyalty-preferences.dto';
 import { MarketingEventBus } from '../journeys/marketing-event.bus';
 import { isTruthy } from '../common/utils/config';
 import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
 import { isProtectedAdminEmail } from '../config/protected-admin-emails';
+import { normalizePhoneToE164 } from '../common/utils/phone-normalize';
 
 @Injectable()
 export class LoyaltyService implements OnModuleInit {
@@ -83,12 +85,31 @@ export class LoyaltyService implements OnModuleInit {
     );
   }
 
+  /** Persist E.164 phoneNormalized when a phone is present and normalisation succeeds. */
+  private async ensurePhoneNormalized(
+    userId: string,
+    phone: string | null | undefined,
+    countryHint?: string | null,
+  ): Promise<void> {
+    if (!phone?.trim()) return;
+    const phoneNormalized = normalizePhoneToE164(phone, countryHint);
+    if (!phoneNormalized) return;
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { phoneNormalized },
+    });
+  }
+
   async enroll(userId: string, dto?: EnrollLoyaltyDto) {
     this.assertEnabled();
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
     if (user.role !== UserRole.CUSTOMER) {
       throw new BadRequestException('Only customers can enroll');
+    }
+
+    if (user.phone && !user.phoneNormalized) {
+      await this.ensurePhoneNormalized(userId, user.phone, dto?.regionCode || user.country);
     }
 
     const existing = await this.prisma.loyaltyMembership.findUnique({
@@ -593,31 +614,152 @@ export class LoyaltyService implements OnModuleInit {
     return { pointsAwarded: pts };
   }
 
+  /**
+   * Staff lookup ladder — stop at first exact hit (never OR across fields):
+   * 1. cardNumber exact (case-insensitive)
+   * 2. email case-insensitive
+   * 3. phoneNormalized — only when exactly one user matches
+   */
   async lookupMember(query: { email?: string; phone?: string; cardNumber?: string }) {
     this.assertEnabled();
-    const where: Prisma.UserWhereInput[] = [];
-    if (query.email) where.push({ email: { equals: query.email, mode: 'insensitive' } });
-    if (query.phone) where.push({ phone: query.phone });
-    if (query.cardNumber) {
-      where.push({
-        loyaltyMembership: { cardNumber: { equals: query.cardNumber, mode: 'insensitive' } },
-      });
+    const email = query.email?.trim();
+    const phone = query.phone?.trim();
+    const cardNumber = query.cardNumber?.trim();
+    if (!email && !phone && !cardNumber) {
+      throw new BadRequestException('Provide email, phone, or cardNumber');
     }
-    if (!where.length) throw new BadRequestException('Provide email, phone, or cardNumber');
 
-    const user = await this.prisma.user.findFirst({
-      where: { OR: where },
-      include: {
-        loyaltyMembership: { include: { tier: true } },
-      },
+    const memberInclude = {
+      loyaltyMembership: { include: { tier: true } },
+    } as const;
+
+    if (cardNumber) {
+      const byCard = await this.prisma.user.findFirst({
+        where: {
+          loyaltyMembership: { cardNumber: { equals: cardNumber, mode: 'insensitive' } },
+        },
+        include: memberInclude,
+      });
+      if (byCard?.loyaltyMembership) {
+        return {
+          userId: byCard.id,
+          email: byCard.email,
+          firstName: byCard.firstName,
+          lastName: byCard.lastName,
+          membership: byCard.loyaltyMembership,
+        };
+      }
+    }
+
+    if (email) {
+      const byEmail = await this.prisma.user.findFirst({
+        where: { email: { equals: email, mode: 'insensitive' } },
+        include: memberInclude,
+      });
+      if (byEmail?.loyaltyMembership) {
+        return {
+          userId: byEmail.id,
+          email: byEmail.email,
+          firstName: byEmail.firstName,
+          lastName: byEmail.lastName,
+          membership: byEmail.loyaltyMembership,
+        };
+      }
+    }
+
+    if (phone) {
+      // Lookup accepts E.164 or national with no inventing — try raw E.164 path only (+/00).
+      const phoneNormalized = normalizePhoneToE164(phone) ?? normalizePhoneToE164(phone, 'GB');
+      if (phoneNormalized) {
+        const matches = await this.prisma.user.findMany({
+          where: { phoneNormalized },
+          include: memberInclude,
+          take: 5,
+        });
+        if (matches.length === 1 && matches[0].loyaltyMembership) {
+          const u = matches[0];
+          return {
+            userId: u.id,
+            email: u.email,
+            firstName: u.firstName,
+            lastName: u.lastName,
+            membership: u.loyaltyMembership,
+          };
+        }
+        // 0 or >1 → do not match (shared phones must not return the wrong member)
+      }
+    }
+
+    throw new NotFoundException('Member not found');
+  }
+
+  /**
+   * In-store staff enrolment: require email, create/find customer, enroll via POS channel.
+   */
+  async enrollFromPos(dto: StaffEnrollDto) {
+    this.assertEnabled();
+    const email = dto.email?.trim();
+    if (!email) {
+      throw new BadRequestException('Email is required for in-store enrolment');
+    }
+
+    const phone = dto.phone?.trim() || null;
+    const countryHint = dto.country?.trim() || 'GB';
+    const phoneNormalized = phone ? normalizePhoneToE164(phone, countryHint) : null;
+
+    let user = await this.prisma.user.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
     });
-    if (!user?.loyaltyMembership) throw new NotFoundException('Member not found');
+
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          password: null,
+          firstName: dto.firstName.trim(),
+          lastName: dto.lastName.trim(),
+          phone,
+          phoneNormalized,
+          country: countryHint,
+          role: UserRole.CUSTOMER,
+        },
+      });
+    } else {
+      if (user.role !== UserRole.CUSTOMER) {
+        throw new BadRequestException('Only customers can enroll');
+      }
+      const updates: Prisma.UserUpdateInput = {};
+      if (dto.firstName?.trim()) updates.firstName = dto.firstName.trim();
+      if (dto.lastName?.trim()) updates.lastName = dto.lastName.trim();
+      if (phone) {
+        updates.phone = phone;
+        if (phoneNormalized) updates.phoneNormalized = phoneNormalized;
+      } else if (user.phone && !user.phoneNormalized) {
+        const existingNorm = normalizePhoneToE164(user.phone, user.country);
+        if (existingNorm) updates.phoneNormalized = existingNorm;
+      }
+      if (Object.keys(updates).length) {
+        user = await this.prisma.user.update({ where: { id: user.id }, data: updates });
+      }
+    }
+
+    const membership = await this.enroll(user.id, { enrollmentChannel: 'POS' });
+    if (!membership) {
+      throw new NotFoundException('Enrolment failed');
+    }
+
     return {
       userId: user.id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      membership: user.loyaltyMembership,
+      cardNumber: membership.cardNumber,
+      qrPayload: JSON.stringify({
+        t: 'hos-loyalty',
+        c: membership.cardNumber,
+        u: user.id,
+      }),
+      membership,
     };
   }
 

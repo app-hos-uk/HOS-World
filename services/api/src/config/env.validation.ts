@@ -24,6 +24,8 @@ interface EnvSchema {
   LOYALTY_DEFAULT_EARN_RATE?: string;
   LOYALTY_DEFAULT_REDEEM_VALUE?: string;
   LOYALTY_MIN_REDEMPTION_POINTS?: string;
+  /** Gate staff POS points→Lightspeed gift card voucher issuance. */
+  LOYALTY_POS_VOUCHER_ENABLED?: string;
   LOYALTY_CARD_PREFIX?: string;
   LOYALTY_POINTS_EXPIRY_MONTHS?: string;
   LOYALTY_REDEMPTION_AT_CHECKOUT?: string;
@@ -38,6 +40,13 @@ interface EnvSchema {
   POS_SALES_POLL_CRON?: string;
   POS_INVENTORY_DISCREPANCY_THRESHOLD?: string;
   POS_SYNC_BATCH_SIZE?: string;
+  /** Gate HOS → Xero posting (also requires FeatureFlag.ACCOUNTING_XERO). Default off. */
+  ACCOUNTING_ENABLED?: string;
+  XERO_CLIENT_ID?: string;
+  XERO_CLIENT_SECRET?: string;
+  XERO_REDIRECT_URI?: string;
+  XERO_TENANT_ID?: string;
+  ACCOUNTING_LEDGER_DRAIN_CRON?: string;
   QUIZ_MAX_PER_WEEK?: string;
   QUIZ_PASS_THRESHOLD?: string;
   FANDOM_PROFILE_RECOMPUTE_CRON?: string;
@@ -183,6 +192,17 @@ export function validateEnvironmentVariables(
       warnings.push(
         'Lightspeed OAuth: set LIGHTSPEED_CLIENT_ID and LIGHTSPEED_CLIENT_SECRET for token refresh, or store tokens only in encrypted POS credentials',
       );
+    }
+  }
+
+  if (isTruthy(config.ACCOUNTING_ENABLED as string | undefined)) {
+    if (!config.XERO_CLIENT_ID || !config.XERO_CLIENT_SECRET) {
+      warnings.push(
+        'ACCOUNTING_ENABLED: set XERO_CLIENT_ID and XERO_CLIENT_SECRET for OAuth',
+      );
+    }
+    if (!config.XERO_REDIRECT_URI) {
+      warnings.push('ACCOUNTING_ENABLED: set XERO_REDIRECT_URI for OAuth callback');
     }
   }
 

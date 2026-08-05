@@ -1,14 +1,29 @@
 name: Deploy
 
 on:
-  push:
+  # Only deploy after CI passes — uses workflow_run so the deploy workflow
+  # waits for the CI workflow to complete on master, rather than racing it.
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [master]
-  workflow_dispatch: # Re-run after adding RAILWAY_TOKEN in repo Settings → Secrets
+  workflow_dispatch: # Manual re-deploy (skips CI gate)
 
 jobs:
+  # Abort if the triggering CI run failed (workflow_dispatch bypasses this).
+  gate:
+    name: Verify CI passed
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - run: echo "CI passed or manual dispatch — proceeding to deploy."
+
   # Without this secret, deploy steps were skipped while the workflow still showed "success".
   verify-railway-token:
     name: Verify RAILWAY_TOKEN secret
+    needs: [gate]
     runs-on: ubuntu-latest
     steps:
       - name: Require GitHub secret RAILWAY_TOKEN
@@ -73,21 +88,28 @@ jobs:
       - name: API health check (liveness then full)
         run: |
           BASE="https://hos-marketplaceapi-production.up.railway.app"
+          LIVE_OK=false
           for i in 1 2 3 4 5 6 7 8 9 10; do
             LIVE=$(curl -sS -o /dev/null -w "%{http_code}" "$BASE/api/health/live" || echo "000")
             echo "Attempt $i — /api/health/live: $LIVE"
-            if [ "$LIVE" = "200" ]; then break; fi
+            if [ "$LIVE" = "200" ]; then LIVE_OK=true; break; fi
             sleep 10
           done
+          if [ "$LIVE_OK" != "true" ]; then
+            echo "::error::API liveness probe never returned 200 after 10 attempts"
+            exit 1
+          fi
           STATUS=$(curl -sS -o /dev/null -w "%{http_code}" "$BASE/api/health" || echo "000")
           echo "API full health check status: $STATUS"
           if [ "$STATUS" != "200" ] && [ "$STATUS" != "201" ]; then
-            echo "::warning::API health check returned $STATUS"
+            echo "::error::API health check returned $STATUS (expected 200)"
+            exit 1
           fi
       - name: Web health check
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://hos-marketplaceweb-production.up.railway.app/ || echo "000")
           echo "Web health check status: $STATUS"
           if [ "$STATUS" != "200" ]; then
-            echo "::warning::Web health check returned $STATUS"
+            echo "::error::Web health check returned $STATUS (expected 200)"
+            exit 1
           fi

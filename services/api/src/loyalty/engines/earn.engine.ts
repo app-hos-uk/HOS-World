@@ -207,12 +207,13 @@ export class LoyaltyEarnEngine {
       orderNumber?: string;
       externalSaleId?: string;
     },
-  ): Promise<void> {
-    if (productFinal <= 0) return;
+  ): Promise<number> {
+    if (productFinal <= 0) return 0;
 
     const slices: Array<{
       pts: number;
       campaignId?: string;
+      keySuffix: string;
       description: string;
       metadata: Prisma.InputJsonValue;
     }> = [];
@@ -223,6 +224,7 @@ export class LoyaltyEarnEngine {
       slices.push({
         pts,
         campaignId: row.campaignId,
+        keySuffix: row.campaignId,
         description: `Product campaign: ${row.name}`.trim(),
         metadata: {
           ...(common.orderNumber ? { orderNumber: common.orderNumber } : {}),
@@ -238,6 +240,7 @@ export class LoyaltyEarnEngine {
       if (pts > 0) {
         slices.push({
           pts,
+          keySuffix: 'cc',
           description: 'Click & collect bonus',
           metadata: {
             ...(common.orderNumber ? { orderNumber: common.orderNumber } : {}),
@@ -251,6 +254,7 @@ export class LoyaltyEarnEngine {
       slices.push({
         pts: productFinal,
         campaignId: productBoost.primaryCampaignId,
+        keySuffix: productBoost.primaryCampaignId ?? 'base',
         description: productBoost.primaryCampaignName
           ? `Product campaign: ${productBoost.primaryCampaignName}`.trim()
           : 'Product campaign',
@@ -268,9 +272,10 @@ export class LoyaltyEarnEngine {
       slices[slices.length - 1].pts += drift;
     }
 
+    let appliedPoints = 0;
     for (const s of slices) {
       if (s.pts <= 0) continue;
-      await this.wallet.applyDelta(tx, membershipId, s.pts, LoyaltyTxType.EARN, {
+      const result = await this.wallet.applyDelta(tx, membershipId, s.pts, LoyaltyTxType.EARN, {
         source: 'PRODUCT_CAMPAIGN',
         sourceId: common.sourceId,
         channel: common.channel,
@@ -280,8 +285,11 @@ export class LoyaltyEarnEngine {
         campaignId: s.campaignId ?? null,
         description: s.description,
         metadata: s.metadata,
+        idempotencyKey: `earn:PRODUCT_CAMPAIGN:${common.sourceId}:${s.keySuffix}`,
       });
+      if (result?.applied) appliedPoints += s.pts;
     }
+    return appliedPoints;
   }
 
   /**
@@ -343,6 +351,7 @@ export class LoyaltyEarnEngine {
             ccBonus: ccRaw,
             deferredClickCollect: true,
           } as Prisma.InputJsonValue,
+          idempotencyKey: `earn:PRODUCT_CAMPAIGN:${order.id}:cc-deferred`,
         });
         await tx.loyaltyMembership.update({
           where: { id: membership.id },
@@ -518,42 +527,60 @@ export class LoyaltyEarnEngine {
           return;
         }
 
+        let appliedPoints = 0;
+
         if (internalFinal > 0) {
-          await this.wallet.applyDelta(tx, membership.id, internalFinal, LoyaltyTxType.EARN, {
-            source: 'PURCHASE',
-            sourceId: order.id,
-            channel: 'WEB',
-            sellerId: primarySellerId,
-            earnRuleId: purchaseRule?.id ?? undefined,
-            campaignId: campaignId ?? undefined,
-            description: 'Order purchase',
-            metadata: {
-              orderNumber: order.orderNumber,
-              sellerIds,
-            } as Prisma.InputJsonValue,
-          });
+          const result = await this.wallet.applyDelta(
+            tx,
+            membership.id,
+            internalFinal,
+            LoyaltyTxType.EARN,
+            {
+              source: 'PURCHASE',
+              sourceId: order.id,
+              channel: 'WEB',
+              sellerId: primarySellerId,
+              earnRuleId: purchaseRule?.id ?? undefined,
+              campaignId: campaignId ?? undefined,
+              description: 'Order purchase',
+              metadata: {
+                orderNumber: order.orderNumber,
+                sellerIds,
+              } as Prisma.InputJsonValue,
+              idempotencyKey: `earn:PURCHASE:${order.id}:${campaignId || 'base'}`,
+            },
+          );
+          if (result?.applied) appliedPoints += internalFinal;
         }
 
         if (brandFinal > 0 && brandBoost.campaignId) {
-          await this.wallet.applyDelta(tx, membership.id, brandFinal, LoyaltyTxType.EARN, {
-            source: 'BRAND_CAMPAIGN',
-            sourceId: order.id,
-            channel: 'WEB',
-            sellerId: primarySellerId,
-            earnRuleId: purchaseRule?.id ?? undefined,
-            campaignId: brandBoost.campaignId,
-            description: `Brand promotion: ${brandBoost.campaignName ?? ''}`.trim(),
-            metadata: {
-              orderNumber: order.orderNumber,
-              partnerName: brandBoost.partnerName,
-              campaignName: brandBoost.campaignName,
-              brandMultiplier: brandBoost.brandMultiplier,
-            } as Prisma.InputJsonValue,
-          });
+          const result = await this.wallet.applyDelta(
+            tx,
+            membership.id,
+            brandFinal,
+            LoyaltyTxType.EARN,
+            {
+              source: 'BRAND_CAMPAIGN',
+              sourceId: order.id,
+              channel: 'WEB',
+              sellerId: primarySellerId,
+              earnRuleId: purchaseRule?.id ?? undefined,
+              campaignId: brandBoost.campaignId,
+              description: `Brand promotion: ${brandBoost.campaignName ?? ''}`.trim(),
+              metadata: {
+                orderNumber: order.orderNumber,
+                partnerName: brandBoost.partnerName,
+                campaignName: brandBoost.campaignName,
+                brandMultiplier: brandBoost.brandMultiplier,
+              } as Prisma.InputJsonValue,
+              idempotencyKey: `earn:BRAND_CAMPAIGN:${order.id}:${brandBoost.campaignId}`,
+            },
+          );
+          if (result?.applied) appliedPoints += brandFinal;
         }
 
         if (productFinal > 0 && (productBoost.points > 0 || ccBonus > 0)) {
-          await this.applyProductCampaignWalletSlices(
+          appliedPoints += await this.applyProductCampaignWalletSlices(
             tx,
             membership.id,
             productBoost,
@@ -570,6 +597,8 @@ export class LoyaltyEarnEngine {
           );
         }
 
+        // Flag means "C&C bonus accounted for" — set it even when the slice was a
+        // no-op, otherwise applyDeferredClickCollectBonus (different key) re-credits it.
         if (ccBonus > 0 && order.clickCollect?.id) {
           await tx.clickCollectOrder.update({
             where: { id: order.clickCollect.id },
@@ -577,15 +606,19 @@ export class LoyaltyEarnEngine {
           });
         }
 
-        await tx.loyaltyMembership.update({
-          where: { id: membership.id },
-          data: {
-            totalPointsEarned: { increment: totalFinal },
-            totalSpend: { increment: order.subtotal },
-            purchaseCount: { increment: 1 },
-          },
-        });
+        // Only bump membership stats for wallet writes that actually applied.
+        if (appliedPoints > 0) {
+          await tx.loyaltyMembership.update({
+            where: { id: membership.id },
+            data: {
+              totalPointsEarned: { increment: appliedPoints },
+              totalSpend: { increment: order.subtotal },
+              purchaseCount: { increment: 1 },
+            },
+          });
+        }
 
+        // Always stamp the order so retries after a wallet-only success do not re-enter.
         await tx.order.update({
           where: { id: order.id },
           data: { loyaltyPointsEarned: totalFinal },
@@ -754,44 +787,62 @@ export class LoyaltyEarnEngine {
           return;
         }
 
+        let appliedPoints = 0;
+
         if (internalFinal > 0) {
-          await this.wallet.applyDelta(tx, membership.id, internalFinal, LoyaltyTxType.EARN, {
-            source: 'POS_PURCHASE',
-            sourceId: sale.id,
-            channel: 'HOS_OUTLET_POS',
-            storeId: sale.storeId,
-            sellerId: primarySellerId,
-            earnRuleId: purchaseRule?.id ?? undefined,
-            campaignId: campaignId ?? undefined,
-            description: 'In-store purchase',
-            metadata: {
-              externalSaleId: sale.externalSaleId,
-              sellerIds,
-            } as Prisma.InputJsonValue,
-          });
+          const result = await this.wallet.applyDelta(
+            tx,
+            membership.id,
+            internalFinal,
+            LoyaltyTxType.EARN,
+            {
+              source: 'POS_PURCHASE',
+              sourceId: sale.id,
+              channel: 'HOS_OUTLET_POS',
+              storeId: sale.storeId,
+              sellerId: primarySellerId,
+              earnRuleId: purchaseRule?.id ?? undefined,
+              campaignId: campaignId ?? undefined,
+              description: 'In-store purchase',
+              metadata: {
+                externalSaleId: sale.externalSaleId,
+                sellerIds,
+              } as Prisma.InputJsonValue,
+              idempotencyKey: `earn:POS_PURCHASE:${sale.id}:${campaignId || 'base'}`,
+            },
+          );
+          if (result?.applied) appliedPoints += internalFinal;
         }
 
         if (brandFinal > 0 && brandBoost.campaignId) {
-          await this.wallet.applyDelta(tx, membership.id, brandFinal, LoyaltyTxType.EARN, {
-            source: 'BRAND_CAMPAIGN',
-            sourceId: sale.id,
-            channel: 'HOS_OUTLET_POS',
-            storeId: sale.storeId,
-            sellerId: primarySellerId,
-            earnRuleId: purchaseRule?.id ?? undefined,
-            campaignId: brandBoost.campaignId,
-            description: `Brand promotion: ${brandBoost.campaignName ?? ''}`.trim(),
-            metadata: {
-              externalSaleId: sale.externalSaleId,
-              partnerName: brandBoost.partnerName,
-              campaignName: brandBoost.campaignName,
-              brandMultiplier: brandBoost.brandMultiplier,
-            } as Prisma.InputJsonValue,
-          });
+          const result = await this.wallet.applyDelta(
+            tx,
+            membership.id,
+            brandFinal,
+            LoyaltyTxType.EARN,
+            {
+              source: 'BRAND_CAMPAIGN',
+              sourceId: sale.id,
+              channel: 'HOS_OUTLET_POS',
+              storeId: sale.storeId,
+              sellerId: primarySellerId,
+              earnRuleId: purchaseRule?.id ?? undefined,
+              campaignId: brandBoost.campaignId,
+              description: `Brand promotion: ${brandBoost.campaignName ?? ''}`.trim(),
+              metadata: {
+                externalSaleId: sale.externalSaleId,
+                partnerName: brandBoost.partnerName,
+                campaignName: brandBoost.campaignName,
+                brandMultiplier: brandBoost.brandMultiplier,
+              } as Prisma.InputJsonValue,
+              idempotencyKey: `earn:BRAND_CAMPAIGN:${sale.id}:${brandBoost.campaignId}`,
+            },
+          );
+          if (result?.applied) appliedPoints += brandFinal;
         }
 
         if (productFinal > 0 && productBoost.breakdown.length > 0) {
-          await this.applyProductCampaignWalletSlices(
+          appliedPoints += await this.applyProductCampaignWalletSlices(
             tx,
             membership.id,
             productBoost,
@@ -809,14 +860,16 @@ export class LoyaltyEarnEngine {
           );
         }
 
-        await tx.loyaltyMembership.update({
-          where: { id: membership.id },
-          data: {
-            totalPointsEarned: { increment: totalFinal },
-            totalSpend: { increment: subtotal },
-            purchaseCount: { increment: 1 },
-          },
-        });
+        if (appliedPoints > 0) {
+          await tx.loyaltyMembership.update({
+            where: { id: membership.id },
+            data: {
+              totalPointsEarned: { increment: appliedPoints },
+              totalSpend: { increment: subtotal },
+              purchaseCount: { increment: 1 },
+            },
+          });
+        }
 
         await tx.pOSSale.update({
           where: { id: sale.id },
