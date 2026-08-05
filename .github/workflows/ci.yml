@@ -98,7 +98,7 @@ jobs:
 
           # Regression guard: baseline is the last known good coverage.
           # Update BASELINE after intentional coverage improvements.
-          BASELINE=44
+          BASELINE=54
           REGRESSED=$(node -e "console.log(Number($LINES)<$BASELINE?'yes':'no')")
           if [ "$REGRESSED" = "yes" ]; then
             echo "::error::Line coverage regressed from ${BASELINE}% to ${LINES}%. Add tests before merging."
