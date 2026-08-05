@@ -199,6 +199,20 @@ export function validateEnvironmentVariables(
     }
   }
 
+  if (config.POS_GIFT_CARD_MIN_AMOUNT || config.POS_GIFT_CARD_MAX_AMOUNT) {
+    const gcMin = Number(config.POS_GIFT_CARD_MIN_AMOUNT ?? 1);
+    const gcMax = Number(config.POS_GIFT_CARD_MAX_AMOUNT ?? 500);
+    if (!Number.isFinite(gcMin) || gcMin <= 0) {
+      errors.push('POS_GIFT_CARD_MIN_AMOUNT must be a positive number');
+    }
+    if (!Number.isFinite(gcMax) || gcMax <= 0) {
+      errors.push('POS_GIFT_CARD_MAX_AMOUNT must be a positive number');
+    }
+    if (Number.isFinite(gcMin) && Number.isFinite(gcMax) && gcMin > gcMax) {
+      errors.push('POS_GIFT_CARD_MIN_AMOUNT must not exceed POS_GIFT_CARD_MAX_AMOUNT');
+    }
+  }
+
   if (isTruthy(config.ACCOUNTING_ENABLED as string | undefined)) {
     if (!config.XERO_CLIENT_ID || !config.XERO_CLIENT_SECRET) {
       warnings.push(

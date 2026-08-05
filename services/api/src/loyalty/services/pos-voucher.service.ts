@@ -98,8 +98,8 @@ export class PosVoucherService {
       throw new BadRequestException('Redemption amount must be greater than zero');
     }
 
-    // Check for an existing voucher via the burn engine's wallet key before validating
-    // limits, so idempotent replays always succeed regardless of config changes.
+    // Check for a prior burn via the wallet key before validating limits or calling
+    // the burn engine, so idempotent replays succeed regardless of config changes.
     const walletKey = `burn:key:${membershipId}:${idempotencyKey}`;
     const priorWalletTx = await this.prisma.loyaltyTransaction.findUnique({
       where: { idempotencyKey: walletKey },
@@ -113,6 +113,24 @@ export class PosVoucherService {
       if (priorVoucher) {
         return this.retryFailedVoucher(priorVoucher.id);
       }
+      // Burn exists but voucher row is missing (crash between burn and voucher create).
+      // Only recover if the redemption is still COMPLETED — if it was REVERSED,
+      // points were restored and we must re-burn via the normal flow below.
+      const priorRedemption = await this.prisma.loyaltyRedemption.findUnique({
+        where: { id: priorWalletTx.sourceId },
+        select: { status: true },
+      });
+      if (priorRedemption && priorRedemption.status !== 'REVERSED') {
+        return this.createAndIssueVoucher({
+          membershipId,
+          redemptionId: priorWalletTx.sourceId,
+          storeId: dto.storeId,
+          amount,
+          currency: store.currency || 'GBP',
+          posConnection: store.posConnection!,
+        });
+      }
+      // Redemption was reversed or missing — fall through to re-burn below.
     }
 
     this.assertGiftCardAmountLimits(amount, store.currency || 'GBP');
@@ -135,29 +153,67 @@ export class PosVoucherService {
       return this.retryFailedVoucher(existingVoucher.id);
     }
 
+    return this.createAndIssueVoucher({
+      membershipId,
+      redemptionId,
+      storeId: dto.storeId,
+      amount,
+      currency: store.currency || 'GBP',
+      posConnection: store.posConnection!,
+      reverseBurnOnFailure: { points: dto.points },
+    });
+  }
+
+  /**
+   * Create a PENDING voucher row and issue the gift card.
+   * Used for both new redemptions and recovery when the burn exists but the voucher row is missing.
+   */
+  private async createAndIssueVoucher(params: {
+    membershipId: string;
+    redemptionId: string;
+    storeId: string;
+    amount: number;
+    currency: string;
+    posConnection: { provider: string; credentials: string };
+    reverseBurnOnFailure?: { points: number };
+  }): Promise<{
+    voucherId: string;
+    redemptionId: string;
+    cardNumber: string;
+    amount: number;
+    currency: string;
+    status: string;
+    points: number;
+  }> {
     const cardNumber = this.generateCardNumber();
-    const currency = store.currency || 'GBP';
 
     let voucher;
     try {
       voucher = await this.prisma.loyaltyPosVoucher.create({
         data: {
-          membershipId,
-          redemptionId,
-          storeId: dto.storeId,
+          membershipId: params.membershipId,
+          redemptionId: params.redemptionId,
+          storeId: params.storeId,
           cardNumber,
-          amount: new Decimal(amount.toFixed(2)),
-          currency,
-          clientId: redemptionId,
+          amount: new Decimal(params.amount.toFixed(2)),
+          currency: params.currency,
+          clientId: params.redemptionId,
           status: 'PENDING',
         },
       });
     } catch (e) {
-      await this.reverseBurn(membershipId, dto.points, redemptionId, dto.storeId);
+      if (params.reverseBurnOnFailure) {
+        await this.reverseBurn(
+          params.membershipId,
+          params.reverseBurnOnFailure.points,
+          params.redemptionId,
+          params.storeId,
+        );
+      }
       throw e;
     }
 
-    return this.issueGiftCardForVoucher(voucher.id, store.posConnection);
+    return this.issueGiftCardForVoucher(voucher.id, params.posConnection);
   }
 
   /**

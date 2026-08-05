@@ -205,6 +205,93 @@ describe('PosVoucherService', () => {
     expect(result.status).toBe('ISSUED');
   });
 
+  it('recovers when burn exists but voucher row is missing (crash between burn and create)', async () => {
+    const createGiftCard = jest.fn().mockResolvedValue({
+      id: 'gc-1',
+      number: 'NEWCARD12345',
+      balance: 5,
+      transactions: [{ id: 'tx-act', type: 'ACTIVATION', amount: 5 }],
+    });
+    const voucherCreate = jest.fn().mockImplementation(({ data }) => ({
+      id: 'voucher-new',
+      ...data,
+      redemption: { pointsSpent: 500, status: 'COMPLETED' },
+    }));
+    const voucherFindUnique = jest.fn().mockImplementation(({ where }: any) => {
+      if (where?.redemptionId) return Promise.resolve(null);
+      const created = voucherCreate.mock.results[0]?.value;
+      return Promise.resolve({
+        ...(created ?? {}),
+        redemption: { pointsSpent: 500, status: 'COMPLETED' },
+      });
+    });
+    const { svc, prisma, burn } = build({ createGiftCard, voucherCreate, voucherFindUnique });
+    // Prior wallet tx exists, but no voucher for that redemptionId
+    prisma.loyaltyTransaction.findUnique.mockResolvedValue({ sourceId: redemptionId });
+
+    const result = await svc.redeemForVoucher({
+      points: 500,
+      storeId,
+      membershipId,
+      idempotencyKey,
+    });
+
+    expect(burn.processRedemption).not.toHaveBeenCalled();
+    expect(voucherCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          redemptionId,
+          clientId: redemptionId,
+          status: 'PENDING',
+        }),
+      }),
+    );
+    expect(result.status).toBe('ISSUED');
+  });
+
+  it('does not recover when burn was reversed — re-burns via normal flow', async () => {
+    const createGiftCard = jest.fn().mockResolvedValue({
+      id: 'gc-1',
+      number: 'NEWCARD12345',
+      balance: 5,
+      transactions: [{ id: 'tx-act', type: 'ACTIVATION', amount: 5 }],
+    });
+    const voucherCreate = jest.fn().mockImplementation(({ data }) => ({
+      id: 'voucher-new',
+      ...data,
+      redemption: { pointsSpent: 500, status: 'COMPLETED' },
+    }));
+    const voucherFindUnique = jest.fn().mockImplementation(({ where }: any) => {
+      if (where?.redemptionId) return Promise.resolve(null);
+      const created = voucherCreate.mock.results[0]?.value;
+      return Promise.resolve({
+        ...(created ?? {}),
+        redemption: { pointsSpent: 500, status: 'COMPLETED' },
+      });
+    });
+    const { svc, prisma, burn } = build({ createGiftCard, voucherCreate, voucherFindUnique });
+    // Prior wallet tx exists, but redemption was REVERSED
+    prisma.loyaltyTransaction.findUnique.mockResolvedValue({ sourceId: redemptionId });
+    prisma.loyaltyRedemption.findUnique.mockResolvedValue({ status: 'REVERSED' });
+
+    const result = await svc.redeemForVoucher({
+      points: 500,
+      storeId,
+      membershipId,
+      idempotencyKey,
+    });
+
+    // Should fall through to burn engine instead of recovery path
+    expect(burn.processRedemption).toHaveBeenCalledWith(
+      expect.objectContaining({
+        membershipId,
+        points: 500,
+        idempotencyKey,
+      }),
+    );
+    expect(result.status).toBe('ISSUED');
+  });
+
   it('replayed request bypasses gift card amount limits', async () => {
     const issuedVoucher = {
       id: 'voucher-1',
