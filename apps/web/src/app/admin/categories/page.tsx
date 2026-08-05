@@ -650,37 +650,28 @@ export default function AdminCategoriesPage() {
             </button>
           </div>
 
-          {/* Stats Cards */}
+          {/* Stats Cards — even 4-col grid so cards stay aligned across breakpoints */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-                <p className="text-sm text-hos-text-secondary">Total</p>
-                <p className="text-2xl font-bold text-hos-gold">{stats.totalCategories}</p>
-              </div>
-              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-                <p className="text-sm text-hos-text-secondary">Fandom</p>
-                <p className="text-2xl font-bold text-hos-gold">{stats.rootCategories}</p>
-              </div>
-              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-                <p className="text-sm text-hos-text-secondary">Active</p>
-                <p className="text-2xl font-bold text-green-400">{stats.activeCategories}</p>
-              </div>
-              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-                <p className="text-sm text-hos-text-secondary">Inactive</p>
-                <p className="text-2xl font-bold text-hos-text-muted">{stats.inactiveCategories}</p>
-              </div>
-              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-                <p className="text-sm text-hos-text-secondary">Products</p>
-                <p className="text-2xl font-bold text-orange-400">{stats.totalProducts}</p>
-              </div>
-              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-                <p className="text-sm text-hos-text-secondary">Avg/Fandom</p>
-                <p className="text-2xl font-bold text-hos-gold">{stats.avgProductsPerCategory}</p>
-              </div>
-              <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
-                <p className="text-sm text-hos-text-secondary">Max Depth</p>
-                <p className="text-2xl font-bold text-pink-400">{stats.maxDepth + 1}</p>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: 'Total', value: stats.totalCategories, className: 'text-hos-gold' },
+                { label: 'Fandom', value: stats.rootCategories, className: 'text-hos-gold' },
+                { label: 'Active', value: stats.activeCategories, className: 'text-green-400' },
+                { label: 'Inactive', value: stats.inactiveCategories, className: 'text-hos-text-muted' },
+                { label: 'Products', value: stats.totalProducts, className: 'text-orange-400' },
+                { label: 'Avg / Fandom', value: stats.avgProductsPerCategory, className: 'text-hos-gold' },
+                { label: 'Max Depth', value: stats.maxDepth + 1, className: 'text-pink-400' },
+              ].map((card) => (
+                <div
+                  key={card.label}
+                  className="bg-hos-bg-secondary rounded-lg shadow p-4 h-full flex flex-col"
+                >
+                  <p className="text-sm text-hos-text-secondary min-h-[1.25rem] truncate">{card.label}</p>
+                  <p className={`text-2xl font-bold mt-auto pt-2 tabular-nums ${card.className}`}>
+                    {card.value}
+                  </p>
+                </div>
+              ))}
             </div>
           )}
 

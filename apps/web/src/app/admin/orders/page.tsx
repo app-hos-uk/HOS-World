@@ -887,6 +887,8 @@ function AdminOrdersContent() {
                       {(selectedOrder.user?.email || selectedOrder.customer?.email) && (
                         <a
                           href={`mailto:${selectedOrder.user?.email || selectedOrder.customer?.email}?subject=${encodeURIComponent(`Regarding order #${selectedOrder.orderNumber || selectedOrder.id.substring(0, 8)}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="admin-table-action"
                         >
                           Contact customer

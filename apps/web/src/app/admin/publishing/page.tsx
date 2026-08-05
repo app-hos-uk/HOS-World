@@ -9,6 +9,7 @@ export default function PublishingDashboardPage() {
   const toast = useToast();
   const [readySubmissions, setReadySubmissions] = useState<any[]>([]);
   const [publishedProducts, setPublishedProducts] = useState<any[]>([]);
+  const [publishedTotal, setPublishedTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState<Set<string>>(new Set());
@@ -22,10 +23,20 @@ export default function PublishingDashboardPage() {
       setError(null);
       const [readyRes, publishedRes] = await Promise.all([
         apiClient.getReadyToPublish().catch(() => ({ data: [] })),
-        apiClient.getPublishedProducts().catch(() => ({ data: [] })),
+        apiClient.getPublishedProducts().catch(() => ({ data: { items: [], total: 0 } })),
       ]);
       setReadySubmissions(Array.isArray(readyRes?.data) ? readyRes.data : []);
-      setPublishedProducts(Array.isArray(publishedRes?.data) ? publishedRes.data : []);
+      const publishedData = publishedRes?.data;
+      if (Array.isArray(publishedData)) {
+        setPublishedProducts(publishedData);
+        setPublishedTotal(publishedData.length);
+      } else if (publishedData && Array.isArray((publishedData as any).items)) {
+        setPublishedProducts((publishedData as any).items);
+        setPublishedTotal(Number((publishedData as any).total) || (publishedData as any).items.length);
+      } else {
+        setPublishedProducts([]);
+        setPublishedTotal(0);
+      }
     } catch (err: any) {
       setError(err?.message || 'Failed to load publishing data');
     } finally {
@@ -127,7 +138,7 @@ export default function PublishingDashboardPage() {
               tab === 'published' ? 'bg-hos-bg-secondary text-hos-gold-hover shadow-sm' : 'text-hos-text-secondary hover:text-hos-gold'
             }`}
           >
-            Published ({publishedProducts.length})
+            Published ({publishedTotal})
           </button>
         </div>
 
@@ -228,6 +239,11 @@ export default function PublishingDashboardPage() {
 
         {!loading && !error && tab === 'published' && (
           <div className="bg-hos-bg-secondary rounded-lg border border-hos-border shadow-sm">
+            {publishedTotal > publishedProducts.length && (
+              <div className="px-4 py-3 border-b border-hos-border text-sm text-hos-text-muted">
+                Showing the {publishedProducts.length} most recently published of {publishedTotal} total.
+              </div>
+            )}
             {publishedProducts.length === 0 ? (
               <div className="text-center py-12 text-hos-text-muted">
                 <p className="text-lg font-medium">No published products yet</p>
@@ -236,7 +252,12 @@ export default function PublishingDashboardPage() {
             ) : (
               <div className="divide-y divide-hos-border">
                 {publishedProducts.map((product: any) => {
-                  const name = product.name || product.catalogEntry?.title || product.productData?.name || 'Untitled';
+                  const name =
+                    product.product?.name ||
+                    product.name ||
+                    product.catalogEntry?.title ||
+                    product.productData?.name ||
+                    'Untitled';
                   return (
                     <div key={product.id} className="p-4 hover:bg-hos-bg-tertiary transition-colors">
                       <div className="flex items-start justify-between">

@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { normalizeWhitespace, validateNameLike } from '@/lib/formFieldValidation';
 import { RuleBuilder, hydrateKeys, type SegmentRuleGroup } from '../../RuleBuilder';
 
 export default function AdminSegmentEditPage() {
@@ -14,6 +15,7 @@ export default function AdminSegmentEditPage() {
   const router = useRouter();
   const toast = useToast();
   const [name, setName] = useState('');
+  const [originalName, setOriginalName] = useState('');
   const [description, setDescription] = useState('');
   const [rules, setRules] = useState<SegmentRuleGroup | null>(null);
   const [preview, setPreview] = useState<{ count: number; sampleUsers: any[] } | null>(null);
@@ -25,6 +27,7 @@ export default function AdminSegmentEditPage() {
       .then((r) => {
         const s = r.data as any;
         setName(s.name);
+        setOriginalName(s.name || '');
         setDescription(s.description || '');
         setRules(hydrateKeys(s.rules));
       })
@@ -40,10 +43,23 @@ export default function AdminSegmentEditPage() {
 
   const save = async () => {
     if (!rules) return;
+    const normalizedName = normalizeWhitespace(name);
+    // Only enforce the new character rules when the name actually changes, so
+    // legacy segments with older names can still update rules/description.
+    if (normalizedName !== normalizeWhitespace(originalName)) {
+      const nameErr = validateNameLike(normalizedName, 'Name');
+      if (nameErr) {
+        toast.error(nameErr);
+        return;
+      }
+    } else if (!normalizedName) {
+      toast.error('Name is required');
+      return;
+    }
     setSaving(true);
     try {
       await apiClient.adminUpdateSegment(id, {
-        name: name.trim(),
+        name: normalizedName,
         description: description.trim() || null,
         rules,
       });

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { normalizeWhitespace, validateNameLike } from '@/lib/formFieldValidation';
 import { RuleBuilder, emptyGroup, type SegmentRuleGroup } from '../RuleBuilder';
 
 export default function AdminSegmentNewPage() {
@@ -25,14 +26,16 @@ export default function AdminSegmentNewPage() {
   }, []);
 
   const save = async () => {
-    if (!name.trim()) {
-      toast.error('Name is required');
+    const normalizedName = normalizeWhitespace(name);
+    const nameErr = validateNameLike(normalizedName, 'Name');
+    if (nameErr) {
+      toast.error(nameErr);
       return;
     }
     setSaving(true);
     try {
       await apiClient.adminCreateSegment({
-        name: name.trim(),
+        name: normalizedName,
         description: description.trim() || undefined,
         rules,
         type: 'DYNAMIC',

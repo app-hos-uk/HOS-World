@@ -165,6 +165,34 @@ export class SegmentationService {
     });
   }
 
+  async restore(id: string): Promise<AudienceSegment> {
+    const existing = await this.prisma.audienceSegment.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Segment not found');
+    if (existing.status !== 'ARCHIVED') {
+      throw new BadRequestException('Only archived segments can be restored');
+    }
+    const segment = await this.prisma.audienceSegment.update({
+      where: { id },
+      data: { status: 'ACTIVE' },
+    });
+    if (segment.type === 'DYNAMIC') {
+      try {
+        await this.evaluateSegment(id);
+      } catch (e: any) {
+        // Archiving clears memberships — restore must refresh them. Roll back if refresh fails
+        // so we don't report success with an empty dynamic segment.
+        await this.prisma.audienceSegment.update({
+          where: { id },
+          data: { status: 'ARCHIVED' },
+        });
+        throw new BadRequestException(
+          `Segment could not be restored: membership refresh failed. ${e?.message || 'Unknown error'}`,
+        );
+      }
+    }
+    return this.prisma.audienceSegment.findUniqueOrThrow({ where: { id } });
+  }
+
   async delete(id: string): Promise<void> {
     const existing = await this.prisma.audienceSegment.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Segment not found');

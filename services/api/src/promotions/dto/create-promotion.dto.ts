@@ -10,6 +10,7 @@ import {
   IsArray,
   ValidateNested,
   IsIn,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PromotionType, PromotionStatus } from '@prisma/client';
@@ -86,8 +87,9 @@ export class CreatePromotionDto {
   name: string;
 
   @IsOptional()
+  @ValidateIf((_, v) => v !== null)
   @IsString()
-  description?: string;
+  description?: string | null;
 
   @IsEnum(PromotionType)
   type: PromotionType;
@@ -104,8 +106,9 @@ export class CreatePromotionDto {
   startDate: string;
 
   @IsOptional()
+  @ValidateIf((_, v) => v !== null)
   @IsDateString()
-  endDate?: string;
+  endDate?: string | null;
 
   @ValidateNested()
   @Type(() => PromotionConditionDto)
@@ -120,12 +123,14 @@ export class CreatePromotionDto {
   isStackable?: boolean;
 
   @IsOptional()
+  @ValidateIf((_, v) => v !== null)
   @IsInt()
-  usageLimit?: number;
+  usageLimit?: number | null;
 
   @IsOptional()
+  @ValidateIf((_, v) => v !== null)
   @IsInt()
-  userUsageLimit?: number;
+  userUsageLimit?: number | null;
 
   @IsOptional()
   @IsString()

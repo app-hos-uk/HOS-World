@@ -15,6 +15,7 @@ describe('SegmentationAdminController', () => {
     findById: jest.fn().mockResolvedValue({ id: 's1', members: 0 }),
     update: jest.fn().mockResolvedValue({ id: 's1' }),
     archive: jest.fn().mockResolvedValue({ id: 's1' }),
+    restore: jest.fn().mockResolvedValue({ id: 's1', status: 'ACTIVE' }),
     delete: jest.fn().mockResolvedValue(undefined),
     evaluateSegment: jest.fn().mockResolvedValue({ added: 0, removed: 0, total: 0 }),
     previewSegment: jest.fn().mockResolvedValue({ count: 0, sampleUsers: [] }),

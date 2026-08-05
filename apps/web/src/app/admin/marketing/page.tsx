@@ -45,24 +45,19 @@ interface PendingSubmission {
   marketingMaterials: MarketingMaterial[];
 }
 
+// Must match Prisma MaterialType enum — invalid values cause 500s on filter.
 const MATERIAL_TYPES = [
-  'HERO_IMAGE',
-  'LIFESTYLE',
-  'DETAIL',
-  'VIDEO',
   'BANNER',
-  'SOCIAL',
-  'OTHER',
+  'CREATIVE',
+  'PRODUCT_IMAGE',
+  'CAMPAIGN_ASSET',
 ];
 
 const TYPE_COLORS: Record<string, string> = {
-  HERO_IMAGE: 'bg-hos-gold/20 text-hos-gold',
-  LIFESTYLE: 'bg-hos-gold/20 text-hos-gold',
-  DETAIL: 'bg-green-500/15 text-green-300',
-  VIDEO: 'bg-red-500/15 text-red-300',
   BANNER: 'bg-yellow-500/15 text-yellow-300',
-  SOCIAL: 'bg-pink-500/15 text-pink-300',
-  OTHER: 'bg-hos-bg-tertiary text-hos-text-secondary',
+  CREATIVE: 'bg-hos-gold/20 text-hos-gold',
+  PRODUCT_IMAGE: 'bg-green-500/15 text-green-300',
+  CAMPAIGN_ASSET: 'bg-pink-500/15 text-pink-300',
 };
 
 export default function AdminMarketingPage() {
@@ -103,7 +98,7 @@ export default function AdminMarketingPage() {
   const [selectedMaterial, setSelectedMaterial] = useState<MarketingMaterial | null>(null);
   const [materialForm, setMaterialForm] = useState({
     submissionId: '',
-    type: 'HERO_IMAGE',
+    type: 'BANNER',
     url: '',
   });
 
@@ -160,7 +155,7 @@ export default function AdminMarketingPage() {
       await apiClient.createMarketingMaterial(materialForm);
       toast.success('Marketing material added successfully');
       setShowAddModal(false);
-      setMaterialForm({ submissionId: '', type: 'HERO_IMAGE', url: '' });
+      setMaterialForm({ submissionId: '', type: 'BANNER', url: '' });
       // Use refs to get current values after async operation completes
       // This prevents stale closure issues if user switched tabs during the operation
       fetchData(activeTabRef.current, typeFilterRef.current);
@@ -224,7 +219,7 @@ export default function AdminMarketingPage() {
     setSelectedSubmission(submission);
     setMaterialForm({
       submissionId: submission.id,
-      type: 'HERO_IMAGE',
+      type: 'BANNER',
       url: '',
     });
     setShowAddModal(true);

@@ -1001,6 +1001,10 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>(`/admin/segments/${id}/archive`, { method: 'POST' });
   }
 
+  async adminRestoreSegment(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/segments/${id}/restore`, { method: 'POST' });
+  }
+
   async adminDeleteSegment(id: string): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>(`/admin/segments/${id}`, { method: 'DELETE' });
   }
@@ -1440,6 +1444,12 @@ export class ApiClient {
   async adminCancelProductCampaign(id: string): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>(`/admin/product-campaigns/${id}/cancel`, {
       method: 'POST',
+    });
+  }
+
+  async adminDeleteProductCampaign(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/product-campaigns/${id}`, {
+      method: 'DELETE',
     });
   }
 
@@ -2290,8 +2300,11 @@ export class ApiClient {
     });
   }
 
-  async getPublishedProducts(): Promise<ApiResponse<any[]>> {
-    return this.request<ApiResponse<any[]>>('/publishing/published', { method: 'GET' });
+  async getPublishedProducts(): Promise<ApiResponse<{ items: any[]; total: number } | any[]>> {
+    return this.request<ApiResponse<{ items: any[]; total: number } | any[]>>(
+      '/publishing/published',
+      { method: 'GET' },
+    );
   }
 
   // Webhooks
@@ -5080,14 +5093,19 @@ export class ApiClient {
 
   async updatePromotion(id: string, data: {
     name?: string;
+    description?: string | null;
     type?: string;
+    status?: string;
     discountType?: string;
     discountValue?: number;
     conditions?: any;
     actions?: any;
     startDate?: string;
-    endDate?: string;
+    endDate?: string | null;
     isActive?: boolean;
+    isStackable?: boolean;
+    usageLimit?: number | null;
+    userUsageLimit?: number | null;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/promotions/${id}`, {
       method: 'PUT',

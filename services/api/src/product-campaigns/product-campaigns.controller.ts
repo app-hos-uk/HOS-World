@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -76,5 +77,12 @@ export class ProductCampaignsController {
   async cancel(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.campaigns.cancel(id);
     return { data, message: 'OK' };
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete draft or cancelled campaign' })
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
+    await this.campaigns.delete(id);
+    return { data: null, message: 'OK' };
   }
 }

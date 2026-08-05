@@ -192,6 +192,14 @@ export class ProductCampaignsService {
     });
   }
 
+  async delete(id: string) {
+    const c = await this.get(id);
+    if (!['DRAFT', 'CANCELLED'].includes(c.status)) {
+      throw new BadRequestException('Only DRAFT or CANCELLED campaigns can be deleted');
+    }
+    await this.prisma.productCampaign.delete({ where: { id } });
+  }
+
   async runScheduledActivations(): Promise<number> {
     const now = new Date();
     const res = await this.prisma.productCampaign.updateMany({

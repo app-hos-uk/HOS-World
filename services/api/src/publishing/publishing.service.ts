@@ -388,32 +388,34 @@ export class PublishingService {
   }
 
   async getPublishedProducts() {
-    const submissions = await this.prisma.productSubmission.findMany({
-      where: {
-        status: 'PUBLISHED',
-      },
-      take: 100,
-      include: {
-        seller: {
-          select: {
-            id: true,
-            storeName: true,
-            slug: true,
+    const where = { status: 'PUBLISHED' as const };
+    const [submissions, total] = await Promise.all([
+      this.prisma.productSubmission.findMany({
+        where,
+        take: 100,
+        include: {
+          seller: {
+            select: {
+              id: true,
+              storeName: true,
+              slug: true,
+            },
+          },
+          product: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              status: true,
+              price: true,
+            },
           },
         },
-        product: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            status: true,
-            price: true,
-          },
-        },
-      },
-      orderBy: { publishedAt: 'desc' },
-    });
+        orderBy: { publishedAt: 'desc' },
+      }),
+      this.prisma.productSubmission.count({ where }),
+    ]);
 
-    return submissions;
+    return { items: submissions, total };
   }
 }

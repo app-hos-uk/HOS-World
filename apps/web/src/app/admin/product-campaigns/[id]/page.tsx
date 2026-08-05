@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/useToast';
 export default function AdminProductCampaignDetailPage() {
   const params = useParams();
   const id = String(params.id);
+  const router = useRouter();
   const toast = useToast();
   const [row, setRow] = useState<Record<string, unknown> | null>(null);
 
@@ -78,6 +79,24 @@ export default function AdminProductCampaignDetailPage() {
                       onClick={() => act(() => apiClient.adminCancelProductCampaign(id), 'Cancelled')}
                     >
                       Cancel
+                    </button>
+                  )}
+                  {(st === 'DRAFT' || st === 'CANCELLED') && (
+                    <button
+                      type="button"
+                      className="text-sm px-2 py-1 rounded border border-red-500/40 text-red-400"
+                      onClick={async () => {
+                        if (!confirm('Delete this campaign? This cannot be undone.')) return;
+                        try {
+                          await apiClient.adminDeleteProductCampaign(id);
+                          toast.success('Deleted');
+                          router.push('/admin/product-campaigns');
+                        } catch (e: unknown) {
+                          toast.error(e instanceof Error ? e.message : 'Failed');
+                        }
+                      }}
+                    >
+                      Delete
                     </button>
                   )}
                 </div>

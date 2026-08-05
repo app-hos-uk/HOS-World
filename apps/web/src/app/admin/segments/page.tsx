@@ -49,6 +49,17 @@ export default function AdminSegmentsPage() {
     }
   };
 
+  const restoreOne = async (id: string) => {
+    if (!confirm('Restore this archived segment?')) return;
+    try {
+      await apiClient.adminRestoreSegment(id);
+      toast.success('Restored');
+      load();
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed');
+    }
+  };
+
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
               <div className="p-6 max-w-6xl mx-auto">
@@ -114,7 +125,15 @@ export default function AdminSegmentsPage() {
                         <Link href={`/admin/segments/${s.id}/edit`} className="text-hos-gold hover:underline">
                           Edit
                         </Link>
-                        {s.status !== 'ARCHIVED' && (
+                        {s.status === 'ARCHIVED' ? (
+                          <button
+                            type="button"
+                            className="text-green-400 hover:underline"
+                            onClick={() => restoreOne(s.id)}
+                          >
+                            Restore
+                          </button>
+                        ) : (
                           <>
                             <button
                               type="button"

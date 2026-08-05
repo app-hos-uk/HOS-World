@@ -363,7 +363,7 @@ export default function AdminFoundingMembersPage() {
             <button
               onClick={handleSendConfirmations}
               disabled={confirmationLoading}
-              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm font-medium hover:bg-hos-gold-hover disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 border border-hos-gold text-hos-gold rounded-lg text-sm font-medium hover:bg-hos-gold/10 disabled:opacity-50 flex items-center gap-2"
             >
               {confirmationLoading ? (
                 <>
@@ -558,7 +558,7 @@ export default function AdminFoundingMembersPage() {
                   <button
                     type="button"
                     onClick={downloadCsvTemplate}
-                    className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm font-medium hover:bg-hos-gold-hover"
+                    className="px-4 py-2 border border-hos-gold text-hos-gold rounded-lg text-sm font-medium hover:bg-hos-gold/10"
                   >
                     Download sample CSV
                   </button>

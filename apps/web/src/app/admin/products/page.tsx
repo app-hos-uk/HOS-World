@@ -271,9 +271,14 @@ function AdminProductsContent() {
       );
     }
 
-    // Status filter
+    // Status filter — "Out of Stock" matches zero stock OR explicit OUT_OF_STOCK status
+    // so the Status dropdown agrees with the Out of Stock summary card / stock filter.
     if (statusFilter !== 'ALL') {
-      filtered = filtered.filter(p => p.status === statusFilter);
+      if (statusFilter === 'OUT_OF_STOCK') {
+        filtered = filtered.filter((p) => p.status === 'OUT_OF_STOCK' || p.stock === 0);
+      } else {
+        filtered = filtered.filter((p) => p.status === statusFilter);
+      }
     }
 
     // Category filter

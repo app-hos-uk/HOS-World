@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
@@ -100,6 +100,8 @@ export default function AdminPromotionsPage() {
   const [loading, setLoading] = useState(true);
   const [creatingPromotion, setCreatingPromotion] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editProductFetchSeq = useRef(0);
   const [productSearchTerm, setProductSearchTerm] = useState('');
   const [productSearchResults, setProductSearchResults] = useState<any[]>([]);
   const [productSearching, setProductSearching] = useState(false);
@@ -107,7 +109,7 @@ export default function AdminPromotionsPage() {
   const [categoryTree, setCategoryTree] = useState<CategoryNode[]>([]);
   const [categorySearchTerm, setCategorySearchTerm] = useState('');
 
-  const [formData, setFormData] = useState({
+  const emptyFormData = {
     name: '',
     description: '',
     type: 'PERCENTAGE_DISCOUNT' as PromotionType,
@@ -117,7 +119,7 @@ export default function AdminPromotionsPage() {
     getQuantity: 1,
     startDate: '',
     endDate: '',
-    status: 'ACTIVE' as 'ACTIVE' | 'DRAFT',
+    status: 'ACTIVE' as 'ACTIVE' | 'DRAFT' | 'INACTIVE' | 'EXPIRED',
     isStackable: false,
     requirementType: 'NONE' as RequirementType,
     minOrderAmount: 0,
@@ -129,7 +131,125 @@ export default function AdminPromotionsPage() {
     totalLimitValue: 100,
     perCustomerEnabled: false,
     userUsageLimit: 1,
-  });
+  };
+
+  const [formData, setFormData] = useState(emptyFormData);
+
+  const resetModalState = () => {
+    editProductFetchSeq.current += 1;
+    setShowCreateModal(false);
+    setEditingId(null);
+    setSelectedProducts([]);
+    setProductSearchTerm('');
+    setProductSearchResults([]);
+    setCategorySearchTerm('');
+    setFormData(emptyFormData);
+  };
+
+  const openCreateModal = () => {
+    editProductFetchSeq.current += 1;
+    setEditingId(null);
+    setFormData(emptyFormData);
+    setSelectedProducts([]);
+    setProductSearchTerm('');
+    setProductSearchResults([]);
+    setCategorySearchTerm('');
+    setShowCreateModal(true);
+  };
+
+  const openEditModal = (promo: any) => {
+    const conditions = promo.conditions || {};
+    const actions = promo.actions || {};
+    const validTypes: PromotionType[] = [
+      'PERCENTAGE_DISCOUNT',
+      'FIXED_DISCOUNT',
+      'BUY_X_GET_Y',
+      'FREE_SHIPPING',
+    ];
+    const type = (validTypes.includes(promo.type) ? promo.type : 'PERCENTAGE_DISCOUNT') as PromotionType;
+    const toDateInput = (d?: string | null) =>
+      d ? new Date(d).toISOString().split('T')[0] : '';
+
+    let requirementType: RequirementType = 'NONE';
+    if (conditions.requirementType === 'MIN_ORDER_AMOUNT' || conditions.requirementType === 'MIN_QUANTITY' || conditions.requirementType === 'NONE') {
+      requirementType = conditions.requirementType;
+    } else if (conditions.cartValue?.min != null) {
+      requirementType = 'MIN_ORDER_AMOUNT';
+    } else if (conditions.minQuantity != null) {
+      requirementType = 'MIN_QUANTITY';
+    }
+
+    let eligibilityType: EligibilityType = 'ALL';
+    if (
+      conditions.eligibilityType === 'SPECIFIC_PRODUCTS' ||
+      conditions.eligibilityType === 'SPECIFIC_CATEGORIES' ||
+      conditions.eligibilityType === 'ALL'
+    ) {
+      eligibilityType = conditions.eligibilityType;
+    } else if (conditions.productIds?.length) {
+      eligibilityType = 'SPECIFIC_PRODUCTS';
+    } else if (conditions.categoryIds?.length) {
+      eligibilityType = 'SPECIFIC_CATEGORIES';
+    }
+
+    const productIds: string[] = Array.isArray(conditions.productIds) ? conditions.productIds : [];
+    const categoryIds: string[] = Array.isArray(conditions.categoryIds) ? conditions.categoryIds : [];
+
+    setEditingId(promo.id);
+    setFormData({
+      name: promo.name || '',
+      description: promo.description || '',
+      type,
+      percentage: actions.percentage ?? 0,
+      fixedAmount: actions.fixedAmount ?? 0,
+      buyQuantity: actions.buyQuantity ?? 2,
+      getQuantity: actions.getQuantity ?? 1,
+      startDate: toDateInput(promo.startDate),
+      endDate: toDateInput(promo.endDate),
+      status:
+        promo.status === 'DRAFT' ||
+        promo.status === 'INACTIVE' ||
+        promo.status === 'EXPIRED'
+          ? promo.status
+          : 'ACTIVE',
+      isStackable: !!promo.isStackable,
+      requirementType,
+      minOrderAmount: conditions.cartValue?.min ?? 0,
+      minQuantity: conditions.minQuantity ?? 0,
+      eligibilityType,
+      productIds,
+      categoryIds,
+      totalLimitEnabled: promo.usageLimit != null,
+      totalLimitValue: promo.usageLimit ?? 100,
+      perCustomerEnabled: promo.userUsageLimit != null,
+      userUsageLimit: promo.userUsageLimit ?? 1,
+    });
+    setSelectedProducts(productIds.map((id) => ({ id, name: id })));
+    setProductSearchTerm('');
+    setProductSearchResults([]);
+    setCategorySearchTerm('');
+    setShowCreateModal(true);
+
+    // Resolve product names for chips (seeded with ids above for immediate UI).
+    const fetchSeq = ++editProductFetchSeq.current;
+    if (productIds.length > 0) {
+      void Promise.all(
+        productIds.map(async (id) => {
+          try {
+            const res = await apiClient.getProduct(id);
+            const name = (res?.data as any)?.name;
+            return name ? { id, name: String(name) } : { id, name: id };
+          } catch {
+            return { id, name: id };
+          }
+        }),
+      ).then((resolved) => {
+        if (editProductFetchSeq.current === fetchSeq) {
+          setSelectedProducts(resolved);
+        }
+      });
+    }
+  };
 
   useEffect(() => {
     fetchPromotions();
@@ -235,6 +355,11 @@ export default function AdminPromotionsPage() {
     e.preventDefault();
     if (creatingPromotion) return;
 
+    const isEditing = !!editingId;
+    if (formData.status === 'EXPIRED') {
+      toast.error('Choose Active, Draft, or Inactive before saving — Expired cannot be kept after edit');
+      return;
+    }
     const startTrimmed = formData.startDate?.trim() ?? '';
     if (!startTrimmed) {
       toast.error('Start date is required');
@@ -249,7 +374,7 @@ export default function AdminPromotionsPage() {
 
     const d = new Date();
     const todayUtc = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
-    if (startDateObj < todayUtc) {
+    if (!isEditing && startDateObj < todayUtc) {
       toast.error('Start date cannot be in the past');
       return;
     }
@@ -260,7 +385,9 @@ export default function AdminPromotionsPage() {
         toast.error('End date is invalid');
         return;
       }
-      if (endDateObj < todayUtc) {
+      // Reject past end dates for new promotions, and when saving as ACTIVE on edit
+      // (otherwise an ACTIVE promo can be saved with an already-expired end date).
+      if (endDateObj < todayUtc && (!isEditing || formData.status === 'ACTIVE')) {
         toast.error('End date cannot be in the past');
         return;
       }
@@ -291,55 +418,47 @@ export default function AdminPromotionsPage() {
       freeShipping: formData.type === 'FREE_SHIPPING' ? true : undefined,
     };
 
+    // On edit, send null (not undefined) so cleared fields are actually wiped server-side.
+    const endDateValue = formData.endDate?.trim()
+      ? new Date(formData.endDate.trim() + 'T00:00:00.000Z').toISOString()
+      : null;
+    const descriptionValue = formData.description.trim() || null;
+
     const promotionPayload = {
       name: formData.name,
-      description: formData.description || undefined,
+      description: descriptionValue ?? (isEditing ? null : undefined),
       type: formData.type,
       status: formData.status,
       startDate: startDateObj.toISOString(),
-      endDate: formData.endDate ? new Date(formData.endDate.trim() + 'T00:00:00.000Z').toISOString() : undefined,
+      endDate: endDateValue ?? (isEditing ? null : undefined),
       isStackable: formData.isStackable,
-      usageLimit: formData.totalLimitEnabled ? formData.totalLimitValue : undefined,
-      userUsageLimit: formData.perCustomerEnabled ? (formData.userUsageLimit || 1) : undefined,
+      usageLimit: formData.totalLimitEnabled
+        ? formData.totalLimitValue
+        : isEditing
+          ? null
+          : undefined,
+      userUsageLimit: formData.perCustomerEnabled
+        ? formData.userUsageLimit || 1
+        : isEditing
+          ? null
+          : undefined,
       conditions,
       actions,
     };
 
     try {
       setCreatingPromotion(true);
-      await apiClient.post<ApiResponse<any>>('/promotions', promotionPayload);
-      toast.success('Promotion created successfully!');
-      setShowCreateModal(false);
-      setSelectedProducts([]);
-      setProductSearchTerm('');
-      setProductSearchResults([]);
-      setCategorySearchTerm('');
-      setFormData({
-        name: '',
-        description: '',
-        type: 'PERCENTAGE_DISCOUNT',
-        percentage: 0,
-        fixedAmount: 0,
-        buyQuantity: 2,
-        getQuantity: 1,
-        startDate: '',
-        endDate: '',
-        status: 'ACTIVE',
-        isStackable: false,
-        requirementType: 'NONE',
-        minOrderAmount: 0,
-        minQuantity: 0,
-        eligibilityType: 'ALL',
-        productIds: [],
-        categoryIds: [],
-        totalLimitEnabled: false,
-        totalLimitValue: 100,
-        perCustomerEnabled: false,
-        userUsageLimit: 1,
-      });
+      if (isEditing) {
+        await apiClient.updatePromotion(editingId, promotionPayload);
+        toast.success('Promotion updated successfully!');
+      } else {
+        await apiClient.post<ApiResponse<any>>('/promotions', promotionPayload);
+        toast.success('Promotion created successfully!');
+      }
+      resetModalState();
       fetchPromotions();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to create promotion');
+      toast.error(err.message || (isEditing ? 'Failed to update promotion' : 'Failed to create promotion'));
     } finally {
       setCreatingPromotion(false);
     }
@@ -365,7 +484,7 @@ export default function AdminPromotionsPage() {
               <p className="text-hos-text-secondary mt-2">Create and manage promotional campaigns</p>
             </div>
             <button
-              onClick={() => setShowCreateModal(true)}
+              onClick={openCreateModal}
               className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
             >
               + Create Promotion
@@ -434,12 +553,22 @@ export default function AdminPromotionsPage() {
                         {promo.endDate ? ` – ${new Date(promo.endDate).toLocaleDateString()}` : ''}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => handleDeletePromotion(promo.id)}
-                          className="text-red-400 hover:text-red-300 transition-colors"
-                        >
-                          Delete
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(promo)}
+                            className="text-hos-gold hover:text-hos-gold-hover transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePromotion(promo.id)}
+                            className="text-red-400 hover:text-red-300 transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -453,7 +582,9 @@ export default function AdminPromotionsPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-hos-bg-secondary rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
-                <h2 className="text-2xl font-bold mb-4">Create New Promotion</h2>
+                <h2 className="text-2xl font-bold mb-4">
+                  {editingId ? 'Edit Promotion' : 'Create New Promotion'}
+                </h2>
                 <form onSubmit={handleCreatePromotion} className="space-y-6">
                   {/* Section 1 - Basics */}
                   <div className="space-y-4">
@@ -484,7 +615,11 @@ export default function AdminPromotionsPage() {
                           type="date"
                           value={formData.startDate}
                           onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                          min={new Date().toISOString().split('T')[0]}
+                          min={
+                            editingId
+                              ? undefined
+                              : new Date().toISOString().split('T')[0]
+                          }
                           required
                           className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                         />
@@ -500,28 +635,29 @@ export default function AdminPromotionsPage() {
                         />
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="status"
-                          checked={formData.status === 'ACTIVE'}
-                          onChange={() => setFormData({ ...formData, status: 'ACTIVE' })}
-                          className="mr-2"
-                        />
-                        <span className="text-sm text-hos-text-secondary">Active</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                          type="radio"
-                          name="status"
-                          checked={formData.status === 'DRAFT'}
-                          onChange={() => setFormData({ ...formData, status: 'DRAFT' })}
-                          className="mr-2"
-                        />
-                        <span className="text-sm text-hos-text-secondary">Draft</span>
-                      </label>
-                      <label className="flex items-center ml-4">
+                    <div className="flex flex-wrap items-center gap-4">
+                      {(['ACTIVE', 'DRAFT', 'INACTIVE'] as const).map((statusOption) => (
+                        <label key={statusOption} className="flex items-center">
+                          <input
+                            type="radio"
+                            name="status"
+                            checked={formData.status === statusOption}
+                            onChange={() => setFormData({ ...formData, status: statusOption })}
+                            className="mr-2"
+                          />
+                          <span className="text-sm text-hos-text-secondary">
+                            {statusOption === 'ACTIVE'
+                              ? 'Active'
+                              : statusOption === 'DRAFT'
+                                ? 'Draft'
+                                : 'Inactive'}
+                          </span>
+                        </label>
+                      ))}
+                      {formData.status === 'EXPIRED' && (
+                        <span className="text-sm text-hos-text-muted">(Currently Expired — choose Active/Draft/Inactive to update)</span>
+                      )}
+                      <label className="flex items-center ml-2">
                         <input
                           type="checkbox"
                           checked={formData.isStackable}
@@ -831,11 +967,17 @@ export default function AdminPromotionsPage() {
                       disabled={creatingPromotion}
                       className="flex-1 px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {creatingPromotion ? 'Creating...' : 'Create Promotion'}
+                      {creatingPromotion
+                        ? editingId
+                          ? 'Saving...'
+                          : 'Creating...'
+                        : editingId
+                          ? 'Save Changes'
+                          : 'Create Promotion'}
                     </button>
                     <button
                       type="button"
-                      onClick={() => setShowCreateModal(false)}
+                      onClick={resetModalState}
                       className="px-6 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary transition-colors"
                     >
                       Cancel

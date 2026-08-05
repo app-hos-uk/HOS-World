@@ -156,6 +156,13 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
+  @Post(':id/restore')
+  @ApiOperation({ summary: 'Restore archived segment' })
+  async restore(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
+    const data = await this.segmentation.restore(id);
+    return { data, message: 'OK' };
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get segment' })
   async get(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {

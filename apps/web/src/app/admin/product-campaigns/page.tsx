@@ -28,6 +28,17 @@ export default function AdminProductCampaignsPage() {
     load();
   }, [load]);
 
+  const remove = async (id: string, name: string) => {
+    if (!confirm(`Delete campaign "${name}"? This cannot be undone.`)) return;
+    try {
+      await apiClient.adminDeleteProductCampaign(id);
+      toast.success('Deleted');
+      load();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed');
+    }
+  };
+
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
               <div className="p-6 max-w-5xl mx-auto">
@@ -66,14 +77,27 @@ export default function AdminProductCampaignsPage() {
             <ul className="space-y-2 text-sm">
               {rows.map((r) => {
                 const cid = String(r.id);
+                const st = String(r.status);
+                const canDelete = st === 'DRAFT' || st === 'CANCELLED';
                 return (
-                  <li key={cid} className="border rounded-lg p-3 bg-hos-bg-secondary">
-                    <Link href={`/admin/product-campaigns/${cid}`} className="text-violet-400 font-medium">
-                      {String(r.name)}
-                    </Link>
-                    <p className="text-hos-text-muted text-xs">
-                      {String(r.status)} · {String(r.type)}
-                    </p>
+                  <li key={cid} className="border rounded-lg p-3 bg-hos-bg-secondary flex justify-between items-start gap-3">
+                    <div>
+                      <Link href={`/admin/product-campaigns/${cid}`} className="text-violet-400 font-medium">
+                        {String(r.name)}
+                      </Link>
+                      <p className="text-hos-text-muted text-xs">
+                        {st} · {String(r.type)}
+                      </p>
+                    </div>
+                    {canDelete && (
+                      <button
+                        type="button"
+                        className="text-red-400 hover:underline text-xs shrink-0"
+                        onClick={() => remove(cid, String(r.name))}
+                      >
+                        Delete
+                      </button>
+                    )}
                   </li>
                 );
               })}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 
 interface Subscription {
   id: string;
@@ -18,6 +19,7 @@ interface Subscription {
 const ALLOWED_ROLES = ['ADMIN', 'MARKETING', 'CMS_EDITOR'] as const;
 
 export default function AdminNewsletterPage() {
+  const toast = useToast();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -26,6 +28,7 @@ export default function AdminNewsletterPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [unsubscribingEmail, setUnsubscribingEmail] = useState<string | null>(null);
 
   const fetchSubscriptions = async () => {
     setLoading(true);
@@ -60,6 +63,29 @@ export default function AdminNewsletterPage() {
       return new Date(s).toLocaleDateString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
     } catch {
       return s;
+    }
+  };
+
+  const handleUnsubscribe = async (email: string) => {
+    if (!confirm(`Unsubscribe ${email} from the newsletter?`)) return;
+    setUnsubscribingEmail(email);
+    try {
+      await apiClient.newsletterUnsubscribe(email);
+      toast.success('Unsubscribed successfully');
+      // If this was the last row on a later page, step back so the table is not empty.
+      if (subscriptions.length <= 1 && page > 1) {
+        setPage((p) => Math.max(1, p - 1));
+      } else {
+        await fetchSubscriptions();
+      }
+    } catch (err: unknown) {
+      toast.error(
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: string }).message)
+          : 'Failed to unsubscribe',
+      );
+    } finally {
+      setUnsubscribingEmail(null);
     }
   };
 
@@ -123,6 +149,9 @@ export default function AdminNewsletterPage() {
                         <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-hos-text-muted">
                           Unsubscribed
                         </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-hos-text-muted">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-hos-border bg-hos-bg-secondary">
@@ -150,6 +179,20 @@ export default function AdminNewsletterPage() {
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-sm text-hos-text-muted">
                             {sub.unsubscribedAt ? formatDate(sub.unsubscribedAt) : '—'}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right text-sm">
+                            {sub.status === 'subscribed' ? (
+                              <button
+                                type="button"
+                                onClick={() => handleUnsubscribe(sub.email)}
+                                disabled={unsubscribingEmail === sub.email}
+                                className="text-red-400 hover:text-red-300 disabled:opacity-50"
+                              >
+                                {unsubscribingEmail === sub.email ? 'Unsubscribing…' : 'Unsubscribe'}
+                              </button>
+                            ) : (
+                              <span className="text-hos-text-muted">—</span>
+                            )}
                           </td>
                         </tr>
                       ))}

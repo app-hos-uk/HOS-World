@@ -74,6 +74,17 @@ export default function AdminSegmentDetailPage() {
     }
   };
 
+  const restore = async () => {
+    if (!confirm('Restore this archived segment?')) return;
+    try {
+      await apiClient.adminRestoreSegment(id);
+      toast.success('Restored');
+      loadSeg();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Failed');
+    }
+  };
+
   const sendBroadcast = async () => {
     if (!confirm(`Send to up to ${broadcastLimit} members?`)) return;
     try {
@@ -116,7 +127,15 @@ export default function AdminSegmentDetailPage() {
               >
                 Edit
               </Link>
-              {seg.status !== 'ARCHIVED' && (
+              {seg.status === 'ARCHIVED' ? (
+                <button
+                  type="button"
+                  onClick={restore}
+                  className="rounded-md bg-green-600 px-3 py-1.5 text-sm text-white"
+                >
+                  Restore
+                </button>
+              ) : (
                 <>
                   <button
                     type="button"

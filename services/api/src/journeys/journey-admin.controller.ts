@@ -1,8 +1,10 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -124,13 +126,19 @@ export class JourneyAdminController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Deactivate journey' })
+  @ApiOperation({ summary: 'Delete inactive journey (cascades enrollments)' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
-    const data = await this.prisma.marketingJourney.update({
-      where: { id },
-      data: { isActive: false },
-    });
-    return { data, message: 'Deactivated' };
+    const journey = await this.prisma.marketingJourney.findUnique({ where: { id } });
+    if (!journey) {
+      throw new NotFoundException('Journey not found');
+    }
+    if (journey.isActive) {
+      throw new BadRequestException(
+        'Deactivate the journey before deleting it to avoid interrupting active enrollments',
+      );
+    }
+    await this.prisma.marketingJourney.delete({ where: { id } });
+    return { data: { id }, message: 'Deleted' };
   }
 
   @Get(':id/enrollments')

@@ -37,6 +37,17 @@ export default function AdminJourneysPage() {
     }
   };
 
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Delete journey "${name}"? This cannot be undone.`)) return;
+    try {
+      await apiClient.adminDeleteJourney(id);
+      toast.success('Journey deleted');
+      load();
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to delete journey');
+    }
+  };
+
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
               <div className="p-6 max-w-6xl mx-auto">
@@ -73,27 +84,33 @@ export default function AdminJourneysPage() {
                       <td className="px-4 py-2">{j.triggerEvent}</td>
                       <td className="px-4 py-2">{j.isActive ? 'Yes' : 'No'}</td>
                       <td className="px-4 py-2">{j._count?.enrollments ?? '—'}</td>
-                      <td className="px-4 py-2 text-right space-x-2">
-                        <Link href={`/admin/journeys/${j.id}`} className="text-hos-gold hover:underline">
-                          View
-                        </Link>
-                        {j.isActive ? (
+                      <td className="px-4 py-2">
+                        <div className="flex justify-end items-center gap-2">
+                          <Link
+                            href={`/admin/journeys/${j.id}`}
+                            className="inline-flex min-w-[4.5rem] justify-center text-hos-gold hover:underline"
+                          >
+                            View
+                          </Link>
                           <button
                             type="button"
-                            className="text-red-400 hover:underline"
-                            onClick={() => toggleActive(j.id, false)}
+                            className={`inline-flex min-w-[5.5rem] justify-center hover:underline ${
+                              j.isActive ? 'text-amber-400' : 'text-green-400'
+                            }`}
+                            onClick={() => toggleActive(j.id, !j.isActive)}
                           >
-                            Deactivate
+                            {j.isActive ? 'Deactivate' : 'Activate'}
                           </button>
-                        ) : (
-                          <button
-                            type="button"
-                            className="text-green-400 hover:underline"
-                            onClick={() => toggleActive(j.id, true)}
-                          >
-                            Activate
-                          </button>
-                        )}
+                          {!j.isActive && (
+                            <button
+                              type="button"
+                              className="inline-flex min-w-[4.5rem] justify-center text-red-400 hover:underline"
+                              onClick={() => handleDelete(j.id, j.name)}
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

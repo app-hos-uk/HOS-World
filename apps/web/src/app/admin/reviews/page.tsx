@@ -555,12 +555,6 @@ function ReviewsByProduct() {
         </>
       )}
 
-      {!selectedProduct && !loading && (
-        <div className="bg-hos-bg-secondary rounded-lg shadow p-12 text-center text-hos-text-muted">
-          <span className="text-5xl block mb-4">📋</span>
-          <p className="text-lg">Select a product above to view its reviews</p>
-        </div>
-      )}
     </div>
   );
 }

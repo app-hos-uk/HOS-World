@@ -58,7 +58,7 @@ export class PublishingController {
   @SwaggerApiResponse({ status: 200, description: 'Published products retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
-  async getPublishedProducts(): Promise<ApiResponse<any[]>> {
+  async getPublishedProducts(): Promise<ApiResponse<{ items: any[]; total: number }>> {
     const products = await this.publishingService.getPublishedProducts();
     return {
       data: products,
