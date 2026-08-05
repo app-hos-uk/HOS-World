@@ -4,6 +4,11 @@ import type {
   POSCustomerPayload,
   POSCustomer,
   POSSale,
+  POSSalesPage,
+  POSGiftCard,
+  POSGiftCardCreatePayload,
+  POSGiftCardTransaction,
+  POSGiftCardTransactionPayload,
 } from './pos-types';
 
 export interface POSAdapter {
@@ -23,8 +28,36 @@ export interface POSAdapter {
   syncCustomer(customer: POSCustomerPayload): Promise<string>;
   lookupCustomer(identifier: string): Promise<POSCustomer | null>;
 
-  getSales(since: Date, outletId?: string): Promise<POSSale[]>;
+  /**
+   * Page sales via Lightspeed version cursor (`after` / `version.max`).
+   * Outlet filtering is client-side when outletId is set (API has no outlet_id filter).
+   */
+  getSales(params: { afterVersion?: number; outletId?: string }): Promise<POSSalesPage>;
 
   validateWebhook(payload: unknown, signature: string, secret: string): boolean;
   parseWebhookSale(payload: unknown): POSSale;
+
+  /** Issue a new gift card (Lightspeed POST /gift_cards). */
+  createGiftCard(payload: POSGiftCardCreatePayload): Promise<POSGiftCard>;
+
+  /** List gift cards (Lightspeed GET /gift_cards, paginated). */
+  listGiftCards(params?: { pageSize?: number }): Promise<POSGiftCard[]>;
+
+  /** Lookup by card number (Lightspeed GET /gift_cards/by_number/{number}). */
+  getGiftCardByNumber(number: string): Promise<POSGiftCard | null>;
+
+  /**
+   * Create a gift card transaction. `clientId` is the Lightspeed idempotency key.
+   * REDEEMING amounts are sent negative; RELOADING positive.
+   */
+  giftCardTransaction(
+    number: string,
+    payload: POSGiftCardTransactionPayload,
+  ): Promise<POSGiftCardTransaction>;
+
+  /** Reverse a REDEEMING transaction (Lightspeed DELETE /gift_cards/transactions/{id}). */
+  reverseGiftCardTransaction(transactionId: string): Promise<POSGiftCardTransaction>;
+
+  /** Void a gift card (Lightspeed DELETE /gift_cards/by_number/{number}). */
+  voidGiftCard(number: string): Promise<POSGiftCard>;
 }

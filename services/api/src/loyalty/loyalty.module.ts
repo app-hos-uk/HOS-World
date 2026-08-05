@@ -11,6 +11,7 @@ import { LoyaltyWalletService } from './services/wallet.service';
 import { LoyaltyCampaignService } from './services/campaign.service';
 import { LoyaltyReferralService } from './services/referral.service';
 import { LoyaltyEventService } from './services/loyalty-event.service';
+import { PosVoucherService } from './services/pos-voucher.service';
 import { LoyaltyBurnEngine } from './engines/burn.engine';
 import { LoyaltyEarnEngine } from './engines/earn.engine';
 import { LoyaltyTierEngine } from './engines/tier.engine';
@@ -24,6 +25,7 @@ import { AmbassadorModule } from '../ambassador/ambassador.module';
 import { BrandPartnershipsModule } from '../brand-partnerships/brand-partnerships.module';
 import { ProductCampaignsModule } from '../product-campaigns/product-campaigns.module';
 import { FeatureFlagsModule } from '../config/feature-flags.module';
+import { PosModule } from '../pos/pos.module';
 
 @Module({
   imports: [
@@ -31,6 +33,7 @@ import { FeatureFlagsModule } from '../config/feature-flags.module';
     QueueModule,
     ConfigModule,
     FeatureFlagsModule,
+    forwardRef(() => PosModule),
     forwardRef(() => JourneyModule),
     forwardRef(() => AmbassadorModule),
     BrandPartnershipsModule,
@@ -58,11 +61,20 @@ import { FeatureFlagsModule } from '../config/feature-flags.module';
     LoyaltyBurnEngine,
     LoyaltyEarnEngine,
     LoyaltyService,
+    PosVoucherService,
     LoyaltyJobsService,
     LoyaltyListener,
     LoyaltyStaffAuthGuard,
     FandomProfileService,
   ],
-  exports: [LoyaltyService, LoyaltyEarnEngine, LoyaltyListener, LoyaltyWalletService, LoyaltyTierEngine, FandomProfileService],
+  exports: [
+    LoyaltyService,
+    LoyaltyEarnEngine,
+    LoyaltyListener,
+    LoyaltyWalletService,
+    LoyaltyTierEngine,
+    FandomProfileService,
+    PosVoucherService,
+  ],
 })
 export class LoyaltyModule {}

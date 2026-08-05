@@ -513,4 +513,74 @@ describe('OrdersService - Phase 1 Tests', () => {
       ).rejects.toThrow(BadRequestException);
     });
   });
+
+  describe('findByOrderNumber', () => {
+    it('throws NotFoundException when order number does not exist', async () => {
+      mockPrismaService.order.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.findByOrderNumber('HOS-MISSING', 'user-id', 'CUSTOMER'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('delegates to findOne when order number exists', async () => {
+      mockPrismaService.order.findFirst.mockResolvedValue({ id: 'order-id' });
+      const mockOrder = {
+        id: 'order-id',
+        userId: 'user-id',
+        orderNumber: 'HOS-123',
+        status: 'CONFIRMED',
+        paymentStatus: 'PAID',
+        currency: 'USD',
+        items: [],
+        shippingAddress: null,
+        billingAddress: null,
+        seller: { id: 'seller-id', userId: 'seller-user-id' },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockPrismaService.order.findUnique.mockResolvedValue(mockOrder);
+
+      const result = await service.findByOrderNumber('HOS-123', 'user-id', 'CUSTOMER');
+
+      expect(result).toMatchObject({ id: 'order-id', orderNumber: 'HOS-123' });
+    });
+  });
+
+  describe('getPublicOrderTracking', () => {
+    it('throws NotFoundException when order number is unknown', async () => {
+      mockPrismaService.order.findFirst.mockResolvedValue(null);
+
+      await expect(service.getPublicOrderTracking('HOS-404')).rejects.toThrow(NotFoundException);
+    });
+
+    it('returns sanitized tracking payload without PII', async () => {
+      mockPrismaService.order.findFirst.mockResolvedValue({
+        orderNumber: 'HOS-123',
+        status: 'SHIPPED',
+        paymentStatus: 'PAID',
+        total: 49.99,
+        currency: 'USD',
+        createdAt: new Date('2026-01-01'),
+        updatedAt: new Date('2026-01-02'),
+        trackingCode: 'TRACK1',
+        carrier: 'DHL',
+        trackingUrl: 'https://track.example/1',
+        estimatedDeliveryAt: null,
+        seller: { storeName: 'HOS Store', slug: 'hos-store' },
+        items: [{ quantity: 1, product: { name: 'Wand' } }],
+      });
+
+      const result = await service.getPublicOrderTracking('HOS-123');
+
+      expect(result).toMatchObject({
+        orderNumber: 'HOS-123',
+        status: 'SHIPPED',
+        storeName: 'HOS Store',
+        items: [{ quantity: 1, productName: 'Wand' }],
+      });
+      expect(result).not.toHaveProperty('shippingAddress');
+      expect(result).not.toHaveProperty('billingAddress');
+    });
+  });
 });

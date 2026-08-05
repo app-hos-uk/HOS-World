@@ -196,7 +196,14 @@ export class TransactionsController {
     type: String,
     description: 'End date (ISO format)',
   })
+  @ApiQuery({
+    name: 'format',
+    required: false,
+    type: String,
+    description: 'Export format: csv for CSV download payload, omit/other for JSON pagination',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Transactions exported successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'CSV export exceeds the row cap - narrow the date range' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
   async exportTransactions(
@@ -206,6 +213,7 @@ export class TransactionsController {
     @Query('status') status?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('format') format?: string,
   ): Promise<ApiResponse<any>> {
     const result = await this.transactionsService.exportTransactions({
       sellerId,
@@ -214,6 +222,7 @@ export class TransactionsController {
       status: status as any,
       startDate: parseQueryDate(startDate, 'start'),
       endDate: parseQueryDate(endDate, 'end'),
+      format,
     });
     return {
       data: result,

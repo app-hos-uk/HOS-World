@@ -25,6 +25,7 @@ export enum IntegrationCategory {
   ANALYTICS = 'ANALYTICS',
   MAPS = 'MAPS',
   OAUTH = 'OAUTH',
+  ACCOUNTING = 'ACCOUNTING',
 }
 
 /**
@@ -74,6 +75,9 @@ export enum IntegrationProvider {
   GOOGLE = 'google',
   FACEBOOK = 'facebook',
   APPLE = 'apple',
+
+  // Accounting
+  XERO = 'xero',
 }
 
 /**

@@ -9,7 +9,9 @@ import { POSAdapterFactory } from './pos-adapter.factory';
 import { PosProductSyncService } from './sync/product-sync.service';
 import { PosInventorySyncService } from './sync/inventory-sync.service';
 import { PosCustomerSyncService } from './sync/customer-sync.service';
+import { PosCustomerIdentityBackfillService } from './sync/customer-identity-backfill.service';
 import { PosSalesImportService } from './sync/sales-import.service';
+import { PosGiftCardReconService } from './sync/gift-card-recon.service';
 import { PosWebhookController } from './webhooks/pos-webhook.controller';
 import { PosAdminController } from './pos-admin.controller';
 import { PosJobsService } from './jobs/pos.jobs';
@@ -29,7 +31,9 @@ import { PosJobsService } from './jobs/pos.jobs';
     PosProductSyncService,
     PosInventorySyncService,
     PosCustomerSyncService,
+    PosCustomerIdentityBackfillService,
     PosSalesImportService,
+    PosGiftCardReconService,
     PosJobsService,
   ],
   exports: [POSAdapterFactory, PosProductSyncService, PosInventorySyncService, PosSalesImportService],

@@ -52,6 +52,7 @@ export interface POSSaleItem {
   externalProductId: string;
   sku?: string;
   name: string;
+  /** Integer quantity (fractional Lightspeed qty is rounded). */
   quantity: number;
   unitPrice: number;
   totalPrice: number;
@@ -69,8 +70,18 @@ export interface POSSale {
   taxAmount: number;
   discountAmount: number;
   currency: string;
+  /** Lightspeed sale state (e.g. closed, pending) or legacy status. */
+  state?: string;
+  /** Lightspeed object version for cursor pagination. */
+  version?: number;
   rawPayload?: unknown;
 }
+
+export type POSSalesPage = {
+  sales: POSSale[];
+  /** Max version from this fetch; persist as poll cursor. */
+  maxVersion: number | null;
+};
 
 export type LightspeedCredentials = {
   domainPrefix: string;
@@ -79,4 +90,37 @@ export type LightspeedCredentials = {
   expiresAt?: number;
   clientId?: string;
   clientSecret?: string;
+};
+
+/** Lightspeed gift card transaction kinds. */
+export type POSGiftCardTransactionType = 'REDEEMING' | 'RELOADING';
+
+export type POSGiftCardCreatePayload = {
+  number: string;
+  amount: number;
+  expiresAt?: Date | string;
+};
+
+export type POSGiftCardTransactionPayload = {
+  amount: number;
+  type: POSGiftCardTransactionType;
+  /** Idempotency key — must be stable across retries. */
+  clientId: string;
+};
+
+export type POSGiftCardTransaction = {
+  id: string;
+  amount: number;
+  type: string;
+  clientId?: string | null;
+  createdAt?: string;
+};
+
+export type POSGiftCard = {
+  id: string;
+  number: string;
+  balance: number;
+  status?: string;
+  expiresAt?: string | null;
+  transactions?: POSGiftCardTransaction[];
 };

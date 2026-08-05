@@ -15,6 +15,8 @@ export enum FeatureFlag {
   AI_RECOMMENDATIONS = 'AI_RECOMMENDATIONS',
   POS_INTEGRATION = 'POS_INTEGRATION',
   MULTI_CURRENCY = 'MULTI_CURRENCY',
+  /** HOS → Xero daily journals (offline by default; also requires ACCOUNTING_ENABLED). */
+  ACCOUNTING_XERO = 'ACCOUNTING_XERO',
 }
 
 const FLAG_DEFAULTS: Record<FeatureFlag, boolean> = {
@@ -30,6 +32,7 @@ const FLAG_DEFAULTS: Record<FeatureFlag, boolean> = {
   [FeatureFlag.AI_RECOMMENDATIONS]: false,
   [FeatureFlag.POS_INTEGRATION]: false,
   [FeatureFlag.MULTI_CURRENCY]: false,
+  [FeatureFlag.ACCOUNTING_XERO]: false,
 };
 
 @Injectable()

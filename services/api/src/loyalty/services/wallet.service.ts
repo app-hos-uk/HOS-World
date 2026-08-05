@@ -5,6 +5,13 @@ import { SegmentationService } from '../../segmentation/segmentation.service';
 /** Prisma transaction client; wallet also needs raw SQL for row locks. */
 export type LoyaltyPrismaTx = Prisma.TransactionClient;
 
+export type ApplyDeltaResult = {
+  balanceBefore: number;
+  balanceAfter: number;
+  /** false when an existing row matched idempotencyKey (no balance change). */
+  applied: boolean;
+};
+
 @Injectable()
 export class LoyaltyWalletService {
   constructor(private segmentation: SegmentationService) {}
@@ -25,13 +32,28 @@ export class LoyaltyWalletService {
       campaignId?: string | null;
       expiresAt?: Date | null;
       metadata?: Prisma.InputJsonValue | null;
+      idempotencyKey?: string | null;
     },
-  ): Promise<{ balanceBefore: number; balanceAfter: number }> {
+  ): Promise<ApplyDeltaResult> {
     // Serialize balance changes for this membership to prevent lost updates
-    // (concurrent debits/ credits reading the same balance before write).
+    // (concurrent debits/credits reading the same balance before write).
     await tx.$executeRaw(
       Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membershipId}::uuid FOR UPDATE`,
     );
+
+    const idempotencyKey = fields.idempotencyKey ?? undefined;
+    if (idempotencyKey) {
+      const existing = await tx.loyaltyTransaction.findUnique({
+        where: { idempotencyKey },
+      });
+      if (existing) {
+        return {
+          balanceBefore: existing.balanceBefore,
+          balanceAfter: existing.balanceAfter,
+          applied: false,
+        };
+      }
+    }
 
     const membership = await tx.loyaltyMembership.findUnique({
       where: { id: membershipId },
@@ -50,30 +72,56 @@ export class LoyaltyWalletService {
       data: { currentBalance: balanceAfter },
     });
 
-    await tx.loyaltyTransaction.create({
-      data: {
-        membershipId,
-        type,
-        points: delta,
-        balanceBefore,
-        balanceAfter,
-        source: fields.source,
-        sourceId: fields.sourceId ?? undefined,
-        channel: fields.channel,
-        storeId: fields.storeId ?? undefined,
-        sellerId: fields.sellerId ?? undefined,
-        description: fields.description ?? undefined,
-        earnRuleId: fields.earnRuleId ?? undefined,
-        campaignId: fields.campaignId ?? undefined,
-        expiresAt: fields.expiresAt ?? undefined,
-        metadata: fields.metadata ?? undefined,
-      },
-    });
+    try {
+      await tx.loyaltyTransaction.create({
+        data: {
+          membershipId,
+          type,
+          points: delta,
+          balanceBefore,
+          balanceAfter,
+          source: fields.source,
+          sourceId: fields.sourceId ?? undefined,
+          channel: fields.channel,
+          storeId: fields.storeId ?? undefined,
+          sellerId: fields.sellerId ?? undefined,
+          description: fields.description ?? undefined,
+          earnRuleId: fields.earnRuleId ?? undefined,
+          campaignId: fields.campaignId ?? undefined,
+          expiresAt: fields.expiresAt ?? undefined,
+          metadata: fields.metadata ?? undefined,
+          idempotencyKey,
+        },
+      });
+    } catch (e) {
+      if (
+        idempotencyKey &&
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
+        // Unique race: restore balance and return the winning row (no-op credit/debit).
+        await tx.loyaltyMembership.update({
+          where: { id: membershipId },
+          data: { currentBalance: balanceBefore },
+        });
+        const existing = await tx.loyaltyTransaction.findUnique({
+          where: { idempotencyKey },
+        });
+        if (existing) {
+          return {
+            balanceBefore: existing.balanceBefore,
+            balanceAfter: existing.balanceAfter,
+            applied: false,
+          };
+        }
+      }
+      throw e;
+    }
 
     if (type === LoyaltyTxType.EARN || type === LoyaltyTxType.BURN || type === LoyaltyTxType.BONUS) {
       void this.segmentation.touchActivity(membership.userId);
     }
 
-    return { balanceBefore, balanceAfter };
+    return { balanceBefore, balanceAfter, applied: true };
   }
 }
