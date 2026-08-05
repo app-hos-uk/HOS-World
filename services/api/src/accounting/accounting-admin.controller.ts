@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -13,13 +14,13 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { AccountingService } from './accounting.service';
 import { LedgerOutboxService } from './ledger-outbox.service';
 import { ThreeWayReconService } from './three-way-recon.service';
 import { XeroAuthService } from './xero-auth.service';
 import type { ChartOfAccountsMapping } from './accounting.types';
-import { randomBytes } from 'crypto';
 
 @ApiTags('admin-accounting')
 @ApiBearerAuth('JWT-auth')
@@ -98,28 +99,38 @@ export class AccountingAdminController {
   }
 
   /**
-   * OAuth connect URL stub.
-   * Returns authorize URL with granular scopes documented on XeroAuthService.
+   * OAuth connect URL — generates a CSRF state token, stores it in XeroAuthService,
+   * and returns the Xero authorize URL.
    */
   @Get('oauth/connect-url')
   async connectUrl(): Promise<ApiResponse<unknown>> {
-    const state = randomBytes(16).toString('hex');
-    const { url, scopes } = this.xeroAuth.getConnectUrl(state);
+    const { url, scopes, state } = this.xeroAuth.createConnectUrl();
     return {
       data: { url, scopes, state },
-      message: 'Open url to authorize Xero (stub — exchange code via oauth/callback)',
+      message: 'Open url to authorize Xero',
     };
   }
 
-  @Post('oauth/callback')
+  /**
+   * Xero redirects here via GET with ?code=…&state=… after the user authorizes.
+   * Marked @Public because the browser redirect carries no JWT bearer token.
+   * The state parameter is validated against the value stored during connect-url.
+   */
+  @Public()
+  @Get('oauth/callback')
   async oauthCallback(
-    @Body() body: { code: string },
+    @Query('code') code?: string,
+    @Query('state') state?: string,
   ): Promise<ApiResponse<unknown>> {
     this.accounting.assertEnabled();
-    if (!body?.code) {
-      return { data: null, message: 'code is required' };
+    if (!code) {
+      throw new BadRequestException('code query parameter is required');
     }
-    await this.xeroAuth.exchangeCode(body.code);
+    if (!state) {
+      throw new BadRequestException('state query parameter is required');
+    }
+    this.xeroAuth.validateAndConsumeState(state);
+    await this.xeroAuth.exchangeCode(code);
     return { data: await this.xeroAuth.getConnectionStatus(), message: 'Connected' };
   }
 }

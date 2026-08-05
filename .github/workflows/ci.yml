@@ -10,6 +10,20 @@ jobs:
   ci:
     name: Lint, Test & Build
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DATABASE_URL: 'postgresql://test:test@localhost:5432/test'
       JWT_SECRET: 'test-secret-minimum-32-chars-long-for-ci'
@@ -36,6 +50,9 @@ jobs:
 
       - name: Generate Prisma client
         run: cd services/api && npx prisma generate
+
+      - name: Push schema to test DB
+        run: cd services/api && npx prisma db push --skip-generate
 
       - name: Build shared packages
         run: |
@@ -67,7 +84,7 @@ jobs:
           fi
           LINES=$(node -e "const c=require('./$COVERAGE_FILE');console.log(c.total.lines.pct)")
           echo "Line coverage: ${LINES}%"
-          THRESHOLD=15
+          THRESHOLD=40
           PASS=$(node -e "console.log(Number($LINES)>=$THRESHOLD?'yes':'no')")
           if [ "$PASS" != "yes" ]; then
             echo "::error::Line coverage ${LINES}% is below threshold ${THRESHOLD}%"

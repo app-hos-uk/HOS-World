@@ -94,7 +94,7 @@ export class LoyaltyBurnEngine {
         }
       } else if (callerBurnKey) {
         const prior = await this.findRedemptionByWalletKey(tx, callerBurnKey);
-        if (prior) {
+        if (prior && prior.status !== 'REVERSED') {
           return {
             redemptionId: prior.id,
             couponCode: prior.couponCode ?? undefined,
@@ -170,7 +170,7 @@ export class LoyaltyBurnEngine {
         const existing = params.orderId
           ? await this.findCompletedOrderRedemption(tx, params.membershipId, params.orderId)
           : await this.findRedemptionByWalletKey(tx, idempotencyKey);
-        if (existing) {
+        if (existing && existing.status !== 'REVERSED') {
           return {
             redemptionId: existing.id,
             couponCode: existing.couponCode ?? undefined,

@@ -11,6 +11,7 @@ import {
 } from './accounting.types';
 
 const MAX_ATTEMPTS_BEFORE_DEAD = 8;
+const POSTING_STALE_MS = 5 * 60 * 1000; // 5 minutes — rows stuck in POSTING longer than this are reclaimed
 
 @Injectable()
 export class LedgerOutboxService {
@@ -124,9 +125,12 @@ export class LedgerOutboxService {
 
   /**
    * Drain PENDING rows → POST ManualJournals with Idempotency-Key.
+   * Also reclaims rows stuck in POSTING (worker crash / timeout) before processing.
    * Handles 429 Retry-After inside XeroApiClient.
    */
   async drainPending(batchSize = 20): Promise<{ processed: number; posted: number; failed: number }> {
+    await this.reclaimStalePosting();
+
     const pending = await this.prisma.ledgerOutboxEntry.findMany({
       where: { status: LedgerOutboxStatus.PENDING },
       orderBy: { createdAt: 'asc' },
@@ -186,5 +190,25 @@ export class LedgerOutboxService {
     }
 
     return { processed: pending.length, posted, failed };
+  }
+
+  /**
+   * Reset rows stuck in POSTING longer than POSTING_STALE_MS back to PENDING.
+   * Xero's Idempotency-Key on the ManualJournal POST ensures a re-post
+   * is safe even if the original request actually succeeded.
+   */
+  private async reclaimStalePosting(): Promise<number> {
+    const cutoff = new Date(Date.now() - POSTING_STALE_MS);
+    const { count } = await this.prisma.ledgerOutboxEntry.updateMany({
+      where: {
+        status: LedgerOutboxStatus.POSTING,
+        updatedAt: { lt: cutoff },
+      },
+      data: { status: LedgerOutboxStatus.PENDING },
+    });
+    if (count > 0) {
+      this.logger.warn(`Reclaimed ${count} stale POSTING outbox rows back to PENDING`);
+    }
+    return count;
   }
 }
