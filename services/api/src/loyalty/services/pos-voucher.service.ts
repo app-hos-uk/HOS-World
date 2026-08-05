@@ -98,6 +98,25 @@ export class PosVoucherService {
       throw new BadRequestException('Redemption amount must be greater than zero');
     }
 
+    // Check for an existing voucher via the burn engine's wallet key before validating
+    // limits, so idempotent replays always succeed regardless of config changes.
+    const walletKey = `burn:key:${membershipId}:${idempotencyKey}`;
+    const priorWalletTx = await this.prisma.loyaltyTransaction.findUnique({
+      where: { idempotencyKey: walletKey },
+      select: { sourceId: true },
+    });
+    if (priorWalletTx?.sourceId) {
+      const priorVoucher = await this.prisma.loyaltyPosVoucher.findUnique({
+        where: { redemptionId: priorWalletTx.sourceId },
+        select: { id: true },
+      });
+      if (priorVoucher) {
+        return this.retryFailedVoucher(priorVoucher.id);
+      }
+    }
+
+    this.assertGiftCardAmountLimits(amount, store.currency || 'GBP');
+
     const { redemptionId } = await this.burn.processRedemption({
       membershipId,
       points: dto.points,
@@ -106,8 +125,8 @@ export class PosVoucherService {
       idempotencyKey,
     });
 
-    // Replayed request: the burn returned the original redemption, so resume that voucher
-    // instead of minting a second card (and never reverse the first, still-valid burn).
+    // Burn engine replay: redemptionId matches an existing voucher from a prior attempt
+    // where the voucher record was created but the gift card issuance may have failed.
     const existingVoucher = await this.prisma.loyaltyPosVoucher.findUnique({
       where: { redemptionId },
       select: { id: true },
@@ -350,6 +369,25 @@ export class PosVoucherService {
     }
     const fallback = Number(this.config.get('LOYALTY_DEFAULT_REDEEM_VALUE', 0.01));
     return Number.isFinite(fallback) && fallback > 0 ? fallback : 0.01;
+  }
+
+  /**
+   * Validate against Lightspeed gift card amount limits.
+   * Lightspeed rejects gift cards below and above configurable thresholds.
+   */
+  private assertGiftCardAmountLimits(amount: number, currency: string): void {
+    const min = Number(this.config.get('POS_GIFT_CARD_MIN_AMOUNT', 1));
+    const max = Number(this.config.get('POS_GIFT_CARD_MAX_AMOUNT', 500));
+    if (Number.isFinite(min) && amount < min) {
+      throw new BadRequestException(
+        `Gift card amount ${currency} ${amount.toFixed(2)} is below the minimum ${currency} ${min.toFixed(2)}`,
+      );
+    }
+    if (Number.isFinite(max) && amount > max) {
+      throw new BadRequestException(
+        `Gift card amount ${currency} ${amount.toFixed(2)} exceeds the maximum ${currency} ${max.toFixed(2)}`,
+      );
+    }
   }
 
   private roundMoney(n: number): number {

@@ -84,6 +84,9 @@ describe('PosVoucherService', () => {
             ),
           ),
       },
+      loyaltyTransaction: {
+        findUnique: jest.fn().mockResolvedValue(null),
+      },
       loyaltyRedemption: {
         findUnique: jest.fn().mockResolvedValue({ id: redemptionId, status: 'COMPLETED' }),
         update: jest.fn(),
@@ -181,10 +184,11 @@ describe('PosVoucherService', () => {
       redemption: { pointsSpent: 500, status: 'COMPLETED' },
       store: { posConnection: { isActive: true, provider: 'lightspeed', credentials: 'enc' } },
     };
-    // Burn replay returns the original redemption; a voucher already exists for it.
     const voucherFindUnique = jest.fn().mockResolvedValue(issuedVoucher);
     const voucherCreate = jest.fn();
-    const { svc, adapter } = build({ voucherFindUnique, voucherCreate });
+    const { svc, adapter, prisma, burn } = build({ voucherFindUnique, voucherCreate });
+    // Prior wallet transaction exists for this idempotency key
+    prisma.loyaltyTransaction.findUnique.mockResolvedValue({ sourceId: redemptionId });
 
     const result = await svc.redeemForVoucher({
       points: 500,
@@ -193,10 +197,51 @@ describe('PosVoucherService', () => {
       idempotencyKey,
     });
 
+    expect(burn.processRedemption).not.toHaveBeenCalled();
     expect(voucherCreate).not.toHaveBeenCalled();
     expect(adapter.createGiftCard).not.toHaveBeenCalled();
     expect(result.voucherId).toBe('voucher-1');
     expect(result.cardNumber).toBe('ABCD2345EFGH');
+    expect(result.status).toBe('ISSUED');
+  });
+
+  it('replayed request bypasses gift card amount limits', async () => {
+    const issuedVoucher = {
+      id: 'voucher-1',
+      membershipId,
+      redemptionId,
+      storeId,
+      cardNumber: 'ABCD2345EFGH',
+      amount: new Decimal('0.50'),
+      currency: 'GBP',
+      clientId: redemptionId,
+      status: 'ISSUED',
+      redemption: { pointsSpent: 50, status: 'COMPLETED' },
+      store: { posConnection: { isActive: true, provider: 'lightspeed', credentials: 'enc' } },
+    };
+    const voucherFindUnique = jest.fn().mockResolvedValue(issuedVoucher);
+    const { svc, prisma, burn } = build({
+      voucherFindUnique,
+      configGet: (key, def) => {
+        if (key === 'LOYALTY_ENABLED') return 'true';
+        if (key === 'LOYALTY_POS_VOUCHER_ENABLED') return 'true';
+        if (key === 'LOYALTY_DEFAULT_REDEEM_VALUE') return '0.01';
+        if (key === 'POS_GIFT_CARD_MIN_AMOUNT') return '5';
+        return def;
+      },
+    });
+    prisma.loyaltyTransaction.findUnique.mockResolvedValue({ sourceId: redemptionId });
+
+    // Amount 0.50 < min 5, but replay should still succeed
+    const result = await svc.redeemForVoucher({
+      points: 50,
+      storeId,
+      membershipId,
+      idempotencyKey,
+    });
+
+    expect(burn.processRedemption).not.toHaveBeenCalled();
+    expect(result.voucherId).toBe('voucher-1');
     expect(result.status).toBe('ISSUED');
   });
 
@@ -313,6 +358,38 @@ describe('PosVoucherService', () => {
         data: expect.objectContaining({ clientId: expect.anything() }),
       }),
     );
+  });
+
+  it('rejects when computed amount is below POS_GIFT_CARD_MIN_AMOUNT', async () => {
+    const { svc, burn } = build({
+      configGet: (key, def) => {
+        if (key === 'LOYALTY_ENABLED') return 'true';
+        if (key === 'LOYALTY_POS_VOUCHER_ENABLED') return 'true';
+        if (key === 'LOYALTY_DEFAULT_REDEEM_VALUE') return '0.01';
+        if (key === 'POS_GIFT_CARD_MIN_AMOUNT') return '5';
+        return def;
+      },
+    });
+    await expect(
+      svc.redeemForVoucher({ points: 100, storeId, membershipId, idempotencyKey }),
+    ).rejects.toThrow(/below the minimum/);
+    expect(burn.processRedemption).not.toHaveBeenCalled();
+  });
+
+  it('rejects when computed amount exceeds POS_GIFT_CARD_MAX_AMOUNT', async () => {
+    const { svc, burn } = build({
+      configGet: (key, def) => {
+        if (key === 'LOYALTY_ENABLED') return 'true';
+        if (key === 'LOYALTY_POS_VOUCHER_ENABLED') return 'true';
+        if (key === 'LOYALTY_DEFAULT_REDEEM_VALUE') return '0.01';
+        if (key === 'POS_GIFT_CARD_MAX_AMOUNT') return '3';
+        return def;
+      },
+    });
+    await expect(
+      svc.redeemForVoucher({ points: 500, storeId, membershipId, idempotencyKey }),
+    ).rejects.toThrow(/exceeds the maximum/);
+    expect(burn.processRedemption).not.toHaveBeenCalled();
   });
 
   it('retry FAILED voucher reuses same clientId and reloads when card exists', async () => {

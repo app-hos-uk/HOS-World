@@ -40,6 +40,10 @@ interface EnvSchema {
   POS_SALES_POLL_CRON?: string;
   POS_INVENTORY_DISCREPANCY_THRESHOLD?: string;
   POS_SYNC_BATCH_SIZE?: string;
+  /** Lightspeed gift card minimum amount (default 1). */
+  POS_GIFT_CARD_MIN_AMOUNT?: string;
+  /** Lightspeed gift card maximum amount (default 500). */
+  POS_GIFT_CARD_MAX_AMOUNT?: string;
   /** Gate HOS → Xero posting (also requires FeatureFlag.ACCOUNTING_XERO). Default off. */
   ACCOUNTING_ENABLED?: string;
   XERO_CLIENT_ID?: string;
