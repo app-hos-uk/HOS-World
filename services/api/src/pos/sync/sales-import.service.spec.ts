@@ -165,7 +165,7 @@ describe('PosSalesImportService', () => {
       );
     });
 
-    it('handles loyalty earn failure gracefully', async () => {
+    it('leaves sale IMPORTED when loyalty earn fails so retries can re-earn', async () => {
       const { service, prisma, earnEngine } = makeMocks();
       prisma.pOSSale.findUnique.mockResolvedValue(null);
       prisma.user.findFirst.mockResolvedValue(null);
@@ -176,7 +176,7 @@ describe('PosSalesImportService', () => {
       const result = await service.importParsedSale('s1', 'lightspeed', mockParsedSale);
 
       expect(result.duplicate).toBe(false);
-      expect(prisma.pOSSale.update).toHaveBeenCalledWith(
+      expect(prisma.pOSSale.update).not.toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ status: 'PROCESSED' }),
         }),

@@ -73,6 +73,7 @@ describe('PosVoucherService', () => {
           ...data,
           redemption: voucherRow.redemption,
         })),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
         findUnique:
           overrides.voucherFindUnique ??
           // Lookups by redemptionId probe for a replayed request; by id fetch the row.
@@ -99,6 +100,9 @@ describe('PosVoucherService', () => {
           },
           loyaltyMembership: { update: jest.fn() },
           loyaltyPosVoucher: { update: jest.fn() },
+          loyaltyTransaction: {
+            findUnique: jest.fn().mockResolvedValue(null),
+          },
         }),
       ),
     };
@@ -119,7 +123,9 @@ describe('PosVoucherService', () => {
         overrides.processRedemption ?? jest.fn().mockResolvedValue({ redemptionId }),
     };
     const wallet: any = {
-      applyDelta: overrides.applyDelta ?? jest.fn().mockResolvedValue({}),
+      applyDelta:
+        overrides.applyDelta ??
+        jest.fn().mockResolvedValue({ applied: true, balanceBefore: 0, balanceAfter: 0 }),
     };
     const factory: any = { create: jest.fn().mockReturnValue(adapter) };
     const encryption: any = {
@@ -518,11 +524,22 @@ describe('PosVoucherService', () => {
         redemption: { pointsSpent: 500, status: 'COMPLETED' },
       });
 
-    const { svc, adapter } = build({
+    const { svc, adapter, prisma } = build({
       giftCardTransaction,
       getGiftCardByNumber,
       voucherFindUnique,
     });
+    prisma.$transaction.mockImplementation(async (fn: (tx: any) => Promise<unknown>) =>
+      fn({
+        loyaltyRedemption: {
+          findUnique: jest.fn().mockResolvedValue({ id: redemptionId, status: 'REVERSED' }),
+          update: jest.fn(),
+        },
+        loyaltyMembership: { update: jest.fn() },
+        loyaltyPosVoucher: { update: jest.fn() },
+        loyaltyTransaction: { findUnique: jest.fn().mockResolvedValue(null) },
+      }),
+    );
 
     const result = await svc.redeemForVoucher({
       points: 500,

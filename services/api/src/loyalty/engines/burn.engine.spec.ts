@@ -285,6 +285,101 @@ describe('LoyaltyBurnEngine', () => {
       expect(mockWallet.applyDelta).not.toHaveBeenCalled();
     });
 
+    it('re-debits and revives redemption when prior burn was REVERSED', async () => {
+      const mockWallet = {
+        applyDelta: jest.fn().mockResolvedValue({
+          balanceBefore: 500,
+          balanceAfter: 0,
+          applied: true,
+        }),
+      };
+      const redemptionUpdate = jest.fn();
+      const membershipUpdate = jest.fn();
+      const mockPrisma = {
+        store: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'store-1',
+            seller: { sellerType: 'PLATFORM_RETAIL' },
+          }),
+        },
+        $transaction: jest.fn().mockImplementation(async (fn: any) =>
+          fn({
+            loyaltyMembership: {
+              findUnique: jest.fn().mockResolvedValue({ id: 'm1', currentBalance: 500 }),
+              update: membershipUpdate,
+            },
+            loyaltyRedemptionOption: {
+              findUnique: jest.fn(),
+              findFirst: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+            },
+            loyaltyTransaction: {
+              findUnique: jest
+                .fn()
+                // first: findRedemptionByWalletKey for original burn key
+                .mockResolvedValueOnce({
+                  id: 'tx1',
+                  sourceId: 'r-first',
+                  idempotencyKey: 'burn:key:m1:till-1:sale-4821',
+                })
+                // second: prior redebit check inside redebitAfterReverse
+                .mockResolvedValueOnce(null),
+            },
+            loyaltyRedemption: {
+              create: jest.fn(),
+              findFirst: jest.fn(),
+              findUnique: jest.fn().mockResolvedValue({
+                id: 'r-first',
+                couponCode: null,
+                status: 'REVERSED',
+              }),
+              update: redemptionUpdate,
+            },
+          }),
+        ),
+      };
+      const mockConfig = {
+        get: jest.fn().mockImplementation((key: string, defaultVal?: any) => {
+          if (key === 'LOYALTY_ENABLED') return 'true';
+          if (key === 'LOYALTY_MIN_REDEMPTION_POINTS') return 100;
+          return defaultVal;
+        }),
+      };
+
+      const engine = new LoyaltyBurnEngine(
+        mockPrisma as any,
+        mockWallet as any,
+        mockConfig as any,
+        mockFeatureFlags as any,
+      );
+
+      const result = await engine.processRedemption({
+        membershipId: 'm1',
+        points: 500,
+        channel: 'HOS_OUTLET_POS',
+        storeId: 'store-1',
+        idempotencyKey: 'till-1:sale-4821',
+      });
+
+      expect(result).toEqual({ redemptionId: 'r-first', couponCode: undefined });
+      expect(mockWallet.applyDelta).toHaveBeenCalledWith(
+        expect.anything(),
+        'm1',
+        -500,
+        expect.anything(),
+        expect.objectContaining({
+          idempotencyKey: 'burn:redebit:r-first',
+          source: 'REDEMPTION_REDEBIT',
+        }),
+      );
+      expect(redemptionUpdate).toHaveBeenCalledWith({
+        where: { id: 'r-first' },
+        data: { status: 'COMPLETED' },
+      });
+      expect(membershipUpdate).toHaveBeenCalled();
+    });
+
     it('heals missing redemption when wallet burn already applied', async () => {
       const mockWallet = {
         applyDelta: jest.fn().mockResolvedValue({

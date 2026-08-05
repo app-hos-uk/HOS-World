@@ -91,13 +91,13 @@ describe('AuthService', () => {
   };
 
   const mockConfigService = {
-    get: jest.fn((key: string) => {
+    get: jest.fn((key: string, defaultValue?: unknown): unknown => {
       if (key === 'JWT_SECRET') return 'test-secret-key-minimum-32-characters-long';
       if (key === 'JWT_REFRESH_SECRET') return 'test-refresh-secret-key-minimum-32-characters-long';
       if (key === 'JWT_EXPIRES_IN') return '1h';
       if (key === 'JWT_REFRESH_EXPIRES_IN') return '7d';
-      return undefined;
-    }),
+      return defaultValue;
+    }) as jest.Mock,
   };
 
   const mockGeolocationService = {

@@ -42,8 +42,16 @@ function buildService(overrides?: {
     decryptJson: overrides?.decryptJson ?? jest.fn(),
   } as any;
 
-  const service = new XeroAuthService(config, prisma, encryption);
-  return { service, config, prisma, encryption };
+  const redis = {
+    isRedisConnected: jest.fn().mockReturnValue(false),
+    set: jest.fn().mockResolvedValue(undefined),
+    get: jest.fn().mockResolvedValue(null),
+    del: jest.fn().mockResolvedValue(undefined),
+    setNX: jest.fn().mockResolvedValue(true),
+  } as any;
+
+  const service = new XeroAuthService(config, prisma, encryption, redis);
+  return { service, config, prisma, encryption, redis };
 }
 
 afterEach(() => {
@@ -53,9 +61,9 @@ afterEach(() => {
 
 describe('XeroAuthService', () => {
   describe('createConnectUrl', () => {
-    it('returns an authorize URL with correct params and state', () => {
+    it('returns an authorize URL with correct params and state', async () => {
       const { service } = buildService();
-      const result = service.createConnectUrl();
+      const result = await service.createConnectUrl();
 
       expect(result.state).toBeDefined();
       expect(result.state.length).toBe(32);
@@ -69,44 +77,56 @@ describe('XeroAuthService', () => {
       ]);
     });
 
-    it('throws when XERO_CLIENT_ID is missing', () => {
+    it('throws when XERO_CLIENT_ID is missing', async () => {
       const { service } = buildService({
         configGet: (key: string) => (key === 'XERO_REDIRECT_URI' ? 'https://cb' : undefined),
       });
-      expect(() => service.createConnectUrl()).toThrow(BadRequestException);
+      await expect(service.createConnectUrl()).rejects.toThrow(BadRequestException);
     });
 
-    it('throws when XERO_REDIRECT_URI is missing', () => {
+    it('throws when XERO_REDIRECT_URI is missing', async () => {
       const { service } = buildService({
         configGet: (key: string) => (key === 'XERO_CLIENT_ID' ? 'id' : undefined),
       });
-      expect(() => service.createConnectUrl()).toThrow(BadRequestException);
+      await expect(service.createConnectUrl()).rejects.toThrow(BadRequestException);
+    });
+
+    it('stores state in Redis when connected', async () => {
+      const { service, redis } = buildService();
+      redis.isRedisConnected.mockReturnValue(true);
+      const { state } = await service.createConnectUrl();
+      expect(redis.set).toHaveBeenCalledWith(
+        `xero:oauth:state:${state}`,
+        expect.any(String),
+        600,
+      );
     });
   });
 
   describe('validateAndConsumeState', () => {
-    it('validates and consumes a valid state token', () => {
+    it('validates and consumes a valid state token', async () => {
       const { service } = buildService();
-      const { state } = service.createConnectUrl();
-      expect(() => service.validateAndConsumeState(state)).not.toThrow();
+      const { state } = await service.createConnectUrl();
+      await expect(service.validateAndConsumeState(state)).resolves.toBeUndefined();
       // Second use should fail
-      expect(() => service.validateAndConsumeState(state)).toThrow(ForbiddenException);
+      await expect(service.validateAndConsumeState(state)).rejects.toThrow(ForbiddenException);
     });
 
-    it('throws for an unknown state', () => {
+    it('throws for an unknown state', async () => {
       const { service } = buildService();
-      expect(() => service.validateAndConsumeState('unknown-state')).toThrow(ForbiddenException);
+      await expect(service.validateAndConsumeState('unknown-state')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
-    it('throws for an expired state', () => {
+    it('throws for an expired state', async () => {
       const { service } = buildService();
-      const { state } = service.createConnectUrl();
+      const { state } = await service.createConnectUrl();
 
-      // Force expiry by manipulating the internal map via a second createConnectUrl + time shift
       const now = Date.now();
       jest.spyOn(Date, 'now').mockReturnValue(now + 11 * 60 * 1000);
 
-      expect(() => service.validateAndConsumeState(state)).toThrow(ForbiddenException);
+      await expect(service.validateAndConsumeState(state)).rejects.toThrow(ForbiddenException);
     });
   });
 

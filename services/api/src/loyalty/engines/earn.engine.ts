@@ -892,6 +892,60 @@ export class LoyaltyEarnEngine {
         `Loyalty earn failed for POS sale ${sale.id}: ${(e as Error).message}`,
         (e as Error)?.stack,
       );
+      // Re-throw so sales import can leave the sale as IMPORTED and retry earn later.
+      throw e;
     }
+  }
+
+  /**
+   * Claw back loyalty points when a previously processed POS sale is voided.
+   * Idempotent via wallet key `reverse:POS_PURCHASE:{saleId}`.
+   */
+  async reversePosSaleEarn(posSaleId: string): Promise<void> {
+    if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
+      return;
+    }
+
+    const sale = await this.prisma.pOSSale.findUnique({
+      where: { id: posSaleId },
+    });
+    if (!sale?.customerId || sale.loyaltyPointsEarned <= 0) return;
+
+    const membership = await this.prisma.loyaltyMembership.findUnique({
+      where: { userId: sale.customerId },
+    });
+    if (!membership) return;
+
+    const points = sale.loyaltyPointsEarned;
+    await this.prisma.$transaction(async (tx) => {
+      const result = await this.wallet.applyDelta(
+        tx,
+        membership.id,
+        -points,
+        LoyaltyTxType.ADJUST,
+        {
+          source: 'POS_SALE_VOID',
+          sourceId: sale.id,
+          channel: 'HOS_OUTLET_POS',
+          storeId: sale.storeId,
+          description: 'Clawback for voided POS sale',
+          metadata: { externalSaleId: sale.externalSaleId },
+          idempotencyKey: `reverse:POS_PURCHASE:${sale.id}`,
+        },
+      );
+      if (result.applied) {
+        await tx.loyaltyMembership.update({
+          where: { id: membership.id },
+          data: {
+            totalPointsEarned: { decrement: points },
+            purchaseCount: { decrement: 1 },
+          },
+        });
+      }
+      await tx.pOSSale.update({
+        where: { id: sale.id },
+        data: { loyaltyPointsEarned: 0 },
+      });
+    });
   }
 }

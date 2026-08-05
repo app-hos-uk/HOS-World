@@ -100,6 +100,18 @@ export class LoyaltyBurnEngine {
             couponCode: prior.couponCode ?? undefined,
           };
         }
+        // Prior burn was reversed (points restored). Re-debit with a successor
+        // wallet key and revive the same redemption — never heal without debit.
+        if (prior?.status === 'REVERSED') {
+          return this.redebitAfterReverse(tx, {
+            membershipId: params.membershipId,
+            points: params.points,
+            channel: params.channel,
+            storeId: params.storeId,
+            prior,
+            balance: membership.currentBalance,
+          });
+        }
       }
 
       let option: Awaited<ReturnType<typeof tx.loyaltyRedemptionOption.findUnique>> = null;
@@ -176,10 +188,18 @@ export class LoyaltyBurnEngine {
             couponCode: existing.couponCode ?? undefined,
           };
         }
-        // Wallet burn already applied but redemption row missing — heal once, no coupon/stock.
+        if (existing?.status === 'REVERSED') {
+          // Should have been handled above for callerBurnKey; refuse free heal.
+          throw new BadRequestException(
+            'Redemption was reversed — retry with voucherId or a new idempotency key',
+          );
+        }
+        // Wallet burn applied but redemption row missing — heal using the wallet
+        // sourceId (the id reserved at burn time), never a fresh UUID.
+        const healId = priorWalletTx?.sourceId || redemptionId;
         const healed = await tx.loyaltyRedemption.create({
           data: {
-            id: redemptionId,
+            id: healId,
             membershipId: params.membershipId,
             optionId: optionIdForRow,
             pointsSpent: params.points,
@@ -318,5 +338,63 @@ export class LoyaltyBurnEngine {
     });
     if (!walletTx?.sourceId) return null;
     return tx.loyaltyRedemption.findUnique({ where: { id: walletTx.sourceId } });
+  }
+
+  /**
+   * After a POS voucher issue failure reversed the burn, a retry with the same
+   * caller idempotency key must re-debit points (new wallet key) and revive the
+   * same redemption id so voucher clientId stays stable.
+   */
+  private async redebitAfterReverse(
+    tx: Prisma.TransactionClient,
+    params: {
+      membershipId: string;
+      points: number;
+      channel: BurnChannel;
+      storeId?: string | null;
+      prior: { id: string; couponCode: string | null };
+      balance: number;
+    },
+  ): Promise<{ redemptionId: string; couponCode?: string }> {
+    const redebitKey = `burn:redebit:${params.prior.id}`;
+    const priorRedebit = await tx.loyaltyTransaction.findUnique({
+      where: { idempotencyKey: redebitKey },
+    });
+    if (!priorRedebit && params.balance < params.points) {
+      throw new BadRequestException('Insufficient points balance');
+    }
+
+    const result = await this.wallet.applyDelta(
+      tx,
+      params.membershipId,
+      -params.points,
+      LoyaltyTxType.BURN,
+      {
+        source: 'REDEMPTION_REDEBIT',
+        sourceId: params.prior.id,
+        channel: params.channel,
+        storeId: params.storeId ?? undefined,
+        description: 'Re-debit after reversed POS voucher burn',
+        metadata: { priorRedemptionId: params.prior.id },
+        idempotencyKey: redebitKey,
+      },
+    );
+
+    if (result.applied) {
+      await tx.loyaltyMembership.update({
+        where: { id: params.membershipId },
+        data: { totalPointsRedeemed: { increment: params.points } },
+      });
+    }
+
+    await tx.loyaltyRedemption.update({
+      where: { id: params.prior.id },
+      data: { status: 'COMPLETED' },
+    });
+
+    return {
+      redemptionId: params.prior.id,
+      couponCode: params.prior.couponCode ?? undefined,
+    };
   }
 }
