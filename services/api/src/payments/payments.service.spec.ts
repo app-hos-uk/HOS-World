@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PaymentsService } from './payments.service';
@@ -136,6 +136,76 @@ describe('PaymentsService', () => {
       mockConfigService.get.mockReturnValue(undefined);
 
       await expect(service.getStripePublishableKey()).resolves.toBeNull();
+    });
+  });
+
+  describe('confirmPayment', () => {
+    it('throws NotFoundException when order does not exist', async () => {
+      mockPrisma.order.findUnique = jest.fn().mockResolvedValue(null);
+
+      await expect(
+        service.confirmPayment('pi_123', 'missing-order'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ForbiddenException when userId does not match', async () => {
+      mockPrisma.order.findUnique = jest.fn().mockResolvedValue({
+        ...baseOrder,
+        userId: 'other-user',
+      });
+
+      await expect(
+        service.confirmPayment('pi_123', 'order-1', 'user-1'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws BadRequestException when payment intent does not match order', async () => {
+      mockPrisma.order.findUnique = jest.fn().mockResolvedValue({
+        ...baseOrder,
+        stripePaymentIntentId: 'pi_different',
+      });
+
+      await expect(
+        service.confirmPayment('pi_123', 'order-1'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('returns early when order is already paid', async () => {
+      mockPrisma.order.findUnique = jest.fn().mockResolvedValue({
+        ...baseOrder,
+        paymentStatus: 'PAID',
+      });
+
+      await expect(
+        service.confirmPayment('pi_123', 'order-1'),
+      ).resolves.toBeUndefined();
+    });
+  });
+
+  describe('createPaymentIntent – edge cases', () => {
+    it('resolves as gift-card-covered for zero-total orders', async () => {
+      mockPrisma.order.findFirst.mockResolvedValue({
+        ...baseOrder,
+        total: new Decimal(0),
+      });
+      mockPrisma.giftCardTransaction.findMany.mockResolvedValue([]);
+      mockPrisma.$transaction.mockImplementation(async (cb) =>
+        cb({
+          order: {
+            findUnique: jest.fn().mockResolvedValue({ paymentStatus: 'PENDING' }),
+            update: jest.fn(),
+            updateMany: jest.fn(),
+          },
+          payment: {
+            findFirst: jest.fn().mockResolvedValue(null),
+            create: jest.fn(),
+          },
+        }),
+      );
+
+      const result = await service.createPaymentIntent('user-1', { orderId: 'order-1' } as any);
+      expect(result.paid).toBe(true);
+      expect(result.method).toBe('gift_card_full_coverage');
     });
   });
 });
