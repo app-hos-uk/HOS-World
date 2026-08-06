@@ -2724,6 +2724,13 @@ export class ApiClient {
     });
   }
 
+  async createTheme(body: { name: string; type: 'HOS' | 'SELLER' | 'CUSTOMER'; config?: Record<string, unknown>; isActive?: boolean }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/themes', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
   async getSellerTheme(sellerId?: string): Promise<ApiResponse<any>> {
     const url = sellerId ? `/themes/seller/${sellerId}` : '/themes/seller/my-theme';
     return this.request<ApiResponse<any>>(url, {
@@ -3924,6 +3931,31 @@ export class ApiClient {
   // WhatsApp
   async getWhatsAppConversations(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/whatsapp/conversations');
+  }
+
+  async sendWhatsAppMessage(body: { to: string; message: string; mediaUrl?: string; userId?: string }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/whatsapp/send', { method: 'POST', body: JSON.stringify(body) });
+  }
+
+  async getWhatsAppMessages(conversationId: string, page?: number, limit?: number): Promise<ApiResponse<any>> {
+    const qs = new URLSearchParams();
+    if (page != null) qs.set('page', String(page));
+    if (limit != null) qs.set('limit', String(limit));
+    const q = qs.toString();
+    return this.request<ApiResponse<any>>(`/whatsapp/conversations/${conversationId}/messages${q ? `?${q}` : ''}`);
+  }
+
+  async getWhatsAppTemplates(category?: string): Promise<ApiResponse<any>> {
+    const qs = category ? `?category=${encodeURIComponent(category)}` : '';
+    return this.request<ApiResponse<any>>(`/whatsapp/templates${qs}`);
+  }
+
+  async createWhatsAppTemplate(body: { name: string; category: string; content: string; variables?: string[] }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/whatsapp/templates', { method: 'POST', body: JSON.stringify(body) });
+  }
+
+  async sendWhatsAppTemplateMessage(body: { to: string; templateName: string; variables: Record<string, string> }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/whatsapp/send-template', { method: 'POST', body: JSON.stringify(body) });
   }
 
   // Admin - Products
@@ -7478,6 +7510,53 @@ export class ApiClient {
     return this.request<ApiResponse<any>>(`/admin/feature-flags/${flag}`, {
       method: 'PUT',
       body: JSON.stringify({ enabled }),
+    });
+  }
+
+  // ===== Tenants =====
+  async adminListTenants(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/tenants', {
+      method: 'GET',
+    });
+  }
+
+  async adminGetTenant(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/tenants/${id}`, {
+      method: 'GET',
+    });
+  }
+
+  async adminCreateTenant(body: { name: string; domain?: string; subdomain?: string; isActive?: boolean }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/tenants', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminUpdateTenant(id: string, body: { name?: string; domain?: string; subdomain?: string; isActive?: boolean }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/tenants/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminAddTenantUser(tenantId: string, userId: string, role: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/tenants/${tenantId}/users/${userId}`, {
+      method: 'POST',
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  async adminUpdateTenantUserRole(tenantId: string, userId: string, role: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/tenants/${tenantId}/users/${userId}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ role }),
+    });
+  }
+
+  async adminRemoveTenantUser(tenantId: string, userId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/tenants/${tenantId}/users/${userId}`, {
+      method: 'DELETE',
     });
   }
 
