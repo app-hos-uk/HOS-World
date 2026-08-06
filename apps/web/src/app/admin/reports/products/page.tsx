@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { DateRangePicker, DateRange } from '@/components/DateRangePicker';
@@ -88,7 +89,7 @@ export default function AdminProductAnalyticsPage() {
       document.body.removeChild(a);
     } catch (err: any) {
       console.error('Export failed:', err);
-      alert('Export failed: ' + err.message);
+      toast.error('Export failed: ' + err.message);
     }
   };
 

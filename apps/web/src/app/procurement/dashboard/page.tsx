@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { getProcurementMenu } from '@/lib/teamMenus';
 
@@ -57,11 +57,12 @@ export default function ProcurementDashboardPage() {
 
   return (
     <RouteGuard allowedRoles={['PROCUREMENT', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout
+      <AppShellLayout
         role="PROCUREMENT"
+        breadcrumbs="inline"
         menuItems={menuItems}
         title="Procurement"
-        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
       >
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -246,7 +247,7 @@ export default function ProcurementDashboardPage() {
             </div>
           </>
         )}
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

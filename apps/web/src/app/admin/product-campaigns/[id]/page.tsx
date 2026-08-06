@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -15,6 +16,13 @@ export default function AdminProductCampaignDetailPage() {
   const [row, setRow] = useState<Record<string, unknown> | null>(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -150,15 +158,23 @@ export default function AdminProductCampaignDetailPage() {
                     <button
                       type="button"
                       className="text-sm px-2 py-1 rounded border border-red-500/40 text-red-400"
-                      onClick={async () => {
-                        if (!confirm('Delete this campaign? This cannot be undone.')) return;
-                        try {
-                          await apiClient.adminDeleteProductCampaign(id);
-                          toast.success('Deleted');
-                          router.push('/admin/product-campaigns');
-                        } catch (e: unknown) {
-                          toast.error(e instanceof Error ? e.message : 'Failed');
-                        }
+                      onClick={() => {
+                        setConfirmDialog({
+                          title: 'Delete this campaign?',
+                          description: 'This cannot be undone.',
+                          tone: 'danger',
+                          confirmLabel: 'Delete',
+                          onConfirm: async () => {
+                            setConfirmDialog(null);
+                            try {
+                              await apiClient.adminDeleteProductCampaign(id);
+                              toast.success('Deleted');
+                              router.push('/admin/product-campaigns');
+                            } catch (e: unknown) {
+                              toast.error(e instanceof Error ? e.message : 'Failed');
+                            }
+                          },
+                        });
                       }}
                     >
                       Delete
@@ -230,6 +246,17 @@ export default function AdminProductCampaignDetailPage() {
             <p className="text-hos-text-muted">Loading…</p>
           )}
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

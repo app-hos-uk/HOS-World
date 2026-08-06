@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -26,6 +27,13 @@ interface Store {
 
 export default function AdminChannelsPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const [stores, setStores] = useState<Store[]>([]);
   const [selectedStoreId, setSelectedStoreId] = useState('');
@@ -145,15 +153,22 @@ export default function AdminChannelsPage() {
     setAssignCurrency('USD');
   };
 
-  const handleRemove = async (id: string) => {
-    if (!confirm('Remove this product from the channel?')) return;
-    try {
-      await apiClient.removeProductFromChannel(id);
-      toast.success('Product removed from channel');
-      loadChannelProducts(selectedStoreId);
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Remove failed');
-    }
+  const handleRemove = (id: string) => {
+    setConfirmDialog({
+      title: 'Remove this product from the channel?',
+      tone: 'danger',
+      confirmLabel: 'Remove',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.removeProductFromChannel(id);
+          toast.success('Product removed from channel');
+          loadChannelProducts(selectedStoreId);
+        } catch (e: unknown) {
+          toast.error(e instanceof Error ? e.message : 'Remove failed');
+        }
+      },
+    });
   };
 
   const startEdit = (item: ChannelProduct) => {
@@ -486,6 +501,17 @@ export default function AdminChannelsPage() {
           </>
         )}
       </div>
-    </RouteGuard>
+            {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

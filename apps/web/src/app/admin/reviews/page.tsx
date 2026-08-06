@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -279,6 +280,13 @@ function ModerationQueue() {
 
 function ReviewsByProduct() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -369,17 +377,24 @@ function ReviewsByProduct() {
     }
   };
 
-  const handleDeleteReview = async (reviewId: string) => {
-    if (!confirm('Are you sure you want to delete this review?')) return;
-    try {
-      await apiClient.deleteReview(reviewId);
-      toast.success('Review deleted successfully');
-      if (selectedProduct) {
-        fetchReviews(selectedProduct);
-      }
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete review');
-    }
+  const handleDeleteReview = (reviewId: string) => {
+    setConfirmDialog({
+      title: 'Are you sure you want to delete this review?',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteReview(reviewId);
+          toast.success('Review deleted successfully');
+          if (selectedProduct) {
+            fetchReviews(selectedProduct);
+          }
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to delete review');
+        }
+      },
+    });
   };
 
   const filteredReviews = filterRating
@@ -555,6 +570,17 @@ function ReviewsByProduct() {
         </>
       )}
 
+      {confirmDialog && (
+        <ConfirmDialog
+          open
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          tone={confirmDialog.tone}
+          confirmLabel={confirmDialog.confirmLabel}
+          onCancel={() => setConfirmDialog(null)}
+          onConfirm={confirmDialog.onConfirm}
+        />
+      )}
     </div>
   );
 }
@@ -597,6 +623,6 @@ export default function AdminReviewsPage() {
 
           {tab === 'moderation' ? <ModerationQueue /> : <ReviewsByProduct />}
         </div>
-          </RouteGuard>
+    </RouteGuard>
   );
 }

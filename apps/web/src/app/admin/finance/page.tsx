@@ -10,6 +10,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { todayDateInputValue } from '@/lib/formFieldValidation';
+import { navIcon } from '@/lib/navIcons';
 
 const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
@@ -230,11 +231,11 @@ export default function AdminFinancePage() {
   }, [rangedTransactions]);
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'transactions', label: 'Transactions', icon: '💳' },
-    { id: 'payouts', label: 'Payouts', icon: '💰' },
-    { id: 'refunds', label: 'Refunds', icon: '↩️' },
-    { id: 'reports', label: 'Reports', icon: '📈' },
+    { id: 'overview', label: 'Overview', icon: navIcon('dashboard') },
+    { id: 'transactions', label: 'Transactions', icon: navIcon('creditCard') },
+    { id: 'payouts', label: 'Payouts', icon: navIcon('dollar') },
+    { id: 'refunds', label: 'Refunds', icon: navIcon('undo') },
+    { id: 'reports', label: 'Reports', icon: navIcon('trending') },
   ];
 
   return (

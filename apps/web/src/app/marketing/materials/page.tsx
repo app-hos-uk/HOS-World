@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
@@ -194,11 +194,12 @@ function MarketingMaterialsPageContent() {
   const menuItems = getMarketingMenu(pendingSubmissions.length);
 
   return (
-      <DashboardLayout
+      <AppShellLayout
         role="MARKETING"
+        breadcrumbs="inline"
         menuItems={menuItems}
         title="Marketing"
-        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
       >
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Marketing Materials</h1>
@@ -475,7 +476,7 @@ function MarketingMaterialsPageContent() {
               </div>
             </div>
           )}
-      </DashboardLayout>
+      </AppShellLayout>
   );
 }
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import {
@@ -9,6 +10,7 @@ import {
   validateNameLike,
   validateOptionalDescriptiveText,
 } from '@/lib/formFieldValidation';
+import { navIcon } from '@/lib/navIcons';
 
 interface Tag {
   id: string;
@@ -33,13 +35,13 @@ interface Stats {
 }
 
 const TAG_CATEGORIES = [
-  { value: 'THEME', label: 'Theme', icon: '🎨', color: 'purple', description: 'Visual themes like Dark, Colorful, Minimalist' },
-  { value: 'OCCASION', label: 'Occasion', icon: '🎉', color: 'pink', description: 'Events like Christmas, Birthday, Halloween' },
-  { value: 'STYLE', label: 'Style', icon: '✨', color: 'blue', description: 'Product styles like Vintage, Modern, Classic' },
-  { value: 'CHARACTER', label: 'Character', icon: '🧙', color: 'green', description: 'Specific characters like Harry Potter, Darth Vader' },
-  { value: 'FANDOM', label: 'Fandom', icon: '⚡', color: 'yellow', description: 'Franchises like Marvel, Star Wars, Disney' },
-  { value: 'CUSTOM', label: 'Custom', icon: '🏷️', color: 'gray', description: 'Custom tags for specific needs' },
-] as const;
+  { value: 'THEME', label: 'Theme', icon: navIcon('palette'), color: 'purple', description: 'Visual themes like Dark, Colorful, Minimalist' },
+  { value: 'OCCASION', label: 'Occasion', icon: navIcon('party'), color: 'pink', description: 'Events like Christmas, Birthday, Halloween' },
+  { value: 'STYLE', label: 'Style', icon: navIcon('sparkles'), color: 'blue', description: 'Product styles like Vintage, Modern, Classic' },
+  { value: 'CHARACTER', label: 'Character', icon: navIcon('wand'), color: 'green', description: 'Specific characters like Harry Potter, Darth Vader' },
+  { value: 'FANDOM', label: 'Fandom', icon: navIcon('zap'), color: 'yellow', description: 'Franchises like Marvel, Star Wars, Disney' },
+  { value: 'CUSTOM', label: 'Custom', icon: navIcon('tag'), color: 'gray', description: 'Custom tags for specific needs' },
+];
 
 const CATEGORY_COLORS: Record<string, string> = {
   THEME: 'bg-hos-gold/20 text-hos-gold border-hos-border-accent',
@@ -68,6 +70,13 @@ export default function AdminTagsPage() {
   const [showInactive, setShowInactive] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'category' | 'usage'>('name');
   const [savingTag, setSavingTag] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -203,19 +212,26 @@ export default function AdminTagsPage() {
     }
   };
 
-  const handleDeleteTag = async (id: string, name: string) => {
+  const handleDeleteTag = (id: string, name: string) => {
     const tag = tags.find(t => t.id === id);
-    if ((tag?.productCount || 0) > 0) {
-      if (!confirm(`"${name}" is used by ${tag?.productCount} products. Delete anyway?`)) return;
-    } else if (!confirm(`Delete "${name}"?`)) return;
-    
-    try {
-      await apiClient.deleteTag(id);
-      toast.success('Tag deleted');
-      fetchTags();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete tag');
-    }
+    const productCount = tag?.productCount || 0;
+    setConfirmDialog({
+      title: productCount > 0
+        ? `"${name}" is used by ${productCount} products. Delete anyway?`
+        : `Delete "${name}"?`,
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteTag(id);
+          toast.success('Tag deleted');
+          fetchTags();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to delete tag');
+        }
+      },
+    });
   };
 
   const handleBulkCreate = async () => {
@@ -251,23 +267,29 @@ export default function AdminTagsPage() {
     fetchTags();
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedTags.size === 0) return;
-    if (!confirm(`Delete ${selectedTags.size} selected tags?`)) return;
+    setConfirmDialog({
+      title: `Delete ${selectedTags.size} selected tags?`,
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        let success = 0;
+        for (const id of selectedTags) {
+          try {
+            await apiClient.deleteTag(id);
+            success++;
+          } catch {
+            // Continue on error
+          }
+        }
 
-    let success = 0;
-    for (const id of selectedTags) {
-      try {
-        await apiClient.deleteTag(id);
-        success++;
-      } catch {
-        // Continue on error
-      }
-    }
-
-    toast.success(`Deleted ${success} tags`);
-    setSelectedTags(new Set());
-    fetchTags();
+        toast.success(`Deleted ${success} tags`);
+        setSelectedTags(new Set());
+        fetchTags();
+      },
+    });
   };
 
   const handleBulkToggleActive = async (activate: boolean) => {
@@ -642,7 +664,7 @@ export default function AdminTagsPage() {
                     >
                       {TAG_CATEGORIES.map((cat) => (
                         <option key={cat.value} value={cat.value}>
-                          {cat.icon} {cat.label} - {cat.description}
+                          {cat.label} - {cat.description}
                         </option>
                       ))}
                     </select>
@@ -814,7 +836,7 @@ export default function AdminTagsPage() {
                               className="px-2 py-1 text-xs text-hos-text-secondary hover:bg-hos-bg-tertiary rounded"
                               title="Duplicate"
                             >
-                              📋
+                              {navIcon('clipboard', 'w-3.5 h-3.5')}
                             </button>
                             <button
                               onClick={() => startEdit(tag)}
@@ -857,7 +879,7 @@ export default function AdminTagsPage() {
                       className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     >
                       {TAG_CATEGORIES.map((cat) => (
-                        <option key={cat.value} value={cat.value}>{cat.icon} {cat.label}</option>
+                        <option key={cat.value} value={cat.value}>{cat.label}</option>
                       ))}
                     </select>
                   </div>
@@ -915,6 +937,17 @@ export default function AdminTagsPage() {
             </div>
           )}
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

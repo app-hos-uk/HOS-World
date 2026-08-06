@@ -1,7 +1,7 @@
 'use client';
 
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { ReturnsManagement } from '@/components/returns/ReturnsManagement';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
@@ -13,9 +13,9 @@ export default function SellerReturnsPage() {
 
   return (
     <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied>
-      <DashboardLayout role={isWholesaler ? 'WHOLESALER' : 'SELLER'} menuItems={menuItems} title={isWholesaler ? 'Wholesaler' : 'Seller'}>
+      <AppShellLayout role={isWholesaler ? 'WHOLESALER' : 'SELLER'} menuItems={menuItems} title={isWholesaler ? 'Wholesaler' : 'Seller'} breadcrumbs="inline">
         <ReturnsManagement mode="seller" />
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

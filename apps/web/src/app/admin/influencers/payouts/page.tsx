@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 const api = apiClient as any;
 
@@ -37,6 +38,13 @@ interface Influencer {
 
 export default function AdminInfluencerPayoutsPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [influencers, setInfluencers] = useState<Influencer[]>([]);
@@ -115,16 +123,22 @@ export default function AdminInfluencerPayoutsPage() {
     }
   };
 
-  const handleCancel = async (id: string) => {
-    if (!confirm('Are you sure you want to cancel this payout?')) return;
-
-    try {
-      await api.cancelPayout(id);
-      toast.success('Payout cancelled');
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to cancel payout');
-    }
+  const handleCancel = (id: string) => {
+    setConfirmDialog({
+      title: 'Are you sure you want to cancel this payout?',
+      tone: 'danger',
+      confirmLabel: 'Cancel payout',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await api.cancelPayout(id);
+          toast.success('Payout cancelled');
+          fetchData();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to cancel payout');
+        }
+      },
+    });
   };
 
   const formatCurrency = (amount: number, currency = 'USD') => {
@@ -389,6 +403,17 @@ export default function AdminInfluencerPayoutsPage() {
           </div>
         )}
       </div>
-          </RouteGuard>
+                  {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

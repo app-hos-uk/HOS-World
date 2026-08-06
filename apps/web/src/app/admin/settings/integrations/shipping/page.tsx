@@ -3,6 +3,7 @@
 import { useEffect, useState, Fragment } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Dialog, Transition } from '@headlessui/react';
@@ -76,6 +77,13 @@ const SHIPPING_PROVIDERS: Record<string, ProviderMetadata> = {
 
 export default function ShippingIntegrationsPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
   const [testingId, setTestingId] = useState<string | null>(null);
@@ -231,16 +239,23 @@ export default function ShippingIntegrationsPage() {
     }
   };
 
-  const handleDeleteIntegration = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete the ${name} integration? This will remove all stored credentials.`)) return;
-
-    try {
-      await apiClient.deleteIntegration(id);
-      toast.success('Integration deleted successfully');
-      fetchIntegrations();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to delete integration');
-    }
+  const handleDeleteIntegration = (id: string, name: string) => {
+    setConfirmDialog({
+      title: `Are you sure you want to delete the ${name} integration?`,
+      description: 'This will remove all stored credentials.',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteIntegration(id);
+          toast.success('Integration deleted successfully');
+          fetchIntegrations();
+        } catch (error: any) {
+          toast.error(error.message || 'Failed to delete integration');
+        }
+      },
+    });
   };
 
   const getIntegration = (provider: string): Integration | undefined => {
@@ -601,6 +616,17 @@ export default function ShippingIntegrationsPage() {
             </div>
           </Dialog>
         </Transition>
-          </RouteGuard>
+                  {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

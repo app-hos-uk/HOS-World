@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { navIcon } from '@/lib/navIcons';
 
 export default function AdminLoyaltyDashboardPage() {
   const [data, setData] = useState<Record<string, unknown> | null>(null);
@@ -26,12 +27,12 @@ export default function AdminLoyaltyDashboardPage() {
   useEffect(() => { load(); }, [load]);
 
   const cards = [
-    { label: 'Total Members', value: data?.totalMembers ?? data?.memberCount ?? 0, icon: '👥', color: 'purple', href: '/admin/loyalty/members' },
-    { label: 'Active Tiers', value: data?.tierCount ?? data?.activeTiers ?? 0, icon: '🏆', color: 'amber', href: '/admin/loyalty/tiers' },
-    { label: 'Earn Rules', value: data?.earnRuleCount ?? data?.earnRules ?? 0, icon: '⚡', color: 'blue', href: '/admin/loyalty/earn-rules' },
-    { label: 'Redemption Options', value: data?.redemptionOptionCount ?? data?.redemptionOptions ?? 0, icon: '🎁', color: 'green', href: '/admin/loyalty/redemption-options' },
-    { label: 'Bonus Campaigns', value: data?.campaignCount ?? data?.campaigns ?? 0, icon: '🎯', color: 'rose', href: '/admin/loyalty/campaigns' },
-    { label: 'Points in Circulation', value: data?.totalPointsInCirculation ?? data?.pointsCirculating ?? 0, icon: '💎', color: 'indigo', href: '/admin/loyalty/transactions' },
+    { label: 'Total Members', value: data?.totalMembers ?? data?.memberCount ?? 0, icon: navIcon('users', 'w-6 h-6'), color: 'purple', href: '/admin/loyalty/members' },
+    { label: 'Active Tiers', value: data?.tierCount ?? data?.activeTiers ?? 0, icon: navIcon('trophy', 'w-6 h-6'), color: 'amber', href: '/admin/loyalty/tiers' },
+    { label: 'Earn Rules', value: data?.earnRuleCount ?? data?.earnRules ?? 0, icon: navIcon('zap', 'w-6 h-6'), color: 'blue', href: '/admin/loyalty/earn-rules' },
+    { label: 'Redemption Options', value: data?.redemptionOptionCount ?? data?.redemptionOptions ?? 0, icon: navIcon('gift', 'w-6 h-6'), color: 'green', href: '/admin/loyalty/redemption-options' },
+    { label: 'Bonus Campaigns', value: data?.campaignCount ?? data?.campaigns ?? 0, icon: navIcon('target', 'w-6 h-6'), color: 'rose', href: '/admin/loyalty/campaigns' },
+    { label: 'Points in Circulation', value: data?.totalPointsInCirculation ?? data?.pointsCirculating ?? 0, icon: navIcon('gem', 'w-6 h-6'), color: 'indigo', href: '/admin/loyalty/transactions' },
   ];
 
   const colorMap: Record<string, string> = {
@@ -77,35 +78,35 @@ export default function AdminLoyaltyDashboardPage() {
                 <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
                 <div className="space-y-2">
                   <Link href="/admin/loyalty/tiers" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
-                    <span className="text-xl">🏆</span>
+                    <span className="text-xl">{navIcon('trophy', 'w-5 h-5')}</span>
                     <div>
                       <p className="font-medium text-hos-text-secondary">Manage Tiers</p>
                       <p className="text-sm text-hos-text-muted">Edit tier thresholds and multipliers</p>
                     </div>
                   </Link>
                   <Link href="/admin/loyalty/earn-rules" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
-                    <span className="text-xl">⚡</span>
+                    <span className="text-xl">{navIcon('zap', 'w-5 h-5')}</span>
                     <div>
                       <p className="font-medium text-hos-text-secondary">Earn Rules</p>
                       <p className="text-sm text-hos-text-muted">Configure how customers earn points</p>
                     </div>
                   </Link>
                   <Link href="/admin/loyalty/redemption-options" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
-                    <span className="text-xl">🎁</span>
+                    <span className="text-xl">{navIcon('gift', 'w-5 h-5')}</span>
                     <div>
                       <p className="font-medium text-hos-text-secondary">Redemption Options</p>
                       <p className="text-sm text-hos-text-muted">Manage the rewards catalogue</p>
                     </div>
                   </Link>
                   <Link href="/admin/loyalty/campaigns" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
-                    <span className="text-xl">🎯</span>
+                    <span className="text-xl">{navIcon('target', 'w-5 h-5')}</span>
                     <div>
                       <p className="font-medium text-hos-text-secondary">Bonus Campaigns</p>
                       <p className="text-sm text-hos-text-muted">Create double-points events</p>
                     </div>
                   </Link>
                   <Link href="/admin/loyalty/members" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
-                    <span className="text-xl">👥</span>
+                    <span className="text-xl">{navIcon('users', 'w-5 h-5')}</span>
                     <div>
                       <p className="font-medium text-hos-text-secondary">Member Lookup</p>
                       <p className="text-sm text-hos-text-muted">Search members, adjust points</p>
@@ -118,21 +119,21 @@ export default function AdminLoyaltyDashboardPage() {
                 <h2 className="text-lg font-semibold mb-4">Analytics</h2>
                 <div className="space-y-2">
                   <Link href="/admin/loyalty-analytics" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
-                    <span className="text-xl">💡</span>
+                    <span className="text-xl">{navIcon('lightbulb', 'w-5 h-5')}</span>
                     <div>
                       <p className="font-medium text-hos-text-secondary">Program Health</p>
                       <p className="text-sm text-hos-text-muted">Overall loyalty KPIs and trends</p>
                     </div>
                   </Link>
                   <Link href="/admin/loyalty-analytics/tiers" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
-                    <span className="text-xl">📊</span>
+                    <span className="text-xl">{navIcon('dashboard', 'w-5 h-5')}</span>
                     <div>
                       <p className="font-medium text-hos-text-secondary">Tier Analysis</p>
                       <p className="text-sm text-hos-text-muted">Member distribution across tiers</p>
                     </div>
                   </Link>
                   <Link href="/admin/loyalty-analytics/clv" className="flex items-center gap-3 p-3 rounded-lg hover:bg-hos-bg-tertiary transition-colors">
-                    <span className="text-xl">👤</span>
+                    <span className="text-xl">{navIcon('user', 'w-5 h-5')}</span>
                     <div>
                       <p className="font-medium text-hos-text-secondary">Customer Lifetime Value</p>
                       <p className="text-sm text-hos-text-muted">CLV distribution and top members</p>

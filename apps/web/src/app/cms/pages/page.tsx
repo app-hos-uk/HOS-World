@@ -3,7 +3,9 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { CMSLayout } from '@/components/CMSLayout';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { AppShellLayout } from '@/components/AppShellLayout';
+import { getCmsMenu } from '@/lib/adminMenus';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
@@ -14,6 +16,13 @@ function CMSPagesContent() {
   const searchParams = useSearchParams();
   const editId = searchParams.get('edit');
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [pages, setPages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -145,18 +154,32 @@ function CMSPagesContent() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
-        <CMSLayout>
+        <AppShellLayout
+          title="CMS Portal"
+          menuItems={getCmsMenu()}
+          role="CMS_EDITOR"
+          breadcrumbs="none"
+          headerLink={{ title: 'Dashboard', href: '/cms/dashboard' }}
+          backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        >
           <div className="flex items-center justify-center h-64">
             <div className="text-hos-text-muted">Loading pages...</div>
           </div>
-        </CMSLayout>
+        </AppShellLayout>
       </RouteGuard>
     );
   }
 
   return (
     <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
-      <CMSLayout>
+      <AppShellLayout
+        title="CMS Portal"
+        menuItems={getCmsMenu()}
+        role="CMS_EDITOR"
+        breadcrumbs="none"
+        headerLink={{ title: 'Dashboard', href: '/cms/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+      >
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-hos-text-secondary">CMS Pages</h1>
@@ -443,15 +466,23 @@ function CMSPagesContent() {
                             Edit
                           </Link>
                           <button
-                            onClick={async () => {
-                              if (!confirm(`Are you sure you want to delete "${page.title}"? This action cannot be undone.`)) return;
-                              try {
-                                await apiClient.deleteCMSPage(page.id);
-                                toast.success('Page deleted successfully');
-                                loadPages();
-                              } catch (err: any) {
-                                toast.error(cmsActionToastMessage(err, 'Failed to delete page'));
-                              }
+                            onClick={() => {
+                              setConfirmDialog({
+                                title: `Are you sure you want to delete "${page.title}"?`,
+                                description: 'This action cannot be undone.',
+                                tone: 'danger',
+                                confirmLabel: 'Delete',
+                                onConfirm: async () => {
+                                  setConfirmDialog(null);
+                                  try {
+                                    await apiClient.deleteCMSPage(page.id);
+                                    toast.success('Page deleted successfully');
+                                    loadPages();
+                                  } catch (err: any) {
+                                    toast.error(cmsActionToastMessage(err, 'Failed to delete page'));
+                                  }
+                                },
+                              });
                             }}
                             className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
                           >
@@ -466,7 +497,18 @@ function CMSPagesContent() {
             </div>
           </div>
         </div>
-      </CMSLayout>
+              {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</AppShellLayout>
     </RouteGuard>
   );
 }

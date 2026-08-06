@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
@@ -283,7 +283,7 @@ export default function SellerProductsPage() {
 
   return (
     <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller" backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}>
+      <AppShellLayout role="SELLER" menuItems={menuItems} title="Seller" backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }} breadcrumbs="inline">
         <div className="space-y-6">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -641,7 +641,7 @@ export default function SellerProductsPage() {
             </div>
           )}
         </div>
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

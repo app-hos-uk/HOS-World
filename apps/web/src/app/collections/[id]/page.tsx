@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
@@ -38,6 +39,13 @@ export default function CollectionDetailPage() {
   const params = useParams();
   const router = useRouter();
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const collectionId = params.id as string;
   const [collection, setCollection] = useState<Collection | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -124,18 +132,23 @@ export default function CollectionDetailPage() {
     }
   };
 
-  const handleDeleteCollection = async () => {
-    if (!confirm('Are you sure you want to delete this collection? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      await apiClient.deleteCollection(collectionId);
-      toast.success('Collection deleted successfully');
-      router.push('/collections');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete collection');
-    }
+  const handleDeleteCollection = () => {
+    setConfirmDialog({
+      title: 'Are you sure you want to delete this collection?',
+      description: 'This action cannot be undone.',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteCollection(collectionId);
+          toast.success('Collection deleted successfully');
+          router.push('/collections');
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to delete collection');
+        }
+      },
+    });
   };
 
   const handleRemoveProduct = async (productId: string) => {
@@ -342,6 +355,17 @@ export default function CollectionDetailPage() {
         </main>
         <Footer />
       </div>
-    </RouteGuard>
+            {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

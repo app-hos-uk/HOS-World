@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { CMSLayout } from '@/components/CMSLayout';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { AppShellLayout } from '@/components/AppShellLayout';
+import { getCmsMenu } from '@/lib/adminMenus';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
@@ -24,6 +26,13 @@ interface BlogPost {
 
 export default function CMSBlogPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,15 +56,23 @@ export default function CMSBlogPage() {
     }
   };
 
-  const handleDeletePost = async (post: BlogPost) => {
-    if (!window.confirm(`Delete "${post.title}"? This cannot be undone.`)) return;
-    try {
-      await apiClient.deleteBlogPost(post.id);
-      toast.success('Blog post deleted');
-      loadBlogPosts();
-    } catch (err: unknown) {
-      toast.error(cmsActionToastMessage(err, 'Failed to delete blog post'));
-    }
+  const handleDeletePost = (post: BlogPost) => {
+    setConfirmDialog({
+      title: `Delete "${post.title}"?`,
+      description: 'This cannot be undone.',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteBlogPost(post.id);
+          toast.success('Blog post deleted');
+          loadBlogPosts();
+        } catch (err: unknown) {
+          toast.error(cmsActionToastMessage(err, 'Failed to delete blog post'));
+        }
+      },
+    });
   };
 
   const handleTogglePublish = async (post: BlogPost) => {
@@ -76,18 +93,32 @@ export default function CMSBlogPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
-        <CMSLayout>
+        <AppShellLayout
+          title="CMS Portal"
+          menuItems={getCmsMenu()}
+          role="CMS_EDITOR"
+          breadcrumbs="none"
+          headerLink={{ title: 'Dashboard', href: '/cms/dashboard' }}
+          backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        >
           <div className="flex items-center justify-center h-64">
             <div className="text-hos-text-muted">Loading blog posts...</div>
           </div>
-        </CMSLayout>
+        </AppShellLayout>
       </RouteGuard>
     );
   }
 
   return (
     <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
-      <CMSLayout>
+      <AppShellLayout
+        title="CMS Portal"
+        menuItems={getCmsMenu()}
+        role="CMS_EDITOR"
+        breadcrumbs="none"
+        headerLink={{ title: 'Dashboard', href: '/cms/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+      >
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-hos-text-secondary">Blog Posts</h1>
@@ -188,7 +219,18 @@ export default function CMSBlogPage() {
             </div>
           </div>
         </div>
-      </CMSLayout>
+              {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</AppShellLayout>
     </RouteGuard>
   );
 }

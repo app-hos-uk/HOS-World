@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -10,6 +11,13 @@ export default function AdminEventsPage() {
   const toast = useToast();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -37,26 +45,42 @@ export default function AdminEventsPage() {
     }
   };
 
-  const remove = async (id: string) => {
-    if (!confirm('Delete this draft event? This cannot be undone.')) return;
-    try {
-      await apiClient.adminDeleteEvent(id);
-      toast.success('Deleted');
-      load();
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed');
-    }
+  const remove = (id: string) => {
+    setConfirmDialog({
+      title: 'Delete this draft event?',
+      description: 'This cannot be undone.',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.adminDeleteEvent(id);
+          toast.success('Deleted');
+          load();
+        } catch (e: any) {
+          toast.error(e?.message || 'Failed');
+        }
+      },
+    });
   };
 
-  const cancel = async (id: string) => {
-    if (!confirm('Cancel this event? RSVPs will be cancelled.')) return;
-    try {
-      await apiClient.adminCancelEvent(id);
-      toast.success('Cancelled');
-      load();
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed');
-    }
+  const cancel = (id: string) => {
+    setConfirmDialog({
+      title: 'Cancel this event?',
+      description: 'RSVPs will be cancelled.',
+      tone: 'danger',
+      confirmLabel: 'Cancel event',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.adminCancelEvent(id);
+          toast.success('Cancelled');
+          load();
+        } catch (e: any) {
+          toast.error(e?.message || 'Failed');
+        }
+      },
+    });
   };
 
   const canCancel = (status: string) =>
@@ -145,6 +169,17 @@ export default function AdminEventsPage() {
             </div>
           )}
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

@@ -1,66 +1,68 @@
 'use client';
 
+import type React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
+import { navIcon } from '@/lib/navIcons';
 
-const ROLE_CONFIG: Record<string, { title: string; dashboardHref: string; menuItems: { title: string; href: string; icon: string }[] }> = {
+const ROLE_CONFIG: Record<string, { title: string; dashboardHref: string; menuItems: { title: string; href: string; icon: React.ReactNode }[] }> = {
   PROCUREMENT: {
     title: 'Procurement',
     dashboardHref: '/procurement/dashboard',
     menuItems: [
-      { title: 'Dashboard', href: '/procurement/dashboard', icon: '📊' },
-      { title: 'Review Submissions', href: '/procurement/submissions', icon: '📦' },
+      { title: 'Dashboard', href: '/procurement/dashboard', icon: navIcon('dashboard') },
+      { title: 'Review Submissions', href: '/procurement/submissions', icon: navIcon('package') },
     ],
   },
   FULFILLMENT: {
     title: 'Fulfillment',
     dashboardHref: '/fulfillment/dashboard',
     menuItems: [
-      { title: 'Dashboard', href: '/fulfillment/dashboard', icon: '📊' },
+      { title: 'Dashboard', href: '/fulfillment/dashboard', icon: navIcon('dashboard') },
     ],
   },
   CATALOG: {
     title: 'Catalog',
     dashboardHref: '/catalog/dashboard',
     menuItems: [
-      { title: 'Dashboard', href: '/catalog/dashboard', icon: '📊' },
+      { title: 'Dashboard', href: '/catalog/dashboard', icon: navIcon('dashboard') },
     ],
   },
   MARKETING: {
     title: 'Marketing',
     dashboardHref: '/marketing/dashboard',
     menuItems: [
-      { title: 'Dashboard', href: '/marketing/dashboard', icon: '📊' },
+      { title: 'Dashboard', href: '/marketing/dashboard', icon: navIcon('dashboard') },
     ],
   },
   FINANCE: {
     title: 'Finance',
     dashboardHref: '/finance/dashboard',
     menuItems: [
-      { title: 'Dashboard', href: '/finance/dashboard', icon: '📊' },
+      { title: 'Dashboard', href: '/finance/dashboard', icon: navIcon('dashboard') },
     ],
   },
   CMS_EDITOR: {
     title: 'CMS',
     dashboardHref: '/cms/dashboard',
     menuItems: [
-      { title: 'Dashboard', href: '/cms/dashboard', icon: '📊' },
+      { title: 'Dashboard', href: '/cms/dashboard', icon: navIcon('dashboard') },
     ],
   },
   ADMIN: {
     title: 'Admin',
     dashboardHref: '/admin/dashboard',
     menuItems: [
-      { title: 'Dashboard', href: '/admin/dashboard', icon: '📊' },
+      { title: 'Dashboard', href: '/admin/dashboard', icon: navIcon('dashboard') },
     ],
   },
   CUSTOMER: {
     title: 'Account',
     dashboardHref: '/customer/dashboard',
     menuItems: [
-      { title: 'Dashboard', href: '/customer/dashboard', icon: '📊' },
+      { title: 'Dashboard', href: '/customer/dashboard', icon: navIcon('dashboard') },
     ],
   },
 };
@@ -99,8 +101,9 @@ export default function AccessDeniedPage() {
   }
 
   return (
-    <DashboardLayout
+    <AppShellLayout
       role={user?.role || 'CUSTOMER'}
+      breadcrumbs="inline"
       menuItems={config.menuItems}
       title={config.title}
     >
@@ -165,6 +168,6 @@ export default function AccessDeniedPage() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </AppShellLayout>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { SafeImage } from '@/components/SafeImage';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -82,6 +83,13 @@ const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
 export default function AdminSellersPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const { formatPrice } = useCurrency();
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -358,15 +366,22 @@ export default function AdminSellersPage() {
     }
   };
 
-  const handleCancelInvitation = async (id: string) => {
-    if (!confirm('Are you sure you want to cancel this invitation?')) return;
-    try {
-      await apiClient.cancelSellerInvitation(id);
-      toast.success('Invitation cancelled successfully');
-      fetchInvitations();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to cancel invitation');
-    }
+  const handleCancelInvitation = (id: string) => {
+    setConfirmDialog({
+      title: 'Are you sure you want to cancel this invitation?',
+      tone: 'danger',
+      confirmLabel: 'Cancel invitation',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.cancelSellerInvitation(id);
+          toast.success('Invitation cancelled successfully');
+          fetchInvitations();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to cancel invitation');
+        }
+      },
+    });
   };
 
   const handleToggleStatus = async (seller: Seller) => {
@@ -1120,6 +1135,17 @@ export default function AdminSellersPage() {
             </div>
           )}
         </div>
-          </RouteGuard>
+                  {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

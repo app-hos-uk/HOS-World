@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import {
   downloadCsvTemplate,
@@ -85,6 +86,13 @@ export default function AdminFoundingMembersPage() {
   const [stats, setStats] = useState<{ total: number; byStatus: Record<string, number> } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const [importFile, setImportFile] = useState<File | null>(null);
   const [parsedMembers, setParsedMembers] = useState<ParsedFoundingMember[]>([]);
@@ -263,41 +271,53 @@ export default function AdminFoundingMembersPage() {
     }
   };
 
-  const handleSendConfirmations = async () => {
-    if (!confirm('Send confirmation emails to all founding members who haven\'t received one yet?')) return;
-    setConfirmationLoading(true);
-    setConfirmationResult(null);
-    setError(null);
-    try {
-      const res = await apiClient.sendFoundingMemberConfirmations(50);
-      setConfirmationResult(res.data as { sent: number; failed: number; skipped: number });
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to send confirmation emails');
-    } finally {
-      setConfirmationLoading(false);
-    }
+  const handleSendConfirmations = () => {
+    setConfirmDialog({
+      title: "Send confirmation emails to all founding members who haven't received one yet?",
+      confirmLabel: 'Send',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        setConfirmationLoading(true);
+        setConfirmationResult(null);
+        setError(null);
+        try {
+          const res = await apiClient.sendFoundingMemberConfirmations(50);
+          setConfirmationResult(res.data as { sent: number; failed: number; skipped: number });
+        } catch (err: unknown) {
+          setError(err instanceof Error ? err.message : 'Failed to send confirmation emails');
+        } finally {
+          setConfirmationLoading(false);
+        }
+      },
+    });
   };
 
-  const handleSendAccountInvitations = async (toSelected = false) => {
+  const handleSendAccountInvitations = (toSelected = false) => {
     const ids = toSelected ? Array.from(selectedIds) : undefined;
     const target = toSelected ? `${ids!.length} selected member(s)` : 'all eligible founding members';
-    if (!confirm(`Send account creation invitations to ${target}?`)) return;
-    setInvitationLoading(true);
-    setInvitationResult(null);
-    setError(null);
-    try {
-      const res = await apiClient.sendFoundingMemberAccountInvitations({
-        batchSize: 50,
-        memberIds: ids,
-      });
-      setInvitationResult(res.data as { sent: number; failed: number; skipped: number });
-      setSelectedIds(new Set());
-      await fetchMembers();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to send account invitations');
-    } finally {
-      setInvitationLoading(false);
-    }
+    setConfirmDialog({
+      title: `Send account creation invitations to ${target}?`,
+      confirmLabel: 'Send',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        setInvitationLoading(true);
+        setInvitationResult(null);
+        setError(null);
+        try {
+          const res = await apiClient.sendFoundingMemberAccountInvitations({
+            batchSize: 50,
+            memberIds: ids,
+          });
+          setInvitationResult(res.data as { sent: number; failed: number; skipped: number });
+          setSelectedIds(new Set());
+          await fetchMembers();
+        } catch (err: unknown) {
+          setError(err instanceof Error ? err.message : 'Failed to send account invitations');
+        } finally {
+          setInvitationLoading(false);
+        }
+      },
+    });
   };
 
   const toggleSelectAll = () => {
@@ -750,6 +770,17 @@ export default function AdminFoundingMembersPage() {
             </form>
           )}
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

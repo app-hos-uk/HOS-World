@@ -124,7 +124,7 @@ export function ActivityItem({
 
 // Empty state component
 interface EmptyStateProps {
-  icon?: string;
+  icon?: React.ReactNode;
   title: string;
   description?: string;
   action?: {

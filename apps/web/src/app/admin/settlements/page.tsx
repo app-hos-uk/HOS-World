@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { DataExport } from '@/components/DataExport';
 import {
@@ -56,6 +58,7 @@ interface Stats {
 export default function AdminSettlementsPage() {
   const toast = useToast();
   const { formatPrice } = useCurrency();
+  const { open: openDialog, close: closeDialog, dialogProps } = useConfirmDialog();
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -272,7 +275,6 @@ export default function AdminSettlementsPage() {
   };
 
   const handleCancelSettlement = async (settlementId: string, reason: string) => {
-    if (!confirm('Are you sure you want to cancel this settlement?')) return;
     try {
       setProcessing(true);
       await apiClient.cancelSettlement(settlementId, { reason });
@@ -284,6 +286,41 @@ export default function AdminSettlementsPage() {
     } finally {
       setProcessing(false);
     }
+  };
+
+  const requestMarkAsPaid = (settlementId: string) => {
+    openDialog({
+      variant: 'prompt',
+      title: 'Mark as Paid',
+      inputLabel: 'Payment reference',
+      inputPlaceholder: 'Enter payment reference...',
+      inputRequired: true,
+      confirmLabel: 'Mark as Paid',
+      onConfirm: async (value) => {
+        closeDialog();
+        if (!value?.trim()) return;
+        await handleMarkAsPaid(settlementId, value.trim());
+      },
+    });
+  };
+
+  const requestCancelSettlement = (settlementId: string) => {
+    openDialog({
+      variant: 'prompt',
+      title: 'Cancel settlement?',
+      description: 'Are you sure you want to cancel this settlement?',
+      inputLabel: 'Cancellation reason',
+      inputPlaceholder: 'Enter cancellation reason...',
+      inputRequired: true,
+      confirmLabel: 'Cancel settlement',
+      tone: 'danger',
+      inputMultiline: true,
+      onConfirm: async (value) => {
+        closeDialog();
+        if (!value?.trim()) return;
+        await handleCancelSettlement(settlementId, value.trim());
+      },
+    });
   };
 
   const handleCreateSettlement = async () => {
@@ -309,22 +346,29 @@ export default function AdminSettlementsPage() {
     }
   };
 
-  const handleBulkProcess = async () => {
+  const handleBulkProcess = () => {
     if (selectedSettlements.size === 0) return;
-    if (!confirm(`Process ${selectedSettlements.size} settlements?`)) return;
-
-    let success = 0;
-    for (const id of selectedSettlements) {
-      try {
-        await apiClient.processSettlement(id, { status: 'PAID' });
-        success++;
-      } catch {
-        // Continue on error
-      }
-    }
-    toast.success(`Processed ${success} settlements`);
-    setSelectedSettlements(new Set());
-    fetchSettlements();
+    const count = selectedSettlements.size;
+    openDialog({
+      title: 'Process settlements?',
+      description: `Process ${count} settlements?`,
+      confirmLabel: 'Process',
+      onConfirm: async () => {
+        closeDialog();
+        let success = 0;
+        for (const id of selectedSettlements) {
+          try {
+            await apiClient.processSettlement(id, { status: 'PAID' });
+            success++;
+          } catch {
+            // Continue on error
+          }
+        }
+        toast.success(`Processed ${success} settlements`);
+        setSelectedSettlements(new Set());
+        fetchSettlements();
+      },
+    });
   };
 
   const toggleSelection = (id: string) => {
@@ -689,10 +733,7 @@ export default function AdminSettlementsPage() {
                       )}
                       {selectedSettlement.status === 'PROCESSING' && (
                         <button
-                          onClick={() => {
-                            const ref = prompt('Enter payment reference:');
-                            if (ref) handleMarkAsPaid(selectedSettlement.id, ref);
-                          }}
+                          onClick={() => requestMarkAsPaid(selectedSettlement.id)}
                           disabled={processing}
                           className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                         >
@@ -701,10 +742,7 @@ export default function AdminSettlementsPage() {
                       )}
                       {['PENDING', 'PROCESSING'].includes(selectedSettlement.status) && (
                         <button
-                          onClick={() => {
-                            const reason = prompt('Enter cancellation reason:');
-                            if (reason) handleCancelSettlement(selectedSettlement.id, reason);
-                          }}
+                          onClick={() => requestCancelSettlement(selectedSettlement.id)}
                           disabled={processing}
                           className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
                         >
@@ -787,6 +825,8 @@ export default function AdminSettlementsPage() {
               </div>
             </div>
           )}
+
+          <ConfirmDialog {...dialogProps} busy={processing} />
         </div>
           </RouteGuard>
   );

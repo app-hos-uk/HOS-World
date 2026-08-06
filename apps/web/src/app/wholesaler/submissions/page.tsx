@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
@@ -24,6 +25,13 @@ export default function WholesalerSubmissionsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const menuItems = getSellerMenuItems(true);
 
@@ -61,7 +69,7 @@ export default function WholesalerSubmissionsPage() {
 
   return (
     <RouteGuard allowedRoles={['WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler" backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}>
+      <AppShellLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler" backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }} breadcrumbs="inline">
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
@@ -235,23 +243,25 @@ export default function WholesalerSubmissionsPage() {
                             {canSellerDeleteSubmission(submission.status) && (
                               <button
                                 type="button"
-                                onClick={async () => {
-                                  if (
-                                    !window.confirm(
-                                      'Remove this submission? This cannot be undone.',
-                                    )
-                                  ) {
-                                    return;
-                                  }
-                                  try {
-                                    await apiClient.deleteSubmission(submission.id);
-                                    toast.success('Submission deleted');
-                                    fetchSubmissions();
-                                  } catch (err: unknown) {
-                                    const msg =
-                                      err instanceof Error ? err.message : 'Failed to delete submission';
-                                    toast.error(msg);
-                                  }
+                                onClick={() => {
+                                  setConfirmDialog({
+                                    title: 'Remove this submission?',
+                                    description: 'This cannot be undone.',
+                                    tone: 'danger',
+                                    confirmLabel: 'Delete',
+                                    onConfirm: async () => {
+                                      setConfirmDialog(null);
+                                      try {
+                                        await apiClient.deleteSubmission(submission.id);
+                                        toast.success('Submission deleted');
+                                        fetchSubmissions();
+                                      } catch (err: unknown) {
+                                        const msg =
+                                          err instanceof Error ? err.message : 'Failed to delete submission';
+                                        toast.error(msg);
+                                      }
+                                    },
+                                  });
                                 }}
                                 className="text-red-400 hover:text-red-300"
                               >
@@ -268,7 +278,18 @@ export default function WholesalerSubmissionsPage() {
             )}
           </div>
         )}
-      </DashboardLayout>
+              {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</AppShellLayout>
     </RouteGuard>
   );
 }

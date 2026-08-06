@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
@@ -19,6 +19,7 @@ import {
   isPostalInvalid,
   SELLER_PROFILE_HINTS,
 } from '@/lib/sellerProfileFieldValidation';
+import { navIcon } from '@/lib/navIcons';
 
 interface SellerProfile {
   id: string;
@@ -253,27 +254,29 @@ export default function SellerProfilePage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-        <DashboardLayout
+        <AppShellLayout
           role={isWholesaler ? 'WHOLESALER' : 'SELLER'}
+          breadcrumbs="inline"
           menuItems={menuItems}
           title={isWholesaler ? 'Wholesaler' : 'Seller'}
-          backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+          backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
         >
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
-        </DashboardLayout>
+        </AppShellLayout>
       </RouteGuard>
     );
   }
 
   return (
     <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout
+      <AppShellLayout
         role={isWholesaler ? 'WHOLESALER' : 'SELLER'}
+        breadcrumbs="inline"
         menuItems={menuItems}
         title={isWholesaler ? 'Wholesaler' : 'Seller'}
-        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
       >
         <div className="space-y-6">
           {/* Header */}
@@ -317,10 +320,10 @@ export default function SellerProfilePage() {
           <div className="bg-hos-bg-secondary border border-hos-border rounded-lg">
             <div className="flex flex-wrap border-b border-hos-border">
               {[
-                { id: 'business', label: 'Business Info', icon: '🏢' },
-                { id: 'bank', label: 'Bank Details', icon: '🏦' },
-                { id: 'operations', label: 'Operations Contact', icon: '👥' },
-                { id: 'warehouse', label: 'Warehouse', icon: '📦' },
+                { id: 'business', label: 'Business Info', icon: navIcon('building') },
+                { id: 'bank', label: 'Bank Details', icon: navIcon('landmark') },
+                { id: 'operations', label: 'Operations Contact', icon: navIcon('users') },
+                { id: 'warehouse', label: 'Warehouse', icon: navIcon('package') },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -732,7 +735,7 @@ export default function SellerProfilePage() {
             </div>
           </div>
         </div>
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

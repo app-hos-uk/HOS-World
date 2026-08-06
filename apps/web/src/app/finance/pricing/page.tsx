@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { getFinanceMenu } from '@/lib/teamMenus';
@@ -178,11 +178,12 @@ function FinancePricingContent() {
 
   return (
     <RouteGuard allowedRoles={['FINANCE', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout
+      <AppShellLayout
         role="FINANCE"
+        breadcrumbs="inline"
         menuItems={menuItems}
         title="Finance"
-        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
       >
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Pricing Management</h1>
@@ -560,7 +561,7 @@ function FinancePricingContent() {
               </div>
             </div>
           )}
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

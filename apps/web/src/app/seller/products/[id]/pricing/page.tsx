@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
@@ -71,7 +71,7 @@ export default function ProductVolumePricingPage() {
 
   return (
     <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied>
-      <DashboardLayout role="SELLER" menuItems={menuItems} title="Volume pricing">
+      <AppShellLayout role="SELLER" menuItems={menuItems} title="Volume pricing" breadcrumbs="inline">
         <div className="mb-4">
           <Link href="/seller/products" className="text-hos-gold text-sm hover:text-hos-gold-hover">← Back to products</Link>
         </div>
@@ -113,7 +113,7 @@ export default function ProductVolumePricingPage() {
             </div>
           </>
         )}
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

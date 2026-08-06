@@ -11,6 +11,7 @@ import {
 } from '@/lib/sellerProfileFieldValidation';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Dialog, Transition } from '@headlessui/react';
@@ -38,6 +39,13 @@ interface Warehouse {
 
 export default function AdminWarehousesPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -201,18 +209,24 @@ export default function AdminWarehousesPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this warehouse? This action cannot be undone.')) {
-      return;
-    }
-    try {
-      await apiClient.deleteWarehouse(id);
-      toast.success('Warehouse deleted successfully!');
-      fetchWarehouses();
-    } catch (err: any) {
-      console.error('Error deleting warehouse:', err);
-      toast.error(err.message || 'Failed to delete warehouse');
-    }
+  const handleDelete = (id: string) => {
+    setConfirmDialog({
+      title: 'Are you sure you want to delete this warehouse?',
+      description: 'This action cannot be undone.',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteWarehouse(id);
+          toast.success('Warehouse deleted successfully!');
+          fetchWarehouses();
+        } catch (err: any) {
+          console.error('Error deleting warehouse:', err);
+          toast.error(err.message || 'Failed to delete warehouse');
+        }
+      },
+    });
   };
 
   const resetForm = () => {
@@ -700,6 +714,17 @@ export default function AdminWarehousesPage() {
             </Dialog>
           </Transition>
         </div>
-          </RouteGuard>
+                  {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { sanitizeEmailPreviewHtml, wrapEmailPreviewDocument } from '@/lib/sanitizeHtml';
 import { TipTapEditor } from '@/components/cms/TipTapEditor';
@@ -32,6 +33,13 @@ const CHANNEL_ICONS: Record<string, string> = {
 
 export default function AdminTemplatesPage() {
   const [templates, setTemplates] = useState<TemplateDefinition[]>([]);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedChannel, setSelectedChannel] = useState<string>('');
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateDefinition | null>(null);
@@ -135,29 +143,36 @@ export default function AdminTemplatesPage() {
     }
   };
 
-  const handleResetTemplate = async () => {
+  const handleResetTemplate = () => {
     if (!selectedTemplate || selectedTemplate.channel !== 'EMAIL') return;
-    if (!window.confirm('Reset this template to the built-in default? Your custom changes will be removed.')) {
-      return;
-    }
-    setSaveLoading(true);
-    setSaveMessage(null);
-    setSaveError(null);
-    try {
-      const res = await apiClient.resetTemplateOverride(selectedTemplate.slug);
-      const reset = res.data as TemplateDefinition;
-      setSelectedTemplate({ ...reset, isCustomized: false });
-      setEditSubject(reset.subject || '');
-      setEditBody(reset.body);
-      setIsEditing(false);
-      setSaveMessage('Template reset to built-in default.');
-      await fetchTemplates();
-      await handlePreview(selectedTemplate.slug);
-    } catch {
-      setSaveError('Failed to reset template.');
-    } finally {
-      setSaveLoading(false);
-    }
+    const slug = selectedTemplate.slug;
+    setConfirmDialog({
+      title: 'Reset this template to the built-in default?',
+      description: 'Your custom changes will be removed.',
+      tone: 'danger',
+      confirmLabel: 'Reset',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        setSaveLoading(true);
+        setSaveMessage(null);
+        setSaveError(null);
+        try {
+          const res = await apiClient.resetTemplateOverride(slug);
+          const reset = res.data as TemplateDefinition;
+          setSelectedTemplate({ ...reset, isCustomized: false });
+          setEditSubject(reset.subject || '');
+          setEditBody(reset.body);
+          setIsEditing(false);
+          setSaveMessage('Template reset to built-in default.');
+          await fetchTemplates();
+          await handlePreview(slug);
+        } catch {
+          setSaveError('Failed to reset template.');
+        } finally {
+          setSaveLoading(false);
+        }
+      },
+    });
   };
 
   const handleTestRender = async () => {
@@ -503,6 +518,17 @@ export default function AdminTemplatesPage() {
           </div>
         </div>
       </div>
-        </RouteGuard>
+                {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

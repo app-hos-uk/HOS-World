@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export interface Column<T> {
   key: string;
@@ -43,6 +44,7 @@ export function BulkSelectTable<T>({
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [executingAction, setExecutingAction] = useState(false);
+  const [pendingAction, setPendingAction] = useState<BulkAction<T> | null>(null);
 
   // Get all IDs
   const allIds = useMemo(() => data.map((item) => String(item[keyField])), [data, keyField]);
@@ -105,23 +107,29 @@ export function BulkSelectTable<T>({
     });
   }, [data, sortColumn, sortDirection]);
 
-  // Execute bulk action
-  const executeBulkAction = useCallback(async (action: BulkAction<T>) => {
+  const runBulkAction = useCallback(async (action: BulkAction<T>) => {
     if (selectedItems.length === 0) return;
-
-    if (action.confirm) {
-      const confirmed = confirm(action.confirm.replace('{count}', String(selectedItems.length)));
-      if (!confirmed) return;
-    }
-
     try {
       setExecutingAction(true);
       await action.onExecute(selectedItems);
       setSelectedIds(new Set());
     } finally {
       setExecutingAction(false);
+      setPendingAction(null);
     }
   }, [selectedItems]);
+
+  // Execute bulk action
+  const executeBulkAction = useCallback(async (action: BulkAction<T>) => {
+    if (selectedItems.length === 0) return;
+
+    if (action.confirm) {
+      setPendingAction(action);
+      return;
+    }
+
+    await runBulkAction(action);
+  }, [selectedItems, runBulkAction]);
 
   const getActionButtonClass = (variant: string = 'secondary') => {
     switch (variant) {
@@ -268,6 +276,23 @@ export function BulkSelectTable<T>({
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={!!pendingAction}
+        title={pendingAction?.label || 'Confirm'}
+        description={
+          pendingAction?.confirm
+            ? pendingAction.confirm.replace('{count}', String(selectedItems.length))
+            : undefined
+        }
+        confirmLabel={pendingAction?.label || 'Confirm'}
+        tone={pendingAction?.variant === 'danger' ? 'danger' : 'default'}
+        busy={executingAction}
+        onCancel={() => setPendingAction(null)}
+        onConfirm={() => {
+          if (pendingAction) void runBulkAction(pendingAction);
+        }}
+      />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { getFulfillmentMenu } from '@/lib/teamMenus';
 
@@ -94,11 +94,12 @@ export default function FulfillmentShipmentsPage() {
 
   return (
     <RouteGuard allowedRoles={['FULFILLMENT', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout
+      <AppShellLayout
         role="FULFILLMENT"
+        breadcrumbs="inline"
         menuItems={menuItems}
         title="Fulfillment"
-        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
       >
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Manage Shipments</h1>
@@ -316,7 +317,7 @@ export default function FulfillmentShipmentsPage() {
               </div>
             </div>
           )}
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

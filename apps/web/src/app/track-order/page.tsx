@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
+import { navIcon } from '@/lib/navIcons';
 
 interface TrackingEvent {
   date: string;
@@ -57,12 +58,12 @@ interface Order {
 }
 
 const ORDER_STATUSES = [
-  { key: 'PENDING', label: 'Order Placed', icon: '📋', description: 'Your order has been received' },
-  { key: 'CONFIRMED', label: 'Confirmed', icon: '✅', description: 'Order confirmed by seller' },
-  { key: 'PROCESSING', label: 'Processing', icon: '⚙️', description: 'Your order is being prepared' },
-  { key: 'FULFILLED', label: 'Packed', icon: '📦', description: 'Order has been packed and ready for shipping' },
-  { key: 'SHIPPED', label: 'Shipped', icon: '🚚', description: 'Order is on the way' },
-  { key: 'DELIVERED', label: 'Delivered', icon: '🎉', description: 'Order delivered successfully' },
+  { key: 'PENDING', label: 'Order Placed', icon: navIcon('clipboard', 'w-6 h-6'), description: 'Your order has been received' },
+  { key: 'CONFIRMED', label: 'Confirmed', icon: navIcon('checkCircle', 'w-6 h-6'), description: 'Order confirmed by seller' },
+  { key: 'PROCESSING', label: 'Processing', icon: navIcon('settings', 'w-6 h-6'), description: 'Your order is being prepared' },
+  { key: 'FULFILLED', label: 'Packed', icon: navIcon('package', 'w-6 h-6'), description: 'Order has been packed and ready for shipping' },
+  { key: 'SHIPPED', label: 'Shipped', icon: navIcon('truck', 'w-6 h-6'), description: 'Order is on the way' },
+  { key: 'DELIVERED', label: 'Delivered', icon: navIcon('party', 'w-6 h-6'), description: 'Order delivered successfully' },
 ];
 
 function TrackOrderContent() {
@@ -325,8 +326,8 @@ function TrackOrderContent() {
               {/* Handle cancelled/refunded status */}
               {['cancelled', 'refunded'].includes((order.status || '').toLowerCase()) ? (
                 <div className="text-center py-8">
-                  <div className="text-6xl mb-4">
-                    {order.status.toLowerCase() === 'cancelled' ? '❌' : '💸'}
+                  <div className="text-6xl mb-4 flex justify-center">
+                    {order.status.toLowerCase() === 'cancelled' ? navIcon('xCircle', 'w-16 h-16') : navIcon('wallet', 'w-16 h-16')}
                   </div>
                   <h4 className="text-xl font-bold text-hos-text-secondary">
                     Order {order.status.toLowerCase() === 'cancelled' ? 'Cancelled' : 'Refunded'}
@@ -552,7 +553,7 @@ function TrackOrderContent() {
         {!searched && !order && !loading && (
           <div className="max-w-2xl mx-auto">
             <div className="bg-hos-bg-secondary rounded-lg shadow p-8 text-center">
-              <div className="text-6xl mb-4">📦</div>
+              <div className="text-6xl mb-4 flex justify-center">{navIcon('package', 'w-16 h-16')}</div>
               <p className="text-hos-text-secondary">
                 Enter your order number above to track its progress
               </p>

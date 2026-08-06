@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { SafeImage } from '@/components/SafeImage';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
@@ -48,6 +49,13 @@ export default function AdminMediaLibraryPage() {
 
   // Preview modal
   const [previewAsset, setPreviewAsset] = useState<MediaAsset | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -122,24 +130,29 @@ export default function AdminMediaLibraryPage() {
     }
   };
 
-  const handleDelete = async (asset: MediaAsset) => {
-    if (!confirm(`Delete "${asset.filename}"? This action cannot be undone.`)) {
-      return;
-    }
-
-    try {
-      await toast.promise(
-        apiClient.deleteMediaAsset(encodeURIComponent(asset.url)),
-        {
-          loading: 'Deleting file...',
-          success: 'File deleted successfully',
-          error: (err: any) => err.message || 'Failed to delete file',
+  const handleDelete = (asset: MediaAsset) => {
+    setConfirmDialog({
+      title: `Delete "${asset.filename}"?`,
+      description: 'This action cannot be undone.',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await toast.promise(
+            apiClient.deleteMediaAsset(encodeURIComponent(asset.url)),
+            {
+              loading: 'Deleting file...',
+              success: 'File deleted successfully',
+              error: (err: any) => err.message || 'Failed to delete file',
+            }
+          );
+          await fetchAssets();
+        } catch (err: any) {
+          console.error('Delete error:', err);
         }
-      );
-      await fetchAssets();
-    } catch (err: any) {
-      console.error('Delete error:', err);
-    }
+      },
+    });
   };
 
   const copyUrl = (url: string) => {
@@ -488,6 +501,17 @@ export default function AdminMediaLibraryPage() {
             </div>
           )}
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

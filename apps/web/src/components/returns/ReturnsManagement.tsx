@@ -6,6 +6,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { Modal } from '@/components/ui/Modal';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface ReturnRow {
   id: string;
@@ -52,6 +53,13 @@ function formatReturnStatus(status: string): string {
 
 export function ReturnsManagement({ mode }: ReturnsManagementProps) {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const { formatPrice } = useCurrency();
   const [returns, setReturns] = useState<ReturnRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,9 +102,15 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
     }
   };
 
-  const handleApprove = async (row: ReturnRow) => {
-    if (!window.confirm('Approve this return and process the refund?')) return;
-    await updateStatus(row, 'APPROVED', 'Return approved and refund initiated');
+  const handleApprove = (row: ReturnRow) => {
+    setConfirmDialog({
+      title: 'Approve this return and process the refund?',
+      confirmLabel: 'Approve',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        await updateStatus(row, 'APPROVED', 'Return approved and refund initiated');
+      },
+    });
   };
 
   const handleReject = async () => {
@@ -358,6 +372,17 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
           </div>
         </div>
       </Modal>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import { getCatalogMenu } from '@/lib/teamMenus';
@@ -55,11 +55,12 @@ export default function CatalogDashboardPage() {
 
   return (
     <RouteGuard allowedRoles={['CATALOG', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout
+      <AppShellLayout
         role="CATALOG"
+        breadcrumbs="inline"
         menuItems={menuItems}
         title="Catalog"
-        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
       >
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -242,7 +243,7 @@ export default function CatalogDashboardPage() {
             </div>
           </>
         )}
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

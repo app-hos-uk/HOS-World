@@ -16,6 +16,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+import { navIcon } from '@/lib/navIcons';
 
 interface Analytics {
   totalClicks: number;
@@ -42,17 +43,17 @@ const TIER_CONFIG = {
 
 // Achievement definitions
 const ACHIEVEMENTS = [
-  { id: 'first_click', name: 'First Click', description: 'Got your first referral click', icon: '🎯', threshold: 1, metric: 'clicks' },
-  { id: 'click_100', name: 'Traffic Driver', description: 'Reached 100 clicks', icon: '🚀', threshold: 100, metric: 'clicks' },
-  { id: 'click_1000', name: 'Viral Sensation', description: 'Reached 1,000 clicks', icon: '⚡', threshold: 1000, metric: 'clicks' },
-  { id: 'first_sale', name: 'First Sale', description: 'Made your first sale', icon: '🎉', threshold: 1, metric: 'conversions' },
-  { id: 'sales_10', name: 'Rising Star', description: 'Completed 10 sales', icon: '⭐', threshold: 10, metric: 'conversions' },
-  { id: 'sales_50', name: 'Top Performer', description: 'Completed 50 sales', icon: '🏆', threshold: 50, metric: 'conversions' },
-  { id: 'sales_100', name: 'Sales Champion', description: 'Completed 100 sales', icon: '👑', threshold: 100, metric: 'conversions' },
-  { id: 'earnings_100', name: 'First Payout', description: 'Earned $100 in commissions', icon: '💵', threshold: 100, metric: 'earnings' },
-  { id: 'earnings_1000', name: 'Money Maker', description: 'Earned $1,000 in commissions', icon: '💰', threshold: 1000, metric: 'earnings' },
-  { id: 'earnings_5000', name: 'High Earner', description: 'Earned $5,000 in commissions', icon: '🤑', threshold: 5000, metric: 'earnings' },
-] as const;
+  { id: 'first_click', name: 'First Click', description: 'Got your first referral click', icon: navIcon('target'), threshold: 1, metric: 'clicks' },
+  { id: 'click_100', name: 'Traffic Driver', description: 'Reached 100 clicks', icon: navIcon('rocket'), threshold: 100, metric: 'clicks' },
+  { id: 'click_1000', name: 'Viral Sensation', description: 'Reached 1,000 clicks', icon: navIcon('zap'), threshold: 1000, metric: 'clicks' },
+  { id: 'first_sale', name: 'First Sale', description: 'Made your first sale', icon: navIcon('party'), threshold: 1, metric: 'conversions' },
+  { id: 'sales_10', name: 'Rising Star', description: 'Completed 10 sales', icon: navIcon('star'), threshold: 10, metric: 'conversions' },
+  { id: 'sales_50', name: 'Top Performer', description: 'Completed 50 sales', icon: navIcon('trophy'), threshold: 50, metric: 'conversions' },
+  { id: 'sales_100', name: 'Sales Champion', description: 'Completed 100 sales', icon: navIcon('crown'), threshold: 100, metric: 'conversions' },
+  { id: 'earnings_100', name: 'First Payout', description: 'Earned $100 in commissions', icon: navIcon('banknote'), threshold: 100, metric: 'earnings' },
+  { id: 'earnings_1000', name: 'Money Maker', description: 'Earned $1,000 in commissions', icon: navIcon('dollar'), threshold: 1000, metric: 'earnings' },
+  { id: 'earnings_5000', name: 'High Earner', description: 'Earned $5,000 in commissions', icon: navIcon('circleDollar'), threshold: 5000, metric: 'earnings' },
+];
 
 interface Influencer {
   id: string;
@@ -551,7 +552,7 @@ export default function InfluencerDashboardPage() {
             </>
           ) : (
             <div className="text-center py-4">
-              <span className="text-2xl">🎉</span>
+              <span className="text-2xl">{navIcon('party', 'w-6 h-6')}</span>
               <p className="text-hos-text-secondary mt-2">Congratulations! You&apos;ve reached the highest tier!</p>
             </div>
           )}

@@ -12,3 +12,6 @@ export { Badge, StatusBadge } from './Badge';
 
 // Loading
 export { LoadingState } from './LoadingState';
+
+// Confirm Dialog
+export { useConfirmDialog } from '@/hooks/useConfirmDialog';

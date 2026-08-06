@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import { useCurrency } from '@/contexts/CurrencyContext';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -11,6 +13,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 export default function FinancialPeriodsPage() {
   const toast = useToast();
   const { formatPrice } = useCurrency();
+  const { open: openDialog, close: closeDialog, dialogProps } = useConfirmDialog();
   const [periods, setPeriods] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [closing, setClosing] = useState(false);
@@ -30,29 +33,50 @@ export default function FinancialPeriodsPage() {
 
   useEffect(() => { fetchPeriods(); }, [fetchPeriods]);
 
-  const handleClose = async (year: number, month: number) => {
-    const notes = window.prompt('Close notes (optional):') || undefined;
-    try {
-      setClosing(true);
-      await apiClient.closeFinancialPeriod(year, month, notes);
-      toast.success(`Period ${MONTHS[month - 1]} ${year} closed`);
-      fetchPeriods();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to close period');
-    } finally {
-      setClosing(false);
-    }
+  const handleClose = (year: number, month: number) => {
+    openDialog({
+      variant: 'prompt',
+      title: `Close ${MONTHS[month - 1]} ${year}?`,
+      description: 'Optionally add notes for this period close.',
+      inputLabel: 'Close notes',
+      inputPlaceholder: 'Close notes (optional)...',
+      inputRequired: false,
+      inputMultiline: true,
+      confirmLabel: 'Close period',
+      onConfirm: async (value) => {
+        closeDialog();
+        const notes = value?.trim() || undefined;
+        try {
+          setClosing(true);
+          await apiClient.closeFinancialPeriod(year, month, notes);
+          toast.success(`Period ${MONTHS[month - 1]} ${year} closed`);
+          fetchPeriods();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to close period');
+        } finally {
+          setClosing(false);
+        }
+      },
+    });
   };
 
-  const handleReopen = async (year: number, month: number) => {
-    if (!confirm(`Reopen ${MONTHS[month - 1]} ${year}? This allows new transactions in that period.`)) return;
-    try {
-      await apiClient.reopenFinancialPeriod(year, month);
-      toast.success(`Period ${MONTHS[month - 1]} ${year} reopened`);
-      fetchPeriods();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to reopen period');
-    }
+  const handleReopen = (year: number, month: number) => {
+    openDialog({
+      title: `Reopen ${MONTHS[month - 1]} ${year}?`,
+      description: 'This allows new transactions in that period.',
+      confirmLabel: 'Reopen',
+      tone: 'danger',
+      onConfirm: async () => {
+        closeDialog();
+        try {
+          await apiClient.reopenFinancialPeriod(year, month);
+          toast.success(`Period ${MONTHS[month - 1]} ${year} reopened`);
+          fetchPeriods();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to reopen period');
+        }
+      },
+    });
   };
 
   const getPeriodForMonth = (month: number) => periods.find((p: any) => p.month === month);
@@ -123,6 +147,8 @@ export default function FinancialPeriodsPage() {
               })}
             </div>
           )}
+
+          <ConfirmDialog {...dialogProps} busy={closing} />
         </div>
           </RouteGuard>
   );

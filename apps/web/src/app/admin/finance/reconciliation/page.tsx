@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 
 export default function ReconciliationPage() {
   const toast = useToast();
+  const { open: openDialog, close: closeDialog, dialogProps } = useConfirmDialog();
   const [runs, setRuns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
@@ -55,28 +58,51 @@ export default function ReconciliationPage() {
     }
   };
 
-  const handleResolveItem = async (itemId: string) => {
-    const resolution = window.prompt('Enter resolution notes:');
-    if (!resolution) return;
-    try {
-      await apiClient.resolveReconciliationItem(itemId, resolution);
-      toast.success('Item resolved');
-      if (selectedRun) handleViewDetails(selectedRun.id);
-    } catch (err: any) {
-      toast.error('Failed to resolve item');
-    }
+  const handleResolveItem = (itemId: string) => {
+    openDialog({
+      variant: 'prompt',
+      title: 'Resolve item',
+      inputLabel: 'Resolution notes',
+      inputPlaceholder: 'Enter resolution notes...',
+      inputRequired: true,
+      inputMultiline: true,
+      confirmLabel: 'Resolve',
+      onConfirm: async (value) => {
+        closeDialog();
+        if (!value?.trim()) return;
+        try {
+          await apiClient.resolveReconciliationItem(itemId, value.trim());
+          toast.success('Item resolved');
+          if (selectedRun) handleViewDetails(selectedRun.id);
+        } catch (err: any) {
+          toast.error('Failed to resolve item');
+        }
+      },
+    });
   };
 
-  const handleIgnoreItem = async (itemId: string) => {
-    const reason = window.prompt('Enter reason for ignoring:');
-    if (!reason) return;
-    try {
-      await apiClient.ignoreReconciliationItem(itemId, reason);
-      toast.success('Item ignored');
-      if (selectedRun) handleViewDetails(selectedRun.id);
-    } catch (err: any) {
-      toast.error('Failed to ignore item');
-    }
+  const handleIgnoreItem = (itemId: string) => {
+    openDialog({
+      variant: 'prompt',
+      title: 'Ignore item',
+      inputLabel: 'Reason for ignoring',
+      inputPlaceholder: 'Enter reason for ignoring...',
+      inputRequired: true,
+      inputMultiline: true,
+      confirmLabel: 'Ignore',
+      tone: 'danger',
+      onConfirm: async (value) => {
+        closeDialog();
+        if (!value?.trim()) return;
+        try {
+          await apiClient.ignoreReconciliationItem(itemId, value.trim());
+          toast.success('Item ignored');
+          if (selectedRun) handleViewDetails(selectedRun.id);
+        } catch (err: any) {
+          toast.error('Failed to ignore item');
+        }
+      },
+    });
   };
 
   return (
@@ -169,6 +195,8 @@ export default function ReconciliationPage() {
               </div>
             </div>
           )}
+
+          <ConfirmDialog {...dialogProps} />
         </div>
           </RouteGuard>
   );

@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { MapPicker } from '@/components/MapPicker';
@@ -99,6 +100,13 @@ function ProfilePageContent() {
   const [gdprConsentHistory, setGdprConsentHistory] = useState<any[]>([]);
   const [exportingData, setExportingData] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [doNotSellUpdating, setDoNotSellUpdating] = useState(false);
   const [newsletterStatus, setNewsletterStatus] = useState<{ email: string; subscribed: boolean; status: string } | null>(null);
   const [newsletterLoading, setNewsletterLoading] = useState(false);
@@ -277,26 +285,32 @@ function ProfilePageContent() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!confirm('Are you sure you want to delete your account? This action cannot be undone. Your data will be anonymized but order history will be retained for legal compliance.')) {
-      return;
-    }
-
-    try {
-      setDeletingAccount(true);
-      await apiClient.deleteUserData();
-      toast.success('Account deletion initiated. You will be logged out.');
-      // Logout and redirect
-      setTimeout(() => {
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+  const handleDeleteAccount = () => {
+    setConfirmDialog({
+      title: 'Are you sure you want to delete your account?',
+      description:
+        'This action cannot be undone. Your data will be anonymized but order history will be retained for legal compliance.',
+      tone: 'danger',
+      confirmLabel: 'Delete account',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          setDeletingAccount(true);
+          await apiClient.deleteUserData();
+          toast.success('Account deletion initiated. You will be logged out.');
+          // Logout and redirect
+          setTimeout(() => {
+            if (typeof window !== 'undefined') {
+              window.location.href = '/login';
+            }
+          }, 2000);
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to delete account');
+        } finally {
+          setDeletingAccount(false);
         }
-      }, 2000);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete account');
-    } finally {
-      setDeletingAccount(false);
-    }
+      },
+    });
   };
 
   // Address management functions
@@ -366,15 +380,22 @@ function ProfilePageContent() {
     }
   };
 
-  const handleDeleteAddress = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this address?')) return;
-    try {
-      await apiClient.deleteAddress(id);
-      toast.success('Address deleted successfully!');
-      fetchAddresses();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete address');
-    }
+  const handleDeleteAddress = (id: string) => {
+    setConfirmDialog({
+      title: 'Are you sure you want to delete this address?',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteAddress(id);
+          toast.success('Address deleted successfully!');
+          fetchAddresses();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to delete address');
+        }
+      },
+    });
   };
 
   const handleSetDefault = async (id: string) => {
@@ -1542,6 +1563,17 @@ function ProfilePageContent() {
           </div>
         </main>
         <Footer />
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
       </div>
     </RouteGuard>
   );

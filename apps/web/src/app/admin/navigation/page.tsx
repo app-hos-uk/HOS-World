@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -40,6 +41,13 @@ export default function AdminNavigationPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [activeGroup, setActiveGroup] = useState('header_primary');
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const fetchItems = useCallback(async () => {
     try {
@@ -101,15 +109,22 @@ export default function AdminNavigationPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this navigation item?')) return;
-    try {
-      await apiClient.deleteNavigationItem(id);
-      toast.success('Item deleted');
-      await fetchItems();
-    } catch (err: any) {
-      toast.error(err.message || 'Delete failed');
-    }
+  const handleDelete = (id: string) => {
+    setConfirmDialog({
+      title: 'Delete this navigation item?',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteNavigationItem(id);
+          toast.success('Item deleted');
+          await fetchItems();
+        } catch (err: any) {
+          toast.error(err.message || 'Delete failed');
+        }
+      },
+    });
   };
 
   const moveItem = async (idx: number, direction: -1 | 1) => {
@@ -325,6 +340,17 @@ export default function AdminNavigationPage() {
             </div>
           )}
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

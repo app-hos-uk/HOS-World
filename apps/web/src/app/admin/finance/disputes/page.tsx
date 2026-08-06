@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import { useCurrency } from '@/contexts/CurrencyContext';
 
 const STATUS_OPTIONS = ['OPEN', 'UNDER_REVIEW', 'EVIDENCE_REQUIRED', 'WON', 'LOST', 'CLOSED'];
@@ -11,6 +13,7 @@ const STATUS_OPTIONS = ['OPEN', 'UNDER_REVIEW', 'EVIDENCE_REQUIRED', 'WON', 'LOS
 export default function DisputesPage() {
   const toast = useToast();
   const { formatPrice } = useCurrency();
+  const { open: openDialog, close: closeDialog, dialogProps } = useConfirmDialog();
   const [disputes, setDisputes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
@@ -29,15 +32,28 @@ export default function DisputesPage() {
 
   useEffect(() => { fetchDisputes(); }, [fetchDisputes]);
 
-  const handleUpdateStatus = async (id: string, newStatus: string) => {
-    const notes = window.prompt('Notes (optional):') || undefined;
-    try {
-      await apiClient.updateDisputeStatus(id, newStatus, notes);
-      toast.success('Dispute status updated');
-      fetchDisputes();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update dispute');
-    }
+  const handleUpdateStatus = (id: string, newStatus: string) => {
+    openDialog({
+      variant: 'prompt',
+      title: `Mark dispute as ${newStatus.replace('_', ' ')}?`,
+      inputLabel: 'Notes',
+      inputPlaceholder: 'Notes (optional)...',
+      inputRequired: false,
+      inputMultiline: true,
+      confirmLabel: 'Update',
+      tone: newStatus === 'LOST' ? 'danger' : 'default',
+      onConfirm: async (value) => {
+        closeDialog();
+        const notes = value?.trim() || undefined;
+        try {
+          await apiClient.updateDisputeStatus(id, newStatus, notes);
+          toast.success('Dispute status updated');
+          fetchDisputes();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to update dispute');
+        }
+      },
+    });
   };
 
   const handleMarkEvidence = async (id: string) => {
@@ -104,6 +120,8 @@ export default function DisputesPage() {
               ))}
             </div>
           )}
+
+          <ConfirmDialog {...dialogProps} />
         </div>
           </RouteGuard>
   );

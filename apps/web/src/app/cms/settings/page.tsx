@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { CMSLayout } from '@/components/CMSLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
+import { getCmsMenu } from '@/lib/adminMenus';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { CmsPortalErrorBanner } from '@/components/CmsPortalErrorBanner';
@@ -63,7 +64,14 @@ export default function CMSSettingsPage() {
 
   return (
     <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
-      <CMSLayout>
+      <AppShellLayout
+        title="CMS Portal"
+        menuItems={getCmsMenu()}
+        role="CMS_EDITOR"
+        breadcrumbs="none"
+        headerLink={{ title: 'Dashboard', href: '/cms/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+      >
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -159,7 +167,7 @@ export default function CMSSettingsPage() {
             </div>
           )}
         </div>
-      </CMSLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

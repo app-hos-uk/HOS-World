@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, type ReactNode } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
@@ -39,6 +40,13 @@ function ReturnDetailContent() {
   const searchParams = useSearchParams();
   const { formatPrice } = useCurrency();
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const id = params?.id as string;
   const backHref = resolveBackHref(searchParams.get('from'));
   const [returnRequest, setReturnRequest] = useState<any>(null);
@@ -66,18 +74,25 @@ function ReturnDetailContent() {
     fetchReturn();
   }, [id]);
 
-  const handleCancelReturn = async () => {
-    if (!confirm('Are you sure you want to cancel this return request?')) return;
-    try {
-      setCancelLoading(true);
-      await apiClient.cancelReturn(id);
-      toast.success('Return request cancelled');
-      router.push(backHref);
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to cancel return request');
-    } finally {
-      setCancelLoading(false);
-    }
+  const handleCancelReturn = () => {
+    setConfirmDialog({
+      title: 'Are you sure you want to cancel this return request?',
+      tone: 'danger',
+      confirmLabel: 'Cancel return',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          setCancelLoading(true);
+          await apiClient.cancelReturn(id);
+          toast.success('Return request cancelled');
+          router.push(backHref);
+        } catch (err: any) {
+          toast.error(err?.message || 'Failed to cancel return request');
+        } finally {
+          setCancelLoading(false);
+        }
+      },
+    });
   };
 
 
@@ -90,6 +105,17 @@ function ReturnDetailContent() {
         </main>
         <Footer />
       </div>
+      {confirmDialog && (
+        <ConfirmDialog
+          open
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          tone={confirmDialog.tone}
+          confirmLabel={confirmDialog.confirmLabel}
+          onCancel={() => setConfirmDialog(null)}
+          onConfirm={confirmDialog.onConfirm}
+        />
+      )}
     </RouteGuard>
   );
 

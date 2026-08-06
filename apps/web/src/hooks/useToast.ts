@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import toast from 'react-hot-toast';
+import { navIcon } from '@/lib/navIcons';
 
 interface ToastOptions {
   id?: string;
@@ -22,7 +23,7 @@ const toastMethods = {
   info: (message: string, options?: ToastOptions) => {
     toast(message, {
       duration: 4000,
-      icon: 'ℹ️',
+      icon: navIcon('info', 'w-5 h-5'),
       style: {
         border: '1px solid #6366f1',
       },
@@ -32,7 +33,7 @@ const toastMethods = {
   warning: (message: string, options?: ToastOptions) => {
     toast(message, {
       duration: 5000,
-      icon: '⚠️',
+      icon: navIcon('alert', 'w-5 h-5'),
       style: {
         border: '1px solid #f59e0b',
       },

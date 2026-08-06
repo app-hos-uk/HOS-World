@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { getFinanceMenu } from '@/lib/teamMenus';
@@ -135,11 +135,12 @@ export default function FinancePayoutsPage() {
 
   return (
     <RouteGuard allowedRoles={['FINANCE', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout
+      <AppShellLayout
         role="FINANCE"
+        breadcrumbs="inline"
         menuItems={menuItems}
         title="Finance"
-        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
       >
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -394,7 +395,7 @@ export default function FinancePayoutsPage() {
             </div>
           </div>
         )}
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

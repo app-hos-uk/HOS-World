@@ -3,10 +3,13 @@
 import { useEffect, useState, Fragment } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { EmailTestPanel } from '@/components/admin/EmailTestPanel';
 import { Dialog, Transition } from '@headlessui/react';
+import { navIcon } from '@/lib/navIcons';
+import type React from 'react';
 
 interface Integration {
   id: string;
@@ -39,56 +42,63 @@ interface CategoryProviders {
   [category: string]: Array<{ provider: string; metadata: ProviderMetadata }>;
 }
 
-const CATEGORY_INFO: Record<string, { name: string; icon: string; description: string }> = {
+const CATEGORY_INFO: Record<string, { name: string; icon: React.ReactNode; description: string }> = {
   SHIPPING: {
     name: 'Shipping Carriers',
-    icon: '🚚',
+    icon: navIcon('truck', 'w-6 h-6'),
     description: 'Configure shipping providers for label generation and tracking',
   },
   TAX: {
     name: 'Tax Services',
-    icon: '📊',
+    icon: navIcon('dashboard', 'w-6 h-6'),
     description: 'Automated tax calculation and compliance services',
   },
   PAYMENT: {
     name: 'Payment Gateways',
-    icon: '💳',
+    icon: navIcon('creditCard', 'w-6 h-6'),
     description: 'Payment processing providers',
   },
   EMAIL: {
     name: 'Email Services',
-    icon: '📧',
+    icon: navIcon('mail', 'w-6 h-6'),
     description: 'Email delivery and transactional email providers',
   },
   SMS: {
     name: 'SMS Services',
-    icon: '📱',
+    icon: navIcon('smartphone', 'w-6 h-6'),
     description: 'SMS and text messaging providers',
   },
   STORAGE: {
     name: 'Cloud Storage',
-    icon: '☁️',
+    icon: navIcon('cloud', 'w-6 h-6'),
     description: 'File and media storage providers',
   },
   SEARCH: {
     name: 'Search Services',
-    icon: '🔍',
+    icon: navIcon('search', 'w-6 h-6'),
     description: 'Search engine providers',
   },
   ANALYTICS: {
     name: 'Analytics',
-    icon: '📈',
+    icon: navIcon('trending', 'w-6 h-6'),
     description: 'Analytics and tracking providers',
   },
   MAPS: {
     name: 'Maps & Geocoding',
-    icon: '🗺️',
+    icon: navIcon('map', 'w-6 h-6'),
     description: 'Mapping and geocoding services',
   },
 };
 
 export default function IntegrationsPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [availableProviders, setAvailableProviders] = useState<CategoryProviders>({});
   const [loading, setLoading] = useState(true);
@@ -272,16 +282,22 @@ export default function IntegrationsPage() {
     }
   };
 
-  const handleDeleteIntegration = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete the ${name} integration?`)) return;
-
-    try {
-      await apiClient.deleteIntegration(id);
-      toast.success('Integration deleted successfully');
-      fetchData();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to delete integration');
-    }
+  const handleDeleteIntegration = (id: string, name: string) => {
+    setConfirmDialog({
+      title: `Are you sure you want to delete the ${name} integration?`,
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteIntegration(id);
+          toast.success('Integration deleted successfully');
+          fetchData();
+        } catch (error: any) {
+          toast.error(error.message || 'Failed to delete integration');
+        }
+      },
+    });
   };
 
   const resetForm = () => {
@@ -544,7 +560,7 @@ export default function IntegrationsPage() {
                           <option value="">Select category...</option>
                           {Object.entries(CATEGORY_INFO).map(([cat, info]) => (
                             <option key={cat} value={cat}>
-                              {info.icon} {info.name}
+                              {info.name}
                             </option>
                           ))}
                         </select>
@@ -732,6 +748,17 @@ export default function IntegrationsPage() {
             </div>
           </Dialog>
         </Transition>
-          </RouteGuard>
+                  {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -11,6 +11,7 @@ import { NotificationBell } from '@/components/NotificationBell';
 import { SearchBar } from '@/components/SearchBar';
 import type { UserRole } from '@hos-marketplace/shared-types';
 import { BrandLogo } from '@/components/BrandLogo';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import {
   getNavPrimary,
   getNavMore,
@@ -22,54 +23,55 @@ import { useLoyaltyEnabled } from '@/hooks/useLoyaltyEnabled';
 import { useShopEnabled } from '@/hooks/useShopEnabled';
 import { resolveShopNavHref } from '@/lib/shopAccess';
 import { withShopPreview } from '@/lib/shopPreviewClient';
+import { navIcon } from '@/lib/navIcons';
 
-const ROLE_QUICK_LINKS: Record<string, Array<{ title: string; href: string; icon: string }>> = {
+const ROLE_QUICK_LINKS: Record<string, Array<{ title: string; href: string; icon: ReactNode }>> = {
   ADMIN: [
-    { title: 'Users', href: '/admin/users', icon: '👥' },
-    { title: 'Orders', href: '/admin/orders', icon: '📦' },
-    { title: 'Products', href: '/admin/products', icon: '🛍️' },
+    { title: 'Users', href: '/admin/users', icon: navIcon('users') },
+    { title: 'Orders', href: '/admin/orders', icon: navIcon('package') },
+    { title: 'Products', href: '/admin/products', icon: navIcon('shoppingBag') },
   ],
   SELLER: [
-    { title: 'My Products', href: '/seller/products', icon: '📦' },
-    { title: 'Orders', href: '/seller/orders', icon: '🛒' },
-    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
+    { title: 'My Products', href: '/seller/products', icon: navIcon('package') },
+    { title: 'Orders', href: '/seller/orders', icon: navIcon('cart') },
+    { title: 'Submit Product', href: '/seller/submit-product', icon: navIcon('plus') },
   ],
   B2C_SELLER: [
-    { title: 'My Products', href: '/seller/products', icon: '📦' },
-    { title: 'Orders', href: '/seller/orders', icon: '🛒' },
-    { title: 'Submit Product', href: '/seller/submit-product', icon: '➕' },
+    { title: 'My Products', href: '/seller/products', icon: navIcon('package') },
+    { title: 'Orders', href: '/seller/orders', icon: navIcon('cart') },
+    { title: 'Submit Product', href: '/seller/submit-product', icon: navIcon('plus') },
   ],
   WHOLESALER: [
-    { title: 'Bulk Products', href: '/wholesaler/products', icon: '📦' },
-    { title: 'Bulk Orders', href: '/wholesaler/orders', icon: '🛒' },
-    { title: 'Submit Product', href: '/wholesaler/submit-product', icon: '➕' },
+    { title: 'Bulk Products', href: '/wholesaler/products', icon: navIcon('package') },
+    { title: 'Bulk Orders', href: '/wholesaler/orders', icon: navIcon('cart') },
+    { title: 'Submit Product', href: '/wholesaler/submit-product', icon: navIcon('plus') },
   ],
   INFLUENCER: [
-    { title: 'Dashboard', href: '/influencer/dashboard', icon: '📊' },
-    { title: 'Profile', href: '/influencer/profile', icon: '👤' },
-    { title: 'Earnings', href: '/influencer/earnings', icon: '💰' },
-    { title: 'Product Links', href: '/influencer/product-links', icon: '🔗' },
-    { title: 'Storefront', href: '/influencer/storefront', icon: '🛍️' },
+    { title: 'Dashboard', href: '/influencer/dashboard', icon: navIcon('dashboard') },
+    { title: 'Profile', href: '/influencer/profile', icon: navIcon('user') },
+    { title: 'Earnings', href: '/influencer/earnings', icon: navIcon('dollar') },
+    { title: 'Product Links', href: '/influencer/product-links', icon: navIcon('link') },
+    { title: 'Storefront', href: '/influencer/storefront', icon: navIcon('shoppingBag') },
   ],
   PROCUREMENT: [
-    { title: 'Submissions', href: '/procurement/submissions', icon: '📝' },
+    { title: 'Submissions', href: '/procurement/submissions', icon: navIcon('fileText') },
   ],
   FULFILLMENT: [
-    { title: 'Shipments', href: '/fulfillment/shipments', icon: '🚚' },
+    { title: 'Shipments', href: '/fulfillment/shipments', icon: navIcon('truck') },
   ],
   CATALOG: [
-    { title: 'Entries', href: '/catalog/entries', icon: '📚' },
+    { title: 'Entries', href: '/catalog/entries', icon: navIcon('library') },
   ],
   MARKETING: [
-    { title: 'Materials', href: '/marketing/materials', icon: '📢' },
+    { title: 'Materials', href: '/marketing/materials', icon: navIcon('megaphone') },
   ],
   FINANCE: [
-    { title: 'Pricing', href: '/finance/pricing', icon: '💰' },
+    { title: 'Pricing', href: '/finance/pricing', icon: navIcon('dollar') },
   ],
   CMS_EDITOR: [
-    { title: 'Pages', href: '/cms/pages', icon: '📄' },
-    { title: 'Blog', href: '/cms/blog', icon: '✍️' },
-    { title: 'Banners', href: '/cms/banners', icon: '🖼️' },
+    { title: 'Pages', href: '/cms/pages', icon: navIcon('file') },
+    { title: 'Blog', href: '/cms/blog', icon: navIcon('penLine') },
+    { title: 'Banners', href: '/cms/banners', icon: navIcon('image') },
   ],
 };
 
@@ -78,6 +80,8 @@ export function Header() {
   const { user, isAuthenticated, logout, impersonatedRole, effectiveRole, switchRole } = useAuth();
   const { cartItemCount } = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [navPrimary, setNavPrimary] = useState<NavLink[]>(getNavPrimary());
   const [navMore, setNavMore] = useState<NavLink[]>(getNavMore());
   const loyaltyEnabled = useLoyaltyEnabled();
@@ -160,9 +164,16 @@ export function Header() {
     CMS_EDITOR: 'CMS Editor',
   } as Record<UserRole, string>;
 
-  const handleLogout = async () => {
-    if (!window.confirm('Are you sure you want to log out?')) return;
-    await logout();
+  const handleLogoutClick = () => setLogoutOpen(true);
+
+  const confirmLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setLoggingOut(false);
+      setLogoutOpen(false);
+    }
   };
 
   const handleBackToAdmin = () => {
@@ -260,7 +271,7 @@ export function Header() {
               {showAuthCustomerNav && (
                 <button
                   type="button"
-                  onClick={handleLogout}
+                  onClick={handleLogoutClick}
                   className="flex flex-col items-center gap-1 group"
                   aria-label="Sign out"
                 >
@@ -332,7 +343,7 @@ export function Header() {
                     </button>
                   )}
                   <button
-                    onClick={handleLogout}
+                    onClick={handleLogoutClick}
                     className="px-3 py-1.5 text-sm bg-hos-sale-red hover:opacity-90 text-hos-text-secondary font-medium rounded-lg transition-colors"
                   >
                     Logout
@@ -439,17 +450,17 @@ export function Header() {
               {showAuthCustomerNav && (
                 <>
                   <NavDivider />
-                  <NavLink href="/profile" icon="⚙️" label="Manage Profile" currentPath={pathname} />
-                  <NavLink href="/orders" icon="📦" label="My Orders" currentPath={pathname} />
+                  <NavLink href="/profile" icon={navIcon('settings')} label="Manage Profile" currentPath={pathname} />
+                  <NavLink href="/orders" icon={navIcon('package')} label="My Orders" currentPath={pathname} />
                   {loyaltyEnabled && (
-                    <NavLink href="/loyalty" icon="✨" label="Rewards" currentPath={pathname} />
+                    <NavLink href="/loyalty" icon={navIcon('sparkles')} label="Rewards" currentPath={pathname} />
                   )}
                 </>
               )}
               {showGuestNav && loyaltyEnabled && (
                 <>
                   <NavDivider />
-                  <NavLink href="/loyalty" icon="✨" label="Rewards" currentPath={pathname} />
+                  <NavLink href="/loyalty" icon={navIcon('sparkles')} label="Rewards" currentPath={pathname} />
                 </>
               )}
               {isAuthenticated && !isCustomerRole && !isDashboardPage && quickLinks.length > 0 && (
@@ -486,13 +497,13 @@ export function Header() {
             {showAuthCustomerNav && (
               <>
                 <div className="border-t border-hos-border my-2" />
-                <MobileNavLink href="/profile" icon="⚙️" label="Manage Profile" onClick={() => setIsMobileMenuOpen(false)} />
-                <MobileNavLink href={withShopPreview(resolveShopNavHref('/wishlist', shopEnabled))} icon="❤️" label="Wishlist" onClick={() => setIsMobileMenuOpen(false)} />
-                <MobileNavLink href="/orders" icon="📦" label="My Orders" onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href="/profile" icon={navIcon('settings')} label="Manage Profile" onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href={withShopPreview(resolveShopNavHref('/wishlist', shopEnabled))} icon={navIcon('heart')} label="Wishlist" onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href="/orders" icon={navIcon('package')} label="My Orders" onClick={() => setIsMobileMenuOpen(false)} />
                 {loyaltyEnabled && (
-                  <MobileNavLink href="/loyalty" icon="✨" label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />
+                  <MobileNavLink href="/loyalty" icon={navIcon('sparkles')} label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />
                 )}
-                <MobileNavLink href={withShopPreview(resolveShopNavHref('/cart', shopEnabled))} icon="🛒" label={`Basket${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href={withShopPreview(resolveShopNavHref('/cart', shopEnabled))} icon={navIcon('cart')} label={`Basket${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
                 {!isDashboardPage && (
                   <div className="px-3 py-2">
                     <CurrencySelector />
@@ -500,10 +511,10 @@ export function Header() {
                 )}
                 <button
                   type="button"
-                  onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
+                  onClick={() => { handleLogoutClick(); setIsMobileMenuOpen(false); }}
                   className="w-full px-3 py-2.5 text-sm text-hos-sale-red hover:bg-hos-bg-secondary rounded-lg transition-colors text-left flex items-center gap-3"
                 >
-                  <span className="w-6 text-center text-base leading-none shrink-0" aria-hidden>🚪</span>
+                  <span className="w-6 text-center text-base leading-none shrink-0 inline-flex items-center justify-center" aria-hidden>{navIcon('logOut')}</span>
                   Sign out
                 </button>
               </>
@@ -511,13 +522,13 @@ export function Header() {
             {showGuestNav && loyaltyEnabled && (
               <>
                 <div className="border-t border-hos-border my-2" />
-                <MobileNavLink href="/loyalty" icon="✨" label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href="/loyalty" icon={navIcon('sparkles')} label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />
               </>
             )}
             {showGuestNav && (
               <>
                 <div className="border-t border-hos-border my-2" />
-                <MobileNavLink href={cartHref} icon="🛒" label={`Basket${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href={cartHref} icon={navIcon('cart')} label={`Basket${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
               </>
             )}
 
@@ -534,8 +545,8 @@ export function Header() {
             <div className="border-t border-hos-border my-2" />
             {isAuthenticated && user ? (
               <div className="space-y-1">
-                <MobileNavLink href="/notifications" icon="🔔" label="Notifications" onClick={() => setIsMobileMenuOpen(false)} />
-                <MobileNavLink href={getDashboardLink()} icon="📊" label="Dashboard" onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href="/notifications" icon={navIcon('bell')} label="Notifications" onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href={getDashboardLink()} icon={navIcon('dashboard')} label="Dashboard" onClick={() => setIsMobileMenuOpen(false)} />
                 <div className="px-3 py-2 flex items-center gap-2">
                   <span className="px-2.5 py-0.5 text-xs font-semibold bg-hos-bg-secondary text-hos-gold border border-hos-border rounded-full">
                     {ROLE_LABELS[currentRole as UserRole] || currentRole}
@@ -559,7 +570,7 @@ export function Header() {
                   </button>
                 )}
                 <button
-                  onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
+                  onClick={() => { handleLogoutClick(); setIsMobileMenuOpen(false); }}
                   className="w-full px-3 py-2.5 text-sm bg-hos-sale-red hover:opacity-90 text-hos-text-secondary font-medium rounded-lg transition-colors text-center"
                 >
                   Logout
@@ -579,11 +590,22 @@ export function Header() {
           </div>
         </nav>
       )}
+
+      <ConfirmDialog
+        open={logoutOpen}
+        title="Log out?"
+        description="Are you sure you want to log out?"
+        confirmLabel="Log out"
+        tone="danger"
+        busy={loggingOut}
+        onCancel={() => setLogoutOpen(false)}
+        onConfirm={confirmLogout}
+      />
     </header>
   );
 }
 
-function NavLink({ href, icon, label, currentPath, badge }: { href: string; icon: string; label: string; currentPath: string | null; badge?: string }) {
+function NavLink({ href, icon, label, currentPath, badge }: { href: string; icon: ReactNode; label: string; currentPath: string | null; badge?: string }) {
   const isActive = currentPath === href || (href !== '/' && currentPath?.startsWith(href));
   return (
     <Link
@@ -594,7 +616,11 @@ function NavLink({ href, icon, label, currentPath, badge }: { href: string; icon
           : 'text-hos-text-secondary hover:text-hos-gold'
       }`}
     >
-      <span className="text-sm leading-none" aria-hidden>{icon}</span>
+      {typeof icon === 'string' ? (
+        <span className="text-sm leading-none" aria-hidden>{icon}</span>
+      ) : (
+        <span className="inline-flex items-center" aria-hidden>{icon}</span>
+      )}
       <span>{label}</span>
       {badge && (
         <span className="ml-0.5 min-w-[18px] h-[18px] flex items-center justify-center text-[10px] font-bold bg-hos-gold text-[#1a1406] rounded-full px-1">
@@ -609,14 +635,18 @@ function NavDivider() {
   return <div className="w-px h-5 bg-hos-border mx-1 shrink-0" />;
 }
 
-function MobileNavLink({ href, icon, label, onClick }: { href: string; icon: string; label: string; onClick: () => void }) {
+function MobileNavLink({ href, icon, label, onClick }: { href: string; icon: ReactNode; label: string; onClick: () => void }) {
   return (
     <Link
       href={href}
       onClick={onClick}
       className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-secondary rounded-lg transition-colors duration-200"
     >
-      <span className="w-6 text-center text-base leading-none shrink-0" aria-hidden>{icon}</span>
+      {typeof icon === 'string' ? (
+        <span className="w-6 text-center text-base leading-none shrink-0" aria-hidden>{icon}</span>
+      ) : (
+        <span className="w-6 inline-flex items-center justify-center shrink-0" aria-hidden>{icon}</span>
+      )}
       <span>{label}</span>
     </Link>
   );

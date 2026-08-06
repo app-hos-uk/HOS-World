@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
@@ -306,7 +306,7 @@ export default function WholesalerBulkProductsPage() {
 
   return (
     <RouteGuard allowedRoles={['WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler" backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}>
+      <AppShellLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler" backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }} breadcrumbs="inline">
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-hos-text-secondary">Bulk Product Import/Export</h1>
           <p className="text-hos-text-secondary mt-2">Import or export wholesale products in bulk using CSV files</p>
@@ -467,7 +467,7 @@ export default function WholesalerBulkProductsPage() {
             </div>
           </div>
         </div>
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

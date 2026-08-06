@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import {
@@ -11,6 +12,7 @@ import {
   validateOptionalDescriptiveText,
 } from '@/lib/formFieldValidation';
 import { SafeImage } from '@/components/SafeImage';
+import { navIcon } from '@/lib/navIcons';
 
 interface Category {
   id: string;
@@ -72,6 +74,13 @@ export default function AdminCategoriesPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [viewMode, setViewMode] = useState<'tree' | 'grid'>('tree');
   const [savingCategory, setSavingCategory] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -232,26 +241,31 @@ export default function AdminCategoriesPage() {
     }
   };
 
-  const handleDeleteCategory = async (id: string, name: string) => {
+  const handleDeleteCategory = (id: string, name: string) => {
     const category = findCategory(categories, id);
     if (category?.children && category.children.length > 0) {
       toast.error('Cannot delete fandom with sub-fandoms. Delete children first.');
       return;
     }
-    if ((category?.productCount || 0) > 0) {
-      if (!confirm(`This fandom has ${category?.productCount} products. Are you sure you want to delete it?`)) {
-        return;
-      }
-    } else if (!confirm(`Delete "${name}"? This action cannot be undone.`)) {
-      return;
-    }
-    try {
-      await apiClient.deleteCategory(id);
-      toast.success('Fandom deleted successfully');
-      fetchCategories();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete fandom');
-    }
+    const productCount = category?.productCount || 0;
+    setConfirmDialog({
+      title: productCount > 0
+        ? `This fandom has ${productCount} products. Are you sure you want to delete it?`
+        : `Delete "${name}"?`,
+      description: productCount > 0 ? undefined : 'This action cannot be undone.',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteCategory(id);
+          toast.success('Fandom deleted successfully');
+          fetchCategories();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to delete fandom');
+        }
+      },
+    });
   };
 
   const handleDuplicateCategory = async (category: Category) => {
@@ -272,19 +286,33 @@ export default function AdminCategoriesPage() {
     }
   };
 
-  const handleToggleActive = async (category: Category) => {
-    if (category.isActive && !window.confirm(`Are you sure you want to deactivate "${category.name}"?`)) {
+  const handleToggleActive = (category: Category) => {
+    const doToggle = async () => {
+      try {
+        await apiClient.updateCategory(category.id, {
+          isActive: !category.isActive,
+        });
+        toast.success(`Fandom ${category.isActive ? 'deactivated' : 'activated'}`);
+        fetchCategories();
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to update fandom');
+      }
+    };
+
+    if (category.isActive) {
+      setConfirmDialog({
+        title: `Are you sure you want to deactivate "${category.name}"?`,
+        tone: 'danger',
+        confirmLabel: 'Deactivate',
+        onConfirm: async () => {
+          setConfirmDialog(null);
+          await doToggle();
+        },
+      });
       return;
     }
-    try {
-      await apiClient.updateCategory(category.id, {
-        isActive: !category.isActive,
-      });
-      toast.success(`Fandom ${category.isActive ? 'deactivated' : 'activated'}`);
-      fetchCategories();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update fandom');
-    }
+
+    void doToggle();
   };
 
   const handleMoveCategory = async (categoryId: string, direction: 'up' | 'down') => {
@@ -468,7 +496,7 @@ export default function AdminCategoriesPage() {
                 </div>
               ) : (
                 <div className="w-10 h-10 rounded bg-hos-bg-tertiary flex items-center justify-center text-hos-text-muted flex-shrink-0">
-                  📁
+                  {navIcon('folder', 'w-5 h-5')}
                 </div>
               )}
               
@@ -525,7 +553,7 @@ export default function AdminCategoriesPage() {
                 className="p-1 text-hos-text-muted hover:text-hos-text-secondary hover:bg-hos-bg-tertiary rounded"
                 title="Duplicate"
               >
-                📋
+                {navIcon('clipboard', 'w-4 h-4')}
               </button>
               <button
                 onClick={() => startEdit(category)}
@@ -575,7 +603,7 @@ export default function AdminCategoriesPage() {
             </div>
           ) : (
             <div className="w-16 h-16 rounded bg-hos-bg-tertiary flex items-center justify-center text-2xl flex-shrink-0">
-              {category.icon || '📁'}
+              {category.icon || navIcon('folder', 'w-8 h-8')}
             </div>
           )}
           <div className="flex-1 min-w-0">
@@ -905,6 +933,17 @@ export default function AdminCategoriesPage() {
             </div>
           </div>
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

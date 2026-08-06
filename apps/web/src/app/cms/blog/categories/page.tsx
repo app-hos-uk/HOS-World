@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { CMSLayout } from '@/components/CMSLayout';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { AppShellLayout } from '@/components/AppShellLayout';
+import { getCmsMenu } from '@/lib/adminMenus';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { cmsActionToastMessage, cmsLoadingErrorMessage } from '@/lib/cmsPortalFeedback';
@@ -23,6 +25,13 @@ interface Category {
 
 export default function BlogCategoriesPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -91,20 +100,35 @@ export default function BlogCategoriesPage() {
     setShowForm(true);
   };
 
-  const handleDelete = async (cat: Category) => {
-    if (!window.confirm(`Delete category "${cat.name}"? Posts will be uncategorized.`)) return;
-    try {
-      await apiClient.deleteBlogCategory(cat.id);
-      toast.success('Category deleted');
-      loadCategories();
-    } catch (err) {
-      toast.error(cmsActionToastMessage(err, 'Failed to delete category'));
-    }
+  const handleDelete = (cat: Category) => {
+    setConfirmDialog({
+      title: `Delete category "${cat.name}"?`,
+      description: 'Posts will be uncategorized.',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteBlogCategory(cat.id);
+          toast.success('Category deleted');
+          loadCategories();
+        } catch (err) {
+          toast.error(cmsActionToastMessage(err, 'Failed to delete category'));
+        }
+      },
+    });
   };
 
   return (
     <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
-      <CMSLayout>
+      <AppShellLayout
+        title="CMS Portal"
+        menuItems={getCmsMenu()}
+        role="CMS_EDITOR"
+        breadcrumbs="none"
+        headerLink={{ title: 'Dashboard', href: '/cms/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+      >
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <div>
@@ -205,7 +229,18 @@ export default function BlogCategoriesPage() {
             )}
           </div>
         </div>
-      </CMSLayout>
+              {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</AppShellLayout>
     </RouteGuard>
   );
 }

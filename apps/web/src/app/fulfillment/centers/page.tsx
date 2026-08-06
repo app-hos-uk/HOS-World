@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { validateFulfillmentCenterFields } from '@/lib/fulfillmentCenterFormValidation';
@@ -164,11 +164,12 @@ export default function FulfillmentCentersPage() {
 
   return (
     <RouteGuard allowedRoles={['FULFILLMENT', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout
+      <AppShellLayout
         role="FULFILLMENT"
+        breadcrumbs="inline"
         menuItems={menuItems}
         title="Fulfillment"
-        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
       >
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -414,7 +415,7 @@ export default function FulfillmentCentersPage() {
             </div>
           </div>
         )}
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

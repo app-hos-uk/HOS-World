@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -10,6 +11,13 @@ const EXPORT_TYPES = ['clv', 'attribution', 'fandom', 'health'] as const;
 
 export default function LoyaltyAnalyticsPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [data, setData] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -45,19 +53,26 @@ export default function LoyaltyAnalyticsPage() {
     }
   };
 
-  const handleRecomputeClv = async () => {
-    if (!confirm('Recompute CLV for all members? This may take a minute.')) return;
-    setRecomputingClv(true);
-    try {
-      const res = await apiClient.adminRecomputeClv();
-      const d = res?.data as { computed?: number; errors?: number } | undefined;
-      toast.success(`CLV recomputed: ${d?.computed ?? 0} members, ${d?.errors ?? 0} errors`);
-      load();
-    } catch (err: any) {
-      toast.error(err.message || 'CLV recompute failed');
-    } finally {
-      setRecomputingClv(false);
-    }
+  const handleRecomputeClv = () => {
+    setConfirmDialog({
+      title: 'Recompute CLV for all members?',
+      description: 'This may take a minute.',
+      confirmLabel: 'Recompute',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        setRecomputingClv(true);
+        try {
+          const res = await apiClient.adminRecomputeClv();
+          const d = res?.data as { computed?: number; errors?: number } | undefined;
+          toast.success(`CLV recomputed: ${d?.computed ?? 0} members, ${d?.errors ?? 0} errors`);
+          load();
+        } catch (err: any) {
+          toast.error(err.message || 'CLV recompute failed');
+        } finally {
+          setRecomputingClv(false);
+        }
+      },
+    });
   };
 
   const handleExport = async (type: string) => {
@@ -255,6 +270,17 @@ export default function LoyaltyAnalyticsPage() {
           <p className="text-hos-text-muted">No data available.</p>
         )}
       </div>
-    </RouteGuard>
+            {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

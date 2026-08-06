@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
@@ -63,6 +64,13 @@ export default function AdminPosConnectionsPage() {
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [outlets, setOutlets] = useState<Outlet[]>([]);
   const [loadingOutlets, setLoadingOutlets] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -202,16 +210,24 @@ export default function AdminPosConnectionsPage() {
     }
   };
 
-  const handleDelete = async (c: Connection) => {
+  const handleDelete = (c: Connection) => {
     const label = c.store?.name || c.provider;
-    if (!confirm(`Delete the POS connection for ${label}? Sync will stop immediately.`)) return;
-    try {
-      await apiClient.deletePosConnection(c.id);
-      toast.success('Connection deleted');
-      await load();
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Delete failed');
-    }
+    setConfirmDialog({
+      title: `Delete the POS connection for ${label}?`,
+      description: 'Sync will stop immediately.',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deletePosConnection(c.id);
+          toast.success('Connection deleted');
+          await load();
+        } catch (e: unknown) {
+          toast.error(e instanceof Error ? e.message : 'Delete failed');
+        }
+      },
+    });
   };
 
   const test = async (id: string) => {
@@ -710,8 +726,15 @@ export default function AdminPosConnectionsPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              if (confirm('Backfill customer identity for this connection? This will update customer records.'))
-                                void backfillCustomerIdentity(c.id, false);
+                              setConfirmDialog({
+                                title: 'Backfill customer identity for this connection?',
+                                description: 'This will update customer records.',
+                                confirmLabel: 'Backfill',
+                                onConfirm: () => {
+                                  setConfirmDialog(null);
+                                  void backfillCustomerIdentity(c.id, false);
+                                },
+                              });
                             }}
                             className="text-hos-gold hover:text-hos-gold-hover"
                             title="Backfill customer identity data from POS"
@@ -742,6 +765,17 @@ export default function AdminPosConnectionsPage() {
           </div>
         )}
       </div>
+      {confirmDialog && (
+        <ConfirmDialog
+          open
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          tone={confirmDialog.tone}
+          confirmLabel={confirmDialog.confirmLabel}
+          onCancel={() => setConfirmDialog(null)}
+          onConfirm={confirmDialog.onConfirm}
+        />
+      )}
     </RouteGuard>
   );
 }

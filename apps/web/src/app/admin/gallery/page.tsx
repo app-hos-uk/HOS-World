@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { FileUpload } from '@/components/FileUpload';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
@@ -53,6 +54,13 @@ export default function AdminGalleryPage() {
   const [albumForm, setAlbumForm] = useState(EMPTY_ALBUM);
   const [selectedAlbumId, setSelectedAlbumId] = useState<string | null>(null);
   const [selectedAlbum, setSelectedAlbum] = useState<GalleryAlbum | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const fetchAlbums = useCallback(async () => {
     try {
@@ -145,16 +153,23 @@ export default function AdminGalleryPage() {
     }
   };
 
-  const handleDeleteAlbum = async (id: string) => {
-    if (!confirm('Delete this event folder and all its images?')) return;
-    try {
-      await apiClient.deleteGalleryAlbum(id);
-      toast.success('Event folder deleted');
-      if (selectedAlbumId === id) setSelectedAlbumId(null);
-      await fetchAlbums();
-    } catch (err: any) {
-      toast.error(err.message || 'Delete failed');
-    }
+  const handleDeleteAlbum = (id: string) => {
+    setConfirmDialog({
+      title: 'Delete this event folder and all its images?',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteGalleryAlbum(id);
+          toast.success('Event folder deleted');
+          if (selectedAlbumId === id) setSelectedAlbumId(null);
+          await fetchAlbums();
+        } catch (err: any) {
+          toast.error(err.message || 'Delete failed');
+        }
+      },
+    });
   };
 
   const handleUploadImages = async (urls: string[]) => {
@@ -172,16 +187,23 @@ export default function AdminGalleryPage() {
     }
   };
 
-  const handleDeleteImage = async (imageId: string) => {
-    if (!confirm('Remove this image?')) return;
-    try {
-      await apiClient.deleteGalleryImage(imageId);
-      toast.success('Image removed');
-      if (selectedAlbumId) await loadSelectedAlbum(selectedAlbumId);
-      await fetchAlbums();
-    } catch (err: any) {
-      toast.error(err.message || 'Delete failed');
-    }
+  const handleDeleteImage = (imageId: string) => {
+    setConfirmDialog({
+      title: 'Remove this image?',
+      tone: 'danger',
+      confirmLabel: 'Remove',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteGalleryImage(imageId);
+          toast.success('Image removed');
+          if (selectedAlbumId) await loadSelectedAlbum(selectedAlbumId);
+          await fetchAlbums();
+        } catch (err: any) {
+          toast.error(err.message || 'Delete failed');
+        }
+      },
+    });
   };
 
   const handleSetCover = async (url: string) => {
@@ -449,6 +471,17 @@ export default function AdminGalleryPage() {
               )}
             </div>
           </div>
+        )}
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
         )}
           </RouteGuard>
   );

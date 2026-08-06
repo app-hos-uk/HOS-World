@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Fragment } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Dialog, Transition } from '@headlessui/react';
@@ -22,6 +23,13 @@ interface StockTransfer {
 
 export default function AdminStockTransfersPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [transfers, setTransfers] = useState<StockTransfer[]>([]);
   const [warehouses, setWarehouses] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
@@ -202,18 +210,23 @@ export default function AdminStockTransfersPage() {
     }
   };
 
-  const handleCompleteTransfer = async (transferId: string) => {
-    if (!confirm('Complete this stock transfer? This will update inventory in both warehouses.')) {
-      return;
-    }
-    try {
-      await apiClient.completeStockTransfer(transferId);
-      toast.success('Stock transfer completed successfully!');
-      fetchTransfers();
-    } catch (err: any) {
-      console.error('Error completing transfer:', err);
-      toast.error(err.message || 'Failed to complete transfer');
-    }
+  const handleCompleteTransfer = (transferId: string) => {
+    setConfirmDialog({
+      title: 'Complete this stock transfer?',
+      description: 'This will update inventory in both warehouses.',
+      confirmLabel: 'Complete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.completeStockTransfer(transferId);
+          toast.success('Stock transfer completed successfully!');
+          fetchTransfers();
+        } catch (err: any) {
+          console.error('Error completing transfer:', err);
+          toast.error(err.message || 'Failed to complete transfer');
+        }
+      },
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -586,6 +599,17 @@ export default function AdminStockTransfersPage() {
             </Dialog>
           </Transition>
         </div>
-          </RouteGuard>
+                  {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

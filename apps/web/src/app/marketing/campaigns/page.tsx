@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import {
   isDateInputInPast,
@@ -292,11 +292,12 @@ function MarketingCampaignsPageContent() {
   const menuItems = getMarketingMenu();
 
   return (
-      <DashboardLayout
+      <AppShellLayout
         role="MARKETING"
+        breadcrumbs="inline"
         menuItems={menuItems}
         title="Marketing"
-        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
       >
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -636,7 +637,7 @@ function MarketingCampaignsPageContent() {
             </div>
           </div>
         )}
-      </DashboardLayout>
+      </AppShellLayout>
   );
 }
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -26,6 +27,13 @@ interface Tenant {
 
 export default function AdminTenantsPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -144,15 +152,22 @@ export default function AdminTenantsPage() {
     }
   };
 
-  const handleRemoveUser = async (tenantId: string, userId: string) => {
-    if (!confirm('Remove this user from the tenant?')) return;
-    try {
-      await apiClient.adminRemoveTenantUser(tenantId, userId);
-      toast.success('User removed');
-      handleExpand(tenantId);
-    } catch {
-      toast.error('Failed to remove user');
-    }
+  const handleRemoveUser = (tenantId: string, userId: string) => {
+    setConfirmDialog({
+      title: 'Remove this user from the tenant?',
+      tone: 'danger',
+      confirmLabel: 'Remove',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.adminRemoveTenantUser(tenantId, userId);
+          toast.success('User removed');
+          handleExpand(tenantId);
+        } catch {
+          toast.error('Failed to remove user');
+        }
+      },
+    });
   };
 
   return (
@@ -414,6 +429,17 @@ export default function AdminTenantsPage() {
           </div>
         )}
       </div>
-    </RouteGuard>
+            {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -86,7 +86,7 @@ export default function SellerEarningsPage() {
 
   return (
     <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER']}>
-      <DashboardLayout role={isWholesaler ? 'WHOLESALER' : 'SELLER'} menuItems={menuItems} title="Earnings & Payouts" backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}>
+      <AppShellLayout role={isWholesaler ? 'WHOLESALER' : 'SELLER'} menuItems={menuItems} title="Earnings & Payouts" backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }} breadcrumbs="inline">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-8 h-8 border-4 border-hos-gold border-t-transparent rounded-full animate-spin" />
@@ -163,7 +163,7 @@ export default function SellerEarningsPage() {
             </div>
           </div>
         ) : null}
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

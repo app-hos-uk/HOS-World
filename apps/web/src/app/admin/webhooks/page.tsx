@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -28,6 +29,13 @@ const EVENT_OPTIONS = [
 
 export default function WebhooksPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [webhooks, setWebhooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,15 +122,22 @@ export default function WebhooksPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this webhook?')) return;
-    try {
-      await apiClient.deleteWebhook(id);
-      toast.success('Webhook deleted');
-      fetchWebhooks();
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to delete webhook');
-    }
+  const handleDelete = (id: string) => {
+    setConfirmDialog({
+      title: 'Are you sure you want to delete this webhook?',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteWebhook(id);
+          toast.success('Webhook deleted');
+          fetchWebhooks();
+        } catch (err: any) {
+          toast.error(err?.message || 'Failed to delete webhook');
+        }
+      },
+    });
   };
 
   const handleToggleActive = async (webhook: any) => {
@@ -476,6 +491,17 @@ export default function WebhooksPage() {
             )}
           </div>
         )}
-          </RouteGuard>
+                  {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

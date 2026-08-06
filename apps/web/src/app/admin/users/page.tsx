@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { SafeImage } from '@/components/SafeImage';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -109,6 +110,13 @@ export default function AdminUsersPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [permissionRoles, setPermissionRoles] = useState<string[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const {
     visibleIds: userVisibleColumnIds,
     isVisible: isUserColumnVisible,
@@ -512,7 +520,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete') => {
+  const handleBulkAction = (action: 'activate' | 'deactivate' | 'delete') => {
     if (selectedUsers.size === 0) return;
     
     const selectedList = [...selectedUsers].filter(id => {
@@ -525,38 +533,45 @@ export default function AdminUsersPage() {
       return;
     }
 
-    if (!confirm(`${action === 'delete' ? 'Delete' : action === 'activate' ? 'Activate' : 'Deactivate'} ${selectedList.length} users?`)) return;
-
-    let success = 0;
-    for (const id of selectedList) {
-      try {
-        if (action === 'delete') {
-          await apiClient.deleteUser(id);
-          success++;
-        } else {
-          // Only toggle if the user's current status actually needs changing.
-          // Skip users whose isActive is undefined (data not loaded) to avoid
-          // accidental toggles.
-          const user = users.find(u => u.id === id);
-          const isCurrentlyActive = user?.isActive === true;
-          const isCurrentlyInactive = user?.isActive === false;
-          const shouldToggle =
-            (action === 'deactivate' && isCurrentlyActive) ||
-            (action === 'activate' && isCurrentlyInactive);
-          if (shouldToggle) {
-            await apiClient.toggleUserStatus(id);
-            success++;
+    const actionLabel = action === 'delete' ? 'Delete' : action === 'activate' ? 'Activate' : 'Deactivate';
+    setConfirmDialog({
+      title: `${actionLabel} ${selectedList.length} users?`,
+      tone: action === 'activate' ? 'default' : 'danger',
+      confirmLabel: actionLabel,
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        let success = 0;
+        for (const id of selectedList) {
+          try {
+            if (action === 'delete') {
+              await apiClient.deleteUser(id);
+              success++;
+            } else {
+              // Only toggle if the user's current status actually needs changing.
+              // Skip users whose isActive is undefined (data not loaded) to avoid
+              // accidental toggles.
+              const user = users.find(u => u.id === id);
+              const isCurrentlyActive = user?.isActive === true;
+              const isCurrentlyInactive = user?.isActive === false;
+              const shouldToggle =
+                (action === 'deactivate' && isCurrentlyActive) ||
+                (action === 'activate' && isCurrentlyInactive);
+              if (shouldToggle) {
+                await apiClient.toggleUserStatus(id);
+                success++;
+              }
+            }
+          } catch {
+            // Continue on error
           }
         }
-      } catch {
-        // Continue on error
-      }
-    }
 
-    toast.success(`Successfully ${action === 'delete' ? 'deleted' : action === 'activate' ? 'activated' : 'deactivated'} ${success} users`);
-    setSelectedUsers(new Set());
-    await fetchUsers(currentPage);
-    await fetchStats();
+        toast.success(`Successfully ${action === 'delete' ? 'deleted' : action === 'activate' ? 'activated' : 'deactivated'} ${success} users`);
+        setSelectedUsers(new Set());
+        await fetchUsers(currentPage);
+        await fetchStats();
+      },
+    });
   };
 
   const toggleSelection = (id: string) => {
@@ -1545,6 +1560,17 @@ export default function AdminUsersPage() {
             </div>
           )}
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

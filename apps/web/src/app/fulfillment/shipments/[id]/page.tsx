@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -99,11 +99,12 @@ export default function ShipmentDetailPage() {
 
   return (
     <RouteGuard allowedRoles={['FULFILLMENT', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout
+      <AppShellLayout
         role="FULFILLMENT"
+        breadcrumbs="inline"
         menuItems={menuItems}
         title="Fulfillment"
-        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
       >
         <div className="mb-6">
           <Link
@@ -332,7 +333,7 @@ export default function ShipmentDetailPage() {
             )}
           </div>
         )}
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

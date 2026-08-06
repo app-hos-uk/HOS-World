@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import {
@@ -29,6 +30,13 @@ export default function AdminLoyaltyCampaignsPage() {
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; description?: string; startsAt?: string; endsAt?: string }>({});
   const [saving, setSaving] = useState(false);
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -116,15 +124,22 @@ export default function AdminLoyaltyCampaignsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this campaign?')) return;
-    try {
-      await apiClient.adminDeleteLoyaltyCampaign(id);
-      toast.success('Campaign deleted');
-      await load();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete');
-    }
+  const handleDelete = (id: string) => {
+    setConfirmDialog({
+      title: 'Delete this campaign?',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.adminDeleteLoyaltyCampaign(id);
+          toast.success('Campaign deleted');
+          await load();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to delete');
+        }
+      },
+    });
   };
 
   const getStatus = (c: any) => {
@@ -233,6 +248,17 @@ export default function AdminLoyaltyCampaignsPage() {
             )}
           </div>
         )}
-          </RouteGuard>
+                  {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

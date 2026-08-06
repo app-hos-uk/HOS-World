@@ -1,14 +1,15 @@
 'use client';
 
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
+import { navIcon } from '@/lib/navIcons';
 
 const menuItems = [
-  { title: 'Dashboard', href: '/influencer/dashboard', icon: '📊' },
-  { title: 'Earnings', href: '/influencer/earnings', icon: '💰' },
-  { title: 'Product Links', href: '/influencer/product-links', icon: '🔗' },
-  { title: 'Profile', href: '/influencer/profile', icon: '👤' },
-  { title: 'Storefront', href: '/influencer/storefront', icon: '🛍️' },
+  { title: 'Dashboard', href: '/influencer/dashboard', icon: navIcon('dashboard') },
+  { title: 'Earnings', href: '/influencer/earnings', icon: navIcon('dollar') },
+  { title: 'Product Links', href: '/influencer/product-links', icon: navIcon('link') },
+  { title: 'Profile', href: '/influencer/profile', icon: navIcon('user') },
+  { title: 'Storefront', href: '/influencer/storefront', icon: navIcon('shoppingBag') },
 ];
 
 export default function InfluencerLayout({
@@ -18,9 +19,9 @@ export default function InfluencerLayout({
 }) {
   return (
     <RouteGuard allowedRoles={['INFLUENCER', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="INFLUENCER" menuItems={menuItems} title="Influencer" backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}>
+      <AppShellLayout role="INFLUENCER" menuItems={menuItems} title="Influencer" backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }} breadcrumbs="inline">
         {children}
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

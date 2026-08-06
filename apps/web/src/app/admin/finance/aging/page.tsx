@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { navIcon } from '@/lib/navIcons';
 
 interface AgingBucket {
   label: string;
@@ -81,9 +82,9 @@ export default function AgingAnalysisPage() {
   );
 
   const tabs = [
-    { id: 'transactions' as const, label: 'Transactions', icon: '💳' },
-    { id: 'settlements' as const, label: 'Settlements', icon: '💸' },
-    { id: 'disputes' as const, label: 'Disputes', icon: '⚠️' },
+    { id: 'transactions' as const, label: 'Transactions', icon: navIcon('creditCard') },
+    { id: 'settlements' as const, label: 'Settlements', icon: navIcon('wallet') },
+    { id: 'disputes' as const, label: 'Disputes', icon: navIcon('alert') },
   ];
 
   return (
@@ -97,7 +98,7 @@ export default function AgingAnalysisPage() {
           <div className="border-b border-hos-border">
             <nav className="flex space-x-6">
               {tabs.map((tab) => (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`pb-3 text-sm font-medium border-b-2 ${activeTab === tab.id ? 'border-hos-gold text-hos-gold' : 'border-transparent text-hos-text-muted hover:text-hos-text-secondary'}`}>
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`pb-3 text-sm font-medium border-b-2 inline-flex items-center gap-1.5 ${activeTab === tab.id ? 'border-hos-gold text-hos-gold' : 'border-transparent text-hos-text-muted hover:text-hos-text-secondary'}`}>
                   {tab.icon} {tab.label}
                 </button>
               ))}

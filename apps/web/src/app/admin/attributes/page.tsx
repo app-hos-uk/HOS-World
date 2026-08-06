@@ -3,9 +3,11 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { SafeImage } from '@/components/SafeImage';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { CategorySelector } from '@/components/taxonomy/CategorySelector';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { navIcon } from '@/lib/navIcons';
 
 interface AttributeValue {
   id: string;
@@ -55,13 +57,13 @@ interface Stats {
 }
 
 const ATTRIBUTE_TYPES = [
-  { value: 'TEXT', label: 'Text', icon: '📝', description: 'Free-form text input' },
-  { value: 'NUMBER', label: 'Number', icon: '🔢', description: 'Numeric value with optional unit' },
-  { value: 'SELECT', label: 'Select', icon: '📋', description: 'Single choice from options' },
-  { value: 'MULTISELECT', label: 'Multi-Select', icon: '☑️', description: 'Multiple choices from options' },
-  { value: 'BOOLEAN', label: 'Boolean', icon: '✓✗', description: 'Yes/No toggle' },
-  { value: 'DATE', label: 'Date', icon: '📅', description: 'Date picker' },
-  { value: 'COLOR', label: 'Color', icon: '🎨', description: 'Color picker with hex value' },
+  { value: 'TEXT', label: 'Text', iconKey: 'fileText' as const, description: 'Free-form text input' },
+  { value: 'NUMBER', label: 'Number', iconKey: 'hash' as const, description: 'Numeric value with optional unit' },
+  { value: 'SELECT', label: 'Select', iconKey: 'clipboard' as const, description: 'Single choice from options' },
+  { value: 'MULTISELECT', label: 'Multi-Select', iconKey: 'checkSquare' as const, description: 'Multiple choices from options' },
+  { value: 'BOOLEAN', label: 'Boolean', iconKey: 'toggle' as const, description: 'Yes/No toggle' },
+  { value: 'DATE', label: 'Date', iconKey: 'calendar' as const, description: 'Date picker' },
+  { value: 'COLOR', label: 'Color', iconKey: 'palette' as const, description: 'Color picker with hex value' },
 ];
 
 const COMMON_UNITS = [
@@ -95,6 +97,13 @@ export default function AdminAttributesPage() {
   const [scopeFilter, setScopeFilter] = useState<'ALL' | 'GLOBAL' | 'CATEGORY'>('ALL');
   const [sortBy, setSortBy] = useState<'name' | 'type' | 'usage'>('name');
   const [savingAttribute, setSavingAttribute] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -350,17 +359,23 @@ export default function AdminAttributesPage() {
     }
   };
 
-  const handleDeleteAttribute = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this attribute? This will remove it from all products.')) {
-      return;
-    }
-    try {
-      await apiClient.deleteAttribute(id);
-      toast.success('Attribute deleted successfully');
-      fetchAttributes();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete attribute');
-    }
+  const handleDeleteAttribute = (id: string) => {
+    setConfirmDialog({
+      title: 'Are you sure you want to delete this attribute?',
+      description: 'This will remove it from all products.',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteAttribute(id);
+          toast.success('Attribute deleted successfully');
+          fetchAttributes();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to delete attribute');
+        }
+      },
+    });
   };
 
   const handleAddValue = async (attributeId: string) => {
@@ -419,15 +434,22 @@ export default function AdminAttributesPage() {
     fetchAttributeValues(attributeId);
   };
 
-  const handleDeleteValue = async (valueId: string, attributeId: string) => {
-    if (!confirm('Delete this value?')) return;
-    try {
-      await apiClient.deleteAttributeValue(valueId);
-      toast.success('Value deleted');
-      fetchAttributeValues(attributeId);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete value');
-    }
+  const handleDeleteValue = (valueId: string, attributeId: string) => {
+    setConfirmDialog({
+      title: 'Delete this value?',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteAttributeValue(valueId);
+          toast.success('Value deleted');
+          fetchAttributeValues(attributeId);
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to delete value');
+        }
+      },
+    });
   };
 
   const handleReorderValue = async (attributeId: string, valueId: string, direction: 'up' | 'down') => {
@@ -538,8 +560,9 @@ export default function AdminAttributesPage() {
     resetForm();
   };
 
-  const getTypeIcon = (type: string) => {
-    return ATTRIBUTE_TYPES.find(t => t.value === type)?.icon || '📋';
+  const getTypeIcon = (type: string, className = 'w-4 h-4') => {
+    const key = ATTRIBUTE_TYPES.find(t => t.value === type)?.iconKey ?? 'clipboard';
+    return navIcon(key, className);
   };
 
   if (loading) {
@@ -634,7 +657,7 @@ export default function AdminAttributesPage() {
               >
                 <option value="ALL">All Types</option>
                 {ATTRIBUTE_TYPES.map(type => (
-                  <option key={type.value} value={type.value}>{type.icon} {type.label}</option>
+                  <option key={type.value} value={type.value}>{type.label}</option>
                 ))}
               </select>
               <select
@@ -702,7 +725,7 @@ export default function AdminAttributesPage() {
                     >
                       {ATTRIBUTE_TYPES.map(type => (
                         <option key={type.value} value={type.value}>
-                          {type.icon} {type.label} - {type.description}
+                          {type.label} - {type.description}
                         </option>
                       ))}
                     </select>
@@ -1013,14 +1036,14 @@ export default function AdminAttributesPage() {
                             className="px-3 py-1 text-sm bg-hos-bg-tertiary text-hos-text-secondary rounded hover:bg-hos-bg-tertiary"
                             title="View usage"
                           >
-                            📊
+                            {navIcon('dashboard', 'w-4 h-4')}
                           </button>
                           <button
                             onClick={() => handleDuplicateAttribute(attribute)}
                             className="px-3 py-1 text-sm bg-hos-bg-tertiary text-hos-text-secondary rounded hover:bg-hos-bg-tertiary"
                             title="Duplicate"
                           >
-                            📋
+                            {navIcon('clipboard', 'w-4 h-4')}
                           </button>
                           <button
                             onClick={() => startEdit(attribute)}
@@ -1229,6 +1252,17 @@ export default function AdminAttributesPage() {
             </div>
           )}
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

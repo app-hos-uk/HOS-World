@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
@@ -22,6 +23,13 @@ export default function SellerSubmissionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const menuItems = getSellerMenuItems(false);
 
@@ -49,7 +57,7 @@ export default function SellerSubmissionsPage() {
 
   return (
     <RouteGuard allowedRoles={['B2C_SELLER', 'SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="SELLER" menuItems={menuItems} title="Seller" backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}>
+      <AppShellLayout role="SELLER" menuItems={menuItems} title="Seller" backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }} breadcrumbs="inline">
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
@@ -187,23 +195,25 @@ export default function SellerSubmissionsPage() {
                             {canSellerDeleteSubmission(submission.status) && (
                               <button
                                 type="button"
-                                onClick={async () => {
-                                  if (
-                                    !window.confirm(
-                                      'Remove this submission? This cannot be undone.',
-                                    )
-                                  ) {
-                                    return;
-                                  }
-                                  try {
-                                    await apiClient.deleteSubmission(submission.id);
-                                    toast.success('Submission deleted');
-                                    fetchSubmissions();
-                                  } catch (err: unknown) {
-                                    const msg =
-                                      err instanceof Error ? err.message : 'Failed to delete submission';
-                                    toast.error(msg);
-                                  }
+                                onClick={() => {
+                                  setConfirmDialog({
+                                    title: 'Remove this submission?',
+                                    description: 'This cannot be undone.',
+                                    tone: 'danger',
+                                    confirmLabel: 'Delete',
+                                    onConfirm: async () => {
+                                      setConfirmDialog(null);
+                                      try {
+                                        await apiClient.deleteSubmission(submission.id);
+                                        toast.success('Submission deleted');
+                                        fetchSubmissions();
+                                      } catch (err: unknown) {
+                                        const msg =
+                                          err instanceof Error ? err.message : 'Failed to delete submission';
+                                        toast.error(msg);
+                                      }
+                                    },
+                                  });
                                 }}
                                 className="text-red-400 hover:text-red-300"
                               >
@@ -220,7 +230,18 @@ export default function SellerSubmissionsPage() {
             )}
           </div>
         )}
-      </DashboardLayout>
+              {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</AppShellLayout>
     </RouteGuard>
   );
 }

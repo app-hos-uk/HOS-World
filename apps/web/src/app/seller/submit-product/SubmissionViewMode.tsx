@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
@@ -68,8 +68,9 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
 
   return (
     <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout
+      <AppShellLayout
         role={isWholesaler ? 'WHOLESALER' : 'SELLER'}
+        breadcrumbs="inline"
         menuItems={menuItems}
         title={isWholesaler ? 'Wholesaler' : 'Seller'}
       >
@@ -305,7 +306,7 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
             </div>
           )}
         </div>
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

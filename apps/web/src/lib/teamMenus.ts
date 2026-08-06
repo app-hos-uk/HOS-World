@@ -1,4 +1,5 @@
 import type { SellerMenuItem } from '@/lib/sellerMenu';
+import { navIcon } from '@/lib/navIcons';
 
 export type TeamMenuItem = SellerMenuItem & { badge?: number };
 
@@ -6,11 +7,11 @@ export type TeamMenuItem = SellerMenuItem & { badge?: number };
 
 export function getProcurementMenu(pendingCount?: number): TeamMenuItem[] {
   return [
-    { title: 'Dashboard', href: '/procurement/dashboard', icon: '📊' },
+    { title: 'Dashboard', href: '/procurement/dashboard', icon: navIcon('dashboard') },
     {
       title: 'Review Submissions',
       href: '/procurement/submissions',
-      icon: '📦',
+      icon: navIcon('package'),
       badge: pendingCount,
     },
   ];
@@ -18,58 +19,58 @@ export function getProcurementMenu(pendingCount?: number): TeamMenuItem[] {
 
 export function getFulfillmentMenu(pendingShipments?: number): TeamMenuItem[] {
   return [
-    { title: 'Dashboard', href: '/fulfillment/dashboard', icon: '📊' },
+    { title: 'Dashboard', href: '/fulfillment/dashboard', icon: navIcon('dashboard') },
     {
       title: 'Manage Shipments',
       href: '/fulfillment/shipments',
-      icon: '🚚',
+      icon: navIcon('truck'),
       badge: pendingShipments,
     },
-    { title: 'Centers', href: '/fulfillment/centers', icon: '🏭' },
+    { title: 'Centers', href: '/fulfillment/centers', icon: navIcon('factory') },
   ];
 }
 
 export function getCatalogMenu(pendingCount?: number): TeamMenuItem[] {
   return [
-    { title: 'Dashboard', href: '/catalog/dashboard', icon: '📊' },
+    { title: 'Dashboard', href: '/catalog/dashboard', icon: navIcon('dashboard') },
     {
       title: 'Catalog Entries',
       href: '/catalog/entries',
-      icon: '📚',
+      icon: navIcon('library'),
       badge: pendingCount,
     },
     {
       title: 'Duplicates',
       href: '/catalog/duplicates',
-      icon: '🧩',
+      icon: navIcon('puzzle'),
     },
   ];
 }
 
 export function getMarketingMenu(pendingMaterials?: number): TeamMenuItem[] {
   return [
-    { title: 'Dashboard', href: '/marketing/dashboard', icon: '📊' },
+    { title: 'Dashboard', href: '/marketing/dashboard', icon: navIcon('dashboard') },
     {
       title: 'Marketing Materials',
       href: '/marketing/materials',
-      icon: '📢',
+      icon: navIcon('megaphone'),
       badge: pendingMaterials,
     },
-    { title: 'Campaigns', href: '/marketing/campaigns', icon: '📣' },
+    { title: 'Campaigns', href: '/marketing/campaigns', icon: navIcon('volume') },
   ];
 }
 
 export function getFinanceMenu(pendingApprovals?: number): TeamMenuItem[] {
   return [
-    { title: 'Dashboard', href: '/finance/dashboard', icon: '📊' },
+    { title: 'Dashboard', href: '/finance/dashboard', icon: navIcon('dashboard') },
     {
       title: 'Pricing Approvals',
       href: '/finance/pricing',
-      icon: '💰',
+      icon: navIcon('dollar'),
       badge: pendingApprovals,
     },
-    { title: 'Payouts', href: '/finance/payouts', icon: '💸' },
-    { title: 'Revenue Reports', href: '/finance/reports/revenue', icon: '📊' },
-    { title: 'Fee Reports', href: '/finance/reports/fees', icon: '📋' },
+    { title: 'Payouts', href: '/finance/payouts', icon: navIcon('wallet') },
+    { title: 'Revenue Reports', href: '/finance/reports/revenue', icon: navIcon('dashboard') },
+    { title: 'Fee Reports', href: '/finance/reports/fees', icon: navIcon('clipboard') },
   ];
 }

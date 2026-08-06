@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -122,7 +122,7 @@ export default function SellerAnalyticsPage() {
 
   return (
     <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER']} showAccessDenied={true}>
-      <DashboardLayout role={isWholesaler ? 'WHOLESALER' : 'SELLER'} menuItems={menuItems} title={isWholesaler ? 'Wholesaler' : 'Seller'}>
+      <AppShellLayout role={isWholesaler ? 'WHOLESALER' : 'SELLER'} menuItems={menuItems} title={isWholesaler ? 'Wholesaler' : 'Seller'} breadcrumbs="inline">
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold">Product Analytics</h1>
           <p className="text-hos-text-secondary mt-1">Track your product performance and conversion rates</p>
@@ -238,7 +238,7 @@ export default function SellerAnalyticsPage() {
             </table>
           </div>
         )}
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

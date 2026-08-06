@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { CMSLayout } from '@/components/CMSLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
+import { getCmsMenu } from '@/lib/adminMenus';
 import { BlogEditor, type BlogFormData } from '@/components/cms/BlogEditor';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
@@ -67,7 +68,14 @@ export default function NewBlogPostPage() {
 
   return (
     <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
-      <CMSLayout>
+      <AppShellLayout
+        title="CMS Portal"
+        menuItems={getCmsMenu()}
+        role="CMS_EDITOR"
+        breadcrumbs="none"
+        headerLink={{ title: 'Dashboard', href: '/cms/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+      >
         <div className="space-y-4">
           <h1 className="text-2xl font-bold text-hos-text-secondary">New Blog Post</h1>
           <BlogEditor
@@ -77,7 +85,7 @@ export default function NewBlogPostPage() {
             saving={saving}
           />
         </div>
-      </CMSLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

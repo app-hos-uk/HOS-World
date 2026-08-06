@@ -9,7 +9,8 @@ import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
 import { TableHeader } from '@tiptap/extension-table-header';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface TipTapEditorProps {
   content: string;
@@ -17,6 +18,15 @@ interface TipTapEditorProps {
   onImageUpload?: () => Promise<string | null>;
   placeholder?: string;
 }
+
+type EditorPrompt =
+  | {
+      kind: 'image';
+    }
+  | {
+      kind: 'link';
+      previousUrl?: string;
+    };
 
 function ToolbarButton({
   onClick,
@@ -51,6 +61,8 @@ export function TipTapEditor({
   onImageUpload,
   placeholder = 'Write your blog content here...',
 }: TipTapEditorProps) {
+  const [editorPrompt, setEditorPrompt] = useState<EditorPrompt | null>(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [1, 2, 3, 4] }, link: false }),
@@ -86,14 +98,26 @@ export function TipTapEditor({
       if (url) editor.chain().focus().setImage({ src: url }).run();
       return;
     }
-    const url = window.prompt('Image URL');
-    if (url) editor.chain().focus().setImage({ src: url }).run();
+    setEditorPrompt({ kind: 'image' });
   };
 
   const setLink = () => {
-    const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('Link URL', previousUrl);
-    if (url === null) return;
+    const previousUrl = editor.getAttributes('link').href as string | undefined;
+    setEditorPrompt({ kind: 'link', previousUrl });
+  };
+
+  const handlePromptConfirm = (value?: string) => {
+    if (!editorPrompt) return;
+    if (editorPrompt.kind === 'image') {
+      const url = value?.trim();
+      setEditorPrompt(null);
+      if (url) editor.chain().focus().setImage({ src: url }).run();
+      return;
+    }
+
+    // Link: cancel is handled separately; empty string unsets the link
+    const url = value ?? '';
+    setEditorPrompt(null);
     if (url === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
       return;
@@ -118,6 +142,19 @@ export function TipTapEditor({
         <ToolbarButton onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()} title="Table">Table</ToolbarButton>
       </div>
       <EditorContent editor={editor} />
+
+      <ConfirmDialog
+        open={!!editorPrompt}
+        variant="prompt"
+        title={editorPrompt?.kind === 'link' ? 'Link URL' : 'Image URL'}
+        inputLabel={editorPrompt?.kind === 'link' ? 'URL' : 'Image URL'}
+        inputPlaceholder={editorPrompt?.kind === 'link' ? 'https://...' : 'https://...'}
+        inputDefaultValue={editorPrompt?.kind === 'link' ? editorPrompt.previousUrl || '' : ''}
+        inputRequired={editorPrompt?.kind === 'image'}
+        confirmLabel={editorPrompt?.kind === 'link' ? 'Apply' : 'Insert'}
+        onCancel={() => setEditorPrompt(null)}
+        onConfirm={handlePromptConfirm}
+      />
     </div>
   );
 }

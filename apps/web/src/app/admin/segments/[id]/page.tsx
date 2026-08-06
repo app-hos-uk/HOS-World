@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -23,6 +24,13 @@ export default function AdminSegmentDetailPage() {
   const [templateSlug, setTemplateSlug] = useState('welcome_loyalty');
   const [subject, setSubject] = useState('');
   const [broadcastLimit, setBroadcastLimit] = useState(500);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const loadSeg = useCallback(() => {
     apiClient
@@ -63,42 +71,60 @@ export default function AdminSegmentDetailPage() {
     }
   };
 
-  const archive = async () => {
-    if (!confirm('Archive segment?')) return;
-    try {
-      await apiClient.adminArchiveSegment(id);
-      toast.success('Archived');
-      loadSeg();
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Failed');
-    }
+  const archive = () => {
+    setConfirmDialog({
+      title: 'Archive segment?',
+      confirmLabel: 'Archive',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.adminArchiveSegment(id);
+          toast.success('Archived');
+          loadSeg();
+        } catch (e: unknown) {
+          toast.error(e instanceof Error ? e.message : 'Failed');
+        }
+      },
+    });
   };
 
-  const restore = async () => {
-    if (!confirm('Restore this archived segment?')) return;
-    try {
-      await apiClient.adminRestoreSegment(id);
-      toast.success('Restored');
-      loadSeg();
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Failed');
-    }
+  const restore = () => {
+    setConfirmDialog({
+      title: 'Restore this archived segment?',
+      confirmLabel: 'Restore',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.adminRestoreSegment(id);
+          toast.success('Restored');
+          loadSeg();
+        } catch (e: unknown) {
+          toast.error(e instanceof Error ? e.message : 'Failed');
+        }
+      },
+    });
   };
 
-  const sendBroadcast = async () => {
-    if (!confirm(`Send to up to ${broadcastLimit} members?`)) return;
-    try {
-      const r = await apiClient.adminBroadcastToSegment(id, {
-        channels,
-        templateSlug,
-        subject: subject || undefined,
-        limit: broadcastLimit,
-      });
-      const d = r.data as any;
-      toast.success(`Sent ${d?.sent ?? 0} (targeted ${d?.targeted ?? 0})`);
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Failed');
-    }
+  const sendBroadcast = () => {
+    setConfirmDialog({
+      title: `Send to up to ${broadcastLimit} members?`,
+      confirmLabel: 'Send',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          const r = await apiClient.adminBroadcastToSegment(id, {
+            channels,
+            templateSlug,
+            subject: subject || undefined,
+            limit: broadcastLimit,
+          });
+          const d = r.data as any;
+          toast.success(`Sent ${d?.sent ?? 0} (targeted ${d?.targeted ?? 0})`);
+        } catch (e: unknown) {
+          toast.error(e instanceof Error ? e.message : 'Failed');
+        }
+      },
+    });
   };
 
   if (!seg) {
@@ -309,6 +335,17 @@ export default function AdminSegmentDetailPage() {
             </div>
           )}
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

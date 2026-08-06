@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Fragment } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Dialog, Transition } from '@headlessui/react';
@@ -67,6 +68,13 @@ export default function AdminTaxZonesPage() {
   /** Percentage as user types it (e.g. "20" or "20.25"). Keeps input as 20, not 0.2. */
   const [ratePercentInput, setRatePercentInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   useEffect(() => {
     fetchTaxZones();
@@ -177,32 +185,43 @@ export default function AdminTaxZonesPage() {
     }
   };
 
-  const handleDeleteZone = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this tax zone? This will also delete all associated tax rates.')) {
-      return;
-    }
-    try {
-      await apiClient.deleteTaxZone(id);
-      toast.success('Tax zone deleted successfully!');
-      fetchTaxZones();
-    } catch (err: any) {
-      console.error('Error deleting tax zone:', err);
-      toast.error(err.message || 'Failed to delete tax zone');
-    }
+  const handleDeleteZone = (id: string) => {
+    setConfirmDialog({
+      title: 'Are you sure you want to delete this tax zone?',
+      description: 'This will also delete all associated tax rates.',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteTaxZone(id);
+          toast.success('Tax zone deleted successfully!');
+          fetchTaxZones();
+        } catch (err: any) {
+          console.error('Error deleting tax zone:', err);
+          toast.error(err.message || 'Failed to delete tax zone');
+        }
+      },
+    });
   };
 
-  const handleDeleteRate = async (rateId: string) => {
-    if (!confirm('Are you sure you want to delete this tax rate?')) {
-      return;
-    }
-    try {
-      await apiClient.deleteTaxRate(rateId);
-      toast.success('Tax rate deleted successfully!');
-      fetchTaxZones();
-    } catch (err: any) {
-      console.error('Error deleting tax rate:', err);
-      toast.error(err.message || 'Failed to delete tax rate');
-    }
+  const handleDeleteRate = (rateId: string) => {
+    setConfirmDialog({
+      title: 'Are you sure you want to delete this tax rate?',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteTaxRate(rateId);
+          toast.success('Tax rate deleted successfully!');
+          fetchTaxZones();
+        } catch (err: any) {
+          console.error('Error deleting tax rate:', err);
+          toast.error(err.message || 'Failed to delete tax rate');
+        }
+      },
+    });
   };
 
   const handleEditZone = (zone: TaxZone) => {
@@ -742,6 +761,17 @@ export default function AdminTaxZonesPage() {
             </Dialog>
           </Transition>
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -53,7 +53,7 @@ export default function WholesalerOrdersPage() {
 
   return (
     <RouteGuard allowedRoles={['WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler" backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}>
+      <AppShellLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler" backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }} breadcrumbs="inline">
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
@@ -221,7 +221,7 @@ export default function WholesalerOrdersPage() {
             )}
           </div>
         )}
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

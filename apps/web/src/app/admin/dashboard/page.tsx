@@ -8,6 +8,7 @@ import { StatCard } from '@/components/ui/StatCard';
 import { SectionCard, ChartCard, ActivityItem, EmptyState } from '@/components/ui/SectionCard';
 import { StatusBadge } from '@/components/ui/Badge';
 import { formatActivityDescription, formatActivityTitle } from '@/lib/adminFormat';
+import { navIcon } from '@/lib/navIcons';
 import {
   LineChart,
   Line,
@@ -81,12 +82,12 @@ const DARK_CHART_GRID = 'rgba(201, 162, 39, 0.12)';
 const DARK_CHART_AXIS = '#9a958a';
 
 const quickActions = [
-  { title: 'Create Product', subtitle: 'Add catalog item', href: '/admin/products/create', icon: '➕', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
-  { title: 'View Orders', subtitle: 'Fulfillment queue', href: '/admin/orders', icon: '🛒', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
-  { title: 'Submissions', subtitle: 'Review pipeline', href: '/admin/submissions', icon: '📋', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
-  { title: 'Invite Seller', subtitle: 'Onboard vendor', href: '/admin/sellers', icon: '👤', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
-  { title: 'View Reports', subtitle: 'Sales analytics', href: '/admin/reports/sales', icon: '📊', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
-  { title: 'Settings', subtitle: 'Platform config', href: '/admin/settings', icon: '⚙️', bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
+  { title: 'Create Product', subtitle: 'Add catalog item', href: '/admin/products/create', icon: navIcon('plus'), bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
+  { title: 'View Orders', subtitle: 'Fulfillment queue', href: '/admin/orders', icon: navIcon('cart'), bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
+  { title: 'Submissions', subtitle: 'Review pipeline', href: '/admin/submissions', icon: navIcon('clipboard'), bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
+  { title: 'Invite Seller', subtitle: 'Onboard vendor', href: '/admin/sellers', icon: navIcon('user'), bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
+  { title: 'View Reports', subtitle: 'Sales analytics', href: '/admin/reports/sales', icon: navIcon('dashboard'), bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
+  { title: 'Settings', subtitle: 'Platform config', href: '/admin/settings', icon: navIcon('settings'), bgColor: 'bg-hos-gold/10 hover:bg-hos-gold/15', iconColor: 'text-hos-gold' },
 ];
 
 export default function AdminDashboardPage() {
@@ -211,7 +212,7 @@ export default function AdminDashboardPage() {
               <StatCard
                 label="Total Revenue"
                 value={`$${(stats.totalRevenue || 0).toLocaleString()}`}
-                icon={<span className="text-lg">💰</span>}
+                icon={navIcon('dollar', 'w-5 h-5')}
                 iconBgColor="bg-green-500/10"
                 trend={{
                   value: 0,
@@ -221,35 +222,35 @@ export default function AdminDashboardPage() {
               <StatCard
                 label="Total Products"
                 value={stats.totalProducts}
-                icon={<span className="text-lg">📦</span>}
+                icon={navIcon('package', 'w-5 h-5')}
                 iconBgColor="bg-hos-gold/10"
                 trend={{ value: 0, label: 'Active catalog' }}
               />
               <StatCard
                 label="Total Orders"
                 value={stats.totalOrders}
-                icon={<span className="text-lg">🛒</span>}
+                icon={navIcon('cart', 'w-5 h-5')}
                 iconBgColor="bg-hos-gold/10"
                 trend={{ value: 0, label: 'All time' }}
               />
               <StatCard
                 label="Total Sellers"
                 value={stats.totalSellers}
-                icon={<span className="text-lg">🏪</span>}
+                icon={navIcon('store', 'w-5 h-5')}
                 iconBgColor="bg-amber-500/10"
                 trend={{ value: 0, label: 'Marketplace vendors' }}
               />
               <StatCard
                 label="Total Users"
                 value={stats.totalUsers || (stats.totalCustomers + stats.totalSellers)}
-                icon={<span className="text-lg">👥</span>}
+                icon={navIcon('users', 'w-5 h-5')}
                 iconBgColor="bg-hos-gold/10"
                 trend={{ value: 0, label: `${stats.totalCustomers} customers` }}
               />
               <StatCard
                 label="Pending Approvals"
                 value={pendingApprovals}
-                icon={<span className="text-lg">⏳</span>}
+                icon={navIcon('hourglass', 'w-5 h-5')}
                 iconBgColor="bg-orange-500/10"
                 valueColor={pendingApprovals > 0 ? 'text-orange-400' : 'text-hos-text-secondary'}
                 trend={{ value: 0, label: 'Awaiting review' }}
@@ -459,7 +460,7 @@ export default function AdminDashboardPage() {
                 </ResponsiveContainer>
                 ) : (
                   <div className="flex h-full flex-col items-center justify-center px-4 text-center">
-                    <span className="text-4xl mb-3" aria-hidden>📊</span>
+                    <span className="text-4xl mb-3" aria-hidden>{navIcon('dashboard', 'w-10 h-10')}</span>
                     <p className="text-sm font-medium text-hos-text-secondary">No sales data yet</p>
                     <p className="mt-1 text-xs text-hos-text-muted">Top products will appear after sales are recorded.</p>
                   </div>
@@ -476,7 +477,7 @@ export default function AdminDashboardPage() {
                     {dashboardData.recentActivity.slice(0, 5).map((activity: any, index: number) => (
                       <ActivityItem
                         key={activity.id || index}
-                        icon={<span className="text-sm">📝</span>}
+                        icon={navIcon('fileText', 'w-4 h-4')}
                         iconBg="bg-hos-gold/20"
                         title={formatActivityTitle(activity)}
                         subtitle={formatActivityDescription(activity)}
@@ -514,7 +515,7 @@ export default function AdminDashboardPage() {
                   </div>
                 ) : (
                   <EmptyState
-                    icon="📋"
+                    icon={navIcon('clipboard', 'w-12 h-12')}
                     title="No submissions"
                     description="Product submissions will appear here"
                   />
@@ -543,7 +544,7 @@ export default function AdminDashboardPage() {
                   </div>
                 ) : (
                   <EmptyState
-                    icon="🛒"
+                    icon={navIcon('cart', 'w-12 h-12')}
                     title="No orders"
                     description="Order data will appear here"
                   />

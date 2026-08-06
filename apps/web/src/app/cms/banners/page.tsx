@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { RouteGuard } from '@/components/RouteGuard';
-import { CMSLayout } from '@/components/CMSLayout';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { AppShellLayout } from '@/components/AppShellLayout';
+import { getCmsMenu } from '@/lib/adminMenus';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { CmsPortalErrorBanner } from '@/components/CmsPortalErrorBanner';
@@ -12,6 +14,13 @@ import { ImageSpecsHint, getBannerContext } from '@/components/ImageSpecsHint';
 
 export default function CMSBannersPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [banners, setBanners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -124,32 +133,54 @@ export default function CMSBannersPage() {
     }
   };
 
-  const handleDeleteBanner = async (banner: any) => {
-    if (!confirm(`Are you sure you want to delete "${banner.title}"? This action cannot be undone.`)) return;
-    try {
-      await apiClient.deleteCMSBanner(banner.id);
-      toast.success('Banner deleted successfully');
-      loadBanners();
-    } catch (err: any) {
-      toast.error(cmsActionToastMessage(err, 'Failed to delete banner'));
-    }
+  const handleDeleteBanner = (banner: any) => {
+    setConfirmDialog({
+      title: `Are you sure you want to delete "${banner.title}"?`,
+      description: 'This action cannot be undone.',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteCMSBanner(banner.id);
+          toast.success('Banner deleted successfully');
+          loadBanners();
+        } catch (err: any) {
+          toast.error(cmsActionToastMessage(err, 'Failed to delete banner'));
+        }
+      },
+    });
   };
 
   if (loading) {
     return (
       <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
-        <CMSLayout>
+        <AppShellLayout
+          title="CMS Portal"
+          menuItems={getCmsMenu()}
+          role="CMS_EDITOR"
+          breadcrumbs="none"
+          headerLink={{ title: 'Dashboard', href: '/cms/dashboard' }}
+          backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        >
           <div className="flex items-center justify-center h-64">
             <div className="text-hos-text-muted">Loading banners...</div>
           </div>
-        </CMSLayout>
+        </AppShellLayout>
       </RouteGuard>
     );
   }
 
   return (
     <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
-      <CMSLayout>
+      <AppShellLayout
+        title="CMS Portal"
+        menuItems={getCmsMenu()}
+        role="CMS_EDITOR"
+        breadcrumbs="none"
+        headerLink={{ title: 'Dashboard', href: '/cms/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+      >
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-hos-text-secondary">CMS Banners</h1>
@@ -496,7 +527,18 @@ export default function CMSBannersPage() {
             </div>
           </div>
         </div>
-      </CMSLayout>
+              {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</AppShellLayout>
     </RouteGuard>
   );
 }

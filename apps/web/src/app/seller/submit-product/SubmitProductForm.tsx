@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { CategorySelector } from '@/components/taxonomy/CategorySelector';
 import { FandomSelector } from '@/components/taxonomy/FandomSelector';
@@ -580,8 +580,9 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
 
   return (
     <RouteGuard allowedRoles={['SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout
+      <AppShellLayout
         role={isWholesaler ? 'WHOLESALER' : 'SELLER'}
+        breadcrumbs="inline"
         menuItems={menuItems}
         title={isWholesaler ? 'Wholesaler' : 'Seller'}
       >
@@ -1503,7 +1504,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
             </>
             )}
         </div>
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

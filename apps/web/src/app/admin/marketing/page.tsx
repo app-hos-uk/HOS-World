@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { navIcon } from '@/lib/navIcons';
 
 interface MarketingMaterial {
   id: string;
@@ -62,6 +64,13 @@ const TYPE_COLORS: Record<string, string> = {
 
 export default function AdminMarketingPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [activeTab, setActiveTab] = useState<'pending' | 'materials'>('pending');
   const [pendingSubmissions, setPendingSubmissions] = useState<PendingSubmission[]>([]);
   const [materials, setMaterials] = useState<MarketingMaterial[]>([]);
@@ -189,18 +198,24 @@ export default function AdminMarketingPage() {
     }
   };
 
-  const handleDeleteMaterial = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this material?')) return;
-
-    try {
-      await apiClient.deleteMarketingMaterial(id);
-      toast.success('Material deleted successfully');
-      // Use refs to get current values after async operation completes
-      fetchData(activeTabRef.current, typeFilterRef.current);
-      fetchStats();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete material');
-    }
+  const handleDeleteMaterial = (id: string) => {
+    setConfirmDialog({
+      title: 'Are you sure you want to delete this material?',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteMarketingMaterial(id);
+          toast.success('Material deleted successfully');
+          // Use refs to get current values after async operation completes
+          fetchData(activeTabRef.current, typeFilterRef.current);
+          fetchStats();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to delete material');
+        }
+      },
+    });
   };
 
   const handleMarkComplete = async (submissionId: string) => {
@@ -248,8 +263,8 @@ export default function AdminMarketingPage() {
   });
 
   const tabs = [
-    { id: 'pending', label: 'Pending Review', icon: '⏳', count: stats.pending },
-    { id: 'materials', label: 'All Materials', icon: '📁', count: stats.totalMaterials },
+    { id: 'pending', label: 'Pending Review', icon: navIcon('hourglass'), count: stats.pending },
+    { id: 'materials', label: 'All Materials', icon: navIcon('folder'), count: stats.totalMaterials },
   ];
 
   return (
@@ -318,7 +333,7 @@ export default function AdminMarketingPage() {
                 <div className="space-y-4">
                   {pendingSubmissions.length === 0 ? (
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-12 text-center">
-                      <span className="text-4xl block mb-2">✅</span>
+                      <span className="text-4xl block mb-2 flex justify-center">{navIcon('checkCircle', 'w-10 h-10')}</span>
                       <p className="text-hos-text-muted">No submissions pending marketing review</p>
                     </div>
                   ) : (
@@ -625,6 +640,17 @@ export default function AdminMarketingPage() {
             </div>
           )}
         </div>
-          </RouteGuard>
+                  {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -29,6 +30,13 @@ export default function AdminNewsletterPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unsubscribingEmail, setUnsubscribingEmail] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const fetchSubscriptions = async () => {
     setLoading(true);
@@ -66,27 +74,34 @@ export default function AdminNewsletterPage() {
     }
   };
 
-  const handleUnsubscribe = async (email: string) => {
-    if (!confirm(`Unsubscribe ${email} from the newsletter?`)) return;
-    setUnsubscribingEmail(email);
-    try {
-      await apiClient.newsletterUnsubscribe(email);
-      toast.success('Unsubscribed successfully');
-      // If this was the last row on a later page, step back so the table is not empty.
-      if (subscriptions.length <= 1 && page > 1) {
-        setPage((p) => Math.max(1, p - 1));
-      } else {
-        await fetchSubscriptions();
-      }
-    } catch (err: unknown) {
-      toast.error(
-        err && typeof err === 'object' && 'message' in err
-          ? String((err as { message: string }).message)
-          : 'Failed to unsubscribe',
-      );
-    } finally {
-      setUnsubscribingEmail(null);
-    }
+  const handleUnsubscribe = (email: string) => {
+    setConfirmDialog({
+      title: `Unsubscribe ${email} from the newsletter?`,
+      tone: 'danger',
+      confirmLabel: 'Unsubscribe',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        setUnsubscribingEmail(email);
+        try {
+          await apiClient.newsletterUnsubscribe(email);
+          toast.success('Unsubscribed successfully');
+          // If this was the last row on a later page, step back so the table is not empty.
+          if (subscriptions.length <= 1 && page > 1) {
+            setPage((p) => Math.max(1, p - 1));
+          } else {
+            await fetchSubscriptions();
+          }
+        } catch (err: unknown) {
+          toast.error(
+            err && typeof err === 'object' && 'message' in err
+              ? String((err as { message: string }).message)
+              : 'Failed to unsubscribe',
+          );
+        } finally {
+          setUnsubscribingEmail(null);
+        }
+      },
+    });
   };
 
   return (
@@ -228,6 +243,17 @@ export default function AdminNewsletterPage() {
             )}
           </div>
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

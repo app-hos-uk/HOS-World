@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { CMSLayout } from '@/components/CMSLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
+import { getCmsMenu } from '@/lib/adminMenus';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import { CmsPortalErrorBanner } from '@/components/CmsPortalErrorBanner';
@@ -81,18 +82,32 @@ export default function CMSDashboardPage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
-        <CMSLayout>
+        <AppShellLayout
+          title="CMS Portal"
+          menuItems={getCmsMenu()}
+          role="CMS_EDITOR"
+          breadcrumbs="none"
+          headerLink={{ title: 'Dashboard', href: '/cms/dashboard' }}
+          backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        >
           <div className="flex items-center justify-center h-64">
             <div className="text-hos-text-muted">Loading dashboard...</div>
           </div>
-        </CMSLayout>
+        </AppShellLayout>
       </RouteGuard>
     );
   }
 
   return (
     <RouteGuard allowedRoles={['CMS_EDITOR', 'ADMIN']}>
-      <CMSLayout>
+      <AppShellLayout
+        title="CMS Portal"
+        menuItems={getCmsMenu()}
+        role="CMS_EDITOR"
+        breadcrumbs="none"
+        headerLink={{ title: 'Dashboard', href: '/cms/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+      >
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-hos-text-secondary">CMS Dashboard</h1>
@@ -211,7 +226,7 @@ export default function CMSDashboardPage() {
             </div>
           </div>
         </div>
-      </CMSLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

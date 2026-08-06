@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { CategorySelector } from '@/components/taxonomy/CategorySelector';
@@ -139,6 +140,13 @@ function AdminProductsContent() {
   const [statusChangePending, setStatusChangePending] = useState<{ product: Product; newStatus: ProductStatus } | null>(null);
   const [statusChangeLoading, setStatusChangeLoading] = useState(false);
   const [editSnapshot, setEditSnapshot] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const bulkTargetIdsRef = useRef<string[]>([]);
   const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
 
@@ -399,7 +407,19 @@ function AdminProductsContent() {
   }, [someFilteredSelected, allFilteredSelected]);
 
   const closeEditModal = () => {
-    if (isEditDirty && !window.confirm('Discard unsaved changes?')) return;
+    if (isEditDirty) {
+      setConfirmDialog({
+        title: 'Discard unsaved changes?',
+        confirmLabel: 'Discard',
+        onConfirm: () => {
+          setConfirmDialog(null);
+          setShowEditModal(false);
+          setEditingProduct(null);
+          setEditSnapshot('');
+        },
+      });
+      return;
+    }
     setShowEditModal(false);
     setEditingProduct(null);
     setEditSnapshot('');
@@ -1772,6 +1792,17 @@ function AdminProductsContent() {
             </div>
           )}
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

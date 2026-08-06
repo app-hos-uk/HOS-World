@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { SocialShare } from '@/components/SocialShare';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface ProductLink {
   id: string;
@@ -32,6 +33,13 @@ interface Product {
 
 export default function InfluencerProductLinksPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [links, setLinks] = useState<ProductLink[]>([]);
@@ -110,16 +118,22 @@ export default function InfluencerProductLinksPage() {
     }
   };
 
-  const handleDeleteLink = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this product link?')) return;
-
-    try {
-      await apiClient.deleteProductLink(id);
-      toast.success('Product link deleted');
-      fetchLinks();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete product link');
-    }
+  const handleDeleteLink = (id: string) => {
+    setConfirmDialog({
+      title: 'Are you sure you want to delete this product link?',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteProductLink(id);
+          toast.success('Product link deleted');
+          fetchLinks();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to delete product link');
+        }
+      },
+    });
   };
 
   const copyLink = async (url: string) => {
@@ -374,6 +388,17 @@ export default function InfluencerProductLinksPage() {
               </div>
             </div>
           </div>
+        )}
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
         )}
     </div>
   );

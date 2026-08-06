@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DataExport } from '@/components/DataExport';
@@ -52,6 +53,13 @@ const CHART_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
 
 export default function AdminDomainsPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -258,26 +266,30 @@ export default function AdminDomainsPage() {
     }
   };
 
-  const handleRemoveDomain = async (seller: Seller, type: 'subdomain' | 'custom') => {
-    if (!confirm(`Are you sure you want to remove the ${type} for ${seller.storeName}?`)) {
-      return;
-    }
-
-    try {
-      await toast.promise(
-        type === 'subdomain'
-          ? apiClient.removeSubDomain(seller.id)
-          : apiClient.removeCustomDomain(seller.id),
-        {
-          loading: `Removing ${type}...`,
-          success: `${type === 'subdomain' ? 'Subdomain' : 'Custom domain'} removed successfully`,
-          error: (err) => err.message || `Failed to remove ${type}`,
+  const handleRemoveDomain = (seller: Seller, type: 'subdomain' | 'custom') => {
+    setConfirmDialog({
+      title: `Are you sure you want to remove the ${type} for ${seller.storeName}?`,
+      tone: 'danger',
+      confirmLabel: 'Remove',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await toast.promise(
+            type === 'subdomain'
+              ? apiClient.removeSubDomain(seller.id)
+              : apiClient.removeCustomDomain(seller.id),
+            {
+              loading: `Removing ${type}...`,
+              success: `${type === 'subdomain' ? 'Subdomain' : 'Custom domain'} removed successfully`,
+              error: (err) => err.message || `Failed to remove ${type}`,
+            }
+          );
+          await fetchSellers();
+        } catch (err: any) {
+          console.error(`Error removing ${type}:`, err);
         }
-      );
-      await fetchSellers();
-    } catch (err: any) {
-      console.error(`Error removing ${type}:`, err);
-    }
+      },
+    });
   };
 
   const handleVerifyDNS = async (seller: Seller) => {
@@ -1032,6 +1044,17 @@ export default function AdminDomainsPage() {
             </div>
           )}
         </div>
-          </RouteGuard>
+                  {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

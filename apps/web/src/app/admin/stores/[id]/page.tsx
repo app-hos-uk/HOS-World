@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -38,6 +39,13 @@ export default function AdminStoreDetailPage() {
   const params = useParams();
   const id = String(params.id);
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [row, setRow] = useState<Record<string, unknown> | null>(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<EditForm>({ name: '', code: '', address: '', city: '', postcode: '', country: '', defaultRegionCode: '' });
@@ -92,15 +100,23 @@ export default function AdminStoreDetailPage() {
     }
   };
 
-  const deactivate = async () => {
-    if (!confirm('Deactivate this store? It will no longer accept orders.')) return;
-    try {
-      await apiClient.adminDeactivateStore(id);
-      toast.success('Store deactivated');
-      load();
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Failed');
-    }
+  const deactivate = () => {
+    setConfirmDialog({
+      title: 'Deactivate this store?',
+      description: 'It will no longer accept orders.',
+      tone: 'danger',
+      confirmLabel: 'Deactivate',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.adminDeactivateStore(id);
+          toast.success('Store deactivated');
+          load();
+        } catch (e: unknown) {
+          toast.error(e instanceof Error ? e.message : 'Failed');
+        }
+      },
+    });
   };
 
   const handleSave = async () => {
@@ -315,6 +331,17 @@ export default function AdminStoreDetailPage() {
           <p className="text-hos-text-muted">Loading&hellip;</p>
         )}
       </div>
-    </RouteGuard>
+            {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

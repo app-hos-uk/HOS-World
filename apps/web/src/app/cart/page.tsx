@@ -1,6 +1,7 @@
 'use client';
 
 import { MinimalCheckoutHeader } from '@/components/storefront/MinimalCheckoutHeader';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { MinimalCheckoutFooter } from '@/components/storefront/MinimalCheckoutFooter';
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -44,6 +45,13 @@ export default function CartPage() {
   const { syncCart } = useCart();
   const { isAuthenticated } = useAuth();
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [couponCode, setCouponCode] = useState('');
@@ -239,51 +247,58 @@ export default function CartPage() {
     }
   };
 
-  const handleRemoveItem = async (itemId: string) => {
+  const handleRemoveItem = (itemId: string) => {
     if (removingItemId === itemId) return;
-    if (!window.confirm('Remove this item from your cart?')) return;
     const item = cart?.items.find((i) => i.id === itemId);
     if (!item || !cart) return;
 
-    // Optimistic update: remove from UI immediately
-    setCart((prev) =>
-      prev ? { ...prev, items: prev.items.filter((i) => i.id !== itemId) } : null
-    );
-    setRemovingItemId(itemId);
+    setConfirmDialog({
+      title: 'Remove this item from your cart?',
+      tone: 'danger',
+      confirmLabel: 'Remove',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        // Optimistic update: remove from UI immediately
+        setCart((prev) =>
+          prev ? { ...prev, items: prev.items.filter((i) => i.id !== itemId) } : null
+        );
+        setRemovingItemId(itemId);
 
-    try {
-      let response;
-      if (isAuthenticated) {
-        response = await apiClient.removeCartItem(itemId);
-      } else {
-        const sid = getOrCreateGuestCartSessionId();
-        response = await apiClient.removeGuestCartItem(sid, itemId);
-      }
-      if (response?.data) {
-        setCart(response.data);
-        syncCart(response.data);
-        toast.success('Item removed from cart');
-      }
-    } catch (error: any) {
-      setCart((prev) => {
-        if (!prev) return null;
-        if (prev.items.some((i) => i.id === itemId)) return prev;
-        return { ...prev, items: [...prev.items, item] };
-      });
-      const msg = error?.message || '';
-      if (msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('log in')) {
-        toast.error('Your session expired. Please sign in again and retry.');
-      } else {
-        toast.error(msg || 'Could not remove item from cart. Please try again.');
-      }
-      try {
-        await fetchCart();
-      } catch {
-        /* resync best-effort */
-      }
-    } finally {
-      setRemovingItemId(null);
-    }
+        try {
+          let response;
+          if (isAuthenticated) {
+            response = await apiClient.removeCartItem(itemId);
+          } else {
+            const sid = getOrCreateGuestCartSessionId();
+            response = await apiClient.removeGuestCartItem(sid, itemId);
+          }
+          if (response?.data) {
+            setCart(response.data);
+            syncCart(response.data);
+            toast.success('Item removed from cart');
+          }
+        } catch (error: any) {
+          setCart((prev) => {
+            if (!prev) return null;
+            if (prev.items.some((i) => i.id === itemId)) return prev;
+            return { ...prev, items: [...prev.items, item] };
+          });
+          const msg = error?.message || '';
+          if (msg.toLowerCase().includes('unauthorized') || msg.toLowerCase().includes('log in')) {
+            toast.error('Your session expired. Please sign in again and retry.');
+          } else {
+            toast.error(msg || 'Could not remove item from cart. Please try again.');
+          }
+          try {
+            await fetchCart();
+          } catch {
+            /* resync best-effort */
+          }
+        } finally {
+          setRemovingItemId(null);
+        }
+      },
+    });
   };
 
   const handleMoveToWishlist = async (item: CartItem) => {
@@ -688,6 +703,17 @@ export default function CartPage() {
         </div>
       </main>
       <MinimalCheckoutFooter />
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
     </div>
   );
 }

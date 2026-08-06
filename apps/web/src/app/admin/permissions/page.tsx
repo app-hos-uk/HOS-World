@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 
@@ -139,10 +140,10 @@ export default function AdminPermissionsPage() {
     try {
       setSaving(true);
       await apiClient.updateRolePermissions(selectedRole, rolePermissions[selectedRole]);
-      alert('Permissions saved successfully!');
+      toast.success('Permissions saved successfully!');
     } catch (error) {
       console.error('Error saving permissions:', error);
-      alert('Failed to save permissions');
+      toast.error('Failed to save permissions');
     } finally {
       setSaving(false);
     }
@@ -305,11 +306,11 @@ export default function AdminPermissionsPage() {
                   <button
                     onClick={async () => {
                       if (!newRoleName.trim()) {
-                        alert('Please enter a role name');
+                        toast.error('Please enter a role name');
                         return;
                       }
                       if (roles.includes(newRoleName)) {
-                        alert('Role already exists');
+                        toast.error('Role already exists');
                         return;
                       }
                       setCreatingRole(true);
@@ -322,9 +323,9 @@ export default function AdminPermissionsPage() {
                       setSelectedRole(newRoleName);
                         setShowCreateRole(false);
                         setNewRoleName('');
-                        alert('Role created successfully! You can now assign permissions.');
+                        toast.success('Role created successfully! You can now assign permissions.');
                       } catch (err: any) {
-                        alert('Failed to create role: ' + err.message);
+                        toast.error('Failed to create role: ' + err.message);
                       } finally {
                         setCreatingRole(false);
                       }

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -11,6 +12,13 @@ export default function AdminJourneysPage() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -25,27 +33,42 @@ export default function AdminJourneysPage() {
     load();
   }, [load]);
 
-  const toggleActive = async (id: string, activate: boolean) => {
+  const toggleActive = (id: string, activate: boolean) => {
     const action = activate ? 'Activate' : 'Deactivate';
-    if (!confirm(`${action} this journey?`)) return;
-    try {
-      await apiClient.adminUpdateJourney(id, { isActive: activate });
-      toast.success(`Journey ${activate ? 'activated' : 'deactivated'}`);
-      load();
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed');
-    }
+    setConfirmDialog({
+      title: `${action} this journey?`,
+      tone: activate ? 'default' : 'danger',
+      confirmLabel: action,
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.adminUpdateJourney(id, { isActive: activate });
+          toast.success(`Journey ${activate ? 'activated' : 'deactivated'}`);
+          load();
+        } catch (e: any) {
+          toast.error(e?.message || 'Failed');
+        }
+      },
+    });
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Delete journey "${name}"? This cannot be undone.`)) return;
-    try {
-      await apiClient.adminDeleteJourney(id);
-      toast.success('Journey deleted');
-      load();
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed to delete journey');
-    }
+  const handleDelete = (id: string, name: string) => {
+    setConfirmDialog({
+      title: `Delete journey "${name}"?`,
+      description: 'This cannot be undone.',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.adminDeleteJourney(id);
+          toast.success('Journey deleted');
+          load();
+        } catch (e: any) {
+          toast.error(e?.message || 'Failed to delete journey');
+        }
+      },
+    });
   };
 
   return (
@@ -120,6 +143,17 @@ export default function AdminJourneysPage() {
             </div>
           )}
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

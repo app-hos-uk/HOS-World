@@ -2,13 +2,14 @@
 
 import { RouteGuard } from '@/components/RouteGuard';
 import Link from 'next/link';
+import { navIcon } from '@/lib/navIcons';
 
 const reportLinks = [
-  { title: 'Sales Reports', href: '/admin/reports/sales', icon: '💵', description: 'Revenue, orders, and sales trends' },
-  { title: 'User Analytics', href: '/admin/reports/users', icon: '👥', description: 'User growth and engagement' },
-  { title: 'Product Analytics', href: '/admin/reports/products', icon: '📦', description: 'Product performance and catalog metrics' },
-  { title: 'Platform Metrics', href: '/admin/reports/platform', icon: '📈', description: 'Platform-wide KPIs and health' },
-  { title: 'Inventory Reports', href: '/admin/reports/inventory', icon: '📋', description: 'Stock levels and inventory trends' },
+  { title: 'Sales Reports', href: '/admin/reports/sales', icon: navIcon('banknote', 'w-8 h-8'), description: 'Revenue, orders, and sales trends' },
+  { title: 'User Analytics', href: '/admin/reports/users', icon: navIcon('users', 'w-8 h-8'), description: 'User growth and engagement' },
+  { title: 'Product Analytics', href: '/admin/reports/products', icon: navIcon('package', 'w-8 h-8'), description: 'Product performance and catalog metrics' },
+  { title: 'Platform Metrics', href: '/admin/reports/platform', icon: navIcon('trending', 'w-8 h-8'), description: 'Platform-wide KPIs and health' },
+  { title: 'Inventory Reports', href: '/admin/reports/inventory', icon: navIcon('clipboard', 'w-8 h-8'), description: 'Stock levels and inventory trends' },
 ];
 
 export default function AdminReportsPage() {

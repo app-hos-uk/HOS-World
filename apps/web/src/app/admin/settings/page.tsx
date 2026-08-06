@@ -6,6 +6,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { EmailTestPanel } from '@/components/admin/EmailTestPanel';
+import { navIcon } from '@/lib/navIcons';
 
 const defaultSettings = {
   // General Settings
@@ -113,11 +114,11 @@ export default function AdminSettingsPage() {
   };
 
   const tabs = [
-    { id: 'general', label: 'General', icon: '⚙️' },
-    { id: 'email', label: 'Email', icon: '📧' },
-    { id: 'payment', label: 'Payment', icon: '💳' },
-    { id: 'fulfillment', label: 'Fulfillment', icon: '🚚' },
-    { id: 'notifications', label: 'Notifications', icon: '🔔' },
+    { id: 'general', label: 'General', icon: navIcon('settings') },
+    { id: 'email', label: 'Email', icon: navIcon('mail') },
+    { id: 'payment', label: 'Payment', icon: navIcon('creditCard') },
+    { id: 'fulfillment', label: 'Fulfillment', icon: navIcon('truck') },
+    { id: 'notifications', label: 'Notifications', icon: navIcon('bell') },
   ];
 
   return (
@@ -134,7 +135,7 @@ export default function AdminSettingsPage() {
             className="group bg-gradient-to-br from-hos-bg to-hos-bg-tertiary border border-hos-border-accent rounded-lg p-5 hover:shadow-md transition-all"
           >
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-2xl">🔌</span>
+              <span className="text-2xl">{navIcon('plug', 'w-6 h-6')}</span>
               <h3 className="font-semibold text-hos-text-secondary group-hover:text-hos-gold-hover">Integrations</h3>
             </div>
             <p className="text-sm text-hos-text-secondary">
@@ -153,7 +154,7 @@ export default function AdminSettingsPage() {
             className="group bg-gradient-to-br from-hos-bg-secondary to-hos-bg-tertiary border border-hos-border-accent rounded-lg p-5 hover:shadow-md transition-all"
           >
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-2xl">🚚</span>
+              <span className="text-2xl">{navIcon('truck', 'w-6 h-6')}</span>
               <h3 className="font-semibold text-hos-text-secondary group-hover:text-hos-gold-hover">Shipping Integrations</h3>
             </div>
             <p className="text-sm text-hos-text-secondary">
@@ -172,7 +173,7 @@ export default function AdminSettingsPage() {
             className="group bg-gradient-to-br from-hos-bg-secondary to-hos-bg-tertiary border border-hos-border-accent rounded-lg p-5 hover:shadow-md transition-all"
           >
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-2xl">🏷️</span>
+              <span className="text-2xl">{navIcon('tag', 'w-6 h-6')}</span>
               <h3 className="font-semibold text-hos-text-secondary group-hover:text-hos-gold-hover">Manual Carriers</h3>
             </div>
             <p className="text-sm text-hos-text-secondary">
@@ -191,7 +192,7 @@ export default function AdminSettingsPage() {
             className="group bg-gradient-to-br from-green-50 to-green-100 border border-green-500/30 rounded-lg p-5 hover:shadow-md transition-all"
           >
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-2xl">📊</span>
+              <span className="text-2xl">{navIcon('dashboard', 'w-6 h-6')}</span>
               <h3 className="font-semibold text-hos-text-secondary group-hover:text-green-400">Tax Services</h3>
             </div>
             <p className="text-sm text-hos-text-secondary">

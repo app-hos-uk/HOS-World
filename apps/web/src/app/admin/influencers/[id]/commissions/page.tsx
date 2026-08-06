@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 type Rule = {
   id: string;
@@ -21,6 +22,13 @@ export default function InfluencerCommissionSettingsPage() {
   const params = useParams();
   const router = useRouter();
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const influencerId = params?.id as string;
 
   const [loading, setLoading] = useState(true);
@@ -176,15 +184,23 @@ export default function InfluencerCommissionSettingsPage() {
     }
   };
 
-  const removeRule = async (ruleId: string) => {
-    if (!influencerId || !confirm('Delete this rule?')) return;
-    try {
-      await apiClient.deleteInfluencerCommissionRule(influencerId, ruleId);
-      toast.success('Rule deleted');
-      load();
-    } catch (e: any) {
-      toast.error(e?.message || 'Delete failed');
-    }
+  const removeRule = (ruleId: string) => {
+    if (!influencerId) return;
+    setConfirmDialog({
+      title: 'Delete this rule?',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deleteInfluencerCommissionRule(influencerId, ruleId);
+          toast.success('Rule deleted');
+          load();
+        } catch (e: any) {
+          toast.error(e?.message || 'Delete failed');
+        }
+      },
+    });
   };
 
   const ruleLabel = (r: Rule) => {
@@ -427,6 +443,17 @@ export default function InfluencerCommissionSettingsPage() {
             </>
           )}
         </div>
-          </RouteGuard>
+                  {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

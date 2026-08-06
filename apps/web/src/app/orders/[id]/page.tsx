@@ -5,8 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -91,6 +93,7 @@ export default function OrderDetailPage() {
   const router = useRouter();
   const toast = useToast();
   const { formatPrice } = useCurrency();
+  const { open: openDialog, close: closeDialog, dialogProps } = useConfirmDialog();
   const orderId = params.id as string;
   const [order, setOrder] = useState<Order | null>(null);
   const [cancellationRequest, setCancellationRequest] = useState<any | null>(null);
@@ -268,39 +271,61 @@ export default function OrderDetailPage() {
       cancellationRequest.status?.toUpperCase?.() || '',
     );
 
-  const handleCancelOrder = async () => {
+  const handleCancelOrder = () => {
     if (!order) return;
     if (isPaidOrder && !cancelReason.trim()) {
       toast.error('Please provide a reason for cancellation');
       return;
     }
-    if (!confirm(isPaidOrder ? 'Submit cancellation request for this order?' : 'Are you sure you want to cancel this order?')) {
-      return;
-    }
-    try {
-      setCancelling(true);
-      const response = await apiClient.cancelOrder(orderId, isPaidOrder ? cancelReason : undefined);
-      toast.success(response?.message || 'Request submitted');
-      setShowCancelForm(false);
-      setCancelReason('');
-      await fetchOrder();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to cancel order');
-    } finally {
-      setCancelling(false);
-    }
+    openDialog({
+      title: isPaidOrder ? 'Submit cancellation request?' : 'Cancel order?',
+      description: isPaidOrder
+        ? 'Submit cancellation request for this order?'
+        : 'Are you sure you want to cancel this order?',
+      confirmLabel: isPaidOrder ? 'Submit request' : 'Cancel order',
+      tone: 'danger',
+      onConfirm: async () => {
+        closeDialog();
+        try {
+          setCancelling(true);
+          const response = await apiClient.cancelOrder(orderId, isPaidOrder ? cancelReason : undefined);
+          toast.success(response?.message || 'Request submitted');
+          setShowCancelForm(false);
+          setCancelReason('');
+          await fetchOrder();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to cancel order');
+        } finally {
+          setCancelling(false);
+        }
+      },
+    });
   };
 
-  const handleEscalate = async () => {
+  const handleEscalate = () => {
     if (!cancellationRequest?.id) return;
-    const reason = window.prompt('Why are you escalating this cancellation?') || '';
-    try {
-      await apiClient.escalateCancellation(cancellationRequest.id, reason);
-      toast.success('Cancellation escalated to admin');
-      await fetchOrder();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to escalate cancellation');
-    }
+    openDialog({
+      variant: 'prompt',
+      title: 'Escalate cancellation',
+      description: 'Why are you escalating this cancellation?',
+      inputLabel: 'Reason',
+      inputPlaceholder: 'Enter escalation reason...',
+      inputRequired: false,
+      inputMultiline: true,
+      confirmLabel: 'Escalate',
+      tone: 'danger',
+      onConfirm: async (value) => {
+        closeDialog();
+        const reason = value || '';
+        try {
+          await apiClient.escalateCancellation(cancellationRequest.id, reason);
+          toast.success('Cancellation escalated to admin');
+          await fetchOrder();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to escalate cancellation');
+        }
+      },
+    });
   };
 
   if (loading) {
@@ -820,6 +845,7 @@ export default function OrderDetailPage() {
           </div>
         </main>
         <Footer />
+        <ConfirmDialog {...dialogProps} busy={cancelling} />
       </div>
     </RouteGuard>
   );

@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
@@ -71,12 +71,16 @@ function ProcurementSubmissionsContent() {
   const isCatalogContext = currentRole === 'CATALOG';
   const layoutTitle = isCatalogContext ? 'Catalog' : 'Procurement';
   const layoutRole = isCatalogContext ? 'CATALOG' : 'PROCUREMENT';
+  // Catalog users reach this page for the cross-seller duplicates workflow only, so the
+  // Catalog Entries destination stays out of the sidebar here.
   const menuItems = isCatalogContext
-    ? getCatalogMenu().map((item) =>
-        item.href === '/catalog/duplicates'
-          ? { ...item, title: 'Duplicates', badge: duplicateGroups.length }
-          : item,
-      )
+    ? getCatalogMenu()
+        .filter((item) => item.href !== '/catalog/entries')
+        .map((item) =>
+          item.href === '/catalog/duplicates'
+            ? { ...item, badge: duplicateGroups.length }
+            : item,
+        )
     : getProcurementMenu(
         submissions.filter(s => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW').length
       );
@@ -243,11 +247,12 @@ function ProcurementSubmissionsContent() {
 
   return (
     <RouteGuard allowedRoles={['PROCUREMENT', 'CATALOG', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout
+      <AppShellLayout
         role={layoutRole}
+        breadcrumbs="inline"
         menuItems={menuItems}
         title={layoutTitle}
-        backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
+        backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}
       >
         <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Review Submissions</h1>
@@ -1055,7 +1060,7 @@ function ProcurementSubmissionsContent() {
               </div>
             </div>
           )}
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }

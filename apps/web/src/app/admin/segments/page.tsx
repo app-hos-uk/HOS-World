@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -11,6 +12,13 @@ export default function AdminSegmentsPage() {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<string>('');
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -38,26 +46,38 @@ export default function AdminSegmentsPage() {
     }
   };
 
-  const archiveOne = async (id: string) => {
-    if (!confirm('Archive this segment and clear memberships?')) return;
-    try {
-      await apiClient.adminArchiveSegment(id);
-      toast.success('Archived');
-      load();
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed');
-    }
+  const archiveOne = (id: string) => {
+    setConfirmDialog({
+      title: 'Archive this segment and clear memberships?',
+      confirmLabel: 'Archive',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.adminArchiveSegment(id);
+          toast.success('Archived');
+          load();
+        } catch (e: any) {
+          toast.error(e?.message || 'Failed');
+        }
+      },
+    });
   };
 
-  const restoreOne = async (id: string) => {
-    if (!confirm('Restore this archived segment?')) return;
-    try {
-      await apiClient.adminRestoreSegment(id);
-      toast.success('Restored');
-      load();
-    } catch (e: any) {
-      toast.error(e?.message || 'Failed');
-    }
+  const restoreOne = (id: string) => {
+    setConfirmDialog({
+      title: 'Restore this archived segment?',
+      confirmLabel: 'Restore',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.adminRestoreSegment(id);
+          toast.success('Restored');
+          load();
+        } catch (e: any) {
+          toast.error(e?.message || 'Failed');
+        }
+      },
+    });
   };
 
   return (
@@ -159,6 +179,17 @@ export default function AdminSegmentsPage() {
             </div>
           )}
         </div>
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
           </RouteGuard>
   );
 }

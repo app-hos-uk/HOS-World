@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -38,6 +39,13 @@ const emptyForm: CarrierFormData = {
 
 export default function AdminShippingCarriersPage() {
   const toast = useToast();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [carriers, setCarriers] = useState<ShippingCarrier[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -133,20 +141,26 @@ export default function AdminShippingCarriersPage() {
     }
   };
 
-  const handleDelete = async (carrier: ShippingCarrier) => {
-    if (!window.confirm(`Delete carrier "${carrier.name}"? Sellers will no longer see it in manual shipping.`)) {
-      return;
-    }
-    try {
-      setDeletingId(carrier.id);
-      await apiClient.deleteShippingCarrier(carrier.id);
-      toast.success('Carrier deleted');
-      await fetchCarriers();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete carrier');
-    } finally {
-      setDeletingId(null);
-    }
+  const handleDelete = (carrier: ShippingCarrier) => {
+    setConfirmDialog({
+      title: `Delete carrier "${carrier.name}"?`,
+      description: 'Sellers will no longer see it in manual shipping.',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          setDeletingId(carrier.id);
+          await apiClient.deleteShippingCarrier(carrier.id);
+          toast.success('Carrier deleted');
+          await fetchCarriers();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to delete carrier');
+        } finally {
+          setDeletingId(null);
+        }
+      },
+    });
   };
 
   return (
@@ -405,6 +419,17 @@ export default function AdminShippingCarriersPage() {
           </div>
         )}
       </div>
-    </RouteGuard>
+            {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
+        )}
+</RouteGuard>
   );
 }

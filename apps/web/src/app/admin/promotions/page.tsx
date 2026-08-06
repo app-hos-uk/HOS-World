@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -101,6 +102,13 @@ export default function AdminPromotionsPage() {
   const [creatingPromotion, setCreatingPromotion] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    title: string;
+    description?: string;
+    tone?: 'default' | 'danger';
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
   const editProductFetchSeq = useRef(0);
   const [productSearchTerm, setProductSearchTerm] = useState('');
   const [productSearchResults, setProductSearchResults] = useState<any[]>([]);
@@ -464,15 +472,22 @@ export default function AdminPromotionsPage() {
     }
   };
 
-  const handleDeletePromotion = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this promotion?')) return;
-    try {
-      await apiClient.deletePromotion(id);
-      toast.success('Promotion deleted successfully!');
-      fetchPromotions();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete promotion');
-    }
+  const handleDeletePromotion = (id: string) => {
+    setConfirmDialog({
+      title: 'Are you sure you want to delete this promotion?',
+      tone: 'danger',
+      confirmLabel: 'Delete',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        try {
+          await apiClient.deletePromotion(id);
+          toast.success('Promotion deleted successfully!');
+          fetchPromotions();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to delete promotion');
+        }
+      },
+    });
   };
 
   return (
@@ -987,6 +1002,17 @@ export default function AdminPromotionsPage() {
               </div>
             </div>
           </div>
+        )}
+        {confirmDialog && (
+          <ConfirmDialog
+            open
+            title={confirmDialog.title}
+            description={confirmDialog.description}
+            tone={confirmDialog.tone}
+            confirmLabel={confirmDialog.confirmLabel}
+            onCancel={() => setConfirmDialog(null)}
+            onConfirm={confirmDialog.onConfirm}
+          />
         )}
           </RouteGuard>
   );

@@ -28,6 +28,7 @@ import {
   Cell,
   Legend,
 } from 'recharts';
+import { navIcon } from '@/lib/navIcons';
 
 interface DashboardStats {
   totalOrders: number;
@@ -188,7 +189,7 @@ export default function CustomerDashboardPage() {
           title: `Order #${order.orderNumber || order.id.slice(0, 8)}`,
           description: `${order.status} - ${formatPrice(order.total, 'USD')}`,
           date: order.createdAt,
-          icon: '📦',
+          icon: navIcon('package'),
           link: `/orders/${order.id}`,
         });
       });
@@ -202,7 +203,7 @@ export default function CustomerDashboardPage() {
           title: 'Added to Wishlist',
           description: product.name,
           date: item.addedAt || item.createdAt,
-          icon: '❤️',
+          icon: navIcon('heart'),
           link: `/products/${product.id}`,
         });
       });
@@ -361,10 +362,10 @@ export default function CustomerDashboardPage() {
           {/* Tab Navigation */}
           <div className="flex flex-wrap gap-2 mb-6 border-b border-hos-border pb-2">
             {[
-              { id: 'overview', label: 'Overview', icon: '📊' },
-              { id: 'orders', label: 'Orders', icon: '📦' },
-              { id: 'analytics', label: 'Analytics', icon: '📈' },
-              { id: 'activity', label: 'Activity', icon: '🕐' },
+              { id: 'overview', label: 'Overview', icon: navIcon('dashboard') },
+              { id: 'orders', label: 'Orders', icon: navIcon('package') },
+              { id: 'analytics', label: 'Analytics', icon: navIcon('trending') },
+              { id: 'activity', label: 'Activity', icon: navIcon('clock') },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -386,14 +387,14 @@ export default function CustomerDashboardPage() {
             <>
               {/* Stats Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-                {([
-                  { icon: '📦', value: stats?.totalOrders || 0, label: 'Total Orders', color: 'text-hos-text-secondary' },
-                  { icon: '⏳', value: stats?.pendingOrders || 0, label: 'In Progress', color: 'text-amber-400' },
-                  { icon: '✅', value: stats?.completedOrders || 0, label: 'Completed', color: 'text-green-400' },
-                  { icon: '💰', value: formatPrice(stats?.totalSpent || 0), label: 'Total Spent', color: 'text-hos-gold' },
-                  { icon: '❤️', value: stats?.wishlistItems || 0, label: 'Wishlist', color: 'text-pink-400' },
-                  { icon: '🛒', value: stats?.cartItems || 0, label: 'In Cart', color: 'text-hos-gold' },
-                ] as const).map((card) => (
+                {[
+                  { icon: navIcon('package', 'w-8 h-8'), value: stats?.totalOrders || 0, label: 'Total Orders', color: 'text-hos-text-secondary' },
+                  { icon: navIcon('hourglass', 'w-8 h-8'), value: stats?.pendingOrders || 0, label: 'In Progress', color: 'text-amber-400' },
+                  { icon: navIcon('checkCircle', 'w-8 h-8'), value: stats?.completedOrders || 0, label: 'Completed', color: 'text-green-400' },
+                  { icon: navIcon('dollar', 'w-8 h-8'), value: formatPrice(stats?.totalSpent || 0), label: 'Total Spent', color: 'text-hos-gold' },
+                  { icon: navIcon('heart', 'w-8 h-8'), value: stats?.wishlistItems || 0, label: 'Wishlist', color: 'text-pink-400' },
+                  { icon: navIcon('cart', 'w-8 h-8'), value: stats?.cartItems || 0, label: 'In Cart', color: 'text-hos-gold' },
+                ].map((card) => (
                   <div key={card.label} className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
                     <div className="text-3xl mb-2">{card.icon}</div>
                     {showSkeleton ? (
@@ -489,7 +490,7 @@ export default function CustomerDashboardPage() {
                     <div className="space-y-4">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-hos-bg-secondary/20 flex items-center justify-center text-2xl">
-                          ✨
+                          {navIcon('sparkles', 'w-6 h-6')}
                         </div>
                         <div>
                           <p className="font-bold text-lg">{loyaltyMembership.tier?.name || 'Member'}</p>
@@ -629,7 +630,7 @@ export default function CustomerDashboardPage() {
                     href="/orders"
                     className="flex flex-col items-center text-center gap-2 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
                   >
-                    <div className="w-12 h-12 rounded-lg bg-hos-gold/20 flex items-center justify-center text-2xl">📋</div>
+                    <div className="w-12 h-12 rounded-lg bg-hos-gold/20 flex items-center justify-center text-2xl">{navIcon('clipboard', 'w-6 h-6')}</div>
                     <div>
                       <p className="font-semibold text-hos-text-secondary text-sm">View All Orders</p>
                       <p className="text-xs text-hos-text-muted mt-0.5">Track orders</p>
@@ -639,7 +640,7 @@ export default function CustomerDashboardPage() {
                     href="/cart"
                     className="flex flex-col items-center text-center gap-2 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
                   >
-                    <div className="w-12 h-12 rounded-lg bg-amber-500/15 flex items-center justify-center text-2xl">🛒</div>
+                    <div className="w-12 h-12 rounded-lg bg-amber-500/15 flex items-center justify-center text-2xl">{navIcon('cart', 'w-6 h-6')}</div>
                     <div>
                       <p className="font-semibold text-hos-text-secondary text-sm">Shopping Cart</p>
                       <p className="text-xs text-hos-text-muted mt-0.5">{stats?.cartItems || 0} items</p>
@@ -649,7 +650,7 @@ export default function CustomerDashboardPage() {
                     href="/loyalty"
                     className="flex flex-col items-center text-center gap-2 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-amber-500/30 transition-all"
                   >
-                    <div className="w-12 h-12 rounded-lg bg-amber-500/15 flex items-center justify-center text-2xl">✨</div>
+                    <div className="w-12 h-12 rounded-lg bg-amber-500/15 flex items-center justify-center text-2xl">{navIcon('sparkles', 'w-6 h-6')}</div>
                     <div>
                       <p className="font-semibold text-hos-text-secondary text-sm">Loyalty Rewards</p>
                       <p className="text-xs text-hos-text-muted mt-0.5">Earn points</p>
@@ -659,7 +660,7 @@ export default function CustomerDashboardPage() {
                     href="/products"
                     className="flex flex-col items-center text-center gap-2 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
                   >
-                    <div className="w-12 h-12 rounded-lg bg-green-500/15 flex items-center justify-center text-2xl">🔮</div>
+                    <div className="w-12 h-12 rounded-lg bg-green-500/15 flex items-center justify-center text-2xl">{navIcon('sparkles', 'w-6 h-6')}</div>
                     <div>
                       <p className="font-semibold text-hos-text-secondary text-sm">Browse Products</p>
                       <p className="text-xs text-hos-text-muted mt-0.5">Discover items</p>
@@ -678,7 +679,7 @@ export default function CustomerDashboardPage() {
                 <div className="divide-y divide-hos-border">
                   {recentOrders.length === 0 ? (
                     <div className="text-center py-12">
-                      <div className="text-5xl mb-4">📦</div>
+                      <div className="text-5xl mb-4 flex justify-center">{navIcon('package', 'w-12 h-12')}</div>
                       <p className="text-hos-text-muted mb-4">No orders yet</p>
                       <Link
                         href="/products"
@@ -696,7 +697,7 @@ export default function CustomerDashboardPage() {
                       >
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-full bg-hos-gold/20 flex items-center justify-center text-lg">
-                            📦
+                            {navIcon('package', 'w-5 h-5')}
                           </div>
                           <div>
                             <p className="font-medium text-hos-text-secondary">
@@ -753,7 +754,7 @@ export default function CustomerDashboardPage() {
                 <div className="divide-y divide-hos-border">
                   {allOrders.length === 0 ? (
                     <div className="text-center py-12">
-                      <div className="text-5xl mb-4">📦</div>
+                      <div className="text-5xl mb-4 flex justify-center">{navIcon('package', 'w-12 h-12')}</div>
                       <p className="text-hos-text-muted mb-4">No orders yet</p>
                       <Link
                         href="/products"
@@ -771,7 +772,7 @@ export default function CustomerDashboardPage() {
                       >
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-full bg-hos-gold/20 flex items-center justify-center text-lg">
-                            📦
+                            {navIcon('package', 'w-5 h-5')}
                           </div>
                           <div>
                             <p className="font-medium text-hos-text-secondary">
@@ -845,7 +846,7 @@ export default function CustomerDashboardPage() {
                   </div>
                 ) : (
                   <div className="text-center py-12 text-hos-text-muted">
-                    <div className="text-4xl mb-2">📊</div>
+                    <div className="text-4xl mb-2 flex justify-center">{navIcon('dashboard', 'w-10 h-10')}</div>
                     <p>No spending data yet</p>
                   </div>
                 )}
@@ -929,7 +930,7 @@ export default function CustomerDashboardPage() {
                   <div className="flex flex-1 flex-col justify-center space-y-4">
                     <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg">
                       <span className="text-hos-text-secondary">Favorite Category</span>
-                      <span className="font-semibold text-hos-text-secondary">🧙 Wizarding Items</span>
+                      <span className="font-semibold text-hos-text-secondary inline-flex items-center gap-1">{navIcon('wand', 'w-4 h-4')} Wizarding Items</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg">
                       <span className="text-hos-text-secondary">Most Active Month</span>
@@ -963,7 +964,7 @@ export default function CustomerDashboardPage() {
               <div className="divide-y divide-hos-border">
                 {recentActivity.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="text-5xl mb-4">🕐</div>
+                    <div className="text-5xl mb-4 flex justify-center">{navIcon('clock', 'w-12 h-12')}</div>
                     <p className="text-hos-text-muted mb-4">No recent activity</p>
                     <Link
                       href="/products"

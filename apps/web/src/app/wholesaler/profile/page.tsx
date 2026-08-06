@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
-import { DashboardLayout } from '@/components/DashboardLayout';
+import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
@@ -18,6 +18,7 @@ import {
   isPostalInvalid,
   SELLER_PROFILE_HINTS,
 } from '@/lib/sellerProfileFieldValidation';
+import { navIcon } from '@/lib/navIcons';
 
 interface WholesalerProfile {
   id: string;
@@ -354,18 +355,18 @@ export default function WholesalerProfilePage() {
   if (loading) {
     return (
       <RouteGuard allowedRoles={['WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-        <DashboardLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler" backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}>
+        <AppShellLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler" backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }} breadcrumbs="inline">
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
-        </DashboardLayout>
+        </AppShellLayout>
       </RouteGuard>
     );
   }
 
   return (
     <RouteGuard allowedRoles={['WHOLESALER', 'ADMIN']} showAccessDenied={true}>
-      <DashboardLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler" backToHref={{ title: 'Admin Dashboard', href: '/admin/dashboard' }}>
+      <AppShellLayout role="WHOLESALER" menuItems={menuItems} title="Wholesaler" backToAdmin={{ title: 'Admin Dashboard', href: '/admin/dashboard' }} breadcrumbs="inline">
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -405,11 +406,11 @@ export default function WholesalerProfilePage() {
           <div className="bg-hos-bg-secondary border border-hos-border rounded-lg">
             <div className="flex flex-wrap border-b border-hos-border">
               {[
-                { id: 'business', label: 'Business Info', icon: '🏢' },
-                { id: 'bank', label: 'Bank Details', icon: '🏦' },
-                { id: 'operations', label: 'Operations Contact', icon: '👥' },
-                { id: 'warehouse', label: 'Warehouse', icon: '📦' },
-                { id: 'verification', label: 'Verification', icon: '✓' },
+                { id: 'business', label: 'Business Info', icon: navIcon('building') },
+                { id: 'bank', label: 'Bank Details', icon: navIcon('landmark') },
+                { id: 'operations', label: 'Operations Contact', icon: navIcon('users') },
+                { id: 'warehouse', label: 'Warehouse', icon: navIcon('package') },
+                { id: 'verification', label: 'Verification', icon: navIcon('check') },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -981,7 +982,7 @@ export default function WholesalerProfilePage() {
             </div>
           </div>
         </div>
-      </DashboardLayout>
+      </AppShellLayout>
     </RouteGuard>
   );
 }
