@@ -57,7 +57,7 @@ function FooterNavColumn({
   return (
     <nav aria-label={ariaLabel} className="flex flex-col min-w-0">
       <h4 className="text-hos-text-secondary text-sm font-bold font-ui mb-4">{title}</h4>
-      <ul className="space-y-2 text-hos-text-muted text-[13px]">
+      <ul className="space-y-2 text-hos-text-secondary text-sm">
         {links.map((link) => (
           <li key={`${link.href}-${link.label}`}>
             {link.external ? (
@@ -113,7 +113,7 @@ function FooterNewsletter({ brandName }: { brandName: string }) {
   return (
     <div className="flex flex-col min-w-0">
       <h4 className="text-hos-text-secondary text-sm font-bold font-ui mb-4">Newsletter</h4>
-      <p className="text-hos-text-muted text-[13px] leading-relaxed mb-3">
+      <p className="text-hos-text-secondary text-sm leading-relaxed mb-3">
         Get updates on new collections, vendor spotlights, and exclusive offers.
       </p>
 
@@ -150,7 +150,7 @@ function FooterNewsletter({ brandName }: { brandName: string }) {
               required
               className="mt-0.5 accent-hos-gold w-4 h-4 shrink-0"
             />
-            <span className="text-hos-text-muted text-xs leading-snug">
+            <span className="text-hos-text-secondary text-xs leading-snug">
               I agree to receive marketing communications from {brandName}.
             </span>
           </label>
@@ -222,9 +222,9 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-10 lg:gap-x-14 items-start [&>div]:min-w-0">
           <div className="flex flex-col">
             <BrandLogo variant="stacked" linked href={homeHref} />
-            <p className="text-hos-text-muted text-[13px] leading-relaxed mt-4">{site.footerAbout}</p>
+            <p className="text-hos-text-secondary text-sm leading-relaxed mt-4">{site.footerAbout}</p>
 
-            <div className="flex flex-wrap gap-3 mt-4 text-hos-text-muted">
+            <div className="flex flex-wrap gap-3 mt-4 text-hos-text-secondary">
               {socialEntries.map(({ platform, ariaLabel, href, label }) => (
                 <a
                   key={platform}
@@ -258,7 +258,7 @@ export function Footer() {
 
         {/* Row 2: contact details in a single line */}
         <div className="border-t border-hos-border mt-10 pt-6">
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-hos-text-muted text-[13px] text-center">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-hos-text-secondary text-sm text-center">
             <span>{site.contactAddress}</span>
             <span className="hidden sm:inline text-hos-border" aria-hidden>
               |
@@ -283,7 +283,7 @@ export function Footer() {
 
         {/* Subfooter */}
         <div className="border-t border-hos-border mt-6 pt-5">
-          <p className="text-hos-text-muted text-[11px] text-center">
+          <p className="text-hos-text-secondary text-xs text-center">
             © {new Date().getFullYear()} {brandName}. All rights reserved.
           </p>
         </div>

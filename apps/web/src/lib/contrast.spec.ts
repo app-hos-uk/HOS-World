@@ -9,6 +9,7 @@ describe('design token contrast (WCAG AA guardrails)', () => {
     colorTextMuted,
     colorBorderInput,
     colorAccentGold,
+    colorAccentGoldDim,
     colorGoldCtaText,
   } = DESIGN_TOKENS;
 
@@ -30,6 +31,10 @@ describe('design token contrast (WCAG AA guardrails)', () => {
 
   it('gold CTA text on gold button meets 4.5:1', () => {
     expect(contrastRatio(colorGoldCtaText, colorAccentGold)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('gold-dim label on page background meets 4.5:1', () => {
+    expect(contrastRatio(colorAccentGoldDim, colorBgPrimary)).toBeGreaterThanOrEqual(4.5);
   });
 
   it('primary input text is brighter than muted placeholder on same surface', () => {

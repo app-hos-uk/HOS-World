@@ -63,7 +63,7 @@ export default function EnchantedFinds() {
           <h2 className="font-display text-hos-gold-hover text-2xl md:text-3xl">
             Enchanted finds
           </h2>
-          <p className="text-hos-text-muted text-sm mt-1 font-body">
+          <p className="text-hos-text-primary text-sm mt-1 font-body">
             Replica props, jewelry, and gifts your fellow fans will recognise instantly.
           </p>
         </div>
@@ -106,7 +106,7 @@ export default function EnchantedFinds() {
             })}
           </div>
           <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-hos-bg to-transparent" aria-hidden />
-          <p className="text-xs text-hos-text-muted mt-2 md:hidden">Swipe to see more →</p>
+          <p className="text-xs text-hos-text-secondary mt-2 md:hidden">Swipe to see more →</p>
         </div>
       )}
     </section>

@@ -133,12 +133,12 @@ export function ProductCard({
       <div className="p-3.5 flex flex-col flex-1 gap-1.5">
         {productHref ? (
           <Link href={productHref}>
-            <h3 className="font-display text-sm text-hos-text-primary leading-snug line-clamp-2 hover:text-hos-gold transition-colors">
+            <h3 className="font-display text-[15px] font-semibold text-hos-text-primary leading-snug line-clamp-2 hover:text-hos-gold transition-colors">
               {name}
             </h3>
           </Link>
         ) : (
-          <h3 className="font-display text-sm text-hos-text-primary leading-snug line-clamp-2">
+          <h3 className="font-display text-[15px] font-semibold text-hos-text-primary leading-snug line-clamp-2">
             {name}
           </h3>
         )}
@@ -150,7 +150,7 @@ export function ProductCard({
             {formatPrice(price)}
           </span>
           {hasDiscount && (
-            <span className="text-hos-text-muted text-xs line-through font-ui">
+            <span className="text-hos-text-secondary text-xs line-through font-ui">
               {formatPrice(rrp)}
             </span>
           )}

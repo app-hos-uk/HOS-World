@@ -71,7 +71,7 @@ export default function WeeklyPicks() {
         <h2 className="font-display text-hos-gold-hover text-2xl md:text-3xl">
           This week on the marketplace
         </h2>
-        <p className="text-hos-text-muted text-sm mt-1 font-body">
+        <p className="text-hos-text-primary text-sm mt-1 font-body">
           Rotating picks from vendors across the marketplace.
         </p>
       </div>
@@ -91,7 +91,7 @@ export default function WeeklyPicks() {
             className={`px-4 py-2 text-sm font-ui font-semibold rounded-full whitespace-nowrap transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hos-gold-ring ${
               activeTab === tab.key
                 ? 'bg-gradient-to-b from-hos-gold-hover to-hos-gold text-[#1a1406]'
-                : 'bg-hos-bg-secondary border border-hos-border text-hos-text-muted hover:border-hos-border-accent hover:text-hos-text-primary'
+                : 'bg-hos-bg-secondary border border-hos-border text-hos-text-secondary hover:border-hos-border-accent hover:text-hos-text-primary'
             }`}
           >
             {tab.label}
@@ -113,7 +113,7 @@ export default function WeeklyPicks() {
             ))}
           </div>
         ) : products.length === 0 ? (
-          <p className="text-hos-text-muted text-sm py-8 text-center">No products in this category yet. Check back soon.</p>
+          <p className="text-hos-text-secondary text-sm py-8 text-center">No products in this category yet. Check back soon.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {products.map((product) => {

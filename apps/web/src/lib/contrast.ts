@@ -9,6 +9,7 @@ export const DESIGN_TOKENS = {
   colorTextMuted: '#9a958a',
   colorBorderInput: '#6b665c',
   colorAccentGold: '#C9A84C',
+  colorAccentGoldDim: '#a08828',
   colorGoldCtaText: '#1a1406',
 } as const;
 

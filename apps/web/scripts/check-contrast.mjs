@@ -12,6 +12,7 @@ const TOKENS = {
   colorTextMuted: '#9a958a',
   colorBorderInput: '#6b665c',
   colorAccentGold: '#C9A84C',
+  colorAccentGoldDim: '#a08828',
   colorGoldCtaText: '#1a1406',
 };
 
@@ -72,6 +73,11 @@ const checks = [
   {
     name: 'gold CTA text on gold button (≥4.5:1)',
     ratio: contrastRatio(TOKENS.colorGoldCtaText, TOKENS.colorAccentGold),
+    min: 4.5,
+  },
+  {
+    name: 'gold-dim label on page background (≥4.5:1)',
+    ratio: contrastRatio(TOKENS.colorAccentGoldDim, TOKENS.colorBgPrimary),
     min: 4.5,
   },
   {

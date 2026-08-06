@@ -67,13 +67,13 @@ export default function BrowseByDepartment() {
     <section className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
       <div className="flex items-end justify-between mb-8 gap-4">
         <div>
-          <p className="text-hos-gold-dim text-[11px] uppercase tracking-[0.1em] font-ui font-semibold">
+          <p className="text-hos-gold-dim text-xs uppercase tracking-[0.1em] font-ui font-semibold">
             Shop the aisles
           </p>
           <h2 className="font-display text-hos-gold-hover text-2xl md:text-3xl mt-1">
             Browse by department
           </h2>
-          <p className="text-hos-text-secondary text-sm mt-1 font-body">
+          <p className="text-hos-text-primary text-sm mt-1 font-body">
             Same marketplace checkout — pick a lane and dive into what vendors stock for your fandom.
           </p>
         </div>
@@ -100,7 +100,7 @@ export default function BrowseByDepartment() {
             )}
             <div className="relative z-10 min-w-0">
               {dept.meta && (
-                <span className="block text-hos-gold-dim text-[10px] uppercase tracking-[0.1em] font-ui font-semibold mb-2">
+                <span className="block text-hos-gold-dim text-[11px] uppercase tracking-[0.1em] font-ui font-semibold mb-2">
                   {dept.meta}
                 </span>
               )}
@@ -108,7 +108,7 @@ export default function BrowseByDepartment() {
                 {dept.name}
               </h3>
               {dept.description && (
-                <p className="text-hos-text-secondary text-[15px] leading-relaxed mb-3.5 font-body">
+                <p className="text-hos-text-primary text-[15px] leading-relaxed mb-3.5 font-body">
                   {dept.description}
                 </p>
               )}

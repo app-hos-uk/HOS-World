@@ -6,7 +6,7 @@ export default function PaymentIcons() {
   return (
     <section className="py-6 border-t border-hos-border">
       <div className="max-w-7xl mx-auto px-4 text-center">
-        <p className="text-hos-text-muted text-xs mb-3">Secure payments</p>
+        <p className="text-hos-text-secondary text-xs mb-3">Secure payments</p>
         <div className="flex items-center justify-center gap-3 flex-wrap">
           {PAYMENT_METHODS.map((method) => (
             <span
