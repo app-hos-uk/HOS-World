@@ -106,7 +106,25 @@ export class PosAdminController {
     @Body() dto: UpdatePosConnectionDto,
   ): Promise<ApiResponse<unknown>> {
     const update: Record<string, unknown> = {};
-    if (dto.credentials) update.credentials = this.encryption.encrypt(JSON.stringify(dto.credentials));
+    if (dto.credentials) {
+      // Credentials are stored as a single encrypted blob, so a partial update must be
+      // merged over the stored values — otherwise editing one field drops the rest.
+      const existing = await this.prisma.pOSConnection.findUnique({
+        where: { id },
+        select: { credentials: true },
+      });
+      let current: Record<string, unknown> = {};
+      if (existing?.credentials) {
+        try {
+          current = this.encryption.decryptJson<Record<string, unknown>>(existing.credentials);
+        } catch {
+          current = {};
+        }
+      }
+      update.credentials = this.encryption.encrypt(
+        JSON.stringify({ ...current, ...dto.credentials }),
+      );
+    }
     if (dto.externalOutletId !== undefined) update.externalOutletId = dto.externalOutletId;
     if (dto.externalRegisterId !== undefined) update.externalRegisterId = dto.externalRegisterId;
     if (dto.webhookSecret !== undefined) update.webhookSecret = dto.webhookSecret;

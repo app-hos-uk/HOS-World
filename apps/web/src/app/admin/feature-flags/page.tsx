@@ -55,10 +55,12 @@ export default function AdminFeatureFlagsPage() {
     setError(null);
     setSuccessMsg(null);
     try {
-      await apiClient.setFeatureFlag(flag, !currentValue);
+      const res = await apiClient.setFeatureFlag(flag, !currentValue);
       setFlags((prev) => ({ ...prev, [flag]: !currentValue }));
-      setSuccessMsg(`${flag} ${!currentValue ? 'enabled' : 'disabled'} successfully`);
-      setTimeout(() => setSuccessMsg(null), 3000);
+      // Server message distinguishes a persisted toggle from an in-memory-only
+      // fallback when the DB write fails.
+      setSuccessMsg(res?.message || `${flag} ${!currentValue ? 'enabled' : 'disabled'} successfully`);
+      setTimeout(() => setSuccessMsg(null), 5000);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to update feature flag');
     } finally {
@@ -81,7 +83,7 @@ export default function AdminFeatureFlagsPage() {
           <div>
             <h1 className="text-2xl font-bold text-hos-text-secondary">Feature Flags</h1>
             <p className="mt-1 text-sm text-hos-text-muted">
-              Toggle features on or off across the platform. Changes take effect immediately (in-memory, resets on server restart).
+              Toggle features on or off across the platform. Changes take effect immediately and are saved to the database.
             </p>
           </div>
 
@@ -192,9 +194,14 @@ export default function AdminFeatureFlagsPage() {
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
             <h3 className="text-sm font-semibold text-amber-300">Important</h3>
             <p className="text-xs text-amber-200/70 mt-1">
-              Feature flag changes are applied in-memory and take effect immediately. However, they will revert
-              to their environment variable defaults on server restart. To make changes permanent, update the
-              corresponding <code className="text-amber-300">FF_*</code> environment variables in your deployment configuration.
+              Changes take effect immediately and are saved to the database, where they override the
+              corresponding <code className="text-amber-300">FF_*</code> environment variable on restart.
+              If a save fails, the banner above will say <em>in-memory only</em> — that change will be lost on restart.
+            </p>
+            <p className="text-xs text-amber-200/70 mt-2">
+              Some integrations need a deploy-time environment variable as well as a flag:
+              POS also requires <code className="text-amber-300">POS_ENABLED=true</code>, and Xero also requires{' '}
+              <code className="text-amber-300">ACCOUNTING_ENABLED=true</code>. Turning the flag on alone will not start them.
             </p>
           </div>
         </div>
