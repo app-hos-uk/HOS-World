@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import { getFulfillmentMenu } from '@/lib/teamMenus';
 
 export default function FulfillmentShipmentsPage() {
   const [shipments, setShipments] = useState<any[]>([]);
@@ -17,11 +18,7 @@ export default function FulfillmentShipmentsPage() {
   const [verificationNotes, setVerificationNotes] = useState<string>('');
   const [trackingNumber, setTrackingNumber] = useState<string>('');
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/fulfillment/dashboard', icon: '📊' },
-    { title: 'Manage Shipments', href: '/fulfillment/shipments', icon: '🚚', badge: shipments.filter(s => s.status === 'PENDING').length },
-    { title: 'Centers', href: '/fulfillment/centers', icon: '🏭' },
-  ];
+  const menuItems = getFulfillmentMenu(shipments.filter(s => s.status === 'PENDING').length);
 
   useEffect(() => {
     fetchShipments();

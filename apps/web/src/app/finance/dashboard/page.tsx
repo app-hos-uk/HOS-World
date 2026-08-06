@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
+import { getFinanceMenu } from '@/lib/teamMenus';
 
 export default function FinanceDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -17,13 +18,7 @@ export default function FinanceDashboardPage() {
       : Array.isArray(dashboardData?.pendingApprovals)
         ? dashboardData.pendingApprovals.length
         : 0;
-  const menuItems = [
-    { title: 'Dashboard', href: '/finance/dashboard', icon: '📊' },
-    { title: 'Pricing Approvals', href: '/finance/pricing', icon: '💰', badge: pendingApprovals },
-    { title: 'Payouts', href: '/finance/payouts', icon: '💸' },
-    { title: 'Revenue Reports', href: '/finance/reports/revenue', icon: '📊' },
-    { title: 'Fee Reports', href: '/finance/reports/fees', icon: '📋' },
-  ];
+  const menuItems = getFinanceMenu(pendingApprovals);
 
   const fetchDashboardData = useCallback(async (showLoading = true) => {
     try {

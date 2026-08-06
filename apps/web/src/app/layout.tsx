@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Cormorant_Garamond, Figtree, Inter } from 'next/font/google';
+import { Cormorant_Garamond, Inter } from 'next/font/google';
 import { ThemeProviderWrapper } from '@/components/ThemeProviderWrapper';
 import { AuthProviderWrapper } from '@/components/AuthProviderWrapper';
 import { QueryProvider } from '@/components/QueryProvider';
@@ -20,7 +20,7 @@ import { fetchServerSiteSettings } from '@/lib/fetchServerSiteSettings';
 import { brandDisplayName } from '@/lib/siteSettingsDefaults';
 import './globals.css';
 
-// Cormorant Garamond — display headings & body (reference storefront)
+// Cormorant Garamond — storefront display headings & marketing body only
 const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
   variable: '--font-cormorant',
@@ -29,18 +29,10 @@ const cormorant = Cormorant_Garamond({
   display: 'swap',
 });
 
-// Figtree — UI labels, buttons, nav (reference storefront)
-const figtree = Figtree({
+// Inter — dashboards, forms, tables, and storefront UI chrome (nav/buttons)
+const inter = Inter({
   subsets: ['latin'],
-  variable: '--font-figtree',
-  weight: ['400', '600', '700'],
-  display: 'swap',
-});
-
-// Inter for admin dashboards - modern, professional, highly readable
-const inter = Inter({ 
-  subsets: ['latin'],
-  variable: '--font-ui',
+  variable: '--font-inter',
   weight: ['400', '500', '600', '700'],
   display: 'swap',
 });
@@ -98,7 +90,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en-US">
-      <body className={`${cormorant.variable} ${figtree.variable} ${inter.variable} storefront-theme antialiased`}>
+      <body className={`${cormorant.variable} ${inter.variable} storefront-theme antialiased`}>
         <GoogleTags />
         <Suspense fallback={null}>
           <MetaPixel />

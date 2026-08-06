@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { ImageSpecsHint } from '@/components/ImageSpecsHint';
+import { getMarketingMenu } from '@/lib/teamMenus';
 
 function MarketingMaterialsPageContent() {
   const searchParams = useSearchParams();
@@ -190,11 +191,7 @@ function MarketingMaterialsPageContent() {
     }
   };
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/marketing/dashboard', icon: '📊' },
-    { title: 'Marketing Materials', href: '/marketing/materials', icon: '📢', badge: pendingSubmissions.length },
-    { title: 'Campaigns', href: '/marketing/campaigns', icon: '📣' },
-  ];
+  const menuItems = getMarketingMenu(pendingSubmissions.length);
 
   return (
       <DashboardLayout

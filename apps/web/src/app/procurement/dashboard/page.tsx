@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
+import { getProcurementMenu } from '@/lib/teamMenus';
 
 export default function ProcurementDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -12,10 +13,7 @@ export default function ProcurementDashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   const pendingCount = dashboardData?.totalPending || 0;
-  const menuItems = [
-    { title: 'Dashboard', href: '/procurement/dashboard', icon: '📊' },
-    { title: 'Review Submissions', href: '/procurement/submissions', icon: '📦', badge: pendingCount },
-  ];
+  const menuItems = getProcurementMenu(pendingCount);
 
   const fetchDashboardData = useCallback(async (showLoading = true) => {
     try {

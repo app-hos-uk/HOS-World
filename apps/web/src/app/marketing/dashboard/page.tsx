@@ -6,6 +6,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
+import { getMarketingMenu } from '@/lib/teamMenus';
 
 export default function MarketingDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -61,11 +62,7 @@ export default function MarketingDashboardPage() {
   const activeCampaigns = dashboardData?.activeCampaigns ?? 0;
   const totalMaterials = dashboardData?.totalMaterials ?? 0;
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/marketing/dashboard', icon: '📊' },
-    { title: 'Marketing Materials', href: '/marketing/materials', icon: '📢', badge: pendingProducts },
-    { title: 'Campaigns', href: '/marketing/campaigns', icon: '📣' },
-  ];
+  const menuItems = getMarketingMenu(pendingProducts);
 
   return (
     <RouteGuard allowedRoles={['MARKETING', 'ADMIN']} showAccessDenied={true}>

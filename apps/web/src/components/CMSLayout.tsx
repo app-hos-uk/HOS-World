@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface CMSLayoutProps {
   children: React.ReactNode;
@@ -48,12 +49,19 @@ const menuItems: MenuItem[] = [
 export function CMSLayout({ children }: CMSLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const pathname = usePathname();
   const { logout, user } = useAuth();
 
-  const handleLogout = async () => {
-    if (!window.confirm('Are you sure you want to log out?')) return;
-    await logout();
+  const confirmLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setLoggingOut(false);
+      setLogoutOpen(false);
+    }
   };
 
   const isActive = (href: string) => {
@@ -90,7 +98,7 @@ export function CMSLayout({ children }: CMSLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-hos-bg-secondary">
+    <div className="dashboard-theme min-h-screen bg-hos-bg-secondary font-inter">
       {/* Sidebar */}
       <div
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-hos-bg-secondary border-r border-hos-border transition-transform duration-300 ${
@@ -254,7 +262,8 @@ export function CMSLayout({ children }: CMSLayoutProps) {
                 </span>
               )}
               <button
-                onClick={handleLogout}
+                type="button"
+                onClick={() => setLogoutOpen(true)}
                 className="px-4 py-2 text-sm text-red-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors font-medium"
               >
                 Logout
@@ -266,6 +275,17 @@ export function CMSLayout({ children }: CMSLayoutProps) {
         {/* Page Content */}
         <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
+
+      <ConfirmDialog
+        open={logoutOpen}
+        title="Log out?"
+        description="You will need to sign in again to access this dashboard."
+        confirmLabel="Log out"
+        tone="danger"
+        busy={loggingOut}
+        onCancel={() => setLogoutOpen(false)}
+        onConfirm={confirmLogout}
+      />
     </div>
   );
 }

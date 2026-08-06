@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { clampDateInputToToday, todayDateInputValue } from '@/lib/formFieldValidation';
+import { getFinanceMenu } from '@/lib/teamMenus';
 
 function getDefaultDateRange() {
   const end = new Date();
@@ -24,13 +25,7 @@ export default function FinanceRevenuePage() {
   const [exporting, setExporting] = useState(false);
   const [dateRange, setDateRange] = useState(getDefaultDateRange);
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/finance/dashboard', icon: '📊' },
-    { title: 'Pricing Approvals', href: '/finance/pricing', icon: '💰' },
-    { title: 'Payouts', href: '/finance/payouts', icon: '💸' },
-    { title: 'Revenue Reports', href: '/finance/reports/revenue', icon: '📊' },
-    { title: 'Fee Reports', href: '/finance/reports/fees', icon: '📋' },
-  ];
+  const menuItems = getFinanceMenu();
 
   const fetchReport = useCallback(
     async (showLoading = true) => {

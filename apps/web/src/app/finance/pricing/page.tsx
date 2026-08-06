@@ -6,6 +6,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { getFinanceMenu } from '@/lib/teamMenus';
 
 export default function FinancePricingPage() {
   return (
@@ -173,13 +174,7 @@ function FinancePricingContent() {
     }
   };
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/finance/dashboard', icon: '📊' },
-    { title: 'Pricing Approvals', href: '/finance/pricing', icon: '💰', badge: pendingSubmissions.length },
-    { title: 'Payouts', href: '/finance/payouts', icon: '💸' },
-    { title: 'Revenue Reports', href: '/finance/reports/revenue', icon: '📊' },
-    { title: 'Fee Reports', href: '/finance/reports/fees', icon: '📋' },
-  ];
+  const menuItems = getFinanceMenu(pendingSubmissions.length);
 
   return (
     <RouteGuard allowedRoles={['FINANCE', 'ADMIN']} showAccessDenied={true}>

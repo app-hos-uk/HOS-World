@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { SafeImage } from '@/components/SafeImage';
+import { getCatalogMenu, getProcurementMenu } from '@/lib/teamMenus';
 
 type DuplicateGroup = {
   groupId: string;
@@ -71,14 +72,14 @@ function ProcurementSubmissionsContent() {
   const layoutTitle = isCatalogContext ? 'Catalog' : 'Procurement';
   const layoutRole = isCatalogContext ? 'CATALOG' : 'PROCUREMENT';
   const menuItems = isCatalogContext
-    ? [
-        { title: 'Dashboard', href: '/catalog/dashboard', icon: '📊' },
-        { title: 'Same product from multiple sellers', href: '/catalog/duplicates', icon: '🔄', badge: duplicateGroups.length },
-      ]
-    : [
-        { title: 'Dashboard', href: '/procurement/dashboard', icon: '📊' },
-        { title: 'Review Submissions', href: '/procurement/submissions', icon: '📦', badge: submissions.filter(s => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW').length },
-      ];
+    ? getCatalogMenu().map((item) =>
+        item.href === '/catalog/duplicates'
+          ? { ...item, title: 'Duplicates', badge: duplicateGroups.length }
+          : item,
+      )
+    : getProcurementMenu(
+        submissions.filter(s => s.status === 'SUBMITTED' || s.status === 'UNDER_REVIEW').length
+      );
 
   useEffect(() => {
     fetchSubmissions();

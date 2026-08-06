@@ -7,6 +7,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { getFulfillmentMenu } from '@/lib/teamMenus';
 
 const STATUS_STEPS = ['CREATED', 'PROCESSING', 'SHIPPED', 'DELIVERED'] as const;
 
@@ -30,11 +31,7 @@ export default function ShipmentDetailPage() {
   const [verifying, setVerifying] = useState(false);
   const [showVerifyForm, setShowVerifyForm] = useState(false);
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/fulfillment/dashboard', icon: '📊' },
-    { title: 'Manage Shipments', href: '/fulfillment/shipments', icon: '🚚' },
-    { title: 'Centers', href: '/fulfillment/centers', icon: '🏭' },
-  ];
+  const menuItems = getFulfillmentMenu();
 
   const fetchShipment = useCallback(async () => {
     try {

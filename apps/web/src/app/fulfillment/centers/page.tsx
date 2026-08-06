@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { validateFulfillmentCenterFields } from '@/lib/fulfillmentCenterFormValidation';
+import { getFulfillmentMenu } from '@/lib/teamMenus';
 
 interface FulfillmentCenter {
   id: string;
@@ -40,11 +41,7 @@ export default function FulfillmentCentersPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/fulfillment/dashboard', icon: '📊' },
-    { title: 'Manage Shipments', href: '/fulfillment/shipments', icon: '🚚' },
-    { title: 'Centers', href: '/fulfillment/centers', icon: '🏭' },
-  ];
+  const menuItems = getFulfillmentMenu();
 
   const fetchCenters = useCallback(async (showLoading = true) => {
     try {

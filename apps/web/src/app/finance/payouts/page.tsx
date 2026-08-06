@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { getFinanceMenu } from '@/lib/teamMenus';
 
 type PayoutStatus = 'ALL' | 'PENDING' | 'PROCESSING' | 'PAID' | 'FAILED';
 
@@ -25,13 +26,7 @@ export default function FinancePayoutsPage() {
   const [scheduling, setScheduling] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/finance/dashboard', icon: '📊' },
-    { title: 'Pricing Approvals', href: '/finance/pricing', icon: '💰' },
-    { title: 'Payouts', href: '/finance/payouts', icon: '💸' },
-    { title: 'Revenue Reports', href: '/finance/reports/revenue', icon: '📊' },
-    { title: 'Fee Reports', href: '/finance/reports/fees', icon: '📋' },
-  ];
+  const menuItems = getFinanceMenu();
 
   const extractPayoutsList = (response: any): any[] => {
     if (!response?.data) return [];

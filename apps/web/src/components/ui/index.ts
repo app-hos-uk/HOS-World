@@ -9,3 +9,6 @@ export { Button, IconButton } from './Button';
 
 // Badge Components
 export { Badge, StatusBadge } from './Badge';
+
+// Loading
+export { LoadingState } from './LoadingState';

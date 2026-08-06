@@ -8,6 +8,7 @@ import { SafeImage } from '@/components/SafeImage';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { ImageSpecsHint } from '@/components/ImageSpecsHint';
+import { getCatalogMenu } from '@/lib/teamMenus';
 
 type CatalogStatusTab = 'pending' | 'in_progress' | 'completed';
 
@@ -236,10 +237,7 @@ function CatalogEntriesContent() {
     }
   };
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/catalog/dashboard', icon: '📊' },
-    { title: 'Catalog Entries', href: '/catalog/entries', icon: '📚', badge: pendingSubmissions.length },
-  ];
+  const menuItems = getCatalogMenu(pendingSubmissions.length);
 
   return (
     <RouteGuard allowedRoles={['CATALOG', 'ADMIN']} showAccessDenied={true}>

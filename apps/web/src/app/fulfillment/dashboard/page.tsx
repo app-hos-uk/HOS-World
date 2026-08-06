@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
+import { getFulfillmentMenu } from '@/lib/teamMenus';
 
 export default function FulfillmentDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -12,11 +13,7 @@ export default function FulfillmentDashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   const incomingShipments = dashboardData?.incomingShipments || 0;
-  const menuItems = [
-    { title: 'Dashboard', href: '/fulfillment/dashboard', icon: '📊' },
-    { title: 'Manage Shipments', href: '/fulfillment/shipments', icon: '🚚', badge: incomingShipments },
-    { title: 'Centers', href: '/fulfillment/centers', icon: '🏭' },
-  ];
+  const menuItems = getFulfillmentMenu(incomingShipments);
 
   const fetchDashboardData = useCallback(async (showLoading = true) => {
     try {

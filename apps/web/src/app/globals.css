@@ -3,13 +3,17 @@
 @tailwind utilities;
 
 :root {
-  /* Font Families — reference storefront (Cormorant Garamond + Figtree) */
+  /*
+   * Font families
+   * --font-cormorant / --font-inter are set by next/font on <body>.
+   * Fallbacks below apply only before hydration / outside the body class.
+   */
   --font-cormorant: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
-  --font-figtree: 'Figtree', system-ui, sans-serif;
   --font-inter: 'Inter', system-ui, sans-serif;
   --font-display: var(--font-cormorant), Georgia, 'Times New Roman', serif;
   --font-body: var(--font-cormorant);
-  --font-ui: var(--font-figtree);
+  /* UI chrome + all dashboards use Inter (readable at small sizes) */
+  --font-ui: var(--font-inter), system-ui, sans-serif;
   /* Sticky storefront header — utility bar (lg) + main row + nav row */
   --header-height: 3.75rem;
   /* Legacy aliases */
@@ -89,7 +93,8 @@
   /* ═══ TEXT ═══ */
   --color-text-primary: #e8e4dc;
   --color-text-secondary: #9a958a;
-  --color-text-muted: #8a8580;
+  /* ~6.2:1 on #1A1A1A / #0e0e12 — WCAG AA for body/helper text */
+  --color-text-muted: #9a958a;
 
   /* ═══ ACCENT (reference gold) ═══ */
   --color-accent-gold: #c9a227;
@@ -126,6 +131,30 @@
   line-height: 1.5;
   color: var(--color-text-primary);
   background-color: var(--color-bg-primary);
+}
+
+/**
+ * Operational dashboards (admin / seller / team / CMS).
+ * Overrides storefront-theme serif + 18px body so tables and forms stay readable.
+ */
+.dashboard-theme {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.dashboard-theme h1,
+.dashboard-theme h2,
+.dashboard-theme h3,
+.dashboard-theme h4,
+.dashboard-theme h5,
+.dashboard-theme h6 {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  letter-spacing: -0.01em;
+  font-weight: 600;
 }
 
 .storefront-theme::before {
@@ -317,25 +346,31 @@ table td.text-left,
   }
   
   /* Table Improvements */
+  /* Wrap data tables: <div className="table-scroll"><table className="admin-table">… */
+  .table-scroll {
+    @apply w-full overflow-x-auto rounded-lg border border-hos-border;
+  }
+
   .admin-table {
     @apply min-w-full divide-y divide-hos-border;
     table-layout: auto;
   }
-  
+
   .admin-table thead {
     @apply bg-hos-bg-tertiary-half;
   }
-  
+
   .admin-table th {
-    @apply px-4 py-3 text-xs font-semibold text-hos-text-secondary
+    @apply px-4 py-3 text-xs font-semibold text-hos-text-muted
            uppercase tracking-wide;
     text-align: left;
+    line-height: 1.25rem;
   }
-  
+
   .admin-table tbody {
     @apply divide-y divide-hos-border;
   }
-  
+
   .admin-table tbody tr {
     @apply hover:bg-hos-bg-tertiary transition-colors;
   }
@@ -347,9 +382,10 @@ table td.text-left,
   .admin-table tbody tr.admin-table-row-clickable {
     @apply cursor-pointer;
   }
-  
+
   .admin-table td {
-    @apply px-4 py-3.5 text-sm;
+    @apply px-4 py-3.5 text-sm text-hos-text-secondary;
+    line-height: 1.375rem;
   }
   
   /* Button Hierarchy */

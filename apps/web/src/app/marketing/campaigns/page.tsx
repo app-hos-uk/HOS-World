@@ -12,6 +12,7 @@ import {
   validateNameLike,
   validateOptionalDescriptiveText,
 } from '@/lib/formFieldValidation';
+import { getMarketingMenu } from '@/lib/teamMenus';
 
 type CampaignStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED';
 
@@ -288,11 +289,7 @@ function MarketingCampaignsPageContent() {
     }
   };
 
-  const menuItems = [
-    { title: 'Dashboard', href: '/marketing/dashboard', icon: '\u{1F4CA}' },
-    { title: 'Marketing Materials', href: '/marketing/materials', icon: '\u{1F4E2}' },
-    { title: 'Campaigns', href: '/marketing/campaigns', icon: '\u{1F4E3}' },
-  ];
+  const menuItems = getMarketingMenu();
 
   return (
       <DashboardLayout

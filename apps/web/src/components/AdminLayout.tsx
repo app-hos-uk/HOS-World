@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminBreadcrumbs } from '@/components/Breadcrumbs';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -85,6 +86,8 @@ const menuItems: MenuItem[] = [
       { title: 'Fandoms', href: '/admin/categories', icon: '📁' },
       { title: 'Attributes', href: '/admin/attributes', icon: '🔧' },
       { title: 'Tags', href: '/admin/tags', icon: '🏷️' },
+      { title: 'Sales Channels', href: '/admin/channels', icon: '📡' },
+      { title: 'Gift Cards', href: '/admin/gift-cards', icon: '🎫' },
     ],
   },
   {
@@ -96,6 +99,7 @@ const menuItems: MenuItem[] = [
       { title: 'Seller Applications', href: '/admin/seller-applications', icon: '📝' },
       { title: 'Verification Queue', href: '/admin/seller-verifications', icon: '🪪' },
       { title: 'Vendor Products', href: '/admin/vendor-products', icon: '📋' },
+      { title: 'Vendor Ledger', href: '/admin/vendor-ledger', icon: '📒' },
       { title: 'Seller Analytics', href: '/admin/seller-analytics', icon: '📈' },
     ],
   },
@@ -110,9 +114,18 @@ const menuItems: MenuItem[] = [
       { title: 'Journeys', href: '/admin/journeys', icon: '🗺️' },
       { title: 'Marketing Materials', href: '/admin/marketing', icon: '📢' },
       { title: 'Newsletter', href: '/admin/newsletter', icon: '📧' },
-      { title: 'Founding Members', href: '/admin/founding-members', icon: '🌟' },
       { title: 'Message Logs', href: '/admin/messaging', icon: '📨' },
       { title: 'Delivery Dashboard', href: '/admin/notifications/delivery', icon: '📡' },
+      { title: 'Segments', href: '/admin/segments', icon: '🎯' },
+      { title: 'Product Campaigns', href: '/admin/product-campaigns', icon: '📋' },
+      { title: 'Events', href: '/admin/events', icon: '🎪' },
+    ],
+  },
+  {
+    title: 'Partners & Creators',
+    icon: '🤝',
+    zone: 'growth',
+    children: [
       { title: 'All Influencers', href: '/admin/influencers', icon: '⭐' },
       { title: 'Influencer Invitations', href: '/admin/influencers/invitations', icon: '✉️' },
       { title: 'Influencer Commissions', href: '/admin/influencers/commissions', icon: '💰' },
@@ -121,9 +134,6 @@ const menuItems: MenuItem[] = [
       { title: 'Ambassador UGC Review', href: '/admin/ambassadors/ugc', icon: '📸' },
       { title: 'Ambassador Dashboard', href: '/admin/ambassadors/dashboard', icon: '📊' },
       { title: 'Brand Partnerships', href: '/admin/brand-partnerships', icon: '🤝' },
-      { title: 'Events', href: '/admin/events', icon: '🎪' },
-      { title: 'Segments', href: '/admin/segments', icon: '🎯' },
-      { title: 'Product Campaigns', href: '/admin/product-campaigns', icon: '📋' },
     ],
   },
   {
@@ -137,7 +147,6 @@ const menuItems: MenuItem[] = [
       { title: 'Redemption Options', href: '/admin/loyalty/redemption-options', icon: '🎁' },
       { title: 'Bonus Campaigns', href: '/admin/loyalty/campaigns', icon: '🎯' },
       { title: 'Members', href: '/admin/loyalty/members', icon: '👥' },
-      // Also listed under Marketing & Engagement — kept here for discoverability.
       { title: 'Founding Members', href: '/admin/founding-members', icon: '🌟' },
       { title: 'Transactions', href: '/admin/loyalty/transactions', icon: '💳' },
       { title: 'Program Health', href: '/admin/loyalty-analytics', icon: '💡' },
@@ -175,6 +184,7 @@ const menuItems: MenuItem[] = [
       { title: 'Gallery', href: '/admin/gallery', icon: '📸' },
       { title: 'Blog', href: '/cms/blog', icon: '📝' },
       { title: 'Stores', href: '/admin/stores', icon: '🏬' },
+      { title: 'Themes', href: '/admin/themes', icon: '🎨' },
       { title: 'Media Library', href: '/admin/media', icon: '🖼️' },
       { title: 'Notification Templates', href: '/admin/templates', icon: '📋' },
     ],
@@ -193,24 +203,34 @@ const menuItems: MenuItem[] = [
     ],
   },
   {
-    title: 'System & Config',
+    title: 'Platform Config',
     icon: '⚙️',
     zone: 'operations',
     children: [
       { title: 'Settings', href: '/admin/settings', icon: '🔧' },
       { title: 'Feature Flags', href: '/admin/feature-flags', icon: '🚩' },
       { title: 'Permissions', href: '/admin/permissions', icon: '🔐' },
-      { title: 'Webhooks', href: '/admin/webhooks', icon: '🔗' },
-      { title: 'Search', href: '/admin/search', icon: '🔍' },
       { title: 'Domain Management', href: '/admin/domains', icon: '🌐' },
       { title: 'Tax Zones', href: '/admin/tax-zones', icon: '💰' },
+      { title: 'Currencies', href: '/admin/currencies', icon: '💱' },
+      { title: 'Tenants', href: '/admin/tenants', icon: '🏢' },
+      { title: 'Customer Groups', href: '/admin/customer-groups', icon: '👥' },
+      { title: 'Return Policies', href: '/admin/return-policies', icon: '↩️' },
+    ],
+  },
+  {
+    title: 'Integrations & Ops',
+    icon: '🔌',
+    zone: 'operations',
+    children: [
+      { title: 'Webhooks', href: '/admin/webhooks', icon: '🔗' },
+      { title: 'Search', href: '/admin/search', icon: '🔍' },
       { title: 'Logistics Partners', href: '/admin/logistics', icon: '🚛' },
       { title: 'Shipping Integrations', href: '/admin/settings/integrations/shipping', icon: '🚚' },
-      { title: 'Return Policies', href: '/admin/return-policies', icon: '↩️' },
-      { title: 'Customer Groups', href: '/admin/customer-groups', icon: '👥' },
       { title: 'Activity Logs', href: '/admin/activity', icon: '📝' },
       { title: 'Discrepancies', href: '/admin/discrepancies', icon: '⚠️' },
       { title: 'POS Integration', href: '/admin/pos', icon: '🏪' },
+      { title: 'POS Sales', href: '/admin/pos/sales', icon: '🧾' },
       { title: 'Privacy Audit', href: '/admin/privacy-audit', icon: '🛡️' },
       { title: 'WhatsApp', href: '/admin/whatsapp', icon: '💬' },
       { title: 'Quiz', href: '/admin/quiz', icon: '❓' },
@@ -255,20 +275,41 @@ const TEAM_ADMIN_SHELL_MENUS: Record<string, MenuItem[]> = {
   ],
   FINANCE: [
     { title: 'Finance Dashboard', href: '/finance/dashboard', icon: '📊', zone: 'quickAccess' },
-    { title: 'Cancellations', href: '/admin/cancellations', icon: '❌', zone: 'operations' },
-    { title: 'Pricing Workflow', href: '/finance/pricing', icon: '💵', zone: 'operations' },
-    { title: 'Product Pricing', href: '/admin/products/pricing', icon: '💰', zone: 'operations' },
-    { title: 'Pricing Approvals', href: '/admin/pricing', icon: '💵', zone: 'operations' },
-    { title: 'Loyalty Overview', href: '/admin/loyalty', icon: '💎', zone: 'operations' },
-    { title: 'Redemption Options', href: '/admin/loyalty/redemption-options', icon: '🎁', zone: 'operations' },
-    { title: 'Loyalty Transactions', href: '/admin/loyalty/transactions', icon: '💳', zone: 'operations' },
-    { title: 'Reconciliation', href: '/admin/finance/reconciliation', icon: '🔄', zone: 'operations' },
-    { title: 'Xero Accounting', href: '/admin/finance/accounting', icon: '📒', zone: 'operations' },
-    { title: 'Three-way Recon', href: '/admin/finance/three-way-recon', icon: '⚖️', zone: 'operations' },
-    { title: 'Disputes', href: '/admin/finance/disputes', icon: '⚠️', zone: 'operations' },
-    { title: 'Period Close', href: '/admin/finance/periods', icon: '📅', zone: 'operations' },
-    { title: 'Aging Analysis', href: '/admin/finance/aging', icon: '⏳', zone: 'operations' },
-    { title: 'Revenue Recognition', href: '/admin/finance/revenue', icon: '📈', zone: 'operations' },
+    {
+      title: 'Pricing',
+      icon: '💵',
+      zone: 'operations',
+      children: [
+        { title: 'Pricing Workflow', href: '/finance/pricing', icon: '💵' },
+        { title: 'Product Pricing', href: '/admin/products/pricing', icon: '💰' },
+        { title: 'Pricing Approvals', href: '/admin/pricing', icon: '💵' },
+        { title: 'Cancellations', href: '/admin/cancellations', icon: '❌' },
+      ],
+    },
+    {
+      title: 'Loyalty Finance',
+      icon: '💎',
+      zone: 'operations',
+      children: [
+        { title: 'Loyalty Overview', href: '/admin/loyalty', icon: '💎' },
+        { title: 'Redemption Options', href: '/admin/loyalty/redemption-options', icon: '🎁' },
+        { title: 'Loyalty Transactions', href: '/admin/loyalty/transactions', icon: '💳' },
+      ],
+    },
+    {
+      title: 'Accounting & Close',
+      icon: '📒',
+      zone: 'operations',
+      children: [
+        { title: 'Reconciliation', href: '/admin/finance/reconciliation', icon: '🔄' },
+        { title: 'Xero Accounting', href: '/admin/finance/accounting', icon: '📒' },
+        { title: 'Three-way Recon', href: '/admin/finance/three-way-recon', icon: '⚖️' },
+        { title: 'Disputes', href: '/admin/finance/disputes', icon: '⚠️' },
+        { title: 'Period Close', href: '/admin/finance/periods', icon: '📅' },
+        { title: 'Aging Analysis', href: '/admin/finance/aging', icon: '⏳' },
+        { title: 'Revenue Recognition', href: '/admin/finance/revenue', icon: '📈' },
+      ],
+    },
   ],
 };
 
@@ -277,6 +318,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { logout, user, effectiveRole } = useAuth();
@@ -422,9 +465,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     setShowSearchResults(false);
   }, [router]);
 
-  const handleLogout = async () => {
-    if (!window.confirm('Are you sure you want to log out?')) return;
-    await logout();
+  const confirmLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setLoggingOut(false);
+      setLogoutOpen(false);
+    }
   };
 
   const isActive = (href: string) => {
@@ -461,7 +509,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-hos-bg-secondary font-inter">
+    <div className="dashboard-theme min-h-screen bg-hos-bg-secondary font-inter">
       {/* Sidebar */}
       <div
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-hos-bg-secondary border-r border-hos-border transition-transform duration-300 shadow-sm ${
@@ -708,7 +756,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </div>
               )}
               <button
-                onClick={handleLogout}
+                type="button"
+                onClick={() => setLogoutOpen(true)}
                 className="px-3 py-1.5 text-sm text-hos-text-secondary hover:text-hos-gold hover:bg-hos-bg-tertiary rounded-lg transition-colors font-medium border border-hos-border"
               >
                 Logout
@@ -727,6 +776,17 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>
+
+      <ConfirmDialog
+        open={logoutOpen}
+        title="Log out?"
+        description="You will need to sign in again to access the admin panel."
+        confirmLabel="Log out"
+        tone="danger"
+        busy={loggingOut}
+        onCancel={() => setLogoutOpen(false)}
+        onConfirm={confirmLogout}
+      />
     </div>
   );
 }

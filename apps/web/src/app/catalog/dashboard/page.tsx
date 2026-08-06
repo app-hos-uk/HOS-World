@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
+import { getCatalogMenu } from '@/lib/teamMenus';
 
 export default function CatalogDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -23,10 +24,7 @@ export default function CatalogDashboardPage() {
       : Array.isArray(dashboardData?.inProgress)
         ? dashboardData.inProgress.length
         : 0;
-  const menuItems = [
-    { title: 'Dashboard', href: '/catalog/dashboard', icon: '📊' },
-    { title: 'Catalog Entries', href: '/catalog/entries', icon: '📚', badge: pendingCount },
-  ];
+  const menuItems = getCatalogMenu(pendingCount);
 
   const fetchDashboardData = useCallback(async (showLoading = true) => {
     try {
