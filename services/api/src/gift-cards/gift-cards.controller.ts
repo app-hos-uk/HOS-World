@@ -147,6 +147,36 @@ export class GiftCardsController {
     };
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @Get('admin/all')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'List all gift cards (admin)',
+    description: 'Returns a paginated list of all gift cards. Admin only.',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 20)' })
+  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by status: ACTIVE, REDEEMED, CANCELLED, PENDING' })
+  @ApiQuery({ name: 'type', required: false, type: String, description: 'Filter by type: digital, physical' })
+  @SwaggerApiResponse({ status: 200, description: 'Gift cards retrieved successfully' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  @SwaggerApiResponse({ status: 403, description: 'Forbidden - Admin access required' })
+  async listAllGiftCards(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+    @Query('type') type?: string,
+  ): Promise<ApiResponse<any>> {
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+    const result = await this.giftCardsService.listAll(pageNum, limitNum, status || undefined, type || undefined);
+    return {
+      data: result,
+      message: 'Gift cards retrieved successfully',
+    };
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get(':id/transactions')
   @ApiBearerAuth('JWT-auth')

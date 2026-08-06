@@ -17,13 +17,14 @@ const FLAG_DESCRIPTIONS: Record<string, string> = {
   AI_RECOMMENDATIONS: 'Enable AI-powered product recommendations',
   POS_INTEGRATION: 'Enable point-of-sale system integration',
   MULTI_CURRENCY: 'Enable multi-currency support for international customers',
+  ACCOUNTING_XERO: 'Enable Xero accounting integration (daily journals, ledger outbox)',
 };
 
 const FLAG_CATEGORIES: Record<string, string[]> = {
   'Core Commerce': ['GUEST_CHECKOUT', 'MULTI_CURRENCY', 'CLICK_COLLECT', 'DIGITAL_PRODUCTS'],
   'Loyalty & Members': ['LOYALTY_PROGRAMME', 'FOUNDING_MEMBERS', 'AMBASSADOR_PROGRAMME'],
   'Marketing & Partnerships': ['BRAND_PARTNERSHIPS', 'INFLUENCER_STOREFRONTS', 'AI_RECOMMENDATIONS'],
-  'System': ['EMAIL_TEMPLATE_OVERRIDES', 'POS_INTEGRATION'],
+  'System': ['EMAIL_TEMPLATE_OVERRIDES', 'POS_INTEGRATION', 'ACCOUNTING_XERO'],
 };
 
 export default function AdminFeatureFlagsPage() {

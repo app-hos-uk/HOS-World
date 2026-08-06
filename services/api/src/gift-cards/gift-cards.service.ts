@@ -331,6 +331,43 @@ export class GiftCardsService {
   }
 
   /**
+   * List all gift cards (admin)
+   */
+  async listAll(
+    page = 1,
+    limit = 20,
+    status?: string,
+    type?: string,
+  ) {
+    const skip = (page - 1) * limit;
+    const where: any = {};
+    if (status) where.status = status;
+    if (type) where.type = type;
+
+    const [items, total] = await Promise.all([
+      (this.prisma as any).giftCard.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          _count: { select: { transactions: true } },
+        },
+      }),
+      (this.prisma as any).giftCard.count({ where }),
+    ]);
+
+    return {
+      items: items.map((gc: any) => ({
+        ...gc,
+        transactionCount: gc._count?.transactions ?? 0,
+        _count: undefined,
+      })),
+      pagination: { page, limit, total },
+    };
+  }
+
+  /**
    * Get gift card transactions
    */
   async getTransactions(giftCardId: string, userId: string): Promise<any[]> {

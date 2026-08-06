@@ -63,6 +63,8 @@ export default function AccountingAdminPage() {
   const [retryingId, setRetryingId] = useState<string | null>(null);
   const [journalDate, setJournalDate] = useState('');
   const [runningJournals, setRunningJournals] = useState(false);
+  const [remoteAccounts, setRemoteAccounts] = useState<any[] | null>(null);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -150,6 +152,19 @@ export default function AccountingAdminPage() {
       toast.error(err.message || 'Daily journal run failed');
     } finally {
       setRunningJournals(false);
+    }
+  };
+
+  const loadRemoteAccounts = async () => {
+    try {
+      setLoadingAccounts(true);
+      const res = await apiClient.getAccountingRemoteAccounts();
+      const list = Array.isArray(res?.data) ? res.data : (res?.data as any)?.accounts ?? [];
+      setRemoteAccounts(list);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to load remote accounts');
+    } finally {
+      setLoadingAccounts(false);
     }
   };
 
@@ -343,16 +358,35 @@ export default function AccountingAdminPage() {
             <div className="bg-hos-bg-secondary rounded-lg border border-hos-border p-5">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                 <h2 className="text-lg font-semibold text-hos-text-secondary">Chart of accounts mapping</h2>
-                <button
-                  type="button"
-                  onClick={handleSaveCoa}
-                  disabled={!coa || savingCoa || !enabled}
-                  title={!enabled ? 'Enable ACCOUNTING_ENABLED + ACCOUNTING_XERO to edit mapping' : undefined}
-                  className="px-3 py-1.5 text-sm rounded-lg bg-hos-gold text-[#1a1406] font-medium hover:opacity-90 disabled:opacity-50"
-                >
-                  {savingCoa ? 'Saving…' : 'Save mapping'}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={loadRemoteAccounts}
+                    disabled={loadingAccounts || !enabled}
+                    className="px-3 py-1.5 text-sm rounded-lg border border-hos-border text-hos-text-secondary hover:bg-hos-bg-tertiary disabled:opacity-50"
+                  >
+                    {loadingAccounts ? 'Loading…' : remoteAccounts ? 'Refresh Xero accounts' : 'Load from Xero'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveCoa}
+                    disabled={!coa || savingCoa || !enabled}
+                    title={!enabled ? 'Enable ACCOUNTING_ENABLED + ACCOUNTING_XERO to edit mapping' : undefined}
+                    className="px-3 py-1.5 text-sm rounded-lg bg-hos-gold text-[#1a1406] font-medium hover:opacity-90 disabled:opacity-50"
+                  >
+                    {savingCoa ? 'Saving…' : 'Save mapping'}
+                  </button>
+                </div>
               </div>
+              {remoteAccounts && (
+                <datalist id="xero-accounts">
+                  {remoteAccounts.map((a: any) => (
+                    <option key={a.code || a.accountID} value={a.code ?? ''}>
+                      {a.code} — {a.name} ({a.type})
+                    </option>
+                  ))}
+                </datalist>
+              )}
               {!coa ? (
                 <p className="text-sm text-hos-text-muted">No CoA mapping loaded.</p>
               ) : (
@@ -361,8 +395,10 @@ export default function AccountingAdminPage() {
                     <label key={key} className="block text-sm">
                       <span className="text-hos-text-muted">{label}</span>
                       <input
+                        list={remoteAccounts ? 'xero-accounts' : undefined}
                         value={coa[key] ?? ''}
                         onChange={(e) => setCoa({ ...coa, [key]: e.target.value })}
+                        placeholder={remoteAccounts ? 'Type or pick account code…' : undefined}
                         className="mt-1 w-full px-3 py-2 rounded-lg border border-hos-border bg-hos-bg-tertiary text-hos-text-primary"
                       />
                     </label>
