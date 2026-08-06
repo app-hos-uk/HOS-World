@@ -132,6 +132,10 @@ describe('PosVoucherService', () => {
       decryptJson: jest.fn().mockReturnValue({ domainPrefix: 'demo', accessToken: 't' }),
     };
 
+    const metrics: any = {
+      incrementCounter: jest.fn(),
+    };
+
     const svc = new PosVoucherService(
       prisma,
       config,
@@ -140,9 +144,10 @@ describe('PosVoucherService', () => {
       wallet,
       factory,
       encryption,
+      metrics,
     );
 
-    return { svc, adapter, prisma, burn, wallet, voucherRow };
+    return { svc, adapter, prisma, burn, wallet, voucherRow, metrics };
   }
 
   it('generates 12+ alphanumeric non-sequential card numbers', () => {

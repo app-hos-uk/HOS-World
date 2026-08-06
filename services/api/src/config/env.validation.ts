@@ -51,6 +51,8 @@ interface EnvSchema {
   XERO_REDIRECT_URI?: string;
   XERO_TENANT_ID?: string;
   ACCOUNTING_LEDGER_DRAIN_CRON?: string;
+  /** Cron for enqueueing prior UTC day's Xero journals (default 15 1 * * *). */
+  ACCOUNTING_DAILY_JOURNALS_CRON?: string;
   QUIZ_MAX_PER_WEEK?: string;
   QUIZ_PASS_THRESHOLD?: string;
   FANDOM_PROFILE_RECOMPUTE_CRON?: string;

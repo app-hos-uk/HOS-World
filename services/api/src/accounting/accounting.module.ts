@@ -12,6 +12,7 @@ import { XeroApiClient } from './xero-api.client';
 import { LedgerOutboxService } from './ledger-outbox.service';
 import { JournalBuilderService } from './journal-builder.service';
 import { ThreeWayReconService } from './three-way-recon.service';
+import { DailyJournalService } from './daily-journal.service';
 
 @Module({
   imports: [DatabaseModule, ConfigModule, QueueModule, FeatureFlagsModule, CacheModule],
@@ -24,7 +25,8 @@ import { ThreeWayReconService } from './three-way-recon.service';
     LedgerOutboxService,
     JournalBuilderService,
     ThreeWayReconService,
+    DailyJournalService,
   ],
-  exports: [AccountingService, LedgerOutboxService, JournalBuilderService],
+  exports: [AccountingService, LedgerOutboxService, JournalBuilderService, DailyJournalService],
 })
 export class AccountingModule {}

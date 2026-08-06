@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from '../database/database.module';
 import { QueueModule } from '../queue/queue.module';
+import { CacheModule } from '../cache/cache.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { DiscrepanciesModule } from '../discrepancies/discrepancies.module';
 import { LoyaltyModule } from '../loyalty/loyalty.module';
@@ -21,6 +22,7 @@ import { PosJobsService } from './jobs/pos.jobs';
     DatabaseModule,
     QueueModule,
     ConfigModule,
+    CacheModule,
     InventoryModule,
     DiscrepanciesModule,
     forwardRef(() => LoyaltyModule),

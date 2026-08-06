@@ -5,6 +5,8 @@ import { QueueService, JobType } from '../queue/queue.service';
 import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
 import { isTruthy } from '../common/utils/config';
 import { LedgerOutboxService } from './ledger-outbox.service';
+import { DailyJournalService } from './daily-journal.service';
+import { MetricsService } from '../monitoring/metrics.service';
 
 /**
  * Accounting cron/workers — only register when ACCOUNTING_ENABLED=true
@@ -19,6 +21,8 @@ export class AccountingJobsService implements OnModuleInit {
     private config: ConfigService,
     private featureFlags: FeatureFlagsService,
     private outbox: LedgerOutboxService,
+    private dailyJournals: DailyJournalService,
+    private metrics: MetricsService,
   ) {}
 
   onModuleInit() {
@@ -34,9 +38,20 @@ export class AccountingJobsService implements OnModuleInit {
 
     this.queue.registerProcessor(JobType.ACCOUNTING_LEDGER_DRAIN, async (_job: Job) => {
       const result = await this.outbox.drainPending();
+      this.metrics.incrementCounter('xero_outbox_posted_total', result.posted);
+      this.metrics.incrementCounter('xero_outbox_failed_total', result.failed);
       this.logger.log(`Ledger outbox drain: ${JSON.stringify(result)}`);
       return result;
     });
+
+    this.queue.registerProcessor(
+      JobType.ACCOUNTING_DAILY_JOURNALS,
+      async (job: Job<{ periodDate?: string }>) => {
+        const result = await this.dailyJournals.enqueueForPeriod(job.data?.periodDate);
+        this.logger.log(`Daily journal enqueue: ${JSON.stringify(result)}`);
+        return result;
+      },
+    );
 
     void this.scheduleCrons();
   }
@@ -48,7 +63,13 @@ export class AccountingJobsService implements OnModuleInit {
         {},
         this.config.get<string>('ACCOUNTING_LEDGER_DRAIN_CRON', '*/10 * * * *'),
       );
-      this.logger.log('Accounting ledger drain cron scheduled');
+      // After UTC midnight + buffer — enqueue prior calendar day's journals.
+      await this.queue.addRepeatable(
+        JobType.ACCOUNTING_DAILY_JOURNALS,
+        {},
+        this.config.get<string>('ACCOUNTING_DAILY_JOURNALS_CRON', '15 1 * * *'),
+      );
+      this.logger.log('Accounting ledger drain + daily journal crons scheduled');
     } catch (e) {
       this.logger.warn(`Accounting cron schedule failed: ${(e as Error).message}`);
     }

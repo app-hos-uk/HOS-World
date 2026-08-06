@@ -19,6 +19,7 @@ import { LoyaltyBurnEngine } from '../engines/burn.engine';
 import { LoyaltyWalletService } from './wallet.service';
 import { RedeemForVoucherDto } from '../dto/redeem-for-voucher.dto';
 import { FeatureFlagsService } from '../../config/feature-flags.service';
+import { MetricsService } from '../../monitoring/metrics.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 
 const CARD_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -36,6 +37,7 @@ export class PosVoucherService {
     private wallet: LoyaltyWalletService,
     private factory: POSAdapterFactory,
     private encryption: EncryptionService,
+    private metrics: MetricsService,
   ) {}
 
   assertVoucherEnabled(): void {
@@ -367,6 +369,7 @@ export class PosVoucherService {
         },
         include: { redemption: true },
       });
+      this.metrics.incrementCounter('loyalty_pos_voucher_issued_total');
 
       return this.toResult(updated, updated.redemption.pointsSpent);
     } catch (e) {
@@ -391,6 +394,7 @@ export class PosVoucherService {
           },
           include: { redemption: true },
         });
+        this.metrics.incrementCounter('loyalty_pos_voucher_issued_total');
         this.logger.warn(
           `POS voucher ${voucher.id}: Lightspeed card already funded after error — marked ISSUED, burn kept`,
         );
@@ -415,6 +419,7 @@ export class PosVoucherService {
           metadata: { lastError: msg.slice(0, 500) } as Prisma.InputJsonValue,
         },
       });
+      this.metrics.incrementCounter('loyalty_pos_voucher_failed_total');
 
       try {
         await this.reverseBurn(

@@ -3,6 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import type { Job } from 'bullmq';
 import { PrismaService } from '../../database/prisma.service';
 import { QueueService, JobType } from '../../queue/queue.service';
+import { FeatureFlagsService } from '../../config/feature-flags.service';
+import { MetricsService } from '../../monitoring/metrics.service';
+import { isPosRuntimeEnabled } from '../pos-enabled';
 import { PosProductSyncService } from '../sync/product-sync.service';
 import { PosInventorySyncService } from '../sync/inventory-sync.service';
 import { PosSalesImportService } from '../sync/sales-import.service';
@@ -25,11 +28,15 @@ export class PosJobsService implements OnModuleInit {
     private customerIdentityBackfill: PosCustomerIdentityBackfillService,
     private giftCardRecon: PosGiftCardReconService,
     private config: ConfigService,
+    private featureFlags: FeatureFlagsService,
+    private metrics: MetricsService,
   ) {}
 
   onModuleInit() {
-    if (this.config.get<string>('POS_ENABLED') !== 'true') {
-      this.logger.log('POS jobs skipped (POS_ENABLED != true)');
+    if (!isPosRuntimeEnabled(this.config, this.featureFlags)) {
+      this.logger.log(
+        'POS jobs skipped (requires POS_ENABLED=true and FeatureFlag.POS_INTEGRATION)',
+      );
       return;
     }
 
@@ -50,7 +57,13 @@ export class PosJobsService implements OnModuleInit {
       async (job: Job<{ storeId: string; provider: string; parsed: ParsedSale }>) => {
         const { storeId, provider, parsed } = job.data;
         if (!storeId || !provider || !parsed) return;
-        await this.salesImport.importParsedSale(storeId, provider, parsed);
+        try {
+          await this.salesImport.importParsedSale(storeId, provider, parsed);
+          this.metrics.incrementCounter('pos_sale_import_total');
+        } catch (e) {
+          this.metrics.incrementCounter('pos_sale_import_failed_total');
+          throw e;
+        }
       },
     );
 
