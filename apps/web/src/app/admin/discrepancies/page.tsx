@@ -24,8 +24,13 @@ export default function AdminDiscrepanciesPage() {
         const responseData = response.data as any;
         if (Array.isArray(responseData)) {
           discrepancyData = responseData;
-        } else if (responseData && typeof responseData === 'object' && 'data' in responseData && Array.isArray(responseData.data)) {
-          discrepancyData = responseData.data;
+        } else if (responseData && typeof responseData === 'object') {
+          // API returns { discrepancies, pagination }; older shapes nested under data.
+          if (Array.isArray(responseData.discrepancies)) {
+            discrepancyData = responseData.discrepancies;
+          } else if (Array.isArray(responseData.data)) {
+            discrepancyData = responseData.data;
+          }
         }
       }
       setDiscrepancies(discrepancyData);

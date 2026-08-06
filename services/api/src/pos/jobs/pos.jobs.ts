@@ -48,9 +48,12 @@ export class PosJobsService implements OnModuleInit {
       await this.productSync.syncAllProductsForStore(conn.storeId);
     });
 
-    this.queue.registerProcessor(JobType.POS_INVENTORY_SYNC, async () => {
-      await this.inventorySync.nightlyReconciliation();
-    });
+    this.queue.registerProcessor(
+      JobType.POS_INVENTORY_SYNC,
+      async (job: Job<{ connectionId?: string }>) => {
+        await this.inventorySync.nightlyReconciliation(job.data?.connectionId);
+      },
+    );
 
     this.queue.registerProcessor(
       JobType.POS_SALE_IMPORT,

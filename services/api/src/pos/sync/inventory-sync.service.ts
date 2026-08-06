@@ -139,12 +139,17 @@ export class PosInventorySyncService {
     }
   }
 
-  async nightlyReconciliation(): Promise<void> {
+  /**
+   * Reconcile POS stock against HOS inventory. Scoped to one connection when
+   * `connectionId` is supplied (admin-triggered single-store sync); otherwise
+   * every active connection is reconciled (nightly cron).
+   */
+  async nightlyReconciliation(connectionId?: string): Promise<void> {
     if (!isPosRuntimeEnabled(this.config, this.featureFlags)) return;
 
     const threshold = this.config.get<number>('POS_INVENTORY_DISCREPANCY_THRESHOLD', 0);
     const connections = await this.prisma.pOSConnection.findMany({
-      where: { isActive: true },
+      where: { isActive: true, ...(connectionId ? { id: connectionId } : {}) },
       include: { store: true },
     });
 
