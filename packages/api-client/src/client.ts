@@ -3908,6 +3908,19 @@ export class ApiClient {
     return this.request<ApiResponse<any>>('/admin/pos/discrepancies');
   }
 
+  async posBackfillCustomerIdentity(
+    connectionId: string,
+    dryRun?: boolean,
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(
+      `/admin/pos/connections/${connectionId}/backfill/customer-identity`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ dryRun: dryRun ?? false }),
+      },
+    );
+  }
+
   // WhatsApp
   async getWhatsAppConversations(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/whatsapp/conversations');
@@ -5062,6 +5075,23 @@ export class ApiClient {
 
   async getGiftCardTransactions(giftCardId: string): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>(`/gift-cards/${giftCardId}/transactions`, {
+      method: 'GET',
+    });
+  }
+
+  async listAllGiftCards(filters?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    type?: string;
+  }): Promise<ApiResponse<any>> {
+    const params = new URLSearchParams();
+    if (filters?.page) params.append('page', String(filters.page));
+    if (filters?.limit) params.append('limit', String(filters.limit));
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.type) params.append('type', filters.type);
+    const qs = params.toString();
+    return this.request<ApiResponse<any>>(`/gift-cards/admin/all${qs ? `?${qs}` : ''}`, {
       method: 'GET',
     });
   }
@@ -6831,6 +6861,10 @@ export class ApiClient {
     });
   }
 
+  async getAccountingRemoteAccounts(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/accounting/coa/remote-accounts', { method: 'GET' });
+  }
+
   async getAccountingConnectUrl(): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/admin/accounting/oauth/connect-url', { method: 'GET' });
   }
@@ -7390,6 +7424,49 @@ export class ApiClient {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+  }
+
+  // ===== Sales Channels =====
+  async assignProductToChannel(data: {
+    productId: string;
+    channelType: string;
+    storeId?: string;
+    currency: string;
+    sellingPrice: number;
+    costPrice?: number;
+    compareAtPrice?: number;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/channels/assign', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async removeProductFromChannel(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/channels/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async updateChannelPrice(id: string, data: {
+    sellingPrice: number;
+    costPrice?: number;
+    compareAtPrice?: number;
+    isActive?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/channels/${id}/price`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getProductChannels(productId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/channels/product/${productId}`);
+  }
+
+  async getStoreChannelProducts(storeId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/channels/store/${storeId}`);
   }
 
   // ===== Feature Flags =====

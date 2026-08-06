@@ -260,6 +260,24 @@ export default function AdminPosConnectionsPage() {
     }
   };
 
+  const backfillCustomerIdentity = async (connectionId: string, dryRun: boolean) => {
+    try {
+      const res = await apiClient.posBackfillCustomerIdentity(connectionId, dryRun);
+      const body = res as { data?: { processed?: number; matched?: number; updated?: number } };
+      if (dryRun) {
+        toast.success(
+          `Dry run: ${body.data?.matched ?? 0} match(es) found out of ${body.data?.processed ?? 0} processed`,
+        );
+      } else {
+        toast.success(
+          `Backfill complete: ${body.data?.updated ?? 0} customer(s) updated`,
+        );
+      }
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Backfill failed');
+    }
+  };
+
   /**
    * Customer sync is platform-wide: it queues loyalty members to every connected
    * POS store, so it is a page-level action. The endpoint is per-connection only
@@ -680,6 +698,25 @@ export default function AdminPosConnectionsPage() {
                             className="text-hos-gold hover:text-hos-gold-hover disabled:opacity-40 disabled:hover:text-hos-gold"
                           >
                             Sync inventory
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void backfillCustomerIdentity(c.id, true)}
+                            className="text-hos-gold hover:text-hos-gold-hover"
+                            title="Dry-run: preview how many customers would be backfilled"
+                          >
+                            Backfill ID (dry)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirm('Backfill customer identity for this connection? This will update customer records.'))
+                                void backfillCustomerIdentity(c.id, false);
+                            }}
+                            className="text-hos-gold hover:text-hos-gold-hover"
+                            title="Backfill customer identity data from POS"
+                          >
+                            Backfill ID
                           </button>
                           <button
                             type="button"
