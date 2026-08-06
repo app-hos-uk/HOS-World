@@ -257,8 +257,14 @@ export default function AdminSettingsPage() {
                       </h3>
                       <p className="text-sm text-hos-text-muted mt-1">
                         {settings.shopEnabled
-                          ? 'The storefront is live. Customers can browse products, add to cart, and checkout.'
-                          : 'All e-commerce routes redirect to a "Coming Soon" page. Toggle on when ready to launch.'}
+                          ? 'Shopping is allowed. Customers can browse products, add to cart, and checkout — provided the shop has also been launched in the deployment config.'
+                          : 'All e-commerce routes redirect to a "Coming Soon" page, overriding the deployment config.'}
+                      </p>
+                      <p className="text-xs text-hos-text-muted mt-2">
+                        This switch is a kill switch: turning it off closes the storefront within
+                        seconds. Turning it on does not open the shop by itself — the public launch
+                        also requires <code>NEXT_PUBLIC_SHOP_ENABLED=true</code> on the web service.
+                        Until then, only testers holding a <code>?preview=</code> link can shop.
                       </p>
                     </div>
                     <button

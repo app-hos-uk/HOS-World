@@ -61,6 +61,8 @@ export default function AccountingAdminPage() {
   const [savingCoa, setSavingCoa] = useState(false);
   const [draining, setDraining] = useState(false);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [journalDate, setJournalDate] = useState('');
+  const [runningJournals, setRunningJournals] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -126,6 +128,28 @@ export default function AccountingAdminPage() {
       toast.error(err.message || 'Retry failed');
     } finally {
       setRetryingId(null);
+    }
+  };
+
+  const handleRunDailyJournals = async () => {
+    try {
+      setRunningJournals(true);
+      const res = await apiClient.runAccountingDailyJournals(journalDate || undefined);
+      const data = res?.data as
+        | { periodDate?: string; enqueued?: string[]; skipped?: string[] }
+        | undefined;
+      const enqueued = data?.enqueued?.length ?? 0;
+      const skipped = data?.skipped?.length ?? 0;
+      toast.success(
+        `${data?.periodDate ?? 'Period'}: ${enqueued} journal(s) enqueued${
+          skipped ? `, ${skipped} skipped` : ''
+        }`,
+      );
+      await load();
+    } catch (err: any) {
+      toast.error(err.message || 'Daily journal run failed');
+    } finally {
+      setRunningJournals(false);
     }
   };
 
@@ -205,6 +229,45 @@ export default function AccountingAdminPage() {
                   className="mt-3 px-3 py-1.5 text-sm rounded-lg border border-hos-border text-hos-text-secondary hover:bg-hos-bg-tertiary disabled:opacity-50"
                 >
                   {draining ? 'Draining…' : 'Drain pending now'}
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-hos-bg-secondary rounded-lg border border-hos-border p-5">
+              <h2 className="text-lg font-semibold text-hos-text-secondary">Daily journals</h2>
+              <p className="text-sm text-hos-text-muted mt-1">
+                Journals post automatically for the previous UTC day. Re-run a specific day to
+                backfill a missed period — posting is idempotent, so a repeat run will not
+                double-post.
+              </p>
+              <div className="mt-3 flex flex-wrap items-end gap-3">
+                <div>
+                  <label
+                    htmlFor="journalDate"
+                    className="block text-xs uppercase text-hos-text-muted mb-1"
+                  >
+                    Period date
+                  </label>
+                  <input
+                    id="journalDate"
+                    type="date"
+                    value={journalDate}
+                    max={new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)}
+                    onChange={(e) => setJournalDate(e.target.value)}
+                    className="border border-hos-border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRunDailyJournals}
+                  disabled={runningJournals || !enabled}
+                  className="px-3 py-2 text-sm rounded-lg border border-hos-border text-hos-text-secondary hover:bg-hos-bg-tertiary disabled:opacity-50"
+                >
+                  {runningJournals
+                    ? 'Running…'
+                    : journalDate
+                      ? `Run journals for ${journalDate}`
+                      : 'Run journals for yesterday'}
                 </button>
               </div>
             </div>

@@ -1,9 +1,11 @@
 /**
  * Soft-launch shop access control.
  *
- * When the shop is not publicly enabled (`NEXT_PUBLIC_SHOP_ENABLED` / admin
- * shopEnabled), commerce routes redirect to `/coming-soon` unless the visitor
- * has unlocked a preview session.
+ * Opening the storefront to the public requires the deploy-time
+ * `NEXT_PUBLIC_SHOP_ENABLED` flag, so no data change can end the soft launch on
+ * its own; the admin Online Shop setting can close it again (see `shopGate.ts`).
+ * While the shop is closed, commerce routes redirect to `/coming-soon` unless the
+ * visitor has unlocked a preview session.
  *
  * Testers unlock by visiting:
  *   /shop?preview=<SHOP_PREVIEW_SECRET>

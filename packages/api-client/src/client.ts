@@ -3793,6 +3793,13 @@ export class ApiClient {
     return this.request<ApiResponse<any[]>>(`/discrepancies${query ? `?${query}` : ''}`);
   }
 
+  async resolveDiscrepancy(id: string, resolution: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/discrepancies/${id}/resolve`, {
+      method: 'PUT',
+      body: JSON.stringify({ resolution }),
+    });
+  }
+
   // Admin — POS (Phase 2)
   async getPosConnections(): Promise<ApiResponse<any[]>> {
     return this.request<ApiResponse<any[]>>('/admin/pos/connections');
@@ -6803,6 +6810,14 @@ export class ApiClient {
 
   async drainAccountingOutbox(): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/admin/accounting/outbox/drain', { method: 'POST' });
+  }
+
+  /** Re-run daily journals for a YYYY-MM-DD period; omit to use the prior UTC day. */
+  async runAccountingDailyJournals(periodDate?: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/accounting/daily-journals/run', {
+      method: 'POST',
+      body: JSON.stringify(periodDate ? { periodDate } : {}),
+    });
   }
 
   async getAccountingCoaMapping(): Promise<ApiResponse<any>> {

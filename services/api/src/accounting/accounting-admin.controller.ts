@@ -20,7 +20,11 @@ import { AccountingService } from './accounting.service';
 import { LedgerOutboxService } from './ledger-outbox.service';
 import { ThreeWayReconService } from './three-way-recon.service';
 import { XeroAuthService } from './xero-auth.service';
+import { DailyJournalService } from './daily-journal.service';
 import type { ChartOfAccountsMapping } from './accounting.types';
+
+/** YYYY-MM-DD, as produced by an <input type="date">. */
+const PERIOD_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 @ApiTags('admin-accounting')
 @ApiBearerAuth('JWT-auth')
@@ -33,6 +37,7 @@ export class AccountingAdminController {
     private outbox: LedgerOutboxService,
     private xeroAuth: XeroAuthService,
     private threeWayRecon: ThreeWayReconService,
+    private dailyJournals: DailyJournalService,
   ) {}
 
   @Get('status')
@@ -70,6 +75,36 @@ export class AccountingAdminController {
     this.accounting.assertEnabled();
     const data = await this.outbox.drainPending();
     return { data, message: 'Drain complete' };
+  }
+
+  /**
+   * Re-run daily journals for a calendar day (defaults to the prior UTC day, the
+   * same period the nightly cron posts). Journals are idempotent per period, so a
+   * re-run backfills a missed day without double-posting.
+   */
+  @Post('daily-journals/run')
+  async runDailyJournals(
+    @Body() body: { periodDate?: string },
+  ): Promise<ApiResponse<unknown>> {
+    this.accounting.assertEnabled();
+    const periodDate = body?.periodDate?.trim();
+    if (periodDate) {
+      // Round-trip through Date so overflow dates (2026-02-30) are rejected rather
+      // than silently rolling into the next month and journaling the wrong day.
+      const parsed = new Date(`${periodDate}T00:00:00.000Z`);
+      if (
+        !PERIOD_DATE_PATTERN.test(periodDate) ||
+        Number.isNaN(parsed.getTime()) ||
+        parsed.toISOString().slice(0, 10) !== periodDate
+      ) {
+        throw new BadRequestException('periodDate must be a valid YYYY-MM-DD date');
+      }
+      if (periodDate > this.dailyJournals.defaultPeriodDate()) {
+        throw new BadRequestException('periodDate cannot be later than the last complete UTC day');
+      }
+    }
+    const data = await this.dailyJournals.enqueueForPeriod(periodDate || undefined);
+    return { data, message: `Daily journals enqueued for ${data.periodDate}` };
   }
 
   /** CoA mapping stub — JSON config stored on Xero integration settings. */
