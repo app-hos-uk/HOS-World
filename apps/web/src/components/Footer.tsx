@@ -17,6 +17,7 @@ import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 import { brandDisplayName } from '@/lib/siteSettingsDefaults';
 import { useShopEnabled } from '@/hooks/useShopEnabled';
 import { resolveShopNavHref } from '@/lib/shopAccess';
+import { withShopPreview } from '@/lib/shopPreviewClient';
 
 type SocialEntry = { platform: SocialPlatform; label: string; ariaLabel: string; href: string };
 
@@ -167,7 +168,7 @@ export function Footer() {
   const site = useSiteSettings();
   const brandName = brandDisplayName(site.platformName);
   const shopEnabled = useShopEnabled();
-  const homeHref = shopEnabled ? '/shop' : '/coming-soon';
+  const homeHref = withShopPreview(shopEnabled ? '/shop' : '/coming-soon');
   const [shopLinks, setShopLinks] = useState<NavLink[]>(getFooterShopLinks());
   const [policyLinks, setPolicyLinks] = useState<NavLink[]>(getFooterPolicyLinks());
 
@@ -180,7 +181,7 @@ export function Footer() {
 
   const visibleShopLinks = shopLinks.map((link) => ({
     ...link,
-    href: resolveShopNavHref(link.href, shopEnabled),
+    href: withShopPreview(resolveShopNavHref(link.href, shopEnabled)),
     label:
       !shopEnabled && /shop now|shop by franchise/i.test(link.label)
         ? 'Coming Soon'

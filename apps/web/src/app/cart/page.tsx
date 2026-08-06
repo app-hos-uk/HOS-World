@@ -9,6 +9,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
+import { withShopPreview } from '@/lib/shopPreviewClient';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -338,10 +339,10 @@ export default function CartPage() {
       return;
     }
     if (!isAuthenticated) {
-      router.push('/login?returnUrl=/checkout');
+      router.push(`/login?returnUrl=${encodeURIComponent(withShopPreview('/checkout'))}`);
       return;
     }
-    router.push('/checkout');
+    router.push(withShopPreview('/checkout'));
   };
 
   // Calculate cart stats

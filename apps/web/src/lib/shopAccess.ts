@@ -8,6 +8,9 @@
  * Testers unlock by visiting:
  *   /shop?preview=<SHOP_PREVIEW_SECRET>
  * which sets an HttpOnly cookie used by middleware + /api/shop-status.
+ *
+ * The matching `?preview=` query also grants access on the same request so
+ * in-app / privacy browsers that drop Set-Cookie on redirects still reach the shop.
  */
 
 export const SHOP_PREVIEW_COOKIE = 'hos_shop_preview';
@@ -73,4 +76,16 @@ export function isShopNavHref(href: string): boolean {
 export function resolveShopNavHref(href: string, shopEnabled: boolean): string {
   if (shopEnabled || !isShopNavHref(href)) return href;
   return '/coming-soon';
+}
+
+/** True when the request carries a valid preview cookie or matching ?preview= secret. */
+export function hasShopPreviewAccess(
+  cookieValue: string | undefined,
+  previewParam: string | null | undefined,
+  secret: string = getShopPreviewSecret(),
+): boolean {
+  if (!secret) return false;
+  if (cookieValue === secret) return true;
+  if (typeof previewParam === 'string' && previewParam === secret) return true;
+  return false;
 }

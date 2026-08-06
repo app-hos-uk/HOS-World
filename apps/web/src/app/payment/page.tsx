@@ -12,6 +12,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 import { trackPurchase } from '@/lib/analytics';
+import { withShopPreview } from '@/lib/shopPreviewClient';
 
 let stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
 let stripePromise: ReturnType<typeof loadStripe> | null = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
@@ -88,7 +89,7 @@ function StripeCardCheckout({
         toast.success('Payment successful!', { id: 'payment-success' });
         trackPurchase(order);
         onClearStripe();
-        router.push(`/order-confirmation?orderId=${order.id}`);
+        router.push(withShopPreview(`/order-confirmation?orderId=${order.id}`));
       } else {
         throw new Error('Payment confirmation failed');
       }
@@ -112,7 +113,7 @@ function StripeCardCheckout({
         toast.success('Payment confirmed!', { id: 'payment-success' });
         trackPurchase(order);
         onClearStripe();
-        router.push(`/order-confirmation?orderId=${order.id}`);
+        router.push(withShopPreview(`/order-confirmation?orderId=${order.id}`));
         return;
       }
       const errorMessage =
@@ -192,7 +193,7 @@ function PaymentContent() {
       if (response?.data) {
         // Redirect to confirmation if order is already paid
         if ((response.data.paymentStatus as string)?.toUpperCase() === 'PAID') {
-          router.push(`/order-confirmation?orderId=${orderId}`);
+          router.push(withShopPreview(`/order-confirmation?orderId=${orderId}`));
           return;
         }
         setOrder(response.data);
@@ -601,7 +602,7 @@ function PaymentForm({ order }: { order: any }) {
                 toast.success('Payment successful with gift card!', { id: 'payment-success' });
                 trackPurchase(order);
                 setProcessing(false);
-                router.push(`/order-confirmation?orderId=${order.id}`);
+                router.push(withShopPreview(`/order-confirmation?orderId=${order.id}`));
                 return;
               }
               // Unexpected: backend didn't confirm paid. Show error.
@@ -657,7 +658,7 @@ function PaymentForm({ order }: { order: any }) {
           if (response.data.paid) {
             toast.success('Payment successful!', { id: 'payment-success' });
             trackPurchase(order);
-            router.push(`/order-confirmation?orderId=${order.id}`);
+            router.push(withShopPreview(`/order-confirmation?orderId=${order.id}`));
             return;
           }
 
@@ -706,7 +707,7 @@ function PaymentForm({ order }: { order: any }) {
           if (zeroResponse?.data?.paid) {
             toast.success('Payment successful!', { id: 'payment-success' });
             trackPurchase(order);
-            router.push(`/order-confirmation?orderId=${order.id}`);
+            router.push(withShopPreview(`/order-confirmation?orderId=${order.id}`));
           } else {
             throw new Error('Payment could not be confirmed by server');
           }

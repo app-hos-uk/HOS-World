@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { BrandLogo } from '@/components/BrandLogo';
 import { useShopEnabled } from '@/hooks/useShopEnabled';
 import { resolveShopNavHref } from '@/lib/shopAccess';
+import { withShopPreview } from '@/lib/shopPreviewClient';
 
 interface MinimalCheckoutHeaderProps {
   backHref?: string;
@@ -16,8 +17,8 @@ export function MinimalCheckoutHeader({
   backLabel = 'Continue shopping',
 }: MinimalCheckoutHeaderProps) {
   const shopEnabled = useShopEnabled();
-  const homeHref = resolveShopNavHref('/shop', shopEnabled);
-  const resolvedBackHref = resolveShopNavHref(backHref, shopEnabled);
+  const homeHref = withShopPreview(resolveShopNavHref('/shop', shopEnabled));
+  const resolvedBackHref = withShopPreview(resolveShopNavHref(backHref, shopEnabled));
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-hos-border bg-hos-bg/95 backdrop-blur-sm">

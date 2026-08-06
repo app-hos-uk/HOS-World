@@ -7,6 +7,7 @@ import { brandDisplayName } from '@/lib/siteSettingsDefaults';
 import { BRAND_LOGOS } from '@/lib/referenceAssets';
 import { useShopEnabled } from '@/hooks/useShopEnabled';
 import { resolveShopNavHref } from '@/lib/shopAccess';
+import { withShopPreview } from '@/lib/shopPreviewClient';
 
 export type BrandLogoVariant = 'horizontal' | 'stacked' | 'emblem';
 
@@ -51,7 +52,10 @@ export function BrandLogo({
 }: BrandLogoProps) {
   const site = useSiteSettings();
   const shopEnabled = useShopEnabled();
-  const resolvedHref = resolveShopNavHref(href, shopEnabled);
+  // Prefer an already-preview-bearing href from parents; otherwise resolve + reattach.
+  const resolvedHref = href.includes('preview=')
+    ? href
+    : withShopPreview(resolveShopNavHref(href.split('?')[0] || href, shopEnabled));
   const altText = brandDisplayName(site.platformName);
   const sizes = VARIANT_SIZES[variant];
 

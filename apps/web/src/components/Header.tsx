@@ -21,6 +21,7 @@ import { StorefrontNavMore } from '@/components/storefront/StorefrontNavMore';
 import { useLoyaltyEnabled } from '@/hooks/useLoyaltyEnabled';
 import { useShopEnabled } from '@/hooks/useShopEnabled';
 import { resolveShopNavHref } from '@/lib/shopAccess';
+import { withShopPreview } from '@/lib/shopPreviewClient';
 
 const ROLE_QUICK_LINKS: Record<string, Array<{ title: string; href: string; icon: string }>> = {
   ADMIN: [
@@ -81,9 +82,9 @@ export function Header() {
   const [navMore, setNavMore] = useState<NavLink[]>(getNavMore());
   const loyaltyEnabled = useLoyaltyEnabled();
   const shopEnabled = useShopEnabled();
-  const homeHref = shopEnabled ? '/shop' : '/coming-soon';
-  const cartHref = resolveShopNavHref('/cart', shopEnabled);
-  const wishlistHref = resolveShopNavHref('/wishlist', shopEnabled);
+  const homeHref = withShopPreview(shopEnabled ? '/shop' : '/coming-soon');
+  const cartHref = withShopPreview(resolveShopNavHref('/cart', shopEnabled));
+  const wishlistHref = withShopPreview(resolveShopNavHref('/wishlist', shopEnabled));
 
   useEffect(() => {
     loadNavigationFromApi().then(() => {
@@ -95,7 +96,7 @@ export function Header() {
   const mapShopNav = (links: NavLink[]): NavLink[] =>
     links.map((link) => ({
       ...link,
-      href: resolveShopNavHref(link.href, shopEnabled),
+      href: withShopPreview(resolveShopNavHref(link.href, shopEnabled)),
       label:
         !shopEnabled && /shop now|shop by franchise/i.test(link.label)
           ? 'Coming Soon'
@@ -190,7 +191,7 @@ export function Header() {
               Marketplace: Shop multiple vendors · Secure checkout · US shipping
             </p>
             <div className="flex items-center gap-5 shrink-0">
-              <Link href={resolveShopNavHref('/sellers', shopEnabled)} className="text-hos-text-muted text-sm hover:text-hos-gold transition-colors duration-200">
+              <Link href={withShopPreview(resolveShopNavHref('/sellers', shopEnabled))} className="text-hos-text-muted text-sm hover:text-hos-gold transition-colors duration-200">
                 Store locations
               </Link>
               <Link href="/seller/onboarding" className="text-hos-text-muted text-xs hover:text-hos-gold transition-colors duration-200">
@@ -486,12 +487,12 @@ export function Header() {
               <>
                 <div className="border-t border-hos-border my-2" />
                 <MobileNavLink href="/profile" icon="⚙️" label="Manage Profile" onClick={() => setIsMobileMenuOpen(false)} />
-                <MobileNavLink href={resolveShopNavHref('/wishlist', shopEnabled)} icon="❤️" label="Wishlist" onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href={withShopPreview(resolveShopNavHref('/wishlist', shopEnabled))} icon="❤️" label="Wishlist" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href="/orders" icon="📦" label="My Orders" onClick={() => setIsMobileMenuOpen(false)} />
                 {loyaltyEnabled && (
                   <MobileNavLink href="/loyalty" icon="✨" label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />
                 )}
-                <MobileNavLink href={resolveShopNavHref('/cart', shopEnabled)} icon="🛒" label={`Basket${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href={withShopPreview(resolveShopNavHref('/cart', shopEnabled))} icon="🛒" label={`Basket${cartItemCount > 0 ? ` (${cartItemCount})` : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
                 {!isDashboardPage && (
                   <div className="px-3 py-2">
                     <CurrencySelector />

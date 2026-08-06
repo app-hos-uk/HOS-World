@@ -26,6 +26,7 @@ function displayCategory(raw: string): string {
   return canonical ?? raw;
 }
 import { trackViewItem, trackAddToCart } from '@/lib/analytics';
+import { withShopPreview } from '@/lib/shopPreviewClient';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function isUuid(s: string): boolean {
@@ -583,7 +584,7 @@ export default function ProductDetailClient() {
               onClick={() => {
                 handleAddToCart();
                 sessionStorage.setItem('checkout_gift_mode', 'true');
-                router.push('/checkout');
+                router.push(withShopPreview('/checkout'));
               }}
               disabled={
                 addingToCart ||
