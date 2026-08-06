@@ -104,7 +104,7 @@ export class AccountingAdminController {
    */
   @Get('oauth/connect-url')
   async connectUrl(): Promise<ApiResponse<unknown>> {
-    const { url, scopes, state } = this.xeroAuth.createConnectUrl();
+    const { url, scopes, state } = await this.xeroAuth.createConnectUrl();
     return {
       data: { url, scopes, state },
       message: 'Open url to authorize Xero',
@@ -129,7 +129,7 @@ export class AccountingAdminController {
     if (!state) {
       throw new BadRequestException('state query parameter is required');
     }
-    this.xeroAuth.validateAndConsumeState(state);
+    await this.xeroAuth.validateAndConsumeState(state);
     await this.xeroAuth.exchangeCode(code);
     return { data: await this.xeroAuth.getConnectionStatus(), message: 'Connected' };
   }

@@ -13,9 +13,11 @@ import type { Request } from 'express';
 import { Public } from '../../common/decorators/public.decorator';
 import { PrismaService } from '../../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { FeatureFlagsService } from '../../config/feature-flags.service';
 import { EncryptionService } from '../../integrations/encryption.service';
 import { POSAdapterFactory } from '../pos-adapter.factory';
 import { QueueService, JobType } from '../../queue/queue.service';
+import { isPosRuntimeEnabled } from '../pos-enabled';
 
 @ApiTags('pos-webhooks')
 @Controller('pos/webhooks')
@@ -26,6 +28,7 @@ export class PosWebhookController {
     private queue: QueueService,
     private config: ConfigService,
     private encryption: EncryptionService,
+    private featureFlags: FeatureFlagsService,
   ) {}
 
   @Public()
@@ -38,7 +41,7 @@ export class PosWebhookController {
     @Headers('x-signature') sigAlt: string | undefined,
     @Req() req: RawBodyRequest<Request>,
   ): Promise<{ ok: boolean }> {
-    if (this.config.get<string>('POS_ENABLED') !== 'true') {
+    if (!isPosRuntimeEnabled(this.config, this.featureFlags)) {
       throw new BadRequestException('POS is not enabled');
     }
 

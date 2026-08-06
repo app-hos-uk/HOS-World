@@ -4,9 +4,16 @@ import type { LightspeedCredentials } from '../../interfaces/pos-types';
 const MIN_INTERVAL_MS = 1500;
 const MAX_RETRIES = 3;
 
+export type LightspeedRedisThrottle = {
+  get: (key: string) => Promise<string | null>;
+  set: (key: string, value: string, ttlSeconds?: number) => Promise<void>;
+  isRedisConnected: () => boolean;
+};
+
 export class LightspeedApiClient {
   private readonly logger = new Logger(LightspeedApiClient.name);
   private lastRequestAt = 0;
+  private redis?: LightspeedRedisThrottle;
 
   constructor(
     private creds: LightspeedCredentials,
@@ -15,12 +22,34 @@ export class LightspeedApiClient {
     private refreshAuth?: () => Promise<void>,
   ) {}
 
+  /** Optional Redis-backed throttle shared across API replicas. */
+  setRedisThrottle(redis: LightspeedRedisThrottle): void {
+    this.redis = redis;
+  }
+
   private baseUrl(): string {
     const p = this.creds.domainPrefix.replace(/\/$/, '');
     return `https://${p}.vendhq.com/api/2.0`;
   }
 
   private async throttle(): Promise<void> {
+    const key = `lightspeed:rl:${this.creds.domainPrefix || 'default'}`;
+    if (this.redis?.isRedisConnected()) {
+      try {
+        const lastRaw = await this.redis.get(key);
+        const last = lastRaw ? Number(lastRaw) : 0;
+        const wait = Number.isFinite(last)
+          ? Math.max(0, MIN_INTERVAL_MS - (Date.now() - last))
+          : 0;
+        if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+        await this.redis.set(key, String(Date.now()), 60);
+        this.lastRequestAt = Date.now();
+        return;
+      } catch {
+        // fall through to in-process throttle
+      }
+    }
+
     const now = Date.now();
     const wait = Math.max(0, MIN_INTERVAL_MS - (now - this.lastRequestAt));
     if (wait > 0) await new Promise((r) => setTimeout(r, wait));

@@ -39,6 +39,9 @@ function makeMocks() {
       return def;
     }),
   };
+  const featureFlags: any = {
+    isEnabled: jest.fn().mockReturnValue(true),
+  };
 
   const service = new PosInventorySyncService(
     prisma,
@@ -47,6 +50,7 @@ function makeMocks() {
     factory,
     encryption,
     config,
+    featureFlags,
   );
   return { service, prisma, inventory, discrepancies, factory, config };
 }

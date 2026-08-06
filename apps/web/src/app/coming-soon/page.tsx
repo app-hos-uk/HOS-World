@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ShopPreviewSessionSync from '@/components/ShopPreviewSessionSync';
 import '../(landing)/landing.css';
 
 const LOGO = '/assets/logo-emblem.png';
@@ -37,6 +38,7 @@ export default async function ComingSoonPage({ searchParams }: ComingSoonPagePro
 
   return (
     <div className="landing-site coming-soon-shell">
+      <ShopPreviewSessionSync />
       <div className="grain" aria-hidden="true" />
       <div className="vignette" aria-hidden="true" />
 

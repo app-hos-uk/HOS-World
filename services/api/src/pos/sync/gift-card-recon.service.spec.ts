@@ -29,6 +29,9 @@ function makeMocks() {
       return undefined;
     }),
   };
+  const featureFlags: any = {
+    isEnabled: jest.fn().mockReturnValue(true),
+  };
 
   const service = new PosGiftCardReconService(
     prisma,
@@ -36,8 +39,9 @@ function makeMocks() {
     factory,
     encryption,
     config,
+    featureFlags,
   );
-  return { service, prisma, discrepancies, factory, encryption, config, adapter };
+  return { service, prisma, discrepancies, factory, encryption, config, featureFlags, adapter };
 }
 
 describe('PosGiftCardReconService', () => {

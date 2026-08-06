@@ -40,6 +40,10 @@ interface EnvSchema {
   POS_SALES_POLL_CRON?: string;
   POS_INVENTORY_DISCREPANCY_THRESHOLD?: string;
   POS_SYNC_BATCH_SIZE?: string;
+  /** Lightspeed gift card minimum amount (default 1). */
+  POS_GIFT_CARD_MIN_AMOUNT?: string;
+  /** Lightspeed gift card maximum amount (default 500). */
+  POS_GIFT_CARD_MAX_AMOUNT?: string;
   /** Gate HOS → Xero posting (also requires FeatureFlag.ACCOUNTING_XERO). Default off. */
   ACCOUNTING_ENABLED?: string;
   XERO_CLIENT_ID?: string;
@@ -47,6 +51,8 @@ interface EnvSchema {
   XERO_REDIRECT_URI?: string;
   XERO_TENANT_ID?: string;
   ACCOUNTING_LEDGER_DRAIN_CRON?: string;
+  /** Cron for enqueueing prior UTC day's Xero journals (default 15 1 * * *). */
+  ACCOUNTING_DAILY_JOURNALS_CRON?: string;
   QUIZ_MAX_PER_WEEK?: string;
   QUIZ_PASS_THRESHOLD?: string;
   FANDOM_PROFILE_RECOMPUTE_CRON?: string;
@@ -192,6 +198,20 @@ export function validateEnvironmentVariables(
       warnings.push(
         'Lightspeed OAuth: set LIGHTSPEED_CLIENT_ID and LIGHTSPEED_CLIENT_SECRET for token refresh, or store tokens only in encrypted POS credentials',
       );
+    }
+  }
+
+  if (config.POS_GIFT_CARD_MIN_AMOUNT || config.POS_GIFT_CARD_MAX_AMOUNT) {
+    const gcMin = Number(config.POS_GIFT_CARD_MIN_AMOUNT ?? 1);
+    const gcMax = Number(config.POS_GIFT_CARD_MAX_AMOUNT ?? 500);
+    if (!Number.isFinite(gcMin) || gcMin <= 0) {
+      errors.push('POS_GIFT_CARD_MIN_AMOUNT must be a positive number');
+    }
+    if (!Number.isFinite(gcMax) || gcMax <= 0) {
+      errors.push('POS_GIFT_CARD_MAX_AMOUNT must be a positive number');
+    }
+    if (Number.isFinite(gcMin) && Number.isFinite(gcMax) && gcMin > gcMax) {
+      errors.push('POS_GIFT_CARD_MIN_AMOUNT must not exceed POS_GIFT_CARD_MAX_AMOUNT');
     }
   }
 

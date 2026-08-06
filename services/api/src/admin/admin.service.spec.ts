@@ -244,4 +244,197 @@ describe('AdminService', () => {
       expect(result.notifications).toEqual({ pending: 1, failed: 1 });
     });
   });
+
+  describe('getUserStats', () => {
+    it('should return aggregated user statistics', async () => {
+      mockPrismaService.user.count
+        .mockResolvedValueOnce(100) // total
+        .mockResolvedValueOnce(5)   // inactive
+        .mockResolvedValueOnce(20); // newThisMonth
+      (mockPrismaService.user as any).groupBy = jest.fn().mockResolvedValue([
+        { role: 'ADMIN', _count: 2 },
+        { role: 'CUSTOMER', _count: 80 },
+        { role: 'SELLER', _count: 10 },
+        { role: 'INFLUENCER', _count: 3 },
+        { role: 'FULFILLMENT', _count: 5 },
+      ]);
+
+      const result = await service.getUserStats();
+
+      expect(result.total).toBe(100);
+      expect(result.admins).toBe(2);
+      expect(result.customers).toBe(80);
+      expect(result.active).toBe(95);
+      expect(result.inactive).toBe(5);
+    });
+  });
+
+  describe('toggleUserStatus', () => {
+    it('should toggle user active status', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'user@example.com',
+        isActive: true,
+      });
+      mockPrismaService.user.update.mockResolvedValue({
+        id: 'user-1',
+        isActive: false,
+      });
+
+      const result = await service.toggleUserStatus('user-1');
+      expect(result.isActive).toBe(false);
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { isActive: false },
+        }),
+      );
+    });
+
+    it('should throw NotFoundException if user not found', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+      await expect(service.toggleUserStatus('missing')).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException for protected admin emails', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'app@houseofspells.co.uk',
+        isActive: true,
+      });
+
+      await expect(service.toggleUserStatus('user-1')).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('resetUserPassword', () => {
+    it('should throw NotFoundException if user not found', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+      await expect(service.resetUserPassword('missing', 'newpass123')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw BadRequestException for short passwords', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'user@example.com',
+      });
+
+      await expect(service.resetUserPassword('user-1', 'short')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should hash and update password', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'user@example.com',
+      });
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-new');
+      mockPrismaService.user.update.mockResolvedValue({});
+
+      const result = await service.resetUserPassword('user-1', 'validpassword123');
+      expect(result.message).toBe('Password reset successfully');
+      expect(bcrypt.hash).toHaveBeenCalledWith('validpassword123', BCRYPT_PASSWORD_ROUNDS);
+    });
+  });
+
+  describe('deleteUser – admin protection', () => {
+    it('should throw when trying to delete an ADMIN', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'admin@example.com',
+        role: 'ADMIN',
+      });
+
+      await expect(service.deleteUser('admin-1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw when trying to delete a protected admin email', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'app@houseofspells.co.uk',
+        role: 'CUSTOMER',
+      });
+
+      await expect(service.deleteUser('admin-1')).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('updateUser – protected admin guards', () => {
+    it('should prevent changing role of a protected admin', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'app@houseofspells.co.uk',
+        role: 'ADMIN',
+      });
+
+      await expect(
+        service.updateUser('admin-1', { role: 'CUSTOMER' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should prevent deactivating a protected admin', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'admin-1',
+        email: 'app@houseofspells.co.uk',
+        role: 'ADMIN',
+      });
+
+      await expect(
+        service.updateUser('admin-1', { isActive: false }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException for invalid role string', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'user@example.com',
+      });
+
+      await expect(
+        service.updateUser('user-1', { role: 'INVALID_ROLE' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw when email is already taken', async () => {
+      mockPrismaService.user.findUnique
+        .mockResolvedValueOnce({ id: 'user-1', email: 'old@example.com' })
+        .mockResolvedValueOnce({ id: 'user-2', email: 'taken@example.com' });
+
+      await expect(
+        service.updateUser('user-1', { email: 'taken@example.com' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('createPermissionRole', () => {
+    it('should throw for built-in role names', async () => {
+      await expect(service.createPermissionRole('ADMIN')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw for empty name', async () => {
+      await expect(service.createPermissionRole('   ')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should create new permission role', async () => {
+      mockPrismaService.permissionRole.findUnique.mockResolvedValue(null);
+      (mockPrismaService as any).permissionRole.create = jest.fn().mockResolvedValue({
+        id: 'role-1',
+        name: 'CUSTOM_ROLE',
+        permissions: [],
+      });
+
+      const result = await service.createPermissionRole('Custom Role');
+      expect(result.name).toBe('CUSTOM_ROLE');
+    });
+  });
+
+  describe('getPermissionCatalog', () => {
+    it('should return array of permission ids', async () => {
+      const catalog = await service.getPermissionCatalog();
+      expect(catalog.length).toBeGreaterThan(0);
+      expect(catalog[0]).toHaveProperty('id');
+    });
+  });
 });

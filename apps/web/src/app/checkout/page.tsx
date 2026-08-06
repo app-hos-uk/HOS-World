@@ -14,6 +14,7 @@ import Link from 'next/link';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { trackBeginCheckout } from '@/lib/analytics';
 import { getInfluencerReferral } from '@/lib/referralAttribution';
+import { withShopPreview } from '@/lib/shopPreviewClient';
 
 interface StockIssue {
   productId: string;
@@ -122,11 +123,11 @@ export default function CheckoutPage() {
         const response = await apiClient.getGuestCart(sid);
         if (!response?.data?.items?.length) {
           toast.error('Your cart is empty');
-          router.push('/cart');
+          router.push(withShopPreview('/cart'));
         }
       } catch {
         toast.error('Unable to load your basket');
-        router.push('/cart');
+        router.push(withShopPreview('/cart'));
       } finally {
         setGuestCartLoading(false);
       }
@@ -242,7 +243,7 @@ export default function CheckoutPage() {
       // Validate cart has items
       if (!cartResponse?.data || !cartResponse.data.items || cartResponse.data.items.length === 0) {
         toast.error('Your cart is empty');
-        router.push('/cart');
+        router.push(withShopPreview('/cart'));
         return;
       }
     } catch (error: any) {
@@ -259,7 +260,7 @@ export default function CheckoutPage() {
       toast.error(errorMessage);
       // Only redirect if it's not a cart error (cart error already handled)
       if (!errorMessage.includes('cart')) {
-        router.push('/cart');
+        router.push(withShopPreview('/cart'));
       }
     } finally {
       setLoading(false);
@@ -522,7 +523,7 @@ export default function CheckoutPage() {
 
     if (!cart || !cart.items || cart.items.length === 0) {
       toast.error('Your cart is empty');
-      router.push('/cart');
+      router.push(withShopPreview('/cart'));
       return;
     }
 
@@ -581,7 +582,7 @@ export default function CheckoutPage() {
           toast.success('Order placed! Redirecting to payment...', { id: 'order-created' });
         }
         setFrontendSessionCookie();
-        router.push(`/payment?orderId=${orderResponse.data.id}`);
+        router.push(withShopPreview(`/payment?orderId=${orderResponse.data.id}`));
         orderNavTimeoutRef.current = setTimeout(() => {
           setCreatingOrder(false);
           isSubmittingRef.current = false;
@@ -614,7 +615,9 @@ export default function CheckoutPage() {
   }
 
   if (!isAuthenticated) {
-    const signInHref = '/login?returnUrl=/checkout';
+    const checkoutReturn = encodeURIComponent(withShopPreview('/checkout'));
+    const signInHref = `/login?returnUrl=${checkoutReturn}`;
+    const registerHref = `/login?register=1&returnUrl=${checkoutReturn}`;
     const stashCheckoutEmailForLogin = () => {
       try {
         const trimmed = guestForm.email.trim();
@@ -651,7 +654,7 @@ export default function CheckoutPage() {
                     Sign In
                   </Link>
                   <Link
-                    href="/login?register=1&returnUrl=/checkout"
+                    href={registerHref}
                     className="px-6 py-3 border border-hos-border rounded-lg text-hos-text-secondary hover:bg-hos-bg-tertiary text-center transition-colors"
                   >
                     Create Account
@@ -986,7 +989,7 @@ export default function CheckoutPage() {
                 <div className="text-center py-4">
                   <p className="text-hos-text-secondary mb-4">No addresses found. Please add a shipping address to continue.</p>
                   <Link
-                    href="/profile?tab=addresses&action=add&returnUrl=/checkout"
+                    href={`/profile?tab=addresses&action=add&returnUrl=${encodeURIComponent(withShopPreview('/checkout'))}`}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1029,7 +1032,7 @@ export default function CheckoutPage() {
                     </label>
                   ))}
                   <Link
-                    href="/profile?tab=addresses&action=add&returnUrl=/checkout"
+                    href={`/profile?tab=addresses&action=add&returnUrl=${encodeURIComponent(withShopPreview('/checkout'))}`}
                     className="block text-center text-hos-gold-hover hover:text-hos-gold text-sm"
                   >
                     + Add New Address

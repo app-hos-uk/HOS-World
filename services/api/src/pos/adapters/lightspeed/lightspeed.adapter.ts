@@ -13,8 +13,11 @@ import type {
   POSSale,
   POSSalesPage,
 } from '../../interfaces/pos-types';
-import { LightspeedApiClient } from './lightspeed-api.client';
-import { LightspeedAuthService } from './lightspeed-auth.service';
+import { LightspeedApiClient, type LightspeedRedisThrottle } from './lightspeed-api.client';
+import {
+  LightspeedAuthService,
+  type LightspeedRedisLock,
+} from './lightspeed-auth.service';
 import * as M from './lightspeed.mapper';
 
 export class LightspeedAdapter implements POSAdapter {
@@ -30,6 +33,15 @@ export class LightspeedAdapter implements POSAdapter {
       (c) => this.auth.setCredentials(c),
       () => this.refreshAuth(),
     );
+  }
+
+  /**
+   * Wire Redis for cross-replica refresh lock + API rate limiting.
+   * Safe to call with a partial Redis surface (lock + throttle share get/set/setNX/del).
+   */
+  attachRedis(redis: LightspeedRedisLock & LightspeedRedisThrottle): void {
+    this.auth.setRedisLock(redis);
+    this.client.setRedisThrottle(redis);
   }
 
   async authenticate(credentials: Record<string, unknown>): Promise<void> {

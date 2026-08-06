@@ -1,14 +1,29 @@
 import { Logger } from '@nestjs/common';
 import type { LightspeedCredentials } from '../../interfaces/pos-types';
 
+export type LightspeedRedisLock = {
+  setNX: (key: string, value: string, ttlSeconds?: number) => Promise<boolean>;
+  del: (key: string) => Promise<void>;
+  isRedisConnected: () => boolean;
+};
+
 /**
  * OAuth token refresh for Lightspeed Retail (Vend) X-Series.
  * https://developers.vendhq.com/reference/token-auth
+ *
+ * Uses in-process single-flight plus optional Redis lock so multi-replica
+ * deploys do not race refresh-token rotation.
  */
 export class LightspeedAuthService {
   private readonly logger = new Logger(LightspeedAuthService.name);
+  private refreshInFlight: Promise<void> | null = null;
+  private redisLock?: LightspeedRedisLock;
 
   constructor(private creds: LightspeedCredentials) {}
+
+  setRedisLock(redis: LightspeedRedisLock): void {
+    this.redisLock = redis;
+  }
 
   getCredentials(): LightspeedCredentials {
     return { ...this.creds };
@@ -62,41 +77,85 @@ export class LightspeedAuthService {
   }
 
   async refreshAuth(): Promise<void> {
+    if (this.refreshInFlight) {
+      return this.refreshInFlight;
+    }
+    this.refreshInFlight = this.refreshAuthLocked().finally(() => {
+      this.refreshInFlight = null;
+    });
+    return this.refreshInFlight;
+  }
+
+  private async refreshAuthLocked(): Promise<void> {
     const { domainPrefix, clientId, clientSecret, refreshToken } = this.creds;
     if (!domainPrefix || !clientId || !clientSecret || !refreshToken) {
       throw new Error('Lightspeed: missing refresh credentials');
     }
 
-    const url = `https://${domainPrefix}.vendhq.com/api/1.0/token`;
-    const body = new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-      client_id: clientId,
-      client_secret: clientSecret,
-    });
+    const lockKey = `lightspeed:refresh:${domainPrefix}`;
+    let heldLock = true;
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString(),
-    });
+    if (this.redisLock?.isRedisConnected()) {
+      try {
+        heldLock = await this.redisLock.setNX(lockKey, '1', 30);
+      } catch {
+        heldLock = true; // lock unavailable — proceed without coordination
+      }
 
-    if (!res.ok) {
-      const t = await res.text();
-      throw new Error(`Lightspeed token refresh failed: ${res.status} ${t.slice(0, 300)}`);
+      if (!heldLock) {
+        // Another replica is refreshing. Wait, then refresh ourselves as fallback
+        // (in-memory tokens are not shared across replicas).
+        await new Promise((r) => setTimeout(r, 750));
+        await new Promise((r) => setTimeout(r, 750));
+        try {
+          heldLock = await this.redisLock.setNX(lockKey, '1', 30);
+        } catch {
+          heldLock = false;
+        }
+        if (!heldLock) {
+          this.logger.debug(
+            'Lightspeed refresh lock still held — refreshing without deleting peer lock',
+          );
+        }
+      }
     }
 
-    const json = (await res.json()) as {
-      access_token: string;
-      refresh_token?: string;
-      expires?: number;
-      expires_in?: number;
-    };
+    try {
+      const url = `https://${domainPrefix}.vendhq.com/api/1.0/token`;
+      const body = new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+        client_id: clientId,
+        client_secret: clientSecret,
+      });
 
-    this.creds.accessToken = json.access_token;
-    if (json.refresh_token) this.creds.refreshToken = json.refresh_token;
-    const expiresIn = json.expires_in ?? json.expires ?? 3600;
-    this.creds.expiresAt = Date.now() + expiresIn * 1000;
-    this.logger.debug('Lightspeed token refreshed');
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString(),
+      });
+
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(`Lightspeed token refresh failed: ${res.status} ${t.slice(0, 300)}`);
+      }
+
+      const json = (await res.json()) as {
+        access_token: string;
+        refresh_token?: string;
+        expires?: number;
+        expires_in?: number;
+      };
+
+      this.creds.accessToken = json.access_token;
+      if (json.refresh_token) this.creds.refreshToken = json.refresh_token;
+      const expiresIn = json.expires_in ?? json.expires ?? 3600;
+      this.creds.expiresAt = Date.now() + expiresIn * 1000;
+      this.logger.debug('Lightspeed token refreshed');
+    } finally {
+      if (heldLock && this.redisLock?.isRedisConnected()) {
+        await this.redisLock.del(lockKey).catch(() => undefined);
+      }
+    }
   }
 }

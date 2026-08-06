@@ -34,9 +34,29 @@ function makeMocks() {
   const encryption: any = {
     decryptJson: jest.fn().mockReturnValue({ clientSecret: 'oauth-client-secret' }),
   };
+  const featureFlags: any = {
+    isEnabled: jest.fn().mockReturnValue(true),
+  };
 
-  const controller = new PosWebhookController(prisma, factory, queue, config, encryption);
-  return { controller, prisma, factory, queue, config, encryption, validateWebhook, parseWebhookSale };
+  const controller = new PosWebhookController(
+    prisma,
+    factory,
+    queue,
+    config,
+    encryption,
+    featureFlags,
+  );
+  return {
+    controller,
+    prisma,
+    factory,
+    queue,
+    config,
+    encryption,
+    featureFlags,
+    validateWebhook,
+    parseWebhookSale,
+  };
 }
 
 function rawReq(raw: string): any {
@@ -48,6 +68,14 @@ describe('PosWebhookController', () => {
     it('rejects when POS is disabled', async () => {
       const { controller, config } = makeMocks();
       config.get.mockReturnValue('false');
+      await expect(
+        controller.handleWebhook('lightspeed', 'STORE-1', {}, undefined, undefined, rawReq('')),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects when FeatureFlag.POS_INTEGRATION is off', async () => {
+      const { controller, featureFlags } = makeMocks();
+      featureFlags.isEnabled.mockReturnValue(false);
       await expect(
         controller.handleWebhook('lightspeed', 'STORE-1', {}, undefined, undefined, rawReq('')),
       ).rejects.toThrow(BadRequestException);

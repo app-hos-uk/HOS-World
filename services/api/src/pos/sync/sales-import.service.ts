@@ -293,6 +293,15 @@ export class PosSalesImportService {
         },
       });
       if (existing) {
+        if (existing.status !== 'VOIDED' && existing.loyaltyPointsEarned > 0) {
+          try {
+            await this.earnEngine.reversePosSaleEarn(existing.id);
+          } catch (e) {
+            this.logger.warn(
+              `Loyalty clawback for voided POS sale ${existing.id}: ${(e as Error).message}`,
+            );
+          }
+        }
         await this.prisma.pOSSale.update({
           where: { id: existing.id },
           data: { status: 'VOIDED', rawPayload: parsed.rawPayload as object },
@@ -318,6 +327,20 @@ export class PosSalesImportService {
       },
     });
     if (existing) {
+      // Retry earn if a prior import left the sale IMPORTED (earn failed).
+      if (existing.status === 'IMPORTED') {
+        try {
+          await this.earnEngine.processPosSale(existing.id);
+          await this.prisma.pOSSale.update({
+            where: { id: existing.id },
+            data: { status: 'PROCESSED', processedAt: new Date() },
+          });
+        } catch (e) {
+          this.logger.warn(
+            `Loyalty earn retry for POS sale ${existing.id}: ${(e as Error).message}`,
+          );
+        }
+      }
       return { id: existing.id, duplicate: true };
     }
 
@@ -387,14 +410,16 @@ export class PosSalesImportService {
 
     try {
       await this.earnEngine.processPosSale(sale.id);
+      await this.prisma.pOSSale.update({
+        where: { id: sale.id },
+        data: { status: 'PROCESSED', processedAt: new Date() },
+      });
     } catch (e) {
-      this.logger.warn(`Loyalty earn for POS sale ${sale.id}: ${(e as Error).message}`);
+      // Leave status IMPORTED so webhook/poll retries can re-earn.
+      this.logger.warn(
+        `Loyalty earn for POS sale ${sale.id} failed — sale left IMPORTED for retry: ${(e as Error).message}`,
+      );
     }
-
-    await this.prisma.pOSSale.update({
-      where: { id: sale.id },
-      data: { status: 'PROCESSED', processedAt: new Date() },
-    });
 
     return { id: sale.id, duplicate: false };
   }

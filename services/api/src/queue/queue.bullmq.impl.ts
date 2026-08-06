@@ -26,6 +26,7 @@ export enum JobType {
   POS_SALES_POLL = 'pos:sales-poll',
   POS_GIFT_CARD_RECON = 'pos:gift-card-reconciliation',
   ACCOUNTING_LEDGER_DRAIN = 'accounting:ledger-drain',
+  ACCOUNTING_DAILY_JOURNALS = 'accounting:daily-journals',
   JOURNEY_STEP_PROCESS = 'marketing:journey-step-process',
   ABANDONED_CART_SCAN = 'marketing:abandoned-cart-scan',
   INACTIVITY_SCAN = 'marketing:inactivity-scan',
@@ -80,8 +81,9 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
         const jobType = job.name as JobType;
         const processor = this.processors.get(jobType);
         if (!processor) {
-          this.logger.warn(`No processor registered for job type: ${jobType}`);
-          return null;
+          // Hard-fail so the job retries / moves to DLQ instead of silent success.
+          this.logger.error(`No processor registered for job type: ${jobType}`);
+          throw new Error(`No processor registered for job type: ${jobType}`);
         }
         return await processor(job);
       },

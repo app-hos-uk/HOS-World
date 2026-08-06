@@ -3,9 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
 import { InventoryService } from '../../inventory/inventory.service';
 import { DiscrepanciesService } from '../../discrepancies/discrepancies.service';
+import { FeatureFlagsService } from '../../config/feature-flags.service';
 import { POSAdapterFactory } from '../pos-adapter.factory';
 import { EncryptionService } from '../../integrations/encryption.service';
 import { MovementType } from '../../inventory/dto/create-stock-movement.dto';
+import { isPosRuntimeEnabled } from '../pos-enabled';
 
 @Injectable()
 export class PosInventorySyncService {
@@ -18,6 +20,7 @@ export class PosInventorySyncService {
     private factory: POSAdapterFactory,
     private encryption: EncryptionService,
     private config: ConfigService,
+    private featureFlags: FeatureFlagsService,
   ) {}
 
   private warehouseIdFromSettings(connection: { settings: unknown }): string | undefined {
@@ -84,7 +87,7 @@ export class PosInventorySyncService {
 
   /** Push online order quantities to POS outlet stock (best-effort). */
   async syncOnlineOrderToPos(orderId: string): Promise<void> {
-    if (this.config.get<string>('POS_ENABLED') !== 'true') return;
+    if (!isPosRuntimeEnabled(this.config, this.featureFlags)) return;
 
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, parentOrderId: null },
@@ -137,7 +140,7 @@ export class PosInventorySyncService {
   }
 
   async nightlyReconciliation(): Promise<void> {
-    if (this.config.get<string>('POS_ENABLED') !== 'true') return;
+    if (!isPosRuntimeEnabled(this.config, this.featureFlags)) return;
 
     const threshold = this.config.get<number>('POS_INVENTORY_DISCREPANCY_THRESHOLD', 0);
     const connections = await this.prisma.pOSConnection.findMany({

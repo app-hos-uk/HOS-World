@@ -9,6 +9,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
+import { withShopPreview } from '@/lib/shopPreviewClient';
 
 const DEFAULT_AMOUNTS = [25, 50, 100, 250, 500];
 
@@ -89,7 +90,7 @@ export default function PurchaseGiftCardPage() {
       if (response?.data) {
         if (response.data.orderId) {
           toast.success('Gift card created! Redirecting to payment...');
-          router.push(`/payment?orderId=${response.data.orderId}`);
+          router.push(withShopPreview(`/payment?orderId=${response.data.orderId}`));
         } else {
           toast.success('Gift card purchased successfully! The amount will be charged to your card on file.');
           router.push(`/gift-cards/${response.data.id}`);

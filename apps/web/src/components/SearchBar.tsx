@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { apiClient } from '@/lib/api';
+import { withShopPreview } from '@/lib/shopPreviewClient';
 
 const RECENT_SEARCHES_KEY = 'recent_searches';
 const MAX_RECENT = 5;
@@ -192,14 +193,14 @@ export function SearchBar({ compact = false }: SearchBarProps) {
     if (pathname === '/products') {
       replaceProductsSearch(t);
     } else {
-      router.push(`/products?q=${encodeURIComponent(t)}`);
+      router.push(withShopPreview(`/products?q=${encodeURIComponent(t)}`));
     }
   }, [router, pathname, replaceProductsSearch]);
 
   const navigateToProduct = useCallback((id: string) => {
     setShowDropdown(false);
     if (query.trim()) saveRecentSearch(query.trim());
-    router.push(`/products/${id}`);
+    router.push(withShopPreview(`/products/${id}`));
   }, [router, query]);
 
   const handleSubmit = (e: React.FormEvent) => {

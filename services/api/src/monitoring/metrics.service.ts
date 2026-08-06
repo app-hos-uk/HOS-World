@@ -43,6 +43,15 @@ export class MetricsService implements OnModuleInit {
     this.createCounter('queue_jobs_total', 'Total number of queue jobs');
     this.createCounter('queue_jobs_failed_total', 'Total number of failed queue jobs');
     this.createHistogram('queue_job_duration_seconds', 'Queue job processing duration');
+
+    // Loyalty / POS / Xero (money paths)
+    this.createCounter('pos_sale_import_total', 'POS sale imports succeeded');
+    this.createCounter('pos_sale_import_failed_total', 'POS sale imports failed');
+    this.createCounter('loyalty_pos_voucher_issued_total', 'POS loyalty vouchers issued');
+    this.createCounter('loyalty_pos_voucher_failed_total', 'POS loyalty vouchers failed');
+    this.createCounter('xero_outbox_posted_total', 'Xero ledger outbox journals posted');
+    this.createCounter('xero_outbox_failed_total', 'Xero ledger outbox post failures');
+    this.createCounter('xero_daily_journals_enqueued_total', 'Daily journal rows enqueued');
   }
 
   /**

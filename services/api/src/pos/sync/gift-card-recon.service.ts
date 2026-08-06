@@ -2,11 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
 import { isTruthy } from '../../common/utils/config';
+import { FeatureFlagsService } from '../../config/feature-flags.service';
 import { DiscrepanciesService } from '../../discrepancies/discrepancies.service';
 import { EncryptionService } from '../../integrations/encryption.service';
 import type { POSAdapter } from '../interfaces/pos-adapter.interface';
 import type { POSGiftCard } from '../interfaces/pos-types';
 import { POSAdapterFactory } from '../pos-adapter.factory';
+import { isPosRuntimeEnabled } from '../pos-enabled';
 
 export type GiftCardReconSummary = {
   connectionsChecked: number;
@@ -35,6 +37,7 @@ export class PosGiftCardReconService {
     private factory: POSAdapterFactory,
     private encryption: EncryptionService,
     private config: ConfigService,
+    private featureFlags: FeatureFlagsService,
   ) {}
 
   /**
@@ -50,8 +53,8 @@ export class PosGiftCardReconService {
       errors: 0,
     };
 
-    if (this.config.get<string>('POS_ENABLED') !== 'true') {
-      this.logger.log('Gift card recon skipped (POS_ENABLED != true)');
+    if (!isPosRuntimeEnabled(this.config, this.featureFlags)) {
+      this.logger.log('Gift card recon skipped (POS runtime disabled)');
       return empty;
     }
     if (!isTruthy(this.config.get<string>('LOYALTY_POS_VOUCHER_ENABLED'))) {

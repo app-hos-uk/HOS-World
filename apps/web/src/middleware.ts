@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getDirectApiBaseUrl } from '@/lib/apiBaseUrl';
 import {
   getShopPreviewSecret,
+  hasShopPreviewAccess,
   isShopGatedPath,
   isShopPubliclyEnabled,
   SHOP_PREVIEW_COOKIE,
@@ -12,7 +14,7 @@ import {
  * Middleware handles:
  * 1. Auth protection — redirects unauthenticated users from protected routes
  * 2. Shop soft-launch gate — redirects commerce routes to /coming-soon unless
- *    the shop is public or the visitor has a valid preview cookie
+ *    the shop is public or the visitor has a valid preview cookie / ?preview=
  * 3. Subdomain routing — rewrites seller subdomains to /sellers/{slug}
  */
 
@@ -108,11 +110,6 @@ const BYPASS_PREFIXES = [
   '/the-experience',
 ];
 
-function hasValidShopPreview(request: NextRequest, secret: string): boolean {
-  if (!secret) return false;
-  return request.cookies.get(SHOP_PREVIEW_COOKIE)?.value === secret;
-}
-
 function setPreviewCookie(response: NextResponse, secret: string): void {
   response.cookies.set({
     name: SHOP_PREVIEW_COOKIE,
@@ -137,11 +134,49 @@ function clearPreviewCookie(response: NextResponse): void {
   });
 }
 
+/**
+ * Runtime shop flag: env OR admin DB toggle via API.
+ * Cached briefly so middleware does not hit the API on every request.
+ */
+let shopEnabledCache: { value: boolean; expiresAt: number } | null = null;
+
+async function resolveShopPubliclyEnabled(): Promise<boolean> {
+  if (isShopPubliclyEnabled()) return true;
+
+  const now = Date.now();
+  if (shopEnabledCache && shopEnabledCache.expiresAt > now) {
+    return shopEnabledCache.value;
+  }
+
+  try {
+    const apiUrl = getDirectApiBaseUrl();
+    const res = await fetch(`${apiUrl}/config/shop-enabled`, {
+      headers: { Accept: 'application/json' },
+      // Edge runtime: keep this cheap; short memory cache above is the throttle.
+      cache: 'no-store',
+    });
+    if (res.ok) {
+      const data = (await res.json()) as { enabled?: boolean };
+      const enabled = data?.enabled === true;
+      // Short TTL so admin toggles propagate quickly to the gate.
+      shopEnabledCache = { value: enabled, expiresAt: now + 5_000 };
+      return enabled;
+    }
+  } catch {
+    // API unreachable — fall through to env (already false here)
+  }
+
+  shopEnabledCache = { value: false, expiresAt: now + 5_000 };
+  return false;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.headers.get('host') || '';
   const previewSecret = getShopPreviewSecret();
   const previewParam = request.nextUrl.searchParams.get(SHOP_PREVIEW_QUERY);
+  const previewCookie = request.cookies.get(SHOP_PREVIEW_COOKIE)?.value;
+  const hasPreview = hasShopPreviewAccess(previewCookie, previewParam, previewSecret);
 
   // --- Shop preview unlock / revoke ---
   // Testers: /shop?preview=<SHOP_PREVIEW_SECRET>
@@ -149,25 +184,40 @@ export async function middleware(request: NextRequest) {
   if (previewParam === 'off') {
     const clean = request.nextUrl.clone();
     clean.searchParams.delete(SHOP_PREVIEW_QUERY);
+    // Signal the client to drop sessionStorage preview so SPA links stop re-unlocking.
+    clean.searchParams.set('preview_cleared', '1');
+    if (isShopGatedPath(clean.pathname)) {
+      clean.pathname = '/coming-soon';
+    }
     const res = NextResponse.redirect(clean);
     clearPreviewCookie(res);
     return res;
   }
 
-  if (previewSecret && previewParam && previewParam === previewSecret) {
-    const clean = request.nextUrl.clone();
-    clean.searchParams.delete(SHOP_PREVIEW_QUERY);
-    // Default unlock landing is /shop when opened from a non-shop URL
-    if (!isShopGatedPath(clean.pathname) && clean.pathname !== '/shop') {
-      clean.pathname = '/shop';
-    }
-    const res = NextResponse.redirect(clean);
+  // Valid ?preview= on a non-shop URL → send testers to /shop (keep query).
+  // On shop/gated URLs, fall through so auth + gate still run; cookie is attached below.
+  if (
+    previewSecret &&
+    previewParam &&
+    previewParam === previewSecret &&
+    !isShopGatedPath(pathname) &&
+    pathname !== '/shop'
+  ) {
+    const shopUrl = request.nextUrl.clone();
+    shopUrl.pathname = '/shop';
+    const res = NextResponse.redirect(shopUrl);
     setPreviewCookie(res, previewSecret);
     return res;
   }
 
   // --- Auth Protection ---
   const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const needsShopGate = isShopGatedPath(pathname);
+  // Only consult the admin shop-enabled API for commerce routes (keeps other
+  // middleware matches free of upstream latency).
+  const shopPublic = needsShopGate
+    ? await resolveShopPubliclyEnabled()
+    : isShopPubliclyEnabled();
 
   if (isProtected) {
     const isLoggedIn = request.cookies.get('is_logged_in')?.value === 'true';
@@ -178,11 +228,7 @@ export async function middleware(request: NextRequest) {
     if (!isAuthenticated) {
       // Soft-launch: unauthenticated hits on gated commerce routes go to
       // coming-soon instead of login when the shop is not public.
-      if (
-        !isShopPubliclyEnabled() &&
-        isShopGatedPath(pathname) &&
-        !hasValidShopPreview(request, previewSecret)
-      ) {
+      if (!shopPublic && needsShopGate && !hasPreview) {
         const comingSoon = request.nextUrl.clone();
         comingSoon.pathname = '/coming-soon';
         comingSoon.search = '';
@@ -198,25 +244,33 @@ export async function middleware(request: NextRequest) {
 
   // --- Soft-launch shop gate ---
   // Public visitors cannot open commerce routes until the shop is enabled.
-  // Testers with a valid preview cookie (set via ?preview=SECRET) can browse.
-  if (
-    !isShopPubliclyEnabled() &&
-    isShopGatedPath(pathname) &&
-    !hasValidShopPreview(request, previewSecret)
-  ) {
+  // Testers with a valid preview cookie OR ?preview=SECRET can browse.
+  if (needsShopGate && !shopPublic && !hasPreview) {
     const comingSoon = request.nextUrl.clone();
     comingSoon.pathname = '/coming-soon';
     comingSoon.search = '';
     return NextResponse.redirect(comingSoon);
   }
 
+  // Attach preview cookie whenever the secret matches (query or existing cookie
+  // refresh) so subsequent navigations without ?preview= keep working.
+  const attachPreviewCookie =
+    !!previewSecret &&
+    hasPreview &&
+    previewCookie !== previewSecret;
+
+  const withPreviewCookie = (res: NextResponse): NextResponse => {
+    if (attachPreviewCookie && previewSecret) setPreviewCookie(res, previewSecret);
+    return res;
+  };
+
   // --- Subdomain Routing ---
   if (BYPASS_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
-    return NextResponse.next();
+    return withPreviewCookie(NextResponse.next());
   }
 
   if (!hostname) {
-    return NextResponse.next();
+    return withPreviewCookie(NextResponse.next());
   }
 
   let subdomain: string | null = null;
@@ -241,12 +295,12 @@ export async function middleware(request: NextRequest) {
     if (pathname === '/' || pathname === '') {
       const url = request.nextUrl.clone();
       url.pathname = `/sellers/${subdomain}`;
-      return NextResponse.rewrite(url);
+      return withPreviewCookie(NextResponse.rewrite(url));
     }
-    return NextResponse.next();
+    return withPreviewCookie(NextResponse.next());
   }
 
-  return NextResponse.next();
+  return withPreviewCookie(NextResponse.next());
 }
 
 export const config = {

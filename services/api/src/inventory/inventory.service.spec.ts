@@ -149,6 +149,12 @@ describe('InventoryService', () => {
   });
 
   describe('reserveStock', () => {
+    it('throws when quantity is not a positive integer', async () => {
+      await expect(
+        service.reserveStock({ inventoryLocationId: 'loc-1', quantity: 0 } as any),
+      ).rejects.toThrow(BadRequestException);
+    });
+
     it('throws when requested quantity exceeds available stock', async () => {
       mockPrisma.$transaction.mockImplementation(async (cb) =>
         cb({
@@ -159,6 +165,7 @@ describe('InventoryService', () => {
               quantity: 5,
               stockReservations: [{ quantity: 4 }],
             }),
+            update: jest.fn(),
           },
           stockReservation: { create: jest.fn() },
         }),
@@ -168,6 +175,267 @@ describe('InventoryService', () => {
         service.reserveStock({
           inventoryLocationId: 'loc-1',
           quantity: 2,
+        } as any),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('findAllWarehouses', () => {
+    it('returns only active warehouses by default', async () => {
+      mockPrisma.warehouse.findMany.mockResolvedValue([{ id: 'wh-1', isActive: true }]);
+
+      await service.findAllWarehouses(false);
+
+      expect(mockPrisma.warehouse.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { isActive: true },
+        }),
+      );
+    });
+
+    it('includes inactive warehouses when includeInactive=true', async () => {
+      mockPrisma.warehouse.findMany.mockResolvedValue([]);
+
+      await service.findAllWarehouses(true);
+
+      expect(mockPrisma.warehouse.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {},
+        }),
+      );
+    });
+
+    it('scopes to seller warehouses for seller roles', async () => {
+      (mockPrisma as any).seller = { findUnique: jest.fn().mockResolvedValue({ id: 'seller-1' }) };
+      mockPrisma.warehouse.findMany.mockResolvedValue([]);
+
+      await service.findAllWarehouses(false, 'user-1', 'SELLER');
+
+      expect(mockPrisma.warehouse.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ sellerId: 'seller-1' }),
+        }),
+      );
+    });
+  });
+
+  describe('confirmReservation', () => {
+    it('throws NotFoundException when reservation is missing', async () => {
+      mockPrisma.$transaction.mockImplementation(async (cb) =>
+        cb({
+          $executeRaw: jest.fn(),
+          stockReservation: {
+            findUnique: jest.fn().mockResolvedValue(null),
+            update: jest.fn(),
+          },
+          inventoryLocation: { update: jest.fn() },
+        }),
+      );
+
+      await expect(service.confirmReservation('res-1', 'ord-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadRequestException when reservation is not active', async () => {
+      mockPrisma.$transaction.mockImplementation(async (cb) =>
+        cb({
+          $executeRaw: jest.fn(),
+          stockReservation: {
+            findUnique: jest.fn().mockResolvedValue({
+              id: 'res-1',
+              status: 'CONFIRMED',
+              inventoryLocation: { id: 'loc-1' },
+            }),
+            update: jest.fn(),
+          },
+          inventoryLocation: { update: jest.fn() },
+        }),
+      );
+
+      await expect(service.confirmReservation('res-1', 'ord-1')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('throws when reservation is expired', async () => {
+      mockPrisma.$transaction.mockImplementation(async (cb) =>
+        cb({
+          $executeRaw: jest.fn(),
+          stockReservation: {
+            findUnique: jest.fn().mockResolvedValue({
+              id: 'res-1',
+              status: 'ACTIVE',
+              expiresAt: new Date(Date.now() - 3600_000),
+              inventoryLocation: { id: 'loc-1' },
+              inventoryLocationId: 'loc-1',
+            }),
+            update: jest.fn(),
+          },
+          inventoryLocation: { update: jest.fn() },
+        }),
+      );
+
+      await expect(service.confirmReservation('res-1', 'ord-1')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('cancelReservation', () => {
+    it('throws NotFoundException when reservation missing', async () => {
+      mockPrisma.$transaction.mockImplementation(async (cb) =>
+        cb({
+          $executeRaw: jest.fn(),
+          stockReservation: {
+            findUnique: jest.fn().mockResolvedValue(null),
+            update: jest.fn(),
+          },
+          seller: { findUnique: jest.fn() },
+          inventoryLocation: { update: jest.fn() },
+        }),
+      );
+
+      await expect(service.cancelReservation('res-1')).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws when reservation is already cancelled', async () => {
+      mockPrisma.$transaction.mockImplementation(async (cb) =>
+        cb({
+          $executeRaw: jest.fn(),
+          stockReservation: {
+            findUnique: jest.fn().mockResolvedValue({
+              id: 'res-1',
+              status: 'CANCELLED',
+              inventoryLocation: { id: 'loc-1', warehouse: {} },
+              inventoryLocationId: 'loc-1',
+            }),
+            update: jest.fn(),
+          },
+          seller: { findUnique: jest.fn() },
+          inventoryLocation: { update: jest.fn() },
+        }),
+      );
+
+      await expect(service.cancelReservation('res-1')).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('getLowStockAlerts', () => {
+    it('returns items where quantity <= threshold', async () => {
+      mockPrisma.inventoryLocation.findMany.mockResolvedValue([
+        {
+          quantity: 3,
+          lowStockThreshold: 10,
+          warehouse: { name: 'Main' },
+          product: { id: 'p1', name: 'Wand', sku: 'WND-01' },
+        },
+        {
+          quantity: 0,
+          lowStockThreshold: 5,
+          warehouse: { name: 'Main' },
+          product: { id: 'p2', name: 'Robe', sku: 'RBE-01' },
+        },
+        {
+          quantity: 50,
+          lowStockThreshold: 10,
+          warehouse: { name: 'Main' },
+          product: { id: 'p3', name: 'Hat', sku: 'HAT-01' },
+        },
+      ]);
+
+      const alerts = await service.getLowStockAlerts();
+      expect(alerts).toHaveLength(2);
+      expect(alerts[0].status).toBe('LOW_STOCK');
+      expect(alerts[1].status).toBe('OUT_OF_STOCK');
+    });
+  });
+
+  describe('allocateStockForOrder', () => {
+    it('throws BadRequestException when insufficient stock', async () => {
+      mockPrisma.inventoryLocation.findMany.mockResolvedValue([]);
+
+      await expect(
+        service.allocateStockForOrder([{ productId: 'p1', quantity: 5 }]),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('allocates across multiple warehouses', async () => {
+      mockPrisma.inventoryLocation.findMany.mockResolvedValue([
+        {
+          id: 'loc-1',
+          warehouseId: 'wh-1',
+          quantity: 3,
+          warehouse: { name: 'A', isActive: true },
+          stockReservations: [],
+        },
+        {
+          id: 'loc-2',
+          warehouseId: 'wh-2',
+          quantity: 5,
+          warehouse: { name: 'B', isActive: true },
+          stockReservations: [],
+        },
+      ]);
+
+      const allocations = await service.allocateStockForOrder([{ productId: 'p1', quantity: 7 }]);
+      const totalAllocated = allocations.reduce((s: number, a: any) => s + a.quantity, 0);
+      expect(totalAllocated).toBe(7);
+    });
+  });
+
+  describe('transferStock', () => {
+    it('throws when source and destination are the same', async () => {
+      await expect(
+        service.transferStock(
+          { fromWarehouseId: 'wh-1', toWarehouseId: 'wh-1', productId: 'p1', quantity: 5 } as any,
+          'admin-1',
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws when quantity is not a positive integer', async () => {
+      await expect(
+        service.transferStock(
+          { fromWarehouseId: 'wh-1', toWarehouseId: 'wh-2', productId: 'p1', quantity: -1 } as any,
+          'admin-1',
+        ),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('updateWarehouse', () => {
+    it('throws NotFoundException when warehouse missing', async () => {
+      mockPrisma.warehouse.findUnique.mockResolvedValue(null);
+      await expect(service.updateWarehouse('wh-missing', { name: 'X' } as any)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('deleteWarehouse', () => {
+    it('throws NotFoundException when warehouse missing', async () => {
+      mockPrisma.warehouse.findUnique.mockResolvedValue(null);
+      await expect(service.deleteWarehouse('wh-missing')).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws when warehouse has inventory', async () => {
+      mockPrisma.warehouse.findUnique.mockResolvedValue({
+        id: 'wh-1',
+        inventory: [{ id: 'inv-1' }],
+        transfersFrom: [],
+        transfersTo: [],
+      });
+      await expect(service.deleteWarehouse('wh-1')).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('recordStockMovement', () => {
+    it('throws when quantity is not a positive integer', async () => {
+      await expect(
+        service.recordStockMovement({
+          inventoryLocationId: 'loc-1',
+          productId: 'p1',
+          quantity: 0,
+          movementType: 'IN',
         } as any),
       ).rejects.toThrow(BadRequestException);
     });
