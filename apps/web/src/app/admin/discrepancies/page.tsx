@@ -5,10 +5,14 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
+/** The resolve endpoint rejects anything already closed out (RESOLVED / DISMISSED). */
+const RESOLVABLE_STATUSES = ['OPEN', 'INVESTIGATING'];
+
 export default function AdminDiscrepanciesPage() {
   const toast = useToast();
   const [discrepancies, setDiscrepancies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDiscrepancies();
@@ -42,10 +46,36 @@ export default function AdminDiscrepanciesPage() {
     }
   };
 
+  const handleResolve = async (disc: any) => {
+    const resolution = prompt(
+      `How was this ${String(disc.type || '').toLowerCase()} discrepancy resolved?`,
+    );
+    if (resolution === null) return;
+    if (!resolution.trim()) {
+      toast.error('A resolution note is required');
+      return;
+    }
+    setResolvingId(disc.id);
+    try {
+      const res = await apiClient.resolveDiscrepancy(disc.id, resolution.trim());
+      toast.success(res.message || 'Discrepancy resolved');
+      await fetchDiscrepancies();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to resolve discrepancy');
+    } finally {
+      setResolvingId(null);
+    }
+  };
+
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
               <div className="space-y-6">
-          <h1 className="text-2xl font-bold text-hos-text-secondary">Discrepancy Reports</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Discrepancy Reports</h1>
+            <p className="text-sm text-hos-text-muted mt-1">
+              Inventory drift from POS stock reconciliation and gift-card balance mismatches.
+            </p>
+          </div>
 
           {loading ? (
             <div className="flex items-center justify-center h-64">
@@ -61,12 +91,13 @@ export default function AdminDiscrepanciesPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Description</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Date</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                   {discrepancies.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-4 text-center text-hos-text-muted">No discrepancies found</td>
+                      <td colSpan={6} className="px-6 py-4 text-center text-hos-text-muted">No discrepancies found</td>
                     </tr>
                   ) : (
                     discrepancies.map((disc) => (
@@ -94,6 +125,22 @@ export default function AdminDiscrepanciesPage() {
                         <td className="px-6 py-4 text-sm">{disc.description}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {new Date(disc.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                          {!RESOLVABLE_STATUSES.includes(disc.status) ? (
+                            <span className="text-hos-text-muted" title={disc.resolution || undefined}>
+                              —
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => void handleResolve(disc)}
+                              disabled={resolvingId === disc.id}
+                              className="text-hos-gold hover:text-hos-gold-hover disabled:opacity-50 font-medium"
+                            >
+                              {resolvingId === disc.id ? 'Resolving…' : 'Resolve'}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))

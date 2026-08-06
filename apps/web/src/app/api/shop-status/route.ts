@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDirectApiBaseUrl } from '@/lib/apiBaseUrl';
 import {
   getShopPreviewSecret,
   hasShopPreviewAccess,
-  isShopPubliclyEnabled,
   SHOP_PREVIEW_COOKIE,
   SHOP_PREVIEW_QUERY,
 } from '@/lib/shopAccess';
+import { isShopPublic } from '@/lib/shopGate';
 
 /**
- * Lightweight proxy for GET /config/shop-enabled on the NestJS API.
- * Also honors the tester preview cookie / ?preview= so UI nav unlocks for
- * preview sessions. Always private — must not be CDN-cached across visitors.
+ * Whether this visitor may use the storefront.
+ *
+ * Must mirror the middleware gate exactly — if this said "enabled" while
+ * middleware disagreed, nav would render shop links that bounce to
+ * /coming-soon. Testers pass via preview cookie / ?preview=.
+ *
+ * Always private — must not be CDN-cached across visitors.
  */
 export async function GET(request: NextRequest) {
   const previewSecret = getShopPreviewSecret();
@@ -25,25 +28,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  try {
-    const apiUrl = getDirectApiBaseUrl();
-    const res = await fetch(`${apiUrl}/config/shop-enabled`, {
-      cache: 'no-store',
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      return NextResponse.json(data, {
-        headers: { 'Cache-Control': 'private, no-store' },
-      });
-    }
-  } catch {
-    // API unreachable — fall back to env var
-  }
-
-  const fallback = isShopPubliclyEnabled();
   return NextResponse.json(
-    { enabled: fallback },
+    { enabled: await isShopPublic() },
     { headers: { 'Cache-Control': 'private, no-store' } },
   );
 }

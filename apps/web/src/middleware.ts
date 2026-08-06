@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDirectApiBaseUrl } from '@/lib/apiBaseUrl';
 import {
   getShopPreviewSecret,
   hasShopPreviewAccess,
@@ -9,6 +8,7 @@ import {
   SHOP_PREVIEW_MAX_AGE_SEC,
   SHOP_PREVIEW_QUERY,
 } from '@/lib/shopAccess';
+import { isShopPublic } from '@/lib/shopGate';
 
 /**
  * Middleware handles:
@@ -134,42 +134,6 @@ function clearPreviewCookie(response: NextResponse): void {
   });
 }
 
-/**
- * Runtime shop flag: env OR admin DB toggle via API.
- * Cached briefly so middleware does not hit the API on every request.
- */
-let shopEnabledCache: { value: boolean; expiresAt: number } | null = null;
-
-async function resolveShopPubliclyEnabled(): Promise<boolean> {
-  if (isShopPubliclyEnabled()) return true;
-
-  const now = Date.now();
-  if (shopEnabledCache && shopEnabledCache.expiresAt > now) {
-    return shopEnabledCache.value;
-  }
-
-  try {
-    const apiUrl = getDirectApiBaseUrl();
-    const res = await fetch(`${apiUrl}/config/shop-enabled`, {
-      headers: { Accept: 'application/json' },
-      // Edge runtime: keep this cheap; short memory cache above is the throttle.
-      cache: 'no-store',
-    });
-    if (res.ok) {
-      const data = (await res.json()) as { enabled?: boolean };
-      const enabled = data?.enabled === true;
-      // Short TTL so admin toggles propagate quickly to the gate.
-      shopEnabledCache = { value: enabled, expiresAt: now + 5_000 };
-      return enabled;
-    }
-  } catch {
-    // API unreachable — fall through to env (already false here)
-  }
-
-  shopEnabledCache = { value: false, expiresAt: now + 5_000 };
-  return false;
-}
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.headers.get('host') || '';
@@ -213,11 +177,9 @@ export async function middleware(request: NextRequest) {
   // --- Auth Protection ---
   const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   const needsShopGate = isShopGatedPath(pathname);
-  // Only consult the admin shop-enabled API for commerce routes (keeps other
-  // middleware matches free of upstream latency).
-  const shopPublic = needsShopGate
-    ? await resolveShopPubliclyEnabled()
-    : isShopPubliclyEnabled();
+  // Only consult the admin kill switch for commerce routes (keeps other middleware
+  // matches free of upstream latency). Testers come through ?preview=/cookie.
+  const shopPublic = needsShopGate ? await isShopPublic() : isShopPubliclyEnabled();
 
   if (isProtected) {
     const isLoggedIn = request.cookies.get('is_logged_in')?.value === 'true';
