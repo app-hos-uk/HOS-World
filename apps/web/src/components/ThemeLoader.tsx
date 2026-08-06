@@ -32,12 +32,13 @@ export function ThemeLoader() {
     root.style.setProperty('--color-bg-secondary', '#0e0e12');
     root.style.setProperty('--color-bg-tertiary', '#14141a');
     root.style.setProperty('--color-surface', theme.colors.surface || '#14141a');
-    root.style.setProperty('--color-border', 'rgba(201, 162, 39, 0.22)');
-    root.style.setProperty('--color-border-accent', 'rgba(201, 162, 39, 0.42)');
+    root.style.setProperty('--color-border', 'rgba(201, 168, 76, 0.22)');
+    root.style.setProperty('--color-border-accent', 'rgba(201, 168, 76, 0.42)');
+    root.style.setProperty('--color-border-input', '#6b665c');
 
     // Prefer theme text when provided, but never allow muted below AA on dark surfaces
     root.style.setProperty('--color-text-primary', theme.colors.text.primary || '#e8e4dc');
-    root.style.setProperty('--color-text-secondary', theme.colors.text.secondary || '#9a958a');
+    root.style.setProperty('--color-text-secondary', theme.colors.text.secondary || '#c9c3b6');
     root.style.setProperty('--color-text-muted', '#9a958a');
 
     root.style.setProperty('--color-accent-gold', theme.colors.accent);

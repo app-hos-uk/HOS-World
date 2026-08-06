@@ -240,7 +240,7 @@ export function Header() {
                 <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">{accountLabel}</span>
+                <span className="text-hos-text-secondary text-xs font-ui group-hover:text-hos-gold transition-colors duration-200">{accountLabel}</span>
               </Link>
               {showAuthCustomerNav && (
                 <Link href="/profile" className="flex flex-col items-center gap-1 group">
@@ -248,14 +248,14 @@ export function Header() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">Profile</span>
+                  <span className="text-hos-text-secondary text-xs font-ui group-hover:text-hos-gold transition-colors duration-200">Profile</span>
                 </Link>
               )}
               <Link href={wishlistHref} className="flex flex-col items-center gap-1 group" aria-label="Wishlist">
                 <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
-                <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">Wishlist</span>
+                <span className="text-hos-text-secondary text-xs font-ui group-hover:text-hos-gold transition-colors duration-200">Wishlist</span>
               </Link>
               <Link href={cartHref} className="relative flex flex-col items-center gap-1 group" aria-label={`Basket${cartItemCount > 0 ? `, ${cartItemCount} items` : ''}`}>
                 <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-gold transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -266,7 +266,7 @@ export function Header() {
                     {cartItemCount > 99 ? '99+' : cartItemCount}
                   </span>
                 )}
-                <span className="text-hos-text-muted text-[11px] group-hover:text-hos-gold transition-colors duration-200">Basket</span>
+                <span className="text-hos-text-secondary text-xs font-ui group-hover:text-hos-gold transition-colors duration-200">Basket</span>
               </Link>
               {showAuthCustomerNav && (
                 <button
@@ -278,7 +278,7 @@ export function Header() {
                   <svg className="w-5 h-5 text-hos-text-secondary group-hover:text-hos-sale-red transition-colors duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
-                  <span className="text-hos-text-muted text-[11px] group-hover:text-hos-sale-red transition-colors duration-200">Sign out</span>
+                  <span className="text-hos-text-secondary text-xs font-ui group-hover:text-hos-sale-red transition-colors duration-200">Sign out</span>
                 </button>
               )}
             </div>

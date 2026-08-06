@@ -87,22 +87,24 @@
   --color-surface: #14141a;
 
   /* ═══ BORDERS ═══ */
-  --color-border: rgba(201, 162, 39, 0.22);
-  --color-border-accent: rgba(201, 162, 39, 0.42);
+  --color-border: rgba(201, 168, 76, 0.22);
+  --color-border-accent: rgba(201, 168, 76, 0.42);
+  /* WCAG 1.4.11 — visible control boundaries on dark surfaces */
+  --color-border-input: #6b665c;
 
   /* ═══ TEXT ═══ */
   --color-text-primary: #e8e4dc;
-  --color-text-secondary: #9a958a;
-  /* ~6.2:1 on #1A1A1A / #0e0e12 — WCAG AA for body/helper text */
+  --color-text-secondary: #c9c3b6;
+  /* Metadata / placeholders only — distinct from secondary body copy */
   --color-text-muted: #9a958a;
 
-  /* ═══ ACCENT (reference gold) ═══ */
-  --color-accent-gold: #c9a227;
+  /* ═══ ACCENT (unified with landing gold) ═══ */
+  --color-accent-gold: #C9A84C;
   --color-accent-gold-hover: #e8d089;
   --color-accent-gold-dim: #8a7020;
-  --color-accent-gold-15: rgba(201, 162, 39, 0.15);
-  --color-accent-gold-20: rgba(201, 162, 39, 0.2);
-  --color-accent-gold-ring: rgba(201, 162, 39, 0.5);
+  --color-accent-gold-15: rgba(201, 168, 76, 0.15);
+  --color-accent-gold-20: rgba(201, 168, 76, 0.2);
+  --color-accent-gold-ring: rgba(201, 168, 76, 0.5);
   --color-bg-tertiary-half: rgba(20, 20, 26, 0.5);
   --color-sale-red: #c45c5c;
   --color-new-green: #3d6b5c;
@@ -183,7 +185,7 @@ body {
 
 body {
   background-color: var(--color-bg-primary);
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   font-family: var(--font-body);
 }
 
@@ -449,8 +451,8 @@ table td.text-left,
   
   /* Input Styles */
   .input {
-    @apply w-full px-4 py-2.5 border border-hos-border rounded-lg 
-           text-sm text-hos-text-secondary bg-hos-bg-secondary placeholder-hos-text-muted
+    @apply w-full px-4 py-2.5 border border-hos-border-input rounded-lg 
+           text-sm text-hos-text-primary bg-hos-bg placeholder-hos-text-muted
            focus:outline-none focus:ring-2 focus:ring-hos-gold-ring focus:border-transparent
            transition-shadow;
   }

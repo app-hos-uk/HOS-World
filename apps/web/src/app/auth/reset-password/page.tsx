@@ -7,6 +7,10 @@ import { useToast } from '@/hooks/useToast';
 import { useSecureUrlToken } from '@/hooks/useSecureUrlToken';
 import Link from 'next/link';
 
+const RESET_INPUT_CLASS =
+  'w-full px-4 py-2.5 bg-hos-bg border-2 border-hos-border-input rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-primary placeholder-hos-text-muted text-base font-ui focus:outline-none';
+const RESET_LABEL_CLASS = 'block text-sm font-medium text-hos-text-secondary mb-1 font-ui';
+
 function ResetPasswordForm() {
   const router = useRouter();
   const toast = useToast();
@@ -77,26 +81,26 @@ function ResetPasswordForm() {
         <p className="text-hos-text-secondary mb-6 text-center text-sm">Enter your new password below.</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-hos-text-secondary mb-1">New Password</label>
+            <label className={RESET_LABEL_CLASS}>New Password</label>
             <input
               type="password"
               required
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+              className={RESET_INPUT_CLASS}
               placeholder="Min 8 characters"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-hos-text-secondary mb-1">Confirm Password</label>
+            <label className={RESET_LABEL_CLASS}>Confirm Password</label>
             <input
               type="password"
               required
               minLength={8}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+              className={RESET_INPUT_CLASS}
               placeholder="Confirm new password"
             />
           </div>

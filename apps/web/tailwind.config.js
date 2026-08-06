@@ -62,6 +62,7 @@ module.exports = {
           surface: 'var(--color-surface)',
           border: 'var(--color-border)',
           'border-accent': 'var(--color-border-accent)',
+          'border-input': 'var(--color-border-input)',
           'text-primary': 'var(--color-text-primary)',
           'text-secondary': 'var(--color-text-secondary)',
           'text-muted': 'var(--color-text-muted)',

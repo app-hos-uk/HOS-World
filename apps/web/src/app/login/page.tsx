@@ -12,6 +12,15 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { validatePhoneMaxDigits } from '@/lib/formFieldValidation';
 
+/** Shared auth form field styles — inset wells, primary text, muted placeholders, Inter UI font */
+const AUTH_INPUT_CLASS =
+  'w-full px-4 py-2.5 bg-hos-bg border-2 border-hos-border-input rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-primary placeholder-hos-text-muted text-base font-ui';
+const AUTH_INPUT_CLASS_PR =
+  'w-full px-4 py-2.5 pr-10 bg-hos-bg border-2 border-hos-border-input rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-primary placeholder-hos-text-muted text-base font-ui';
+const AUTH_SELECT_CLASS =
+  'w-full px-4 py-2.5 bg-hos-bg border-2 border-hos-border-input rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-primary text-base font-ui';
+const AUTH_LABEL_CLASS = 'block text-sm font-medium text-hos-text-secondary mb-1 font-ui';
+
 function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -491,7 +500,7 @@ function LoginPageInner() {
 
                 <form onSubmit={handleForgotPassword} className="space-y-4">
                   <div>
-                    <label htmlFor="reset-email" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                    <label htmlFor="reset-email" className={AUTH_LABEL_CLASS}>
                       Email
                     </label>
                     <input
@@ -502,7 +511,7 @@ function LoginPageInner() {
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
                       required
-                      className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
+                      className={AUTH_INPUT_CLASS}
                       placeholder="your.email@example.com"
                       
                     />
@@ -542,7 +551,7 @@ function LoginPageInner() {
             </h2>
 
             {isLogin && safeReturnUrl && (
-              <p className="mb-4 rounded-lg border border-hos-border bg-hos-bg-tertiary px-3 py-2 text-center text-xs text-hos-text-muted" role="status">
+              <p className="mb-4 rounded-lg border border-hos-border bg-hos-bg-tertiary px-3 py-2 text-center text-sm text-hos-text-muted font-ui" role="status">
                 {safeReturnUrl.startsWith('/wishlist')
                   ? 'Sign in to view and manage your wishlist.'
                   : safeReturnUrl.startsWith('/checkout')
@@ -565,7 +574,7 @@ function LoginPageInner() {
               autoComplete="off"
             >
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                <label htmlFor="email" className={AUTH_LABEL_CLASS}>
                   Email
                 </label>
                 <input
@@ -578,7 +587,7 @@ function LoginPageInner() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
+                  className={AUTH_INPUT_CLASS}
                   placeholder="your.email@example.com"
                   
                 />
@@ -611,14 +620,14 @@ function LoginPageInner() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={8}
-                    className="w-full px-4 py-2.5 pr-10 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
+                    className={AUTH_INPUT_CLASS_PR}
                     placeholder="••••••••"
                     
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-hos-text-muted hover:text-hos-text-secondary focus:outline-none"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-hos-text-muted hover:text-hos-text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-hos-gold-ring rounded"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? (
@@ -640,7 +649,7 @@ function LoginPageInner() {
                 <>
                   {requiresInviteCode && (
                     <div>
-                      <label htmlFor="inviteCode" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                      <label htmlFor="inviteCode" className={AUTH_LABEL_CLASS}>
                         Invite Code
                       </label>
                       <input
@@ -651,14 +660,14 @@ function LoginPageInner() {
                         value={inviteCode}
                         onChange={(e) => setInviteCode(e.target.value)}
                         required={requiresInviteCode}
-                        className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
+                        className={AUTH_INPUT_CLASS}
                         placeholder="Enter your team invite code"
                       />
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label htmlFor="firstName" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                      <label htmlFor="firstName" className={AUTH_LABEL_CLASS}>
                         First Name
                       </label>
                       <input
@@ -674,13 +683,13 @@ function LoginPageInner() {
                           }
                         }}
                         maxLength={50}
-                        className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
+                        className={AUTH_INPUT_CLASS}
                         placeholder="John"
                         
                       />
                     </div>
                     <div>
-                      <label htmlFor="lastName" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                      <label htmlFor="lastName" className={AUTH_LABEL_CLASS}>
                         Last Name
                       </label>
                       <input
@@ -696,7 +705,7 @@ function LoginPageInner() {
                           }
                         }}
                         maxLength={50}
-                        className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
+                        className={AUTH_INPUT_CLASS}
                         placeholder="Doe"
                         
                       />
@@ -705,11 +714,11 @@ function LoginPageInner() {
 
                   {/* Country Detection */}
                   <div>
-                    <label htmlFor="country" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                    <label htmlFor="country" className={AUTH_LABEL_CLASS}>
                       Country <span className="text-red-500">*</span>
                     </label>
                     {detectingCountry ? (
-                      <div className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg text-sm text-hos-text-muted">
+                      <div className="w-full px-4 py-2.5 bg-hos-bg border-2 border-hos-border-input rounded-lg text-sm text-hos-text-muted font-ui">
                         Detecting your location...
                       </div>
                     ) : detectedCountry && !country ? (
@@ -718,7 +727,7 @@ function LoginPageInner() {
                           <p className="text-sm text-hos-gold font-medium mb-1">
                             We detected your location: <strong>{detectedCountry.country}</strong>
                           </p>
-                          <p className="text-xs text-hos-gold mb-2">
+                          <p className="text-sm text-hos-gold mb-2 font-ui">
                             Currency: {currencyPreference} ({detectedCountry.currency})
                           </p>
                           <div className="flex gap-2">
@@ -759,7 +768,7 @@ function LoginPageInner() {
                           setCurrencyPreference(countryCurrencies[e.target.value] || 'USD');
                         }}
                         required
-                        className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary text-base"
+                        className={AUTH_SELECT_CLASS}
                         
                       >
                         <option value="">Select your country</option>
@@ -784,7 +793,7 @@ function LoginPageInner() {
                       </select>
                     )}
                     {country && currencyPreference && (
-                      <p className="mt-1 text-xs text-hos-text-muted">
+                      <p className="mt-1 text-sm text-hos-text-muted font-ui">
                         Prices will be displayed in {currencyPreference}
                       </p>
                     )}
@@ -792,7 +801,7 @@ function LoginPageInner() {
 
                   {/* WhatsApp Number */}
                   <div>
-                    <label htmlFor="whatsappNumber" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                    <label htmlFor="whatsappNumber" className={AUTH_LABEL_CLASS}>
                       WhatsApp Number (Optional)
                     </label>
                     <input
@@ -807,18 +816,18 @@ function LoginPageInner() {
                           setWhatsappNumber(val);
                         }
                       }}
-                      className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary placeholder-hos-text-muted text-base"
+                      className={AUTH_INPUT_CLASS}
                       placeholder="+1 555 123 4567"
                       maxLength={20}
                     />
-                    <p className="mt-1 text-xs text-hos-text-muted">
+                    <p className="mt-1 text-sm text-hos-text-muted font-ui">
                       Include country code (e.g., +1 for US)
                     </p>
                   </div>
 
                   {/* Communication Preference */}
                   <div>
-                    <label htmlFor="communicationMethod" className="block text-sm font-medium text-hos-text-secondary mb-1">
+                    <label htmlFor="communicationMethod" className={AUTH_LABEL_CLASS}>
                       Preferred Communication Method <span className="text-red-500">*</span>
                     </label>
                     <select
@@ -826,7 +835,7 @@ function LoginPageInner() {
                       value={preferredCommunicationMethod}
                       onChange={(e) => setPreferredCommunicationMethod(e.target.value as any)}
                       required
-                      className="w-full px-4 py-2.5 bg-hos-bg-secondary border-2 border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold text-hos-text-secondary text-base"
+                      className={AUTH_SELECT_CLASS}
                       
                     >
                       <option value="EMAIL">Email</option>
@@ -839,8 +848,8 @@ function LoginPageInner() {
                   {/* Privacy notice acknowledgement and consent preferences */}
                   <div className="space-y-3 p-4 bg-hos-bg-secondary rounded-lg border border-hos-border">
                     <div className="p-3 bg-hos-gold/10 border border-hos-border-accent rounded-lg mb-2">
-                      <p className="text-xs text-hos-gold font-medium mb-1">Notice at Collection</p>
-                      <p className="text-xs text-hos-gold">
+                      <p className="text-sm text-hos-gold font-medium mb-1 font-ui">Notice at Collection</p>
+                      <p className="text-sm text-hos-gold font-ui">
                         We collect your name, email, phone number, and shipping address to create and manage your
                         account, process orders, and communicate with you. We do not sell your personal information.
                         For more details, see our{' '}
@@ -865,7 +874,7 @@ function LoginPageInner() {
                         <span className="text-red-500">*</span>
                       </label>
                     </div>
-                    <p className="ml-6 text-xs text-hos-text-muted">
+                    <p className="ml-6 text-sm text-hos-text-muted font-ui">
                       California residents: You have the right to know, delete, correct, and opt out.
                       You can exercise these rights anytime from your{' '}
                       <a href="/profile?tab=settings" className="text-hos-gold hover:underline">Privacy Request Center</a>.
@@ -987,8 +996,8 @@ function LoginPageInner() {
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-hos-border"></div>
                   </div>
-                  <div className="relative flex justify-center text-xs sm:text-sm">
-                    <span className="px-2 bg-hos-bg-secondary text-hos-text-muted">Or continue with</span>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-hos-bg-secondary text-hos-text-muted font-ui">Or continue with</span>
                   </div>
                 </div>
 
