@@ -9,6 +9,11 @@ import {
   SHOP_PREVIEW_QUERY,
 } from '@/lib/shopAccess';
 import { isShopPublic } from '@/lib/shopGate';
+import {
+  isValidLoyaltyReferralCode,
+  LOYALTY_REF_COOKIE,
+  LOYALTY_REF_COOKIE_MAX_AGE,
+} from '@/lib/referralAttribution';
 
 /**
  * Middleware handles:
@@ -225,6 +230,25 @@ export async function middleware(request: NextRequest) {
     if (attachPreviewCookie && previewSecret) setPreviewCookie(res, previewSecret);
     return res;
   };
+
+  // --- Loyalty referral attribution (/ref/HOS-…) ---
+  // Cookie must be set here (or in a Route Handler), never in a Server Component render.
+  const loyaltyRefMatch = pathname.match(/^\/ref\/([^/]+)\/?$/);
+  if (loyaltyRefMatch) {
+    const code = decodeURIComponent(loyaltyRefMatch[1] || '').trim();
+    const res = withPreviewCookie(NextResponse.next());
+    if (code && isValidLoyaltyReferralCode(code)) {
+      res.cookies.set({
+        name: LOYALTY_REF_COOKIE,
+        value: code,
+        path: '/',
+        maxAge: LOYALTY_REF_COOKIE_MAX_AGE,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+      });
+    }
+    return res;
+  }
 
   // --- Subdomain Routing ---
   if (BYPASS_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {

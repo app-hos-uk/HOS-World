@@ -12,7 +12,7 @@ import {
 /**
  * Global ?ref= capture for shared referral links.
  * Influencer codes → trackReferral + localStorage (commission attribution).
- * Loyalty codes (HOS-*) → session stash only (Enchanted Circle; cookie set on /ref/[code]).
+ * Loyalty codes (HOS-*) → session stash only (Enchanted Circle; cookie set in middleware on /ref/[code]).
  */
 export function ReferralCapture() {
   const searchParams = useSearchParams();

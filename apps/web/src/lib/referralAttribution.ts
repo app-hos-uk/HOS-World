@@ -1,7 +1,9 @@
 const INFLUENCER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-/** Loyalty program (Enchanted Circle) — cookie set on /ref/[code], read at registration. */
-const LOYALTY_COOKIE = 'hos_ref';
+/** Loyalty program (Enchanted Circle) — cookie set by middleware on /ref/[code], read at registration. */
+export const LOYALTY_REF_COOKIE = 'hos_ref';
+export const LOYALTY_REF_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+const LOYALTY_COOKIE = LOYALTY_REF_COOKIE;
 const LOYALTY_SESSION_KEY = 'hos_referral_pending';
 
 /** Influencer commission referrals — localStorage, tracked via POST /referrals/track. */
@@ -43,6 +45,17 @@ export function stashReferralFromQuery(ref: string | null | undefined): void {
 export function clearPendingReferral(): void {
   try {
     sessionStorage.removeItem(LOYALTY_SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+  // Also drop the middleware-set attribution cookie so a later signup on the
+  // same browser cannot re-apply a stale loyalty referral.
+  try {
+    if (typeof document !== 'undefined') {
+      const secure =
+        typeof location !== 'undefined' && location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `${LOYALTY_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax${secure}`;
+    }
   } catch {
     /* ignore */
   }

@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { cookies } from 'next/headers';
 import { isValidLoyaltyReferralCode } from '@/lib/referralAttribution';
 
-/** Loyalty (Enchanted Circle) attribution cookie — distinct from influencer commission storage in localStorage. */
-const LOYALTY_REF_COOKIE = 'hos_ref';
-const MAX_AGE = 60 * 60 * 24 * 30;
-
+/**
+ * Loyalty referral landing page.
+ * Attribution cookie (`hos_ref`) is set in middleware — Server Components cannot
+ * mutate cookies during render (Next.js restriction).
+ */
 export default async function ReferralLandingPage({
   params,
 }: {
@@ -14,16 +14,6 @@ export default async function ReferralLandingPage({
   const { code: raw } = await params;
   const code = decodeURIComponent(raw || '').trim();
   const isValidCode = code.length > 0 && isValidLoyaltyReferralCode(code);
-
-  if (isValidCode) {
-    const store = await cookies();
-    store.set(LOYALTY_REF_COOKIE, code, {
-      path: '/',
-      maxAge: MAX_AGE,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-    });
-  }
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col items-center justify-center px-4">
@@ -36,7 +26,7 @@ export default async function ReferralLandingPage({
           <div className="flex flex-wrap gap-3 justify-center">
             <Link
               href={`/register?ref=${encodeURIComponent(code)}`}
-              className="rounded-md bg-amber-600 px-5 py-2.5 text-stone-950 font-secondary font-medium hover:bg-amber-600"
+              className="rounded-md bg-amber-600 px-5 py-2.5 text-stone-950 font-secondary font-medium hover:bg-amber-500"
             >
               Sign up
             </Link>
