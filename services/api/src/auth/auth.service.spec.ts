@@ -83,6 +83,9 @@ describe('AuthService', () => {
     userBadge: {
       create: jest.fn(),
     },
+    loyaltyReferral: {
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
   };
 
   const mockJwtService = {
@@ -1181,6 +1184,33 @@ describe('AuthService', () => {
       });
 
       await service.assertRegistrationAllowed('test@test.com', 'valid_code');
+    });
+
+    it('should allow registration with a pending loyalty referral code', async () => {
+      mockConfigService.get.mockImplementation((key: string, defaultValue?: any) => {
+        if (key === 'REGISTRATION_MODE') return 'invite_only';
+        if (key === 'REGISTRATION_INVITE_CODES') return 'team-only';
+        return defaultValue;
+      });
+      mockPrismaService.loyaltyReferral = {
+        findFirst: jest.fn().mockResolvedValue({ id: 'ref-1' }),
+      };
+
+      await service.assertRegistrationAllowed('friend@test.com', undefined, 'HOS-SABRINA-3FB5');
+      expect(mockPrismaService.loyaltyReferral.findFirst).toHaveBeenCalled();
+    });
+
+    it('should allow invite-only registration when loyalty code is pasted as inviteCode', async () => {
+      mockConfigService.get.mockImplementation((key: string, defaultValue?: any) => {
+        if (key === 'REGISTRATION_MODE') return 'invite_only';
+        if (key === 'REGISTRATION_INVITE_CODES') return '';
+        return defaultValue;
+      });
+      mockPrismaService.loyaltyReferral = {
+        findFirst: jest.fn().mockResolvedValue({ id: 'ref-1' }),
+      };
+
+      await service.assertRegistrationAllowed('friend@test.com', 'HOS-SABRINA-3FB5');
     });
   });
 

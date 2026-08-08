@@ -3,7 +3,12 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth, setFrontendSessionCookie } from '@/lib/api';
-import { clearPendingReferral, getPendingReferralCode, stashReferralFromQuery } from '@/lib/referralAttribution';
+import {
+  clearPendingReferral,
+  getPendingReferralCode,
+  isValidLoyaltyReferralCode,
+  stashReferralFromQuery,
+} from '@/lib/referralAttribution';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
 import { getDirectApiBaseUrl } from '@/lib/apiBaseUrl';
@@ -56,7 +61,14 @@ function LoginPageInner() {
   });
   const [currencyPreference, setCurrencyPreference] = useState('USD');
   const [inviteCode, setInviteCode] = useState('');
+  const [pendingReferral, setPendingReferral] = useState<string | undefined>(undefined);
   const requiresInviteCode = process.env.NEXT_PUBLIC_REGISTRATION_REQUIRES_INVITE === 'true';
+  // Only treat Enchanted Circle (HOS-*) codes as invite substitutes — influencer/other ?ref=
+  // values must not hide the invite field during soft-launch.
+  const hasReferralInvite = Boolean(
+    pendingReferral && isValidLoyaltyReferralCode(pendingReferral),
+  );
+  const showInviteField = requiresInviteCode && !hasReferralInvite;
   const oauthGoogleEnabled = process.env.NEXT_PUBLIC_OAUTH_GOOGLE_ENABLED === 'true';
   const oauthFacebookEnabled = process.env.NEXT_PUBLIC_OAUTH_FACEBOOK_ENABLED === 'true';
   const oauthAppleEnabled = process.env.NEXT_PUBLIC_OAUTH_APPLE_ENABLED === 'true';
@@ -93,6 +105,7 @@ function LoginPageInner() {
     if (!isMounted) return;
     const refParam = searchParams.get('ref');
     if (refParam) stashReferralFromQuery(refParam);
+    setPendingReferral(getPendingReferralCode());
     const wantRegister = searchParams.get('register');
     if (wantRegister === '1' || wantRegister === 'true') {
       setIsLogin(false);
@@ -138,6 +151,13 @@ function LoginPageInner() {
         invite = (sessionStorage.getItem('hos_invite_code') || '').trim();
       } catch {
         /* ignore */
+      }
+    }
+    // Soft-launch: only a loyalty (HOS-*) referral satisfies invite-only registration.
+    if (!invite) {
+      const pending = (getPendingReferralCode() || '').trim();
+      if (pending && isValidLoyaltyReferralCode(pending)) {
+        invite = pending;
       }
     }
     const qs = invite ? `?invite=${encodeURIComponent(invite)}` : '';
@@ -301,8 +321,6 @@ function LoginPageInner() {
       const role = isLogin ? undefined : 'customer'; // For now, registration is customer only
       // Seller registration will be handled separately
       
-      const pendingReferral = getPendingReferralCode();
-
       // Always prefer live query param, then state, then session stash — never drop invite=founding.
       let resolvedInvite = (inviteCode || searchParams.get('invite') || '').trim();
       if (!resolvedInvite) {
@@ -312,6 +330,15 @@ function LoginPageInner() {
           /* ignore */
         }
       }
+
+      const pendingRaw = getPendingReferralCode();
+      const pendingLoyalty =
+        pendingRaw && isValidLoyaltyReferralCode(pendingRaw) ? pendingRaw : undefined;
+      const inviteAsLoyalty =
+        resolvedInvite && isValidLoyaltyReferralCode(resolvedInvite)
+          ? resolvedInvite
+          : undefined;
+      const loyaltyReferralCode = pendingLoyalty || inviteAsLoyalty;
 
       const response = await apiClient.register({
         email,
@@ -325,7 +352,7 @@ function LoginPageInner() {
         gdprConsent,
         dataProcessingConsent,
         ...(resolvedInvite ? { inviteCode: resolvedInvite } : {}),
-        ...(pendingReferral ? { referralCode: pendingReferral } : {}),
+        ...(loyaltyReferralCode ? { referralCode: loyaltyReferralCode } : {}),
       });
       if (!response || !response.data) {
         throw new Error('Invalid response from server');
@@ -338,9 +365,9 @@ function LoginPageInner() {
       // Confirm loyalty enroll + referral after register. Backend may have already
       // enrolled (idempotent). Only clear the stashed code when conversion actually
       // applied (or was already applied) — enroll can succeed while referral fails.
-      if (pendingReferral) {
+      if (loyaltyReferralCode) {
         try {
-          const enrollRes = await apiClient.enrollLoyalty({ referralCode: pendingReferral });
+          const enrollRes = await apiClient.enrollLoyalty({ referralCode: loyaltyReferralCode });
           const status = (enrollRes?.data as { referralStatus?: string } | undefined)?.referralStatus;
           if (status === 'applied' || status === 'already_applied') {
             clearPendingReferral();
@@ -647,7 +674,7 @@ function LoginPageInner() {
               {/* Registration-specific fields */}
               {!isLogin && (
                 <>
-                  {requiresInviteCode && (
+                  {showInviteField && (
                     <div>
                       <label htmlFor="inviteCode" className={AUTH_LABEL_CLASS}>
                         Invite Code
@@ -659,11 +686,16 @@ function LoginPageInner() {
                         autoComplete="off"
                         value={inviteCode}
                         onChange={(e) => setInviteCode(e.target.value)}
-                        required={requiresInviteCode}
+                        required={showInviteField}
                         className={AUTH_INPUT_CLASS}
-                        placeholder="Enter your team invite code"
+                        placeholder="Enter your team invite code or use a referral link"
                       />
                     </div>
+                  )}
+                  {requiresInviteCode && hasReferralInvite && (
+                    <p className="text-sm text-hos-text-muted">
+                      Referral link applied — no separate invite code needed.
+                    </p>
                   )}
                   <div className="grid grid-cols-2 gap-4">
                     <div>

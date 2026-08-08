@@ -128,9 +128,33 @@ export class AuthService {
   }
 
   /**
-   * Shared invite-only / founding-member gate for register, guest checkout, and OAuth signup.
+   * True when `code` is an unused, non-expired Enchanted Circle referral invite.
+   * Soft-launch invite-only mode treats these as valid registration invites.
    */
-  async assertRegistrationAllowed(email: string, inviteCode?: string | null): Promise<void> {
+  private async isActiveLoyaltyReferralCode(code: string): Promise<boolean> {
+    const normalized = code?.trim();
+    if (!normalized) return false;
+    const hit = await this.prisma.loyaltyReferral.findFirst({
+      where: {
+        referralCode: { equals: normalized, mode: 'insensitive' },
+        status: 'PENDING',
+        refereeId: null,
+        expiresAt: { gt: new Date() },
+      },
+      select: { id: true },
+    });
+    return !!hit;
+  }
+
+  /**
+   * Shared invite-only / founding-member gate for register, guest checkout, and OAuth signup.
+   * A valid pending loyalty referral code also satisfies the invite gate (referral soft-launch).
+   */
+  async assertRegistrationAllowed(
+    email: string,
+    inviteCode?: string | null,
+    referralCode?: string | null,
+  ): Promise<void> {
     const registrationMode = this.configService.get<string>('REGISTRATION_MODE', 'open');
     if (registrationMode !== 'invite_only') return;
 
@@ -166,18 +190,39 @@ export class AuthService {
         .map((c) => c.trim())
         .filter(Boolean);
       const validCodesNormalized = new Set(validCodes.map((c) => c.toLowerCase()));
-      if (!inviteCodeNormalized || !validCodesNormalized.has(inviteCodeNormalized)) {
-        throw new ForbiddenException(
-          'Registration is currently invite-only. Please provide a valid invite code.',
-        );
+      if (inviteCodeNormalized && validCodesNormalized.has(inviteCodeNormalized)) {
+        bypassInviteGate = true;
       }
+    }
+
+    if (!bypassInviteGate) {
+      // Accept loyalty referral as invite (from referralCode, or pasted into invite field).
+      const referralCandidates = [referralCode, inviteCode]
+        .map((c) => c?.trim())
+        .filter((c): c is string => !!c);
+      for (const candidate of referralCandidates) {
+        if (await this.isActiveLoyaltyReferralCode(candidate)) {
+          bypassInviteGate = true;
+          break;
+        }
+      }
+    }
+
+    if (!bypassInviteGate) {
+      throw new ForbiddenException(
+        'Registration is currently invite-only. Please provide a valid invite code or use a referral link.',
+      );
     }
   }
 
   async register(registerDto: RegisterDto, ipAddress?: string, userAgent?: string): Promise<AuthResponse> {
     registerDto.email = registerDto.email?.trim().toLowerCase();
 
-    await this.assertRegistrationAllowed(registerDto.email, registerDto.inviteCode);
+    await this.assertRegistrationAllowed(
+      registerDto.email,
+      registerDto.inviteCode,
+      registerDto.referralCode,
+    );
 
     // Check if user already exists
     const existingUser = await this.prisma.user.findUnique({
@@ -302,7 +347,15 @@ export class AuthService {
 
       if (this.loyaltyService?.isEnabled()) {
         try {
-          const referralCode = registerDto.referralCode?.trim();
+          // Prefer explicit referralCode; also accept a loyalty code pasted as inviteCode
+          // (invite-only soft-launch allows that path for registration).
+          let referralCode = registerDto.referralCode?.trim() || undefined;
+          if (!referralCode && registerDto.inviteCode?.trim()) {
+            const inviteAsReferral = registerDto.inviteCode.trim();
+            if (await this.isActiveLoyaltyReferralCode(inviteAsReferral)) {
+              referralCode = inviteAsReferral;
+            }
+          }
           await this.loyaltyService.enroll(
             user.id,
             referralCode ? { referralCode } : undefined,
