@@ -55,17 +55,19 @@ export default function AdminTemplatesPage() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // Always load every channel so the summary counts stay accurate; the channel
+  // selection only narrows the list below.
   const fetchTemplates = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiClient.getTemplates(selectedChannel || undefined);
+      const res = await apiClient.getTemplates();
       setTemplates(res.data || []);
     } catch {
       setTemplates([]);
     } finally {
       setLoading(false);
     }
-  }, [apiClient, selectedChannel]);
+  }, [apiClient]);
 
   useEffect(() => {
     fetchTemplates();
@@ -196,6 +198,10 @@ export default function AdminTemplatesPage() {
     {} as Record<string, number>,
   );
 
+  const visibleTemplates = selectedChannel
+    ? templates.filter((t) => t.channel === selectedChannel)
+    : templates;
+
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
           <div className="space-y-6">
@@ -233,11 +239,11 @@ export default function AdminTemplatesPage() {
             <h2 className="text-lg font-semibold text-hos-text-secondary mb-3">Templates</h2>
             {loading ? (
               <div className="text-center py-8 text-hos-text-muted">Loading...</div>
-            ) : templates.length === 0 ? (
+            ) : visibleTemplates.length === 0 ? (
               <div className="text-center py-8 text-hos-text-muted">No templates found</div>
             ) : (
               <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
-                {templates.map((t) => (
+                {visibleTemplates.map((t) => (
                   <button
                     key={t.slug}
                     onClick={() => handleSelectTemplate(t)}

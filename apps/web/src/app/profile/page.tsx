@@ -429,100 +429,71 @@ function ProfilePageContent() {
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           {/* Profile Header */}
           <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 sm:p-8 mb-6 text-hos-text-secondary">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-hos-bg-secondary bg-opacity-20 flex items-center justify-center text-4xl sm:text-5xl overflow-hidden">
-                {profile?.avatar ? (
-                  <Image
-                    src={profile.avatar}
-                    alt={profile.firstName || 'User'}
-                    width={96}
-                    height={96}
-                    className="rounded-full object-cover"
-                  />
-                ) : (
-                  <span>{profile?.firstName?.[0] || profile?.email?.[0] || 'U'}</span>
-                )}
+            <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+              <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
+                <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-hos-bg flex items-center justify-center text-4xl sm:text-5xl overflow-hidden shrink-0 border border-hos-border">
+                  {profile?.avatar ? (
+                    <Image
+                      src={profile.avatar}
+                      alt={profile.firstName || 'User'}
+                      width={96}
+                      height={96}
+                      className="rounded-full object-cover"
+                    />
+                  ) : (
+                    <span>{profile?.firstName?.[0] || profile?.email?.[0] || 'U'}</span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-bold mb-1 truncate">
+                    {profile?.firstName && profile?.lastName
+                      ? `${profile.firstName} ${profile.lastName}`
+                      : profile?.email || 'User'}
+                  </h1>
+                  <p className="text-hos-text-secondary text-sm sm:text-base truncate">{profile?.email}</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-                  {profile?.firstName && profile?.lastName
-                    ? `${profile.firstName} ${profile.lastName}`
-                    : profile?.email || 'User'}
-                </h1>
-                <p className="text-hos-text-secondary text-sm sm:text-base">{profile?.email}</p>
-                {stats && (
-                  <div className="flex flex-wrap gap-4 mt-4">
-                    <div>
-                      <div className="text-2xl sm:text-3xl font-bold">Level {stats.level}</div>
-                      <div className="text-xs sm:text-sm text-hos-text-secondary">Current Level</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl sm:text-3xl font-bold">{stats.points.toLocaleString()}</div>
-                      <div className="text-xs sm:text-sm text-hos-text-secondary">Points</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl sm:text-3xl font-bold">{stats.badgeCount}</div>
-                      <div className="text-xs sm:text-sm text-hos-text-secondary">Badges</div>
-                    </div>
+              {stats && (
+                <div className="grid grid-cols-3 gap-3 w-full lg:w-auto lg:min-w-[22rem]">
+                  <div className="rounded-lg border border-hos-border bg-hos-bg px-3 py-3 text-center">
+                    <div className="text-xl sm:text-2xl font-bold text-hos-gold">Level {stats.level}</div>
+                    <div className="text-xs text-hos-text-secondary mt-1">Current Level</div>
                   </div>
-                )}
-              </div>
+                  <div className="rounded-lg border border-hos-border bg-hos-bg px-3 py-3 text-center">
+                    <div className="text-xl sm:text-2xl font-bold">{stats.points.toLocaleString()}</div>
+                    <div className="text-xs text-hos-text-secondary mt-1">Points</div>
+                  </div>
+                  <div className="rounded-lg border border-hos-border bg-hos-bg px-3 py-3 text-center">
+                    <div className="text-xl sm:text-2xl font-bold">{stats.badgeCount}</div>
+                    <div className="text-xs text-hos-text-secondary mt-1">Badges</div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Tabs */}
           <div className="bg-hos-bg-secondary border border-hos-border rounded-lg mb-6">
             <div className="flex flex-wrap border-b border-hos-border">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
-                  activeTab === 'overview'
-                    ? 'border-b-2 border-hos-gold text-hos-gold'
-                    : 'text-hos-text-secondary hover:text-hos-gold'
-                }`}
-              >
-                Overview
-              </button>
-              <button
-                onClick={() => setActiveTab('badges')}
-                className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
-                  activeTab === 'badges'
-                    ? 'border-b-2 border-hos-gold text-hos-gold'
-                    : 'text-hos-text-secondary hover:text-hos-gold'
-                }`}
-              >
-                Badges ({badges.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('collections')}
-                className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
-                  activeTab === 'collections'
-                    ? 'border-b-2 border-hos-gold text-hos-gold'
-                    : 'text-hos-text-secondary hover:text-hos-gold'
-                }`}
-              >
-                Collections ({collections.length})
-              </button>
-              <button
-                onClick={() => setActiveTab('addresses')}
-                className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
-                  activeTab === 'addresses'
-                    ? 'border-b-2 border-hos-gold text-hos-gold'
-                    : 'text-hos-text-secondary hover:text-hos-gold'
-                }`}
-              >
-                Addresses
-              </button>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className={`px-4 sm:px-6 py-3 font-medium text-sm sm:text-base transition-colors ${
-                  activeTab === 'settings'
-                    ? 'border-b-2 border-hos-gold text-hos-gold'
-                    : 'text-hos-text-secondary hover:text-hos-gold'
-                }`}
-              >
-                Settings
-              </button>
+              {[
+                { id: 'overview' as const, label: 'Overview' },
+                { id: 'badges' as const, label: `Badges (${badges.length})` },
+                { id: 'collections' as const, label: `Collections (${collections.length})` },
+                { id: 'addresses' as const, label: 'Addresses' },
+                { id: 'settings' as const, label: 'Settings' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 sm:px-6 py-3 text-sm sm:text-base transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-b-2 border-hos-gold bg-hos-gold/10 text-hos-gold font-semibold'
+                      : 'text-hos-text-secondary hover:text-hos-gold font-medium'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -533,17 +504,17 @@ function ProfilePageContent() {
                 {/* Level Progress */}
                 {stats && (
                   <div>
-                    <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-end justify-between gap-3 mb-2">
                       <h3 className="text-lg font-semibold">Progress to Level {stats.progress.nextLevel}</h3>
-                      <span className="text-sm text-hos-text-secondary">
+                      <span className="text-sm font-medium text-hos-gold tabular-nums">
                         {stats.progress.current} / {stats.progress.current + stats.progress.needed} points
                       </span>
                     </div>
-                    <div className="w-full bg-hos-bg-tertiary rounded-full h-4">
+                    <div className="w-full bg-hos-border/60 rounded-full h-3 overflow-hidden">
                       <div
-                        className="bg-hos-bg-secondary border border-hos-border h-4 rounded-full transition-all duration-300"
-                        style={{ width: `${stats.progress.percentage}%` }}
-                      ></div>
+                        className="bg-hos-gold h-3 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, Math.max(0, stats.progress.percentage))}%` }}
+                      />
                     </div>
                     <p className="text-sm text-hos-text-secondary mt-2">
                       {stats.progress.needed} more points to reach Level {stats.progress.nextLevel}
@@ -705,29 +676,39 @@ function ProfilePageContent() {
                     </Link>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {collections.map((collection) => (
                       <Link
                         key={collection.id}
                         href={`/collections/${collection.id}`}
-                        className="bg-hos-bg-secondary rounded-lg p-6 hover:shadow-lg transition-shadow block"
+                        className="bg-hos-bg rounded-lg border border-hos-border p-4 hover:border-hos-gold/40 transition-colors block"
                       >
-                        <div className="text-4xl mb-3">📚</div>
-                        <h3 className="text-lg font-semibold mb-2">{collection.name}</h3>
-                        {collection.description && (
-                          <p className="text-sm text-hos-text-secondary mb-3 line-clamp-2">{collection.description}</p>
-                        )}
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-hos-text-secondary">{collection.itemCount} items</span>
-                          <span
-                            className={`px-2 py-1 rounded text-xs ${
-                              collection.isPublic
-                                ? 'bg-green-500/15 text-green-300'
-                                : 'bg-hos-bg-tertiary text-hos-text-secondary'
-                            }`}
-                          >
-                            {collection.isPublic ? 'Public' : 'Private'}
-                          </span>
+                        <div className="flex items-start gap-3">
+                          <div className="text-2xl shrink-0 leading-none pt-0.5">📚</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <h3 className="text-base font-semibold text-hos-text-secondary truncate">
+                                {collection.name}
+                              </h3>
+                              <span
+                                className={`shrink-0 px-2 py-0.5 rounded text-xs ${
+                                  collection.isPublic
+                                    ? 'bg-green-500/15 text-green-300'
+                                    : 'bg-hos-bg-tertiary text-hos-text-secondary'
+                                }`}
+                              >
+                                {collection.isPublic ? 'Public' : 'Private'}
+                              </span>
+                            </div>
+                            {collection.description && (
+                              <p className="text-sm text-hos-text-muted mb-2 line-clamp-2">
+                                {collection.description}
+                              </p>
+                            )}
+                            <p className="text-xs text-hos-text-secondary">
+                              {collection.itemCount} items
+                            </p>
+                          </div>
                         </div>
                       </Link>
                     ))}

@@ -38,7 +38,7 @@ export class LoyaltyWalletService {
     // Serialize balance changes for this membership to prevent lost updates
     // (concurrent debits/credits reading the same balance before write).
     await tx.$executeRaw(
-      Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membershipId}::uuid FOR UPDATE`,
+      Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membershipId} FOR UPDATE`,
     );
 
     const idempotencyKey = fields.idempotencyKey ?? undefined;

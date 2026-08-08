@@ -28,8 +28,10 @@ interface Order {
   orderNumber?: string;
   status: string;
   paymentStatus?: string;
+  paymentMethod?: string;
   total: number;
   subtotal?: number;
+  tax?: number;
   shippingCost?: number;
   shippingAmount?: number;
   discount?: number;
@@ -50,7 +52,33 @@ interface Order {
   carrier?: string;
   trackingUrl?: string;
   estimatedDelivery?: string | Date;
+  estimatedDeliveryAt?: string | Date;
+  deliveredAt?: string | Date;
 }
+
+type SortOption = 'newest' | 'oldest' | 'highest' | 'lowest';
+
+const SORT_LABELS: Record<SortOption, string> = {
+  newest: 'Newest first',
+  oldest: 'Oldest first',
+  highest: 'Highest price',
+  lowest: 'Lowest price',
+};
+
+const ORDERS_PER_PAGE = 10;
+
+/**
+ * Active fulfillment statuses where Track is useful even before a tracking code
+ * is attached (common for wholesale marketplace orders). Refunded/returned are
+ * excluded — Track only appears for those when a tracking code already exists.
+ */
+const TRACKABLE_STATUSES = [
+  'processing',
+  'fulfilled',
+  'shipped',
+  'delivered',
+  'completed',
+];
 
 export default function OrdersPage() {
   const toast = useToast();
@@ -58,6 +86,9 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
 
@@ -101,6 +132,9 @@ export default function OrdersPage() {
 
   const normalizeStatus = (s: string) => (s || '').toLowerCase();
 
+  const isUnpaidOrder = (order: Order) =>
+    !order.paymentStatus || order.paymentStatus.toUpperCase() !== 'PAID';
+
   const stats = useMemo(() => {
     return {
       total: orders.length,
@@ -112,7 +146,7 @@ export default function OrdersPage() {
     };
   }, [orders]);
 
-  const filteredOrders = useMemo(() => {
+  const statusFilteredOrders = useMemo(() => {
     if (!statusFilter) return orders;
 
     if (statusFilter === 'PROCESSING') {
@@ -124,23 +158,97 @@ export default function OrdersPage() {
     if (statusFilter === 'CANCELLED') {
       return orders.filter(o => ['cancelled', 'refunded'].includes(normalizeStatus(o.status)));
     }
+    if (statusFilter === 'UNPAID') {
+      return orders.filter(
+        o =>
+          isUnpaidOrder(o) && !['cancelled', 'refunded'].includes(normalizeStatus(o.status)),
+      );
+    }
+    if (statusFilter === 'REFUNDED') {
+      return orders.filter(
+        o =>
+          normalizeStatus(o.status) === 'refunded' ||
+          (o.paymentStatus || '').toUpperCase() === 'REFUNDED',
+      );
+    }
     return orders.filter(o => normalizeStatus(o.status) === statusFilter.toLowerCase());
   }, [orders, statusFilter]);
 
+  const filteredOrders = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    const matched = !query
+      ? statusFilteredOrders
+      : statusFilteredOrders.filter(order => {
+          const orderRef = `${order.orderNumber || ''} ${order.id}`.toLowerCase();
+          if (orderRef.includes(query)) return true;
+          return (order.items || []).some(item =>
+            (item.product?.name || '').toLowerCase().includes(query),
+          );
+        });
+
+    const sorted = [...matched];
+    sorted.sort((a, b) => {
+      switch (sortBy) {
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'highest':
+          return Number(b.total || 0) - Number(a.total || 0);
+        case 'lowest':
+          return Number(a.total || 0) - Number(b.total || 0);
+        case 'newest':
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
+    return sorted;
+  }, [statusFilteredOrders, searchTerm, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / ORDERS_PER_PAGE));
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+  const sliceStart = (safePage - 1) * ORDERS_PER_PAGE;
+  const pagedOrders = filteredOrders.slice(sliceStart, sliceStart + ORDERS_PER_PAGE);
+  const showingFrom = filteredOrders.length === 0 ? 0 : sliceStart + 1;
+  const showingTo = Math.min(sliceStart + ORDERS_PER_PAGE, filteredOrders.length);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchTerm, sortBy]);
+
   const getPaymentBadge = (order: Order) => {
     const ps = (order.paymentStatus || '').toUpperCase();
+    const orderStatus = normalizeStatus(order.status);
+    const isClosed = ['cancelled', 'refunded'].includes(orderStatus);
+
+    if (ps === 'REFUNDED') {
+      return (
+        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-500/15 text-red-300">
+          Refunded
+        </span>
+      );
+    }
+
+    // "Payment pending" is misleading once an order is cancelled — the payment will
+    // never be taken, or a refund is already under way.
+    if (isClosed) {
+      if (ps === 'PAID') {
+        return (
+          <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-orange-500/15 text-orange-300">
+            Refund in progress
+          </span>
+        );
+      }
+      return (
+        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-hos-bg-tertiary text-hos-text-secondary">
+          Cancelled before payment
+        </span>
+      );
+    }
+
     if (ps === 'PAID') return null;
     if (ps === 'PENDING' || !ps) {
       return (
         <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-orange-500/15 text-orange-300">
           Payment pending
-        </span>
-      );
-    }
-    if (ps === 'REFUNDED') {
-      return (
-        <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-red-500/15 text-red-300">
-          Refunded
         </span>
       );
     }
@@ -151,8 +259,35 @@ export default function OrdersPage() {
     );
   };
 
-  const isUnpaidOrder = (order: Order) =>
-    !order.paymentStatus || order.paymentStatus.toUpperCase() !== 'PAID';
+  /** An invoice only exists once money has actually been taken. */
+  const hasInvoice = (order: Order) =>
+    (order.paymentStatus || '').toUpperCase() === 'PAID' &&
+    !['pending', 'cancelled'].includes(normalizeStatus(order.status));
+
+  const canTrackOrder = (order: Order) => {
+    const hasTrackingCode = Boolean(order.trackingNumber || order.trackingCode);
+    if (hasTrackingCode) return true;
+
+    // Without a tracking code, only offer Track during active fulfillment —
+    // not when the order/payment has already been returned or refunded.
+    const status = normalizeStatus(order.status);
+    const payment = (order.paymentStatus || '').toLowerCase();
+    if (['returned', 'refunded'].includes(status) || payment === 'refunded') {
+      return false;
+    }
+    return TRACKABLE_STATUSES.includes(status);
+  };
+
+  const getDeliveryEstimate = (order: Order) => {
+    const raw = order.deliveredAt || order.estimatedDeliveryAt || order.estimatedDelivery;
+    if (!raw) return null;
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return null;
+    return {
+      label: order.deliveredAt ? 'Delivered' : 'Estimated delivery',
+      value: date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+    };
+  };
 
   const getStatusColor = (status: string) => {
     switch (normalizeStatus(status)) {
@@ -250,6 +385,62 @@ export default function OrdersPage() {
             </button>
           </div>
 
+          {/* Search, filter and sort */}
+          <div className="bg-hos-bg-secondary rounded-lg shadow p-4 mb-6 flex flex-col lg:flex-row gap-3 lg:items-center">
+            <div className="flex-1">
+              <label htmlFor="order-search" className="sr-only">
+                Search orders
+              </label>
+              <input
+                id="order-search"
+                type="search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by order number or product name..."
+                className="w-full px-4 py-2 rounded-lg bg-hos-bg-primary border border-hos-border text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold focus:ring-2 focus:ring-hos-gold/40"
+              />
+            </div>
+            <div className="flex gap-3">
+              <div>
+                <label htmlFor="order-status-filter" className="sr-only">
+                  Filter by status
+                </label>
+                <select
+                  id="order-status-filter"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-3 py-2 rounded-lg bg-hos-bg-primary border border-hos-border text-hos-text-secondary focus:outline-none focus:border-hos-gold"
+                >
+                  <option value="">All Orders</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="PROCESSING">Processing</option>
+                  <option value="SHIPPED">Shipped</option>
+                  <option value="DELIVERED">Delivered</option>
+                  <option value="CANCELLED">Cancelled</option>
+                  <option value="UNPAID">Pending Payment</option>
+                  <option value="REFUNDED">Refunded</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="order-sort" className="sr-only">
+                  Sort orders
+                </label>
+                <select
+                  id="order-sort"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="px-3 py-2 rounded-lg bg-hos-bg-primary border border-hos-border text-hos-text-secondary focus:outline-none focus:border-hos-gold"
+                >
+                  {(Object.keys(SORT_LABELS) as SortOption[]).map((key) => (
+                    <option key={key} value={key}>
+                      {SORT_LABELS[key]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
           {/* Orders List */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -272,22 +463,26 @@ export default function OrdersPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredOrders.map((order) => (
+              {pagedOrders.map((order) => {
+                const delivery = getDeliveryEstimate(order);
+                return (
                 <div key={order.id} className="bg-hos-bg-secondary rounded-lg shadow overflow-hidden">
                   {/* Order Header */}
                   <div className="p-4 sm:p-6 border-b border-hos-border">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <h3 className="text-lg font-semibold text-hos-text-secondary">
-                            Order #{order.orderNumber || order.id.slice(0, 8)}
-                          </h3>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div className="min-w-0">
+                        <h3 className="text-lg font-semibold text-hos-text-secondary">
+                          Order #{order.orderNumber || order.id.slice(0, 8)}
+                        </h3>
+                        {/* Badges sit on their own row so spacing stays uniform
+                            regardless of order-number length. */}
+                        <div className="flex items-center gap-2 flex-wrap mt-2">
                           <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
                             {order.status}
                           </span>
                           {getPaymentBadge(order)}
                         </div>
-                        <p className="text-sm text-hos-text-muted mt-1">
+                        <p className="text-sm text-hos-text-muted mt-2">
                           Placed on {new Date(order.createdAt).toLocaleDateString('en-US', {
                             day: 'numeric',
                             month: 'long',
@@ -295,50 +490,71 @@ export default function OrdersPage() {
                           })}
                         </p>
                       </div>
-                      <div className="text-right">
+                      <div className="sm:text-right shrink-0">
                         <p className="text-xl font-bold text-hos-gold">
                           {formatPrice(order.total, order.currency || 'USD')}
                         </p>
                         <p className="text-sm text-hos-text-muted">
                           {order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? 's' : ''}
                         </p>
+                        {order.paymentMethod && (
+                          <p className="text-sm text-hos-text-muted mt-1">
+                            Paid by {order.paymentMethod}
+                          </p>
+                        )}
+                        {delivery && (
+                          <p className="text-sm text-hos-text-muted mt-1">
+                            {delivery.label}: {delivery.value}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
 
                   {/* Order Items Preview */}
-                  <div className="p-4 sm:p-6 bg-hos-bg-secondary">
-                    <div className="flex items-center gap-4 overflow-x-auto pb-2">
-                      {order.items?.slice(0, 4).map((item, index) => {
-                        const imageUrl = getProductImage(item);
-                        return (
-                          <div key={item.id || index} className="flex-shrink-0">
-                            {imageUrl ? (
-                              <Image
-                                src={imageUrl}
-                                alt={item.product?.name || 'Product'}
-                                width={64}
-                                height={64}
-                                className="rounded-lg object-cover"
-                              />
-                            ) : (
-                              <div className="w-16 h-16 rounded-lg bg-hos-bg-tertiary flex items-center justify-center">
-                                <span className="text-hos-text-muted text-xs">No img</span>
-                              </div>
-                            )}
+                  <div className="p-4 sm:p-6 bg-hos-bg-secondary space-y-3">
+                    {order.items?.slice(0, 3).map((item, index) => {
+                      const imageUrl = getProductImage(item);
+                      return (
+                        <div key={item.id || index} className="flex items-center gap-4">
+                          {imageUrl ? (
+                            <Image
+                              src={imageUrl}
+                              alt={item.product?.name || 'Product'}
+                              width={56}
+                              height={56}
+                              className="rounded-lg object-cover shrink-0"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 rounded-lg bg-hos-bg-tertiary flex items-center justify-center shrink-0">
+                              <span className="text-hos-text-muted text-xs">No img</span>
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <Link
+                              href={`/products/${item.productId}`}
+                              className="block truncate font-medium text-hos-text-secondary hover:text-hos-gold"
+                            >
+                              {item.product?.name || 'Product'}
+                            </Link>
+                            <p className="text-sm text-hos-text-muted">Qty: {item.quantity}</p>
                           </div>
-                        );
-                      })}
-                      {order.items && order.items.length > 4 && (
-                        <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-hos-bg-tertiary flex items-center justify-center">
-                          <span className="text-hos-text-secondary text-sm font-medium">+{order.items.length - 4}</span>
+                          <p className="shrink-0 text-sm font-medium text-hos-text-secondary">
+                            {formatPrice(item.price * item.quantity, order.currency || 'USD')}
+                          </p>
                         </div>
-                      )}
-                    </div>
+                      );
+                    })}
+                    {order.items && order.items.length > 3 && (
+                      <p className="text-sm text-hos-text-muted">
+                        + {order.items.length - 3} more item
+                        {order.items.length - 3 !== 1 ? 's' : ''}
+                      </p>
+                    )}
                   </div>
 
                   {/* Order Actions */}
-                  <div className="p-4 sm:p-6 flex flex-wrap gap-3">
+                  <div className="p-4 sm:p-6 flex flex-wrap gap-3 border-t border-hos-border">
                     <button
                       onClick={() => openOrderDetails(order)}
                       className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium text-sm"
@@ -354,7 +570,7 @@ export default function OrdersPage() {
                         Complete Payment
                       </Link>
                     )}
-                    {!['PENDING', 'CANCELLED'].includes(order.status?.toUpperCase()) && (
+                    {hasInvoice(order) && (
                       <button
                         type="button"
                         onClick={async () => {
@@ -375,7 +591,7 @@ export default function OrdersPage() {
                         Download Invoice
                       </button>
                     )}
-                    {(order.trackingNumber || order.trackingCode) && (
+                    {canTrackOrder(order) && (
                       <Link
                         href={`/track-order?orderNumber=${order.orderNumber || order.id}`}
                         className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
@@ -393,14 +609,41 @@ export default function OrdersPage() {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
 
-          {/* Results Count */}
-          {!loading && orders.length > 0 && (
-            <div className="text-sm text-hos-text-muted text-center mt-6">
-              Showing {filteredOrders.length} of {orders.length} orders
+          {/* Results count and pagination */}
+          {!loading && filteredOrders.length > 0 && (
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-sm text-hos-text-muted">
+                Showing {showingFrom}–{showingTo} of {filteredOrders.length} order
+                {filteredOrders.length !== 1 ? 's' : ''}
+              </p>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={safePage <= 1}
+                    className="px-3 py-1.5 text-sm rounded-md border border-hos-border text-hos-text-secondary hover:bg-hos-bg-tertiary disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-hos-text-muted">
+                    Page {safePage} of {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={safePage >= totalPages}
+                    className="px-3 py-1.5 text-sm rounded-md border border-hos-border text-hos-text-secondary hover:bg-hos-bg-tertiary disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </main>
@@ -446,7 +689,7 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Tracking Info */}
-                {(selectedOrder.trackingNumber || selectedOrder.trackingCode) && (
+                {canTrackOrder(selectedOrder) && (
                   <div className="bg-hos-gold/10 rounded-lg p-4 space-y-2">
                     <h3 className="font-medium text-hos-text-secondary mb-2">Tracking Information</h3>
                     {selectedOrder.carrier && (
@@ -454,9 +697,15 @@ export default function OrdersPage() {
                         Carrier: <span className="font-medium">{selectedOrder.carrier}</span>
                       </p>
                     )}
-                    <p className="text-sm text-hos-text-secondary">
-                      Tracking Number: <span className="font-mono">{selectedOrder.trackingNumber || selectedOrder.trackingCode}</span>
-                    </p>
+                    {selectedOrder.trackingNumber || selectedOrder.trackingCode ? (
+                      <p className="text-sm text-hos-text-secondary">
+                        Tracking Number: <span className="font-mono">{selectedOrder.trackingNumber || selectedOrder.trackingCode}</span>
+                      </p>
+                    ) : (
+                      <p className="text-sm text-hos-text-muted">
+                        A tracking number will appear here once your parcel is handed to the carrier.
+                      </p>
+                    )}
                     {selectedOrder.trackingUrl && (
                       <a
                         href={selectedOrder.trackingUrl}
@@ -467,25 +716,53 @@ export default function OrdersPage() {
                         Track shipment
                       </a>
                     )}
-                    {selectedOrder.estimatedDelivery && (
-                      <p className="text-sm text-hos-text-secondary">
-                        Estimated Delivery: {new Date(selectedOrder.estimatedDelivery).toLocaleDateString()}
-                      </p>
-                    )}
+                    {(() => {
+                      const delivery = getDeliveryEstimate(selectedOrder);
+                      return delivery ? (
+                        <p className="text-sm text-hos-text-secondary">
+                          {delivery.label}: {delivery.value}
+                        </p>
+                      ) : null;
+                    })()}
+                    <Link
+                      href={`/track-order?orderNumber=${selectedOrder.orderNumber || selectedOrder.id}`}
+                      className="text-sm text-hos-gold hover:text-hos-gold-hover underline inline-block"
+                    >
+                      Open tracking page
+                    </Link>
                   </div>
                 )}
 
+                {/* Payment */}
+                <div className="bg-hos-bg-secondary rounded-lg p-4">
+                  <h3 className="font-medium text-hos-text-secondary mb-2">Payment</h3>
+                  <div className="space-y-1 text-sm text-hos-text-secondary">
+                    <p>
+                      <span className="text-hos-text-muted">Status: </span>
+                      {selectedOrder.paymentStatus || 'Pending'}
+                    </p>
+                    <p>
+                      <span className="text-hos-text-muted">Method: </span>
+                      {selectedOrder.paymentMethod || 'Not recorded'}
+                    </p>
+                  </div>
+                </div>
+
                 {/* Shipping Address */}
-                {selectedOrder.shippingAddress && (
-                  <div className="bg-hos-bg-secondary rounded-lg p-4">
-                    <h3 className="font-medium text-hos-text-secondary mb-2">Shipping Address</h3>
+                <div className="bg-hos-bg-secondary rounded-lg p-4">
+                  <h3 className="font-medium text-hos-text-secondary mb-2">Shipping Address</h3>
+                  {selectedOrder.shippingAddress ? (
                     <p className="text-sm text-hos-text-secondary">
                       {selectedOrder.shippingAddress.street}<br />
                       {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.postalCode}<br />
                       {selectedOrder.shippingAddress.country}
                     </p>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-sm text-hos-text-muted">
+                      No shipping address recorded for this order.
+                    </p>
+                  )}
+                </div>
 
                 {/* Order Items */}
                 <div>
@@ -540,6 +817,12 @@ export default function OrdersPage() {
                       <div className="flex justify-between">
                         <span className="text-hos-text-muted">Shipping</span>
                         <span className="text-hos-text-secondary">{formatPrice(selectedOrder.shippingCost || selectedOrder.shippingAmount || 0, selectedOrder.currency || 'USD')}</span>
+                      </div>
+                    ) : null}
+                    {selectedOrder.tax ? (
+                      <div className="flex justify-between">
+                        <span className="text-hos-text-muted">Tax</span>
+                        <span className="text-hos-text-secondary">{formatPrice(selectedOrder.tax, selectedOrder.currency || 'USD')}</span>
                       </div>
                     ) : null}
                     {(selectedOrder.discount || selectedOrder.discountAmount) ? (

@@ -84,15 +84,31 @@ function MapResizeFix() {
   return null;
 }
 
+/**
+ * A handful of tiles can fail transiently while panning. Only surface the error
+ * state once enough failures accumulate without any tile loading successfully.
+ */
 function TileErrorWatcher({ onError }: { onError: (message: string) => void }) {
   const map = useMap();
   useEffect(() => {
+    const FAILURE_THRESHOLD = 4;
+    let failures = 0;
+
     const onTileError = () => {
-      onError('Map tiles could not be loaded. Check your network connection and try again.');
+      failures += 1;
+      if (failures >= FAILURE_THRESHOLD) {
+        onError('Map tiles could not be loaded. Check your network connection and try again.');
+      }
     };
+    const onTileLoad = () => {
+      failures = 0;
+    };
+
     map.on('tileerror', onTileError);
+    map.on('tileload', onTileLoad);
     return () => {
       map.off('tileerror', onTileError);
+      map.off('tileload', onTileLoad);
     };
   }, [map, onError]);
   return null;

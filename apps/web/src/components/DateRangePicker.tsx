@@ -1,7 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { format, subDays, subMonths, subYears, startOfMonth, startOfYear, endOfDay } from 'date-fns';
+import {
+  format,
+  subDays,
+  subMonths,
+  subYears,
+  startOfMonth,
+  startOfYear,
+  endOfDay,
+  endOfMonth,
+  endOfYear,
+} from 'date-fns';
 
 export interface DateRange {
   startDate: Date | null;
@@ -56,11 +66,10 @@ export function DateRangePicker({
     {
       label: 'Last Month',
       getRange: () => {
-        const now = new Date();
-        const lastMonth = subMonths(now, 1);
+        const lastMonth = subMonths(new Date(), 1);
         return {
           startDate: startOfMonth(lastMonth),
-          endDate: endOfDay(subMonths(startOfMonth(now), 1)),
+          endDate: endOfDay(endOfMonth(lastMonth)),
         };
       },
     },
@@ -79,11 +88,10 @@ export function DateRangePicker({
     {
       label: 'Last Year',
       getRange: () => {
-        const now = new Date();
-        const lastYear = subYears(now, 1);
+        const lastYear = subYears(new Date(), 1);
         return {
           startDate: startOfYear(lastYear),
-          endDate: endOfDay(subYears(startOfYear(now), 1)),
+          endDate: endOfDay(endOfYear(lastYear)),
         };
       },
     },

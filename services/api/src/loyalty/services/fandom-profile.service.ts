@@ -16,7 +16,7 @@ export class FandomProfileService {
       FROM order_items oi
       JOIN orders o ON oi."orderId" = o.id
       JOIN products p ON oi."productId" = p.id
-      WHERE o."userId" = ${userId}::uuid
+      WHERE o."userId" = ${userId}
         AND o."paymentStatus" = 'PAID'
         AND p.fandom IS NOT NULL AND TRIM(p.fandom) <> ''
       GROUP BY TRIM(p.fandom)
@@ -29,7 +29,7 @@ export class FandomProfileService {
       SELECT TRIM(p.fandom) AS fandom, COUNT(*)::float * 1.5 AS score
       FROM wishlist_items wi
       JOIN products p ON wi."productId" = p.id
-      WHERE wi."userId" = ${userId}::uuid
+      WHERE wi."userId" = ${userId}
         AND p.fandom IS NOT NULL AND TRIM(p.fandom) <> ''
       GROUP BY TRIM(p.fandom)
     `;
@@ -51,7 +51,7 @@ export class FandomProfileService {
       FROM fandom_quiz_attempts fqa
       JOIN fandom_quizzes fq ON fqa."quizId" = fq.id
       JOIN fandoms f ON fq."fandomId" = f.id
-      WHERE fqa."userId" = ${userId}::uuid
+      WHERE fqa."userId" = ${userId}
         AND f.name IS NOT NULL AND TRIM(f.name) <> ''
       GROUP BY TRIM(f.name)
     `;
@@ -64,7 +64,7 @@ export class FandomProfileService {
       FROM user_quests uq
       JOIN quests q ON uq."questId" = q.id
       JOIN fandoms f ON q."fandomId" = f.id
-      WHERE uq."userId" = ${userId}::uuid
+      WHERE uq."userId" = ${userId}
         AND uq.status = 'COMPLETED'
         AND f.name IS NOT NULL AND TRIM(f.name) <> ''
       GROUP BY TRIM(f.name)

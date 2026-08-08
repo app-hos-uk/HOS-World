@@ -10,6 +10,7 @@ import { existsSync, unlinkSync, mkdirSync, readFileSync } from 'fs';
 import { join, parse as parsePath, resolve } from 'path';
 import { randomUUID } from 'crypto';
 import { QueueService, JobType } from '../queue/queue.service';
+import { StorageService } from '../storage/storage.service';
 import {
   parseUploadRelativePath,
   resolveUploadFilePath,
@@ -51,6 +52,7 @@ export class UploadsService implements OnModuleInit {
   constructor(
     private configService: ConfigService,
     private queueService: QueueService,
+    private storageService: StorageService,
   ) {
     this.uploadBasePath = this.resolveUploadBasePath();
 
@@ -299,14 +301,63 @@ export class UploadsService implements OnModuleInit {
     return filePath;
   }
 
+  /**
+   * Strip protocol, host, query string and fragment so that both absolute
+   * ("https://api.host/api/uploads/x/y.jpg") and relative ("/uploads/x/y.jpg")
+   * media URLs resolve to the same "<folder>/<filename>" pair.
+   */
+  private extractUploadRelativePath(url: string): string | null {
+    let pathname = url.trim();
+    if (!pathname) return null;
+
+    if (/^https?:\/\//i.test(pathname)) {
+      try {
+        pathname = new URL(pathname).pathname;
+      } catch {
+        return null;
+      }
+    } else {
+      pathname = pathname.split('?')[0].split('#')[0];
+    }
+
+    const match = pathname.match(/\/uploads\/(.+)$/);
+    if (match) return match[1];
+
+    // Media records created before the /uploads/ prefix existed store a bare
+    // "<folder>/<filename>" relative path.
+    const bare = pathname.replace(/^\/+/, '');
+    return bare.includes('/') ? bare : null;
+  }
+
   async deleteFile(url: string): Promise<void> {
+    if (!url?.trim()) {
+      throw new BadRequestException('A file URL is required');
+    }
+
+    // Remote assets (S3, MinIO, Cloudinary) are owned by the storage provider.
+    const isRemote =
+      /^https?:\/\//i.test(url) &&
+      /(cloudinary\.com|amazonaws\.com|s3[.-]|minio)/i.test(url) &&
+      !/\/uploads\//.test(url);
+    if (isRemote) {
+      try {
+        await this.storageService.deleteFile(url);
+        return;
+      } catch (error) {
+        this.logger.error(`Error deleting remote file: ${(error as Error)?.message}`);
+        throw new BadRequestException('Failed to delete file from storage provider');
+      }
+    }
+
     try {
-      const urlMatch = url.match(/\/uploads\/(.+)$/);
-      if (!urlMatch) {
-        throw new BadRequestException('Invalid file URL format');
+      const relativePath = this.extractUploadRelativePath(url);
+      if (!relativePath) {
+        throw new BadRequestException(
+          'Could not determine the storage location for this file. It may already have been removed.',
+        );
       }
 
-      const { folder, filename } = parseUploadRelativePath(urlMatch[1]);
+      const { folder, filename } = parseUploadRelativePath(relativePath);
       const filePath = this.getFilePath(folder, filename);
 
       if (existsSync(filePath)) {

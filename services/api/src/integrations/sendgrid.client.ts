@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { isValidEmailAddress } from '../config/protected-admin-emails';
 
 export interface SendGridSendParams {
   apiKey: string;
@@ -18,10 +19,54 @@ export interface SendGridSendResult {
 const logger = new Logger('SendGridClient');
 
 /**
+ * Raw SendGrid payloads are logged but never surfaced to admins — they leak
+ * provider internals and are not actionable in the UI.
+ */
+function friendlySendGridError(status: number, rawBody: string): string {
+  switch (status) {
+    case 401:
+    case 403:
+      return 'Email provider authentication failed. Please verify the SendGrid API key in Admin → Integrations.';
+    case 413:
+      return 'The email was rejected because it is too large.';
+    case 429:
+      return 'The email provider is rate limiting requests. Please try again shortly.';
+    default:
+      break;
+  }
+
+  if (status === 400) {
+    // 400s are usually actionable configuration problems (unverified sender, bad address).
+    if (/from address does not match a verified Sender Identity/i.test(rawBody)) {
+      return 'The sender address is not a verified SendGrid Sender Identity. Verify it in SendGrid, or update the From address in Admin → Integrations.';
+    }
+    return 'The email provider rejected the message. Please check the sender and recipient addresses in Admin → Integrations.';
+  }
+
+  if (status >= 500) {
+    return 'The email provider is temporarily unavailable. Please try again shortly.';
+  }
+
+  return 'The email could not be sent. Please check the SendGrid configuration in Admin → Integrations.';
+}
+
+/**
  * Send email via SendGrid v3 Mail Send API (no extra dependency).
  */
 export async function sendViaSendGrid(params: SendGridSendParams): Promise<SendGridSendResult> {
   const { apiKey, to, subject, html, fromEmail, fromName } = params;
+
+  if (!isValidEmailAddress(fromEmail)) {
+    logger.error(`Refusing to send: invalid SendGrid sender address "${fromEmail}"`);
+    return {
+      success: false,
+      error:
+        'The configured sender address is not a valid email address. Update the From address in Admin → Integrations.',
+    };
+  }
+  if (!isValidEmailAddress(to)) {
+    return { success: false, error: 'The recipient address is not a valid email address.' };
+  }
 
   const body = {
     personalizations: [{ to: [{ email: to }] }],
@@ -52,12 +97,15 @@ export async function sendViaSendGrid(params: SendGridSendParams): Promise<SendG
     logger.error(`SendGrid API error ${response.status}: ${errorText}`);
     return {
       success: false,
-      error: `SendGrid ${response.status}: ${errorText.slice(0, 500)}`,
+      error: friendlySendGridError(response.status, errorText),
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     logger.error(`SendGrid request failed: ${message}`);
-    return { success: false, error: message };
+    return {
+      success: false,
+      error: 'Could not reach the email provider. Please check network connectivity and try again.',
+    };
   }
 }
 
@@ -76,9 +124,14 @@ export async function verifySendGridApiKey(apiKey: string): Promise<SendGridSend
     }
 
     const errorText = await response.text();
-    return { success: false, error: `SendGrid ${response.status}: ${errorText.slice(0, 500)}` };
+    logger.error(`SendGrid key verification failed ${response.status}: ${errorText}`);
+    return { success: false, error: friendlySendGridError(response.status, errorText) };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
-    return { success: false, error: message };
+    logger.error(`SendGrid key verification request failed: ${message}`);
+    return {
+      success: false,
+      error: 'Could not reach the email provider. Please check network connectivity and try again.',
+    };
   }
 }

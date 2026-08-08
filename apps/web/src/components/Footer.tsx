@@ -21,6 +21,14 @@ import { withShopPreview } from '@/lib/shopPreviewClient';
 
 type SocialEntry = { platform: SocialPlatform; label: string; ariaLabel: string; href: string };
 
+/**
+ * Shared heading band for every footer column. The fixed height keeps the four
+ * columns' content on the same baseline even though the brand column leads with a
+ * logo rather than a text heading.
+ */
+const FOOTER_HEADING_CLASS =
+  'flex items-center h-6 text-hos-text-primary text-sm font-bold font-ui mb-4';
+
 function SocialIcon({ platform }: { platform: SocialPlatform }) {
   if (platform === 'facebook') {
     return (
@@ -56,7 +64,7 @@ function FooterNavColumn({
 }) {
   return (
     <nav aria-label={ariaLabel} className="flex flex-col min-w-0">
-      <h4 className="text-hos-text-secondary text-sm font-bold font-ui mb-4">{title}</h4>
+      <h4 className={FOOTER_HEADING_CLASS}>{title}</h4>
       <ul className="space-y-2 text-hos-text-secondary text-sm">
         {links.map((link) => (
           <li key={`${link.href}-${link.label}`}>
@@ -112,8 +120,8 @@ function FooterNewsletter({ brandName }: { brandName: string }) {
 
   return (
     <div className="flex flex-col min-w-0">
-      <h4 className="text-hos-text-secondary text-sm font-bold font-ui mb-4">Newsletter</h4>
-      <p className="text-hos-text-secondary text-sm leading-relaxed mb-3">
+      <h4 className={FOOTER_HEADING_CLASS}>Newsletter</h4>
+      <p className="text-hos-text-primary text-sm leading-relaxed mb-3">
         Get updates on new collections, vendor spotlights, and exclusive offers.
       </p>
 
@@ -142,15 +150,18 @@ function FooterNewsletter({ brandName }: { brandName: string }) {
           </div>
 
           <label className="flex items-start gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
-              disabled={status === 'loading'}
-              required
-              className="mt-0.5 accent-hos-gold w-4 h-4 shrink-0"
-            />
-            <span className="text-hos-text-secondary text-xs leading-snug">
+            {/* h-4 wrapper matched to the label's line-height centres the box on the first line. */}
+            <span className="flex h-[1.125rem] items-center shrink-0">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                disabled={status === 'loading'}
+                required
+                className="accent-hos-gold w-4 h-4 block"
+              />
+            </span>
+            <span className="text-hos-text-primary text-xs leading-[1.125rem]">
               I agree to receive marketing communications from {brandName}.
             </span>
           </label>

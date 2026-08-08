@@ -76,7 +76,10 @@ export default function AdminSearchPage() {
       setActionMessage(null);
       await apiClient.syncSearchIndex();
       setActionMessage({ type: 'success', text: 'Products synced to search index successfully.' });
-      fetchStats();
+      // Indexing settles asynchronously, so an immediate read still returns the old
+      // document count. Re-read once the engine has had a moment to commit.
+      await fetchStats();
+      setTimeout(() => { void fetchStats(); }, 2500);
     } catch (err: any) {
       setActionMessage({ type: 'error', text: err.message || 'Sync failed.' });
     } finally {
@@ -91,7 +94,8 @@ export default function AdminSearchPage() {
       setActionMessage(null);
       await apiClient.rebuildSearchIndex();
       setActionMessage({ type: 'success', text: 'Search index rebuilt successfully.' });
-      fetchStats();
+      await fetchStats();
+      setTimeout(() => { void fetchStats(); }, 2500);
     } catch (err: any) {
       setActionMessage({ type: 'error', text: err.message || 'Rebuild failed.' });
     } finally {

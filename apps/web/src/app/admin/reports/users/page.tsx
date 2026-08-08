@@ -202,19 +202,23 @@ export default function AdminCustomerAnalyticsPage() {
 
           {pieData.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              {/* min-w-0 lets the grid tracks shrink; without it ResponsiveContainer
+                  measures wider than the card and the charts overflow. */}
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6 min-w-0">
                 <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">
                   Customer Distribution
                 </h2>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
+                <ResponsiveContainer width="100%" height={320}>
+                  <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
                     <Pie
                       data={pieData}
                       cx="50%"
-                      cy="50%"
+                      cy="45%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
+                      // Only the percentage sits on the slice; names live in the legend
+                      // so the two never collide.
+                      label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                      outerRadius={90}
                       fill="#8884d8"
                       dataKey="value"
                     >
@@ -223,21 +227,33 @@ export default function AdminCustomerAnalyticsPage() {
                       ))}
                     </Pie>
                     <Tooltip />
-                    <Legend />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={36}
+                      iconType="circle"
+                      wrapperStyle={{ paddingTop: 12 }}
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6 min-w-0">
                 <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Customer Metrics</h2>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={metricsData}>
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart data={metricsData} margin={{ top: 8, right: 16, bottom: 48, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
+                    <XAxis
+                      dataKey="name"
+                      interval={0}
+                      angle={-20}
+                      textAnchor="end"
+                      height={60}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis allowDecimals={false} />
                     <Tooltip />
-                    <Legend />
-                    <Bar dataKey="value" fill="#3b82f6" name="Count" />
+                    <Legend verticalAlign="top" height={28} />
+                    <Bar dataKey="value" fill="#3b82f6" name="Count" maxBarSize={72} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

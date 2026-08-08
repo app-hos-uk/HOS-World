@@ -98,7 +98,7 @@ export default function WholesalerDashboardPage() {
               <div className="bg-hos-bg-secondary border rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Bulk Orders</h3>
+                    <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Orders</h3>
                     <p className="text-3xl font-bold text-hos-gold">
                       {dashboardData?.totalOrders?.toLocaleString() || '0'}
                     </p>

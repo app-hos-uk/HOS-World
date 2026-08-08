@@ -18,6 +18,15 @@ function canSellerDeleteSubmission(status: string): boolean {
   return ['SUBMITTED', 'UNDER_REVIEW', 'PROCUREMENT_REJECTED', 'REJECTED'].includes(status);
 }
 
+function formatSubmissionStatus(status?: string): string {
+  if (!status) return 'Unknown';
+  return status
+    .toLowerCase()
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 export default function WholesalerSubmissionsPage() {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,8 +71,14 @@ export default function WholesalerSubmissionsPage() {
     return submissions.filter((s) => {
       const name = (s.productData?.name || '').toLowerCase();
       const desc = (s.productData?.description || '').toLowerCase();
-      const status = (s.status || '').toLowerCase();
-      return name.includes(q) || desc.includes(q) || status.includes(q);
+      const statusRaw = (s.status || '').toLowerCase();
+      const statusLabel = formatSubmissionStatus(s.status).toLowerCase();
+      return (
+        name.includes(q) ||
+        desc.includes(q) ||
+        statusRaw.includes(q) ||
+        statusLabel.includes(q)
+      );
     });
   }, [submissions, searchTerm]);
 
@@ -154,7 +169,7 @@ export default function WholesalerSubmissionsPage() {
                   <colgroup>
                     <col />
                     <col style={{ width: '5.5rem' }} />
-                    <col style={{ width: '6rem' }} />
+                    <col style={{ width: '8rem' }} />
                     <col style={{ width: '9rem' }} />
                     <col style={{ width: '6.5rem' }} />
                     <col style={{ width: '9rem' }} />
@@ -167,8 +182,8 @@ export default function WholesalerSubmissionsPage() {
                       <th className="text-right px-4 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Stock
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
-                        Min. Order
+                      <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider whitespace-nowrap">
+                        Min Qty
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Status
@@ -212,13 +227,7 @@ export default function WholesalerSubmissionsPage() {
                                   : 'bg-yellow-500/15 text-yellow-300'
                             }`}
                           >
-                            {submission.status === 'CONTENT_COMPLETED'
-                              ? 'Content Completed'
-                              : submission.status === 'CATALOG_COMPLETED'
-                                ? 'Catalog Completed'
-                                : submission.status === 'MARKETING_COMPLETED'
-                                  ? 'Marketing Completed'
-                                  : submission.status}
+                            {formatSubmissionStatus(submission.status)}
                           </span>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-hos-text-muted">

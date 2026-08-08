@@ -92,6 +92,36 @@ export class CustomerGroupsService {
   }
 
   /**
+   * Permanently delete a customer group.
+   * Only inactive, empty groups may be removed — deactivation is the reversible path.
+   */
+  async remove(id: string) {
+    const group = await this.prisma.customerGroup.findUnique({
+      where: { id },
+      select: { id: true, name: true, isActive: true, _count: { select: { customers: true } } },
+    });
+
+    if (!group) {
+      throw new NotFoundException('Customer group not found');
+    }
+
+    if (group.isActive) {
+      throw new BadRequestException(
+        'Deactivate the customer group before deleting it.',
+      );
+    }
+
+    if (group._count.customers > 0) {
+      throw new BadRequestException(
+        `This group still has ${group._count.customers} customer(s) assigned. Reassign them before deleting.`,
+      );
+    }
+
+    await this.prisma.customerGroup.delete({ where: { id } });
+    return { id: group.id, name: group.name };
+  }
+
+  /**
    * Add customer to group
    */
   async addCustomerToGroup(groupId: string, userId: string) {

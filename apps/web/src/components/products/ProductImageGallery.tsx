@@ -140,14 +140,14 @@ export function ProductImageGallery({ images, productName }: ProductImageGallery
         <button
           type="button"
           onClick={openLightbox}
-          className="relative w-full aspect-square mb-4 bg-hos-bg-secondary rounded-lg overflow-hidden cursor-zoom-in group isolate"
+          className="relative w-full max-w-md mx-auto aspect-[4/5] max-h-[480px] mb-4 bg-hos-bg-secondary rounded-lg overflow-hidden cursor-zoom-in group isolate"
           aria-label="Zoom product image"
         >
           <SafeImage
             src={currentUrl}
             alt={productName}
             fill
-            sizes="(max-width: 768px) 100vw, 50vw"
+            sizes="(max-width: 768px) 100vw, 420px"
             className="object-contain rounded-lg transition-transform group-hover:scale-[1.02]"
           />
           <span className="absolute bottom-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded pointer-events-none">

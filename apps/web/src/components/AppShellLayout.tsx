@@ -105,31 +105,48 @@ export function AppShellLayout({
     if (!persistSidebarScroll) return;
 
     let cancelled = false;
-    let timeoutEarly: ReturnType<typeof setTimeout> | undefined;
-    let timeoutLate: ReturnType<typeof setTimeout> | undefined;
     let raf2 = 0;
+    let savedTop = 0;
+    try {
+      savedTop = Number(sessionStorage.getItem(SIDEBAR_SCROLL_KEY)) || 0;
+    } catch {
+      // ignore storage errors
+    }
 
     const restoreScroll = () => {
       if (cancelled) return;
       const nav = navScrollRef.current;
       if (!nav) return;
-      try {
-        const saved = sessionStorage.getItem(SIDEBAR_SCROLL_KEY);
-        if (saved) nav.scrollTop = Number(saved) || 0;
-      } catch {
-        // ignore storage errors
+
+      // Submenus expand after the route change, so the scroll height grows in steps.
+      // Re-applying the saved offset each time keeps it from being clamped to a
+      // shorter, not-yet-expanded list.
+      if (savedTop > 0 && nav.scrollTop !== savedTop) {
+        nav.scrollTop = savedTop;
       }
+
       const activeLink = nav.querySelector<HTMLElement>('[data-active-nav="true"]');
-      if (activeLink) {
+      if (!activeLink) return;
+      const navBox = nav.getBoundingClientRect();
+      const linkBox = activeLink.getBoundingClientRect();
+      if (linkBox.top < navBox.top || linkBox.bottom > navBox.bottom) {
         activeLink.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       }
     };
 
+    // Keep correcting while the nav is still growing, then stop so the user can scroll freely.
+    const observer =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(restoreScroll) : null;
+    const stopObserving = setTimeout(() => observer?.disconnect(), 600);
+
     const raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
         restoreScroll();
-        timeoutEarly = setTimeout(restoreScroll, 50);
-        timeoutLate = setTimeout(restoreScroll, 150);
+        const nav = navScrollRef.current;
+        if (nav && observer) {
+          observer.observe(nav);
+          Array.from(nav.children).forEach((child) => observer.observe(child));
+        }
       });
     });
 
@@ -137,8 +154,8 @@ export function AppShellLayout({
       cancelled = true;
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
-      if (timeoutEarly) clearTimeout(timeoutEarly);
-      if (timeoutLate) clearTimeout(timeoutLate);
+      clearTimeout(stopObserving);
+      observer?.disconnect();
     };
   }, [pathname, persistSidebarScroll]);
 

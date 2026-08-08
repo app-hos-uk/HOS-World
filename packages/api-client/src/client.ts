@@ -3760,6 +3760,37 @@ export class ApiClient {
     return this.request<ApiResponse<any[]>>(`/logistics/partners${query}`);
   }
 
+  async updateLogisticsPartner(
+    id: string,
+    data: {
+      name?: string;
+      type?: string;
+      description?: string;
+      contactEmail?: string;
+      contactPhone?: string;
+      website?: string;
+      isActive?: boolean;
+    },
+  ): Promise<ApiResponse<any>> {
+    const payload: any = {};
+    // Backend UpdateLogisticsPartnerDto has no `type` field (forbidNonWhitelisted).
+    if (data.name !== undefined) payload.name = data.name;
+    if (data.description !== undefined) payload.description = data.description;
+    if (data.website !== undefined) payload.website = data.website;
+    if (data.contactEmail !== undefined || data.contactPhone !== undefined) {
+      payload.contactInfo = {
+        name: data.name || '',
+        email: data.contactEmail || '',
+        phone: data.contactPhone,
+      };
+    }
+    if (data.isActive !== undefined) payload.isActive = data.isActive;
+    return this.request<ApiResponse<any>>(`/logistics/partners/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  }
+
   async deleteLogisticsPartner(id: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/logistics/partners/${id}`, {
       method: 'DELETE',
@@ -5588,6 +5619,12 @@ export class ApiClient {
     return this.request<ApiResponse<any>>(`/customer-groups/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCustomerGroup(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/customer-groups/${id}`, {
+      method: 'DELETE',
     });
   }
 

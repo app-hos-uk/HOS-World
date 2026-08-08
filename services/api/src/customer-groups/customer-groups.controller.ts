@@ -97,6 +97,23 @@ export class CustomerGroupsController {
     };
   }
 
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete customer group',
+    description: 'Permanently deletes an inactive customer group that has no assigned customers.',
+  })
+  @ApiParam({ name: 'id', description: 'Customer group UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Customer group deleted successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Group is active or still has customers' })
+  @SwaggerApiResponse({ status: 404, description: 'Customer group not found' })
+  async remove(@Param('id') id: string): Promise<ApiResponse<any>> {
+    const group = await this.customerGroupsService.remove(id);
+    return {
+      data: group,
+      message: 'Customer group deleted successfully',
+    };
+  }
+
   @Post(':id/customers/:userId')
   @ApiOperation({
     summary: 'Add customer to group',

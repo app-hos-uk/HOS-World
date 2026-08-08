@@ -430,7 +430,7 @@ export default function ProductDetailClient() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,420px)_1fr] gap-8 mb-8">
           <ProductImageGallery images={product.images} productName={product.name} />
 
           {/* Product Details */}
@@ -511,21 +511,25 @@ export default function ProductDetailClient() {
             {/* Quantity Selector */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-hos-text-secondary mb-2">Quantity</label>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <button
+                  type="button"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary"
+                  aria-label="Decrease quantity"
+                  className="min-w-11 min-h-11 px-4 py-3 text-xl leading-none border border-hos-border rounded-lg hover:bg-hos-bg-tertiary"
                 >
-                  -
+                  −
                 </button>
-                <span className="text-lg font-semibold">{quantity}</span>
+                <span className="min-w-[2.5rem] text-center text-lg font-semibold">{quantity}</span>
                 <button
+                  type="button"
                   onClick={() => {
                     const max = product.stock ?? 99;
                     setQuantity(Math.min(max, quantity + 1));
                   }}
                   disabled={quantity >= (product.stock ?? 99)}
-                  className="px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Increase quantity"
+                  className="min-w-11 min-h-11 px-4 py-3 text-xl leading-none border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   +
                 </button>
@@ -612,32 +616,60 @@ export default function ProductDetailClient() {
         </div>
 
         {/* Specifications */}
-        {product.attributes && product.attributes.length > 0 && (
-          <div className="mt-12 border-t pt-8">
-            <h2 className="text-2xl font-bold mb-4">Specifications</h2>
-            <div className="bg-hos-bg-secondary rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
-                <tbody>
-                  {product.attributes.map((attr: any) => {
-                    const label = attr.attribute?.name || 'Specification';
-                    const value =
-                      typeof attr.value === 'object' && attr.value?.value != null
-                        ? attr.value.value
-                        : attr.value != null
-                          ? String(attr.value)
-                          : '—';
-                    return (
-                      <tr key={attr.id || attr.attributeId} className="border-b border-hos-border last:border-0">
-                        <td className="px-4 py-3 font-medium text-hos-text-primary w-1/3">{label}</td>
-                        <td className="px-4 py-3 text-hos-text-secondary">{value}</td>
+        {(() => {
+          const attrRows = (product.attributes || []).map((attr: any) => {
+            const label = attr.attribute?.name || 'Specification';
+            const value =
+              typeof attr.value === 'object' && attr.value?.value != null
+                ? attr.value.value
+                : attr.value != null
+                  ? String(attr.value)
+                  : '—';
+            return { key: String(attr.id || attr.attributeId || label), label, value };
+          });
+          const dimensions =
+            product.length != null || product.width != null || product.height != null
+              ? [product.length, product.width, product.height]
+                  .filter((v) => v != null && v !== '')
+                  .join(' × ')
+              : null;
+          const baseRows = [
+            { key: 'brand', label: 'Brand', value: product.brand },
+            { key: 'sku', label: 'SKU', value: product.sku },
+            {
+              key: 'category',
+              label: 'Category',
+              value: product.category
+                ? displayCategory(product.category)
+                : product.categoryRelation?.name,
+            },
+            {
+              key: 'weight',
+              label: 'Weight',
+              value: product.weight != null ? String(product.weight) : null,
+            },
+            { key: 'dimensions', label: 'Dimensions', value: dimensions },
+          ].filter((row) => row.value != null && String(row.value).trim() !== '');
+          const rows = [...baseRows, ...attrRows] as Array<{ key: string; label: string; value: string }>;
+          if (rows.length === 0) return null;
+          return (
+            <div className="mt-12 border-t pt-8">
+              <h2 className="text-2xl font-bold mb-4">Specifications</h2>
+              <div className="bg-hos-bg-secondary rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.key} className="border-b border-hos-border last:border-0">
+                        <td className="px-4 py-3 font-medium text-hos-text-primary w-1/3">{row.label}</td>
+                        <td className="px-4 py-3 text-hos-text-secondary">{row.value}</td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Full Product Description */}
         {product.description && (

@@ -234,7 +234,18 @@ export default function CustomerDashboardPage() {
 
   // Calculate spending analytics
   const spendingAnalytics = useMemo(() => {
-    if (!allOrders.length) return { monthlySpending: [], categoryBreakdown: [], yearlyTotal: 0 };
+    if (!allOrders.length) {
+      return {
+        monthlySpending: [],
+        categoryBreakdown: [],
+        yearlyTotal: 0,
+        favoriteFandom: '—',
+        totalItemsPurchased: 0,
+        lastOrderDate: '—',
+        avgPurchaseFrequency: '—',
+        highestSpendingMonth: 'N/A',
+      };
+    }
 
     const completedOrders = allOrders.filter((o) => 
       ['DELIVERED', 'COMPLETED', 'PAID'].includes(o.status?.toUpperCase())
@@ -275,10 +286,13 @@ export default function CustomerDashboardPage() {
     const colors: Record<string, string> = {
       COMPLETED: '#10B981',
       DELIVERED: '#06b6d4',
+      FULFILLED: '#14B8A6',
       PENDING: '#F59E0B',
       PROCESSING: '#3B82F6',
       SHIPPED: '#8B5CF6',
       CANCELLED: '#EF4444',
+      REFUNDED: '#F97316',
+      RETURNED: '#EC4899',
       PAID: '#c9a227',
     };
 
@@ -292,7 +306,64 @@ export default function CustomerDashboardPage() {
       .filter((o) => new Date(o.createdAt).getFullYear() === now.getFullYear())
       .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
 
-    return { monthlySpending, categoryBreakdown, yearlyTotal };
+    const fandomCounts: Record<string, number> = {};
+    let totalItemsPurchased = 0;
+    completedOrders.forEach((order: any) => {
+      const items = order.items || order.orderItems || [];
+      items.forEach((item: any) => {
+        totalItemsPurchased += Number(item.quantity) || 1;
+        const fandom = item.product?.fandom || item.fandom || item.product?.category;
+        if (fandom) {
+          const key = typeof fandom === 'string' ? fandom : fandom.name || 'Other';
+          fandomCounts[key] = (fandomCounts[key] || 0) + (Number(item.quantity) || 1);
+        }
+      });
+    });
+    const favoriteFandom =
+      Object.entries(fandomCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+
+    const sortedByDate = [...allOrders].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+    const lastOrderDate = sortedByDate[0]?.createdAt
+      ? new Date(sortedByDate[0].createdAt).toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      : '—';
+
+    const firstOrderDate = sortedByDate[sortedByDate.length - 1]?.createdAt
+      ? new Date(sortedByDate[sortedByDate.length - 1].createdAt)
+      : null;
+    let avgPurchaseFrequency = '—';
+    if (firstOrderDate && allOrders.length > 1) {
+      const monthsSpan = Math.max(
+        1,
+        (now.getFullYear() - firstOrderDate.getFullYear()) * 12 +
+          (now.getMonth() - firstOrderDate.getMonth()) +
+          1,
+      );
+      avgPurchaseFrequency = `${(allOrders.length / monthsSpan).toFixed(1)} / month`;
+    } else if (allOrders.length === 1) {
+      avgPurchaseFrequency = '1 order';
+    }
+
+    const highestSpendingMonth =
+      monthlySpending.length > 0
+        ? monthlySpending.reduce((a, b) => (a.amount > b.amount ? a : b)).month
+        : 'N/A';
+
+    return {
+      monthlySpending,
+      categoryBreakdown,
+      yearlyTotal,
+      favoriteFandom,
+      totalItemsPurchased,
+      lastOrderDate,
+      avgPurchaseFrequency,
+      highestSpendingMonth,
+    };
   }, [allOrders]);
 
   const getStatusColor = (status: string) => {
@@ -388,21 +459,30 @@ export default function CustomerDashboardPage() {
               {/* Stats Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
                 {[
-                  { icon: navIcon('package', 'w-8 h-8'), value: stats?.totalOrders || 0, label: 'Total Orders', color: 'text-hos-text-secondary' },
-                  { icon: navIcon('hourglass', 'w-8 h-8'), value: stats?.pendingOrders || 0, label: 'In Progress', color: 'text-amber-400' },
-                  { icon: navIcon('checkCircle', 'w-8 h-8'), value: stats?.completedOrders || 0, label: 'Completed', color: 'text-green-400' },
-                  { icon: navIcon('dollar', 'w-8 h-8'), value: formatPrice(stats?.totalSpent || 0), label: 'Total Spent', color: 'text-hos-gold' },
-                  { icon: navIcon('heart', 'w-8 h-8'), value: stats?.wishlistItems || 0, label: 'Wishlist', color: 'text-pink-400' },
-                  { icon: navIcon('cart', 'w-8 h-8'), value: stats?.cartItems || 0, label: 'In Cart', color: 'text-hos-gold' },
+                  { icon: navIcon('package', 'w-8 h-8'), value: stats?.totalOrders || 0, label: 'Total Orders' },
+                  { icon: navIcon('hourglass', 'w-8 h-8'), value: stats?.pendingOrders || 0, label: 'In Progress' },
+                  { icon: navIcon('checkCircle', 'w-8 h-8'), value: stats?.completedOrders || 0, label: 'Completed' },
+                  { icon: navIcon('dollar', 'w-8 h-8'), value: formatPrice(stats?.totalSpent || 0), label: 'Total Spent', accent: true },
+                  { icon: navIcon('heart', 'w-8 h-8'), value: stats?.wishlistItems || 0, label: 'Wishlist' },
+                  { icon: navIcon('cart', 'w-8 h-8'), value: stats?.cartItems || 0, label: 'In Cart' },
                 ].map((card) => (
-                  <div key={card.label} className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border">
-                    <div className="text-3xl mb-2">{card.icon}</div>
+                  <div
+                    key={card.label}
+                    className="bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border min-h-[120px] flex flex-col justify-center"
+                  >
+                    <div className="text-2xl mb-2 text-hos-text-secondary">{card.icon}</div>
                     {showSkeleton ? (
                       <div className="h-8 w-16 bg-hos-bg-tertiary rounded animate-pulse mb-1" />
                     ) : (
-                      <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
+                      <p
+                        className={`text-2xl font-bold ${
+                          card.accent ? 'text-hos-gold' : 'text-hos-text-secondary'
+                        }`}
+                      >
+                        {card.value}
+                      </p>
                     )}
-                    <p className="text-xs text-hos-text-muted">{card.label}</p>
+                    <p className="text-xs font-medium text-hos-text-secondary mt-1">{card.label}</p>
                   </div>
                 ))}
               </div>
@@ -927,27 +1007,51 @@ export default function CustomerDashboardPage() {
 
                 <div className="flex min-h-[320px] flex-col rounded-xl border border-hos-border bg-hos-bg-secondary p-6 shadow-sm">
                   <h3 className="mb-4 text-lg font-semibold text-hos-text-secondary">Shopping Insights</h3>
-                  <div className="flex flex-1 flex-col justify-center space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg">
-                      <span className="text-hos-text-secondary">Favorite Category</span>
-                      <span className="font-semibold text-hos-text-secondary inline-flex items-center gap-1">{navIcon('wand', 'w-4 h-4')} Wizarding Items</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg">
-                      <span className="text-hos-text-secondary">Most Active Month</span>
-                      <span className="font-semibold text-hos-text-secondary">
-                        {spendingAnalytics.monthlySpending.length > 0
-                          ? spendingAnalytics.monthlySpending.reduce((a, b) => (a.amount > b.amount ? a : b)).month
-                          : 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg">
-                      <span className="text-hos-text-secondary">Completion Rate</span>
-                      <span className="font-semibold text-green-400">
-                        {stats?.totalOrders
-                          ? Math.round((stats.completedOrders / stats.totalOrders) * 100)
-                          : 0}%
-                      </span>
-                    </div>
+                  <div className="flex flex-1 flex-col justify-center space-y-3">
+                    {[
+                      {
+                        label: 'Most Purchased Franchise',
+                        value: spendingAnalytics.favoriteFandom || '—',
+                      },
+                      {
+                        label: 'Total Items Purchased',
+                        value: String(spendingAnalytics.totalItemsPurchased ?? 0),
+                      },
+                      {
+                        label: 'Last Order Date',
+                        value: spendingAnalytics.lastOrderDate || '—',
+                      },
+                      {
+                        label: 'Avg. Purchase Frequency',
+                        value: spendingAnalytics.avgPurchaseFrequency || '—',
+                      },
+                      {
+                        label: 'Highest Spending Month',
+                        value: spendingAnalytics.highestSpendingMonth || 'N/A',
+                      },
+                      {
+                        label: 'Total Rewards Earned',
+                        value: String(loyaltyMembership?.totalPointsEarned ?? 0),
+                      },
+                      {
+                        label: 'Completion Rate',
+                        value: `${
+                          stats?.totalOrders
+                            ? Math.round((stats.completedOrders / stats.totalOrders) * 100)
+                            : 0
+                        }%`,
+                      },
+                    ].map((row) => (
+                      <div
+                        key={row.label}
+                        className="flex items-center justify-between gap-3 p-3 bg-hos-bg rounded-lg"
+                      >
+                        <span className="text-hos-text-secondary text-sm">{row.label}</span>
+                        <span className="font-semibold text-hos-text-secondary text-sm text-right">
+                          {row.value}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

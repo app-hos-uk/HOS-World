@@ -6,16 +6,43 @@ import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useToast } from '@/hooks/useToast';
 import { PortalMobileCard } from '@/components/ui/PortalMobileCard';
 import { PORTAL_INPUT_CLASS, PORTAL_SELECT_CLASS } from '@/lib/portalFieldClasses';
 
+/**
+ * Wholesalers fulfil their own marketplace orders, so they get the same
+ * forward-only transitions as B2C sellers.
+ */
+const NEXT_STATUS: Record<string, { status: string; label: string }> = {
+  PENDING: { status: 'CONFIRMED', label: 'Accept Order' },
+  ACCEPTED: { status: 'CONFIRMED', label: 'Confirm Order' },
+  CONFIRMED: { status: 'PROCESSING', label: 'Start Processing' },
+  PROCESSING: { status: 'FULFILLED', label: 'Mark as Fulfilled' },
+  FULFILLED: { status: 'SHIPPED', label: 'Mark as Shipped' },
+  SHIPPED: { status: 'DELIVERED', label: 'Mark as Delivered' },
+};
+
+const CANCELLABLE = ['PENDING', 'ACCEPTED', 'CONFIRMED', 'PROCESSING'];
+
+function normalizeStatus(status: unknown): string {
+  return String(status || '').toUpperCase();
+}
+
 export default function WholesalerOrdersPage() {
   const { formatPrice } = useCurrency();
+  const toast = useToast();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [carrier, setCarrier] = useState('');
+  const [cancelReason, setCancelReason] = useState('');
+  const [showCancelForm, setShowCancelForm] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   const menuItems = getSellerMenuItems(true);
 
@@ -37,6 +64,74 @@ export default function WholesalerOrdersPage() {
       setError(err.message || 'Failed to load orders');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openManageModal = (order: any) => {
+    setSelectedOrder(order);
+    setTrackingNumber(order.trackingCode || order.trackingNumber || '');
+    setCarrier(order.carrier || '');
+    setCancelReason('');
+    setShowCancelForm(false);
+  };
+
+  const closeManageModal = () => {
+    setSelectedOrder(null);
+    setTrackingNumber('');
+    setCarrier('');
+    setCancelReason('');
+    setShowCancelForm(false);
+  };
+
+  const handleStatusUpdate = async (newStatus: string) => {
+    if (!selectedOrder) return;
+
+    if (newStatus === 'SHIPPED') {
+      if (!trackingNumber.trim()) {
+        toast.error('Enter a tracking number before marking as shipped');
+        return;
+      }
+      if (!carrier.trim()) {
+        toast.error('Enter the carrier before marking as shipped');
+        return;
+      }
+    }
+
+    try {
+      setUpdatingStatus(true);
+      const shipping =
+        newStatus === 'SHIPPED'
+          ? { trackingCode: trackingNumber.trim(), carrier: carrier.trim() }
+          : undefined;
+      await apiClient.updateOrderStatus(selectedOrder.id, newStatus, shipping);
+      toast.success(`Order status updated to ${newStatus}`);
+      closeManageModal();
+      await fetchOrders();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update order status');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!selectedOrder) return;
+    if (!cancelReason.trim()) {
+      toast.error('Please provide a cancellation reason');
+      return;
+    }
+    try {
+      setUpdatingStatus(true);
+      // Cancellation goes through the dedicated endpoint so refunds and stock
+      // restoration are handled; the generic update endpoint rejects CANCELLED.
+      await apiClient.cancelOrder(selectedOrder.id, cancelReason.trim());
+      toast.success('Order cancellation submitted');
+      closeManageModal();
+      await fetchOrders();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to cancel order');
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
@@ -149,6 +244,18 @@ export default function WholesalerOrdersPage() {
                         ),
                       },
                       { label: 'Date', value: new Date(order.createdAt).toLocaleDateString() },
+                      {
+                        label: 'Actions',
+                        value: (
+                          <button
+                            type="button"
+                            onClick={() => openManageModal(order)}
+                            className="text-hos-gold hover:text-hos-gold-hover font-medium"
+                          >
+                            Manage
+                          </button>
+                        ),
+                      },
                     ]}
                   />
                 ))}
@@ -174,6 +281,9 @@ export default function WholesalerOrdersPage() {
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                         Date
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-hos-text-muted uppercase tracking-wider">
+                        Actions
                       </th>
                     </tr>
                   </thead>
@@ -212,6 +322,15 @@ export default function WholesalerOrdersPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {new Date(order.createdAt).toLocaleDateString()}
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                          <button
+                            type="button"
+                            onClick={() => openManageModal(order)}
+                            className="text-hos-gold hover:text-hos-gold-hover font-medium"
+                          >
+                            Manage
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -219,6 +338,135 @@ export default function WholesalerOrdersPage() {
               </div>
               </>
             )}
+          </div>
+        )}
+
+        {selectedOrder && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <div className="w-full max-w-lg rounded-lg bg-hos-bg-secondary border border-hos-border shadow-xl">
+              <div className="flex items-start justify-between border-b border-hos-border p-5">
+                <div>
+                  <h2 className="text-lg font-semibold text-hos-text-secondary">
+                    Order #{selectedOrder.orderNumber || selectedOrder.id.slice(0, 8)}
+                  </h2>
+                  <p className="mt-1 text-sm text-hos-text-muted">
+                    Current status: {normalizeStatus(selectedOrder.status)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeManageModal}
+                  className="text-hos-text-muted hover:text-hos-text-secondary"
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4 p-5">
+                {NEXT_STATUS[normalizeStatus(selectedOrder.status)]?.status === 'SHIPPED' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-hos-text-secondary">
+                        Tracking Number
+                      </label>
+                      <input
+                        type="text"
+                        value={trackingNumber}
+                        onChange={(e) => setTrackingNumber(e.target.value)}
+                        placeholder="e.g. 1Z999AA10123456784"
+                        className={PORTAL_INPUT_CLASS}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-hos-text-secondary">
+                        Carrier
+                      </label>
+                      <input
+                        type="text"
+                        value={carrier}
+                        onChange={(e) => setCarrier(e.target.value)}
+                        placeholder="e.g. DPD"
+                        className={PORTAL_INPUT_CLASS}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-2">
+                  {NEXT_STATUS[normalizeStatus(selectedOrder.status)] ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleStatusUpdate(NEXT_STATUS[normalizeStatus(selectedOrder.status)].status)
+                      }
+                      disabled={updatingStatus}
+                      className="rounded-lg bg-hos-gold px-4 py-2 text-sm font-medium text-[#1a1406] hover:bg-hos-gold-hover disabled:opacity-50"
+                    >
+                      {NEXT_STATUS[normalizeStatus(selectedOrder.status)].label}
+                    </button>
+                  ) : (
+                    <p className="text-sm text-hos-text-muted">
+                      This order has reached a final status — no further action is available.
+                    </p>
+                  )}
+
+                  {CANCELLABLE.includes(normalizeStatus(selectedOrder.status)) && !showCancelForm && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCancelForm(true)}
+                      disabled={updatingStatus}
+                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                    >
+                      Cancel Order
+                    </button>
+                  )}
+                </div>
+
+                {showCancelForm && (
+                  <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4">
+                    <label className="mb-1 block text-sm font-medium text-hos-text-secondary">
+                      Cancellation reason
+                    </label>
+                    <textarea
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      rows={3}
+                      placeholder="Explain why this order is being cancelled"
+                      className={PORTAL_INPUT_CLASS}
+                    />
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleCancelOrder}
+                        disabled={updatingStatus}
+                        className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                      >
+                        Confirm Cancellation
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowCancelForm(false)}
+                        disabled={updatingStatus}
+                        className="rounded-lg bg-hos-bg-tertiary px-4 py-2 text-sm font-medium text-hos-text-secondary"
+                      >
+                        Keep Order
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end border-t border-hos-border p-5">
+                <button
+                  type="button"
+                  onClick={closeManageModal}
+                  className="rounded-lg bg-hos-bg-tertiary px-4 py-2 text-sm font-medium text-hos-text-secondary hover:bg-hos-bg-tertiary"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </AppShellLayout>

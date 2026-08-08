@@ -66,6 +66,8 @@ export default function AdminPricingPage() {
   const [priceFilter, setPriceFilter] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock' | 'margin'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   
   // Bulk update form
   const [bulkAction, setBulkAction] = useState<'price' | 'discount' | 'stock' | 'taxRate'>('price');
@@ -194,6 +196,17 @@ export default function AdminPricingPage() {
     return filtered;
   }, [products, searchTerm, statusFilter, stockFilter, priceFilter, sortBy, sortOrder]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+  const pageStart = (safePage - 1) * pageSize;
+  const pagedProducts = filteredProducts.slice(pageStart, pageStart + pageSize);
+  const showingFrom = filteredProducts.length === 0 ? 0 : pageStart + 1;
+  const showingTo = Math.min(pageStart + pageSize, filteredProducts.length);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, stockFilter, priceFilter, sortBy, sortOrder, pageSize]);
+
   const handleEditProduct = (product: Product) => {
     setSelectedProduct(product);
     setEditData({
@@ -321,8 +334,24 @@ export default function AdminPricingPage() {
     });
   };
 
+  const allPageSelected =
+    pagedProducts.length > 0 && pagedProducts.every((p) => selectedProducts.has(p.id));
+
+  /** Only the current page — never the full filtered set across pages. */
   const selectAllVisible = () => {
-    setSelectedProducts(new Set(filteredProducts.map(p => p.id)));
+    setSelectedProducts((prev) => {
+      const next = new Set(prev);
+      pagedProducts.forEach((p) => next.add(p.id));
+      return next;
+    });
+  };
+
+  const deselectVisible = () => {
+    setSelectedProducts((prev) => {
+      const next = new Set(prev);
+      pagedProducts.forEach((p) => next.delete(p.id));
+      return next;
+    });
   };
 
   const clearSelection = () => {
@@ -531,9 +560,10 @@ export default function AdminPricingPage() {
                     <th className="px-4 py-3 text-xs font-medium text-hos-text-muted uppercase text-center">
                       <input
                         type="checkbox"
-                        checked={selectedProducts.size === filteredProducts.length && filteredProducts.length > 0}
-                        onChange={() => selectedProducts.size === filteredProducts.length ? clearSelection() : selectAllVisible()}
+                        checked={allPageSelected}
+                        onChange={() => (allPageSelected ? deselectVisible() : selectAllVisible())}
                         className="rounded border-hos-border text-hos-gold"
+                        aria-label="Select all products on this page"
                       />
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Product</th>
@@ -556,7 +586,7 @@ export default function AdminPricingPage() {
                       </td>
                     </tr>
                   ) : (
-                    filteredProducts.map((product) => (
+                    pagedProducts.map((product) => (
                       <tr key={product.id} className={`hover:bg-hos-bg-tertiary ${selectedProducts.has(product.id) ? 'bg-hos-gold/10' : ''}`}>
                         <td className="px-4 py-3">
                           <input
@@ -643,8 +673,9 @@ export default function AdminPricingPage() {
                           <button
                             onClick={() => handleEditProduct(product)}
                             className="text-hos-gold hover:text-hos-gold-hover text-sm"
+                            title={`Edit all pricing fields for ${product.name}`}
                           >
-                            Edit All
+                            Edit
                           </button>
                         </td>
                       </tr>
@@ -653,6 +684,51 @@ export default function AdminPricingPage() {
                 </tbody>
               </table>
             </div>
+
+            {filteredProducts.length > 0 && (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-hos-border px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <p className="text-sm text-hos-text-muted">
+                    Showing {showingFrom}–{showingTo} of {filteredProducts.length} products
+                  </p>
+                  <label className="flex items-center gap-2 text-sm text-hos-text-muted">
+                    Rows
+                    <select
+                      value={pageSize}
+                      onChange={(e) => setPageSize(Number(e.target.value))}
+                      className="px-2 py-1 rounded border border-hos-border bg-hos-bg-secondary text-hos-text-secondary"
+                    >
+                      {[25, 50, 100].map((size) => (
+                        <option key={size} value={size}>
+                          {size}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={safePage <= 1}
+                    className="px-3 py-1.5 text-sm rounded-md border border-hos-border text-hos-text-secondary hover:bg-hos-bg-tertiary disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-hos-text-muted">
+                    Page {safePage} of {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={safePage >= totalPages}
+                    className="px-3 py-1.5 text-sm rounded-md border border-hos-border text-hos-text-secondary hover:bg-hos-bg-tertiary disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Edit Modal */}

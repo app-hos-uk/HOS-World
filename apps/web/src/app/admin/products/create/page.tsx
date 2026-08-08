@@ -10,6 +10,7 @@ import { AttributeEditor } from '@/components/taxonomy/AttributeEditor';
 import { FandomSelector } from '@/components/taxonomy/FandomSelector';
 import { SafeImage } from '@/components/SafeImage';
 import { ImageSpecsHint } from '@/components/ImageSpecsHint';
+import { normalizeWhitespace, validateNameLike } from '@/lib/formFieldValidation';
 import { useRouter } from 'next/navigation';
 
 /**
@@ -94,8 +95,10 @@ export default function ProductCreationPage() {
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const productName = normalizeWhitespace(formData.name);
     const validationErrors: string[] = [];
-    if (!formData.name.trim()) validationErrors.push('Product name is required');
+    const nameErr = validateNameLike(productName, 'Product name');
+    if (nameErr) validationErrors.push(nameErr);
     if (formData.description.trim().length < 10) validationErrors.push('Description must be at least 10 characters');
     if (images.length === 0) validationErrors.push('At least one product image is required');
     if (!formData.categoryId && !formData.fandom) validationErrors.push('A fandom or category must be selected');
@@ -124,7 +127,7 @@ export default function ProductCreationPage() {
 
       // Create product as DRAFT (no price/stock - those are managed separately for SIMPLE)
       const response = await apiClient.createAdminProduct({
-        name: formData.name,
+        name: productName,
         description: formData.description,
         shortDescription: formData.shortDescription?.trim() || undefined,
         sku: formData.sku || undefined,

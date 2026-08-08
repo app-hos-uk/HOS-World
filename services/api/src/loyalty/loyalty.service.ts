@@ -244,7 +244,7 @@ export class LoyaltyService implements OnModuleInit {
         // Lock + in-tx duplicate check so concurrent getMembership/enroll
         // paths cannot both award the welcome bonus.
         await tx.$executeRaw(
-          Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membershipId}::uuid FOR UPDATE`,
+          Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membershipId} FOR UPDATE`,
         );
         const existingSignup = await tx.loyaltyTransaction.findFirst({
           where: { membershipId, source: 'SIGNUP', type: LoyaltyTxType.BONUS },

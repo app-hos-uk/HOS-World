@@ -102,6 +102,7 @@ export default function WholesalerProfilePage() {
     reviewNotes?: string;
     createdAt: string;
     reviewedAt?: string;
+    reviewedBy?: string | { id?: string; firstName?: string; lastName?: string; email?: string };
   }
 
   const DOCUMENT_TYPES = [
@@ -848,15 +849,26 @@ export default function WholesalerProfilePage() {
 
                         {uploadMode === 'file' ? (
                           <div>
-                            <input
-                              id="verification-file-input"
-                              type="file"
-                              accept=".pdf,.jpg,.jpeg,.png,.webp"
-                              onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                              className="w-full text-sm text-hos-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-hos-gold file:text-[#1a1406] hover:file:bg-hos-gold-hover file:cursor-pointer"
-                            />
+                            <label
+                              htmlFor="verification-file-input"
+                              className="flex flex-col items-center justify-center gap-2 w-full min-h-[7rem] px-4 py-6 border-2 border-dashed border-hos-border rounded-lg bg-hos-bg-secondary cursor-pointer hover:border-hos-gold/50 transition-colors"
+                            >
+                              <span className="px-4 py-2 rounded-lg text-sm font-medium bg-hos-gold text-[#1a1406]">
+                                Choose File
+                              </span>
+                              <span className="text-xs text-hos-text-muted text-center">
+                                PDF, JPG, PNG, or WEBP
+                              </span>
+                              <input
+                                id="verification-file-input"
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                                className="sr-only"
+                              />
+                            </label>
                             {selectedFile && (
-                              <p className="text-xs text-hos-text-muted mt-1">
+                              <p className="text-xs text-hos-text-muted mt-2">
                                 Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
                               </p>
                             )}
@@ -896,18 +908,38 @@ export default function WholesalerProfilePage() {
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        {verificationDocs.map((doc) => (
+                        {(() => {
+                          const attemptByType: Record<string, number> = {};
+                          const sortedDocs = [...verificationDocs].sort(
+                            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+                          );
+                          const attemptMap = new Map<string, number>();
+                          sortedDocs.forEach((doc) => {
+                            attemptByType[doc.documentType] = (attemptByType[doc.documentType] || 0) + 1;
+                            attemptMap.set(doc.id, attemptByType[doc.documentType]);
+                          });
+                          return verificationDocs.map((doc) => {
+                            const attempt = attemptMap.get(doc.id) || 1;
+                            const reviewedByName =
+                              typeof doc.reviewedBy === 'string'
+                                ? doc.reviewedBy
+                                : doc.reviewedBy
+                                  ? [doc.reviewedBy.firstName, doc.reviewedBy.lastName]
+                                      .filter(Boolean)
+                                      .join(' ') || doc.reviewedBy.email
+                                  : null;
+                            return (
                           <div
                             key={doc.id}
                             className={`bg-hos-bg-tertiary border rounded-lg p-4 ${
                               doc.status === 'REJECTED' ? 'border-red-500/30' : 'border-hos-border'
                             }`}
                           >
-                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                              <div className="space-y-1">
+                            <div className="flex flex-col sm:flex-row sm:items-stretch gap-3">
+                              <div className="space-y-1 flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="font-medium text-hos-text-secondary">
-                                    {formatDocType(doc.documentType)}
+                                    {formatDocType(doc.documentType)} — Attempt {attempt}
                                   </span>
                                   <span
                                     className={`px-2 py-0.5 rounded text-xs font-medium ${
@@ -940,6 +972,23 @@ export default function WholesalerProfilePage() {
                                     minute: '2-digit',
                                   })}
                                 </p>
+                                {doc.reviewedAt && (
+                                  <p className="text-xs text-hos-text-muted">
+                                    Reviewed {new Date(doc.reviewedAt).toLocaleDateString(undefined, {
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                    {reviewedByName ? ` by ${reviewedByName}` : ''}
+                                  </p>
+                                )}
+                                {doc.status === 'APPROVED' && doc.reviewedAt && (
+                                  <p className="text-xs text-green-400">
+                                    Approved {new Date(doc.reviewedAt).toLocaleDateString()}
+                                  </p>
+                                )}
                                 {doc.reviewNotes && (
                                   <div
                                     className={`mt-2 text-sm rounded-md p-2.5 ${
@@ -948,11 +997,14 @@ export default function WholesalerProfilePage() {
                                         : 'bg-hos-bg-secondary text-hos-text-secondary'
                                     }`}
                                   >
-                                    <span className="font-medium">Review Notes:</span> {doc.reviewNotes}
+                                    <span className="font-medium">
+                                      {doc.status === 'REJECTED' ? 'Rejection Reason:' : 'Review Notes:'}
+                                    </span>{' '}
+                                    {doc.reviewNotes}
                                   </div>
                                 )}
                               </div>
-                              <div className="flex flex-col gap-2 shrink-0">
+                              <div className="flex flex-col gap-2 w-full sm:w-28 shrink-0">
                                 <a
                                   href={doc.fileUrl}
                                   target="_blank"
@@ -961,7 +1013,7 @@ export default function WholesalerProfilePage() {
                                 >
                                   View
                                 </a>
-                                {doc.status === 'REJECTED' && (
+                                {doc.status === 'REJECTED' ? (
                                   <button
                                     type="button"
                                     onClick={() => handleResubmit(doc)}
@@ -969,11 +1021,15 @@ export default function WholesalerProfilePage() {
                                   >
                                     Resubmit
                                   </button>
+                                ) : (
+                                  <span className="hidden sm:block h-[38px]" aria-hidden="true" />
                                 )}
                               </div>
                             </div>
                           </div>
-                        ))}
+                            );
+                          });
+                        })()}
                       </div>
                     )}
                   </div>

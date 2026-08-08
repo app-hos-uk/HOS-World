@@ -113,24 +113,35 @@ export default function RevenueRecognitionPage() {
                   <p className="text-hos-text-muted text-center py-4">No deferred revenue items</p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                    <table className="w-full min-w-[640px] text-sm table-fixed">
+                      <colgroup>
+                        <col className="w-[22%]" />
+                        <col className="w-[18%]" />
+                        <col className="w-[20%]" />
+                        <col className="w-[28%]" />
+                        <col className="w-[12%]" />
+                      </colgroup>
                       <thead>
                         <tr className="border-b border-hos-border">
-                          <th className="text-left py-2 text-hos-text-muted font-medium">Order</th>
-                          <th className="tabular-nums text-right py-2 text-hos-text-muted font-medium">Amount</th>
-                          <th className="text-left py-2 text-hos-text-muted font-medium">Status</th>
-                          <th className="text-left py-2 text-hos-text-muted font-medium">Seller</th>
-                          <th className="text-left py-2 text-hos-text-muted font-medium">Age</th>
+                          <th className="text-left px-3 py-2 text-hos-text-muted font-medium">Order</th>
+                          <th className="tabular-nums text-right px-3 py-2 text-hos-text-muted font-medium">Amount</th>
+                          <th className="text-left px-3 py-2 text-hos-text-muted font-medium">Status</th>
+                          <th className="text-left px-3 py-2 text-hos-text-muted font-medium">Seller</th>
+                          <th className="text-right px-3 py-2 text-hos-text-muted font-medium">Age</th>
                         </tr>
                       </thead>
                       <tbody>
                         {deferred.map((order: any) => (
                           <tr key={order.id} className="border-b border-hos-border/50">
-                            <td className="py-2 font-medium">{order.orderNumber || order.id.slice(0, 8)}</td>
-                            <td className="tabular-nums text-right py-2">{formatPrice(order.total)}</td>
-                            <td className="py-2"><span className="px-2 py-0.5 text-xs rounded bg-yellow-500/20 text-yellow-400">{order.status}</span></td>
-                            <td className="py-2 text-hos-text-muted">{order.seller?.storeName || '—'}</td>
-                            <td className="py-2 text-hos-text-muted">{order.ageInDays}d</td>
+                            <td className="px-3 py-2 font-medium truncate">{order.orderNumber || order.id.slice(0, 8)}</td>
+                            <td className="tabular-nums text-right px-3 py-2">{formatPrice(order.total)}</td>
+                            <td className="px-3 py-2">
+                              <span className="inline-block px-2 py-0.5 text-xs rounded bg-yellow-500/20 text-yellow-400">
+                                {order.status}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-hos-text-muted truncate">{order.seller?.storeName || '—'}</td>
+                            <td className="px-3 py-2 text-right tabular-nums text-hos-text-muted">{order.ageInDays}d</td>
                           </tr>
                         ))}
                       </tbody>

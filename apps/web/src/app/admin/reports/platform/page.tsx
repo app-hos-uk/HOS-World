@@ -60,6 +60,15 @@ function groupByPeriod(items: any[], dateField: string, period: Period, startDat
     .map(([label, entries]) => ({ label, entries, count: entries.length }));
 }
 
+/** Show at most ~12 x-axis ticks so daily ranges stay legible instead of overlapping. */
+function axisTickInterval(pointCount: number): number {
+  const MAX_TICKS = 12;
+  if (pointCount <= MAX_TICKS) return 0;
+  return Math.ceil(pointCount / MAX_TICKS) - 1;
+}
+
+const USER_GROWTH_PAGE_SIZE = 10;
+
 export default function AdminPlatformMetricsPage() {
   const [metrics, setMetrics] = useState<PlatformMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,6 +76,12 @@ export default function AdminPlatformMetricsPage() {
   const [period, setPeriod] = useState<Period>('monthly');
   const [startDate, setStartDate] = useState(() => format(subMonths(new Date(), 6), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(() => format(new Date(), 'yyyy-MM-dd'));
+  const [userGrowthPage, setUserGrowthPage] = useState(1);
+
+  // Row set changes completely when the range or bucket size changes.
+  useEffect(() => {
+    setUserGrowthPage(1);
+  }, [period, startDate, endDate]);
 
   const fetchMetrics = useCallback(async () => {
     try {
@@ -161,6 +176,22 @@ export default function AdminPlatformMetricsPage() {
     orders: orderVolumeData[i]?.count || 0,
     revenue: revenueData[i]?.revenue || 0,
   }));
+
+  const userGrowthTotalPages = Math.max(1, Math.ceil(userGrowthData.length / USER_GROWTH_PAGE_SIZE));
+  const userGrowthSafePage = Math.min(Math.max(1, userGrowthPage), userGrowthTotalPages);
+  const userGrowthSliceStart = (userGrowthSafePage - 1) * USER_GROWTH_PAGE_SIZE;
+  // Cumulative totals are computed across the full range, not just the visible page.
+  const userGrowthRows = userGrowthData
+    .map((row, i) => ({
+      ...row,
+      cumulative: userGrowthData.slice(0, i + 1).reduce((s, r) => s + r.count, 0),
+    }))
+    .slice(userGrowthSliceStart, userGrowthSliceStart + USER_GROWTH_PAGE_SIZE);
+  const userGrowthShowingFrom = userGrowthData.length === 0 ? 0 : userGrowthSliceStart + 1;
+  const userGrowthShowingTo = Math.min(
+    userGrowthSliceStart + USER_GROWTH_PAGE_SIZE,
+    userGrowthData.length,
+  );
 
   if (loading && !metrics) {
     return (
@@ -273,11 +304,19 @@ export default function AdminPlatformMetricsPage() {
           {chartData.length > 0 && (
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Growth Overview</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData}>
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={chartData} margin={{ top: 8, right: 8, bottom: 48, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="period" />
-                  <YAxis yAxisId="left" />
+                  <XAxis
+                    dataKey="period"
+                    interval={axisTickInterval(chartData.length)}
+                    angle={-35}
+                    textAnchor="end"
+                    height={70}
+                    tick={{ fontSize: 11 }}
+                    minTickGap={8}
+                  />
+                  <YAxis yAxisId="left" allowDecimals={false} />
                   <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `$${v}`} />
                   <Tooltip
                     formatter={(value: any, name: string) =>
@@ -296,10 +335,18 @@ export default function AdminPlatformMetricsPage() {
           {chartData.length > 0 && (
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Revenue Trend</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={chartData}>
+              <ResponsiveContainer width="100%" height={320}>
+                <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 48, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="period" />
+                  <XAxis
+                    dataKey="period"
+                    interval={axisTickInterval(chartData.length)}
+                    angle={-35}
+                    textAnchor="end"
+                    height={70}
+                    tick={{ fontSize: 11 }}
+                    minTickGap={8}
+                  />
                   <YAxis tickFormatter={(v) => `$${Number(v).toFixed(0)}`} />
                   <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} labelFormatter={(l) => `Period: ${l}`} />
                   <Legend />
@@ -327,20 +374,45 @@ export default function AdminPlatformMetricsPage() {
                       <td colSpan={3} className="px-6 py-4 text-center text-sm text-hos-text-muted">No data for selected range</td>
                     </tr>
                   ) : (
-                    userGrowthData.map((row, i) => {
-                      const cumulative = userGrowthData.slice(0, i + 1).reduce((s, r) => s + r.count, 0);
-                      return (
-                        <tr key={row.label} className="hover:bg-hos-bg-tertiary">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">{row.label}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary text-right">{row.count}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted text-right">{cumulative}</td>
-                        </tr>
-                      );
-                    })
+                    userGrowthRows.map((row) => (
+                      <tr key={row.label} className="hover:bg-hos-bg-tertiary">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">{row.label}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary text-right">{row.count}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted text-right">{row.cumulative}</td>
+                      </tr>
+                    ))
                   )}
                 </tbody>
               </table>
             </div>
+            {userGrowthData.length > 0 && (
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <p className="text-sm text-hos-text-muted">
+                  Showing {userGrowthShowingFrom}–{userGrowthShowingTo} of {userGrowthData.length} periods
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setUserGrowthPage((p) => Math.max(1, p - 1))}
+                    disabled={userGrowthPage <= 1}
+                    className="px-3 py-1.5 text-sm rounded-md border border-hos-border text-hos-text-secondary hover:bg-hos-bg-tertiary disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-hos-text-muted">
+                    Page {userGrowthSafePage} of {userGrowthTotalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setUserGrowthPage((p) => Math.min(userGrowthTotalPages, p + 1))}
+                    disabled={userGrowthSafePage >= userGrowthTotalPages}
+                    className="px-3 py-1.5 text-sm rounded-md border border-hos-border text-hos-text-secondary hover:bg-hos-bg-tertiary disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Order Volume Table */}

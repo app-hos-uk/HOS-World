@@ -590,10 +590,10 @@ export class BrandPartnershipsService {
     // Lock campaign + partnership so concurrent order completions cannot
     // overspend point budgets (read-budget + increment is not safe otherwise).
     await tx.$executeRaw(
-      Prisma.sql`SELECT 1 FROM brand_campaigns WHERE id = ${primaryId}::uuid FOR UPDATE`,
+      Prisma.sql`SELECT 1 FROM brand_campaigns WHERE id = ${primaryId} FOR UPDATE`,
     );
     await tx.$executeRaw(
-      Prisma.sql`SELECT 1 FROM brand_partnerships WHERE id = ${primary.partnershipId}::uuid FOR UPDATE`,
+      Prisma.sql`SELECT 1 FROM brand_partnerships WHERE id = ${primary.partnershipId} FOR UPDATE`,
     );
     const primaryRow = await tx.brandCampaign.findUnique({
       where: { id: primaryId },

@@ -182,30 +182,50 @@ export default function AdminProductAnalyticsPage() {
 
           {chartData.length > 0 && (
             <>
-              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6 min-w-0 overflow-hidden">
                 <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Top Products by Revenue</h2>
                 <ResponsiveContainer width="100%" height={400}>
-                  <BarChart data={chartData} layout="vertical">
+                  <BarChart
+                    data={chartData}
+                    layout="vertical"
+                    margin={{ top: 8, right: 24, bottom: 8, left: 8 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" width={150} />
+                    <XAxis type="number" tickFormatter={(v) => `$${Number(v).toFixed(0)}`} />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      width={150}
+                      interval={0}
+                      tick={{ fontSize: 12 }}
+                    />
                     <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
                     <Legend />
-                    <Bar dataKey="revenue" fill="#3b82f6" name="Revenue" />
+                    <Bar dataKey="revenue" fill="#3b82f6" name="Revenue" maxBarSize={28} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
-              <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
+              <div className="bg-hos-bg-secondary rounded-lg shadow p-6 min-w-0 overflow-hidden">
                 <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Top Products by Orders</h2>
-                <ResponsiveContainer width="100%" height={400}>
-                  <BarChart data={chartData}>
+                <ResponsiveContainer width="100%" height={420}>
+                  <BarChart data={chartData} margin={{ top: 8, right: 16, bottom: 72, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} />
-                    <YAxis />
+                    <XAxis
+                      dataKey="name"
+                      angle={-45}
+                      textAnchor="end"
+                      height={110}
+                      interval={0}
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(value: string) =>
+                        value.length > 16 ? `${value.slice(0, 16)}…` : value
+                      }
+                    />
+                    <YAxis allowDecimals={false} />
                     <Tooltip />
-                    <Legend />
-                    <Bar dataKey="orders" fill="#10b981" name="Orders" />
+                    <Legend verticalAlign="top" height={28} />
+                    <Bar dataKey="orders" fill="#10b981" name="Orders" maxBarSize={48} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

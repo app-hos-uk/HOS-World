@@ -18,18 +18,29 @@ export function isSuperAdminEmail(email: string | null | undefined): boolean {
   return isProtectedAdminEmail(email);
 }
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function isValidEmailAddress(email: string | null | undefined): boolean {
+  return !!email && EMAIL_PATTERN.test(email.trim());
+}
+
 /**
  * Resolve a safe outbound From address.
- * If the candidate is a protected admin email, falls back to DEFAULT_OUTBOUND_FROM.
+ * Falls back to DEFAULT_OUTBOUND_FROM when the candidate is a protected admin email
+ * or is not a syntactically valid address (misconfigured integrations otherwise send
+ * garbage senders such as "1", which SendGrid rejects).
  */
 export function resolveOutboundFromEmail(
   candidate: string | null | undefined,
   fallback: string = DEFAULT_OUTBOUND_FROM,
 ): string {
-  const fb = fallback.trim() || DEFAULT_OUTBOUND_FROM;
-  const raw = candidate?.trim() || fb;
+  const fb = isValidEmailAddress(fallback) ? fallback.trim() : DEFAULT_OUTBOUND_FROM;
+  const raw = candidate?.trim();
+  if (!isValidEmailAddress(raw)) {
+    return fb;
+  }
   if (isProtectedAdminEmail(raw)) {
     return fb;
   }
-  return raw;
+  return raw as string;
 }

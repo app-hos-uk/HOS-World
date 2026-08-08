@@ -48,10 +48,12 @@ export class ReconciliationService {
       });
     } catch (err: any) {
       this.logger.error(`Failed to create reconciliation run: ${err?.message}`, err?.stack);
-      throw new BadRequestException(
-        err?.message?.includes('Foreign key') || err?.code === 'P2003'
-          ? 'Invalid startedBy user for reconciliation run'
-          : `Could not start reconciliation: ${err?.message || 'database error'}`,
+      if (err?.code === 'P2003' || err?.message?.includes('Foreign key')) {
+        throw new BadRequestException('Invalid startedBy user for reconciliation run');
+      }
+      // Raw Prisma/Postgres errors must not reach the admin UI.
+      throw new InternalServerErrorException(
+        'Could not start reconciliation. The reconciliation storage is unavailable — please contact support if this persists.',
       );
     }
 
@@ -381,7 +383,15 @@ export class ReconciliationService {
     const page = filters?.page || 1;
     const limit = filters?.limit || 20;
     const where: any = {};
-    if (filters?.status) where.status = filters.status;
+    if (filters?.status) {
+      const status = filters.status.trim().toUpperCase();
+      if (!['RUNNING', 'COMPLETED', 'FAILED'].includes(status)) {
+        throw new BadRequestException(
+          `Invalid reconciliation status "${filters.status}". Expected one of: RUNNING, COMPLETED, FAILED`,
+        );
+      }
+      where.status = status;
+    }
 
     const [runs, total] = await Promise.all([
       this.prisma.reconciliationRun.findMany({

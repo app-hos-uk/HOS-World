@@ -97,6 +97,13 @@ export function validateNameLike(
   return null;
 }
 
+/**
+ * Characters allowed in descriptive prose. Deliberately broader than
+ * `validateNameLike` (sentences need punctuation) but still rejects symbol soup
+ * such as `@#$%^*<>{}|\~`.
+ */
+const DISALLOWED_DESCRIPTIVE_CHARS = /[^\p{L}\p{N}\s.,;:!?'"()\[\]&%+\-–—_/@#°£$€¥®™]/u;
+
 /** Optional free text: when provided, reject special-char-only / numeric-only. */
 export function validateOptionalDescriptiveText(
   value: string,
@@ -106,6 +113,10 @@ export function validateOptionalDescriptiveText(
   if (!t) return null;
   if (isNumericOnly(t)) return `${label} cannot be numbers only`;
   if (!hasLetter(t)) return `${label} must include at least one letter`;
+  const invalid = t.match(DISALLOWED_DESCRIPTIVE_CHARS);
+  if (invalid) {
+    return `${label} contains an unsupported character ("${invalid[0]}")`;
+  }
   return null;
 }
 

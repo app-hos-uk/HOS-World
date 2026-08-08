@@ -304,7 +304,11 @@ export default function AdminSalesReportsPage() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="period" />
                     <YAxis />
+                    {/* shared={false} makes the tooltip item-triggered, so it only appears
+                        over an actual point rather than anywhere along the x axis. */}
                     <Tooltip
+                      shared={false}
+                      cursor={false}
                       formatter={(value: any) => `$${Number(value).toFixed(2)}`}
                       labelFormatter={(label) => `Period: ${label}`}
                     />
@@ -315,6 +319,7 @@ export default function AdminSalesReportsPage() {
                       stroke="#8b5cf6"
                       strokeWidth={2}
                       name="Average Order Value"
+                      activeDot={{ r: 5 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>

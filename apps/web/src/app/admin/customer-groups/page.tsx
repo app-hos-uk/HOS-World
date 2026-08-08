@@ -187,21 +187,31 @@ export default function AdminCustomerGroupsPage() {
   const confirmDelete = async () => {
     if (!selectedGroup) return;
 
+    // Active groups are deactivated (reversible); inactive ones are permanently removed.
+    const isDeactivation = selectedGroup.isActive;
+
     try {
       setActionLoading(true);
-      // Note: Delete endpoint may not exist, using update to deactivate instead
       await toast.promise(
-        apiClient.updateCustomerGroup(selectedGroup.id, { isActive: false }),
+        isDeactivation
+          ? apiClient.updateCustomerGroup(selectedGroup.id, { isActive: false })
+          : apiClient.deleteCustomerGroup(selectedGroup.id),
         {
-          loading: 'Deactivating customer group...',
-          success: 'Customer group deactivated successfully',
-          error: (err: any) => err.message || 'Failed to deactivate customer group',
+          loading: isDeactivation
+            ? 'Deactivating customer group...'
+            : 'Deleting customer group...',
+          success: isDeactivation
+            ? 'Customer group deactivated successfully'
+            : 'Customer group deleted successfully',
+          error: (err: any) =>
+            err.message ||
+            `Failed to ${isDeactivation ? 'deactivate' : 'delete'} customer group`,
         }
       );
       setShowDeleteModal(false);
       await fetchGroups();
     } catch (err: any) {
-      console.error('Error deactivating customer group:', err);
+      console.error('Error removing customer group:', err);
     } finally {
       setActionLoading(false);
     }
@@ -523,9 +533,13 @@ export default function AdminCustomerGroupsPage() {
           {showDeleteModal && selectedGroup && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
               <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
-                <h2 className="text-xl font-bold mb-4">Deactivate Customer Group</h2>
+                <h2 className="text-xl font-bold mb-4">
+                  {selectedGroup.isActive ? 'Deactivate' : 'Delete'} Customer Group
+                </h2>
                 <p className="text-hos-text-secondary mb-6">
-                  Are you sure you want to deactivate &quot;{selectedGroup.name}&quot;? This will mark the group as inactive.
+                  {selectedGroup.isActive
+                    ? `Are you sure you want to deactivate "${selectedGroup.name}"? This will mark the group as inactive.`
+                    : `Are you sure you want to permanently delete "${selectedGroup.name}"? This action cannot be undone.`}
                 </p>
                 <div className="flex gap-3">
                   <button
@@ -540,7 +554,13 @@ export default function AdminCustomerGroupsPage() {
                     disabled={actionLoading}
                     className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {actionLoading ? 'Deactivating...' : 'Deactivate'}
+                    {actionLoading
+                      ? selectedGroup.isActive
+                        ? 'Deactivating...'
+                        : 'Deleting...'
+                      : selectedGroup.isActive
+                        ? 'Deactivate'
+                        : 'Delete'}
                   </button>
                 </div>
               </div>

@@ -303,7 +303,9 @@ export default function WebhooksPage() {
             >
               {loading ? 'Refreshing...' : 'Refresh'}
             </button>
-            {!showCreate && !editingId && (
+            {/* The empty state already offers "Create Your First Webhook", so the
+                header action would be a duplicate primary CTA. */}
+            {!showCreate && !editingId && (loading || webhooks.length > 0) && (
               <button
                 onClick={() => {
                   resetForm();

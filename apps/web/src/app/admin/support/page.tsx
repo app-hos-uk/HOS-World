@@ -388,7 +388,7 @@ export default function AdminSupportPage() {
               <table className="min-w-full divide-y divide-hos-border">
                 <thead className="bg-hos-bg-secondary">
                   <tr>
-                    <th className="px-6 py-3 text-xs font-medium text-hos-text-muted uppercase text-center">Ticket</th>
+                    <th className="px-6 py-3 text-xs font-medium text-hos-text-muted uppercase text-left w-[22rem] min-w-[16rem]">Ticket</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Customer</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Priority</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase">Status</th>
@@ -408,8 +408,15 @@ export default function AdminSupportPage() {
                     filteredTickets.map((ticket) => (
                       <tr key={ticket.id} className="hover:bg-hos-bg-tertiary">
                         <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-hos-text-secondary">#{ticket.ticketNumber}</div>
-                          <div className="text-sm text-hos-text-muted truncate max-w-xs">{ticket.subject}</div>
+                          <div
+                            className="text-sm font-medium text-hos-text-secondary whitespace-nowrap overflow-hidden text-ellipsis"
+                            title={`#${ticket.ticketNumber}`}
+                          >
+                            #{ticket.ticketNumber}
+                          </div>
+                          <div className="text-sm text-hos-text-muted truncate" title={ticket.subject}>
+                            {ticket.subject}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {ticket.user?.email || 'Unknown'}

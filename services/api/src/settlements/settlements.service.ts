@@ -259,6 +259,13 @@ export class SettlementsService {
                 total: true,
                 createdAt: true,
                 status: true,
+                items: {
+                  take: 3,
+                  select: {
+                    quantity: true,
+                    product: { select: { name: true } },
+                  },
+                },
               },
             },
           },

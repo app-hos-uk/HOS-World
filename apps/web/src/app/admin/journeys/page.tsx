@@ -108,26 +108,30 @@ export default function AdminJourneysPage() {
                       <td className="px-4 py-2">{j.isActive ? 'Yes' : 'No'}</td>
                       <td className="px-4 py-2">{j._count?.enrollments ?? '—'}</td>
                       <td className="px-4 py-2">
-                        <div className="flex justify-end items-center gap-2">
+                        {/* Fixed-width slots keep every row's actions in the same columns,
+                            even when Delete is only available for inactive journeys. */}
+                        <div className="ml-auto grid w-fit grid-cols-[4.5rem_5.5rem_4.5rem] items-center gap-2 text-center">
                           <Link
                             href={`/admin/journeys/${j.id}`}
-                            className="inline-flex min-w-[4.5rem] justify-center text-hos-gold hover:underline"
+                            className="text-hos-gold hover:underline"
                           >
                             View
                           </Link>
                           <button
                             type="button"
-                            className={`inline-flex min-w-[5.5rem] justify-center hover:underline ${
+                            className={`hover:underline ${
                               j.isActive ? 'text-amber-400' : 'text-green-400'
                             }`}
                             onClick={() => toggleActive(j.id, !j.isActive)}
                           >
                             {j.isActive ? 'Deactivate' : 'Activate'}
                           </button>
-                          {!j.isActive && (
+                          {j.isActive ? (
+                            <span aria-hidden="true" />
+                          ) : (
                             <button
                               type="button"
-                              className="inline-flex min-w-[4.5rem] justify-center text-red-400 hover:underline"
+                              className="text-red-400 hover:underline"
                               onClick={() => handleDelete(j.id, j.name)}
                             >
                               Delete

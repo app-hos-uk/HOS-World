@@ -201,6 +201,10 @@ export default function AdminLoyaltyMembersPage() {
       toast.error('Reason is required');
       return;
     }
+    if (!Number.isInteger(adjustForm.pointsDelta) || adjustForm.pointsDelta === 0) {
+      toast.error('Enter a non-zero whole number of points to add or deduct');
+      return;
+    }
     setAdjusting(true);
     try {
       await apiClient.adminAdjustLoyaltyPoints(

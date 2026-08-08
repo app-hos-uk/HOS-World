@@ -188,9 +188,9 @@ export default function AdminShippingCarriersPage() {
             <button
               type="button"
               onClick={openCreate}
-              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover text-sm font-medium"
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg font-medium hover:bg-hos-gold-hover transition-colors"
             >
-              Add Carrier
+              + Add Carrier
             </button>
           </div>
         </div>

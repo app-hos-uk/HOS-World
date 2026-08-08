@@ -470,7 +470,7 @@ export class LoyaltyListener {
         // Serialize concurrent profile updates on the membership row, then
         // re-check for an existing bonus inside the transaction.
         await tx.$executeRaw(
-          Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membership.id}::uuid FOR UPDATE`,
+          Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membership.id} FOR UPDATE`,
         );
         const dup = await tx.loyaltyTransaction.findFirst({
           where: {

@@ -116,33 +116,39 @@ export default function LoyaltyDashboardPage() {
           ) : (
             <div className="space-y-6">
               <div className="rounded-lg border border-stone-800 bg-stone-900/50 p-6">
-                <div className="flex flex-wrap gap-4 justify-between items-start">
-                  <div>
-                    <p className="text-sm text-stone-500 font-secondary">Tier</p>
-                    <p className="font-primary text-xl text-amber-200">{membership.tier?.name}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="rounded-lg border border-stone-800 bg-stone-950/40 p-4">
+                    <p className="text-sm text-stone-400 font-secondary">Tier</p>
+                    <p className="font-primary text-2xl font-semibold text-amber-200 mt-1">
+                      {membership.tier?.name}
+                    </p>
                   </div>
-                  <div>
-                    <p className="text-sm text-stone-500 font-secondary">Points balance</p>
-                    <p className="font-primary text-xl">{membership.currentBalance}</p>
+                  <div className="rounded-lg border border-stone-800 bg-stone-950/40 p-4">
+                    <p className="text-sm text-stone-400 font-secondary">Points balance</p>
+                    <p className="font-primary text-2xl font-semibold text-stone-100 mt-1">
+                      {membership.currentBalance}
+                    </p>
                   </div>
-                  <div>
-                    <p className="text-sm text-stone-500 font-secondary">Lifetime earned</p>
-                    <p className="font-primary text-xl">{membership.totalPointsEarned}</p>
+                  <div className="rounded-lg border border-stone-800 bg-stone-950/40 p-4">
+                    <p className="text-sm text-stone-400 font-secondary">Lifetime earned</p>
+                    <p className="font-primary text-2xl font-semibold text-stone-100 mt-1">
+                      {membership.totalPointsEarned}
+                    </p>
                   </div>
                 </div>
                 {progress?.nextTier && (
                   <div className="mt-6">
-                    <div className="flex justify-between text-sm font-secondary text-stone-400 mb-1">
+                    <div className="flex items-center justify-between gap-3 text-sm font-secondary text-stone-300 mb-2">
                       <span>Progress to {progress.nextTier.name}</span>
-                      <span>{progress.progressPercent ?? 0}%</span>
+                      <span className="tabular-nums text-amber-200">{progress.progressPercent ?? 0}%</span>
                     </div>
-                    <div className="h-2 rounded-full bg-stone-800 overflow-hidden">
+                    <div className="h-2.5 rounded-full bg-stone-800 overflow-hidden">
                       <div
                         className="h-full bg-amber-600 transition-all"
-                        style={{ width: `${progress.progressPercent ?? 0}%` }}
+                        style={{ width: `${Math.min(100, Math.max(0, progress.progressPercent ?? 0))}%` }}
                       />
                     </div>
-                    <p className="text-xs text-stone-500 mt-1 font-secondary">
+                    <p className="text-xs text-stone-400 mt-2 font-secondary">
                       {progress.pointsToNext ?? 0} points to go
                     </p>
                   </div>
@@ -194,61 +200,30 @@ export default function LoyaltyDashboardPage() {
                   </ul>
                 </div>
               )}
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/events"
-                  className="rounded-md border border-amber-700/50 px-4 py-2 font-secondary hover:bg-stone-800 text-amber-100/90"
-                >
-                  Events
-                </Link>
-                <Link
-                  href="/events/my-events"
-                  className="rounded-md border border-stone-600 px-4 py-2 font-secondary hover:bg-stone-800"
-                >
-                  My events
-                </Link>
-                <Link
-                  href="/quiz"
-                  className="rounded-md border border-stone-600 px-4 py-2 font-secondary hover:bg-stone-800"
-                >
-                  Quizzes
-                </Link>
-                <Link
-                  href="/loyalty/rewards"
-                  className="rounded-md border border-stone-600 px-4 py-2 font-secondary hover:bg-stone-800"
-                >
-                  Rewards
-                </Link>
-                <Link
-                  href="/loyalty/referral"
-                  className="rounded-md border border-stone-600 px-4 py-2 font-secondary hover:bg-stone-800"
-                >
-                  Referrals
-                </Link>
-                <Link
-                  href="/loyalty/ambassador"
-                  className="rounded-md border border-amber-700/40 px-4 py-2 font-secondary hover:bg-stone-800 text-amber-100/90"
-                >
-                  Ambassadors
-                </Link>
-                <Link
-                  href="/loyalty/card"
-                  className="rounded-md border border-stone-600 px-4 py-2 font-secondary hover:bg-stone-800"
-                >
-                  Digital card
-                </Link>
-                <Link
-                  href="/loyalty/preferences"
-                  className="rounded-md border border-stone-600 px-4 py-2 font-secondary hover:bg-stone-800"
-                >
-                  Message preferences
-                </Link>
-                <Link
-                  href="/loyalty/messages"
-                  className="rounded-md border border-stone-600 px-4 py-2 font-secondary hover:bg-stone-800"
-                >
-                  Message history
-                </Link>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  { href: '/events', label: 'Events', highlight: true },
+                  { href: '/events/my-events', label: 'My Events' },
+                  { href: '/quiz', label: 'Quizzes' },
+                  { href: '/loyalty/rewards', label: 'Rewards' },
+                  { href: '/loyalty/referral', label: 'Referrals' },
+                  { href: '/loyalty/ambassador', label: 'Ambassadors', highlight: true },
+                  { href: '/loyalty/card', label: 'Digital Card' },
+                  { href: '/loyalty/preferences', label: 'Message Preferences' },
+                  { href: '/loyalty/messages', label: 'Message History' },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`inline-flex min-h-11 items-center justify-center rounded-md border px-3 py-2 text-center text-sm font-secondary hover:bg-stone-800 ${
+                      item.highlight
+                        ? 'border-amber-700/50 text-amber-100/90'
+                        : 'border-stone-600 text-stone-200'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
               </div>
             </div>
           )}

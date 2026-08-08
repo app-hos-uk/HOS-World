@@ -351,10 +351,11 @@ function CatalogEntriesContent() {
                         </div>
                       </div>
 
-                      <div className="flex gap-2">
+                      {/* items-start stops the button stretching to the card's full height. */}
+                      <div className="flex items-start gap-2">
                         <button
                           onClick={() => handleCreateEntry(submission.id)}
-                          className="px-4 py-2 text-sm font-medium bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors whitespace-nowrap"
+                          className="h-10 px-4 py-2 text-sm font-medium bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors whitespace-nowrap"
                         >
                           Create Entry
                         </button>

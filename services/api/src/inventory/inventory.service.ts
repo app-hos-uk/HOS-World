@@ -224,7 +224,7 @@ export class InventoryService {
       // Row lock prevents two concurrent requests from each passing an availability
       // check and overselling the last units (lost update on reservations).
       await tx.$executeRaw(
-        Prisma.sql`SELECT 1 FROM inventory_locations WHERE id = ${reserveDto.inventoryLocationId}::uuid FOR UPDATE`,
+        Prisma.sql`SELECT 1 FROM inventory_locations WHERE id = ${reserveDto.inventoryLocationId} FOR UPDATE`,
       );
 
       const location = await tx.inventoryLocation.findUnique({
@@ -288,7 +288,7 @@ export class InventoryService {
   async confirmReservation(reservationId: string, orderId: string) {
     return this.prisma.$transaction(async (tx) => {
       await tx.$executeRaw(
-        Prisma.sql`SELECT 1 FROM stock_reservations WHERE id = ${reservationId}::uuid FOR UPDATE`,
+        Prisma.sql`SELECT 1 FROM stock_reservations WHERE id = ${reservationId} FOR UPDATE`,
       );
 
       const reservation = await tx.stockReservation.findUnique({
@@ -309,7 +309,7 @@ export class InventoryService {
       }
 
       await tx.$executeRaw(
-        Prisma.sql`SELECT 1 FROM inventory_locations WHERE id = ${reservation.inventoryLocationId}::uuid FOR UPDATE`,
+        Prisma.sql`SELECT 1 FROM inventory_locations WHERE id = ${reservation.inventoryLocationId} FOR UPDATE`,
       );
 
       await tx.stockReservation.update({
@@ -335,7 +335,7 @@ export class InventoryService {
   async cancelReservation(reservationId: string, userId?: string, role?: string) {
     return this.prisma.$transaction(async (tx) => {
       await tx.$executeRaw(
-        Prisma.sql`SELECT 1 FROM stock_reservations WHERE id = ${reservationId}::uuid FOR UPDATE`,
+        Prisma.sql`SELECT 1 FROM stock_reservations WHERE id = ${reservationId} FOR UPDATE`,
       );
 
       const reservation = await tx.stockReservation.findUnique({
@@ -361,7 +361,7 @@ export class InventoryService {
       }
 
       await tx.$executeRaw(
-        Prisma.sql`SELECT 1 FROM inventory_locations WHERE id = ${reservation.inventoryLocationId}::uuid FOR UPDATE`,
+        Prisma.sql`SELECT 1 FROM inventory_locations WHERE id = ${reservation.inventoryLocationId} FOR UPDATE`,
       );
 
       await tx.stockReservation.update({

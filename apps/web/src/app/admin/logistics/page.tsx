@@ -7,6 +7,12 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Dialog, Transition } from '@headlessui/react';
 
+/** The API persists `isActive`; older records/responses may only carry `active`. */
+function isPartnerActive(partner: any): boolean {
+  if (partner?.isActive !== undefined) return partner.isActive !== false;
+  return partner?.active !== false;
+}
+
 export default function AdminLogisticsPage() {
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -20,6 +26,7 @@ export default function AdminLogisticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPartner, setEditingPartner] = useState<any | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     type: '',
@@ -29,6 +36,45 @@ export default function AdminLogisticsPage() {
     active: true,
   });
   const [submitting, setSubmitting] = useState(false);
+
+  const emptyForm = {
+    name: '',
+    type: '',
+    contactEmail: '',
+    contactPhone: '',
+    website: '',
+    active: true,
+  };
+
+  const openCreateModal = () => {
+    setEditingPartner(null);
+    setFormData(emptyForm);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (partner: any) => {
+    const derivedType =
+      partner.type ||
+      (typeof partner.description === 'string' && partner.description.startsWith('Type: ')
+        ? partner.description.slice(6)
+        : '');
+    setEditingPartner(partner);
+    setFormData({
+      name: partner.name || '',
+      type: derivedType,
+      contactEmail: partner.contactInfo?.email || partner.contactEmail || '',
+      contactPhone: partner.contactInfo?.phone || partner.contactPhone || '',
+      website: partner.website || '',
+      active: isPartnerActive(partner),
+    });
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingPartner(null);
+    setFormData(emptyForm);
+  };
 
   useEffect(() => {
     fetchPartners();
@@ -61,37 +107,52 @@ export default function AdminLogisticsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.name.trim()) {
+      toast.error('Name is required');
+      return;
+    }
     setSubmitting(true);
+    const isEditing = Boolean(editingPartner);
     try {
       // API client internally transforms contactEmail/contactPhone to contactInfo
-      const response = await apiClient.createLogisticsPartner({
-        name: formData.name,
+      const typeValue = formData.type.trim();
+      const payload = {
+        name: formData.name.trim(),
         website: formData.website || undefined,
         contactEmail: formData.contactEmail || undefined,
         contactPhone: formData.contactPhone || undefined,
         isActive: formData.active !== undefined ? formData.active : true,
-        // Persist selected partner type in description until a dedicated column exists
-        ...(formData.type
-          ? { description: `Type: ${formData.type}` }
-          : {}),
-      });
+        // Persist selected partner type in description until a dedicated column exists.
+        // When editing, always send description so clearing Type removes the old value.
+        ...(typeValue
+          ? { description: `Type: ${typeValue}` }
+          : isEditing
+            ? { description: '' }
+            : {}),
+      };
+
+      const response = isEditing
+        ? await apiClient.updateLogisticsPartner(editingPartner.id, payload)
+        : await apiClient.createLogisticsPartner(payload);
+
       if (response?.data) {
-        toast.success('Logistics partner created successfully!');
-        setIsModalOpen(false);
-        setFormData({
-          name: '',
-          type: '',
-          contactEmail: '',
-          contactPhone: '',
-          website: '',
-          active: true,
-        });
+        toast.success(
+          isEditing
+            ? 'Logistics partner updated successfully!'
+            : 'Logistics partner created successfully!',
+        );
+        closeModal();
         fetchPartners();
       } else {
-        toast.error(response.message || 'Failed to create logistics partner');
+        toast.error(
+          response.message ||
+            `Failed to ${isEditing ? 'update' : 'create'} logistics partner`,
+        );
       }
     } catch (err: any) {
-      toast.error(err.message || 'Failed to create logistics partner');
+      toast.error(
+        err.message || `Failed to ${isEditing ? 'update' : 'create'} logistics partner`,
+      );
     } finally {
       setSubmitting(false);
     }
@@ -147,7 +208,7 @@ export default function AdminLogisticsPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-hos-text-secondary">Logistics Partners</h1>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={openCreateModal}
               className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
             >
               Add Partner
@@ -158,7 +219,7 @@ export default function AdminLogisticsPage() {
             <table className="min-w-full divide-y divide-hos-border">
               <thead className="bg-hos-bg-secondary">
                 <tr>
-                  <th className="px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider text-center">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
                     Name
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-hos-text-muted uppercase tracking-wider">
@@ -195,17 +256,23 @@ export default function AdminLogisticsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            partner.active !== false
+                            isPartnerActive(partner)
                               ? 'bg-green-500/15 text-green-300'
                               : 'bg-hos-bg-tertiary text-hos-text-secondary'
                           }`}
                         >
-                          {partner.active !== false ? 'Active' : 'Inactive'}
+                          {isPartnerActive(partner) ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <div className="flex gap-3">
-                          <button className="text-hos-gold hover:text-hos-gold">Edit</button>
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(partner)}
+                            className="text-hos-gold hover:text-hos-gold-hover"
+                          >
+                            Edit
+                          </button>
                           <button
                             type="button"
                             onClick={() => handleDelete(partner)}
@@ -225,7 +292,7 @@ export default function AdminLogisticsPage() {
 
         {/* Add Partner Modal */}
         <Transition appear show={isModalOpen} as={Fragment}>
-          <Dialog as="div" className="relative z-10" onClose={() => setIsModalOpen(false)}>
+          <Dialog as="div" className="relative z-10" onClose={closeModal}>
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -251,7 +318,7 @@ export default function AdminLogisticsPage() {
                 >
                   <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-hos-bg-secondary p-6 text-left align-middle shadow-xl transition-all">
                     <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-hos-text-secondary mb-4">
-                      Add Logistics Partner
+                      {editingPartner ? 'Edit Logistics Partner' : 'Add Logistics Partner'}
                     </Dialog.Title>
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div>
@@ -320,7 +387,7 @@ export default function AdminLogisticsPage() {
                       <div className="flex justify-end gap-3 mt-6">
                         <button
                           type="button"
-                          onClick={() => setIsModalOpen(false)}
+                          onClick={closeModal}
                           className="px-4 py-2 text-sm font-medium text-hos-text-secondary bg-hos-bg-tertiary rounded-lg hover:bg-hos-bg-tertiary"
                         >
                           Cancel
@@ -330,7 +397,13 @@ export default function AdminLogisticsPage() {
                           disabled={submitting}
                           className="px-4 py-2 text-sm font-medium text-[#1a1406] bg-hos-gold rounded-lg hover:bg-hos-gold-hover disabled:opacity-50"
                         >
-                          {submitting ? 'Creating...' : 'Create Partner'}
+                          {submitting
+                            ? editingPartner
+                              ? 'Saving...'
+                              : 'Creating...'
+                            : editingPartner
+                              ? 'Save Changes'
+                              : 'Create Partner'}
                         </button>
                       </div>
                     </form>
