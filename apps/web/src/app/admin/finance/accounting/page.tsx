@@ -190,9 +190,14 @@ export default function AccountingAdminPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-hos-text-secondary">Xero Accounting</h1>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Xero Export (optional)</h1>
             <p className="text-hos-text-muted mt-1">
-              Ledger outbox, chart of accounts, and OAuth status. In-store POS sales stay on Lightspeed’s native Xero connector.
+              Optional finance export only. HOS remains the system of record for loyalty points and gift-card
+              liability — see{' '}
+              <Link href="/admin/loyalty/liability" className="text-hos-gold hover:underline">
+                Loyalty Liability
+              </Link>
+              . In-store POS sales stay on Lightspeed’s native Xero connector.
             </p>
           </div>
           <Link
@@ -201,6 +206,11 @@ export default function AccountingAdminPage() {
           >
             Three-way recon →
           </Link>
+        </div>
+
+        <div className="rounded-lg border border-amber-700/40 bg-amber-950/20 px-4 py-3 text-sm text-amber-100/90">
+          Loyalty and gift cards work with Xero off. Enable this export only when finance wants daily journals
+          into Xero; it does not own customer wallet balances.
         </div>
 
         {loading && !status ? (

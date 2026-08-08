@@ -35,7 +35,12 @@ export class LoyaltyListener {
     return isLoyaltyRuntimeEnabled(this.config, this.featureFlags);
   }
 
+  /**
+   * @param db Pass the transaction client (after `wallet.lockMembership`) so the
+   * cap check cannot be overtaken by a concurrent award for the same member.
+   */
   private async isWithinLimits(
+    db: Prisma.TransactionClient,
     membershipId: string,
     source: string,
     rule: { maxPerDay?: number | null; maxPerMonth?: number | null } | null,
@@ -44,7 +49,7 @@ export class LoyaltyListener {
     if (rule.maxPerDay != null && rule.maxPerDay > 0) {
       const dayStart = new Date();
       dayStart.setHours(0, 0, 0, 0);
-      const dayCount = await this.prisma.loyaltyTransaction.count({
+      const dayCount = await db.loyaltyTransaction.count({
         where: {
           membershipId,
           source,
@@ -58,7 +63,7 @@ export class LoyaltyListener {
       const monthStart = new Date();
       monthStart.setDate(1);
       monthStart.setHours(0, 0, 0, 0);
-      const monthCount = await this.prisma.loyaltyTransaction.count({
+      const monthCount = await db.loyaltyTransaction.count({
         where: {
           membershipId,
           source,
@@ -148,6 +153,7 @@ export class LoyaltyListener {
           sourceId: referral.id,
           channel: 'WEB',
           description: 'Referral welcome bonus',
+          idempotencyKey: `bonus:REFERRAL_BONUS:${referral.id}`,
         });
         await tx.loyaltyMembership.update({
           where: { id: refereeMembership.id },
@@ -159,6 +165,7 @@ export class LoyaltyListener {
           sourceId: referral.id,
           channel: 'WEB',
           description: `Referral reward – friend joined`,
+          idempotencyKey: `bonus:REFERRAL_REWARD:${referral.id}`,
         });
         await tx.loyaltyMembership.update({
           where: { id: referral.referrerId },
@@ -236,16 +243,6 @@ export class LoyaltyListener {
       PHOTO_IN_REVIEW.test(text);
     const action = isPhoto ? 'PHOTO_REVIEW' : 'REVIEW';
 
-    const dup = await this.prisma.loyaltyTransaction.findFirst({
-      where: {
-        membershipId: membership.id,
-        sourceId: reviewId,
-        type: LoyaltyTxType.EARN,
-        source: { in: ['REVIEW', 'PHOTO_REVIEW'] },
-      },
-    });
-    if (dup) return 0;
-
     const rule = await this.prisma.loyaltyEarnRule.findFirst({
       where: { action, isActive: true },
     });
@@ -253,16 +250,31 @@ export class LoyaltyListener {
     const fallback = isPhoto ? 50 : 25;
     const pts = rule?.pointsAmount ?? fallback;
     if (pts <= 0) return 0;
-    if (!(await this.isWithinLimits(membership.id, action, rule))) return 0;
 
     try {
+      let awarded = false;
       await this.prisma.$transaction(async (tx) => {
+        await this.wallet.lockMembership(tx, membership!.id);
+        // Either source counts as already paid: submit awards REVIEW, a later
+        // approve of the same review must not pay PHOTO_REVIEW on top.
+        const dup = await tx.loyaltyTransaction.findFirst({
+          where: {
+            membershipId: membership!.id,
+            sourceId: reviewId,
+            type: LoyaltyTxType.EARN,
+            source: { in: ['REVIEW', 'PHOTO_REVIEW'] },
+          },
+        });
+        if (dup) return;
+        if (!(await this.isWithinLimits(tx, membership!.id, action, rule))) return;
+
         await this.wallet.applyDelta(tx, membership!.id, pts, LoyaltyTxType.EARN, {
           source: action,
           sourceId: reviewId,
           channel: 'WEB',
           earnRuleId: rule?.id,
           description: isPhoto ? 'Photo product review' : 'Product review reward',
+          idempotencyKey: `earn:REVIEW:${membership!.id}:${reviewId}`,
         });
         await tx.loyaltyMembership.update({
           where: { id: membership!.id },
@@ -271,7 +283,9 @@ export class LoyaltyListener {
             engagementCount: { increment: 1 },
           },
         });
+        awarded = true;
       });
+      if (!awarded) return 0;
       await this.tiers.recalculateTier(membership.id);
       void this.segmentation.touchActivity(userId);
       return pts;
@@ -294,10 +308,16 @@ export class LoyaltyListener {
       where: { action: 'SOCIAL_SHARE', isActive: true },
     });
     const pts = rule?.pointsAmount ?? 10;
-    if (!(await this.isWithinLimits(membership.id, 'SOCIAL_SHARE', rule))) return 0;
+    if (pts <= 0) return 0;
 
     try {
+      let awarded = false;
       await this.prisma.$transaction(async (tx) => {
+        // Shares are legitimately repeatable, so the daily cap is the only guard —
+        // check it under the row lock so parallel shares cannot both slip past it.
+        await this.wallet.lockMembership(tx, membership.id);
+        if (!(await this.isWithinLimits(tx, membership.id, 'SOCIAL_SHARE', rule))) return;
+
         await this.wallet.applyDelta(tx, membership.id, pts, LoyaltyTxType.EARN, {
           source: 'SOCIAL_SHARE',
           channel: 'WEB',
@@ -312,7 +332,9 @@ export class LoyaltyListener {
             engagementCount: { increment: 1 },
           },
         });
+        awarded = true;
       });
+      if (!awarded) return 0;
       await this.tiers.recalculateTier(membership.id);
       void this.segmentation.touchActivity(userId);
       return pts;
@@ -328,26 +350,34 @@ export class LoyaltyListener {
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) return 0;
 
-    const dup = await this.prisma.loyaltyTransaction.findFirst({
-      where: { membershipId: membership.id, source: 'QUEST', sourceId: questId, type: LoyaltyTxType.EARN },
-    });
-    if (dup) return 0;
-
     const rule = await this.prisma.loyaltyEarnRule.findFirst({
       where: { action: 'QUEST', isActive: true },
     });
     const pts = questPoints > 0 ? questPoints : rule?.pointsAmount ?? 0;
     if (pts <= 0) return 0;
-    if (!(await this.isWithinLimits(membership.id, 'QUEST', rule))) return 0;
 
     try {
+      let awarded = false;
       await this.prisma.$transaction(async (tx) => {
+        await this.wallet.lockMembership(tx, membership.id);
+        const dup = await tx.loyaltyTransaction.findFirst({
+          where: {
+            membershipId: membership.id,
+            source: 'QUEST',
+            sourceId: questId,
+            type: LoyaltyTxType.EARN,
+          },
+        });
+        if (dup) return;
+        if (!(await this.isWithinLimits(tx, membership.id, 'QUEST', rule))) return;
+
         await this.wallet.applyDelta(tx, membership.id, pts, LoyaltyTxType.EARN, {
           source: 'QUEST',
           sourceId: questId,
           channel: 'WEB',
           earnRuleId: rule?.id,
           description: 'Quest completed',
+          idempotencyKey: `earn:QUEST:${membership.id}:${questId}`,
         });
         await tx.loyaltyMembership.update({
           where: { id: membership.id },
@@ -356,7 +386,9 @@ export class LoyaltyListener {
             engagementCount: { increment: 1 },
           },
         });
+        awarded = true;
       });
+      if (!awarded) return 0;
       await this.tiers.recalculateTier(membership.id);
       void this.segmentation.touchActivity(userId);
       return pts;
@@ -373,24 +405,32 @@ export class LoyaltyListener {
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) return 0;
 
-    const dup = await this.prisma.loyaltyTransaction.findFirst({
-      where: { membershipId: membership.id, source: 'QUIZ', sourceId: quizId, type: LoyaltyTxType.EARN },
-    });
-    if (dup) return 0;
-
     const rule = await this.prisma.loyaltyEarnRule.findFirst({
       where: { action: 'QUIZ', isActive: true },
     });
-    if (!(await this.isWithinLimits(membership.id, 'QUIZ', rule))) return 0;
 
     try {
+      let awarded = false;
       await this.prisma.$transaction(async (tx) => {
+        await this.wallet.lockMembership(tx, membership.id);
+        const dup = await tx.loyaltyTransaction.findFirst({
+          where: {
+            membershipId: membership.id,
+            source: 'QUIZ',
+            sourceId: quizId,
+            type: LoyaltyTxType.EARN,
+          },
+        });
+        if (dup) return;
+        if (!(await this.isWithinLimits(tx, membership.id, 'QUIZ', rule))) return;
+
         await this.wallet.applyDelta(tx, membership.id, points, LoyaltyTxType.EARN, {
           source: 'QUIZ',
           sourceId: quizId,
           channel: 'WEB',
           earnRuleId: rule?.id,
           description: 'Fandom quiz completed',
+          idempotencyKey: `earn:QUIZ:${membership.id}:${quizId}`,
         });
         await tx.loyaltyMembership.update({
           where: { id: membership.id },
@@ -399,7 +439,9 @@ export class LoyaltyListener {
             engagementCount: { increment: 1 },
           },
         });
+        awarded = true;
       });
+      if (!awarded) return 0;
       await this.tiers.recalculateTier(membership.id);
       void this.segmentation.touchActivity(userId);
       return points;
@@ -469,9 +511,7 @@ export class LoyaltyListener {
       await this.prisma.$transaction(async (tx) => {
         // Serialize concurrent profile updates on the membership row, then
         // re-check for an existing bonus inside the transaction.
-        await tx.$executeRaw(
-          Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membership.id} FOR UPDATE`,
-        );
+        await this.wallet.lockMembership(tx, membership.id);
         const dup = await tx.loyaltyTransaction.findFirst({
           where: {
             membershipId: membership.id,
@@ -486,6 +526,7 @@ export class LoyaltyListener {
           channel: 'WEB',
           earnRuleId: rule?.id,
           description: 'Profile completion bonus',
+          idempotencyKey: `bonus:PROFILE_COMPLETE:${membership.id}`,
         });
         await tx.loyaltyMembership.update({
           where: { id: membership.id },

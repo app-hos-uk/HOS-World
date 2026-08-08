@@ -1,9 +1,24 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { LoyaltyTxType, Prisma, SellerType } from '@prisma/client';
+import {
+  CouponStatus,
+  LoyaltyTxType,
+  Prisma,
+  PromotionStatus,
+  PromotionType,
+  SellerType,
+} from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { LoyaltyWalletService } from '../services/wallet.service';
+import { LoyaltySettingsService } from '../services/loyalty-settings.service';
 import { FeatureFlagsService } from '../../config/feature-flags.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 
@@ -11,11 +26,14 @@ export type BurnChannel = 'MARKETPLACE_CHECKOUT' | 'HOS_OUTLET_POS';
 
 @Injectable()
 export class LoyaltyBurnEngine {
+  private readonly logger = new Logger(LoyaltyBurnEngine.name);
+
   constructor(
     private prisma: PrismaService,
     private wallet: LoyaltyWalletService,
     private config: ConfigService,
     private featureFlags: FeatureFlagsService,
+    @Optional() private loyaltySettings?: LoyaltySettingsService,
   ) {}
 
   assertChannelAllowed(channel: string, storeId?: string | null): void {
@@ -63,7 +81,9 @@ export class LoyaltyBurnEngine {
       await this.validatePosStore(params.storeId);
     }
 
-    const minRedeem = this.config.get<number>('LOYALTY_MIN_REDEMPTION_POINTS', 100);
+    const minRedeem = this.loyaltySettings
+      ? (await this.loyaltySettings.getResolved()).settings.minRedemptionPoints
+      : this.config.get<number>('LOYALTY_MIN_REDEMPTION_POINTS', 100);
     if (params.points < minRedeem) {
       throw new BadRequestException(`Minimum redemption is ${minRedeem} points`);
     }
@@ -218,8 +238,16 @@ export class LoyaltyBurnEngine {
       });
 
       let couponCode: string | undefined;
-      if (option?.type === 'DISCOUNT' && option.value != null) {
-        couponCode = await this.generateCouponCode(tx, option, params.membershipId);
+      // Only catalogue redemptions get a coupon. A checkout burn (orderId set)
+      // already takes the discount off that order, so issuing a usable coupon on
+      // top would hand out the reward twice.
+      if (!params.orderId && option?.type === 'DISCOUNT' && option.value != null) {
+        couponCode = await this.generateCouponCode(
+          tx,
+          option,
+          params.membershipId,
+          membership.userId,
+        );
       }
 
       const redemption = await tx.loyaltyRedemption.create({
@@ -261,31 +289,73 @@ export class LoyaltyBurnEngine {
     return this.prisma.$transaction(async (tx) => run(tx));
   }
 
+  /**
+   * Issues the Promotion + Coupon pair that makes a DISCOUNT reward redeemable at
+   * checkout (`PromotionsService.validateCoupon` resolves codes through `Coupon`).
+   * A failure here must abort the whole redemption: returning a code with no
+   * coupon row spends the member's points on something they can never apply.
+   */
   private async generateCouponCode(
     tx: Prisma.TransactionClient,
     option: { id: string; value: any; type: string },
     membershipId: string,
+    userId: string,
   ): Promise<string> {
     const { randomBytes } = await import('crypto');
-    const code = `HOS-LYL-${randomBytes(4).toString('hex').toUpperCase()}`;
+    const amount = Number(option.value ?? 0);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new BadRequestException('This reward has no discount value configured');
+    }
 
+    // Pre-check uniqueness rather than recovering from a unique violation: a
+    // failed insert aborts the surrounding transaction, so it cannot be retried.
+    let code = '';
+    for (let attempt = 0; attempt < 5 && !code; attempt++) {
+      const candidate = `HOS-LYL-${randomBytes(4).toString('hex').toUpperCase()}`;
+      const clash = await tx.coupon.findUnique({ where: { code: candidate } });
+      if (!clash) code = candidate;
+    }
+    if (!code) {
+      throw new InternalServerErrorException(
+        'Could not allocate a unique coupon code for this reward. No points were spent.',
+      );
+    }
+
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     try {
-      await (tx as any).promotion?.create?.({
+      const promotion = await tx.promotion.create({
         data: {
-          code,
-          type: 'LOYALTY_REWARD',
-          discountType: 'FIXED_AMOUNT',
-          discountValue: option.value,
+          name: `Loyalty reward ${code}`,
+          description: `Loyalty redemption for membership ${membershipId} (option ${option.id})`,
+          type: PromotionType.FIXED_DISCOUNT,
+          status: PromotionStatus.ACTIVE,
+          startDate: new Date(),
+          endDate: expiresAt,
+          // allowedUserId keeps the reward with the member who paid points for it:
+          // PromotionsService refuses the code for any other account.
+          conditions: { allowedUserId: userId } as Prisma.InputJsonValue,
+          actions: { fixedAmount: amount } as Prisma.InputJsonValue,
           usageLimit: 1,
-          usedCount: 0,
-          isActive: true,
-          startsAt: new Date(),
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          metadata: { loyaltyOptionId: option.id, membershipId },
+          userUsageLimit: 1,
         },
       });
-    } catch {
-      // Promotion model may not exist yet — coupon code is still returned
+      await tx.coupon.create({
+        data: {
+          code,
+          promotionId: promotion.id,
+          usageLimit: 1,
+          userLimit: 1,
+          expiresAt,
+          status: CouponStatus.ACTIVE,
+        },
+      });
+    } catch (e) {
+      this.logger.error(
+        `Coupon issue failed for redemption option ${option.id}: ${(e as Error).message}`,
+      );
+      throw new InternalServerErrorException(
+        'Could not issue the reward coupon. No points were spent — please try again.',
+      );
     }
 
     return code;

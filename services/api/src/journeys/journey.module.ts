@@ -1,9 +1,10 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { DatabaseModule } from '../database/database.module';
 import { QueueModule } from '../queue/queue.module';
 import { MessagingModule } from '../messaging/messaging.module';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { JourneyService } from './journey.service';
 import { MarketingEventBus } from './marketing-event.bus';
 import { MarketingJobsService } from './jobs/marketing.jobs';
@@ -16,6 +17,8 @@ import { JourneyAdminController, MessagingAdminController } from './journey-admi
     ConfigModule,
     QueueModule,
     MessagingModule,
+    // Expiry-warning emails need the same expiry horizon the sweep uses.
+    forwardRef(() => LoyaltyModule),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => {

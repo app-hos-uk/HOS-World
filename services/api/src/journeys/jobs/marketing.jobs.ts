@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit, Optional, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Job } from 'bullmq';
 import { LoyaltyTxType } from '@prisma/client';
@@ -6,6 +6,7 @@ import { QueueService, JobType } from '../../queue/queue.service';
 import { PrismaService } from '../../database/prisma.service';
 import { JourneyService } from '../journey.service';
 import { MarketingEventBus } from '../marketing-event.bus';
+import { LoyaltySettingsService } from '../../loyalty/services/loyalty-settings.service';
 
 @Injectable()
 export class MarketingJobsService implements OnModuleInit {
@@ -17,6 +18,9 @@ export class MarketingJobsService implements OnModuleInit {
     private config: ConfigService,
     private journeys: JourneyService,
     private bus: MarketingEventBus,
+    @Optional()
+    @Inject(forwardRef(() => LoyaltySettingsService))
+    private loyaltySettings?: LoyaltySettingsService,
   ) {}
 
   async onModuleInit() {
@@ -182,7 +186,12 @@ export class MarketingJobsService implements OnModuleInit {
   }
 
   private async runPointsExpiryWarningScan(): Promise<void> {
-    const expiryMonths = this.config.get<number>('LOYALTY_POINTS_EXPIRY_MONTHS', 0);
+    // Same horizon the expiry sweep uses (admin Settings first, env as fallback),
+    // otherwise members get warned on a schedule that no longer expires anything.
+    const raw = this.loyaltySettings
+      ? (await this.loyaltySettings.getResolved(true)).settings.pointsExpiryMonths
+      : this.config.get<string | number>('LOYALTY_POINTS_EXPIRY_MONTHS', 0);
+    const expiryMonths = Math.max(0, Math.floor(Number(raw) || 0));
     if (expiryMonths <= 0) return;
 
     const txs = await this.prisma.loyaltyTransaction.findMany({

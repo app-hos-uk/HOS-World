@@ -111,7 +111,11 @@ export class LoyaltyController {
 
   @Post('redeem')
   @Roles('CUSTOMER')
-  @ApiOperation({ summary: 'Redeem points for a reward' })
+  @ApiOperation({
+    summary: 'Redeem points for a reward',
+    description:
+      'Send an `idempotencyKey` to make retries safe — a repeat call with the same key returns the original redemption instead of burning the points again.',
+  })
   async redeem(
     @Request() req: { user: { id: string } },
     @Body() body: RedeemPointsDto,

@@ -1184,6 +1184,20 @@ describe('OrdersService - Phase 1 Tests', () => {
       cancelSpy.mockRestore();
     });
 
+    it('should sweep failed payments too so burned loyalty points are released', async () => {
+      mockPrismaService.order.findMany.mockResolvedValue([]);
+
+      await service.expireUnpaidOrders();
+
+      expect(mockPrismaService.order.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            paymentStatus: { in: ['PENDING', 'FAILED'] },
+          }),
+        }),
+      );
+    });
+
     it('should handle cancel failures gracefully and continue', async () => {
       mockPrismaService.order.findMany.mockResolvedValue([
         { id: 'stale-1', userId: 'user-1' },

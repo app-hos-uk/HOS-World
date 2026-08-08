@@ -24,6 +24,7 @@ import { PaymentProviderService } from '../payments/payment-provider.service';
 import { ShippingService } from '../shipping/shipping.service';
 import { PromotionsService } from '../promotions/promotions.service';
 import { LoyaltyService } from '../loyalty/loyalty.service';
+import { LoyaltyReversalService } from '../loyalty/services/loyalty-reversal.service';
 import { AmbassadorService } from '../ambassador/ambassador.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ActivityService } from '../activity/activity.service';
@@ -99,7 +100,9 @@ export class OrdersService {
 
   /**
    * Cancel checkout orders that were never paid within the configured TTL.
-   * Restores stock via the standard cancel() path.
+   * Restores stock via the standard cancel() path, which is also what releases
+   * loyalty points burned at checkout — so abandoned FAILED payments are swept
+   * too, otherwise those points stay debited forever.
    */
   async expireUnpaidOrders(): Promise<number> {
     const ttlMinutes = Number(this.configService.get<string>('UNPAID_ORDER_TTL_MINUTES') || 60);
@@ -109,7 +112,7 @@ export class OrdersService {
       where: {
         parentOrderId: null,
         deletedAt: null,
-        paymentStatus: 'PENDING',
+        paymentStatus: { in: ['PENDING', 'FAILED'] },
         status: { in: ['PENDING', 'CONFIRMED'] },
         createdAt: { lt: cutoff },
       },
@@ -229,6 +232,8 @@ export class OrdersService {
     @Optional() private shippingService?: ShippingService,
     @Optional() private promotionsService?: PromotionsService,
     @Optional() @Inject(forwardRef(() => LoyaltyService)) private loyaltyService?: LoyaltyService,
+    @Optional() @Inject(forwardRef(() => LoyaltyReversalService))
+    private loyaltyReversalService?: LoyaltyReversalService,
     @Optional() @Inject(forwardRef(() => AmbassadorService)) private ambassadorService?: AmbassadorService,
     @Optional() @Inject(forwardRef(() => NotificationsService)) private notificationsService?: NotificationsService,
     @Optional() private activityService?: ActivityService,
@@ -589,9 +594,9 @@ export class OrdersService {
     // A pending loyalty redemption is already discounted into cart.discount above. If the
     // points can no longer be burned, the discount would be given away for free — so refuse
     // checkout rather than silently skipping the burn.
-    const loyaltyRedemptionActive =
-      !!this.loyaltyService?.isEnabled() &&
-      isTruthy(this.configService.get<string>('LOYALTY_REDEMPTION_AT_CHECKOUT'));
+    const loyaltyRedemptionActive = this.loyaltyService
+      ? await this.loyaltyService.isCheckoutRedemptionEnabled()
+      : false;
     if ((cart.pendingLoyaltyPoints || 0) > 0 && !loyaltyRedemptionActive) {
       throw new BadRequestException(
         'Loyalty point redemption is currently unavailable. Please remove the points discount from your cart and try again.',
@@ -2331,6 +2336,17 @@ export class OrdersService {
       } catch (txErr: any) {
         this.logger.error(
           `Failed to record cancellation refund transaction for order ${order.orderNumber}: ${txErr?.message}`,
+        );
+      }
+    }
+
+    // Loyalty earn clawback / burn restore (policy-driven; idempotent)
+    if (this.loyaltyReversalService) {
+      try {
+        await this.loyaltyReversalService.onOrderCancelled(order.id);
+      } catch (loyErr: any) {
+        this.logger.warn(
+          `Loyalty reversal on cancel failed for ${order.orderNumber}: ${loyErr?.message}`,
         );
       }
     }

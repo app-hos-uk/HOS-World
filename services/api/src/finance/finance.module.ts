@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { FinanceService } from './finance.service';
 import { FinanceController } from './finance.controller';
 import { TransactionsController } from './transactions.controller';
@@ -23,9 +23,16 @@ import { DatabaseModule } from '../database/database.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PaymentProviderModule } from '../payments/payment-provider.module';
 import { VendorLedgerModule } from '../vendor-ledger/vendor-ledger.module';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 
 @Module({
-  imports: [DatabaseModule, NotificationsModule, PaymentProviderModule, VendorLedgerModule],
+  imports: [
+    DatabaseModule,
+    NotificationsModule,
+    PaymentProviderModule,
+    VendorLedgerModule,
+    forwardRef(() => LoyaltyModule),
+  ],
   controllers: [
     FinanceController,
     TransactionsController,

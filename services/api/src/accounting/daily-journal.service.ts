@@ -44,7 +44,18 @@ export class DailyJournalService {
     return toDateString(d);
   }
 
-  redeemValuePerPoint(): number {
+  async redeemValuePerPoint(): Promise<number> {
+    try {
+      const row = await this.prisma.config.findFirst({
+        where: { level: 'PLATFORM', levelId: 'PLATFORM', key: 'LOYALTY_PROGRAMME_SETTINGS' },
+      });
+      const v = row?.value as { defaultRedeemValue?: number } | null;
+      if (v?.defaultRedeemValue != null && Number(v.defaultRedeemValue) > 0) {
+        return Number(v.defaultRedeemValue);
+      }
+    } catch {
+      /* env fallback */
+    }
     const redeemRaw = this.config.get<string | number>('LOYALTY_DEFAULT_REDEEM_VALUE');
     if (redeemRaw === undefined || redeemRaw === null || redeemRaw === '') return 0.01;
     return Number(redeemRaw) || 0.01;
@@ -163,7 +174,7 @@ export class DailyJournalService {
     }
 
     // --- Points liability ---
-    const redeemValue = this.redeemValuePerPoint();
+    const redeemValue = await this.redeemValuePerPoint();
     const [earnAgg, burnAgg, expireAgg] = await Promise.all([
       this.prisma.loyaltyTransaction.aggregate({
         where: { type: LoyaltyTxType.EARN, createdAt: { gte: start, lte: end } },

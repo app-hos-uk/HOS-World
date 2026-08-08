@@ -346,4 +346,109 @@ describe('LoyaltyEarnEngine', () => {
       );
     });
   });
+
+  describe('reversePosSaleEarn', () => {
+    const mockConfig = {
+      get: jest.fn().mockImplementation((key: string, defaultVal?: any) => {
+        if (key === 'LOYALTY_ENABLED') return 'true';
+        return defaultVal;
+      }),
+    };
+
+    const buildEngine = (balance: number, totalPointsEarned = 500, purchaseCount = 3) => {
+      const membershipUpdate = jest.fn();
+      const saleUpdate = jest.fn();
+      const mockWallet = {
+        applyDelta: jest.fn().mockResolvedValue({ applied: true }),
+        lockMembership: jest.fn().mockResolvedValue(undefined),
+      };
+      const mockPrisma = {
+        pOSSale: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'sale-1',
+            customerId: 'u1',
+            storeId: 'store-1',
+            externalSaleId: 'ext-1',
+            loyaltyPointsEarned: 100,
+          }),
+        },
+        loyaltyMembership: { findUnique: jest.fn().mockResolvedValue({ id: 'm1' }) },
+        $transaction: jest.fn(async (fn: (tx: any) => Promise<any>) =>
+          fn({
+            loyaltyMembership: {
+              findUnique: jest
+                .fn()
+                .mockResolvedValue({ currentBalance: balance, totalPointsEarned, purchaseCount }),
+              update: membershipUpdate,
+            },
+            pOSSale: { update: saleUpdate },
+          }),
+        ),
+      };
+      const mockTiers = { recalculateTier: jest.fn() };
+      const engine = new LoyaltyEarnEngine(
+        mockPrisma as any,
+        mockConfig as any,
+        mockFeatureFlags as any,
+        mockWallet as any,
+        { getActiveForContext: jest.fn(), applyCampaignsToBasePoints: jest.fn() } as any,
+        mockTiers as any,
+        mockBrandPartnerships as any,
+        mockProductCampaigns as any,
+      );
+      return { engine, mockWallet, membershipUpdate, saleUpdate, mockTiers };
+    };
+
+    it('claws back the full earn when the balance still covers it', async () => {
+      const { engine, mockWallet, saleUpdate } = buildEngine(400);
+      await engine.reversePosSaleEarn('sale-1');
+
+      expect(mockWallet.applyDelta).toHaveBeenCalledWith(
+        expect.anything(),
+        'm1',
+        -100,
+        'ADJUST',
+        expect.objectContaining({
+          source: 'POS_SALE_VOID',
+          idempotencyKey: 'reverse:POS_PURCHASE:sale-1',
+        }),
+      );
+      expect(saleUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { loyaltyPointsEarned: 0 } }),
+      );
+    });
+
+    it('caps the clawback at the live balance instead of failing the void', async () => {
+      const { engine, mockWallet, membershipUpdate, saleUpdate } = buildEngine(30);
+      await engine.reversePosSaleEarn('sale-1');
+
+      expect(mockWallet.applyDelta).toHaveBeenCalledWith(
+        expect.anything(),
+        'm1',
+        -30,
+        'ADJUST',
+        expect.objectContaining({
+          metadata: expect.objectContaining({ earnedPoints: 100, clawedPoints: 30 }),
+        }),
+      );
+      expect(membershipUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { totalPointsEarned: { decrement: 30 } } }),
+      );
+      expect(saleUpdate).toHaveBeenCalled();
+    });
+
+    it('still completes the void when the points are fully spent', async () => {
+      const { engine, mockWallet, membershipUpdate, saleUpdate } = buildEngine(0);
+      await engine.reversePosSaleEarn('sale-1');
+
+      expect(mockWallet.applyDelta).not.toHaveBeenCalled();
+      // purchaseCount is still corrected even though no points could be taken.
+      expect(membershipUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { purchaseCount: { decrement: 1 } } }),
+      );
+      expect(saleUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { loyaltyPointsEarned: 0 } }),
+      );
+    });
+  });
 });

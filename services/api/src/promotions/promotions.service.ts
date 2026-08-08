@@ -84,6 +84,9 @@ export class PromotionsService {
             status: 'ACTIVE',
           },
         },
+        // Counts every coupon regardless of status so the automatic engine can tell
+        // a code-gated promotion from a public one even after its codes are used up.
+        _count: { select: { coupons: true } },
       },
     });
   }
@@ -282,6 +285,12 @@ export class PromotionsService {
     // Check promotion validity
     const promotion = coupon.promotion;
     const now = new Date();
+
+    const ownerId = (promotion.conditions as PromotionConditions | null)?.allowedUserId;
+    if (ownerId && ownerId !== userId) {
+      throw new BadRequestException('This coupon belongs to another account');
+    }
+
     if (promotion.status !== PromotionStatus.ACTIVE) {
       throw new BadRequestException('Promotion is not active');
     }
@@ -574,6 +583,22 @@ export class PromotionsService {
 
     for (const promotion of promotions) {
       const promo = promotion as PromotionWithDetails;
+
+      // A promotion that has coupon codes is redeemed by entering one of those codes.
+      // Applying it automatically would hand it to shoppers who never earned it —
+      // loyalty reward codes are minted this way.
+      const couponCount =
+        (promotion as { _count?: { coupons?: number } })._count?.coupons ??
+        (promotion as { coupons?: unknown[] }).coupons?.length ??
+        0;
+      if (couponCount > 0) {
+        continue;
+      }
+
+      const ownerId = (promo.conditions as PromotionConditions | null)?.allowedUserId;
+      if (ownerId && ownerId !== userId) {
+        continue;
+      }
 
       if (promo.usageLimit != null && promo.usageCount >= promo.usageLimit) {
         continue;

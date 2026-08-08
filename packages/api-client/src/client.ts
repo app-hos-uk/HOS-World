@@ -588,11 +588,16 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>(`/loyalty/redemption-options${qs}`);
   }
 
+  /**
+   * @param body.idempotencyKey Stable per redemption attempt — a retry with the
+   * same key returns the original redemption instead of burning points twice.
+   */
   async redeemLoyaltyPoints(body: {
     points: number;
     channel: string;
     optionId?: string;
     storeId?: string;
+    idempotencyKey?: string;
   }): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>('/loyalty/redeem', {
       method: 'POST',
@@ -1687,9 +1692,107 @@ export class ApiClient {
     });
   }
 
-  async adminGetLoyaltyTransactions(membershipId?: string): Promise<ApiResponse<unknown>> {
-    const qs = membershipId ? `?membershipId=${membershipId}` : '';
-    return this.request<ApiResponse<unknown>>(`/admin/loyalty/transactions${qs}`);
+  async adminGetLoyaltyTransactions(
+    membershipId?: string,
+    params?: {
+      type?: string;
+      channel?: string;
+      from?: string;
+      to?: string;
+      page?: number;
+      limit?: number;
+    },
+  ): Promise<ApiResponse<unknown>> {
+    const qs = new URLSearchParams();
+    if (membershipId) qs.set('membershipId', membershipId);
+    if (params?.type) qs.set('type', params.type);
+    if (params?.channel) qs.set('channel', params.channel);
+    if (params?.from) qs.set('from', params.from);
+    if (params?.to) qs.set('to', params.to);
+    if (params?.page != null) qs.set('page', String(params.page));
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    const query = qs.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/transactions${query ? `?${query}` : ''}`);
+  }
+
+  async adminGetLoyaltySettings(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty/settings');
+  }
+
+  async adminUpdateLoyaltySettings(data: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async adminGetLoyaltyRuntimeStatus(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/loyalty/runtime-status');
+  }
+
+  async adminGetLoyaltyMemberInstruments(userId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/members/${userId}/instruments`);
+  }
+
+  async adminGetLoyaltyPosVouchers(params?: {
+    status?: string;
+    storeId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.storeId) qs.set('storeId', params.storeId);
+    if (params?.page != null) qs.set('page', String(params.page));
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    const query = qs.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/pos-vouchers${query ? `?${query}` : ''}`);
+  }
+
+  async adminGetLoyaltyPosVoucher(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/pos-vouchers/${id}`);
+  }
+
+  async adminRetryLoyaltyPosVoucher(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/pos-vouchers/${id}/retry`, {
+      method: 'POST',
+    });
+  }
+
+  async adminGetIdentityMatchReviews(params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.page != null) qs.set('page', String(params.page));
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    const query = qs.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/identity-reviews${query ? `?${query}` : ''}`);
+  }
+
+  async adminResolveIdentityMatchReview(
+    id: string,
+    data: { status: 'MERGED' | 'REJECTED' | 'IGNORED'; note?: string; proposedInternalId?: string },
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/identity-reviews/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async adminGetLoyaltyLiabilityReport(params?: {
+    from?: string;
+    to?: string;
+  }): Promise<ApiResponse<unknown>> {
+    const qs = new URLSearchParams();
+    if (params?.from) qs.set('from', params.from);
+    if (params?.to) qs.set('to', params.to);
+    const query = qs.toString();
+    return this.request<ApiResponse<unknown>>(
+      `/admin/loyalty/liability-report${query ? `?${query}` : ''}`,
+    );
   }
 
   async lookupLoyaltyMember(
@@ -6826,11 +6929,18 @@ export class ApiClient {
     });
   }
 
-  // Gift Card Refund
-  async refundGiftCard(id: string, amount: number, reason?: string): Promise<ApiResponse<any>> {
+  // Gift Card Refund (restores balance for a prior order redemption)
+  async refundGiftCard(
+    id: string,
+    amount: number,
+    orderIdOrReason?: string,
+    reason?: string,
+  ): Promise<ApiResponse<any>> {
+    // Backward-compatible: (id, amount, orderId) or (id, amount, orderId, reason)
+    const orderId = orderIdOrReason;
     return this.request<ApiResponse<any>>(`/gift-cards/${id}/refund`, {
       method: 'POST',
-      body: JSON.stringify({ amount, reason }),
+      body: JSON.stringify({ amount, orderId, reason }),
     });
   }
 

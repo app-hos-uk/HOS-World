@@ -16,6 +16,17 @@ export type ApplyDeltaResult = {
 export class LoyaltyWalletService {
   constructor(private segmentation: SegmentationService) {}
 
+  /**
+   * Takes the same row lock `applyDelta` uses. Callers whose duplicate or cap
+   * checks must not race a concurrent award should call this first, so the check
+   * and the award are serialised for that membership.
+   */
+  async lockMembership(tx: LoyaltyPrismaTx, membershipId: string): Promise<void> {
+    await tx.$executeRaw(
+      Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membershipId} FOR UPDATE`,
+    );
+  }
+
   async applyDelta(
     tx: LoyaltyPrismaTx,
     membershipId: string,
@@ -37,9 +48,7 @@ export class LoyaltyWalletService {
   ): Promise<ApplyDeltaResult> {
     // Serialize balance changes for this membership to prevent lost updates
     // (concurrent debits/credits reading the same balance before write).
-    await tx.$executeRaw(
-      Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membershipId} FOR UPDATE`,
-    );
+    await this.lockMembership(tx, membershipId);
 
     const idempotencyKey = fields.idempotencyKey ?? undefined;
     if (idempotencyKey) {

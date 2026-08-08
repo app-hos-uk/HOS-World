@@ -448,6 +448,7 @@ export class AuthService {
                     bonusPoints,
                     'FOUNDING_MEMBER_BONUS',
                     'Founding member welcome bonus',
+                    `bonus:FOUNDING_MEMBER_BONUS:${membership.id}`,
                   );
                 }
               }

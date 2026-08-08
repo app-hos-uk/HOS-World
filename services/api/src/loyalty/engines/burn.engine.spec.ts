@@ -488,6 +488,8 @@ describe('LoyaltyBurnEngine', () => {
             },
             loyaltyTransaction: { findUnique: jest.fn().mockResolvedValue(null) },
             loyaltyRedemption: { create: redemptionCreate, findFirst: jest.fn().mockResolvedValue(null) },
+            promotion: { create: jest.fn().mockResolvedValue({ id: 'promo-1' }) },
+            coupon: { findUnique: jest.fn().mockResolvedValue(null), create: jest.fn() },
           }),
         ),
       };
@@ -523,6 +525,152 @@ describe('LoyaltyBurnEngine', () => {
           idempotencyKey: 'burn:order:order-9:opt1',
         }),
       );
+    });
+  });
+
+  describe('DISCOUNT reward coupons', () => {
+    const discountOption = {
+      id: 'opt-disc',
+      pointsCost: 500,
+      type: 'DISCOUNT',
+      isActive: true,
+      stock: null,
+      regionCodes: [],
+      channels: [],
+      value: 5,
+    };
+
+    const buildEngine = (overrides: {
+      promotionCreate?: jest.Mock;
+      couponCreate?: jest.Mock;
+      couponFindUnique?: jest.Mock;
+      redemptionCreate?: jest.Mock;
+    }) => {
+      const mockWallet = {
+        applyDelta: jest.fn().mockResolvedValue({
+          transactionId: 'tx1',
+          balanceBefore: 500,
+          balanceAfter: 0,
+          applied: true,
+        }),
+      };
+      const mockPrisma = {
+        $transaction: jest.fn().mockImplementation(async (fn: any) =>
+          fn({
+            loyaltyMembership: {
+              findUnique: jest
+                .fn()
+                .mockResolvedValue({ id: 'm1', userId: 'user-1', currentBalance: 500 }),
+              update: jest.fn(),
+            },
+            loyaltyRedemptionOption: {
+              findUnique: jest.fn().mockResolvedValue(discountOption),
+              findFirst: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+            },
+            loyaltyTransaction: { findUnique: jest.fn().mockResolvedValue(null) },
+            loyaltyRedemption: {
+              create: overrides.redemptionCreate ?? jest.fn().mockResolvedValue({ id: 'r1' }),
+              findFirst: jest.fn().mockResolvedValue(null),
+            },
+            promotion: {
+              create: overrides.promotionCreate ?? jest.fn().mockResolvedValue({ id: 'promo-1' }),
+            },
+            coupon: {
+              findUnique: overrides.couponFindUnique ?? jest.fn().mockResolvedValue(null),
+              create: overrides.couponCreate ?? jest.fn(),
+            },
+          }),
+        ),
+      };
+      const mockConfig = {
+        get: jest.fn().mockImplementation((key: string, defaultVal?: any) => {
+          if (key === 'LOYALTY_ENABLED') return 'true';
+          if (key === 'LOYALTY_MIN_REDEMPTION_POINTS') return 100;
+          return defaultVal;
+        }),
+      };
+      const engine = new LoyaltyBurnEngine(
+        mockPrisma as any,
+        mockWallet as any,
+        mockConfig as any,
+        mockFeatureFlags as any,
+      );
+      return { engine, mockWallet };
+    };
+
+    it('issues a Promotion + Coupon pair the checkout validator can resolve', async () => {
+      const promotionCreate = jest.fn().mockResolvedValue({ id: 'promo-1' });
+      const couponCreate = jest.fn();
+      const { engine } = buildEngine({ promotionCreate, couponCreate });
+
+      const result = await engine.processRedemption({
+        membershipId: 'm1',
+        points: 500,
+        channel: 'MARKETPLACE_CHECKOUT',
+        optionId: 'opt-disc',
+      });
+
+      expect(result.couponCode).toMatch(/^HOS-LYL-[0-9A-F]{8}$/);
+      expect(promotionCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            type: 'FIXED_DISCOUNT',
+            status: 'ACTIVE',
+            actions: { fixedAmount: 5 },
+            usageLimit: 1,
+            // Locked to the member who spent the points, so a leaked code is worthless.
+            conditions: { allowedUserId: 'user-1' },
+          }),
+        }),
+      );
+      expect(couponCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            code: result.couponCode,
+            promotionId: 'promo-1',
+            usageLimit: 1,
+            status: 'ACTIVE',
+          }),
+        }),
+      );
+    });
+
+    it('does not mint a coupon for a checkout burn — the order is already discounted', async () => {
+      const promotionCreate = jest.fn();
+      const couponCreate = jest.fn();
+      const { engine } = buildEngine({ promotionCreate, couponCreate });
+
+      const result = await engine.processRedemption({
+        membershipId: 'm1',
+        points: 500,
+        channel: 'MARKETPLACE_CHECKOUT',
+        optionId: 'opt-disc',
+        orderId: 'order-9',
+      });
+
+      expect(result.couponCode).toBeUndefined();
+      expect(promotionCreate).not.toHaveBeenCalled();
+      expect(couponCreate).not.toHaveBeenCalled();
+    });
+
+    it('aborts the redemption when the coupon cannot be issued', async () => {
+      const couponCreate = jest.fn().mockRejectedValue(new Error('db down'));
+      const redemptionCreate = jest.fn();
+      const { engine } = buildEngine({ couponCreate, redemptionCreate });
+
+      await expect(
+        engine.processRedemption({
+          membershipId: 'm1',
+          points: 500,
+          channel: 'MARKETPLACE_CHECKOUT',
+          optionId: 'opt-disc',
+        }),
+      ).rejects.toThrow(/Could not issue the reward coupon/);
+      // No redemption row is written, so the surrounding transaction rolls the
+      // burn back rather than leaving the member with a dead code.
+      expect(redemptionCreate).not.toHaveBeenCalled();
     });
   });
 });

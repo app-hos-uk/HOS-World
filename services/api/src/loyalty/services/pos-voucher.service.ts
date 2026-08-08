@@ -17,6 +17,7 @@ import type { POSAdapter } from '../../pos/interfaces/pos-adapter.interface';
 import { POSAdapterFactory } from '../../pos/pos-adapter.factory';
 import { LoyaltyBurnEngine } from '../engines/burn.engine';
 import { LoyaltyWalletService } from './wallet.service';
+import { LoyaltySettingsService } from './loyalty-settings.service';
 import { RedeemForVoucherDto } from '../dto/redeem-for-voucher.dto';
 import { FeatureFlagsService } from '../../config/feature-flags.service';
 import { MetricsService } from '../../monitoring/metrics.service';
@@ -38,13 +39,15 @@ export class PosVoucherService {
     private factory: POSAdapterFactory,
     private encryption: EncryptionService,
     private metrics: MetricsService,
+    private loyaltySettings: LoyaltySettingsService,
   ) {}
 
-  assertVoucherEnabled(): void {
+  async assertVoucherEnabled(): Promise<void> {
     if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
       throw new BadRequestException('Loyalty programme is not enabled');
     }
-    if (!isTruthy(this.config.get<string>('LOYALTY_POS_VOUCHER_ENABLED'))) {
+    const { settings } = await this.loyaltySettings.getResolved();
+    if (!settings.posVoucherEnabled) {
       throw new BadRequestException('POS loyalty voucher redemption is not enabled');
     }
   }
@@ -69,7 +72,7 @@ export class PosVoucherService {
     status: string;
     points: number;
   }> {
-    this.assertVoucherEnabled();
+    await this.assertVoucherEnabled();
 
     if (dto.voucherId) {
       return this.retryFailedVoucher(dto.voucherId);
@@ -94,7 +97,7 @@ export class PosVoucherService {
       throw new BadRequestException('Store has no active POS connection');
     }
 
-    const redeemValue = this.resolveRedeemValue(store.loyaltyRedeemValue);
+    const redeemValue = await this.resolveRedeemValue(store.loyaltyRedeemValue);
     const amount = this.roundMoney(dto.points * redeemValue);
     if (amount <= 0) {
       throw new BadRequestException('Redemption amount must be greater than zero');
@@ -135,7 +138,7 @@ export class PosVoucherService {
       // Redemption was reversed or missing — fall through to re-burn below.
     }
 
-    this.assertGiftCardAmountLimits(amount, store.currency || 'GBP');
+    await this.assertGiftCardAmountLimits(amount, store.currency || 'GBP');
 
     const { redemptionId } = await this.burn.processRedemption({
       membershipId,
@@ -241,7 +244,7 @@ export class PosVoucherService {
     status: string;
     points: number;
   }> {
-    this.assertVoucherEnabled();
+    await this.assertVoucherEnabled();
 
     const voucher = await this.prisma.loyaltyPosVoucher.findUnique({
       where: { id: voucherId },
@@ -525,12 +528,13 @@ export class PosVoucherService {
     return adapter;
   }
 
-  private resolveRedeemValue(storeValue: Decimal | number | null | undefined): number {
+  private async resolveRedeemValue(storeValue: Decimal | number | null | undefined): Promise<number> {
     if (storeValue != null) {
       const n = Number(storeValue);
       if (Number.isFinite(n) && n > 0) return n;
     }
-    const fallback = Number(this.config.get('LOYALTY_DEFAULT_REDEEM_VALUE', 0.01));
+    const { settings } = await this.loyaltySettings.getResolved();
+    const fallback = settings.defaultRedeemValue;
     return Number.isFinite(fallback) && fallback > 0 ? fallback : 0.01;
   }
 
@@ -538,9 +542,10 @@ export class PosVoucherService {
    * Validate against Lightspeed gift card amount limits.
    * Lightspeed rejects gift cards below and above configurable thresholds.
    */
-  private assertGiftCardAmountLimits(amount: number, currency: string): void {
-    const min = Number(this.config.get('POS_GIFT_CARD_MIN_AMOUNT', 1));
-    const max = Number(this.config.get('POS_GIFT_CARD_MAX_AMOUNT', 500));
+  private async assertGiftCardAmountLimits(amount: number, currency: string): Promise<void> {
+    const { settings } = await this.loyaltySettings.getResolved();
+    const min = settings.posVoucherMinAmount;
+    const max = settings.posVoucherMaxAmount;
     if (Number.isFinite(min) && amount < min) {
       throw new BadRequestException(
         `Gift card amount ${currency} ${amount.toFixed(2)} is below the minimum ${currency} ${min.toFixed(2)}`,

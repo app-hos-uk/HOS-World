@@ -15,6 +15,11 @@ export interface PromotionConditions {
   collectionIds?: string[];
   customerGroupId?: string;
   minQuantity?: number;
+  /**
+   * Restricts the promotion to a single account. Set on promotions minted for one
+   * person (e.g. a loyalty reward coupon) so the code is worthless to anyone else.
+   */
+  allowedUserId?: string;
 }
 
 /**

@@ -1,9 +1,11 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -28,6 +30,11 @@ import {
   UpdateCampaignDto,
 } from './dto/loyalty-admin.dto';
 import { FandomProfileService } from './services/fandom-profile.service';
+import { PosVoucherService } from './services/pos-voucher.service';
+import {
+  LoyaltyProgrammeSettings,
+  LoyaltySettingsService,
+} from './services/loyalty-settings.service';
 
 @ApiTags('admin-loyalty')
 @ApiBearerAuth('JWT-auth')
@@ -39,6 +46,8 @@ export class LoyaltyAdminController {
     private loyalty: LoyaltyService,
     private prisma: PrismaService,
     private fandomProfiles: FandomProfileService,
+    private settings: LoyaltySettingsService,
+    private posVouchers: PosVoucherService,
   ) {}
 
   @Get('dashboard')
@@ -288,12 +297,388 @@ export class LoyaltyAdminController {
   }
 
   @Get('transactions')
-  async transactions(@Query('membershipId') membershipId?: string): Promise<ApiResponse<unknown>> {
-    const data = await this.prisma.loyaltyTransaction.findMany({
-      where: membershipId ? { membershipId } : undefined,
-      orderBy: { createdAt: 'desc' },
-      take: 200,
-    });
+  @ApiOperation({
+    summary: 'Loyalty ledger',
+    description:
+      'Points ledger across all members. Supports a createdAt range so finance can pull a closed period for CSV export.',
+  })
+  async transactions(
+    @Query('membershipId') membershipId?: string,
+    @Query('type') type?: string,
+    @Query('channel') channel?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const take = Math.min(Math.max(Number(limit) || 50, 1), 200);
+    const pageNum = Math.max(Number(page) || 1, 1);
+    const where: Record<string, unknown> = {};
+    if (membershipId) where.membershipId = membershipId;
+    if (type) where.type = type;
+    if (channel) where.channel = channel;
+    if (from || to) {
+      where.createdAt = {
+        ...(from ? { gte: new Date(`${from}T00:00:00.000Z`) } : {}),
+        ...(to ? { lte: new Date(`${to}T23:59:59.999Z`) } : {}),
+      };
+    }
+    const [data, total] = await Promise.all([
+      this.prisma.loyaltyTransaction.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take,
+        skip: (pageNum - 1) * take,
+        include: {
+          membership: {
+            select: {
+              id: true,
+              userId: true,
+              cardNumber: true,
+              user: { select: { email: true, firstName: true, lastName: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.loyaltyTransaction.count({ where }),
+    ]);
+    return {
+      data,
+      message: 'OK',
+      pagination: { page: pageNum, limit: take, total, totalPages: Math.ceil(total / take) },
+    } as ApiResponse<unknown>;
+  }
+
+  @Get('settings')
+  @ApiOperation({ summary: 'Get loyalty programme settings (DB over env)' })
+  async getSettings(): Promise<ApiResponse<unknown>> {
+    const { settings, source } = await this.settings.getResolved(true);
+    return { data: { settings, source }, message: 'OK' };
+  }
+
+  @Put('settings')
+  @ApiOperation({ summary: 'Update loyalty programme settings' })
+  async putSettings(@Body() body: Partial<LoyaltyProgrammeSettings>): Promise<ApiResponse<unknown>> {
+    try {
+      const settings = await this.settings.update(body || {});
+      return { data: settings, message: 'Settings saved' };
+    } catch (e) {
+      throw new BadRequestException((e as Error).message);
+    }
+  }
+
+  @Get('runtime-status')
+  @ApiOperation({ summary: 'Effective loyalty/POS/accounting runtime gates' })
+  async runtimeStatus(): Promise<ApiResponse<unknown>> {
+    const data = await this.settings.getRuntimeStatus();
     return { data, message: 'OK' };
+  }
+
+  @Get('members/:userId/instruments')
+  @ApiOperation({ summary: 'Member balance instruments (points, GCs, vouchers)' })
+  async memberInstruments(@Param('userId', ParseUUIDPipe) userId: string): Promise<ApiResponse<unknown>> {
+    const membership = await this.prisma.loyaltyMembership.findUnique({
+      where: { userId },
+      include: { tier: true, user: { select: { id: true, email: true, firstName: true, lastName: true } } },
+    });
+    if (!membership) throw new BadRequestException('Membership not found');
+    const [giftCards, vouchers] = await Promise.all([
+      this.prisma.giftCard.findMany({
+        where: { userId, status: 'ACTIVE' },
+        select: { id: true, code: true, balance: true, currency: true, status: true },
+      }),
+      this.prisma.loyaltyPosVoucher.findMany({
+        where: { membershipId: membership.id },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      }),
+    ]);
+    return {
+      data: {
+        membership,
+        giftCards,
+        posVouchers: vouchers,
+      },
+      message: 'OK',
+    };
+  }
+
+  @Get('pos-vouchers')
+  @ApiOperation({ summary: 'List POS loyalty vouchers' })
+  async listPosVouchers(
+    @Query('status') status?: string,
+    @Query('storeId') storeId?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const take = Math.min(Math.max(Number(limit) || 50, 1), 200);
+    const pageNum = Math.max(Number(page) || 1, 1);
+    const where: Record<string, unknown> = {};
+    if (status) where.status = status;
+    if (storeId) where.storeId = storeId;
+    const [data, total] = await Promise.all([
+      this.prisma.loyaltyPosVoucher.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take,
+        skip: (pageNum - 1) * take,
+        include: {
+          membership: {
+            select: {
+              id: true,
+              userId: true,
+              user: { select: { email: true, firstName: true, lastName: true } },
+            },
+          },
+          store: { select: { id: true, name: true, code: true } },
+        },
+      }),
+      this.prisma.loyaltyPosVoucher.count({ where }),
+    ]);
+    return {
+      data,
+      message: 'OK',
+      pagination: { page: pageNum, limit: take, total, totalPages: Math.ceil(total / take) },
+    } as ApiResponse<unknown>;
+  }
+
+  @Get('pos-vouchers/:id')
+  async getPosVoucher(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
+    const data = await this.prisma.loyaltyPosVoucher.findUnique({
+      where: { id },
+      include: {
+        membership: {
+          include: { user: { select: { email: true, firstName: true, lastName: true } } },
+        },
+        store: true,
+      },
+    });
+    if (!data) throw new BadRequestException('Voucher not found');
+    return { data, message: 'OK' };
+  }
+
+  @Post('pos-vouchers/:id/retry')
+  @ApiOperation({
+    summary: 'Retry issuing the POS gift card for a FAILED/PENDING voucher',
+    description:
+      'Re-attempts the Lightspeed gift-card issuance for an existing voucher, re-debiting the points if the burn was reversed. Safe to call repeatedly — an already ISSUED voucher is returned unchanged.',
+  })
+  async retryPosVoucher(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.posVouchers.retryFailedVoucher(id);
+    return { data, message: 'Voucher issuance retried' };
+  }
+
+  @Get('identity-reviews')
+  @ApiOperation({ summary: 'Open identity match reviews (Lightspeed ↔ HOS)' })
+  async identityReviews(
+    @Query('status') status?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const take = Math.min(Math.max(Number(limit) || 50, 1), 200);
+    const pageNum = Math.max(Number(page) || 1, 1);
+    const where = { status: status || 'OPEN' };
+    const [data, total] = await Promise.all([
+      this.prisma.identityMatchReview.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take,
+        skip: (pageNum - 1) * take,
+      }),
+      this.prisma.identityMatchReview.count({ where }),
+    ]);
+    return {
+      data,
+      message: 'OK',
+      pagination: { page: pageNum, limit: take, total, totalPages: Math.ceil(total / take) },
+    } as ApiResponse<unknown>;
+  }
+
+  @Patch('identity-reviews/:id')
+  @ApiOperation({ summary: 'Resolve an identity match review' })
+  async resolveIdentityReview(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body()
+    body: { status: 'MERGED' | 'REJECTED' | 'IGNORED'; note?: string; proposedInternalId?: string },
+  ): Promise<ApiResponse<unknown>> {
+    if (!body?.status || !['MERGED', 'REJECTED', 'IGNORED'].includes(body.status)) {
+      throw new BadRequestException('status must be MERGED, REJECTED, or IGNORED');
+    }
+
+    const review = await this.prisma.identityMatchReview.findUnique({ where: { id } });
+    if (!review) throw new BadRequestException('Identity review not found');
+    if (review.status !== 'OPEN') {
+      throw new BadRequestException(`Review is already ${review.status}`);
+    }
+
+    let proposedInternalId = body.proposedInternalId ?? review.proposedInternalId ?? null;
+
+    if (body.status === 'MERGED') {
+      if (!review.lightspeedCustomerId) {
+        throw new BadRequestException('Cannot merge: review has no Lightspeed customer id');
+      }
+      if (!proposedInternalId && review.candidateInternalIds?.length === 1) {
+        proposedInternalId = review.candidateInternalIds[0];
+      }
+      if (!proposedInternalId) {
+        throw new BadRequestException(
+          'proposedInternalId is required to merge (HOS user id or loyalty membership id)',
+        );
+      }
+
+      // Candidates may be userId (sales import) or membershipId (backfill).
+      let membership = await this.prisma.loyaltyMembership.findUnique({
+        where: { id: proposedInternalId },
+        select: { id: true, userId: true },
+      });
+      if (!membership) {
+        membership = await this.prisma.loyaltyMembership.findUnique({
+          where: { userId: proposedInternalId },
+          select: { id: true, userId: true },
+        });
+      }
+      if (!membership) {
+        throw new BadRequestException(
+          'No loyalty membership found for proposedInternalId — enroll the user first',
+        );
+      }
+
+      try {
+        await this.prisma.externalEntityMapping.upsert({
+          where: {
+            provider_entityType_internalId_storeId: {
+              provider: review.provider || 'lightspeed',
+              entityType: 'CUSTOMER',
+              internalId: membership.id,
+              storeId: '',
+            },
+          },
+          create: {
+            provider: review.provider || 'lightspeed',
+            entityType: 'CUSTOMER',
+            internalId: membership.id,
+            externalId: review.lightspeedCustomerId,
+            storeId: '',
+            syncStatus: 'SYNCED',
+            lastSyncedAt: new Date(),
+            metadata: {
+              source: 'identity_match_review',
+              reviewId: review.id,
+              linkedUserId: membership.userId,
+            },
+          },
+          update: {
+            externalId: review.lightspeedCustomerId,
+            syncStatus: 'SYNCED',
+            lastSyncedAt: new Date(),
+            syncError: null,
+            metadata: {
+              source: 'identity_match_review',
+              reviewId: review.id,
+              linkedUserId: membership.userId,
+            },
+          },
+        });
+      } catch (e) {
+        throw new BadRequestException(
+          `Could not link Lightspeed customer: ${(e as Error).message}`,
+        );
+      }
+
+      proposedInternalId = membership.id;
+    }
+
+    const data = await this.prisma.identityMatchReview.update({
+      where: { id },
+      data: {
+        status: body.status,
+        resolutionNote: body.note ?? null,
+        proposedInternalId: proposedInternalId ?? undefined,
+        resolvedAt: new Date(),
+      },
+    });
+    return { data, message: 'Resolved' };
+  }
+
+  @Get('liability-report')
+  @Roles('ADMIN', 'FINANCE')
+  @ApiOperation({ summary: 'HOS loyalty & gift-card liability report (SoR)' })
+  async liabilityReport(
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const { settings } = await this.settings.getResolved();
+    const redeem = settings.defaultRedeemValue;
+    const start = from ? new Date(`${from}T00:00:00.000Z`) : new Date(Date.now() - 30 * 86400000);
+    const end = to ? new Date(`${to}T23:59:59.999Z`) : new Date();
+
+    const [
+      balanceAgg,
+      earnAgg,
+      burnAgg,
+      expireAgg,
+      gcLiability,
+      gcIssued,
+      gcRedeemed,
+      gcRefunded,
+      vouchersIssued,
+    ] = await Promise.all([
+      this.prisma.loyaltyMembership.aggregate({ _sum: { currentBalance: true } }),
+      this.prisma.loyaltyTransaction.aggregate({
+        where: { type: 'EARN', createdAt: { gte: start, lte: end } },
+        _sum: { points: true },
+      }),
+      this.prisma.loyaltyTransaction.aggregate({
+        where: { type: 'BURN', createdAt: { gte: start, lte: end } },
+        _sum: { points: true },
+      }),
+      this.prisma.loyaltyTransaction.aggregate({
+        where: { type: 'EXPIRE', createdAt: { gte: start, lte: end } },
+        _sum: { points: true },
+      }),
+      this.prisma.giftCard.aggregate({
+        where: { status: 'ACTIVE' },
+        _sum: { balance: true },
+      }),
+      this.prisma.giftCardTransaction.aggregate({
+        where: { type: 'PURCHASE', createdAt: { gte: start, lte: end } },
+        _sum: { amount: true },
+      }),
+      this.prisma.giftCardTransaction.aggregate({
+        where: { type: 'REDEMPTION', createdAt: { gte: start, lte: end } },
+        _sum: { amount: true },
+      }),
+      this.prisma.giftCardTransaction.aggregate({
+        where: { type: 'REFUND', createdAt: { gte: start, lte: end } },
+        _sum: { amount: true },
+      }),
+      this.prisma.loyaltyPosVoucher.aggregate({
+        where: { status: 'ISSUED', issuedAt: { gte: start, lte: end } },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    const pointsOutstanding = balanceAgg._sum.currentBalance ?? 0;
+    const n = (v: unknown) => Number(v || 0);
+    return {
+      data: {
+        period: { from: start.toISOString(), to: end.toISOString() },
+        redeemValuePerPoint: redeem,
+        pointsOutstanding,
+        pointsOutstandingValue: pointsOutstanding * redeem,
+        periodEarnPoints: n(earnAgg._sum.points),
+        periodBurnPoints: Math.abs(n(burnAgg._sum.points)),
+        periodExpirePoints: Math.abs(n(expireAgg._sum.points)),
+        periodBreakageValue: Math.abs(n(expireAgg._sum.points)) * redeem,
+        hosGiftCardLiability: n(gcLiability._sum.balance),
+        periodGcIssued: n(gcIssued._sum.amount),
+        periodGcRedeemed: n(gcRedeemed._sum.amount),
+        periodGcRefunded: n(gcRefunded._sum.amount),
+        periodPosVouchersIssued: n(vouchersIssued._sum.amount),
+      },
+      message: 'OK',
+    };
   }
 }

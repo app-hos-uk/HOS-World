@@ -7,6 +7,7 @@ import { PrismaService } from '../../database/prisma.service';
 import { LoyaltyTierEngine } from '../engines/tier.engine';
 import { LoyaltyWalletService } from '../services/wallet.service';
 import { FandomProfileService } from '../services/fandom-profile.service';
+import { LoyaltySettingsService } from '../services/loyalty-settings.service';
 import { MarketingEventBus } from '../../journeys/marketing-event.bus';
 import { FeatureFlagsService } from '../../config/feature-flags.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
@@ -23,9 +24,36 @@ export class LoyaltyJobsService implements OnModuleInit {
     private config: ConfigService,
     private featureFlags: FeatureFlagsService,
     private fandomProfiles: FandomProfileService,
+    private settings: LoyaltySettingsService,
     @Optional() @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
   ) {}
+
+  /**
+   * Points that aged past the cutoff and were never spent. Spends are assumed
+   * to consume the oldest credits first, so all-time debits are netted off the
+   * aged credits; the result is capped by the live balance so expiry can never
+   * take points a member has already burned.
+   */
+  private async computeExpirableBudget(membershipId: string, cutoff: Date): Promise<number> {
+    const [agedCredits, debits, membership] = await Promise.all([
+      this.prisma.loyaltyTransaction.aggregate({
+        where: { membershipId, points: { gt: 0 }, createdAt: { lt: cutoff } },
+        _sum: { points: true },
+      }),
+      this.prisma.loyaltyTransaction.aggregate({
+        where: { membershipId, points: { lt: 0 } },
+        _sum: { points: true },
+      }),
+      this.prisma.loyaltyMembership.findUnique({
+        where: { id: membershipId },
+        select: { currentBalance: true },
+      }),
+    ]);
+    const credits = Number(agedCredits._sum.points ?? 0);
+    const spent = Math.abs(Number(debits._sum.points ?? 0));
+    return Math.max(0, Math.min(credits - spent, membership?.currentBalance ?? 0));
+  }
 
   async onModuleInit() {
     if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
@@ -49,9 +77,10 @@ export class LoyaltyJobsService implements OnModuleInit {
     });
 
     this.queue.registerProcessor(JobType.LOYALTY_POINTS_EXPIRY, async () => {
-      const expiryMonths = this.config.get<number>('LOYALTY_POINTS_EXPIRY_MONTHS', 0);
+      const { settings } = await this.settings.getResolved(true);
+      const expiryMonths = Math.max(0, Math.floor(Number(settings.pointsExpiryMonths) || 0));
       if (expiryMonths <= 0) {
-        this.logger.log('Points expiry disabled (LOYALTY_POINTS_EXPIRY_MONTHS not set)');
+        this.logger.log('Points expiry disabled (pointsExpiryMonths is 0)');
         return;
       }
 
@@ -65,34 +94,48 @@ export class LoyaltyJobsService implements OnModuleInit {
           expiresAt: null,
           points: { gt: 0 },
         },
-        include: { membership: true },
+        orderBy: { createdAt: 'asc' },
         take: 500,
       });
 
       this.logger.log(`Found ${expirable.length} transactions eligible for expiry`);
 
+      const byMembership = new Map<string, typeof expirable>();
       for (const tx of expirable) {
+        const rows = byMembership.get(tx.membershipId) ?? [];
+        rows.push(tx);
+        byMembership.set(tx.membershipId, rows);
+      }
+
+      for (const [membershipId, rows] of byMembership) {
         try {
-          await this.prisma.$transaction(async (ptx) => {
-            const membership = await ptx.loyaltyMembership.findUnique({
-              where: { id: tx.membershipId },
+          let budget = await this.computeExpirableBudget(membershipId, cutoff);
+          for (const tx of rows) {
+            // Under FIFO, spends consume the oldest credits first, so only the
+            // portion of this earn that was never spent may expire. The row is
+            // still stamped when the budget is exhausted — its points are
+            // already accounted for by earlier burns.
+            const amount = Math.min(tx.points, Math.max(0, budget));
+            await this.prisma.$transaction(async (ptx) => {
+              if (amount > 0) {
+                await this.wallet.applyDelta(ptx, membershipId, -amount, LoyaltyTxType.EXPIRE, {
+                  source: 'EXPIRY',
+                  sourceId: tx.id,
+                  channel: 'SYSTEM',
+                  description: `Points expired (earned ${tx.createdAt.toISOString().slice(0, 10)})`,
+                  idempotencyKey: `expire:${tx.id}`,
+                  metadata: { earnedPoints: tx.points, expiredPoints: amount },
+                });
+              }
+              await ptx.loyaltyTransaction.update({
+                where: { id: tx.id },
+                data: { expiresAt: new Date() },
+              });
             });
-            if (!membership || membership.currentBalance < tx.points) return;
-
-            await this.wallet.applyDelta(ptx, tx.membershipId, -tx.points, LoyaltyTxType.EXPIRE, {
-              source: 'EXPIRY',
-              sourceId: tx.id,
-              channel: 'SYSTEM',
-              description: `Points expired (earned ${tx.createdAt.toISOString().slice(0, 10)})`,
-            });
-
-            await ptx.loyaltyTransaction.update({
-              where: { id: tx.id },
-              data: { expiresAt: new Date() },
-            });
-          });
+            budget -= amount;
+          }
         } catch (e) {
-          this.logger.warn(`Expiry failed for tx ${tx.id}: ${(e as Error).message}`);
+          this.logger.warn(`Expiry failed for membership ${membershipId}: ${(e as Error).message}`);
         }
       }
     });
@@ -136,25 +179,32 @@ export class LoyaltyJobsService implements OnModuleInit {
         if (!dob) continue;
         if (dob.getUTCMonth() + 1 !== month || dob.getUTCDate() !== day) continue;
 
+        // One birthday bonus per calendar year, enforced by the wallet key below;
+        // this is just a cheap filter so most members skip the transaction.
+        const yearStart = new Date(Date.UTC(today.getUTCFullYear(), 0, 1));
         const alreadyAwarded = await this.prisma.loyaltyTransaction.count({
-          where: {
-            membershipId: m.id,
-            source: 'BIRTHDAY',
-            createdAt: {
-              gte: new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())),
-            },
-          },
+          where: { membershipId: m.id, source: 'BIRTHDAY', createdAt: { gte: yearStart } },
         });
         if (alreadyAwarded > 0) continue;
 
         try {
+          let applied = false;
           await this.prisma.$transaction(async (ptx) => {
-            await this.wallet.applyDelta(ptx, m.id, pts, LoyaltyTxType.BONUS, {
+            await this.wallet.lockMembership(ptx, m.id);
+            const dup = await ptx.loyaltyTransaction.count({
+              where: { membershipId: m.id, source: 'BIRTHDAY', createdAt: { gte: yearStart } },
+            });
+            if (dup > 0) return;
+
+            const result = await this.wallet.applyDelta(ptx, m.id, pts, LoyaltyTxType.BONUS, {
               source: 'BIRTHDAY',
               channel: 'SYSTEM',
               earnRuleId: bonusRule?.id,
               description: 'Happy birthday bonus',
+              idempotencyKey: `bonus:BIRTHDAY:${m.id}:${today.getUTCFullYear()}`,
             });
+            if (!result.applied) return;
+
             await ptx.loyaltyMembership.update({
               where: { id: m.id },
               data: {
@@ -164,7 +214,9 @@ export class LoyaltyJobsService implements OnModuleInit {
                 ...(m.birthday ? {} : dob ? { birthday: dob } : {}),
               },
             });
+            applied = true;
           });
+          if (!applied) continue;
           awarded++;
           void this.marketingBus
             ?.emit('LOYALTY_BIRTHDAY', m.userId, {
@@ -218,25 +270,31 @@ export class LoyaltyJobsService implements OnModuleInit {
         if (anniversary.getUTCFullYear() >= year) continue;
         if (anniversary.getUTCMonth() + 1 !== month || anniversary.getUTCDate() !== day) continue;
 
+        // One anniversary bonus per calendar year (wallet key enforces it).
+        const yearStart = new Date(Date.UTC(year, 0, 1));
         const alreadyAwarded = await this.prisma.loyaltyTransaction.count({
-          where: {
-            membershipId: m.id,
-            source: 'ANNIVERSARY',
-            createdAt: {
-              gte: new Date(Date.UTC(year, today.getUTCMonth(), today.getUTCDate())),
-            },
-          },
+          where: { membershipId: m.id, source: 'ANNIVERSARY', createdAt: { gte: yearStart } },
         });
         if (alreadyAwarded > 0) continue;
 
         try {
+          let applied = false;
           await this.prisma.$transaction(async (ptx) => {
-            await this.wallet.applyDelta(ptx, m.id, pts, LoyaltyTxType.BONUS, {
+            await this.wallet.lockMembership(ptx, m.id);
+            const dup = await ptx.loyaltyTransaction.count({
+              where: { membershipId: m.id, source: 'ANNIVERSARY', createdAt: { gte: yearStart } },
+            });
+            if (dup > 0) return;
+
+            const result = await this.wallet.applyDelta(ptx, m.id, pts, LoyaltyTxType.BONUS, {
               source: 'ANNIVERSARY',
               channel: 'SYSTEM',
               earnRuleId: bonusRule?.id,
               description: 'Membership anniversary bonus',
+              idempotencyKey: `bonus:ANNIVERSARY:${m.id}:${year}`,
             });
+            if (!result.applied) return;
+
             await ptx.loyaltyMembership.update({
               where: { id: m.id },
               data: {
@@ -244,8 +302,9 @@ export class LoyaltyJobsService implements OnModuleInit {
                 engagementCount: { increment: 1 },
               },
             });
+            applied = true;
           });
-          awarded++;
+          if (applied) awarded++;
         } catch (e) {
           this.logger.warn(`Anniversary bonus failed for ${m.id}: ${(e as Error).message}`);
         }

@@ -23,6 +23,7 @@ function makeMocks() {
   };
   const wallet: any = {
     applyDelta: jest.fn().mockResolvedValue({ balanceBefore: 0, balanceAfter: 10 }),
+    lockMembership: jest.fn().mockResolvedValue(undefined),
   };
   const tiers: any = {
     recalculateTier: jest.fn().mockResolvedValue({ upgraded: false, tierId: 't1' }),

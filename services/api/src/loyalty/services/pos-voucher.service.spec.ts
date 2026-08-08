@@ -136,6 +136,31 @@ describe('PosVoucherService', () => {
       incrementCounter: jest.fn(),
     };
 
+    const posVoucherEnabled = (() => {
+      if (overrides.configGet) {
+        const v = overrides.configGet('LOYALTY_POS_VOUCHER_ENABLED', undefined);
+        if (v === 'false' || v === false) return false;
+        if (v === 'true' || v === true) return true;
+      }
+      return true;
+    })();
+
+    const loyaltySettings: any = {
+      getResolved: jest.fn().mockResolvedValue({
+        settings: {
+          posVoucherEnabled,
+          defaultRedeemValue: 0.01,
+          posVoucherMinAmount: Number(
+            (overrides.configGet?.('POS_GIFT_CARD_MIN_AMOUNT', 1) as number) ?? 1,
+          ),
+          posVoucherMaxAmount: Number(
+            (overrides.configGet?.('POS_GIFT_CARD_MAX_AMOUNT', 500) as number) ?? 500,
+          ),
+        },
+        source: 'env',
+      }),
+    };
+
     const svc = new PosVoucherService(
       prisma,
       config,
@@ -145,9 +170,10 @@ describe('PosVoucherService', () => {
       factory,
       encryption,
       metrics,
+      loyaltySettings,
     );
 
-    return { svc, adapter, prisma, burn, wallet, voucherRow, metrics };
+    return { svc, adapter, prisma, burn, wallet, voucherRow, metrics, loyaltySettings };
   }
 
   it('generates 12+ alphanumeric non-sequential card numbers', () => {

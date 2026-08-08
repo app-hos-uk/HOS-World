@@ -814,6 +814,37 @@ export class ReturnsService {
     return this.mapToReturnType(updated);
   }
 
+  /**
+   * Fulfilment side of a refund that settled after the inline attempt (Stripe
+   * webhook). The approval path only restocks and moves the order when the card
+   * refund succeeds inline, so an async settlement has to finish that work here.
+   * The caller is responsible for making sure this runs once per return.
+   */
+  async finalizeSettledReturn(returnId: string): Promise<void> {
+    const returnRequest = await this.prisma.returnRequest.findUnique({
+      where: { id: returnId },
+      include: { order: { include: { items: true, seller: true } }, items: true },
+    });
+    if (!returnRequest?.order) return;
+
+    const isPartial =
+      returnRequest.items?.length > 0 &&
+      returnRequest.items.length < (returnRequest.order.items?.length ?? 0);
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.applyRestockForReturn(tx, returnRequest);
+      await this.markOrderRefundedInTx(tx, returnRequest.orderId, isPartial);
+    });
+
+    try {
+      await this.getOrdersService().reverseInfluencerAttribution(returnRequest.orderId);
+    } catch (commErr) {
+      this.logger.error(
+        `Influencer reversal after settled refund failed for order ${returnRequest.orderId}: ${(commErr as Error).message}`,
+      );
+    }
+  }
+
   private async markOrderRefundedInTx(tx: any, orderId: string, isPartial?: boolean) {
     if (isPartial) {
       // For partial returns, only update paymentStatus to REFUNDED but keep order

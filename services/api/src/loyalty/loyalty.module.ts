@@ -12,6 +12,8 @@ import { LoyaltyCampaignService } from './services/campaign.service';
 import { LoyaltyReferralService } from './services/referral.service';
 import { LoyaltyEventService } from './services/loyalty-event.service';
 import { PosVoucherService } from './services/pos-voucher.service';
+import { LoyaltySettingsService } from './services/loyalty-settings.service';
+import { LoyaltyReversalService } from './services/loyalty-reversal.service';
 import { LoyaltyBurnEngine } from './engines/burn.engine';
 import { LoyaltyEarnEngine } from './engines/earn.engine';
 import { LoyaltyTierEngine } from './engines/tier.engine';
@@ -57,6 +59,8 @@ import { PosModule } from '../pos/pos.module';
     LoyaltyCampaignService,
     LoyaltyReferralService,
     LoyaltyEventService,
+    LoyaltySettingsService,
+    LoyaltyReversalService,
     LoyaltyTierEngine,
     LoyaltyBurnEngine,
     LoyaltyEarnEngine,
@@ -75,6 +79,8 @@ import { PosModule } from '../pos/pos.module';
     LoyaltyTierEngine,
     FandomProfileService,
     PosVoucherService,
+    LoyaltySettingsService,
+    LoyaltyReversalService,
   ],
 })
 export class LoyaltyModule {}

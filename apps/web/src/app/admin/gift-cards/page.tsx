@@ -85,6 +85,13 @@ export default function AdminGiftCardsPage() {
   const [transactions, setTransactions] = useState<GiftCardTransaction[]>([]);
   const [loadingTx, setLoadingTx] = useState(false);
 
+  // Refund (order-linked restore of a prior REDEMPTION)
+  const [refundingId, setRefundingId] = useState<string | null>(null);
+  const [refundAmount, setRefundAmount] = useState('');
+  const [refundOrderId, setRefundOrderId] = useState('');
+  const [refundOrders, setRefundOrders] = useState<Array<{ orderId: string; label: string; max: number }>>([]);
+  const [refundSubmitting, setRefundSubmitting] = useState(false);
+
   // Issue form
   const [showForm, setShowForm] = useState(false);
   const [issuing, setIssuing] = useState(false);
@@ -139,6 +146,95 @@ export default function AdminGiftCardsPage() {
       setTransactions([]);
     } finally {
       setLoadingTx(false);
+    }
+  };
+
+  const openRefund = async (gc: GiftCard, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRefundingId(gc.id);
+    setRefundAmount('');
+    setRefundOrderId('');
+    setRefundOrders([]);
+    try {
+      const res = await apiClient.getGiftCardTransactions(gc.id);
+      const txs: GiftCardTransaction[] = res?.data || [];
+      if (expandedId !== gc.id) {
+        setExpandedId(gc.id);
+        setTransactions(txs);
+      }
+      const redeemedByOrder = new Map<string, { amount: number; orderNumber?: string }>();
+      const refundedByOrder = new Map<string, number>();
+      for (const t of txs) {
+        const orderId = t.order?.id;
+        if (!orderId) continue;
+        if (t.type === 'REDEMPTION') {
+          const prev = redeemedByOrder.get(orderId);
+          redeemedByOrder.set(orderId, {
+            amount: (prev?.amount || 0) + Number(t.amount),
+            orderNumber: t.order?.orderNumber || prev?.orderNumber,
+          });
+        } else if (t.type === 'REFUND') {
+          refundedByOrder.set(orderId, (refundedByOrder.get(orderId) || 0) + Number(t.amount));
+        }
+      }
+      const options = Array.from(redeemedByOrder.entries())
+        .map(([orderId, info]) => {
+          const already = refundedByOrder.get(orderId) || 0;
+          const max = Math.max(0, info.amount - already);
+          return {
+            orderId,
+            max,
+            label: `${info.orderNumber || orderId.slice(0, 8)} · max ${formatCurrency(max, gc.currency)}`,
+          };
+        })
+        .filter((o) => o.max > 0);
+      setRefundOrders(options);
+      if (options.length === 1) {
+        setRefundOrderId(options[0].orderId);
+        setRefundAmount(String(options[0].max));
+      }
+      if (options.length === 0) {
+        toast.error('No refundable redemptions on this card (needs a prior order redemption)');
+        setRefundingId(null);
+      }
+    } catch {
+      toast.error('Failed to load redemptions for refund');
+      setRefundingId(null);
+    }
+  };
+
+  const submitRefund = async (gc: GiftCard) => {
+    const amount = parseFloat(refundAmount);
+    if (!refundOrderId) {
+      toast.error('Select the order redemption to refund');
+      return;
+    }
+    if (!amount || amount <= 0) {
+      toast.error('Refund amount must be greater than zero');
+      return;
+    }
+    const selected = refundOrders.find((o) => o.orderId === refundOrderId);
+    if (selected && amount > selected.max) {
+      toast.error(`Refund cannot exceed ${selected.max}`);
+      return;
+    }
+    try {
+      setRefundSubmitting(true);
+      await apiClient.refundGiftCard(gc.id, amount, refundOrderId);
+      toast.success('Gift card balance restored');
+      setRefundingId(null);
+      setRefundAmount('');
+      setRefundOrderId('');
+      setRefundOrders([]);
+      await fetchGiftCards();
+      if (expandedId === gc.id) {
+        const res = await apiClient.getGiftCardTransactions(gc.id);
+        setTransactions(res?.data || []);
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Refund failed');
+    } finally {
+      setRefundSubmitting(false);
     }
   };
 
@@ -344,6 +440,7 @@ export default function AdminGiftCardsPage() {
                   <th className="text-left px-4 py-3 font-medium text-hos-text-muted">Created</th>
                   <th className="text-left px-4 py-3 font-medium text-hos-text-muted">Expires</th>
                   <th className="text-right px-4 py-3 font-medium text-hos-text-muted">Txns</th>
+                  <th className="text-right px-4 py-3 font-medium text-hos-text-muted">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -375,10 +472,80 @@ export default function AdminGiftCardsPage() {
                       <td className="px-4 py-3 text-hos-text-muted">{formatDate(gc.createdAt)}</td>
                       <td className="px-4 py-3 text-hos-text-muted">{formatDate(gc.expiresAt)}</td>
                       <td className="px-4 py-3 text-right text-hos-text-muted">{gc.transactionCount}</td>
+                      <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                        {gc.transactionCount > 0 ? (
+                          <button
+                            type="button"
+                            onClick={(e) => openRefund(gc, e)}
+                            className="text-hos-gold hover:text-hos-gold-hover text-xs font-medium"
+                          >
+                            Refund
+                          </button>
+                        ) : (
+                          <span className="text-hos-text-muted text-xs">—</span>
+                        )}
+                      </td>
                     </tr>
+                    {refundingId === gc.id && (
+                      <tr>
+                        <td colSpan={10} className="bg-hos-bg-secondary px-6 py-4 border-b border-hos-border">
+                          <p className="text-xs text-hos-text-muted mb-3 font-ui">
+                            Restores balance for a prior order redemption (same API used on cancel/return).
+                          </p>
+                          <div className="flex flex-wrap items-end gap-3">
+                            <label className="text-xs text-hos-text-muted min-w-[220px]">
+                              Order redemption
+                              <select
+                                value={refundOrderId}
+                                onChange={(e) => {
+                                  const id = e.target.value;
+                                  setRefundOrderId(id);
+                                  const opt = refundOrders.find((o) => o.orderId === id);
+                                  if (opt) setRefundAmount(String(opt.max));
+                                }}
+                                className="mt-1 block w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary text-sm"
+                              >
+                                <option value="">Select order…</option>
+                                {refundOrders.map((o) => (
+                                  <option key={o.orderId} value={o.orderId}>
+                                    {o.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="text-xs text-hos-text-muted">
+                              Amount
+                              <input
+                                type="number"
+                                min="0.01"
+                                step="0.01"
+                                value={refundAmount}
+                                onChange={(e) => setRefundAmount(e.target.value)}
+                                className="mt-1 block w-32 px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary text-sm"
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              disabled={refundSubmitting}
+                              onClick={() => submitRefund(gc)}
+                              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded font-semibold text-sm disabled:opacity-50"
+                            >
+                              {refundSubmitting ? 'Refunding…' : 'Confirm refund'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setRefundingId(null)}
+                              className="px-3 py-2 border border-hos-border rounded text-sm text-hos-text-secondary"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                     {expandedId === gc.id && (
                       <tr>
-                        <td colSpan={9} className="bg-hos-bg-tertiary/40 px-6 py-4">
+                        <td colSpan={10} className="bg-hos-bg-tertiary/40 px-6 py-4">
                           <h4 className="text-sm font-semibold text-hos-text-primary mb-3">Transaction History</h4>
                           {loadingTx ? (
                             <div className="flex items-center gap-2 text-hos-text-muted text-sm py-2">

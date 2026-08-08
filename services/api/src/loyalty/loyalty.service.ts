@@ -29,6 +29,8 @@ import { isTruthy } from '../common/utils/config';
 import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
 import { isProtectedAdminEmail } from '../config/protected-admin-emails';
 import { normalizePhoneToE164 } from '../common/utils/phone-normalize';
+import { isPosRuntimeEnabled } from '../pos/pos-enabled';
+import { LoyaltySettingsService } from './services/loyalty-settings.service';
 
 @Injectable()
 export class LoyaltyService implements OnModuleInit {
@@ -46,6 +48,7 @@ export class LoyaltyService implements OnModuleInit {
     private events: LoyaltyEventService,
     private queue: QueueService,
     private loyaltyListener: LoyaltyListener,
+    private loyaltySettings: LoyaltySettingsService,
     @Optional() @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
   ) {}
@@ -76,6 +79,12 @@ export class LoyaltyService implements OnModuleInit {
     if (!isTruthy(this.config.get<string>('LOYALTY_ENABLED'))) {
       throw new BadRequestException('Loyalty programme is not enabled');
     }
+  }
+
+  async isCheckoutRedemptionEnabled(): Promise<boolean> {
+    if (!this.isEnabled()) return false;
+    const { settings } = await this.loyaltySettings.getResolved();
+    return settings.redemptionAtCheckout;
   }
 
   isEnabled(): boolean {
@@ -181,7 +190,7 @@ export class LoyaltyService implements OnModuleInit {
         this.logger.warn(`Marketing welcome event failed for ${userId}: ${e instanceof Error ? e.message : 'unknown'}`);
       });
 
-    if (this.config.get<string>('POS_ENABLED') === 'true') {
+    if (isPosRuntimeEnabled(this.config, this.featureFlags)) {
       void this.queue.addJob(JobType.POS_CUSTOMER_SYNC, { userId }).catch((e: unknown) => {
         this.logger.warn(`POS sync job enqueue failed for ${userId}: ${e instanceof Error ? e.message : 'unknown'}`);
       });
@@ -243,9 +252,7 @@ export class LoyaltyService implements OnModuleInit {
       await this.prisma.$transaction(async (tx) => {
         // Lock + in-tx duplicate check so concurrent getMembership/enroll
         // paths cannot both award the welcome bonus.
-        await tx.$executeRaw(
-          Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membershipId} FOR UPDATE`,
-        );
+        await this.wallet.lockMembership(tx, membershipId);
         const existingSignup = await tx.loyaltyTransaction.findFirst({
           where: { membershipId, source: 'SIGNUP', type: LoyaltyTxType.BONUS },
         });
@@ -255,6 +262,7 @@ export class LoyaltyService implements OnModuleInit {
           source: 'SIGNUP',
           channel: 'WEB',
           description: 'Welcome bonus for joining The Enchanted Circle',
+          idempotencyKey: `bonus:SIGNUP:${membershipId}`,
         });
         await tx.loyaltyMembership.update({
           where: { id: membershipId },
@@ -473,7 +481,20 @@ export class LoyaltyService implements OnModuleInit {
     });
   }
 
-  async redeem(userId: string, body: { points: number; channel: string; optionId?: string; storeId?: string }) {
+  /**
+   * Standalone redemption (no order). Pass `idempotencyKey` so a retried client
+   * call replays the original redemption instead of burning the points twice.
+   */
+  async redeem(
+    userId: string,
+    body: {
+      points: number;
+      channel: string;
+      optionId?: string;
+      storeId?: string;
+      idempotencyKey?: string;
+    },
+  ) {
     this.assertEnabled();
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) throw new NotFoundException('Not enrolled');
@@ -485,6 +506,7 @@ export class LoyaltyService implements OnModuleInit {
       storeId: body.storeId,
       optionId: body.optionId,
       regionCode: membership.regionCode,
+      idempotencyKey: body.idempotencyKey,
     });
   }
 
@@ -580,26 +602,31 @@ export class LoyaltyService implements OnModuleInit {
 
     const dayStart = new Date();
     dayStart.setHours(0, 0, 0, 0);
-    const checkInsToday = await this.prisma.loyaltyTransaction.count({
-      where: {
-        membershipId: membership.id,
-        source: 'CHECK_IN',
-        storeId,
-        type: LoyaltyTxType.EARN,
-        createdAt: { gte: dayStart },
-      },
-    });
     const maxDay = rule?.maxPerDay ?? 1;
-    if (maxDay > 0 && checkInsToday >= maxDay) {
-      throw new BadRequestException('Check-in limit reached for this store today');
-    }
 
     await this.prisma.$transaction(async (tx) => {
+      // Lock first so two taps of the same button cannot both pass the cap check.
+      await this.wallet.lockMembership(tx, membership.id);
+      const checkInsToday = await tx.loyaltyTransaction.count({
+        where: {
+          membershipId: membership.id,
+          source: 'CHECK_IN',
+          storeId,
+          type: LoyaltyTxType.EARN,
+          createdAt: { gte: dayStart },
+        },
+      });
+      if (maxDay > 0 && checkInsToday >= maxDay) {
+        throw new BadRequestException('Check-in limit reached for this store today');
+      }
+
+      const dayKey = dayStart.toISOString().slice(0, 10);
       await this.wallet.applyDelta(tx, membership.id, pts, LoyaltyTxType.EARN, {
         source: 'CHECK_IN',
         channel: 'STORE',
         storeId,
         description: 'Store check-in',
+        idempotencyKey: `earn:CHECK_IN:${membership.id}:${storeId}:${dayKey}:${checkInsToday}`,
       });
       await tx.loyaltyMembership.update({
         where: { id: membership.id },
@@ -805,7 +832,8 @@ export class LoyaltyService implements OnModuleInit {
 
   async validateCartRedemption(userId: string, optionId: string): Promise<{ points: number; discount: Decimal }> {
     this.assertEnabled();
-    if (this.config.get<string>('LOYALTY_REDEMPTION_AT_CHECKOUT') !== 'true') {
+    const { settings } = await this.loyaltySettings.getResolved();
+    if (!settings.redemptionAtCheckout) {
       throw new BadRequestException('Checkout redemption is not enabled');
     }
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
@@ -825,7 +853,7 @@ export class LoyaltyService implements OnModuleInit {
       throw new BadRequestException('Insufficient points');
     }
 
-    const minRedeem = this.config.get<number>('LOYALTY_MIN_REDEMPTION_POINTS', 100);
+    const minRedeem = settings.minRedemptionPoints;
     if (opt.pointsCost < minRedeem) {
       throw new BadRequestException(`Minimum redemption is ${minRedeem} points`);
     }
@@ -871,7 +899,8 @@ export class LoyaltyService implements OnModuleInit {
         this.prisma.loyaltyMembership.aggregate({ _sum: { currentBalance: true } }),
       ]);
 
-    const redeemValue = Number(this.config.get('LOYALTY_DEFAULT_REDEEM_VALUE', 0.01));
+    const { settings } = await this.loyaltySettings.getResolved();
+    const redeemValue = settings.defaultRedeemValue;
     const liability = balanceAgg._sum.currentBalance ?? 0;
 
     return {
@@ -888,22 +917,29 @@ export class LoyaltyService implements OnModuleInit {
     };
   }
 
+  /**
+   * Bonus credit. Defaults to one award per source per member; pass an explicit
+   * `idempotencyKey` (e.g. with the year in it) for a bonus that may repeat.
+   */
   async awardBonus(
     membershipId: string,
     points: number,
     source: string,
     description: string,
+    idempotencyKey?: string,
   ): Promise<void> {
     if (points <= 0) return;
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { id: membershipId } });
     if (!membership) return;
 
     await this.prisma.$transaction(async (tx) => {
-      await this.wallet.applyDelta(tx, membershipId, points, LoyaltyTxType.BONUS, {
+      const result = await this.wallet.applyDelta(tx, membershipId, points, LoyaltyTxType.BONUS, {
         source,
         channel: 'WEB',
         description,
+        idempotencyKey: idempotencyKey ?? `bonus:${source}:${membershipId}`,
       });
+      if (!result.applied) return;
       await tx.loyaltyMembership.update({
         where: { id: membershipId },
         data: { totalPointsEarned: { increment: points } },
@@ -933,6 +969,22 @@ export class LoyaltyService implements OnModuleInit {
           await tx.loyaltyMembership.update({
             where: { id: membership.id },
             data: { totalPointsEarned: { increment: delta } },
+          });
+        } else {
+          // A negative adjust is a correction, so the lifetime-earned figure that
+          // drives tier placement has to come down too — otherwise the member
+          // keeps a tier the corrected history no longer earns.
+          const current = await tx.loyaltyMembership.findUnique({
+            where: { id: membership.id },
+            select: { totalPointsEarned: true },
+          });
+          await tx.loyaltyMembership.update({
+            where: { id: membership.id },
+            data: {
+              totalPointsEarned: {
+                decrement: Math.min(Math.abs(delta), current?.totalPointsEarned ?? 0),
+              },
+            },
           });
         }
       });

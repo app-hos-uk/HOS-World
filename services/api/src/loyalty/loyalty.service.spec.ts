@@ -12,6 +12,7 @@ import { LoyaltyReferralService } from './services/referral.service';
 import { LoyaltyEventService } from './services/loyalty-event.service';
 import { QueueService } from '../queue/queue.service';
 import { LoyaltyListener } from './listeners/loyalty.listener';
+import { LoyaltySettingsService } from './services/loyalty-settings.service';
 
 describe('LoyaltyService', () => {
   let service: LoyaltyService;
@@ -98,6 +99,7 @@ describe('LoyaltyService', () => {
 
   const mockWallet = {
     applyDelta: jest.fn(),
+    lockMembership: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockReferrals = {
@@ -117,6 +119,21 @@ describe('LoyaltyService', () => {
     onUserRegistered: jest.fn().mockResolvedValue('applied'),
   };
 
+  const mockLoyaltySettings = {
+    getResolved: jest.fn().mockResolvedValue({
+      settings: {
+        defaultEarnRate: 1,
+        defaultRedeemValue: 0.01,
+        minRedemptionPoints: 100,
+        cardPrefix: 'HOS',
+        redemptionAtCheckout: true,
+        posVoucherEnabled: false,
+      },
+      source: 'env',
+    }),
+    isCheckoutRedemptionEnabled: jest.fn().mockResolvedValue(true),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -132,6 +149,7 @@ describe('LoyaltyService', () => {
         { provide: LoyaltyEventService, useValue: mockEvents },
         { provide: QueueService, useValue: mockQueue },
         { provide: LoyaltyListener, useValue: mockLoyaltyListener },
+        { provide: LoyaltySettingsService, useValue: mockLoyaltySettings },
       ],
     }).compile();
 
@@ -400,6 +418,132 @@ describe('LoyaltyService', () => {
       mockPrisma.loyaltyMembership.findUnique.mockResolvedValue(null);
       await service.awardBonus('mem-1', 50, 'TEST', 'test');
       expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('adminAdjustPoints', () => {
+    const runTx = (membershipUpdate: jest.Mock, totalPointsEarned: number) => {
+      mockPrisma.$transaction.mockImplementation(async (fn: any) =>
+        fn({
+          loyaltyMembership: {
+            findUnique: jest.fn().mockResolvedValue({ totalPointsEarned }),
+            update: membershipUpdate,
+          },
+        }),
+      );
+    };
+
+    beforeEach(() => {
+      mockPrisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'mem-1', userId: 'user-1' });
+      mockWallet.applyDelta.mockResolvedValue({ applied: true });
+      mockTiers.recalculateTier.mockResolvedValue({ upgraded: false });
+      // adminAdjustPoints returns getMembership(), which repairs bonuses; a
+      // zero-point SIGNUP rule short-circuits that so this stays focused.
+      (mockPrisma as any).loyaltyEarnRule.findFirst = jest
+        .fn()
+        .mockResolvedValue({ action: 'SIGNUP', isActive: true, pointsAmount: 0 });
+      (mockPrisma as any).loyaltyTier.findFirst.mockResolvedValue({ id: 'tier-1' });
+      mockLoyaltyListener.onProfileUpdated.mockResolvedValue(0);
+    });
+
+    it('raises the tier basis on a positive adjust', async () => {
+      const membershipUpdate = jest.fn();
+      runTx(membershipUpdate, 1000);
+
+      await service.adminAdjustPoints('user-1', 250, 'goodwill');
+
+      expect(membershipUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { totalPointsEarned: { increment: 250 } } }),
+      );
+    });
+
+    it('lowers the tier basis on a negative adjust so the tier can be corrected', async () => {
+      const membershipUpdate = jest.fn();
+      runTx(membershipUpdate, 1000);
+
+      await service.adminAdjustPoints('user-1', -250, 'correction');
+
+      expect(membershipUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { totalPointsEarned: { decrement: 250 } } }),
+      );
+      expect(mockTiers.recalculateTier).toHaveBeenCalledWith('mem-1');
+    });
+
+    it('never drives the tier basis negative', async () => {
+      const membershipUpdate = jest.fn();
+      runTx(membershipUpdate, 100);
+
+      await service.adminAdjustPoints('user-1', -500, 'correction');
+
+      expect(membershipUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { totalPointsEarned: { decrement: 100 } } }),
+      );
+    });
+  });
+
+  describe('checkIn', () => {
+    const runCheckIn = (checkInsToday: number) => {
+      const membershipUpdate = jest.fn();
+      mockPrisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'mem-1' });
+      (mockPrisma as any).loyaltyEarnRule.findFirst = jest
+        .fn()
+        .mockResolvedValue({ id: 'rule-1', action: 'CHECK_IN', pointsAmount: 15, maxPerDay: 1 });
+      mockWallet.applyDelta.mockResolvedValue({ applied: true });
+      mockPrisma.$transaction.mockImplementation(async (fn: any) =>
+        fn({
+          loyaltyTransaction: { count: jest.fn().mockResolvedValue(checkInsToday) },
+          loyaltyMembership: { update: membershipUpdate },
+        }),
+      );
+      return membershipUpdate;
+    };
+
+    it('awards with a per-store, per-day idempotency key', async () => {
+      runCheckIn(0);
+
+      const result = await service.checkIn('user-1', 'store-1');
+
+      expect(result.pointsAwarded).toBe(15);
+      expect(mockWallet.applyDelta).toHaveBeenCalledWith(
+        expect.anything(),
+        'mem-1',
+        15,
+        'EARN',
+        expect.objectContaining({
+          idempotencyKey: expect.stringMatching(
+            /^earn:CHECK_IN:mem-1:store-1:\d{4}-\d{2}-\d{2}:0$/,
+          ),
+        }),
+      );
+      expect(mockWallet.lockMembership).toHaveBeenCalled();
+    });
+
+    it('enforces the daily cap inside the transaction', async () => {
+      const membershipUpdate = runCheckIn(1);
+
+      await expect(service.checkIn('user-1', 'store-1')).rejects.toThrow(BadRequestException);
+      expect(mockWallet.applyDelta).not.toHaveBeenCalled();
+      expect(membershipUpdate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('redeem', () => {
+    it('forwards the caller idempotency key so a retry cannot burn twice', async () => {
+      mockPrisma.loyaltyMembership.findUnique.mockResolvedValue({
+        id: 'mem-1',
+        regionCode: 'GB',
+      });
+      mockBurn.processRedemption.mockResolvedValue({ redemptionId: 'r1' });
+
+      await service.redeem('user-1', {
+        points: 500,
+        channel: 'MARKETPLACE_CHECKOUT',
+        idempotencyKey: 'client-attempt-1',
+      });
+
+      expect(mockBurn.processRedemption).toHaveBeenCalledWith(
+        expect.objectContaining({ idempotencyKey: 'client-attempt-1' }),
+      );
     });
   });
 

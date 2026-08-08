@@ -36,16 +36,27 @@ export class GiftCardsService {
   }
 
   /**
-   * Preset purchase amounts (override with GIFT_CARD_CATALOG_AMOUNTS="25,50,100" env).
+   * Preset purchase amounts. Prefers Admin Loyalty Settings (PLATFORM config),
+   * then GIFT_CARD_CATALOG_AMOUNTS / GIFT_CARD_DEFAULT_CURRENCY env.
    */
-  getCatalog(): { currency: string; amounts: number[] } {
-    const raw =
+  async getCatalog(): Promise<{ currency: string; amounts: number[] }> {
+    let raw =
       this.configService.get<string>('GIFT_CARD_CATALOG_AMOUNTS') || '25,50,100,250,500';
+    let currency = this.configService.get<string>('GIFT_CARD_DEFAULT_CURRENCY') || 'GBP';
+    try {
+      const row = await this.prisma.config.findFirst({
+        where: { level: 'PLATFORM', levelId: 'PLATFORM', key: 'LOYALTY_PROGRAMME_SETTINGS' },
+      });
+      const v = row?.value as { giftCardCatalogAmounts?: string; giftCardDefaultCurrency?: string } | null;
+      if (v?.giftCardCatalogAmounts) raw = v.giftCardCatalogAmounts;
+      if (v?.giftCardDefaultCurrency) currency = v.giftCardDefaultCurrency;
+    } catch {
+      /* env fallback */
+    }
     const amounts = raw
       .split(/[,;\s]+/)
       .map((s) => parseFloat(s.trim()))
       .filter((n) => !Number.isNaN(n) && n > 0);
-    const currency = this.configService.get<string>('GIFT_CARD_DEFAULT_CURRENCY') || 'USD';
     return {
       currency,
       amounts: amounts.length ? amounts : [25, 50, 100, 250, 500],
@@ -370,8 +381,11 @@ export class GiftCardsService {
   /**
    * Get gift card transactions
    */
-  async getTransactions(giftCardId: string, userId: string): Promise<any[]> {
-    // Verify user owns the gift card
+  async getTransactions(
+    giftCardId: string,
+    userId: string,
+    opts?: { isAdmin?: boolean },
+  ): Promise<any[]> {
     const giftCard = await this.prisma.giftCard.findUnique({
       where: { id: giftCardId },
     });
@@ -380,7 +394,7 @@ export class GiftCardsService {
       throw new NotFoundException('Gift card not found');
     }
 
-    if (giftCard.userId !== userId) {
+    if (!opts?.isAdmin && giftCard.userId !== userId) {
       throw new ForbiddenException('You do not have access to this gift card');
     }
 
@@ -419,15 +433,15 @@ export class GiftCardsService {
         throw new NotFoundException('Gift card not found');
       }
 
-      const transaction = await (tx as any).giftCardTransaction.findFirst({
-        where: {
-          giftCardId,
-          orderId,
-          type: 'REDEMPTION',
-        },
+      // A card can be redeemed against the same order more than once (top-ups at
+      // checkout), so the refundable amount is every redemption on that pair.
+      const redemptions = await (tx as any).giftCardTransaction.aggregate({
+        where: { giftCardId, orderId, type: 'REDEMPTION' },
+        _sum: { amount: true },
+        _count: { _all: true },
       });
 
-      if (!transaction) {
+      if (!redemptions?._count?._all) {
         throw new BadRequestException('This gift card was not used for the specified order');
       }
 
@@ -436,7 +450,7 @@ export class GiftCardsService {
         _sum: { amount: true },
       });
       const alreadyRefunded = Number(existingRefunds._sum?.amount || 0);
-      const maxRefund = Number(transaction.amount) - alreadyRefunded;
+      const maxRefund = Number(redemptions._sum?.amount || 0) - alreadyRefunded;
 
       if (amount > maxRefund) {
         throw new BadRequestException(

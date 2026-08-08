@@ -41,7 +41,7 @@ export class GiftCardsController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Catalog retrieved successfully' })
   async getCatalog(): Promise<ApiResponse<{ currency: string; amounts: number[] }>> {
-    const catalog = this.giftCardsService.getCatalog();
+    const catalog = await this.giftCardsService.getCatalog();
     return {
       data: catalog,
       message: 'Gift card catalog retrieved successfully',
@@ -193,7 +193,10 @@ export class GiftCardsController {
     @Request() req: any,
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ApiResponse<any[]>> {
-    const transactions = await this.giftCardsService.getTransactions(id, req.user.id);
+    const role = String(req.user?.role || '').toUpperCase();
+    const transactions = await this.giftCardsService.getTransactions(id, req.user.id, {
+      isAdmin: role === 'ADMIN',
+    });
     return {
       data: transactions,
       message: 'Transactions retrieved successfully',

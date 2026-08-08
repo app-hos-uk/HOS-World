@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { LoyaltyTxType, Prisma, UserRole } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -11,6 +11,7 @@ import { BrandPartnershipsService } from '../../brand-partnerships/brand-partner
 import { ProductCampaignsService } from '../../product-campaigns/product-campaigns.service';
 import { FeatureFlagsService } from '../../config/feature-flags.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
+import { LoyaltySettingsService } from '../services/loyalty-settings.service';
 
 @Injectable()
 export class LoyaltyEarnEngine {
@@ -25,7 +26,16 @@ export class LoyaltyEarnEngine {
     private tiers: LoyaltyTierEngine,
     private brandPartnerships: BrandPartnershipsService,
     private productCampaigns: ProductCampaignsService,
+    @Optional() private loyaltySettings?: LoyaltySettingsService,
   ) {}
+
+  private async platformDefaultEarnRate(): Promise<number> {
+    if (this.loyaltySettings) {
+      const { settings } = await this.loyaltySettings.getResolved();
+      return settings.defaultEarnRate || 0;
+    }
+    return Number(this.config.get('LOYALTY_DEFAULT_EARN_RATE', 1)) || 0;
+  }
 
   /**
    * Auto-enroll a customer into loyalty on first qualifying earn if they have
@@ -135,6 +145,35 @@ export class LoyaltyEarnEngine {
     return { pts: new Decimal(0), skippedDisabledSeller: !seller.loyaltyEnabled };
   }
 
+  /** Rounds points in Decimal so a half-way value is not lost to float error. */
+  private roundPoints(raw: number, multiplier: number): number {
+    return Math.max(
+      0,
+      new Decimal(raw).mul(multiplier).toDecimalPlaces(0, Decimal.ROUND_HALF_UP).toNumber(),
+    );
+  }
+
+  /**
+   * Apply the tier multiplier in Decimal, so an exact 2.5 cannot arrive as
+   * 2.4999999999999996 and lose a point. Brand takes the residual so the three
+   * slices always sum to the awarded total.
+   */
+  private applyTierMultiplier(
+    parts: { internal: number; brand: number; product: number },
+    tierMult: number,
+  ): { totalFinal: number; internalFinal: number; productFinal: number; brandFinal: number } {
+    const totalRaw = new Decimal(parts.internal).add(parts.brand).add(parts.product);
+    const totalFinal = Math.max(
+      0,
+      totalRaw.mul(tierMult).toDecimalPlaces(0, Decimal.ROUND_HALF_UP).toNumber(),
+    );
+    const internalFinal = this.roundPoints(parts.internal, tierMult);
+    const productFinal = this.roundPoints(parts.product, tierMult);
+    const brandFinal = Math.max(0, totalFinal - internalFinal - productFinal);
+
+    return { totalFinal, internalFinal, productFinal, brandFinal };
+  }
+
   /**
    * Resolve the "economic seller" for an order item, mirroring the checkout
    * VendorProduct routing so loyalty earn applies to the same seller that
@@ -219,7 +258,7 @@ export class LoyaltyEarnEngine {
     }> = [];
 
     for (const row of productBoost.breakdown) {
-      const pts = Math.max(0, Math.round(row.bonus * tierMult));
+      const pts = this.roundPoints(row.bonus, tierMult);
       if (pts <= 0) continue;
       slices.push({
         pts,
@@ -236,7 +275,7 @@ export class LoyaltyEarnEngine {
     }
 
     if (ccBonusRaw > 0) {
-      const pts = Math.max(0, Math.round(ccBonusRaw * tierMult));
+      const pts = this.roundPoints(ccBonusRaw, tierMult);
       if (pts > 0) {
         slices.push({
           pts,
@@ -329,7 +368,7 @@ export class LoyaltyEarnEngine {
     const tierMult =
       applyTierMult && membership.tier?.multiplier ? membership.tier.multiplier.toNumber() : 1;
 
-    const pts = Math.max(0, Math.round(ccRaw * tierMult));
+    const pts = this.roundPoints(ccRaw, tierMult);
     if (pts <= 0) {
       await this.prisma.clickCollectOrder.update({
         where: { id: order.clickCollect.id },
@@ -402,7 +441,7 @@ export class LoyaltyEarnEngine {
     const purchaseRule = await this.prisma.loyaltyEarnRule.findUnique({
       where: { action: 'PURCHASE' },
     });
-    const platformDefaultRate = Number(this.config.get('LOYALTY_DEFAULT_EARN_RATE', 1)) || 0;
+    const platformDefaultRate = await this.platformDefaultEarnRate();
     const hosSellerId = this.config.get<string>('HOS_SELLER_ID') || '';
 
     let basePoints = new Decimal(0);
@@ -517,11 +556,12 @@ export class LoyaltyEarnEngine {
 
         const productDelta = productBoost.points + ccBonus;
 
-        const totalPre = campPoints + brandDelta + productDelta;
-        totalFinal = Math.max(0, Math.round(totalPre * tierMult));
-        const internalFinal = Math.max(0, Math.round(campPoints * tierMult));
-        const productFinal = Math.max(0, Math.round(productDelta * tierMult));
-        const brandFinal = Math.max(0, totalFinal - internalFinal - productFinal);
+        const split = this.applyTierMultiplier(
+          { internal: campPoints, brand: brandDelta, product: productDelta },
+          tierMult,
+        );
+        totalFinal = split.totalFinal;
+        const { internalFinal, productFinal, brandFinal } = split;
 
         if (totalFinal === 0) {
           return;
@@ -665,7 +705,7 @@ export class LoyaltyEarnEngine {
     const purchaseRule = await this.prisma.loyaltyEarnRule.findUnique({
       where: { action: 'PURCHASE' },
     });
-    const platformDefaultRate = Number(this.config.get('LOYALTY_DEFAULT_EARN_RATE', 1)) || 0;
+    const platformDefaultRate = await this.platformDefaultEarnRate();
     const hosSellerId = this.config.get<string>('HOS_SELLER_ID') || '';
 
     let basePoints = new Decimal(0);
@@ -777,11 +817,12 @@ export class LoyaltyEarnEngine {
 
         const productDelta = productBoost.points;
 
-        const totalPre = campPoints + brandDelta + productDelta;
-        totalFinal = Math.max(0, Math.round(totalPre * tierMult));
-        const internalFinal = Math.max(0, Math.round(campPoints * tierMult));
-        const productFinal = Math.max(0, Math.round(productDelta * tierMult));
-        const brandFinal = Math.max(0, totalFinal - internalFinal - productFinal);
+        const split = this.applyTierMultiplier(
+          { internal: campPoints, brand: brandDelta, product: productDelta },
+          tierMult,
+        );
+        totalFinal = split.totalFinal;
+        const { internalFinal, productFinal, brandFinal } = split;
 
         if (totalFinal === 0) {
           return;
@@ -900,6 +941,10 @@ export class LoyaltyEarnEngine {
   /**
    * Claw back loyalty points when a previously processed POS sale is voided.
    * Idempotent via wallet key `reverse:POS_PURCHASE:{saleId}`.
+   *
+   * The debit is capped at the live balance: a member who already spent the
+   * points must not block the void, so we take what is there and log the
+   * shortfall (same policy as order cancellation).
    */
   async reversePosSaleEarn(posSaleId: string): Promise<void> {
     if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
@@ -917,35 +962,65 @@ export class LoyaltyEarnEngine {
     if (!membership) return;
 
     const points = sale.loyaltyPointsEarned;
+    let clawed = 0;
     await this.prisma.$transaction(async (tx) => {
-      const result = await this.wallet.applyDelta(
-        tx,
-        membership.id,
-        -points,
-        LoyaltyTxType.ADJUST,
-        {
-          source: 'POS_SALE_VOID',
-          sourceId: sale.id,
-          channel: 'HOS_OUTLET_POS',
-          storeId: sale.storeId,
-          description: 'Clawback for voided POS sale',
-          metadata: { externalSaleId: sale.externalSaleId },
-          idempotencyKey: `reverse:POS_PURCHASE:${sale.id}`,
-        },
-      );
-      if (result.applied) {
+      await this.wallet.lockMembership(tx, membership.id);
+      const locked = await tx.loyaltyMembership.findUnique({
+        where: { id: membership.id },
+        select: { currentBalance: true, totalPointsEarned: true, purchaseCount: true },
+      });
+      clawed = Math.min(points, Math.max(0, locked?.currentBalance ?? 0));
+
+      if (clawed > 0) {
+        const result = await this.wallet.applyDelta(
+          tx,
+          membership.id,
+          -clawed,
+          LoyaltyTxType.ADJUST,
+          {
+            source: 'POS_SALE_VOID',
+            sourceId: sale.id,
+            channel: 'HOS_OUTLET_POS',
+            storeId: sale.storeId,
+            description: 'Clawback for voided POS sale',
+            metadata: {
+              externalSaleId: sale.externalSaleId,
+              earnedPoints: points,
+              clawedPoints: clawed,
+            },
+            idempotencyKey: `reverse:POS_PURCHASE:${sale.id}`,
+          },
+        );
+        if (result.applied) {
+          await tx.loyaltyMembership.update({
+            where: { id: membership.id },
+            data: {
+              totalPointsEarned: {
+                decrement: Math.min(clawed, locked?.totalPointsEarned ?? 0),
+              },
+            },
+          });
+        }
+      }
+
+      if ((locked?.purchaseCount ?? 0) > 0) {
         await tx.loyaltyMembership.update({
           where: { id: membership.id },
-          data: {
-            totalPointsEarned: { decrement: points },
-            purchaseCount: { decrement: 1 },
-          },
+          data: { purchaseCount: { decrement: 1 } },
         });
       }
+
       await tx.pOSSale.update({
         where: { id: sale.id },
         data: { loyaltyPointsEarned: 0 },
       });
     });
+
+    if (clawed < points) {
+      this.logger.warn(
+        `POS sale ${sale.id} void clawed only ${clawed}/${points} points for membership ${membership.id} — balance was already spent`,
+      );
+    }
+    await this.tiers.recalculateTier(membership.id);
   }
 }

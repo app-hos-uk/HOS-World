@@ -7,6 +7,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { ActivityModule } from '../activity/activity.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { ReturnPoliciesModule } from '../return-policies/return-policies.module';
+import { RETURN_FULFILMENT } from './return-fulfilment.token';
 
 @Module({
   imports: [
@@ -17,7 +18,11 @@ import { ReturnPoliciesModule } from '../return-policies/return-policies.module'
     InventoryModule,
   ],
   controllers: [ReturnsController],
-  providers: [ReturnsService, ReturnsEnhancementsService],
-  exports: [ReturnsService, ReturnsEnhancementsService],
+  providers: [
+    ReturnsService,
+    ReturnsEnhancementsService,
+    { provide: RETURN_FULFILMENT, useExisting: ReturnsService },
+  ],
+  exports: [ReturnsService, ReturnsEnhancementsService, RETURN_FULFILMENT],
 })
 export class ReturnsModule {}

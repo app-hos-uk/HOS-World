@@ -57,8 +57,21 @@ export class PosGiftCardReconService {
       this.logger.log('Gift card recon skipped (POS runtime disabled)');
       return empty;
     }
-    if (!isTruthy(this.config.get<string>('LOYALTY_POS_VOUCHER_ENABLED'))) {
-      this.logger.log('Gift card recon skipped (LOYALTY_POS_VOUCHER_ENABLED != true)');
+    // Prefer Admin Loyalty Settings; fall back to LOYALTY_POS_VOUCHER_ENABLED env.
+    let posVoucherEnabled = isTruthy(this.config.get<string>('LOYALTY_POS_VOUCHER_ENABLED'));
+    try {
+      const row = await this.prisma.config.findFirst({
+        where: { level: 'PLATFORM', levelId: 'PLATFORM', key: 'LOYALTY_PROGRAMME_SETTINGS' },
+      });
+      const v = row?.value as { posVoucherEnabled?: boolean } | null;
+      if (v && typeof v.posVoucherEnabled === 'boolean') {
+        posVoucherEnabled = v.posVoucherEnabled;
+      }
+    } catch {
+      /* env fallback */
+    }
+    if (!posVoucherEnabled) {
+      this.logger.log('Gift card recon skipped (POS voucher redemption disabled)');
       return empty;
     }
 
