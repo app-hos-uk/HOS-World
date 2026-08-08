@@ -20,8 +20,29 @@ export function isSuperAdminEmail(email: string | null | undefined): boolean {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * Normalize common “Display Name <email@domain>” / mailto forms to a bare address.
+ */
+export function normalizeEmailAddress(email: string | null | undefined): string | null {
+  if (email == null) return null;
+  let raw = String(email).trim();
+  if (!raw) return null;
+  const angle = raw.match(/<([^<>@\s]+@[^<>@\s]+\.[^<>@\s]+)>/);
+  if (angle?.[1]) raw = angle[1].trim();
+  if (/^mailto:/i.test(raw)) raw = raw.slice(7).trim();
+  // Strip wrapping quotes
+  if (
+    (raw.startsWith('"') && raw.endsWith('"')) ||
+    (raw.startsWith("'") && raw.endsWith("'"))
+  ) {
+    raw = raw.slice(1, -1).trim();
+  }
+  return raw || null;
+}
+
 export function isValidEmailAddress(email: string | null | undefined): boolean {
-  return !!email && EMAIL_PATTERN.test(email.trim());
+  const normalized = normalizeEmailAddress(email);
+  return !!normalized && EMAIL_PATTERN.test(normalized);
 }
 
 /**
@@ -34,12 +55,15 @@ export function resolveOutboundFromEmail(
   candidate: string | null | undefined,
   fallback: string = DEFAULT_OUTBOUND_FROM,
 ): string {
-  const fb = isValidEmailAddress(fallback) ? fallback.trim() : DEFAULT_OUTBOUND_FROM;
-  const raw = candidate?.trim();
-  if (!isValidEmailAddress(raw)) {
-    return fb;
-  }
-  if (isProtectedAdminEmail(raw)) {
+  const fbNorm = normalizeEmailAddress(fallback);
+  // Never allow a protected admin login address (or other invalid value) as the
+  // outbound fallback — those accounts are custodian logins, not senders.
+  const fb =
+    fbNorm && isValidEmailAddress(fbNorm) && !isProtectedAdminEmail(fbNorm)
+      ? fbNorm
+      : DEFAULT_OUTBOUND_FROM;
+  const raw = normalizeEmailAddress(candidate);
+  if (!isValidEmailAddress(raw) || isProtectedAdminEmail(raw)) {
     return fb;
   }
   return raw as string;

@@ -201,20 +201,20 @@ export default function AdminLoyaltyMembersPage() {
       toast.error('Reason is required');
       return;
     }
-    if (!Number.isInteger(adjustForm.pointsDelta) || adjustForm.pointsDelta === 0) {
+    const userId = selectedMember.userId || selectedMember.user?.id || '';
+    const pointsDelta = Number(adjustForm.pointsDelta);
+    if (!userId) {
+      toast.error('Member is missing a user id — refresh the list and try again');
+      return;
+    }
+    if (!Number.isInteger(pointsDelta) || pointsDelta === 0) {
       toast.error('Enter a non-zero whole number of points to add or deduct');
       return;
     }
     setAdjusting(true);
     try {
-      await apiClient.adminAdjustLoyaltyPoints(
-        selectedMember.userId,
-        adjustForm.pointsDelta,
-        adjustForm.reason,
-      );
-      toast.success(
-        `Points adjusted by ${adjustForm.pointsDelta > 0 ? '+' : ''}${adjustForm.pointsDelta}`,
-      );
+      await apiClient.adminAdjustLoyaltyPoints(userId, pointsDelta, adjustForm.reason.trim());
+      toast.success(`Points adjusted by ${pointsDelta > 0 ? '+' : ''}${pointsDelta}`);
       setSelectedMember(null);
       setAdjustForm({ pointsDelta: 0, reason: '' });
       await load({ q: activeQuery, page: currentPage });

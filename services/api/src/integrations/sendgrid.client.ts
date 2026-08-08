@@ -1,5 +1,5 @@
 import { Logger } from '@nestjs/common';
-import { isValidEmailAddress } from '../config/protected-admin-emails';
+import { isValidEmailAddress, normalizeEmailAddress } from '../config/protected-admin-emails';
 
 export interface SendGridSendParams {
   apiKey: string;
@@ -40,6 +40,9 @@ function friendlySendGridError(status: number, rawBody: string): string {
     if (/from address does not match a verified Sender Identity/i.test(rawBody)) {
       return 'The sender address is not a verified SendGrid Sender Identity. Verify it in SendGrid, or update the From address in Admin → Integrations.';
     }
+    if (/does not contain a valid address/i.test(rawBody) || /valid address/i.test(rawBody)) {
+      return 'SendGrid rejected the From/To address. Set a verified sender email (e.g. noreply@yourdomain.com) in Admin → Integrations → SendGrid → From Email.';
+    }
     return 'The email provider rejected the message. Please check the sender and recipient addresses in Admin → Integrations.';
   }
 
@@ -54,10 +57,12 @@ function friendlySendGridError(status: number, rawBody: string): string {
  * Send email via SendGrid v3 Mail Send API (no extra dependency).
  */
 export async function sendViaSendGrid(params: SendGridSendParams): Promise<SendGridSendResult> {
-  const { apiKey, to, subject, html, fromEmail, fromName } = params;
+  const { apiKey, subject, html, fromName } = params;
+  const fromEmail = normalizeEmailAddress(params.fromEmail) || '';
+  const to = normalizeEmailAddress(params.to) || '';
 
   if (!isValidEmailAddress(fromEmail)) {
-    logger.error(`Refusing to send: invalid SendGrid sender address "${fromEmail}"`);
+    logger.error(`Refusing to send: invalid SendGrid sender address "${params.fromEmail}"`);
     return {
       success: false,
       error:

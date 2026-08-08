@@ -15,7 +15,12 @@ import {
   TestConnectionResultDto,
 } from './dto/create-integration.dto';
 import { verifySendGridApiKey, sendViaSendGrid } from './sendgrid.client';
-import { resolveOutboundFromEmail, isProtectedAdminEmail } from '../config/protected-admin-emails';
+import {
+  resolveOutboundFromEmail,
+  isProtectedAdminEmail,
+  isValidEmailAddress,
+  normalizeEmailAddress,
+} from '../config/protected-admin-emails';
 
 /**
  * Provider metadata definitions
@@ -882,36 +887,60 @@ export class IntegrationsService {
       return { success: false, message: verify.error || 'SendGrid API key verification failed' };
     }
 
-    const fromEmail = resolveOutboundFromEmail(credentials.fromEmail, 'noreply@houseofspells.com');
-    const fromName = credentials.fromName?.trim() || 'House of Spells';
+    const configuredFrom = normalizeEmailAddress(
+      typeof credentials.fromEmail === 'string' ? credentials.fromEmail : null,
+    );
+    const fromName =
+      (typeof credentials.fromName === 'string' && credentials.fromName.trim()) ||
+      'House of Spells';
 
-    // Optional: send a minimal test to verify sender identity when fromEmail is set
-    if (credentials.fromEmail?.trim() && !isProtectedAdminEmail(credentials.fromEmail)) {
-      const probe = await sendViaSendGrid({
-        apiKey: credentials.apiKey,
-        to: fromEmail,
-        subject: 'SendGrid connection test',
-        html: '<p>SendGrid connection test from House of Spells admin.</p>',
-        fromEmail,
-        fromName,
-      });
-      if (!probe.success) {
-        return {
-          success: false,
-          message: `API key valid but sender test failed: ${probe.error}`,
-        };
-      }
+    // No From configured — API key alone is enough for a pass; skip sender probe.
+    if (!configuredFrom) {
       return {
         success: true,
-        message: `SendGrid verified; test message sent to ${fromEmail}`,
-        details: { environment: isTestMode ? 'test' : 'production', messageId: probe.messageId },
+        message:
+          'SendGrid API key verified. Set From Email to a verified SendGrid Sender Identity to run a sender test.',
+        details: { environment: isTestMode ? 'test' : 'production' },
       };
     }
 
+    if (!isValidEmailAddress(configuredFrom)) {
+      return {
+        success: false,
+        message: `API key valid, but From Email "${configuredFrom}" is not a valid email address. Update From Email in Admin → Integrations (e.g. noreply@houseofspells.com).`,
+      };
+    }
+
+    if (isProtectedAdminEmail(configuredFrom)) {
+      return {
+        success: true,
+        message:
+          'SendGrid API key verified. From Email is a protected admin login address and cannot be used as a sender — outbound mail will use noreply@houseofspells.com.',
+        details: { environment: isTestMode ? 'test' : 'production' },
+      };
+    }
+
+    // Probe with the configured address only (do not silently substitute fallback —
+    // admins need to know whether *their* From identity is accepted by SendGrid).
+    const fromEmail = resolveOutboundFromEmail(configuredFrom, 'noreply@houseofspells.com');
+    const probe = await sendViaSendGrid({
+      apiKey: credentials.apiKey,
+      to: fromEmail,
+      subject: 'SendGrid connection test',
+      html: '<p>SendGrid connection test from House of Spells admin.</p>',
+      fromEmail,
+      fromName,
+    });
+    if (!probe.success) {
+      return {
+        success: false,
+        message: `API key valid but sender test failed: ${probe.error}`,
+      };
+    }
     return {
       success: true,
-      message: 'SendGrid API key verified. Set fromEmail to run a sender test.',
-      details: { environment: isTestMode ? 'test' : 'production' },
+      message: `SendGrid verified; test message sent to ${fromEmail}`,
+      details: { environment: isTestMode ? 'test' : 'production', messageId: probe.messageId },
     };
   }
 }

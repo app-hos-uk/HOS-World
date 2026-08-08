@@ -915,6 +915,9 @@ export class LoyaltyService implements OnModuleInit {
 
   async adminAdjustPoints(userId: string, delta: number, reason?: string) {
     this.assertEnabled();
+    if (!Number.isInteger(delta) || delta === 0) {
+      throw new BadRequestException('pointsDelta must be a non-zero integer');
+    }
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) throw new NotFoundException('Loyalty membership not found');
 
@@ -943,6 +946,13 @@ export class LoyaltyService implements OnModuleInit {
       }
       if (/loyalty membership not found/i.test(message)) {
         throw new NotFoundException('Loyalty membership not found');
+      }
+      // Surface actionable DB operator errors (e.g. uuid cast) instead of a generic 400.
+      if (/operator does not exist|invalid input syntax for type uuid/i.test(message)) {
+        this.logger.error(`adminAdjustPoints DB error for ${userId}: ${message}`);
+        throw new BadRequestException(
+          'Loyalty points adjustment failed due to a database type error. Please retry after the latest API deploy.',
+        );
       }
       this.logger.error(`adminAdjustPoints failed for ${userId}: ${message}`);
       throw new BadRequestException('Failed to adjust loyalty points. Please try again.');

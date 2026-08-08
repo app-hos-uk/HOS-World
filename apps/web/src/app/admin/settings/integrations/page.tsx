@@ -700,6 +700,13 @@ export default function IntegrationsPage() {
                                         credentials: { ...formData.credentials, [field]: e.target.value },
                                       })
                                     }
+                                    placeholder={
+                                      selectedProvider === 'sendgrid' && field === 'fromEmail'
+                                        ? 'e.g. noreply@houseofspells.com (must be a verified SendGrid sender)'
+                                        : selectedProvider === 'sendgrid' && field === 'fromName'
+                                          ? 'e.g. House of Spells'
+                                          : undefined
+                                    }
                                     className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                                   />
                                 </div>
