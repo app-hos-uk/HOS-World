@@ -1,4 +1,4 @@
-import { IsBoolean, IsNumber, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, Length, Matches, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateStoreDto {
@@ -33,6 +33,12 @@ export class CreateStoreDto {
   @IsOptional()
   @IsString()
   country?: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(2, 2)
+  @Matches(/^[A-Z]{2}$/)
+  countryCode?: string;
 
   @IsOptional()
   @IsString()

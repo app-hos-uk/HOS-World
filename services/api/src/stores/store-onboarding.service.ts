@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { normalizeCountryCode } from '../common/utils/country-code';
 import { PlatformRegionService } from '../config/platform-region.service';
 import { PrismaService } from '../database/prisma.service';
 import { CreateStoreDto } from './dto/create-store.dto';
@@ -64,6 +65,8 @@ export class StoreOnboardingService {
 
     const region = await this.region.getRegion();
 
+    const isoCode = normalizeCountryCode(dto.countryCode) || normalizeCountryCode(dto.country) || null;
+
     const store = await this.prisma.store.create({
       data: {
         tenantId: dto.tenantId,
@@ -74,6 +77,7 @@ export class StoreOnboardingService {
         city: dto.city ?? null,
         state: dto.state ?? null,
         country: dto.country ?? region.country,
+        countryCode: isoCode ?? region.country,
         postalCode: dto.postalCode ?? null,
         latitude: dto.latitude ?? null,
         longitude: dto.longitude ?? null,
@@ -138,6 +142,9 @@ export class StoreOnboardingService {
     if (dto.city !== undefined) data.city = dto.city;
     if (dto.state !== undefined) data.state = dto.state;
     if (dto.country !== undefined) data.country = dto.country;
+    if (dto.countryCode !== undefined || dto.country !== undefined) {
+      data.countryCode = normalizeCountryCode(dto.countryCode) || normalizeCountryCode(dto.country) || undefined;
+    }
     if (dto.postalCode !== undefined) data.postalCode = dto.postalCode;
     if (dto.latitude !== undefined) data.latitude = dto.latitude;
     if (dto.longitude !== undefined) data.longitude = dto.longitude;

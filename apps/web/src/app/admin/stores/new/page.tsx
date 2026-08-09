@@ -7,6 +7,13 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
+import { CountrySelect } from '@/components/CountrySelect';
+import { COUNTRIES } from '@/lib/countries';
+
+const COUNTRY_CURRENCY: Record<string, string> = {
+  US: 'USD', GB: 'GBP', AE: 'AED', MY: 'MYR', AU: 'AUD', CA: 'CAD',
+  IN: 'INR', SG: 'SGD', NZ: 'NZD', IE: 'EUR', DE: 'EUR', FR: 'EUR',
+};
 
 export default function AdminStoreNewPage() {
   const router = useRouter();
@@ -14,9 +21,8 @@ export default function AdminStoreNewPage() {
   const [tenantId, setTenantId] = useState('');
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
-  const [country, setCountry] = useState('GB');
+  const [countryCode, setCountryCode] = useState('US');
   const [currency, setCurrency] = useState(DEFAULT_CURRENCY);
-  const [region, setRegion] = useState('GB');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -33,27 +39,37 @@ export default function AdminStoreNewPage() {
       });
   }, []);
 
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const cc = e.target.value;
+    setCountryCode(cc);
+    const mapped = COUNTRY_CURRENCY[cc];
+    if (mapped) setCurrency(mapped);
+  };
+
   const save = async () => {
     if (!tenantId || !name.trim() || !code.trim()) {
-      toast.error('Tenant, name, and code are required');
+      toast.error('Tenant ID, name, and code are required');
       return;
     }
     setSaving(true);
     try {
+      const countryName = COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
       const r = await apiClient.adminCreateStore({
         tenantId,
         name: name.trim(),
         code: code.trim(),
-        country,
+        country: countryName,
+        countryCode,
         currency,
-        defaultRegionCode: region,
+        defaultRegionCode: countryCode,
         isActive: false,
       });
       const sid = (r.data as Record<string, unknown>)?.id;
       toast.success('Store created');
       router.push(sid ? `/admin/stores/${sid}` : '/admin/stores');
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Failed');
+      const msg = e instanceof Error ? e.message : 'Failed';
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -93,28 +109,22 @@ export default function AdminStoreNewPage() {
               onChange={(e) => setCode(e.target.value)}
             />
           </label>
-          <label className="block text-sm">
+          <div className="block text-sm">
             <span className="text-hos-text-secondary">Country</span>
-            <input
-              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
-              value={country}
-              onChange={(e) => setCountry(e.target.value)}
+            <CountrySelect
+              id="store-country"
+              name="countryCode"
+              value={countryCode}
+              onChange={handleCountryChange}
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
             />
-          </label>
+          </div>
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Currency</span>
             <input
               className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-            />
-          </label>
-          <label className="block text-sm">
-            <span className="text-hos-text-secondary">Default region code</span>
-            <input
-              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
-              value={region}
-              onChange={(e) => setRegion(e.target.value)}
             />
           </label>
           <button

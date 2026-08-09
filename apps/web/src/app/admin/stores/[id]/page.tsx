@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { CountrySelect } from '@/components/CountrySelect';
+import { COUNTRIES } from '@/lib/countries';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -16,21 +18,29 @@ type EditForm = {
   address: string;
   city: string;
   postcode: string;
-  country: string;
+  countryCode: string;
   defaultRegionCode: string;
 };
 
 const INPUT_CLS =
   'w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border';
 
+const LEGACY_ALIASES: Record<string, string> = { UK: 'GB', USA: 'US' };
+
 function toEditForm(row: Record<string, unknown>): EditForm {
+  const cc = String(row.countryCode ?? '');
+  const country = String(row.country ?? '');
+  const byName = COUNTRIES.find((c) => c.name.toLowerCase() === country.toLowerCase())?.code;
+  const byAlias = LEGACY_ALIASES[country.toUpperCase()];
+  const byCode = COUNTRIES.find((c) => c.code === country.toUpperCase())?.code;
+  const resolved = cc || byName || byAlias || byCode || 'US';
   return {
     name: String(row.name ?? ''),
     code: String(row.code ?? ''),
     address: String(row.address ?? ''),
     city: String(row.city ?? ''),
     postcode: String(row.postcode ?? ''),
-    country: String(row.country ?? ''),
+    countryCode: resolved,
     defaultRegionCode: String(row.defaultRegionCode ?? ''),
   };
 }
@@ -48,7 +58,7 @@ export default function AdminStoreDetailPage() {
   } | null>(null);
   const [row, setRow] = useState<Record<string, unknown> | null>(null);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState<EditForm>({ name: '', code: '', address: '', city: '', postcode: '', country: '', defaultRegionCode: '' });
+  const [form, setForm] = useState<EditForm>({ name: '', code: '', address: '', city: '', postcode: '', countryCode: '', defaultRegionCode: '' });
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(() => {
@@ -126,13 +136,15 @@ export default function AdminStoreDetailPage() {
     }
     setSaving(true);
     try {
+      const countryName = COUNTRIES.find((c) => c.code === form.countryCode)?.name;
       await apiClient.adminUpdateStore(id, {
         name: form.name.trim(),
         code: form.code.trim(),
         address: form.address.trim() || undefined,
         city: form.city.trim() || undefined,
         postcode: form.postcode.trim() || undefined,
-        country: form.country.trim() || undefined,
+        country: countryName || form.countryCode || undefined,
+        countryCode: form.countryCode || undefined,
         defaultRegionCode: form.defaultRegionCode.trim() || undefined,
       });
       toast.success('Store updated');
@@ -254,19 +266,12 @@ export default function AdminStoreDetailPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-hos-text-secondary mb-1">Country</label>
-                    <input
+                    <CountrySelect
+                      id="store-country"
+                      name="countryCode"
+                      value={form.countryCode}
+                      onChange={(e) => setForm({ ...form, countryCode: e.target.value, defaultRegionCode: e.target.value })}
                       className={INPUT_CLS}
-                      value={form.country}
-                      onChange={(e) => setForm({ ...form, country: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Default region code</label>
-                    <input
-                      className={INPUT_CLS}
-                      placeholder="e.g. GB"
-                      value={form.defaultRegionCode}
-                      onChange={(e) => setForm({ ...form, defaultRegionCode: e.target.value })}
                     />
                   </div>
                 </div>
