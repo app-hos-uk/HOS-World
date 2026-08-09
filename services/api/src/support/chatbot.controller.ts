@@ -12,6 +12,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
 import { Throttle } from '@nestjs/throttler';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+import { ChatbotMessageDto } from './dto/chatbot-message.dto';
 
 @ApiTags('support')
 @Controller('support/chatbot')
@@ -50,18 +51,7 @@ export class ChatbotController {
   @SwaggerApiResponse({ status: 200, description: 'Message processed successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data' })
   async sendMessage(
-    @Body()
-    body: {
-      userId?: string;
-      sellerId?: string;
-      message: string;
-      conversationId?: string;
-      context?: {
-        orderId?: string;
-        productId?: string;
-        ticketId?: string;
-      };
-    },
+    @Body() body: ChatbotMessageDto,
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
     const authenticatedUserId = req.user?.id;

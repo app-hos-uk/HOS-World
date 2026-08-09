@@ -109,6 +109,14 @@ export class WhatsAppService {
     MessageSid: string;
     MediaUrl0?: string;
   }) {
+    // Checked here rather than with a DTO on the controller: Twilio posts a few dozen form
+    // fields, and the global pipe runs with forbidNonWhitelisted, so a DTO narrow enough to be
+    // useful would reject every genuine delivery. Without this the sender's absence surfaced as
+    // a 500, which reads to Twilio as "retry later" instead of "this payload is wrong".
+    if (!data?.From || !data?.MessageSid) {
+      throw new BadRequestException('Webhook payload must include From and MessageSid');
+    }
+
     const phoneNumber = data.From.replace('whatsapp:', '');
     const messageContent = data.Body || '';
     const messageId = data.MessageSid;

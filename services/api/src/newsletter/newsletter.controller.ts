@@ -22,6 +22,7 @@ import { Throttle } from '@nestjs/throttler';
 import { NewsletterService } from './newsletter.service';
 import { CreateNewsletterSubscriptionDto } from './dto/create-newsletter-subscription.dto';
 import { SendNewsletterCampaignDto } from './dto/send-newsletter-campaign.dto';
+import { UnsubscribeNewsletterDto } from './dto/unsubscribe-newsletter.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -75,8 +76,10 @@ export class NewsletterController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Successfully unsubscribed from newsletter' })
   @SwaggerApiResponse({ status: 404, description: 'Email not found in subscriptions' })
-  async unsubscribe(@Body('email') email: string): Promise<ApiResponse<{ message: string }>> {
-    await this.newsletterService.unsubscribe(email);
+  async unsubscribe(
+    @Body() body: UnsubscribeNewsletterDto,
+  ): Promise<ApiResponse<{ message: string }>> {
+    await this.newsletterService.unsubscribe(body.email);
     return {
       data: { message: 'Successfully unsubscribed from newsletter' },
       message: 'Successfully unsubscribed',

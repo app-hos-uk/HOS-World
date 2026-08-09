@@ -13,6 +13,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+import { TrackReferralDto } from './dto/track-referral.dto';
 
 @ApiTags('referrals')
 @Controller('referrals')
@@ -27,17 +28,7 @@ export class ReferralsController {
     description: 'Track a referral click/visit. Called when user visits with ?ref=CODE',
   })
   @SwaggerApiResponse({ status: 201, description: 'Referral tracked successfully' })
-  async track(
-    @Body()
-    body: {
-      referralCode: string;
-      visitorId?: string;
-      landingPage?: string;
-      productId?: string;
-      campaignId?: string;
-      utmParams?: Record<string, string>;
-    },
-  ): Promise<ApiResponse<any>> {
+  async track(@Body() body: TrackReferralDto): Promise<ApiResponse<any>> {
     const result = await this.referralsService.track(body);
     return {
       data: result,

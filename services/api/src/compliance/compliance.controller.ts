@@ -9,6 +9,7 @@ import {
 import { ComplianceService } from './compliance.service';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+import { VerifyAgeDto } from './dto/verify-age.dto';
 
 @ApiTags('compliance')
 @Controller('compliance')
@@ -69,7 +70,7 @@ export class ComplianceController {
   })
   @SwaggerApiResponse({ status: 200, description: 'Age verification completed' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid age data' })
-  async verifyAge(@Body() body: { country: string; age: number }): Promise<ApiResponse<any>> {
+  async verifyAge(@Body() body: VerifyAgeDto): Promise<ApiResponse<any>> {
     const requiresVerification = this.complianceService.requiresAgeVerification(
       body.country.toUpperCase(),
     );

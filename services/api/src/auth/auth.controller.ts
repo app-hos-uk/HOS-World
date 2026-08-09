@@ -23,6 +23,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 import { GuestCheckoutDto } from './dto/guest-checkout.dto';
 import { LoginDto } from './dto/login.dto';
 import { CharacterSelectionDto } from './dto/character-selection.dto';
@@ -99,7 +100,7 @@ export class AuthController {
   })
   @SwaggerApiResponse({ status: 400, description: 'Invalid token or registration data' })
   async acceptInvitation(
-    @Body() body: { token: string; registerDto: RegisterDto },
+    @Body() body: AcceptInvitationDto,
     @Request() req: any,
     @Res({ passthrough: true }) res: Response,
   ): Promise<ApiResponse<AuthResponse>> {
