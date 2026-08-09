@@ -178,10 +178,12 @@ export class MonitoringService implements OnModuleInit {
   }
 
   /**
-   * Capture exception for monitoring
+   * Capture exception for monitoring.
+   *
+   * Does not touch errorCount: the caller already recorded the request through trackRequest, and
+   * counting it here too pushed the reported error rate above the true one.
    */
   captureException(error: Error, context?: Record<string, any>) {
-    this.errorCount++;
     this.logger.error(`Exception captured: ${error.message}`, error.stack);
 
     // Send to Sentry if configured

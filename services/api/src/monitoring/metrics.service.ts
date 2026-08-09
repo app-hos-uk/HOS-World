@@ -28,7 +28,8 @@ export class MetricsService implements OnModuleInit {
   private initializeDefaultMetrics() {
     // HTTP metrics
     this.createCounter('http_requests_total', 'Total number of HTTP requests');
-    this.createCounter('http_errors_total', 'Total number of HTTP errors');
+    this.createCounter('http_errors_total', 'Total number of HTTP server errors (5xx)');
+    this.createCounter('http_client_errors_total', 'Total number of HTTP client errors (4xx)');
 
     // Database metrics
     this.createCounter('db_queries_total', 'Total number of database queries');

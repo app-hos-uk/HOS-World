@@ -1,10 +1,24 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { MonitoringService } from './monitoring.service';
 import { MetricsService } from './metrics.service';
 import { LoggerService } from './logger.service';
+
+/** 401/403/404 are the ordinary traffic of a public API and would drown out the rest. */
+const ROUTINE_CLIENT_STATUSES: number[] = [
+  HttpStatus.UNAUTHORIZED,
+  HttpStatus.FORBIDDEN,
+  HttpStatus.NOT_FOUND,
+];
 
 /**
  * Monitoring Interceptor
@@ -45,21 +59,38 @@ export class MonitoringInterceptor implements NestInterceptor {
       }),
       catchError((error) => {
         const responseTime = Date.now() - startTime;
-        this.monitoringService.trackRequest(responseTime, false);
-        this.metricsService.incrementCounter('http_errors_total');
-        this.monitoringService.captureException(error, {
-          method,
-          url,
-          route: route?.path,
-          correlationId,
-        });
+        const status =
+          error instanceof HttpException ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+        const isServerError = status >= 500;
 
-        // Log error
-        this.loggerService.error(
-          `${method} ${url} - ${responseTime}ms - Error: ${error.message}`,
-          error.stack,
-          'MonitoringInterceptor',
+        // A rejected request is still a served request. Counting 4xx as failures made the error
+        // rate track how many callers sent bad input rather than whether the service is healthy.
+        this.monitoringService.trackRequest(responseTime, !isServerError);
+        this.metricsService.incrementCounter(
+          isServerError ? 'http_errors_total' : 'http_client_errors_total',
         );
+
+        if (isServerError) {
+          this.monitoringService.captureException(error, {
+            method,
+            url,
+            route: route?.path,
+            correlationId,
+          });
+          this.loggerService.error(
+            `${method} ${url} - ${responseTime}ms - Error: ${error.message}`,
+            error.stack,
+            'MonitoringInterceptor',
+          );
+        } else {
+          // No stack and no Sentry: the caller is at fault, and the message is the whole story.
+          const line = `${method} ${url} - ${responseTime}ms - ${status}: ${error.message}`;
+          if (ROUTINE_CLIENT_STATUSES.includes(status)) {
+            this.loggerService.debug(line, 'MonitoringInterceptor');
+          } else {
+            this.loggerService.warn(line, 'MonitoringInterceptor');
+          }
+        }
 
         return throwError(() => error);
       }),
