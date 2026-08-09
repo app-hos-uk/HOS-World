@@ -85,6 +85,40 @@ describe('shipping quote request validation', () => {
       expect(result.cartItems[0].weight).toBe(2.5);
     });
 
+    // A WEIGHT_BASED rate is rate x weight and the minimum charge only floors it when one is
+    // configured, so a negative line weight can drag a quote below zero. The charged amount is
+    // safe either way, because order creation re-quotes from the product's stored weight, but
+    // the endpoint should not answer with a nonsense rate.
+    it('rejects a negative weight', async () => {
+      await expect(
+        run(GetShippingOptionsDto, {
+          cartItems: [{ productId: 'p-1', quantity: 1, weight: -1000 }],
+          cartValue: 10,
+          destination: { country: 'GB' },
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('rejects a negative price', async () => {
+      await expect(
+        run(GetShippingOptionsDto, {
+          cartItems: [{ productId: 'p-1', quantity: 1, price: -5 }],
+          cartValue: 10,
+          destination: { country: 'GB' },
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('still accepts a zero weight and a free line', async () => {
+      await expect(
+        run(GetShippingOptionsDto, {
+          cartItems: [{ productId: 'p-1', quantity: 1, weight: 0, price: 0 }],
+          cartValue: 0,
+          destination: { country: 'GB' },
+        }),
+      ).resolves.toBeDefined();
+    });
+
     it('rejects an unknown property so typos surface as 400 rather than being ignored', async () => {
       await expect(
         run(GetShippingOptionsDto, {

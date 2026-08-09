@@ -18,14 +18,19 @@ export class ShippingCartItemDto {
   @Min(0)
   quantity: number;
 
+  // Weight feeds the quote directly: a WEIGHT_BASED rate is rate x weight, and the minimum
+  // charge only floors it when one is configured, so a negative line weight can drag a quote
+  // below zero. CalculateShippingRateDto already bounds the same figure.
   @IsOptional()
   @IsNumber()
+  @Min(0)
   weight?: number;
 
   // Quoting uses weight and quantity only, but the storefront sends price with every line.
   // Accept it: with forbidNonWhitelisted on, omitting it here would reject live checkout traffic.
   @IsOptional()
   @IsNumber()
+  @Min(0)
   price?: number;
 }
 
