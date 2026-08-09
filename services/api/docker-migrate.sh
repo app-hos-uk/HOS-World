@@ -1,6 +1,27 @@
 #!/bin/sh
 set -e
 
+# Fast path.
+#
+# The reconciliation below spawns ~37 Prisma CLI processes, each parsing the full schema and
+# opening its own connection, which pushed container boot past six minutes — longer than the
+# Railway healthcheck window in railway.toml, so deploys began failing on timing alone.
+#
+# On a database whose history is already reconciled (which is every environment in the steady
+# state) none of that work changes anything, and `migrate deploy` alone is enough.
+#
+# migrate deploy only reads _prisma_migrations though, so it cannot see a schema that is missing
+# tables a migration claims to have created. verify-repair-objects.js checks the physical objects
+# the repair steps below would create, so the fast path is only taken when they are genuinely
+# there. If either command fails, nothing has been applied and reconciliation runs as before.
+echo "=== Step 0: Fast path (verify repair objects, then migrate deploy) ==="
+if node ./scripts/verify-repair-objects.js && npx prisma migrate deploy; then
+  echo "=== Migrations complete (schema verified, history already reconciled) ==="
+  exit 0
+fi
+
+echo "=== Fast path declined — falling back to full historical reconciliation ==="
+
 echo "=== Step 1: Execute fix SQL directly (bypasses Prisma checksum) ==="
 npx prisma db execute --schema ./prisma/schema.prisma --file ./prisma/migrations/20260315120000_fix_missing_tables/migration.sql 2>&1 || echo "WARN: db execute had issues (may be OK if already applied)"
 
