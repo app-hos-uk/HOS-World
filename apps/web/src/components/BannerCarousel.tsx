@@ -14,7 +14,7 @@ import Image from 'next/image';
  * - Color Profile: sRGB
  * - Place images in: /public/banners/
  * 
- * See: /public/IMAGE_SPECIFICATIONS.md for detailed requirements
+ * See: apps/web/docs/IMAGE_SPECIFICATIONS.md for detailed requirements
  */
 interface Banner {
   id: number;

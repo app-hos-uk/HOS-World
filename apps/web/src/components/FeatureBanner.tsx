@@ -12,7 +12,7 @@ import Link from 'next/link';
  * - Color Profile: sRGB
  * - Place images in: /public/featured/
  * 
- * See: /public/IMAGE_SPECIFICATIONS.md for detailed requirements
+ * See: apps/web/docs/IMAGE_SPECIFICATIONS.md for detailed requirements
  */
 interface FeatureBannerProps {
   title: string;
