@@ -10,10 +10,14 @@ import { DEFAULT_CURRENCY, COUNTRY_TO_CURRENCY } from '@/lib/regionConfig';
 import { CountrySelect } from '@/components/CountrySelect';
 import { COUNTRIES } from '@/lib/countries';
 
+type TenantOption = { id: string; name: string };
+
 export default function AdminStoreNewPage() {
   const router = useRouter();
   const toast = useToast();
   const [tenantId, setTenantId] = useState('');
+  const [tenants, setTenants] = useState<TenantOption[]>([]);
+  const [tenantsLoaded, setTenantsLoaded] = useState(false);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [countryCode, setCountryCode] = useState('US');
@@ -22,16 +26,19 @@ export default function AdminStoreNewPage() {
 
   useEffect(() => {
     apiClient
-      .adminListStores()
+      .adminListTenants()
       .then((r) => {
-        const d = r.data as Record<string, unknown>[] | undefined;
-        const first = d?.[0] as Record<string, unknown> | undefined;
-        const t = first?.tenant as Record<string, string> | undefined;
-        if (t?.id) setTenantId(t.id);
+        const rows = (r.data ?? []) as Record<string, unknown>[];
+        const list = rows
+          .filter((t) => t?.id)
+          .map((t) => ({ id: String(t.id), name: String(t.name ?? t.id) }));
+        setTenants(list);
+        if (list.length === 1) setTenantId(list[0].id);
       })
       .catch((e: unknown) => {
-        console.error('adminListStores failed:', e instanceof Error ? e.message : e);
-      });
+        console.error('adminListTenants failed:', e instanceof Error ? e.message : e);
+      })
+      .finally(() => setTenantsLoaded(true));
   }, []);
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -42,8 +49,12 @@ export default function AdminStoreNewPage() {
   };
 
   const save = async () => {
-    if (!tenantId || !name.trim() || !code.trim()) {
-      toast.error('Tenant ID, name, and code are required');
+    if (!tenantId) {
+      toast.error('Select a tenant');
+      return;
+    }
+    if (!name.trim() || !code.trim()) {
+      toast.error('Name and code are required');
       return;
     }
     setSaving(true);
@@ -77,17 +88,37 @@ export default function AdminStoreNewPage() {
             ← Stores
           </Link>
           <h1 className="text-2xl font-semibold text-hos-text-secondary">New store</h1>
-          <p className="text-xs text-hos-text-muted">
-            Tenant ID defaults from your first existing store if available; override if needed.
-          </p>
           <label className="block text-sm">
-            <span className="text-hos-text-secondary">Tenant ID</span>
-            <input
-              className="mt-1 w-full border rounded px-3 py-2 font-mono text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
+            <span className="text-hos-text-secondary">Tenant</span>
+            <select
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border"
               value={tenantId}
               onChange={(e) => setTenantId(e.target.value)}
-            />
+              disabled={!tenantsLoaded || tenants.length === 0}
+            >
+              <option value="">
+                {!tenantsLoaded
+                  ? 'Loading tenants…'
+                  : tenants.length === 0
+                    ? 'No tenants available'
+                    : 'Select a tenant'}
+              </option>
+              {tenants.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
           </label>
+          {tenantsLoaded && tenants.length === 0 && (
+            <p className="text-xs text-amber-400">
+              No tenants exist yet. A store must belong to a tenant, so create one first from{' '}
+              <Link href="/admin/tenants" className="underline">
+                Tenants
+              </Link>
+              .
+            </p>
+          )}
           <label className="block text-sm">
             <span className="text-hos-text-secondary">Name</span>
             <input
