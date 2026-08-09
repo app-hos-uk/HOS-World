@@ -102,7 +102,9 @@ export class AmbassadorAchievementService {
       distinct: ['platform'],
       select: { platform: true },
     });
-    const platformCount = distinctPlatforms.filter((p) => p.platform && p.platform.length > 0).length;
+    const platformCount = distinctPlatforms.filter(
+      (p) => p.platform && p.platform.length > 0,
+    ).length;
 
     for (const def of AMBASSADOR_ACHIEVEMENTS) {
       if (earned.has(def.slug) || def.slug === 'ambassador-unlocked') continue;

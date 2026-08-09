@@ -35,8 +35,12 @@ describe('LightspeedApiClient', () => {
   async function drainAndCollect<T>(p: Promise<T>): Promise<{ value?: T; error?: Error }> {
     const result: { value?: T; error?: Error } = {};
     const guarded = p.then(
-      (v) => { result.value = v; },
-      (e) => { result.error = e; },
+      (v) => {
+        result.value = v;
+      },
+      (e) => {
+        result.error = e;
+      },
     );
     for (let i = 0; i < 20; i++) {
       await jest.advanceTimersByTimeAsync(3_000);

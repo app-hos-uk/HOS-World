@@ -9,7 +9,6 @@ import {
   Query,
   UseGuards,
   Request,
-  ParseUUIDPipe,
   UploadedFile,
   UseInterceptors,
   ForbiddenException,
@@ -205,10 +204,12 @@ export class ThemesController {
   @SwaggerApiResponse({ status: 403, description: 'Theme customization has been disabled' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async updateMySellerTheme(
-    @Request() req: any,
-    @Body() updateDto: UpdateSellerThemeDto,
+    @Request() _req: any,
+    @Body() _updateDto: UpdateSellerThemeDto,
   ): Promise<ApiResponse<any>> {
-    throw new ForbiddenException('Theme customization has been disabled. All stores now use the default HOS theme.');
+    throw new ForbiddenException(
+      'Theme customization has been disabled. All stores now use the default HOS theme.',
+    );
   }
 
   @Public()
@@ -307,11 +308,13 @@ export class ThemesController {
   @SwaggerApiResponse({ status: 403, description: 'Theme customization has been disabled' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async createFromTemplate(
-    @Request() req: any,
-    @Param('templateId') templateId: string,
-    @Body() body: { name?: string },
+    @Request() _req: any,
+    @Param('templateId') _templateId: string,
+    @Body() _body: { name?: string },
   ): Promise<ApiResponse<any>> {
-    throw new ForbiddenException('Theme customization has been disabled. All stores now use the default HOS theme.');
+    throw new ForbiddenException(
+      'Theme customization has been disabled. All stores now use the default HOS theme.',
+    );
   }
 
   // Theme Upload

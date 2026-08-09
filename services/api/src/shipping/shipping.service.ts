@@ -85,9 +85,8 @@ export class ShippingService {
         ...rule,
         rate: Number(rule.rate),
         minimumCharge: rule.minimumCharge != null ? Number(rule.minimumCharge) : null,
-        freeShippingThreshold: rule.freeShippingThreshold != null
-          ? Number(rule.freeShippingThreshold)
-          : null,
+        freeShippingThreshold:
+          rule.freeShippingThreshold != null ? Number(rule.freeShippingThreshold) : null,
         conditions: rule.conditions as ShippingRuleConditions,
       })) as ShippingRuleWithDetails[],
     })) as ShippingMethodWithRules[];
@@ -123,9 +122,8 @@ export class ShippingService {
         ...rule,
         rate: Number(rule.rate),
         minimumCharge: rule.minimumCharge != null ? Number(rule.minimumCharge) : null,
-        freeShippingThreshold: rule.freeShippingThreshold != null
-          ? Number(rule.freeShippingThreshold)
-          : null,
+        freeShippingThreshold:
+          rule.freeShippingThreshold != null ? Number(rule.freeShippingThreshold) : null,
         conditions: rule.conditions as ShippingRuleConditions,
       })) as ShippingRuleWithDetails[],
     } as ShippingMethodWithRules;
@@ -147,9 +145,10 @@ export class ShippingService {
         rate: new Decimal(createDto.rate),
         minimumCharge:
           createDto.minimumCharge != null ? new Decimal(createDto.minimumCharge) : null,
-        freeShippingThreshold: createDto.freeShippingThreshold != null
-          ? new Decimal(createDto.freeShippingThreshold)
-          : null,
+        freeShippingThreshold:
+          createDto.freeShippingThreshold != null
+            ? new Decimal(createDto.freeShippingThreshold)
+            : null,
         estimatedDays: createDto.estimatedDays,
         isActive: createDto.isActive ?? true,
       },
@@ -180,9 +179,8 @@ export class ShippingService {
         ...rule,
         rate: Number(rule.rate),
         minimumCharge: rule.minimumCharge != null ? Number(rule.minimumCharge) : null,
-        freeShippingThreshold: rule.freeShippingThreshold != null
-          ? Number(rule.freeShippingThreshold)
-          : null,
+        freeShippingThreshold:
+          rule.freeShippingThreshold != null ? Number(rule.freeShippingThreshold) : null,
         conditions: rule.conditions as ShippingRuleConditions,
       }));
 
@@ -305,7 +303,10 @@ export class ShippingService {
       }
 
       // Check cart value range (supports both cartValueRange object and minCartValue shorthand)
-      const extConditions = conditions as ShippingRuleConditions & { minCartValue?: number; countries?: string[] };
+      const extConditions = conditions as ShippingRuleConditions & {
+        minCartValue?: number;
+        countries?: string[];
+      };
       if (conditions.cartValueRange) {
         if (
           conditions.cartValueRange.min !== undefined &&
@@ -319,7 +320,10 @@ export class ShippingService {
         ) {
           continue;
         }
-      } else if (extConditions.minCartValue !== undefined && cartValue < extConditions.minCartValue) {
+      } else if (
+        extConditions.minCartValue !== undefined &&
+        cartValue < extConditions.minCartValue
+      ) {
         // Shorthand: minCartValue means cart must be at least this amount
         continue;
       }
@@ -466,9 +470,10 @@ export class ShippingService {
         updateDto.minimumCharge != null ? new Decimal(updateDto.minimumCharge) : null;
     }
     if (updateDto.freeShippingThreshold !== undefined) {
-      updateData.freeShippingThreshold = updateDto.freeShippingThreshold != null
-        ? new Decimal(updateDto.freeShippingThreshold)
-        : null;
+      updateData.freeShippingThreshold =
+        updateDto.freeShippingThreshold != null
+          ? new Decimal(updateDto.freeShippingThreshold)
+          : null;
     }
     if (updateDto.conditions) {
       updateData.conditions = updateDto.conditions as any;
@@ -518,9 +523,8 @@ export class ShippingService {
         ...rule,
         rate: Number(rule.rate),
         minimumCharge: rule.minimumCharge != null ? Number(rule.minimumCharge) : null,
-        freeShippingThreshold: rule.freeShippingThreshold != null
-          ? Number(rule.freeShippingThreshold)
-          : null,
+        freeShippingThreshold:
+          rule.freeShippingThreshold != null ? Number(rule.freeShippingThreshold) : null,
         conditions: rule.conditions as ShippingRuleConditions,
       })) as ShippingRuleWithDetails[],
     })) as ShippingMethodWithRules[];

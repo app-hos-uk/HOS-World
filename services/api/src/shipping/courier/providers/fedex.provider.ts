@@ -190,7 +190,7 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
         shipDateStamp: (request.shipDate || new Date()).toISOString().split('T')[0],
         pickupType: 'DROPOFF_AT_FEDEX_LOCATION',
         rateRequestType: ['LIST', 'ACCOUNT'],
-        requestedPackageLineItems: request.packages.map((pkg, index) => ({
+        requestedPackageLineItems: request.packages.map((pkg, _index) => ({
           groupPackageCount: 1,
           weight: {
             units: 'KG',
@@ -311,7 +311,7 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
           imageType: request.labelFormat === 'PNG' ? 'PNG' : 'PDF',
           labelStockType: 'PAPER_7X4.75',
         },
-        requestedPackageLineItems: request.packages.map((pkg, index) => ({
+        requestedPackageLineItems: request.packages.map((pkg, _index) => ({
           weight: {
             units: 'KG',
             value: pkg.weight,

@@ -31,7 +31,9 @@ describe('SegmentationService', () => {
         count: jest.fn().mockResolvedValue(0),
       },
       user: {
-        findMany: jest.fn().mockResolvedValue([{ id: 'u1', _count: { eventAttendances: 0, quizAttempts: 0 } }]),
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ id: 'u1', _count: { eventAttendances: 0, quizAttempts: 0 } }]),
         count: jest.fn().mockResolvedValue(1),
       },
       loyaltyMembership: {
@@ -46,7 +48,9 @@ describe('SegmentationService', () => {
         {
           provide: ConfigService,
           useValue: {
-            get: jest.fn((k: string, def?: number) => def ?? (k === 'SEGMENT_EVAL_BATCH_SIZE' ? 500 : 10)),
+            get: jest.fn(
+              (k: string, def?: number) => def ?? (k === 'SEGMENT_EVAL_BATCH_SIZE' ? 500 : 10),
+            ),
           },
         },
       ],
@@ -81,7 +85,9 @@ describe('SegmentationService', () => {
   it('archive clears memberships', async () => {
     prisma.audienceSegment.findUnique.mockResolvedValue({ id: 's1', status: 'ACTIVE' });
     await service.archive('s1');
-    expect(prisma.segmentMembership.deleteMany).toHaveBeenCalledWith({ where: { segmentId: 's1' } });
+    expect(prisma.segmentMembership.deleteMany).toHaveBeenCalledWith({
+      where: { segmentId: 's1' },
+    });
   });
 
   it('delete only when archived', async () => {
@@ -104,7 +110,9 @@ describe('SegmentationService', () => {
       type: 'DYNAMIC',
       rules: sampleRules,
     });
-    prisma.user.findMany.mockResolvedValue([{ id: 'u1', _count: { eventAttendances: 0, quizAttempts: 0 } }]);
+    prisma.user.findMany.mockResolvedValue([
+      { id: 'u1', _count: { eventAttendances: 0, quizAttempts: 0 } },
+    ]);
     prisma.segmentMembership.findMany.mockResolvedValue([{ userId: 'u2' }]);
     const r = await service.evaluateSegment('s1');
     expect(r.added).toBeGreaterThanOrEqual(0);
@@ -137,9 +145,7 @@ describe('SegmentationService', () => {
   });
 
   it('getUserSegments maps segments', async () => {
-    prisma.segmentMembership.findMany.mockResolvedValue([
-      { segment: { id: 's1', name: 'S' } },
-    ]);
+    prisma.segmentMembership.findMany.mockResolvedValue([{ segment: { id: 's1', name: 'S' } }]);
     const rows = await service.getUserSegments('u1');
     expect(rows).toHaveLength(1);
     expect(rows[0].name).toBe('S');

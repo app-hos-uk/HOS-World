@@ -223,7 +223,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
   }
 
   private buildRatePayload(request: RateRequest): any {
-    const totalWeight = request.packages.reduce((sum, pkg) => sum + pkg.weight, 0);
+    const _totalWeight = request.packages.reduce((sum, pkg) => sum + pkg.weight, 0);
 
     return {
       customerDetails: {
@@ -252,7 +252,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
       returnStandardProductsOnly: false,
       nextBusinessDay: true,
       productTypeCode: 'all',
-      packages: request.packages.map((pkg, index) => ({
+      packages: request.packages.map((pkg, _index) => ({
         weight: pkg.weight,
         dimensions: {
           length: pkg.length,
@@ -373,7 +373,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
         },
       },
       content: {
-        packages: request.packages.map((pkg, index) => ({
+        packages: request.packages.map((pkg, _index) => ({
           weight: pkg.weight,
           dimensions: {
             length: pkg.length,
@@ -645,8 +645,8 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
   }
 
   async getAvailableServices(
-    from: Address,
-    to: Address,
+    _from: Address,
+    _to: Address,
   ): Promise<Array<{ code: string; name: string; description?: string }>> {
     return [
       { code: 'P', name: 'DHL Express Worldwide', description: '1-3 business days' },

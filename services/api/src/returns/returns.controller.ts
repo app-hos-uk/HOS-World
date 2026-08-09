@@ -98,7 +98,8 @@ export class ReturnsController {
   @Put(':id/cancel')
   @ApiOperation({
     summary: 'Cancel return request',
-    description: 'Allows the customer who created the return request to cancel it while it is still pending.',
+    description:
+      'Allows the customer who created the return request to cancel it while it is still pending.',
   })
   @ApiParam({ name: 'id', description: 'Return request UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Return request cancelled successfully' })

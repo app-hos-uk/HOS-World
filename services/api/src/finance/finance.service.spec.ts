@@ -7,6 +7,7 @@ import { SetPricingDto, ApprovePricingDto } from './dto/set-pricing.dto';
 
 describe('FinanceService', () => {
   let service: FinanceService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let prismaService: PrismaService;
 
   const mockPrismaService = {
@@ -60,7 +61,9 @@ describe('FinanceService', () => {
 
       expect(mockPrismaService.productSubmission.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { status: { in: expect.arrayContaining(['MARKETING_COMPLETED', 'FINANCE_PENDING']) } },
+          where: {
+            status: { in: expect.arrayContaining(['MARKETING_COMPLETED', 'FINANCE_PENDING']) },
+          },
           include: expect.any(Object),
         }),
       );

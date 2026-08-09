@@ -11,7 +11,6 @@ import { CreateVendorProductDto } from './dto/create-vendor-product.dto';
 import { UpdateVendorProductDto } from './dto/update-vendor-product.dto';
 import { ApproveVendorProductDto, RejectVendorProductDto } from './dto/approve-vendor-product.dto';
 import { QueryVendorProductsDto } from './dto/query-vendor-products.dto';
-import { Decimal } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class VendorProductsService {

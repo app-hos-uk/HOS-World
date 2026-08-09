@@ -70,10 +70,13 @@ export class DisputesService {
     });
   }
 
-  async updateFromWebhook(stripeDisputeId: string, update: {
-    status?: string;
-    outcome?: string;
-  }) {
+  async updateFromWebhook(
+    stripeDisputeId: string,
+    update: {
+      status?: string;
+      outcome?: string;
+    },
+  ) {
     const dispute = await this.prisma.dispute.findUnique({
       where: { stripeDisputeId },
     });
@@ -83,14 +86,14 @@ export class DisputesService {
     }
 
     const statusMap: Record<string, string> = {
-      'needs_response': 'EVIDENCE_REQUIRED',
-      'under_review': 'UNDER_REVIEW',
-      'won': 'WON',
-      'lost': 'LOST',
-      'closed': 'CLOSED',
+      needs_response: 'EVIDENCE_REQUIRED',
+      under_review: 'UNDER_REVIEW',
+      won: 'WON',
+      lost: 'LOST',
+      closed: 'CLOSED',
     };
 
-    const newStatus = update.status ? (statusMap[update.status] || dispute.status) : dispute.status;
+    const newStatus = update.status ? statusMap[update.status] || dispute.status : dispute.status;
 
     return this.prisma.dispute.update({
       where: { id: dispute.id },
@@ -164,7 +167,9 @@ export class DisputesService {
     });
   }
 
-  async getSellerChargebackRate(sellerId: string): Promise<{ rate: number; total: number; lost: number }> {
+  async getSellerChargebackRate(
+    sellerId: string,
+  ): Promise<{ rate: number; total: number; lost: number }> {
     const [total, lost] = await Promise.all([
       this.prisma.dispute.count({ where: { sellerId } }),
       this.prisma.dispute.count({ where: { sellerId, status: 'LOST' } }),

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { GeocodingService } from '../inventory/geocoding.service';
 import { CreateAddressDto } from './dto/create-address.dto';
@@ -202,10 +202,7 @@ export class AddressesService {
           where: { id },
         });
       } catch (err) {
-        if (
-          err instanceof Prisma.PrismaClientKnownRequestError &&
-          err.code === 'P2003'
-        ) {
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003') {
           // Race: order linked after the count check — soft-hide instead of failing.
           await this.prisma.address.update({
             where: { id },

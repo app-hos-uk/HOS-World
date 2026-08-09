@@ -27,7 +27,8 @@ export class LoyaltyListener {
     private config: ConfigService,
     private featureFlags: FeatureFlagsService,
     private segmentation: SegmentationService,
-    @Optional() @Inject(forwardRef(() => AmbassadorService))
+    @Optional()
+    @Inject(forwardRef(() => AmbassadorService))
     private ambassador?: AmbassadorService,
   ) {}
 
@@ -121,12 +122,14 @@ export class LoyaltyListener {
         this.prisma.loyaltyEarnRule.findUnique({ where: { action: 'REFERRAL_REFEREE' } }),
         this.prisma.loyaltyEarnRule.findUnique({ where: { action: 'REFERRAL_REFERRER' } }),
       ]);
-      const refereePoints = (refereeRule?.isActive && refereeRule.pointsAmount != null)
-        ? refereeRule.pointsAmount
-        : this.config.get<number>('LOYALTY_REFERRAL_REFEREE_BONUS', 100);
-      const referrerPoints = (referrerRule?.isActive && referrerRule.pointsAmount != null)
-        ? referrerRule.pointsAmount
-        : this.config.get<number>('LOYALTY_REFERRAL_REFERRER_BONUS', 200);
+      const refereePoints =
+        refereeRule?.isActive && refereeRule.pointsAmount != null
+          ? refereeRule.pointsAmount
+          : this.config.get<number>('LOYALTY_REFERRAL_REFEREE_BONUS', 100);
+      const referrerPoints =
+        referrerRule?.isActive && referrerRule.pointsAmount != null
+          ? referrerRule.pointsAmount
+          : this.config.get<number>('LOYALTY_REFERRAL_REFERRER_BONUS', 200);
 
       let claimedOk = false;
       await this.prisma.$transaction(async (tx) => {
@@ -210,7 +213,7 @@ export class LoyaltyListener {
       // Auto-enroll customers who review before joining so REVIEW earn rules still fire
       const user = await this.prisma.user.findUnique({ where: { id: userId } });
       if (!user || user.role !== 'CUSTOMER') return 0;
-      let tier = await this.prisma.loyaltyTier.findFirst({
+      const tier = await this.prisma.loyaltyTier.findFirst({
         where: { slug: 'initiate', isActive: true },
       });
       if (!tier) return 0;
@@ -353,7 +356,7 @@ export class LoyaltyListener {
     const rule = await this.prisma.loyaltyEarnRule.findFirst({
       where: { action: 'QUEST', isActive: true },
     });
-    const pts = questPoints > 0 ? questPoints : rule?.pointsAmount ?? 0;
+    const pts = questPoints > 0 ? questPoints : (rule?.pointsAmount ?? 0);
     if (pts <= 0) return 0;
 
     try {
@@ -483,9 +486,7 @@ export class LoyaltyListener {
     }
 
     const profileComplete =
-      Boolean(user.firstName?.trim()) &&
-      Boolean(user.lastName?.trim()) &&
-      Boolean(user.birthday);
+      Boolean(user.firstName?.trim()) && Boolean(user.lastName?.trim()) && Boolean(user.birthday);
 
     if (!profileComplete) return 0;
 

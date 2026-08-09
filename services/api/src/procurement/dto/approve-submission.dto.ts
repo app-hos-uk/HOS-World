@@ -1,5 +1,4 @@
-import { IsOptional, IsString, IsNumber, IsEnum, IsBoolean, IsNotEmpty } from 'class-validator';
-import { ProductSubmissionStatus } from '@prisma/client';
+import { IsOptional, IsString, IsNumber, IsBoolean, IsNotEmpty } from 'class-validator';
 
 export class ApproveSubmissionDto {
   @IsOptional()

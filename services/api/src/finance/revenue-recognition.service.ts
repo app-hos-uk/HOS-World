@@ -67,9 +67,10 @@ export class RevenueRecognitionService {
       month,
       ...breakdown,
       actualRefunds: Number(actualRefunds._sum.amount || 0),
-      provisionAccuracy: breakdown.recognized > 0
-        ? +((Number(actualRefunds._sum.amount || 0) / breakdown.recognized) * 100).toFixed(2)
-        : 0,
+      provisionAccuracy:
+        breakdown.recognized > 0
+          ? +((Number(actualRefunds._sum.amount || 0) / breakdown.recognized) * 100).toFixed(2)
+          : 0,
     };
   }
 

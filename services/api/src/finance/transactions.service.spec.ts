@@ -5,6 +5,7 @@ import { PrismaService } from '../database/prisma.service';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let prismaService: PrismaService;
 
   const mockPrismaService = {
@@ -168,7 +169,9 @@ describe('TransactionsService', () => {
       expect(result.filename).toMatch(/^transactions-\d{4}-\d{2}-\d{2}\.csv$/);
 
       const [header, row] = result.csv.split('\n');
-      expect(header).toBe('id,type,status,amount,currency,seller,customerEmail,orderNumber,createdAt');
+      expect(header).toBe(
+        'id,type,status,amount,currency,seller,customerEmail,orderNumber,createdAt',
+      );
       expect(row).toBe(
         'transaction-1,PAYMENT,COMPLETED,100.5,GBP,"Wands, Robes & More",a@b.com,HOS-1,2026-01-02T03:04:05.000Z',
       );

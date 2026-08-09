@@ -3,8 +3,12 @@ import { Decimal } from '@prisma/client/runtime/library';
 
 describe('LoyaltyAnalyticsService', () => {
   const membership = {
-    id: 'm1', userId: 'u1', engagementCount: 5, enrolledAt: new Date(Date.now() - 180 * 86400000),
-    purchaseCount: 10, totalSpend: new Decimal(500),
+    id: 'm1',
+    userId: 'u1',
+    engagementCount: 5,
+    enrolledAt: new Date(Date.now() - 180 * 86400000),
+    purchaseCount: 10,
+    totalSpend: new Decimal(500),
     tier: { level: 3, multiplier: new Decimal(1.5), name: 'Enchanter' },
   };
 
@@ -13,10 +17,12 @@ describe('LoyaltyAnalyticsService', () => {
       count: jest.fn().mockResolvedValue(10),
       findMany: jest.fn().mockResolvedValue([{ id: 'm1' }]),
       findUnique: jest.fn().mockResolvedValue(membership),
-      aggregate: jest.fn().mockResolvedValue({ _sum: { currentBalance: 5000 }, _avg: { clvScore: new Decimal(100), predictedChurnRisk: new Decimal(0.2) }, _count: 10 }),
-      groupBy: jest
-        .fn()
-        .mockResolvedValue([{ regionCode: 'GB', _sum: { currentBalance: 1000 } }]),
+      aggregate: jest.fn().mockResolvedValue({
+        _sum: { currentBalance: 5000 },
+        _avg: { clvScore: new Decimal(100), predictedChurnRisk: new Decimal(0.2) },
+        _count: 10,
+      }),
+      groupBy: jest.fn().mockResolvedValue([{ regionCode: 'GB', _sum: { currentBalance: 1000 } }]),
       update: jest.fn().mockResolvedValue({}),
     },
     loyaltyTransaction: {
@@ -25,20 +31,45 @@ describe('LoyaltyAnalyticsService', () => {
     },
     loyaltyTier: {
       findMany: jest.fn().mockResolvedValue([
-        { id: 't1', name: 'Initiate', level: 1, isActive: true, multiplier: new Decimal(1), _count: { members: 5 } },
+        {
+          id: 't1',
+          name: 'Initiate',
+          level: 1,
+          isActive: true,
+          multiplier: new Decimal(1),
+          _count: { members: 5 },
+        },
       ]),
     },
-    loyaltyAnalyticsSnapshot: { upsert: jest.fn().mockImplementation((_a: any) => Promise.resolve({})), findMany: jest.fn().mockResolvedValue([]) },
+    loyaltyAnalyticsSnapshot: {
+      upsert: jest.fn().mockImplementation((_a: any) => Promise.resolve({})),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
     loyaltyBonusCampaign: { findUnique: jest.fn().mockResolvedValue({ name: 'Summer' }) },
     brandCampaign: { findUnique: jest.fn().mockResolvedValue(null) },
-    campaignAttribution: { upsert: jest.fn().mockResolvedValue({}), findMany: jest.fn().mockResolvedValue([]) },
-    order: { findMany: jest.fn().mockResolvedValue([{ subtotal: new Decimal(50), createdAt: new Date() }]), aggregate: jest.fn().mockResolvedValue({ _sum: { subtotal: new Decimal(500) }, _count: 10 }) },
-    orderItem: { findMany: jest.fn().mockResolvedValue([]), groupBy: jest.fn().mockResolvedValue([]) },
-    pOSSale: { aggregate: jest.fn().mockResolvedValue({ _sum: { totalAmount: new Decimal(200) }, _count: 5 }) },
+    campaignAttribution: {
+      upsert: jest.fn().mockResolvedValue({}),
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+    order: {
+      findMany: jest.fn().mockResolvedValue([{ subtotal: new Decimal(50), createdAt: new Date() }]),
+      aggregate: jest.fn().mockResolvedValue({ _sum: { subtotal: new Decimal(500) }, _count: 10 }),
+    },
+    orderItem: {
+      findMany: jest.fn().mockResolvedValue([]),
+      groupBy: jest.fn().mockResolvedValue([]),
+    },
+    pOSSale: {
+      aggregate: jest
+        .fn()
+        .mockResolvedValue({ _sum: { totalAmount: new Decimal(200) }, _count: 5 }),
+    },
     segmentMembership: {},
   };
 
-  const config: any = { get: jest.fn().mockImplementation((_k: string, def?: unknown) => def ?? '200') };
+  const config: any = {
+    get: jest.fn().mockImplementation((_k: string, def?: unknown) => def ?? '200'),
+  };
   let service: LoyaltyAnalyticsService;
 
   beforeEach(() => {
@@ -76,16 +107,26 @@ describe('LoyaltyAnalyticsService', () => {
   });
 
   it('getTopMembersByClv returns array', async () => {
-    prisma.loyaltyMembership.findMany.mockResolvedValueOnce([{
-      id: 'm1', userId: 'u1', clvScore: new Decimal(100), totalSpend: new Decimal(500),
-      purchaseCount: 10, tier: { name: 'Enchanter' }, user: { firstName: 'A', lastName: 'B', email: 'a@b.c' },
-    }]);
+    prisma.loyaltyMembership.findMany.mockResolvedValueOnce([
+      {
+        id: 'm1',
+        userId: 'u1',
+        clvScore: new Decimal(100),
+        totalSpend: new Decimal(500),
+        purchaseCount: 10,
+        tier: { name: 'Enchanter' },
+        user: { firstName: 'A', lastName: 'B', email: 'a@b.c' },
+      },
+    ]);
     const r = await service.getTopMembersByClv();
     expect(r.length).toBe(1);
   });
 
   it('getChurnRiskReport separates risk levels', async () => {
-    prisma.loyaltyMembership.count.mockResolvedValueOnce(2).mockResolvedValueOnce(5).mockResolvedValueOnce(1);
+    prisma.loyaltyMembership.count
+      .mockResolvedValueOnce(2)
+      .mockResolvedValueOnce(5)
+      .mockResolvedValueOnce(1);
     prisma.loyaltyMembership.findMany.mockResolvedValueOnce([]);
     const r: any = await service.getChurnRiskReport();
     expect(r.atRisk).toBe(2);
@@ -94,7 +135,13 @@ describe('LoyaltyAnalyticsService', () => {
 
   it('computeAttributionForDate processes transactions', async () => {
     prisma.loyaltyTransaction.findMany.mockResolvedValueOnce([
-      { campaignId: 'c1', points: 100, sourceId: 'o1', source: 'PURCHASE', membership: { userId: 'u1' } },
+      {
+        campaignId: 'c1',
+        points: 100,
+        sourceId: 'o1',
+        source: 'PURCHASE',
+        membership: { userId: 'u1' },
+      },
     ]);
     const n = await service.computeAttributionForDate(new Date());
     expect(n).toBe(1);

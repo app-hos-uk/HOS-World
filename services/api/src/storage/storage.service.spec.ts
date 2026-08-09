@@ -37,6 +37,7 @@ jest.mock('cloudinary', () => ({
 
 describe('StorageService', () => {
   let service: StorageService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let configService: ConfigService;
 
   const mockConfigService = {
@@ -121,6 +122,7 @@ describe('StorageService', () => {
         return undefined;
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { Upload } = require('@aws-sdk/lib-storage');
       (Upload as jest.Mock).mockImplementation(() => ({
         done: jest.fn().mockResolvedValue({
@@ -159,6 +161,7 @@ describe('StorageService', () => {
         return undefined;
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { Upload } = require('@aws-sdk/lib-storage');
       (Upload as jest.Mock).mockImplementation(() => ({
         done: jest.fn().mockResolvedValue({
@@ -175,6 +178,7 @@ describe('StorageService', () => {
     });
 
     it('should upload file to Cloudinary when provider is Cloudinary', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const cloudinary = require('cloudinary').v2;
 
       mockConfigService.get.mockImplementation((key: string) => {
@@ -213,6 +217,7 @@ describe('StorageService', () => {
 
   describe('deleteFile', () => {
     it('should delete file from Cloudinary', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const cloudinary = require('cloudinary').v2;
       cloudinary.uploader.destroy.mockResolvedValue({ result: 'ok' });
 
@@ -223,6 +228,7 @@ describe('StorageService', () => {
 
     it('should delete file from S3', async () => {
       const mockSend = jest.fn().mockResolvedValue({});
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { S3Client } = require('@aws-sdk/client-s3');
       (S3Client as jest.Mock).mockImplementation(() => ({
         send: mockSend,
@@ -264,6 +270,7 @@ describe('StorageService', () => {
     });
 
     it('should handle deletion errors gracefully', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const cloudinary = require('cloudinary').v2;
       cloudinary.uploader.destroy.mockRejectedValue(new Error('Delete failed'));
 

@@ -1,7 +1,6 @@
 import {
   IsString,
   IsOptional,
-  IsEmail,
   IsEnum,
   IsDateString,
   MinLength,
@@ -64,7 +63,8 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(32)
   @Matches(/^\+?[\d\s()-]+$/, {
-    message: 'WhatsApp number must contain only digits, spaces, hyphens, parentheses, and an optional leading +',
+    message:
+      'WhatsApp number must contain only digits, spaces, hyphens, parentheses, and an optional leading +',
   })
   whatsappNumber?: string;
 

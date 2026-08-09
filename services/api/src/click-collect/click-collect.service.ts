@@ -262,7 +262,9 @@ export class ClickCollectService {
       where: { id },
       include: {
         store: true,
-        order: { include: { items: { include: { product: { select: { id: true, name: true } } } } } },
+        order: {
+          include: { items: { include: { product: { select: { id: true, name: true } } } } },
+        },
       },
     });
     if (!row) throw new NotFoundException('Click & collect order not found');

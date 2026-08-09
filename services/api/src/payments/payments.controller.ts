@@ -76,7 +76,11 @@ export class PaymentsController {
     @Request() req: any,
     @Body() confirmDto: ConfirmPaymentDto,
   ): Promise<ApiResponse<{ message: string }>> {
-    await this.paymentsService.confirmPayment(confirmDto.paymentIntentId, confirmDto.orderId, req.user.id);
+    await this.paymentsService.confirmPayment(
+      confirmDto.paymentIntentId,
+      confirmDto.orderId,
+      req.user.id,
+    );
     return {
       data: { message: 'Payment confirmed successfully' },
       message: 'Payment confirmed',
@@ -103,7 +107,8 @@ export class PaymentsController {
   @Get('config')
   @ApiOperation({
     summary: 'Get payment configuration for frontend',
-    description: 'Returns non-secret payment config (e.g. Stripe publishable key) for client-side SDK initialization.',
+    description:
+      'Returns non-secret payment config (e.g. Stripe publishable key) for client-side SDK initialization.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Payment config retrieved' })
   async getPaymentConfig(): Promise<ApiResponse<{ stripePublishableKey: string | null }>> {

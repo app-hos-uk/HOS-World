@@ -42,7 +42,6 @@ import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import { Response } from 'express';
 import { existsSync, mkdirSync } from 'fs';
-import { StorageProvider } from '../storage/storage.service';
 import {
   parseUploadRelativePath,
   sanitizeUploadFolder,
@@ -61,7 +60,11 @@ const IMAGE_MIME_WHITELIST = [
   'application/pdf',
 ];
 
-function fileFilter(req: any, file: Express.Multer.File, cb: Function) {
+function fileFilter(
+  req: any,
+  file: Express.Multer.File,
+  cb: (error: Error | null, acceptFile?: boolean) => void,
+) {
   const ext = extname(file.originalname || '').toLowerCase();
   const extOk = ALLOWED_FILE_EXTENSIONS.includes(ext);
   /** Cameras often send images with missing or uncommon extensions; trust MIME after multer probes. */
@@ -255,8 +258,7 @@ export class UploadsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Upload single file',
-    description:
-      'Uploads a single file. Customers may only upload to the reviews folder.',
+    description: 'Uploads a single file. Customers may only upload to the reviews folder.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({

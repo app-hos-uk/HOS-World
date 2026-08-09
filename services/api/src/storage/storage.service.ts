@@ -3,12 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { sanitizeUploadFolder } from '../common/utils/sanitize-upload-folder';
 import * as fs from 'fs/promises';
 import { v2 as cloudinary } from 'cloudinary';
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-  GetObjectCommand,
-} from '@aws-sdk/client-s3';
+import { S3Client, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
 
@@ -109,12 +104,20 @@ export class StorageService {
   private validateFileContent(buffer: Buffer): boolean {
     if (!buffer || buffer.length < 12) return false;
     if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return true;
-    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return true;
+    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47)
+      return true;
     if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) return true;
     if (
-      buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
-      buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50
-    ) return true;
+      buffer[0] === 0x52 &&
+      buffer[1] === 0x49 &&
+      buffer[2] === 0x46 &&
+      buffer[3] === 0x46 &&
+      buffer[8] === 0x57 &&
+      buffer[9] === 0x45 &&
+      buffer[10] === 0x42 &&
+      buffer[11] === 0x50
+    )
+      return true;
     return false;
   }
 
@@ -134,7 +137,9 @@ export class StorageService {
           throw new BadRequestException('File content does not match declared type. Invalid PDF.');
         }
       } else if (file.mimetype?.startsWith('image/') && !this.validateFileContent(file.buffer)) {
-        throw new BadRequestException('File content does not match declared type. Invalid or unsupported image.');
+        throw new BadRequestException(
+          'File content does not match declared type. Invalid or unsupported image.',
+        );
       }
     }
 
@@ -177,7 +182,7 @@ export class StorageService {
   private async uploadToS3(
     file: Express.Multer.File,
     folder: string,
-    options?: any,
+    _options?: any,
   ): Promise<UploadResult> {
     if (!this.s3Client) {
       throw new BadRequestException('S3 client not initialized. Check AWS credentials.');
@@ -226,7 +231,7 @@ export class StorageService {
   private async uploadToMinIO(
     file: Express.Multer.File,
     folder: string,
-    options?: any,
+    _options?: any,
   ): Promise<UploadResult> {
     if (!this.minioClient) {
       throw new BadRequestException('MinIO client not initialized. Check MinIO credentials.');
@@ -366,7 +371,7 @@ export class StorageService {
     }
 
     // Generate signature
-    const paramsString = Object.keys(params)
+    const _paramsString = Object.keys(params)
       .sort()
       .map((key) => `${key}=${params[key]}`)
       .join('&');

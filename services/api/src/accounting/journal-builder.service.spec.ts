@@ -41,13 +41,13 @@ describe('JournalBuilderService POSSale guardrail', () => {
   });
 
   it('HARD GUARD: forbidden POS entry types are rejected', () => {
-    expect(() =>
-      assertNoPosSaleInLedger('INSTORE_SALES', { total: 1 }),
-    ).toThrow(BadRequestException);
+    expect(() => assertNoPosSaleInLedger('INSTORE_SALES', { total: 1 })).toThrow(
+      BadRequestException,
+    );
 
-    expect(() =>
-      assertNoPosSaleInLedger('POS_SALE_DAILY', { total: 1 }),
-    ).toThrow(BadRequestException);
+    expect(() => assertNoPosSaleInLedger('POS_SALE_DAILY', { total: 1 })).toThrow(
+      BadRequestException,
+    );
   });
 
   it('PROVES POSSale never posts: drain path would refuse before Xero fetch', async () => {

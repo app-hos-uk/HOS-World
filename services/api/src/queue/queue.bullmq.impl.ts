@@ -115,9 +115,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
       removeOnComplete: false,
       removeOnFail: false,
     });
-    this.logger.warn(
-      `Job ${job.id} (${job.name}) moved to DLQ after exhausting all retries`,
-    );
+    this.logger.warn(`Job ${job.id} (${job.name}) moved to DLQ after exhausting all retries`);
   }
 
   async onModuleDestroy() {
@@ -225,11 +223,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     return this.addJob(JobType.BULK_IMPORT, payload);
   }
 
-  async addRepeatable(
-    jobType: JobType,
-    payload: any,
-    pattern: string,
-  ): Promise<void> {
+  async addRepeatable(jobType: JobType, payload: any, pattern: string): Promise<void> {
     await this.queue.add(jobType, payload, {
       repeat: { pattern },
       removeOnComplete: { age: 86_400 },

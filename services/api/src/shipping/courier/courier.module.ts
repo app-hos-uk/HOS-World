@@ -23,12 +23,7 @@ import { DHLLegacyProvider } from './providers/legacy/dhl-legacy.provider';
 @Module({
   imports: [ConfigModule, DatabaseModule],
   controllers: [CourierController],
-  providers: [
-    CourierService,
-    CourierFactoryService,
-    FedExLegacyProvider,
-    DHLLegacyProvider,
-  ],
+  providers: [CourierService, CourierFactoryService, FedExLegacyProvider, DHLLegacyProvider],
   exports: [CourierService, CourierFactoryService],
 })
 export class CourierModule implements OnModuleInit {

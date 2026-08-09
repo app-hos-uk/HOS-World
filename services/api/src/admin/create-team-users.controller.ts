@@ -1,4 +1,4 @@
-import { Controller, Post, ForbiddenException, Headers, Request } from '@nestjs/common';
+import { Controller, Post, ForbiddenException, Request } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
@@ -379,7 +379,8 @@ export class CreateTeamUsersController {
       }
       return {
         data: { email, status: 'updated', role: 'INFLUENCER', profileCreated, slug, referralCode },
-        message: 'Influencer test user updated. Login: influencer@hos.test (password from TEST_SEED_PASSWORD env)',
+        message:
+          'Influencer test user updated. Login: influencer@hos.test (password from TEST_SEED_PASSWORD env)',
       };
     }
 

@@ -6,7 +6,9 @@ import { TransactionsService } from './transactions.service';
 
 describe('PayoutsService', () => {
   let service: PayoutsService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let prismaService: PrismaService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let transactionsService: TransactionsService;
 
   const mockPrismaService = {

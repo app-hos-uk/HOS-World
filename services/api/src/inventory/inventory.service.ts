@@ -1,11 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateWarehouseDto, UpdateWarehouseDto } from './dto/create-warehouse.dto';
 import { CreateInventoryLocationDto } from './dto/create-inventory-location.dto';
 import { ReserveStockDto } from './dto/reserve-stock.dto';
 import { CreateStockTransferDto } from './dto/create-stock-transfer.dto';
-import { CreateStockMovementDto, MovementType } from './dto/create-stock-movement.dto';
-import { Prisma, ReservationStatus, TransferStatus } from '@prisma/client';
+import { CreateStockMovementDto } from './dto/create-stock-movement.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class InventoryService {
@@ -112,7 +118,11 @@ export class InventoryService {
   /**
    * Create or update inventory location
    */
-  async upsertInventoryLocation(createDto: CreateInventoryLocationDto, userId?: string, role?: string) {
+  async upsertInventoryLocation(
+    createDto: CreateInventoryLocationDto,
+    userId?: string,
+    role?: string,
+  ) {
     if (!Number.isInteger(createDto.quantity) || createDto.quantity < 0) {
       throw new BadRequestException('Quantity must be a non-negative integer');
     }
@@ -521,7 +531,7 @@ export class InventoryService {
       throw new BadRequestException('Source and destination warehouses must be different');
     }
 
-    const [fromWarehouse, toWarehouse] = await Promise.all([
+    const [_fromWarehouse, _toWarehouse] = await Promise.all([
       this.findWarehouseById(createDto.fromWarehouseId),
       this.findWarehouseById(createDto.toWarehouseId),
     ]);
@@ -550,7 +560,7 @@ export class InventoryService {
     }
 
     // Check available stock (quantity - reserved)
-    const reserved = await this.prisma.stockReservation.count({
+    const _reserved = await this.prisma.stockReservation.count({
       where: {
         inventoryLocationId: sourceLocation.id,
         status: 'ACTIVE',
@@ -1221,10 +1231,7 @@ export class InventoryService {
     // Check if address is on one of the user's orders
     const orderWithAddress = await this.prisma.order.findFirst({
       where: {
-        OR: [
-          { shippingAddressId: addressId },
-          { billingAddressId: addressId },
-        ],
+        OR: [{ shippingAddressId: addressId }, { billingAddressId: addressId }],
         userId,
       },
       select: { id: true },

@@ -140,6 +140,7 @@ async function bootstrap() {
     // Pre-flight check: Verify Prisma client can be imported and has RefreshToken
     logger.debug('🔍 PRE-FLIGHT CHECK: Verifying Prisma Client', 'Bootstrap');
     try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { PrismaClient } = require('@prisma/client');
       const testClient = new PrismaClient();
 
@@ -278,11 +279,16 @@ async function bootstrap() {
           return res.status(403).json({ error: 'Forbidden: origin not allowed' });
         }
         const hasAuthCookie = req.cookies?.access_token || req.cookies?.refresh_token;
-        const hasBearer = typeof req.headers.authorization === 'string' && req.headers.authorization.startsWith('Bearer ');
+        const hasBearer =
+          typeof req.headers.authorization === 'string' &&
+          req.headers.authorization.startsWith('Bearer ');
         const hasApiKey = !!req.headers['x-api-key'];
         const isXhr = req.headers['x-requested-with'] === 'XMLHttpRequest';
         if (hasAuthCookie && !hasBearer && !hasApiKey && !isXhr) {
-          logger.warn('CSRF: Blocked cookie-authenticated request without Origin or X-Requested-With', 'Security');
+          logger.warn(
+            'CSRF: Blocked cookie-authenticated request without Origin or X-Requested-With',
+            'Security',
+          );
           return res.status(403).json({ error: 'Forbidden: missing CSRF protection header' });
         }
         return next();
@@ -429,7 +435,7 @@ async function bootstrap() {
       .addTag('users', 'User management')
       .addTag('admin', 'Admin operations')
       .addTag('sellers', 'Seller operations')
-      .addTag('health', 'Health check endpoints')
+      .addTag('health', 'Health check endpoints');
     const apiPublicUrl = process.env.API_URL || process.env.API_PUBLIC_URL;
     if (apiPublicUrl) {
       const base = apiPublicUrl.replace(/\/+$/, '');
@@ -444,9 +450,8 @@ async function bootstrap() {
     const document = SwaggerModule.createDocument(app, swaggerConfig);
 
     const swaggerDocsToken = process.env.SWAGGER_DOCS_TOKEN;
-    const swaggerPath = isProduction && swaggerDocsToken
-      ? `api/docs-${swaggerDocsToken}`
-      : 'api/docs';
+    const swaggerPath =
+      isProduction && swaggerDocsToken ? `api/docs-${swaggerDocsToken}` : 'api/docs';
 
     if (!isProduction || swaggerDocsToken) {
       // In production, protect Swagger with HTTP Basic Auth
@@ -478,7 +483,10 @@ async function bootstrap() {
       });
       logger.info(`Swagger documentation available at /${swaggerPath}`, 'Bootstrap');
     } else {
-      logger.info('Swagger documentation disabled in production (set SWAGGER_DOCS_TOKEN to enable)', 'Bootstrap');
+      logger.info(
+        'Swagger documentation disabled in production (set SWAGGER_DOCS_TOKEN to enable)',
+        'Bootstrap',
+      );
     }
 
     // Bull Board dashboard for monitoring queues (non-production only)

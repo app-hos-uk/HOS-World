@@ -7,7 +7,6 @@ import { AuthOAuthController } from './auth.controller.oauth';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
-import { UsersModule } from '../users/users.module';
 import { AdminModule } from '../admin/admin.module';
 import { GeolocationModule } from '../geolocation/geolocation.module';
 import { NotificationsModule } from '../notifications/notifications.module';

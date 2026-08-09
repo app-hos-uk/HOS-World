@@ -24,11 +24,7 @@ describe('AmbassadorJobsService', () => {
       JobType.AMBASSADOR_ACHIEVEMENT_CHECK,
       expect.any(Function),
     );
-    expect(addRepeatable).toHaveBeenCalledWith(
-      JobType.AMBASSADOR_TIER_REVIEW,
-      {},
-      '0 4 * * *',
-    );
+    expect(addRepeatable).toHaveBeenCalledWith(JobType.AMBASSADOR_TIER_REVIEW, {}, '0 4 * * *');
   });
 
   it('tier review processor runs daily guard', async () => {

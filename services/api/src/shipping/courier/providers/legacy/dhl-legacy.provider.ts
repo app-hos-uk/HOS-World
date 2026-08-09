@@ -63,7 +63,7 @@ export class DHLLegacyProvider implements CourierProvider {
 
   async createLabel(
     orderId: string,
-    shipment: any,
+    _shipment: any,
   ): Promise<{ trackingNumber: string; labelUrl: string }> {
     this.logger.debug(`Creating DHL label for order ${orderId}`);
 

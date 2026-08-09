@@ -104,7 +104,10 @@ describe('EventsService', () => {
       }),
     };
 
-    const segmentation = { getSegmentUserIds: jest.fn().mockResolvedValue([]), touchActivity: jest.fn() };
+    const segmentation = {
+      getSegmentUserIds: jest.fn().mockResolvedValue([]),
+      touchActivity: jest.fn(),
+    };
 
     service = new EventsService(
       prisma,
@@ -370,24 +373,15 @@ describe('EventsService', () => {
   describe('sendRemindersWindow', () => {
     it('sends 24h reminder and flags metadata', async () => {
       const ev = { id: 'ev1', title: 'Gala', startsAt: new Date() };
-      prisma.event.findMany
-        .mockResolvedValueOnce([ev])
-        .mockResolvedValueOnce([]);
-      prisma.eventRSVP.findMany.mockResolvedValue([
-        { id: 'r1', userId: 'u1', metadata: {} },
-      ]);
+      prisma.event.findMany.mockResolvedValueOnce([ev]).mockResolvedValueOnce([]);
+      prisma.eventRSVP.findMany.mockResolvedValue([{ id: 'r1', userId: 'u1', metadata: {} }]);
       prisma.eventRSVP.update.mockResolvedValue({});
 
       await service.sendRemindersWindow();
 
       expect(templates.render).toHaveBeenCalledWith('event_reminder_24h', expect.any(Object));
       // Reminders go out via the queue so the rendered HTML template is not double-wrapped.
-      expect(notifications.queueNotification).toHaveBeenCalledWith(
-        'a@b.c',
-        'S',
-        '<p>Hi</p>',
-        'n1',
-      );
+      expect(notifications.queueNotification).toHaveBeenCalledWith('a@b.c', 'S', '<p>Hi</p>', 'n1');
       expect(prisma.eventRSVP.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({

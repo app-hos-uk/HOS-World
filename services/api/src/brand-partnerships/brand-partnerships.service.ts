@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, ProductStatus, type BrandCampaign, type BrandPartnership } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../database/prisma.service';
@@ -44,7 +40,7 @@ export class BrandPartnershipsService {
     const end = new Date(dto.contractEnd);
     if (start >= end) throw new BadRequestException('contractStart must be before contractEnd');
 
-    let base = slugifyBase(dto.name);
+    const base = slugifyBase(dto.name);
     let slug = makeSlug(base);
     for (let i = 0; i < 5; i++) {
       const exists = await this.prisma.brandPartnership.findUnique({ where: { slug } });
@@ -156,7 +152,7 @@ export class BrandPartnershipsService {
     const end = new Date(dto.endsAt);
     if (start >= end) throw new BadRequestException('startsAt must be before endsAt');
 
-    let base = slugifyBase(dto.name);
+    const base = slugifyBase(dto.name);
     let slug = makeSlug(base);
     for (let i = 0; i < 5; i++) {
       const exists = await this.prisma.brandCampaign.findUnique({ where: { slug } });
@@ -307,9 +303,7 @@ export class BrandPartnershipsService {
     return updated;
   }
 
-  async completeCampaign(
-    id: string,
-  ): Promise<BrandCampaign & { partnership: BrandPartnership }> {
+  async completeCampaign(id: string): Promise<BrandCampaign & { partnership: BrandPartnership }> {
     const updated = await this.prisma.brandCampaign.update({
       where: { id },
       data: { status: 'COMPLETED' },
@@ -569,9 +563,7 @@ export class BrandPartnershipsService {
     );
 
     const multPart =
-      qualifyingBase > 0 && bestMult > 1
-        ? qualifyingBase * args.internalMult * (bestMult - 1)
-        : 0;
+      qualifyingBase > 0 && bestMult > 1 ? qualifyingBase * args.internalMult * (bestMult - 1) : 0;
     let brandRaw = Math.max(0, Math.round(multPart + bonusSum));
     if (brandRaw <= 0) {
       return { brandPoints: 0 };

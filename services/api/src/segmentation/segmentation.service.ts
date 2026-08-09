@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { AudienceSegment, Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
@@ -271,8 +266,7 @@ export class SegmentationService {
     const latestOrder = new Map<string, { at: Date; region: string | null }>();
     for (const o of orders) {
       if (latestOrder.has(o.userId)) continue;
-      const region =
-        o.clickCollect?.store?.defaultRegionCode || o.shippingAddress?.country || null;
+      const region = o.clickCollect?.store?.defaultRegionCode || o.shippingAddress?.country || null;
       latestOrder.set(o.userId, {
         at: o.createdAt,
         region: normalizeGeoRegion(region ? String(region) : null),
@@ -359,7 +353,9 @@ export class SegmentationService {
     return ids;
   }
 
-  async evaluateSegment(segmentId: string): Promise<{ added: number; removed: number; total: number }> {
+  async evaluateSegment(
+    segmentId: string,
+  ): Promise<{ added: number; removed: number; total: number }> {
     const segment = await this.prisma.audienceSegment.findUnique({ where: { id: segmentId } });
     if (!segment) throw new NotFoundException('Segment not found');
     if (segment.status === 'ARCHIVED') {
@@ -423,7 +419,9 @@ export class SegmentationService {
     return { evaluated: segments.length, errors };
   }
 
-  async previewSegment(rules: SegmentRuleGroup): Promise<{ count: number; sampleUsers: PreviewUser[] }> {
+  async previewSegment(
+    rules: SegmentRuleGroup,
+  ): Promise<{ count: number; sampleUsers: PreviewUser[] }> {
     this.validateRules(rules);
     const previewLimit = this.config.get<number>('SEGMENT_PREVIEW_LIMIT', 10);
     const matched = await this.resolveMatchingUserIds(rules);
@@ -488,7 +486,9 @@ export class SegmentationService {
               firstName: true,
               lastName: true,
               country: true,
-              loyaltyMembership: { select: { currentBalance: true, tier: { select: { name: true } } } },
+              loyaltyMembership: {
+                select: { currentBalance: true, tier: { select: { name: true } } },
+              },
             },
           },
         },

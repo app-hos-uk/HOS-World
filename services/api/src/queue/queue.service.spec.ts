@@ -51,6 +51,7 @@ describe('QueueService', () => {
   describe('onModuleInit', () => {
     it('should initialize worker', async () => {
       await service.onModuleInit();
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { Worker } = require('bullmq');
       expect(Worker).toHaveBeenCalledWith(
         'jobs',

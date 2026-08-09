@@ -162,7 +162,9 @@ export class NewsletterController {
   })
   @ApiBody({ type: SendNewsletterCampaignDto })
   @SwaggerApiResponse({ status: 200, description: 'Emails queued' })
-  async sendCampaign(@Body() dto: SendNewsletterCampaignDto): Promise<ApiResponse<{ queued: number }>> {
+  async sendCampaign(
+    @Body() dto: SendNewsletterCampaignDto,
+  ): Promise<ApiResponse<{ queued: number }>> {
     const result = await this.newsletterService.sendCampaign(dto);
     return {
       data: result,

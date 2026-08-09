@@ -83,8 +83,7 @@ export class ThreeWayReconService {
     ]);
 
     const totalPoints = pointsAgg._sum.currentBalance ?? 0;
-    const estimatedCurrencyLiability =
-      Math.round(totalPoints * redeemValuePerPoint * 100) / 100;
+    const estimatedCurrencyLiability = Math.round(totalPoints * redeemValuePerPoint * 100) / 100;
 
     const lastPostedByType: Record<string, LastPostedSummary | null> = {};
     RECON_ENTRY_TYPES.forEach((entryType, i) => {
@@ -122,9 +121,7 @@ export class ThreeWayReconService {
     };
   }
 
-  private async findLatestPosted(
-    entryType: LedgerEntryType,
-  ): Promise<LastPostedSummary | null> {
+  private async findLatestPosted(entryType: LedgerEntryType): Promise<LastPostedSummary | null> {
     const row = await this.prisma.ledgerOutboxEntry.findFirst({
       where: {
         entryType,

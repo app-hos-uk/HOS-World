@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException, OnModuleInit, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnModuleInit,
+  BadRequestException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Job } from 'bullmq';
 import { PrismaService } from '../database/prisma.service';
@@ -96,7 +102,9 @@ export class NotificationsService implements OnModuleInit {
             },
           });
         } catch (e) {
-          this.logger.warn(`Could not update notification ${notificationId}: ${(e as Error)?.message}`);
+          this.logger.warn(
+            `Could not update notification ${notificationId}: ${(e as Error)?.message}`,
+          );
         }
       }
       // sendEmail swallows SMTP errors and returns false so callers get a boolean; for queued mail we
@@ -130,7 +138,11 @@ export class NotificationsService implements OnModuleInit {
     return this.configService.get('SMTP_FROM', 'noreply@houseofspells.com');
   }
 
-  private async sendViaActiveSendGrid(to: string, subject: string, html: string): Promise<boolean | null> {
+  private async sendViaActiveSendGrid(
+    to: string,
+    subject: string,
+    html: string,
+  ): Promise<boolean | null> {
     if (!this.sendGridActive) {
       await this.detectSendGridProvider();
       if (!this.sendGridActive) {
@@ -139,7 +151,10 @@ export class NotificationsService implements OnModuleInit {
     }
 
     try {
-      const credentials = await this.integrationsService.getDecryptedCredentials('EMAIL', 'sendgrid');
+      const credentials = await this.integrationsService.getDecryptedCredentials(
+        'EMAIL',
+        'sendgrid',
+      );
       const apiKey = credentials.apiKey?.trim();
       if (!apiKey) {
         this.logger.warn('SendGrid integration active but apiKey missing');
@@ -172,8 +187,18 @@ export class NotificationsService implements OnModuleInit {
     }
   }
 
-  async queueNotification(to: string, subject: string, html: string, notificationId?: string): Promise<void> {
-    await this.queueService.addJob(JobType.EMAIL_NOTIFICATION, { to, subject, html, notificationId });
+  async queueNotification(
+    to: string,
+    subject: string,
+    html: string,
+    notificationId?: string,
+  ): Promise<void> {
+    await this.queueService.addJob(JobType.EMAIL_NOTIFICATION, {
+      to,
+      subject,
+      html,
+      notificationId,
+    });
   }
 
   private initializeEmailTransporter() {
@@ -204,7 +229,9 @@ export class NotificationsService implements OnModuleInit {
         this.emailEnabled = false;
       }
     } else {
-      this.logger.log('Email not configured (SMTP_HOST/SMTP_USER/SMTP_PASS) — notifications will be logged only');
+      this.logger.log(
+        'Email not configured (SMTP_HOST/SMTP_USER/SMTP_PASS) — notifications will be logged only',
+      );
       this.emailEnabled = false;
     }
   }
@@ -272,7 +299,10 @@ export class NotificationsService implements OnModuleInit {
 
     if (this.sendGridActive) {
       try {
-        const credentials = await this.integrationsService.getDecryptedCredentials('EMAIL', 'sendgrid');
+        const credentials = await this.integrationsService.getDecryptedCredentials(
+          'EMAIL',
+          'sendgrid',
+        );
         const apiKey = credentials.apiKey?.trim();
         if (!apiKey) {
           throw new BadRequestException('SendGrid is active but API key is missing');
@@ -319,7 +349,8 @@ export class NotificationsService implements OnModuleInit {
       success: false,
       provider: 'none',
       to: email,
-      error: 'No email provider configured. Activate SendGrid in Admin → Integrations or set SMTP env vars.',
+      error:
+        'No email provider configured. Activate SendGrid in Admin → Integrations or set SMTP env vars.',
     };
   }
 
@@ -418,7 +449,8 @@ export class NotificationsService implements OnModuleInit {
       return;
     }
 
-    const customerName = [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || 'Customer';
+    const customerName =
+      [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || 'Customer';
 
     const itemsTable = `<table><thead><tr><th>Product</th><th>Quantity</th><th>Price</th><th>Total</th></tr></thead><tbody>${order.items.map((item: any) => `<tr><td>${escapeHtml(item.product.name)}</td><td>${item.quantity}</td><td>$${Number(item.price).toFixed(2)}</td><td>$${(Number(item.price) * item.quantity).toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
 
@@ -441,7 +473,12 @@ export class NotificationsService implements OnModuleInit {
       },
     });
 
-    await this.queueNotification(order.user.email, rendered.subject, rendered.body, notification.id);
+    await this.queueNotification(
+      order.user.email,
+      rendered.subject,
+      rendered.body,
+      notification.id,
+    );
   }
 
   /**
@@ -466,8 +503,7 @@ export class NotificationsService implements OnModuleInit {
       return 'skipped';
     }
 
-    const customerName =
-      [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Customer';
+    const customerName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Customer';
 
     const itemsTable = `<table><thead><tr><th>Product</th><th>Qty</th><th>Line total</th></tr></thead><tbody>${lines
       .map(
@@ -515,7 +551,8 @@ export class NotificationsService implements OnModuleInit {
       return;
     }
 
-    const customerName = [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || 'Customer';
+    const customerName =
+      [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || 'Customer';
 
     const rendered = await this.templatesService.render('order_shipped', {
       orderNumber: order.orderNumber,
@@ -535,7 +572,12 @@ export class NotificationsService implements OnModuleInit {
       },
     });
 
-    await this.queueNotification(order.user.email, rendered.subject, rendered.body, notification.id);
+    await this.queueNotification(
+      order.user.email,
+      rendered.subject,
+      rendered.body,
+      notification.id,
+    );
   }
 
   async sendOrderDelivered(orderId: string): Promise<void> {
@@ -548,7 +590,8 @@ export class NotificationsService implements OnModuleInit {
       return;
     }
 
-    const customerName = [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || 'Customer';
+    const customerName =
+      [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || 'Customer';
 
     const rendered = await this.templatesService.render('order_delivered', {
       orderNumber: order.orderNumber,
@@ -566,7 +609,12 @@ export class NotificationsService implements OnModuleInit {
       },
     });
 
-    await this.queueNotification(order.user.email, rendered.subject, rendered.body, notification.id);
+    await this.queueNotification(
+      order.user.email,
+      rendered.subject,
+      rendered.body,
+      notification.id,
+    );
   }
 
   async getUserNotifications(
@@ -769,12 +817,7 @@ export class NotificationsService implements OnModuleInit {
         bodyContent: escapeHtml(content).replace(/\n/g, '<br>'),
       });
 
-      await this.queueNotification(
-        user.email,
-        rendered.subject,
-        rendered.body,
-        notification.id,
-      );
+      await this.queueNotification(user.email, rendered.subject, rendered.body, notification.id);
 
       this.logger.log(`✅ Queued notification for user ${userId}`);
     } catch (error: any) {

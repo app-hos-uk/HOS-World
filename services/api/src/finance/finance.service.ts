@@ -2,7 +2,6 @@ import { Injectable, Logger, NotFoundException, BadRequestException } from '@nes
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SetPricingDto, ApprovePricingDto } from './dto/set-pricing.dto';
-import { ProductSubmissionStatus, VisibilityLevel } from '@prisma/client';
 
 @Injectable()
 export class FinanceService {
@@ -203,7 +202,9 @@ export class FinanceService {
         { submissionId },
       );
     } catch (notifyErr) {
-      this.logger.warn(`Post-approval notification failed for submission ${submissionId}: ${notifyErr}`);
+      this.logger.warn(
+        `Post-approval notification failed for submission ${submissionId}: ${notifyErr}`,
+      );
     }
 
     return updated;
@@ -251,7 +252,9 @@ export class FinanceService {
         );
       }
     } catch (notifyErr) {
-      this.logger.warn(`Post-rejection notification failed for submission ${submissionId}: ${notifyErr}`);
+      this.logger.warn(
+        `Post-rejection notification failed for submission ${submissionId}: ${notifyErr}`,
+      );
     }
 
     return updated;

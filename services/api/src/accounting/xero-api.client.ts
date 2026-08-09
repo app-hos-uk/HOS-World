@@ -44,9 +44,7 @@ export class XeroApiClient {
             AccountCode: line.accountCode,
             Description: line.description,
             LineAmount:
-              line.debit !== undefined && line.debit !== null
-                ? line.debit
-                : -(line.credit ?? 0),
+              line.debit !== undefined && line.debit !== null ? line.debit : -(line.credit ?? 0),
             TaxType: line.taxType ?? 'NONE',
           })),
         },
@@ -64,10 +62,7 @@ export class XeroApiClient {
     return { manualJournalId: id, raw: result.data };
   }
 
-  async getAccounts(
-    accessToken: string,
-    tenantId: string,
-  ): Promise<unknown> {
+  async getAccounts(accessToken: string, tenantId: string): Promise<unknown> {
     const result = await this.request('GET', '/Accounts', accessToken, tenantId);
     return result.data;
   }
@@ -106,9 +101,7 @@ export class XeroApiClient {
 
         if (res.status === 429) {
           const retryAfterHeader = res.headers.get('retry-after');
-          const retryAfterSeconds = retryAfterHeader
-            ? parseInt(retryAfterHeader, 10) || 60
-            : 60;
+          const retryAfterSeconds = retryAfterHeader ? parseInt(retryAfterHeader, 10) || 60 : 60;
           await res.text().catch(() => '');
           if (attempt < MAX_RETRIES) {
             this.logger.warn(

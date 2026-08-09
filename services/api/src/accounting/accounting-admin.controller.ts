@@ -62,9 +62,7 @@ export class AccountingAdminController {
   }
 
   @Post('outbox/:id/retry')
-  async retryFailed(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<unknown>> {
+  async retryFailed(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     this.accounting.assertEnabled();
     const data = await this.outbox.retryFailed(id);
     return { data, message: 'Queued for retry' };
@@ -83,9 +81,7 @@ export class AccountingAdminController {
    * re-run backfills a missed day without double-posting.
    */
   @Post('daily-journals/run')
-  async runDailyJournals(
-    @Body() body: { periodDate?: string },
-  ): Promise<ApiResponse<unknown>> {
+  async runDailyJournals(@Body() body: { periodDate?: string }): Promise<ApiResponse<unknown>> {
     this.accounting.assertEnabled();
     const periodDate = body?.periodDate?.trim();
     if (periodDate) {

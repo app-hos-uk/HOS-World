@@ -11,21 +11,18 @@ export class PaginationCapInterceptor implements NestInterceptor {
     if (request?.query) {
       if (request.query.limit !== undefined) {
         const parsed = parseInt(request.query.limit, 10);
-        request.query.limit = isNaN(parsed) || parsed <= 0
-          ? DEFAULT_PAGE_SIZE
-          : Math.min(parsed, MAX_PAGE_SIZE);
+        request.query.limit =
+          isNaN(parsed) || parsed <= 0 ? DEFAULT_PAGE_SIZE : Math.min(parsed, MAX_PAGE_SIZE);
       }
       if (request.query.take !== undefined) {
         const parsed = parseInt(request.query.take, 10);
-        request.query.take = isNaN(parsed) || parsed <= 0
-          ? DEFAULT_PAGE_SIZE
-          : Math.min(parsed, MAX_PAGE_SIZE);
+        request.query.take =
+          isNaN(parsed) || parsed <= 0 ? DEFAULT_PAGE_SIZE : Math.min(parsed, MAX_PAGE_SIZE);
       }
       if (request.query.pageSize !== undefined) {
         const parsed = parseInt(request.query.pageSize, 10);
-        request.query.pageSize = isNaN(parsed) || parsed <= 0
-          ? DEFAULT_PAGE_SIZE
-          : Math.min(parsed, MAX_PAGE_SIZE);
+        request.query.pageSize =
+          isNaN(parsed) || parsed <= 0 ? DEFAULT_PAGE_SIZE : Math.min(parsed, MAX_PAGE_SIZE);
       }
     }
     return next.handle();

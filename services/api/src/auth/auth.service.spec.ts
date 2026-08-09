@@ -5,7 +5,6 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
-  NotImplementedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -24,9 +23,13 @@ jest.mock('bcrypt');
 
 describe('AuthService', () => {
   let service: AuthService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let prismaService: PrismaService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let jwtService: JwtService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let configService: ConfigService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let geolocationService: GeolocationService;
 
   const mockPrismaService = {
@@ -68,7 +71,12 @@ describe('AuthService', () => {
     tenant: {
       findFirst: jest.fn().mockResolvedValue({ id: 'platform' }),
       findUnique: jest.fn().mockResolvedValue({ id: 'platform' }),
-      create: jest.fn().mockResolvedValue({ id: 'platform', name: 'Platform', subdomain: 'platform', isActive: true }),
+      create: jest.fn().mockResolvedValue({
+        id: 'platform',
+        name: 'Platform',
+        subdomain: 'platform',
+        isActive: true,
+      }),
     },
     sellerInvitation: {
       findUnique: jest.fn(),
@@ -348,7 +356,9 @@ describe('AuthService', () => {
         oAuthAccounts: [{ id: 'oa-1', provider: 'google' }],
       });
 
-      await expect(service.unlinkOAuthAccount('user-id', 'google')).rejects.toThrow(ConflictException);
+      await expect(service.unlinkOAuthAccount('user-id', 'google')).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('should throw ConflictException when provider is not linked', async () => {
@@ -358,7 +368,9 @@ describe('AuthService', () => {
         oAuthAccounts: [{ id: 'oa-1', provider: 'google' }],
       });
 
-      await expect(service.unlinkOAuthAccount('user-id', 'facebook')).rejects.toThrow(ConflictException);
+      await expect(service.unlinkOAuthAccount('user-id', 'facebook')).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('should successfully unlink when user has a password', async () => {
@@ -514,9 +526,9 @@ describe('AuthService', () => {
       mockPrismaService.user.update.mockResolvedValue({});
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(
-        service.login({ email: 'test@example.com', password: 'wrong' }),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.login({ email: 'test@example.com', password: 'wrong' })).rejects.toThrow(
+        UnauthorizedException,
+      );
 
       expect(mockPrismaService.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -537,9 +549,9 @@ describe('AuthService', () => {
       mockPrismaService.user.update.mockResolvedValue({});
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(
-        service.login({ email: 'test@example.com', password: 'wrong' }),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(service.login({ email: 'test@example.com', password: 'wrong' })).rejects.toThrow(
+        UnauthorizedException,
+      );
 
       expect(mockPrismaService.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -735,7 +747,11 @@ describe('AuthService', () => {
         return undefined;
       });
       mockPrismaService.refreshToken.findMany.mockResolvedValue([
-        { id: 'rt-1' }, { id: 'rt-2' }, { id: 'rt-3' }, { id: 'rt-4' }, { id: 'rt-5' },
+        { id: 'rt-1' },
+        { id: 'rt-2' },
+        { id: 'rt-3' },
+        { id: 'rt-4' },
+        { id: 'rt-5' },
       ]);
       mockPrismaService.refreshToken.updateMany.mockResolvedValue({ count: 1 });
       mockPrismaService.refreshToken.create.mockResolvedValue({});
@@ -753,7 +769,9 @@ describe('AuthService', () => {
     it('should throw UnauthorizedException when JWT_REFRESH_SECRET is not set', async () => {
       const user = { id: 'user-id', email: 'test@test.com', role: 'CUSTOMER' };
 
-      mockJwtService.sign.mockImplementation(() => { throw new Error('JWT_REFRESH_SECRET must be configured'); });
+      mockJwtService.sign.mockImplementation(() => {
+        throw new Error('JWT_REFRESH_SECRET must be configured');
+      });
       mockConfigService.get.mockImplementation((key: string) => {
         if (key === 'JWT_REFRESH_SECRET') return undefined;
         return 'value';
@@ -774,7 +792,9 @@ describe('AuthService', () => {
     });
 
     it('should return null for invalid token', async () => {
-      mockJwtService.verify.mockImplementation(() => { throw new Error('invalid'); });
+      mockJwtService.verify.mockImplementation(() => {
+        throw new Error('invalid');
+      });
 
       const result = await service.validateToken('invalid-token');
 
@@ -800,7 +820,9 @@ describe('AuthService', () => {
         if (key === 'JWT_REFRESH_SECRET') return 'secret';
         return undefined;
       });
-      mockJwtService.verify.mockImplementation(() => { throw new Error('invalid'); });
+      mockJwtService.verify.mockImplementation(() => {
+        throw new Error('invalid');
+      });
 
       await expect(service.refresh('invalid-token')).rejects.toThrow(UnauthorizedException);
     });
@@ -903,7 +925,9 @@ describe('AuthService', () => {
     it('should throw BadRequestException when token is invalid or expired', async () => {
       mockPrismaService.user.findFirst.mockResolvedValue(null);
 
-      await expect(service.resetPassword('invalid-token', 'ValidPass123!')).rejects.toThrow(BadRequestException);
+      await expect(service.resetPassword('invalid-token', 'ValidPass123!')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should reset password and revoke all tokens on valid token', async () => {
@@ -932,23 +956,25 @@ describe('AuthService', () => {
 
   describe('changePassword', () => {
     it('should throw BadRequestException when new password is too short', async () => {
-      await expect(service.changePassword('user-id', 'current', 'short')).rejects.toThrow(BadRequestException);
+      await expect(service.changePassword('user-id', 'current', 'short')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when user not found', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.changePassword('user-id', 'current', 'NewPassword1!'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.changePassword('user-id', 'current', 'NewPassword1!')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when user has no password (OAuth only)', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue({ id: 'user-id', password: null });
 
-      await expect(
-        service.changePassword('user-id', 'current', 'NewPassword1!'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.changePassword('user-id', 'current', 'NewPassword1!')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when current password is incorrect', async () => {
@@ -991,7 +1017,9 @@ describe('AuthService', () => {
     it('should throw NotFoundException when character does not exist', async () => {
       mockPrismaService.character.findUnique.mockResolvedValue(null);
 
-      await expect(service.selectCharacter('user-id', 'char-missing')).rejects.toThrow(NotFoundException);
+      await expect(service.selectCharacter('user-id', 'char-missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should update user with character and fandoms', async () => {
@@ -1015,7 +1043,10 @@ describe('AuthService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.completeFandomQuiz('user-missing', { favoriteFandoms: ['HP'], interests: ['magic'] }),
+        service.completeFandomQuiz('user-missing', {
+          favoriteFandoms: ['HP'],
+          interests: ['magic'],
+        }),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -1056,7 +1087,9 @@ describe('AuthService', () => {
     it('should throw NotFoundException when user does not exist', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.sendVerificationEmail('missing-user')).rejects.toThrow(NotFoundException);
+      await expect(service.sendVerificationEmail('missing-user')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should return early if email is already verified', async () => {
@@ -1106,9 +1139,7 @@ describe('AuthService', () => {
     it('should throw BadRequestException when token not found in DB', async () => {
       mockPrismaService.user.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.verifyEmail('a'.repeat(64)),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.verifyEmail('a'.repeat(64))).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when token has expired', async () => {
@@ -1120,9 +1151,7 @@ describe('AuthService', () => {
       });
       mockPrismaService.user.update.mockResolvedValue({});
 
-      await expect(
-        service.verifyEmail('a'.repeat(64)),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.verifyEmail('a'.repeat(64))).rejects.toThrow(BadRequestException);
     });
 
     it('should mark email as verified on valid token', async () => {

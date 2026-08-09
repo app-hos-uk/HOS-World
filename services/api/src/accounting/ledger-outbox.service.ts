@@ -77,12 +77,7 @@ export class LedgerOutboxService {
     });
   }
 
-  async list(params: {
-    status?: string;
-    entryType?: string;
-    page?: number;
-    limit?: number;
-  }) {
+  async list(params: { status?: string; entryType?: string; page?: number; limit?: number }) {
     const page = Math.max(1, params.page ?? 1);
     const limit = Math.min(100, Math.max(1, params.limit ?? 50));
     const where: Prisma.LedgerOutboxEntryWhereInput = {};
@@ -105,10 +100,7 @@ export class LedgerOutboxService {
   async retryFailed(id: string) {
     const row = await this.prisma.ledgerOutboxEntry.findUnique({ where: { id } });
     if (!row) throw new NotFoundException('Outbox entry not found');
-    if (
-      row.status !== LedgerOutboxStatus.FAILED &&
-      row.status !== LedgerOutboxStatus.DEAD
-    ) {
+    if (row.status !== LedgerOutboxStatus.FAILED && row.status !== LedgerOutboxStatus.DEAD) {
       throw new BadRequestException(`Cannot retry entry in status ${row.status}`);
     }
 
@@ -128,7 +120,9 @@ export class LedgerOutboxService {
    * Also reclaims rows stuck in POSTING (worker crash / timeout) before processing.
    * Handles 429 Retry-After inside XeroApiClient.
    */
-  async drainPending(batchSize = 20): Promise<{ processed: number; posted: number; failed: number }> {
+  async drainPending(
+    batchSize = 20,
+  ): Promise<{ processed: number; posted: number; failed: number }> {
     await this.reclaimStalePosting();
 
     const pending = await this.prisma.ledgerOutboxEntry.findMany({

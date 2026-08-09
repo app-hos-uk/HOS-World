@@ -46,7 +46,8 @@ export class EventsService {
     private templates: TemplatesService,
     private config: ConfigService,
     private segmentation: SegmentationService,
-    @Optional() @Inject(forwardRef(() => MarketingEventBus))
+    @Optional()
+    @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
   ) {}
 
@@ -265,7 +266,12 @@ export class EventsService {
         where: { eventId_userId: { eventId: e.id, userId } },
       });
       if (r && r.status !== 'CANCELLED') {
-        userRsvp = { id: r.id, status: r.status, ticketCode: r.ticketCode, guestCount: r.guestCount };
+        userRsvp = {
+          id: r.id,
+          status: r.status,
+          ticketCode: r.ticketCode,
+          guestCount: r.guestCount,
+        };
         if (r.status === 'CONFIRMED' && e.virtualUrl) virtualUrl = e.virtualUrl;
       }
       const att = await this.prisma.eventAttendance.findUnique({
@@ -274,7 +280,10 @@ export class EventsService {
       userAttended = !!att;
       userCanRsvp =
         access.allowed &&
-        (spotsLeft === null || spotsLeft > 0 || (r?.status === 'WAITLISTED' || r?.status === 'CONFIRMED'));
+        (spotsLeft === null ||
+          spotsLeft > 0 ||
+          r?.status === 'WAITLISTED' ||
+          r?.status === 'CONFIRMED');
     }
 
     return {
@@ -327,7 +336,8 @@ export class EventsService {
     if (!membership) throw new ForbiddenException('Loyalty membership required to RSVP');
 
     const access = await this.canAccessEvent(userId, event);
-    if (!access.allowed) throw new ForbiddenException(access.reason || 'Not eligible for this event');
+    if (!access.allowed)
+      throw new ForbiddenException(access.reason || 'Not eligible for this event');
 
     const guestCount = Math.min(dto.guestCount ?? 0, this.maxGuestCount());
     const head = 1 + guestCount;
@@ -402,7 +412,12 @@ export class EventsService {
             metadata: { eventId: event.id, ticketCode } as any,
           },
         });
-        await this.notifications.queueNotification(userRecord.email, subject, rendered.body, notification.id);
+        await this.notifications.queueNotification(
+          userRecord.email,
+          subject,
+          rendered.body,
+          notification.id,
+        );
       }
     } catch (err) {
       this.logger.warn(`RSVP notification failed: ${(err as Error).message}`);
@@ -484,7 +499,12 @@ export class EventsService {
               metadata: { eventId: event.id } as any,
             },
           });
-          await this.notifications.queueNotification(userRecord.email, subject, rendered.body, notification.id);
+          await this.notifications.queueNotification(
+            userRecord.email,
+            subject,
+            rendered.body,
+            notification.id,
+          );
         }
       } catch (e) {
         this.logger.warn(`Waitlist promotion notify failed: ${(e as Error).message}`);
@@ -511,7 +531,11 @@ export class EventsService {
   async checkIn(eventId: string, userId: string, dto: CheckInDto, checkedInBy?: string | null) {
     const event = await this.prisma.event.findUnique({ where: { id: eventId } });
     if (!event) throw new NotFoundException('Event not found');
-    if (event.status !== 'PUBLISHED' && event.status !== 'SOLD_OUT' && event.status !== 'COMPLETED') {
+    if (
+      event.status !== 'PUBLISHED' &&
+      event.status !== 'SOLD_OUT' &&
+      event.status !== 'COMPLETED'
+    ) {
       throw new BadRequestException('Check-in not available for this event');
     }
 
@@ -661,7 +685,7 @@ export class EventsService {
   }
 
   async create(dto: CreateEventDto, createdBy: string) {
-    let base = slugify(dto.title);
+    const base = slugify(dto.title);
     let slug = base;
     for (let i = 0; i < 10; i++) {
       const clash = await this.prisma.event.findUnique({ where: { slug } });
@@ -684,7 +708,8 @@ export class EventsService {
       allowedTierIds: dto.allowedTierIds ?? [],
       requiresTicket: dto.requiresTicket ?? false,
       ticketCurrency: dto.ticketCurrency ?? 'USD',
-      attendancePoints: dto.attendancePoints ?? this.config.get<number>('EVENT_DEFAULT_POINTS', 100),
+      attendancePoints:
+        dto.attendancePoints ?? this.config.get<number>('EVENT_DEFAULT_POINTS', 100),
       earnRuleAction: dto.earnRuleAction,
       tags: dto.tags ?? [],
       hostName: dto.hostName,
@@ -716,7 +741,8 @@ export class EventsService {
     if (dto.startsAt !== undefined) data.startsAt = new Date(dto.startsAt);
     if (dto.endsAt !== undefined) data.endsAt = new Date(dto.endsAt);
     if (dto.timezone !== undefined) data.timezone = dto.timezone;
-    if (dto.doorsOpenAt !== undefined) data.doorsOpenAt = dto.doorsOpenAt ? new Date(dto.doorsOpenAt) : null;
+    if (dto.doorsOpenAt !== undefined)
+      data.doorsOpenAt = dto.doorsOpenAt ? new Date(dto.doorsOpenAt) : null;
     if (dto.capacity !== undefined) data.capacity = dto.capacity;
     if (dto.isPublic !== undefined) data.isPublic = dto.isPublic;
     if (dto.minTierLevel !== undefined) data.minTierLevel = dto.minTierLevel;
@@ -802,7 +828,12 @@ export class EventsService {
               metadata: { eventId: id } as any,
             },
           });
-          await this.notifications.queueNotification(userRecord.email, subject, rendered.body, notification.id);
+          await this.notifications.queueNotification(
+            userRecord.email,
+            subject,
+            rendered.body,
+            notification.id,
+          );
         }
       } catch (err) {
         this.logger.warn(`Cancel notify failed: ${(err as Error).message}`);
@@ -881,9 +912,9 @@ export class EventsService {
       select: { userId: true },
     });
     const attendedIds = new Set(
-      (await this.prisma.eventAttendance.findMany({ where: { eventId }, select: { userId: true } })).map(
-        (a) => a.userId,
-      ),
+      (
+        await this.prisma.eventAttendance.findMany({ where: { eventId }, select: { userId: true } })
+      ).map((a) => a.userId),
     );
     let noShow = 0;
     for (const r of rsvpConfirmed) {
@@ -963,7 +994,12 @@ export class EventsService {
               metadata: { eventId: event.id } as any,
             },
           });
-          await this.notifications.queueNotification(userRecord.email, subject, rendered.body, notification.id);
+          await this.notifications.queueNotification(
+            userRecord.email,
+            subject,
+            rendered.body,
+            notification.id,
+          );
         }
         invited++;
       } catch (e) {
@@ -1025,7 +1061,12 @@ export class EventsService {
                 metadata: { eventId: ev.id } as any,
               },
             });
-            await this.notifications.queueNotification(userRecord.email, subject, rendered.body, notification.id);
+            await this.notifications.queueNotification(
+              userRecord.email,
+              subject,
+              rendered.body,
+              notification.id,
+            );
           }
           await this.prisma.eventRSVP.update({
             where: { id: r.id },
@@ -1074,7 +1115,12 @@ export class EventsService {
                 metadata: { eventId: ev.id } as any,
               },
             });
-            await this.notifications.queueNotification(userRecord.email, subject, rendered.body, notification.id);
+            await this.notifications.queueNotification(
+              userRecord.email,
+              subject,
+              rendered.body,
+              notification.id,
+            );
           }
           await this.prisma.eventRSVP.update({
             where: { id: r.id },

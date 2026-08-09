@@ -15,11 +15,7 @@ export interface FoundingMemberImportResult {
   createdEmails: string[];
 }
 
-export type FoundingMemberPreviewStatus =
-  | 'ready'
-  | 'duplicate'
-  | 'duplicate_in_file'
-  | 'invalid';
+export type FoundingMemberPreviewStatus = 'ready' | 'duplicate' | 'duplicate_in_file' | 'invalid';
 
 export interface FoundingMemberPreviewRow {
   row: number;
@@ -246,9 +242,12 @@ export class FoundingMembersService {
       const batchResults = await Promise.allSettled(
         batch.map(async (member) => {
           try {
-            const sent = await this.notificationsService.sendFoundingMemberConfirmation(member.email, {
-              firstName: member.firstName,
-            });
+            const sent = await this.notificationsService.sendFoundingMemberConfirmation(
+              member.email,
+              {
+                firstName: member.firstName,
+              },
+            );
             if (!sent) {
               throw new Error('Email provider unavailable');
             }
@@ -266,7 +265,8 @@ export class FoundingMembersService {
                 where: { id: member.id },
                 data: {
                   metadata: this.mergeMetadata(member.metadata, {
-                    confirmationEmailError: emailErr instanceof Error ? emailErr.message : 'unknown',
+                    confirmationEmailError:
+                      emailErr instanceof Error ? emailErr.message : 'unknown',
                   }),
                 },
               });
@@ -539,10 +539,10 @@ export class FoundingMembersService {
       const batchResults = await Promise.allSettled(
         batch.map(async (member) => {
           try {
-            await this.notificationsService.sendFoundingMemberAccountInvitation(
-              member.email,
-              { firstName: member.firstName, registerLink },
-            );
+            await this.notificationsService.sendFoundingMemberAccountInvitation(member.email, {
+              firstName: member.firstName,
+              registerLink,
+            });
             const sentAt = new Date().toISOString();
             await this.prisma.foundingMember.update({
               where: { id: member.id },
@@ -554,19 +554,21 @@ export class FoundingMembersService {
               },
             });
           } catch (emailErr) {
-            await this.prisma.foundingMember.update({
-              where: { id: member.id },
-              data: {
-                metadata: this.mergeMetadata(member.metadata, {
-                  accountInvitationError:
-                    emailErr instanceof Error ? emailErr.message : 'unknown',
-                }),
-              },
-            }).catch((rollbackErr) => {
-              this.logger.error(
-                `Failed to save invitation error for member ${member.id}: ${rollbackErr instanceof Error ? rollbackErr.message : 'unknown'}`,
-              );
-            });
+            await this.prisma.foundingMember
+              .update({
+                where: { id: member.id },
+                data: {
+                  metadata: this.mergeMetadata(member.metadata, {
+                    accountInvitationError:
+                      emailErr instanceof Error ? emailErr.message : 'unknown',
+                  }),
+                },
+              })
+              .catch((rollbackErr) => {
+                this.logger.error(
+                  `Failed to save invitation error for member ${member.id}: ${rollbackErr instanceof Error ? rollbackErr.message : 'unknown'}`,
+                );
+              });
             throw emailErr;
           }
         }),

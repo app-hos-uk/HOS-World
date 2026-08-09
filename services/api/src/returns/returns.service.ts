@@ -215,44 +215,59 @@ export class ReturnsService {
       },
     });
 
-    this.activityService?.createLog({
-      userId,
-      action: 'RETURN_REQUESTED',
-      entityType: 'ReturnRequest',
-      entityId: returnRequest.id,
-      description: `Return requested for order ${order.orderNumber || order.id}`,
-      metadata: { orderId: order.id, reason: createReturnDto.reason },
-    }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+    this.activityService
+      ?.createLog({
+        userId,
+        action: 'RETURN_REQUESTED',
+        entityType: 'ReturnRequest',
+        entityId: returnRequest.id,
+        description: `Return requested for order ${order.orderNumber || order.id}`,
+        metadata: { orderId: order.id, reason: createReturnDto.reason },
+      })
+      .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
     if (this.notificationsService) {
-      this.notificationsService.sendNotificationToUser(
-        userId,
-        'RETURN_REQUESTED',
-        'Return request received',
-        `Your return request for order ${order.orderNumber || order.id} has been submitted and is pending review.`,
-        { returnId: returnRequest.id, orderId: order.id },
-      ).catch((e) => this.logger.warn(`Return notification failed: ${(e as Error).message}`));
+      this.notificationsService
+        .sendNotificationToUser(
+          userId,
+          'RETURN_REQUESTED',
+          'Return request received',
+          `Your return request for order ${order.orderNumber || order.id} has been submitted and is pending review.`,
+          { returnId: returnRequest.id, orderId: order.id },
+        )
+        .catch((e) => this.logger.warn(`Return notification failed: ${(e as Error).message}`));
 
       if (order.sellerId) {
-        const seller = await this.prisma.seller.findUnique({ where: { id: order.sellerId }, select: { userId: true } });
+        const seller = await this.prisma.seller.findUnique({
+          where: { id: order.sellerId },
+          select: { userId: true },
+        });
         if (seller?.userId) {
-          this.notificationsService.sendNotificationToUser(
-            seller.userId,
-            'RETURN_REQUESTED',
-            'New return request',
-            `A customer has requested a return for order ${order.orderNumber || order.id}. Please review it in your returns dashboard.`,
-            { returnId: returnRequest.id, orderId: order.id },
-          ).catch((e) => this.logger.warn(`Seller return notification failed: ${(e as Error).message}`));
+          this.notificationsService
+            .sendNotificationToUser(
+              seller.userId,
+              'RETURN_REQUESTED',
+              'New return request',
+              `A customer has requested a return for order ${order.orderNumber || order.id}. Please review it in your returns dashboard.`,
+              { returnId: returnRequest.id, orderId: order.id },
+            )
+            .catch((e) =>
+              this.logger.warn(`Seller return notification failed: ${(e as Error).message}`),
+            );
         }
       }
 
-      this.notificationsService.sendNotificationToRole(
-        'ADMIN',
-        'RETURN_REQUESTED',
-        'New return request',
-        `A return has been requested for order ${order.orderNumber || order.id}. Review pending in the returns management queue.`,
-        { returnId: returnRequest.id, orderId: order.id },
-      ).catch((e) => this.logger.warn(`Admin return notification failed: ${(e as Error).message}`));
+      this.notificationsService
+        .sendNotificationToRole(
+          'ADMIN',
+          'RETURN_REQUESTED',
+          'New return request',
+          `A return has been requested for order ${order.orderNumber || order.id}. Review pending in the returns management queue.`,
+          { returnId: returnRequest.id, orderId: order.id },
+        )
+        .catch((e) =>
+          this.logger.warn(`Admin return notification failed: ${(e as Error).message}`),
+        );
     }
 
     return this.mapToReturnType(returnRequest);
@@ -267,10 +282,7 @@ export class ReturnsService {
       const seller = await this.prisma.seller.findUnique({ where: { userId } });
       if (seller) {
         where.order = {
-          OR: [
-            { sellerId: seller.id },
-            { childOrders: { some: { sellerId: seller.id } } },
-          ],
+          OR: [{ sellerId: seller.id }, { childOrders: { some: { sellerId: seller.id } } }],
         };
       } else {
         where.userId = userId;
@@ -433,11 +445,12 @@ export class ReturnsService {
         const seller = await this.prisma.seller.findUnique({ where: { userId } });
         // Check direct sellerId OR if seller has a child order for this parent order
         const isDirectSeller = seller && returnRequest.order?.sellerId === seller.id;
-        const hasChildOrder = seller && returnRequest.order?.id
-          ? await this.prisma.order.count({
-              where: { parentOrderId: returnRequest.order.id, sellerId: seller.id },
-            }) > 0
-          : false;
+        const hasChildOrder =
+          seller && returnRequest.order?.id
+            ? (await this.prisma.order.count({
+                where: { parentOrderId: returnRequest.order.id, sellerId: seller.id },
+              })) > 0
+            : false;
         if (!seller || (!isDirectSeller && !hasChildOrder)) {
           throw new ForbiddenException('You do not have permission to update this return');
         }
@@ -489,22 +502,28 @@ export class ReturnsService {
           },
         });
 
-        this.activityService?.createLog({
-          userId: userId || returnRequest.userId,
-          action: 'RETURN_APPROVED',
-          entityType: 'ReturnRequest',
-          entityId: id,
-          description: `Return approved (inspection required) for order ${returnRequest.order.orderNumber || returnRequest.orderId}`,
-        }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+        this.activityService
+          ?.createLog({
+            userId: userId || returnRequest.userId,
+            action: 'RETURN_APPROVED',
+            entityType: 'ReturnRequest',
+            entityId: id,
+            description: `Return approved (inspection required) for order ${returnRequest.order.orderNumber || returnRequest.orderId}`,
+          })
+          .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
         if (this.notificationsService) {
-          this.notificationsService.sendNotificationToUser(
-            returnRequest.userId,
-            'RETURN_APPROVED',
-            'Return approved — awaiting inspection',
-            `Your return for order ${returnRequest.order.orderNumber || returnRequest.orderId} has been approved. Please ship the item(s) back. Your refund will be processed after inspection.`,
-            { returnId: id },
-          ).catch((e) => this.logger.warn(`Return approval notification failed: ${(e as Error).message}`));
+          this.notificationsService
+            .sendNotificationToUser(
+              returnRequest.userId,
+              'RETURN_APPROVED',
+              'Return approved — awaiting inspection',
+              `Your return for order ${returnRequest.order.orderNumber || returnRequest.orderId} has been approved. Please ship the item(s) back. Your refund will be processed after inspection.`,
+              { returnId: id },
+            )
+            .catch((e) =>
+              this.logger.warn(`Return approval notification failed: ${(e as Error).message}`),
+            );
         }
 
         const updated = await this.prisma.returnRequest.findUnique({ where: { id } });
@@ -513,8 +532,7 @@ export class ReturnsService {
 
       const maxRefundable = this.calculateReturnRefundAmount(returnRequest);
       let amount = Math.min(refundAmount ?? maxRefundable, maxRefundable);
-      const restockingFee =
-        policy?.restockingFee != null ? Number(policy.restockingFee) : 0;
+      const restockingFee = policy?.restockingFee != null ? Number(policy.restockingFee) : 0;
 
       if (restockingFee > 0) {
         amount = Math.max(0, Math.round((amount - restockingFee) * 100) / 100);
@@ -558,7 +576,8 @@ export class ReturnsService {
 
         if (refundSucceeded) {
           await this.applyRestockForReturn(tx, returnRequest);
-          const isPartial = returnRequest.items?.length > 0 &&
+          const isPartial =
+            returnRequest.items?.length > 0 &&
             returnRequest.items.length < (returnRequest.order?.items?.length ?? 0);
           await this.markOrderRefundedInTx(tx, returnRequest.orderId, isPartial);
         }
@@ -574,25 +593,31 @@ export class ReturnsService {
         }
       }
 
-      this.activityService?.createLog({
-        userId: userId || returnRequest.userId,
-        action: 'RETURN_APPROVED',
-        entityType: 'ReturnRequest',
-        entityId: id,
-        description: `Return approved for order ${returnRequest.order.orderNumber || returnRequest.orderId}`,
-        metadata: { refundAmount: amount, refundSucceeded },
-      }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+      this.activityService
+        ?.createLog({
+          userId: userId || returnRequest.userId,
+          action: 'RETURN_APPROVED',
+          entityType: 'ReturnRequest',
+          entityId: id,
+          description: `Return approved for order ${returnRequest.order.orderNumber || returnRequest.orderId}`,
+          metadata: { refundAmount: amount, refundSucceeded },
+        })
+        .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
       if (this.notificationsService) {
-        this.notificationsService.sendNotificationToUser(
-          returnRequest.userId,
-          'RETURN_APPROVED',
-          refundSucceeded ? 'Return approved' : 'Return approved — refund pending',
-          refundSucceeded
-            ? `Your return for order ${returnRequest.order.orderNumber || returnRequest.orderId} has been approved. Your refund is being processed.`
-            : `Your return for order ${returnRequest.order.orderNumber || returnRequest.orderId} was approved, but the automatic refund could not be completed. Our team will process it shortly.`,
-          { returnId: id, refundSucceeded },
-        ).catch((e) => this.logger.warn(`Return approval notification failed: ${(e as Error).message}`));
+        this.notificationsService
+          .sendNotificationToUser(
+            returnRequest.userId,
+            'RETURN_APPROVED',
+            refundSucceeded ? 'Return approved' : 'Return approved — refund pending',
+            refundSucceeded
+              ? `Your return for order ${returnRequest.order.orderNumber || returnRequest.orderId} has been approved. Your refund is being processed.`
+              : `Your return for order ${returnRequest.order.orderNumber || returnRequest.orderId} was approved, but the automatic refund could not be completed. Our team will process it shortly.`,
+            { returnId: id, refundSucceeded },
+          )
+          .catch((e) =>
+            this.logger.warn(`Return approval notification failed: ${(e as Error).message}`),
+          );
       }
 
       const updated = await this.prisma.returnRequest.findUnique({ where: { id } });
@@ -602,11 +627,15 @@ export class ReturnsService {
     // Determine whether refund+restock were already completed on APPROVE
     // (i.e. immediate-approval path where Stripe succeeded).
     // A refund transaction with status COMPLETED is the definitive signal.
-    const refundFullyProcessed = returnRequest.refundAmount
-      && Number(returnRequest.refundAmount) > 0
-      && await this.prisma.transaction.count({
+    const refundFullyProcessed =
+      returnRequest.refundAmount &&
+      Number(returnRequest.refundAmount) > 0 &&
+      (await this.prisma.transaction
+        .count({
           where: { returnId: id, type: 'REFUND', status: 'COMPLETED' },
-        }).then(c => c > 0).catch(() => false);
+        })
+        .then((c) => c > 0)
+        .catch(() => false));
 
     // For non-APPROVED transitions, commit directly
     const updated = await this.prisma.$transaction(async (tx) => {
@@ -622,7 +651,8 @@ export class ReturnsService {
       });
 
       if (newStatus === 'COMPLETED' && returnRequest.order && refundFullyProcessed) {
-        const isPartial = returnRequest.items?.length > 0 &&
+        const isPartial =
+          returnRequest.items?.length > 0 &&
           returnRequest.items.length < (returnRequest.order?.items?.length ?? 0);
         await this.markOrderRefundedInTx(tx, returnRequest.orderId, isPartial);
       }
@@ -641,8 +671,7 @@ export class ReturnsService {
       );
       const maxRefundable = this.calculateReturnRefundAmount(returnRequest);
       let amount = Math.min(refundAmount ?? maxRefundable, maxRefundable);
-      const restockingFee =
-        policy?.restockingFee != null ? Number(policy.restockingFee) : 0;
+      const restockingFee = policy?.restockingFee != null ? Number(policy.restockingFee) : 0;
       if (restockingFee > 0) {
         amount = Math.max(0, Math.round((amount - restockingFee) * 100) / 100);
       }
@@ -661,7 +690,8 @@ export class ReturnsService {
           if (refundResult.stripeRefundSucceeded) {
             await this.prisma.$transaction(async (tx) => {
               await this.applyRestockForReturn(tx, returnRequest);
-              const isPartial = returnRequest.items?.length > 0 &&
+              const isPartial =
+                returnRequest.items?.length > 0 &&
                 returnRequest.items.length < (returnRequest.order?.items?.length ?? 0);
               await this.markOrderRefundedInTx(tx, returnRequest.orderId, isPartial);
             });
@@ -670,7 +700,9 @@ export class ReturnsService {
               data: {
                 refundAmount: amount,
                 refundMethod: refundMethod || 'ORIGINAL_PAYMENT',
-                notes: [returnRequest.notes || '', `[${refundBreakdown}]`].filter(Boolean).join(' '),
+                notes: [returnRequest.notes || '', `[${refundBreakdown}]`]
+                  .filter(Boolean)
+                  .join(' '),
               },
             });
             try {
@@ -689,12 +721,16 @@ export class ReturnsService {
                   returnRequest.notes || '',
                   `[${refundBreakdown}]`,
                   `[Refund pending: ${refundResult.error || 'Stripe refund failed — manual retry required'}]`,
-                ].filter(Boolean).join(' '),
+                ]
+                  .filter(Boolean)
+                  .join(' '),
               },
             });
           }
         } catch (e) {
-          this.logger.error(`Refund on completion failed for return ${id}: ${(e as Error).message}`);
+          this.logger.error(
+            `Refund on completion failed for return ${id}: ${(e as Error).message}`,
+          );
         }
       }
     }
@@ -710,22 +746,28 @@ export class ReturnsService {
       } else {
         message = `Your return for order ${orderLabel} has been completed and your refund is being processed.`;
       }
-      this.notificationsService.sendNotificationToUser(
-        returnRequest.userId,
-        newStatus === 'REJECTED' ? 'RETURN_REJECTED' : 'RETURN_COMPLETED',
-        title,
-        message,
-        { returnId: id },
-      ).catch((e) => this.logger.warn(`Return ${newStatus} notification failed: ${(e as Error).message}`));
+      this.notificationsService
+        .sendNotificationToUser(
+          returnRequest.userId,
+          newStatus === 'REJECTED' ? 'RETURN_REJECTED' : 'RETURN_COMPLETED',
+          title,
+          message,
+          { returnId: id },
+        )
+        .catch((e) =>
+          this.logger.warn(`Return ${newStatus} notification failed: ${(e as Error).message}`),
+        );
     }
 
-    this.activityService?.createLog({
-      userId: userId || returnRequest.userId,
-      action: `RETURN_${newStatus}`,
-      entityType: 'ReturnRequest',
-      entityId: id,
-      description: `Return ${newStatus.toLowerCase()} for order ${returnRequest.order?.orderNumber || returnRequest.orderId}`,
-    }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+    this.activityService
+      ?.createLog({
+        userId: userId || returnRequest.userId,
+        action: `RETURN_${newStatus}`,
+        entityType: 'ReturnRequest',
+        entityId: id,
+        description: `Return ${newStatus.toLowerCase()} for order ${returnRequest.order?.orderNumber || returnRequest.orderId}`,
+      })
+      .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
     // Re-fetch after potential post-transaction updates (refundAmount, notes)
     // to return the most current state
@@ -761,11 +803,7 @@ export class ReturnsService {
     return this.mapToReturnType(updated);
   }
 
-  async retryReturnRefund(
-    id: string,
-    userId?: string,
-    role?: string,
-  ): Promise<ReturnRequest> {
+  async retryReturnRefund(id: string, userId?: string, role?: string): Promise<ReturnRequest> {
     const returnRequest = await this.prisma.returnRequest.findUnique({
       where: { id },
       include: { order: true },
@@ -788,7 +826,8 @@ export class ReturnsService {
         if (fullReturn) {
           await this.applyRestockForReturn(tx, fullReturn);
         }
-        const isPartial = fullReturn?.items?.length > 0 &&
+        const isPartial =
+          fullReturn?.items?.length > 0 &&
           fullReturn.items.length < (fullReturn.order?.items?.length ?? 0);
         await this.markOrderRefundedInTx(tx, returnRequest.orderId, isPartial);
       });
@@ -801,14 +840,19 @@ export class ReturnsService {
       }
     }
 
-    this.activityService?.createLog({
-      userId: userId || returnRequest.userId,
-      action: 'RETURN_REFUND_RETRY',
-      entityType: 'ReturnRequest',
-      entityId: id,
-      description: `Refund retry for return ${id}: ${refundResult.stripeRefundSucceeded ? 'succeeded' : 'failed'}`,
-      metadata: { refundSucceeded: refundResult.stripeRefundSucceeded, error: refundResult.error },
-    }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+    this.activityService
+      ?.createLog({
+        userId: userId || returnRequest.userId,
+        action: 'RETURN_REFUND_RETRY',
+        entityType: 'ReturnRequest',
+        entityId: id,
+        description: `Refund retry for return ${id}: ${refundResult.stripeRefundSucceeded ? 'succeeded' : 'failed'}`,
+        metadata: {
+          refundSucceeded: refundResult.stripeRefundSucceeded,
+          error: refundResult.error,
+        },
+      })
+      .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
     const updated = await this.prisma.returnRequest.findUnique({ where: { id } });
     return this.mapToReturnType(updated);
@@ -1062,8 +1106,7 @@ export class ReturnsService {
         at:
           returnRequest.shippedAt ||
           (afterAwaitingReturn.includes(status) ? returnRequest.updatedAt : undefined),
-        completed:
-          !!returnRequest.shippedAt || afterAwaitingReturn.includes(status),
+        completed: !!returnRequest.shippedAt || afterAwaitingReturn.includes(status),
       },
       {
         step: 'ITEM_RECEIVED',
@@ -1080,7 +1123,9 @@ export class ReturnsService {
           : refundTx
             ? 'Refund Completed'
             : 'Refund Pending',
-        at: refundTx?.createdAt || failedRefundTx?.createdAt ||
+        at:
+          refundTx?.createdAt ||
+          failedRefundTx?.createdAt ||
           (afterRefundPending.includes(status) ? returnRequest.updatedAt : undefined),
         completed: !!refundTx || status === 'COMPLETED',
       },
@@ -1102,9 +1147,7 @@ export class ReturnsService {
       currency: t.currency,
       createdAt: t.createdAt,
       stripeRefundId:
-        (t.metadata as any)?.stripeRefundId ||
-        (t.metadata as any)?.refundId ||
-        undefined,
+        (t.metadata as any)?.stripeRefundId || (t.metadata as any)?.refundId || undefined,
     }));
 
     return {
@@ -1123,7 +1166,8 @@ export class ReturnsService {
         ? {
             id: returnRequest.order.id,
             orderNumber: returnRequest.order.orderNumber,
-            total: returnRequest.order.total != null ? Number(returnRequest.order.total) : undefined,
+            total:
+              returnRequest.order.total != null ? Number(returnRequest.order.total) : undefined,
             currency: returnRequest.order.currency,
             paymentStatus: returnRequest.order.paymentStatus,
           }

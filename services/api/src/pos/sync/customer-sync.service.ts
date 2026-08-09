@@ -30,9 +30,7 @@ export class PosCustomerSyncService {
 
     // Skip when member has not consented to any contact channel used for POS push.
     if (!membership.optInEmail && !membership.optInSms) {
-      this.logger.debug(
-        `Skipping POS customer sync for user ${userId}: no email/sms opt-in`,
-      );
+      this.logger.debug(`Skipping POS customer sync for user ${userId}: no email/sms opt-in`);
       return;
     }
 

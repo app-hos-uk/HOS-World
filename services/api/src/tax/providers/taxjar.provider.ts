@@ -150,7 +150,7 @@ export class TaxJarProvider extends BaseTaxProvider implements ITaxProvider {
   }
 
   private parseTaxResponse(request: TaxCalculationRequest, response: any): TaxCalculationResponse {
-    const jurisdictions = response.breakdown?.jurisdictions || {};
+    const _jurisdictions = response.breakdown?.jurisdictions || {};
 
     // Parse line items
     const lineItems: TaxLineItemResult[] = (response.breakdown?.line_items || []).map(
@@ -284,7 +284,7 @@ export class TaxJarProvider extends BaseTaxProvider implements ITaxProvider {
     return details;
   }
 
-  async commitTransaction(transactionId: string): Promise<{ success: boolean; message: string }> {
+  async commitTransaction(_transactionId: string): Promise<{ success: boolean; message: string }> {
     // TaxJar commits transactions by creating them via /transactions endpoint
     // The calculation from /taxes is not stored - you need to create a transaction
     return {

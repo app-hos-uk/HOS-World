@@ -39,7 +39,11 @@ export class DigitalProductsController {
     description:
       'Redirects to a time-limited signed URL for the asset. Call POST .../download first to register the download.',
   })
-  @ApiParam({ name: 'id', description: 'Digital product composite id (orderId-productId)', type: String })
+  @ApiParam({
+    name: 'id',
+    description: 'Digital product composite id (orderId-productId)',
+    type: String,
+  })
   @SwaggerApiResponse({ status: 302, description: 'Redirect to file URL' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Download not allowed' })

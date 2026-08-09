@@ -68,22 +68,24 @@ describe('PosVoucherService', () => {
       },
       loyaltyPosVoucher: {
         create: overrides.voucherCreate ?? jest.fn().mockResolvedValue(voucherRow),
-        update: overrides.voucherUpdate ?? jest.fn().mockImplementation(({ data }) => ({
-          ...voucherRow,
-          ...data,
-          redemption: voucherRow.redemption,
-        })),
+        update:
+          overrides.voucherUpdate ??
+          jest.fn().mockImplementation(({ data }) => ({
+            ...voucherRow,
+            ...data,
+            redemption: voucherRow.redemption,
+          })),
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
         findUnique:
           overrides.voucherFindUnique ??
           // Lookups by redemptionId probe for a replayed request; by id fetch the row.
-          jest.fn().mockImplementation(({ where }: any) =>
-            Promise.resolve(
-              where?.redemptionId
-                ? null
-                : { ...voucherRow, redemption: voucherRow.redemption },
+          jest
+            .fn()
+            .mockImplementation(({ where }: any) =>
+              Promise.resolve(
+                where?.redemptionId ? null : { ...voucherRow, redemption: voucherRow.redemption },
+              ),
             ),
-          ),
       },
       loyaltyTransaction: {
         findUnique: jest.fn().mockResolvedValue(null),
@@ -201,9 +203,9 @@ describe('PosVoucherService', () => {
 
   it('rejects a new redemption without an idempotency key', async () => {
     const { svc, burn } = build({});
-    await expect(
-      svc.redeemForVoucher({ points: 500, storeId, membershipId }),
-    ).rejects.toThrow(/idempotencyKey of at least 8 characters is required/);
+    await expect(svc.redeemForVoucher({ points: 500, storeId, membershipId })).rejects.toThrow(
+      /idempotencyKey of at least 8 characters is required/,
+    );
     expect(burn.processRedemption).not.toHaveBeenCalled();
   });
 
@@ -449,9 +451,7 @@ describe('PosVoucherService', () => {
         data: expect.objectContaining({ amount: new Decimal('10.00') }),
       }),
     );
-    expect(adapter.createGiftCard).toHaveBeenCalledWith(
-      expect.objectContaining({ amount: 10 }),
-    );
+    expect(adapter.createGiftCard).toHaveBeenCalledWith(expect.objectContaining({ amount: 10 }));
   });
 
   it('on gift card failure marks FAILED, reverses burn, keeps clientId', async () => {

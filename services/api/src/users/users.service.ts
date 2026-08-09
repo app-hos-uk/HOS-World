@@ -1,4 +1,12 @@
-import { Inject, Injectable, NotFoundException, BadRequestException, Optional, forwardRef, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Optional,
+  forwardRef,
+  Logger,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 import { PrismaService } from '../database/prisma.service';
@@ -13,7 +21,8 @@ export class UsersService {
 
   constructor(
     private prisma: PrismaService,
-    @Optional() @Inject(forwardRef(() => LoyaltyListener))
+    @Optional()
+    @Inject(forwardRef(() => LoyaltyListener))
     private loyaltyListener?: LoyaltyListener,
   ) {}
 
@@ -121,9 +130,7 @@ export class UsersService {
     }
     if (updateProfileDto.anniversary !== undefined) {
       const raw =
-        typeof updateProfileDto.anniversary === 'string'
-          ? updateProfileDto.anniversary.trim()
-          : '';
+        typeof updateProfileDto.anniversary === 'string' ? updateProfileDto.anniversary.trim() : '';
       updateData.anniversary = raw.length > 0 ? new Date(raw) : null;
     }
 

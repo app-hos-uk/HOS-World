@@ -5,7 +5,9 @@ import { GeminiService } from '../ai/gemini.service';
 
 describe('ChatbotService', () => {
   let service: ChatbotService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let prismaService: PrismaService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let geminiService: GeminiService;
 
   const mockPrismaService = {
@@ -195,8 +197,8 @@ describe('ChatbotService', () => {
 
   describe('shouldEscalate', () => {
     it('should return true for escalation keywords in response', () => {
-      const aiResponse = 'I cannot help you with this issue';
-      const userMessage = 'Test message';
+      const _aiResponse = 'I cannot help you with this issue';
+      const _userMessage = 'Test message';
 
       // Access private method through reflection or make it public for testing
       // For now, we test through processMessage
@@ -204,8 +206,8 @@ describe('ChatbotService', () => {
     });
 
     it('should return true for human request keywords', () => {
-      const aiResponse = 'Response';
-      const userMessage = 'I want to speak to a human agent';
+      const _aiResponse = 'Response';
+      const _userMessage = 'I want to speak to a human agent';
 
       // Test through processMessage
       expect(service).toBeDefined();

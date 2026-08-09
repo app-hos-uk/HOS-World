@@ -33,7 +33,6 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
-import { LocalAuthGuard } from '../common/guards/local-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { AdminSellersService } from '../admin/sellers.service';
@@ -111,7 +110,12 @@ export class AuthController {
       req.connection.remoteAddress;
 
     const userAgent = req.headers['user-agent'];
-    const result = await this.authService.acceptInvitation(body.token, body.registerDto, ipAddress, userAgent);
+    const result = await this.authService.acceptInvitation(
+      body.token,
+      body.registerDto,
+      ipAddress,
+      userAgent,
+    );
     setAuthCookies(res, result.token, result.refreshToken, this.configService);
     return {
       data: sanitizeAuthResponse(result),
@@ -162,7 +166,10 @@ export class AuthController {
       'Creates a passwordless customer account from guest checkout details, merges the guest cart, and returns auth tokens.',
   })
   @ApiBody({ type: GuestCheckoutDto })
-  @SwaggerApiResponse({ status: 201, description: 'Guest account created and checkout session started' })
+  @SwaggerApiResponse({
+    status: 201,
+    description: 'Guest account created and checkout session started',
+  })
   @SwaggerApiResponse({ status: 400, description: 'Invalid input data or missing GDPR consent' })
   @SwaggerApiResponse({ status: 409, description: 'Account with this email already exists' })
   async guestCheckout(
@@ -324,9 +331,7 @@ export class AuthController {
   @ApiBody({ type: ResetPasswordDto })
   @SwaggerApiResponse({ status: 200, description: 'Password reset successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid or expired token' })
-  async resetPassword(
-    @Body() body: ResetPasswordDto,
-  ): Promise<ApiResponse<{ message: string }>> {
+  async resetPassword(@Body() body: ResetPasswordDto): Promise<ApiResponse<{ message: string }>> {
     const result = await this.authService.resetPassword(body.token, body.newPassword);
     return { data: result, message: result.message };
   }

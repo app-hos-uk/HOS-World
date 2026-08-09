@@ -238,6 +238,7 @@ export class DuplicatesService {
     for (let i = 0; i < n; i++) {
       for (let j = i + 1; j < n; j++) {
         if (submissions[i].sellerId === submissions[j].sellerId) continue;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { match, reasons } = this.areSameProduct(
           submissions[i].productData as Record<string, unknown>,
           submissions[j].productData as Record<string, unknown>,

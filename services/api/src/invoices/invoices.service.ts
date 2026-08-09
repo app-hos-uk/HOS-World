@@ -29,9 +29,15 @@ export class InvoicesService {
     this.companyPostal = this.config.get<string>('INVOICE_COMPANY_POSTAL', 'EC2A 4BX');
     this.companyVat = this.config.get<string>('INVOICE_COMPANY_VAT', 'GB123456789');
     this.companyReg = this.config.get<string>('INVOICE_COMPANY_REG', '12345678');
-    this.companyEmail = this.config.get<string>('INVOICE_COMPANY_EMAIL', 'support@houseofspells.co.uk');
+    this.companyEmail = this.config.get<string>(
+      'INVOICE_COMPANY_EMAIL',
+      'support@houseofspells.co.uk',
+    );
     this.companyPhone = this.config.get<string>('INVOICE_COMPANY_PHONE', '+44 20 7946 0958');
-    this.companyWebsite = this.config.get<string>('INVOICE_COMPANY_WEBSITE', 'https://houseofspells.co.uk');
+    this.companyWebsite = this.config.get<string>(
+      'INVOICE_COMPANY_WEBSITE',
+      'https://houseofspells.co.uk',
+    );
   }
 
   async generateInvoicePdf(orderId: string): Promise<Buffer> {
@@ -107,7 +113,13 @@ export class InvoicesService {
 
       const currency = order.currency || 'USD';
       const currencySymbol =
-        currency === 'GBP' ? '£' : currency === 'EUR' ? '€' : currency === 'USD' ? '$' : `${currency} `;
+        currency === 'GBP'
+          ? '£'
+          : currency === 'EUR'
+            ? '€'
+            : currency === 'USD'
+              ? '$'
+              : `${currency} `;
 
       const invoiceNumber = `INV-${order.orderNumber}`;
       const invoiceDate = order.createdAt
@@ -185,7 +197,11 @@ export class InvoicesService {
           doc.text(billing.addressLine2, 50, yPos);
           yPos += 12;
         }
-        doc.text(`${billing.city}, ${billing.state || ''} ${billing.postalCode || ''}`.trim(), 50, yPos);
+        doc.text(
+          `${billing.city}, ${billing.state || ''} ${billing.postalCode || ''}`.trim(),
+          50,
+          yPos,
+        );
         yPos += 12;
         doc.text(billing.country, 50, yPos);
         yPos += 12;
@@ -217,7 +233,11 @@ export class InvoicesService {
           doc.text(shipping.addressLine2, 300, yShip);
           yShip += 12;
         }
-        doc.text(`${shipping.city}, ${shipping.state || ''} ${shipping.postalCode || ''}`.trim(), 300, yShip);
+        doc.text(
+          `${shipping.city}, ${shipping.state || ''} ${shipping.postalCode || ''}`.trim(),
+          300,
+          yShip,
+        );
         yShip += 12;
         doc.text(shipping.country, 300, yShip);
         yShip += 12;
@@ -258,8 +278,14 @@ export class InvoicesService {
           .text(productName, 50, yPos, { width: 210 })
           .text(productSku, 260, yPos, { width: 70 })
           .text(String(itemQty), 340, yPos, { width: 40, align: 'right' })
-          .text(`${currencySymbol}${itemPrice.toFixed(2)}`, 390, yPos, { width: 70, align: 'right' })
-          .text(`${currencySymbol}${lineTotal.toFixed(2)}`, 470, yPos, { width: 75, align: 'right' });
+          .text(`${currencySymbol}${itemPrice.toFixed(2)}`, 390, yPos, {
+            width: 70,
+            align: 'right',
+          })
+          .text(`${currencySymbol}${lineTotal.toFixed(2)}`, 470, yPos, {
+            width: 75,
+            align: 'right',
+          });
         yPos += 18;
 
         if (yPos > 690) {
@@ -289,7 +315,10 @@ export class InvoicesService {
       if (shippingAmt > 0) {
         doc
           .text('Shipping:', 340, yPos, { width: 120, align: 'right' })
-          .text(`${currencySymbol}${shippingAmt.toFixed(2)}`, 470, yPos, { width: 75, align: 'right' });
+          .text(`${currencySymbol}${shippingAmt.toFixed(2)}`, 470, yPos, {
+            width: 75,
+            align: 'right',
+          });
         yPos += 15;
       }
 
@@ -297,7 +326,10 @@ export class InvoicesService {
         doc
           .fillColor('#16a34a')
           .text('Discount:', 340, yPos, { width: 120, align: 'right' })
-          .text(`-${currencySymbol}${discountAmt.toFixed(2)}`, 470, yPos, { width: 75, align: 'right' });
+          .text(`-${currencySymbol}${discountAmt.toFixed(2)}`, 470, yPos, {
+            width: 75,
+            align: 'right',
+          });
         yPos += 15;
         doc.fillColor('#333333');
       }
@@ -358,12 +390,7 @@ export class InvoicesService {
 
       // ─── Footer: Legal & contact ───
       const footerY = 735;
-      doc
-        .moveTo(50, footerY)
-        .lineTo(545, footerY)
-        .strokeColor('#e0e0e0')
-        .lineWidth(0.5)
-        .stroke();
+      doc.moveTo(50, footerY).lineTo(545, footerY).strokeColor('#e0e0e0').lineWidth(0.5).stroke();
 
       doc
         .fontSize(7)

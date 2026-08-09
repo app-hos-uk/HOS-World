@@ -12,12 +12,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { CancellationsService } from './cancellations.service';
 import { RequestCancellationDto } from './dto/request-cancellation.dto';
 import { ReviewCancellationDto } from './dto/review-cancellation.dto';
@@ -75,7 +70,9 @@ export class CancellationsController {
     const data = await this.cancellationsService.findByOrderId(orderId, req.user.id, req.user.role);
     return {
       data,
-      message: data ? 'Cancellation request retrieved successfully' : 'No cancellation request found',
+      message: data
+        ? 'Cancellation request retrieved successfully'
+        : 'No cancellation request found',
     };
   }
 
@@ -115,7 +112,9 @@ export class CancellationsController {
     const data = await this.cancellationsService.financeReview(id, req.user.id, req.user.role, dto);
     return {
       data,
-      message: dto.approved ? 'Cancellation approved and refund processed' : 'Cancellation request rejected',
+      message: dto.approved
+        ? 'Cancellation approved and refund processed'
+        : 'Cancellation request rejected',
     };
   }
 

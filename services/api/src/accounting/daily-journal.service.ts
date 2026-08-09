@@ -68,7 +68,11 @@ export class DailyJournalService {
   }> {
     if (!this.accounting.isEnabled()) {
       this.logger.log('Daily journal enqueue skipped — accounting disabled');
-      return { periodDate: periodDate ?? this.defaultPeriodDate(), enqueued: [], skipped: ['disabled'] };
+      return {
+        periodDate: periodDate ?? this.defaultPeriodDate(),
+        enqueued: [],
+        skipped: ['disabled'],
+      };
     }
 
     const day = periodDate ?? this.defaultPeriodDate();

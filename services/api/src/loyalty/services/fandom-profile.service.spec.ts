@@ -10,7 +10,9 @@ describe('FandomProfileService', () => {
     ];
     let callIdx = 0;
     const prisma: any = {
-      $queryRaw: jest.fn().mockImplementation(() => Promise.resolve(queryRawResults[callIdx++] ?? [])),
+      $queryRaw: jest
+        .fn()
+        .mockImplementation(() => Promise.resolve(queryRawResults[callIdx++] ?? [])),
       user: {
         findUnique: jest.fn().mockResolvedValue({ favoriteFandoms: ['DC'] }),
       },

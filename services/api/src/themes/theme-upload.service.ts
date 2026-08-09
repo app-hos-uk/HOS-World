@@ -264,7 +264,7 @@ export class ThemeUploadService {
     }
   }
 
-  private async createPlaceholderPreview(theme: any): Promise<string | null> {
+  private async createPlaceholderPreview(_theme: any): Promise<string | null> {
     try {
       // Create a simple placeholder image
       // In production, you could:

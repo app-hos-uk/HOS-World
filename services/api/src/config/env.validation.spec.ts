@@ -13,16 +13,19 @@ describe('validateEnvironmentVariables', () => {
   });
 
   it('throws when DATABASE_URL is missing', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { DATABASE_URL, ...rest } = validBase;
     expect(() => validateEnvironmentVariables(rest)).toThrow('DATABASE_URL is required');
   });
 
   it('throws when JWT_SECRET is missing', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { JWT_SECRET, ...rest } = validBase;
     expect(() => validateEnvironmentVariables(rest)).toThrow('JWT_SECRET is required');
   });
 
   it('throws when JWT_REFRESH_SECRET is missing', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { JWT_REFRESH_SECRET, ...rest } = validBase;
     expect(() => validateEnvironmentVariables(rest)).toThrow('JWT_REFRESH_SECRET is required');
   });
@@ -48,21 +51,21 @@ describe('validateEnvironmentVariables', () => {
   });
 
   it('throws when PORT is invalid (0)', () => {
-    expect(() =>
-      validateEnvironmentVariables({ ...validBase, PORT: '0' }),
-    ).toThrow('PORT must be between 1 and 65535');
+    expect(() => validateEnvironmentVariables({ ...validBase, PORT: '0' })).toThrow(
+      'PORT must be between 1 and 65535',
+    );
   });
 
   it('throws when PORT is out of range (99999)', () => {
-    expect(() =>
-      validateEnvironmentVariables({ ...validBase, PORT: '99999' }),
-    ).toThrow('PORT must be between 1 and 65535');
+    expect(() => validateEnvironmentVariables({ ...validBase, PORT: '99999' })).toThrow(
+      'PORT must be between 1 and 65535',
+    );
   });
 
   it('throws when PORT is NaN', () => {
-    expect(() =>
-      validateEnvironmentVariables({ ...validBase, PORT: 'abc' }),
-    ).toThrow('PORT must be between 1 and 65535');
+    expect(() => validateEnvironmentVariables({ ...validBase, PORT: 'abc' })).toThrow(
+      'PORT must be between 1 and 65535',
+    );
   });
 
   it('accepts valid PORT', () => {
@@ -71,9 +74,9 @@ describe('validateEnvironmentVariables', () => {
   });
 
   it('throws when DATABASE_URL is not a PostgreSQL URL', () => {
-    expect(() =>
-      validateEnvironmentVariables({ ...validBase, DATABASE_URL: 'mysql://x' }),
-    ).toThrow('DATABASE_URL must be a valid PostgreSQL URL');
+    expect(() => validateEnvironmentVariables({ ...validBase, DATABASE_URL: 'mysql://x' })).toThrow(
+      'DATABASE_URL must be a valid PostgreSQL URL',
+    );
   });
 
   it('accepts postgresql:// DATABASE_URL', () => {
@@ -109,9 +112,9 @@ describe('validateEnvironmentVariables', () => {
   });
 
   it('throws when STORAGE_PROVIDER is invalid', () => {
-    expect(() =>
-      validateEnvironmentVariables({ ...validBase, STORAGE_PROVIDER: 'gcs' }),
-    ).toThrow('STORAGE_PROVIDER must be one of');
+    expect(() => validateEnvironmentVariables({ ...validBase, STORAGE_PROVIDER: 'gcs' })).toThrow(
+      'STORAGE_PROVIDER must be one of',
+    );
   });
 
   it('accepts valid STORAGE_PROVIDER values', () => {

@@ -67,9 +67,7 @@ export class PromotionsController {
   })
   @ApiQuery({ name: 'sellerId', required: false, description: 'Filter by seller ID' })
   @SwaggerApiResponse({ status: 200, description: 'Promotions retrieved successfully' })
-  async findAll(
-    @Query('sellerId') sellerId?: string,
-  ): Promise<ApiResponse<any[]>> {
+  async findAll(@Query('sellerId') sellerId?: string): Promise<ApiResponse<any[]>> {
     // Public callers always see only active promotions with coupon codes stripped.
     const promotions = await this.promotionsService.findAll(sellerId, true);
     return {
@@ -84,10 +82,15 @@ export class PromotionsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get all promotions (Admin/Marketing)',
-    description: 'Retrieves all promotions including DRAFT and expired. Full coupon details included.',
+    description:
+      'Retrieves all promotions including DRAFT and expired. Full coupon details included.',
   })
   @ApiQuery({ name: 'sellerId', required: false, description: 'Filter by seller ID' })
-  @ApiQuery({ name: 'activeOnly', required: false, description: 'When false, returns all promotions' })
+  @ApiQuery({
+    name: 'activeOnly',
+    required: false,
+    description: 'When false, returns all promotions',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Promotions retrieved successfully' })
   async findAllAdmin(
     @Query('sellerId') sellerId?: string,
@@ -105,7 +108,8 @@ export class PromotionsController {
   @Public()
   @ApiOperation({
     summary: 'Get promotion by ID',
-    description: 'Retrieves a specific promotion by ID. Coupon codes stripped from public responses.',
+    description:
+      'Retrieves a specific promotion by ID. Coupon codes stripped from public responses.',
   })
   @ApiParam({ name: 'id', description: 'Promotion UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Promotion retrieved successfully' })

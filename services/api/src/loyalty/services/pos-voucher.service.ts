@@ -10,7 +10,6 @@ import { LoyaltyTxType, Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
-import { isTruthy } from '../../common/utils/config';
 import { normalizePhoneToE164 } from '../../common/utils/phone-normalize';
 import { EncryptionService } from '../../integrations/encryption.service';
 import type { POSAdapter } from '../../pos/interfaces/pos-adapter.interface';
@@ -382,7 +381,12 @@ export class PosVoucherService {
       );
 
       // Confirm Lightspeed does not hold funded value before restoring points.
-      const funded = await this.isGiftCardFunded(adapter, voucher.cardNumber, amount, voucher.clientId);
+      const funded = await this.isGiftCardFunded(
+        adapter,
+        voucher.cardNumber,
+        amount,
+        voucher.clientId,
+      );
       if (funded.funded) {
         // Partial success: mark ISSUED, keep burn — do not reverse points.
         const updated = await this.prisma.loyaltyPosVoucher.update({
@@ -504,7 +508,9 @@ export class PosVoucherService {
       }
       // Fresh create often funds via ACTIVATION without clientId — accept only when
       // balance matches and there are no other client-tagged txs (our card number).
-      const hasOtherClient = existing.transactions?.some((t) => t.clientId && t.clientId !== clientId);
+      const hasOtherClient = existing.transactions?.some(
+        (t) => t.clientId && t.clientId !== clientId,
+      );
       if (!hasOtherClient && Number(existing.balance) >= amount - 0.001) {
         const activation = existing.transactions?.find((t) => t.type === 'ACTIVATION');
         return {
@@ -528,7 +534,9 @@ export class PosVoucherService {
     return adapter;
   }
 
-  private async resolveRedeemValue(storeValue: Decimal | number | null | undefined): Promise<number> {
+  private async resolveRedeemValue(
+    storeValue: Decimal | number | null | undefined,
+  ): Promise<number> {
     if (storeValue != null) {
       const n = Number(storeValue);
       if (Number.isFinite(n) && n > 0) return n;
@@ -628,9 +636,7 @@ export class PosVoucherService {
     if (phone) {
       const phoneNormalized = normalizePhoneToE164(phone);
       const byPhone = await this.prisma.user.findFirst({
-        where: phoneNormalized
-          ? { OR: [{ phoneNormalized }, { phone }] }
-          : { phone },
+        where: phoneNormalized ? { OR: [{ phoneNormalized }, { phone }] } : { phone },
         include: { loyaltyMembership: true },
       });
       if (byPhone?.loyaltyMembership) return byPhone.loyaltyMembership.id;

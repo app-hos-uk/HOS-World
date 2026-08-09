@@ -78,8 +78,7 @@ export class PosWebhookController {
     }
 
     const adapter = this.factory.create(connection.provider, connection.credentials);
-    const signature =
-      sigHeader || sigAlt || String(req.headers['x-webhook-signature'] ?? '');
+    const signature = sigHeader || sigAlt || String(req.headers['x-webhook-signature'] ?? '');
     const rawBody = this.getRawBody(req);
     if (!adapter.validateWebhook(rawBody, signature, secret)) {
       throw new BadRequestException('Invalid signature');
@@ -109,17 +108,12 @@ export class PosWebhookController {
 
   /** Sale events only — ignore product/inventory/customer updates. */
   private isSaleWebhook(body: unknown): boolean {
-    const b =
-      body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
+    const b = body && typeof body === 'object' ? (body as Record<string, unknown>) : {};
     const type = String(b.type ?? b.topic ?? '').toLowerCase();
 
     if (type) {
       if (type === 'sale.delete' || type.endsWith('.delete')) return false;
-      if (
-        type === 'sale.update' ||
-        type.startsWith('sale.') ||
-        type.includes('register_sale')
-      ) {
+      if (type === 'sale.update' || type.startsWith('sale.') || type.includes('register_sale')) {
         return true;
       }
       return false;
@@ -139,8 +133,6 @@ export class PosWebhookController {
     }
 
     if (!saleObj?.id) return false;
-    return (
-      Array.isArray(saleObj.register_sale_products) || Array.isArray(saleObj.line_items)
-    );
+    return Array.isArray(saleObj.register_sale_products) || Array.isArray(saleObj.line_items);
   }
 }

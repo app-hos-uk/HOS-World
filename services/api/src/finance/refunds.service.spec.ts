@@ -10,7 +10,9 @@ import { RETURN_FULFILMENT } from '../returns/return-fulfilment.token';
 
 describe('RefundsService', () => {
   let service: RefundsService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let prismaService: PrismaService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let transactionsService: TransactionsService;
 
   const mockPrismaService = {

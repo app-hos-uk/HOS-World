@@ -31,7 +31,9 @@ export class EventsController {
     private jwt: JwtService,
   ) {}
 
-  private optionalUserId(req: { headers: Record<string, string | string[] | undefined> }): string | undefined {
+  private optionalUserId(req: {
+    headers: Record<string, string | string[] | undefined>;
+  }): string | undefined {
     const raw = req.headers['authorization'];
     const auth = typeof raw === 'string' ? raw : raw?.[0];
     if (!auth?.startsWith('Bearer ')) return undefined;

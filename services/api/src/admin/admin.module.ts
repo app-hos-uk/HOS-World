@@ -45,7 +45,15 @@ const migrationControllers =
     : [];
 
 @Module({
-  imports: [DatabaseModule, ConfigModule, NotificationsModule, ProductsModule, FeatureFlagsModule, LoyaltyModule, forwardRef(() => ReviewsModule)],
+  imports: [
+    DatabaseModule,
+    ConfigModule,
+    NotificationsModule,
+    ProductsModule,
+    FeatureFlagsModule,
+    LoyaltyModule,
+    forwardRef(() => ReviewsModule),
+  ],
   controllers: [...coreControllers, ...migrationControllers],
   providers: [AdminService, AdminSellersService, AdminProductsService],
   exports: [AdminService, AdminSellersService, AdminProductsService],

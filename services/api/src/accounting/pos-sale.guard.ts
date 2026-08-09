@@ -48,7 +48,11 @@ function scanValue(value: unknown, path: string): void {
         );
       }
       // Reject string values that look like explicit POSSale model references
-      if (typeof child === 'string' && /POSSale/i.test(child) && /prisma|model|entity/i.test(child)) {
+      if (
+        typeof child === 'string' &&
+        /POSSale/i.test(child) &&
+        /prisma|model|entity/i.test(child)
+      ) {
         throw new BadRequestException(
           `POSSale guardrail: payload must not reference POSSale at ${childPath}`,
         );
@@ -58,10 +62,7 @@ function scanValue(value: unknown, path: string): void {
   }
 }
 
-export function assertNoPosSaleInLedger(
-  entryType: string,
-  payload: unknown,
-): void {
+export function assertNoPosSaleInLedger(entryType: string, payload: unknown): void {
   if (!ALLOWED_LEDGER_ENTRY_TYPES.has(entryType)) {
     throw new BadRequestException(
       `POSSale guardrail: entryType "${entryType}" is not an allowed HOS→Xero journal type`,

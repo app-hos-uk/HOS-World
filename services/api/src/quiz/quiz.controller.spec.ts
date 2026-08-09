@@ -40,14 +40,18 @@ describe('QuizController', () => {
 
   it('submit propagates BadRequestException from service', async () => {
     const mockQuiz = {
-      submitQuiz: jest.fn().mockRejectedValue(new BadRequestException('Weekly quiz attempt limit reached')),
+      submitQuiz: jest
+        .fn()
+        .mockRejectedValue(new BadRequestException('Weekly quiz attempt limit reached')),
     };
     const moduleRef = await Test.createTestingModule({
       controllers: [QuizController],
       providers: [{ provide: QuizService, useValue: mockQuiz }],
     }).compile();
     const ctrl = moduleRef.get(QuizController);
-    await expect(ctrl.submit({ user: { id: 'u1' } }, 'q1', { answers: [0] })).rejects.toThrow(BadRequestException);
+    await expect(ctrl.submit({ user: { id: 'u1' } }, 'q1', { answers: [0] })).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it('one() propagates NotFoundException from service', async () => {

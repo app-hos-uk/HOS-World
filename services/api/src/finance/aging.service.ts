@@ -12,7 +12,10 @@ export interface AgingBucket {
 export class AgingService {
   constructor(private prisma: PrismaService) {}
 
-  async getTransactionAging(): Promise<{ buckets: AgingBucket[]; summary: { totalCount: number; totalAmount: number } }> {
+  async getTransactionAging(): Promise<{
+    buckets: AgingBucket[];
+    summary: { totalCount: number; totalAmount: number };
+  }> {
     const now = new Date();
     const ranges = [
       { label: '0-7 days', maxDays: 7 },
@@ -28,13 +31,20 @@ export class AgingService {
       orderBy: { createdAt: 'asc' },
     });
 
-    const buckets: AgingBucket[] = ranges.map((r) => ({ label: r.label, count: 0, totalAmount: 0, items: [] }));
+    const buckets: AgingBucket[] = ranges.map((r) => ({
+      label: r.label,
+      count: 0,
+      totalAmount: 0,
+      items: [],
+    }));
     let prevMax = 0;
 
     for (let i = 0; i < ranges.length; i++) {
       const maxDays = ranges[i].maxDays;
       for (const tx of pendingTransactions) {
-        const ageDays = Math.floor((now.getTime() - tx.createdAt.getTime()) / (1000 * 60 * 60 * 24));
+        const ageDays = Math.floor(
+          (now.getTime() - tx.createdAt.getTime()) / (1000 * 60 * 60 * 24),
+        );
         if (ageDays >= prevMax && (maxDays === Infinity ? true : ageDays <= maxDays)) {
           buckets[i].count++;
           buckets[i].totalAmount += Number(tx.amount);
@@ -58,7 +68,10 @@ export class AgingService {
     return { buckets, summary: { totalCount, totalAmount } };
   }
 
-  async getSettlementAging(): Promise<{ buckets: AgingBucket[]; summary: { totalCount: number; totalAmount: number } }> {
+  async getSettlementAging(): Promise<{
+    buckets: AgingBucket[];
+    summary: { totalCount: number; totalAmount: number };
+  }> {
     const now = new Date();
     const ranges = [
       { label: '0-7 days', maxDays: 7 },
@@ -74,7 +87,12 @@ export class AgingService {
       orderBy: { createdAt: 'asc' },
     });
 
-    const buckets: AgingBucket[] = ranges.map((r) => ({ label: r.label, count: 0, totalAmount: 0, items: [] }));
+    const buckets: AgingBucket[] = ranges.map((r) => ({
+      label: r.label,
+      count: 0,
+      totalAmount: 0,
+      items: [],
+    }));
     let prevMax = 0;
 
     for (let i = 0; i < ranges.length; i++) {
@@ -104,7 +122,10 @@ export class AgingService {
     return { buckets, summary: { totalCount, totalAmount } };
   }
 
-  async getDisputeAging(): Promise<{ buckets: AgingBucket[]; summary: { totalCount: number; totalAmount: number } }> {
+  async getDisputeAging(): Promise<{
+    buckets: AgingBucket[];
+    summary: { totalCount: number; totalAmount: number };
+  }> {
     const now = new Date();
     const ranges = [
       { label: '0-7 days', maxDays: 7 },
@@ -120,7 +141,12 @@ export class AgingService {
       orderBy: { createdAt: 'asc' },
     });
 
-    const buckets: AgingBucket[] = ranges.map((r) => ({ label: r.label, count: 0, totalAmount: 0, items: [] }));
+    const buckets: AgingBucket[] = ranges.map((r) => ({
+      label: r.label,
+      count: 0,
+      totalAmount: 0,
+      items: [],
+    }));
     let prevMax = 0;
 
     for (let i = 0; i < ranges.length; i++) {

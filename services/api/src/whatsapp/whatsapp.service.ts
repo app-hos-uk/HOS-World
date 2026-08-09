@@ -56,6 +56,7 @@ export class WhatsAppService {
 
     if (this.useTwilio) {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const twilio = require('twilio');
         const client = twilio(this.twilioAccountSid, this.twilioAuthToken);
 

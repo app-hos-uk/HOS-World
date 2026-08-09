@@ -43,9 +43,7 @@ export class FoundingMembersController {
     }
 
     const ipAddress =
-      req.headers?.['x-forwarded-for']?.split(',')[0] ||
-      req.headers?.['x-real-ip'] ||
-      req.ip;
+      req.headers?.['x-forwarded-for']?.split(',')[0] || req.headers?.['x-real-ip'] || req.ip;
     const userAgent = req.headers?.['user-agent'] || '';
 
     const member = await this.foundingMembersService.register(
@@ -129,7 +127,7 @@ export class FoundingMembersController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Send confirmation emails to all founding members who haven\'t received one',
+    summary: "Send confirmation emails to all founding members who haven't received one",
   })
   async sendConfirmations(@Body() body?: { batchSize?: number }) {
     const result = await this.foundingMembersService.sendConfirmationToAll({
@@ -147,7 +145,8 @@ export class FoundingMembersController {
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Send account creation invitations to founding members who haven\'t created an account yet',
+    summary:
+      "Send account creation invitations to founding members who haven't created an account yet",
   })
   async sendAccountInvitations(@Body() body?: { batchSize?: number; memberIds?: string[] }) {
     const result = await this.foundingMembersService.sendAccountInvitations({

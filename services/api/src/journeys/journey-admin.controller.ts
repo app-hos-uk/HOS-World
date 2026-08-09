@@ -114,7 +114,9 @@ export class JourneyAdminController {
         ...('triggerEvent' in body && body.triggerEvent !== undefined
           ? { triggerEvent: body.triggerEvent }
           : {}),
-        ...('triggerConditions' in body ? { triggerConditions: body.triggerConditions as object } : {}),
+        ...('triggerConditions' in body
+          ? { triggerConditions: body.triggerConditions as object }
+          : {}),
         ...('steps' in body && body.steps !== undefined ? { steps: body.steps as object } : {}),
         ...('isActive' in body && body.isActive !== undefined ? { isActive: body.isActive } : {}),
         ...('regionCodes' in body ? { regionCodes: body.regionCodes } : {}),
@@ -176,7 +178,10 @@ export class JourneyAdminController {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
 export class MessagingAdminController {
-  constructor(private prisma: PrismaService, private messaging: MessagingService) {}
+  constructor(
+    private prisma: PrismaService,
+    private messaging: MessagingService,
+  ) {}
 
   @Get('logs')
   @ApiOperation({ summary: 'Message logs' })

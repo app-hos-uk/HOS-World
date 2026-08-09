@@ -1,9 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InventoryService } from './inventory.service';
 import { PrismaService } from '../database/prisma.service';
 
@@ -35,10 +31,7 @@ describe('InventoryService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        InventoryService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [InventoryService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get(InventoryService);

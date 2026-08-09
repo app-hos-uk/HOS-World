@@ -17,8 +17,7 @@ import { RedisThrottlerStorage } from './redis-throttler.storage';
         // computed once at startup so it can never be flipped on in prod, even
         // if NODE_ENV or the opt-in flag is misconfigured at request time.
         const nodeEnv = configService.get<string>('NODE_ENV');
-        const optedOut =
-          nodeEnv === 'test' || configService.get('DISABLE_RATE_LIMIT') === 'true';
+        const optedOut = nodeEnv === 'test' || configService.get('DISABLE_RATE_LIMIT') === 'true';
         const rateLimitDisabled = nodeEnv !== 'production' && optedOut;
 
         const options: ThrottlerModuleOptions = {

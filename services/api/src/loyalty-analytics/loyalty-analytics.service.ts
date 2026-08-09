@@ -48,7 +48,7 @@ export class LoyaltyAnalyticsService {
   async computeDailySnapshot(date?: Date): Promise<unknown> {
     const target = date ? startOfDay(date) : startOfDay(daysAgo(1));
     const dayEnd = endOfDay(target);
-    const now = new Date();
+    const _now = new Date();
     const thirtyAgo = daysAgo(30);
 
     const [
@@ -129,9 +129,10 @@ export class LoyaltyAnalyticsService {
       new Decimal(0),
     );
     const totalOrdersLoyalty = loyaltyOrders.length;
-    const avgOv = totalOrdersLoyalty > 0 ? totalRevenueLoyalty.div(totalOrdersLoyalty) : new Decimal(0);
+    const avgOv =
+      totalOrdersLoyalty > 0 ? totalRevenueLoyalty.div(totalOrdersLoyalty) : new Decimal(0);
 
-    const topFandomsRaw = await this.prisma.orderItem.groupBy({
+    const _topFandomsRaw = await this.prisma.orderItem.groupBy({
       by: ['productId'],
       where: { order: { createdAt: { gte: target, lte: dayEnd }, parentOrderId: null } },
       _sum: { quantity: true },
@@ -177,7 +178,9 @@ export class LoyaltyAnalyticsService {
 
   // ── CLV ──
 
-  async computeClvForMember(membershipId: string): Promise<{ clvScore: number; churnRisk: number }> {
+  async computeClvForMember(
+    membershipId: string,
+  ): Promise<{ clvScore: number; churnRisk: number }> {
     const m = await this.prisma.loyaltyMembership.findUnique({
       where: { id: membershipId },
       include: { tier: true },
@@ -283,12 +286,18 @@ export class LoyaltyAnalyticsService {
       where: { clvScore: { not: null } },
       orderBy: { clvScore: 'desc' },
       take: Math.min(100, limit),
-      include: { tier: { select: { name: true } }, user: { select: { firstName: true, lastName: true, email: true } } },
+      include: {
+        tier: { select: { name: true } },
+        user: { select: { firstName: true, lastName: true, email: true } },
+      },
     });
     return rows.map((r) => ({
       membershipId: r.id,
       userId: r.userId,
-      name: [r.user?.firstName, r.user?.lastName].filter(Boolean).join(' ') || r.user?.email || r.userId,
+      name:
+        [r.user?.firstName, r.user?.lastName].filter(Boolean).join(' ') ||
+        r.user?.email ||
+        r.userId,
       clvScore: r.clvScore ? new Decimal(r.clvScore).toNumber() : 0,
       tier: r.tier?.name ?? 'Unknown',
       totalSpend: new Decimal(r.totalSpend).toNumber(),
@@ -332,13 +341,27 @@ export class LoyaltyAnalyticsService {
 
     const txs = await this.prisma.loyaltyTransaction.findMany({
       where: { campaignId: { not: null }, createdAt: { gte: target, lte: dayEnd } },
-      select: { campaignId: true, points: true, sourceId: true, source: true, membership: { select: { userId: true } } },
+      select: {
+        campaignId: true,
+        points: true,
+        sourceId: true,
+        source: true,
+        membership: { select: { userId: true } },
+      },
     });
 
-    const grouped = new Map<string, { points: number; orderIds: Set<string>; userIds: Set<string>; source: string }>();
+    const grouped = new Map<
+      string,
+      { points: number; orderIds: Set<string>; userIds: Set<string>; source: string }
+    >();
     for (const tx of txs) {
       if (!tx.campaignId) continue;
-      const g = grouped.get(tx.campaignId) ?? { points: 0, orderIds: new Set(), userIds: new Set(), source: tx.source };
+      const g = grouped.get(tx.campaignId) ?? {
+        points: 0,
+        orderIds: new Set(),
+        userIds: new Set(),
+        source: tx.source,
+      };
       g.points += Math.abs(tx.points);
       if (tx.sourceId) g.orderIds.add(tx.sourceId);
       g.userIds.add(tx.membership.userId);
@@ -407,7 +430,10 @@ export class LoyaltyAnalyticsService {
   }
 
   async getCampaignAttributionReport(filters: {
-    startDate?: Date; endDate?: Date; campaignType?: string; limit?: number;
+    startDate?: Date;
+    endDate?: Date;
+    campaignType?: string;
+    limit?: number;
   }): Promise<unknown> {
     const where: Prisma.CampaignAttributionWhereInput = {};
     if (filters.startDate || filters.endDate) {
@@ -423,15 +449,28 @@ export class LoyaltyAnalyticsService {
       take: Math.min(100, filters.limit ?? 50),
     });
 
-    const byCampaign = new Map<string, {
-      campaignId: string; campaignName: string; campaignType: string;
-      totalOrders: number; totalRevenue: number; totalPoints: number; totalCost: number;
-    }>();
+    const byCampaign = new Map<
+      string,
+      {
+        campaignId: string;
+        campaignName: string;
+        campaignType: string;
+        totalOrders: number;
+        totalRevenue: number;
+        totalPoints: number;
+        totalCost: number;
+      }
+    >();
     for (const r of rows) {
       const key = r.campaignId;
       const cur = byCampaign.get(key) ?? {
-        campaignId: r.campaignId, campaignName: r.campaignName, campaignType: r.campaignType,
-        totalOrders: 0, totalRevenue: 0, totalPoints: 0, totalCost: 0,
+        campaignId: r.campaignId,
+        campaignName: r.campaignName,
+        campaignType: r.campaignType,
+        totalOrders: 0,
+        totalRevenue: 0,
+        totalPoints: 0,
+        totalCost: 0,
       };
       cur.totalOrders += r.ordersInfluenced;
       cur.totalRevenue += new Decimal(r.revenueInfluenced).toNumber();
@@ -442,7 +481,10 @@ export class LoyaltyAnalyticsService {
 
     const campaigns = [...byCampaign.values()].map((c) => ({
       ...c,
-      roi: c.totalCost > 0 ? Math.round(((c.totalRevenue - c.totalCost) / c.totalCost) * 10000) / 10000 : 0,
+      roi:
+        c.totalCost > 0
+          ? Math.round(((c.totalRevenue - c.totalCost) / c.totalCost) * 10000) / 10000
+          : 0,
     }));
 
     const totals = campaigns.reduce(
@@ -459,7 +501,10 @@ export class LoyaltyAnalyticsService {
       campaigns,
       totals: {
         ...totals,
-        avgRoi: totals.cost > 0 ? Math.round(((totals.revenue - totals.cost) / totals.cost) * 10000) / 10000 : 0,
+        avgRoi:
+          totals.cost > 0
+            ? Math.round(((totals.revenue - totals.cost) / totals.cost) * 10000) / 10000
+            : 0,
       },
     };
   }
@@ -497,7 +542,10 @@ export class LoyaltyAnalyticsService {
       select: { quantity: true, price: true, product: { select: { fandom: true } } },
     });
 
-    const cur = new Map<string, { revenue: number; orders: number; products: Map<string, number> }>();
+    const cur = new Map<
+      string,
+      { revenue: number; orders: number; products: Map<string, number> }
+    >();
     for (const it of items) {
       const f = it.product?.fandom;
       if (!f) continue;
@@ -534,7 +582,8 @@ export class LoyaltyAnalyticsService {
       .sort((a, b) => b[1].revenue - a[1].revenue)
       .map(([fandom, data]) => {
         const prevRev = prev.get(fandom) ?? 0;
-        const growth = prevRev > 0 ? Math.round(((data.revenue - prevRev) / prevRev) * 10000) / 100 : 0;
+        const growth =
+          prevRev > 0 ? Math.round(((data.revenue - prevRev) / prevRev) * 10000) / 100 : 0;
         const topProducts = [...data.products.entries()]
           .sort((a, b) => b[1] - a[1])
           .slice(0, 5)
@@ -554,7 +603,7 @@ export class LoyaltyAnalyticsService {
   // ── Programme Health ──
 
   async getProgrammeHealth(): Promise<unknown> {
-    const now = new Date();
+    const _now = new Date();
     const redeemValue = Number(this.config.get('LOYALTY_DEFAULT_REDEEM_VALUE', 0.01));
 
     const [totalMembers, active30, active90, liabilityAgg, clvAgg] = await Promise.all([
@@ -562,7 +611,9 @@ export class LoyaltyAnalyticsService {
       this.prisma.loyaltyMembership.count({ where: { lastActivityAt: { gte: daysAgo(30) } } }),
       this.prisma.loyaltyMembership.count({ where: { lastActivityAt: { gte: daysAgo(90) } } }),
       this.prisma.loyaltyMembership.aggregate({ _sum: { currentBalance: true } }),
-      this.prisma.loyaltyMembership.aggregate({ _avg: { clvScore: true, predictedChurnRisk: true } }),
+      this.prisma.loyaltyMembership.aggregate({
+        _avg: { clvScore: true, predictedChurnRisk: true },
+      }),
     ]);
 
     const liability = liabilityAgg._sum.currentBalance ?? 0;
@@ -603,7 +654,10 @@ export class LoyaltyAnalyticsService {
       enrollmentMonths.push({ month: monthKey(s), count });
     }
 
-    const memberUserIds = await this.prisma.loyaltyMembership.findMany({ select: { userId: true }, take: 50000 });
+    const memberUserIds = await this.prisma.loyaltyMembership.findMany({
+      select: { userId: true },
+      take: 50000,
+    });
     const memberIdSet = new Set(memberUserIds.map((m) => m.userId));
 
     const allOrders30 = await this.prisma.order.findMany({
@@ -612,17 +666,26 @@ export class LoyaltyAnalyticsService {
       select: { userId: true, subtotal: true },
     });
 
-    let memberRev = 0, memberCount = 0, nonMemberRev = 0, nonMemberCount = 0;
+    let memberRev = 0,
+      memberCount = 0,
+      nonMemberRev = 0,
+      nonMemberCount = 0;
     for (const o of allOrders30) {
       const sub = new Decimal(o.subtotal).toNumber();
-      if (o.userId && memberIdSet.has(o.userId)) { memberRev += sub; memberCount++; }
-      else { nonMemberRev += sub; nonMemberCount++; }
+      if (o.userId && memberIdSet.has(o.userId)) {
+        memberRev += sub;
+        memberCount++;
+      } else {
+        nonMemberRev += sub;
+        nonMemberCount++;
+      }
     }
     const memberAvgOrder = memberCount > 0 ? memberRev / memberCount : 0;
     const nonMemberAvgOrder = nonMemberCount > 0 ? nonMemberRev / nonMemberCount : 0;
-    const liftPercent = nonMemberAvgOrder > 0
-      ? Math.round(((memberAvgOrder - nonMemberAvgOrder) / nonMemberAvgOrder) * 10000) / 100
-      : 0;
+    const liftPercent =
+      nonMemberAvgOrder > 0
+        ? Math.round(((memberAvgOrder - nonMemberAvgOrder) / nonMemberAvgOrder) * 10000) / 100
+        : 0;
 
     const tierChanges30 = await this.prisma.loyaltyMembership.count({
       where: { updatedAt: { gte: daysAgo(30) } },
@@ -633,16 +696,25 @@ export class LoyaltyAnalyticsService {
       activeLast30d: active30,
       activeLast90d: active90,
       enrollmentTrend: enrollmentMonths,
-      pointsLiability: { total: liability, estimatedCost: Math.round(liability * redeemValue * 100) / 100 },
+      pointsLiability: {
+        total: liability,
+        estimatedCost: Math.round(liability * redeemValue * 100) / 100,
+      },
       liabilityByRegion,
-      pointsVelocity: { issuedLast30d, redeemedLast30d, netChange: issuedLast30d - redeemedLast30d },
+      pointsVelocity: {
+        issuedLast30d,
+        redeemedLast30d,
+        netChange: issuedLast30d - redeemedLast30d,
+      },
       revenueImpact: {
         memberRevenue: Math.round(memberRev * 100) / 100,
         nonMemberRevenue: Math.round(nonMemberRev * 100) / 100,
         liftPercent,
       },
       avgClv: clvAgg._avg.clvScore ? new Decimal(clvAgg._avg.clvScore).toNumber() : 0,
-      churnRate: clvAgg._avg.predictedChurnRisk ? new Decimal(clvAgg._avg.predictedChurnRisk).toNumber() : 0,
+      churnRate: clvAgg._avg.predictedChurnRisk
+        ? new Decimal(clvAgg._avg.predictedChurnRisk).toNumber()
+        : 0,
       tierMovement30d: { upgrades: tierChanges30, downgrades: 0 },
     };
   }
@@ -660,7 +732,12 @@ export class LoyaltyAnalyticsService {
     for (const t of tiers) {
       const agg = await this.prisma.loyaltyMembership.aggregate({
         where: { tierId: t.id },
-        _avg: { totalSpend: true, clvScore: true, purchaseFrequency: true, predictedChurnRisk: true },
+        _avg: {
+          totalSpend: true,
+          clvScore: true,
+          purchaseFrequency: true,
+          predictedChurnRisk: true,
+        },
         _sum: { totalSpend: true },
       });
       result.push({
@@ -669,8 +746,12 @@ export class LoyaltyAnalyticsService {
         memberCount: t._count.members,
         avgSpend: agg._avg.totalSpend ? new Decimal(agg._avg.totalSpend).toNumber() : 0,
         avgClv: agg._avg.clvScore ? new Decimal(agg._avg.clvScore).toNumber() : 0,
-        avgPurchaseFreq: agg._avg.purchaseFrequency ? new Decimal(agg._avg.purchaseFrequency).toNumber() : 0,
-        churnRate: agg._avg.predictedChurnRisk ? new Decimal(agg._avg.predictedChurnRisk).toNumber() : 0,
+        avgPurchaseFreq: agg._avg.purchaseFrequency
+          ? new Decimal(agg._avg.purchaseFrequency).toNumber()
+          : 0,
+        churnRate: agg._avg.predictedChurnRisk
+          ? new Decimal(agg._avg.predictedChurnRisk).toNumber()
+          : 0,
         revenueContribution: agg._sum.totalSpend ? new Decimal(agg._sum.totalSpend).toNumber() : 0,
       });
     }
@@ -708,20 +789,24 @@ export class LoyaltyAnalyticsService {
     });
 
     const webRev = webOrders._sum.subtotal ? new Decimal(webOrders._sum.subtotal).toNumber() : 0;
-    const posRev = posOrders._sum.totalAmount ? new Decimal(posOrders._sum.totalAmount).toNumber() : 0;
+    const posRev = posOrders._sum.totalAmount
+      ? new Decimal(posOrders._sum.totalAmount).toNumber()
+      : 0;
 
     return {
       web: {
         orders: webOrders._count ?? 0,
         revenue: webRev,
         pointsEarned: webAgg._sum.points ?? 0,
-        avgOrder: (webOrders._count ?? 0) > 0 ? Math.round((webRev / webOrders._count) * 100) / 100 : 0,
+        avgOrder:
+          (webOrders._count ?? 0) > 0 ? Math.round((webRev / webOrders._count) * 100) / 100 : 0,
       },
       pos: {
         orders: posOrders._count ?? 0,
         revenue: posRev,
         pointsEarned: posAgg._sum.points ?? 0,
-        avgOrder: (posOrders._count ?? 0) > 0 ? Math.round((posRev / posOrders._count) * 100) / 100 : 0,
+        avgOrder:
+          (posOrders._count ?? 0) > 0 ? Math.round((posRev / posOrders._count) * 100) / 100 : 0,
       },
       trend: [],
     };
@@ -772,7 +857,7 @@ export class LoyaltyAnalyticsService {
 
   // ── Export ──
 
-  async exportReport(type: string, format: string): Promise<unknown> {
+  async exportReport(type: string, _format: string): Promise<unknown> {
     switch (type) {
       case 'clv':
         return this.getTopMembersByClv(200);

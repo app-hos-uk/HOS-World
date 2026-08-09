@@ -126,9 +126,9 @@ describe('LightspeedAdapter', () => {
 
       const id = await adapter.syncCustomer(customer);
       expect(id).toBe('ls-by-email');
-      expect(request.mock.calls.some((c) => c[0] === 'PUT' && c[1] === '/customers/ls-by-email')).toBe(
-        true,
-      );
+      expect(
+        request.mock.calls.some((c) => c[0] === 'PUT' && c[1] === '/customers/ls-by-email'),
+      ).toBe(true);
       expect(request.mock.calls.some((c) => c[0] === 'PUT' && c[1] === '/customers/wrong')).toBe(
         false,
       );
@@ -169,7 +169,10 @@ describe('LightspeedAdapter', () => {
         // no firstName / lastName / phone
       });
 
-      const putBody = request.mock.calls.find((c) => c[0] === 'PUT')?.[2] as Record<string, unknown>;
+      const putBody = request.mock.calls.find((c) => c[0] === 'PUT')?.[2] as Record<
+        string,
+        unknown
+      >;
       expect(putBody).toEqual({
         customer_code: 'mem-abc',
         email: 'ada@example.com',
@@ -306,21 +309,16 @@ describe('LightspeedAdapter', () => {
         balance: '1.00',
         status: 'ACTIVE',
       }));
-      request
-        .mockResolvedValueOnce({ status: 200, data: { data: page } })
-        .mockResolvedValueOnce({
-          status: 200,
-          data: {
-            data: [{ id: 'gc-last', number: 'CARDLAST0001', balance: '2.00', status: 'ACTIVE' }],
-          },
-        });
+      request.mockResolvedValueOnce({ status: 200, data: { data: page } }).mockResolvedValueOnce({
+        status: 200,
+        data: {
+          data: [{ id: 'gc-last', number: 'CARDLAST0001', balance: '2.00', status: 'ACTIVE' }],
+        },
+      });
 
       const cards = await adapter.listGiftCards({ pageSize: 100 });
       expect(request).toHaveBeenCalledWith('GET', '/gift_cards?page_size=100');
-      expect(request).toHaveBeenCalledWith(
-        'GET',
-        '/gift_cards?page_size=100&before=gc-99',
-      );
+      expect(request).toHaveBeenCalledWith('GET', '/gift_cards?page_size=100&before=gc-99');
       expect(cards).toHaveLength(101);
       expect(cards[0].number).toBe('CARD00000000');
       expect(cards[100].id).toBe('gc-last');

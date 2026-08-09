@@ -80,10 +80,18 @@ export class LoyaltySettingsService {
     return {
       defaultEarnRate: num(this.config.get('LOYALTY_DEFAULT_EARN_RATE'), 1),
       defaultRedeemValue: num(this.config.get('LOYALTY_DEFAULT_REDEEM_VALUE'), 0.01),
-      minRedemptionPoints: Math.max(0, Math.floor(num(this.config.get('LOYALTY_MIN_REDEMPTION_POINTS'), 100))),
-      pointsExpiryMonths: Math.max(0, Math.floor(num(this.config.get('LOYALTY_POINTS_EXPIRY_MONTHS'), 24))),
+      minRedemptionPoints: Math.max(
+        0,
+        Math.floor(num(this.config.get('LOYALTY_MIN_REDEMPTION_POINTS'), 100)),
+      ),
+      pointsExpiryMonths: Math.max(
+        0,
+        Math.floor(num(this.config.get('LOYALTY_POINTS_EXPIRY_MONTHS'), 24)),
+      ),
       cardPrefix: String(this.config.get('LOYALTY_CARD_PREFIX') || 'HOS').slice(0, 16),
-      redemptionAtCheckout: isTruthy(this.config.get<string>('LOYALTY_REDEMPTION_AT_CHECKOUT') ?? 'true'),
+      redemptionAtCheckout: isTruthy(
+        this.config.get<string>('LOYALTY_REDEMPTION_AT_CHECKOUT') ?? 'true',
+      ),
       posVoucherEnabled: isTruthy(this.config.get<string>('LOYALTY_POS_VOUCHER_ENABLED')),
       posVoucherMinAmount: num(this.config.get('POS_GIFT_CARD_MIN_AMOUNT'), 1),
       posVoucherMaxAmount: num(this.config.get('POS_GIFT_CARD_MAX_AMOUNT'), 500),
@@ -97,19 +105,30 @@ export class LoyaltySettingsService {
     };
   }
 
-  private normalize(partial: Partial<LoyaltyProgrammeSettings>, base: LoyaltyProgrammeSettings): LoyaltyProgrammeSettings {
+  private normalize(
+    partial: Partial<LoyaltyProgrammeSettings>,
+    base: LoyaltyProgrammeSettings,
+  ): LoyaltyProgrammeSettings {
     return {
       defaultEarnRate: num(partial.defaultEarnRate, base.defaultEarnRate),
       defaultRedeemValue: num(partial.defaultRedeemValue, base.defaultRedeemValue),
-      minRedemptionPoints: Math.max(0, Math.floor(num(partial.minRedemptionPoints, base.minRedemptionPoints))),
-      pointsExpiryMonths: Math.max(0, Math.floor(num(partial.pointsExpiryMonths, base.pointsExpiryMonths))),
+      minRedemptionPoints: Math.max(
+        0,
+        Math.floor(num(partial.minRedemptionPoints, base.minRedemptionPoints)),
+      ),
+      pointsExpiryMonths: Math.max(
+        0,
+        Math.floor(num(partial.pointsExpiryMonths, base.pointsExpiryMonths)),
+      ),
       cardPrefix: String(partial.cardPrefix ?? base.cardPrefix).slice(0, 16) || 'HOS',
       redemptionAtCheckout: bool(partial.redemptionAtCheckout, base.redemptionAtCheckout),
       posVoucherEnabled: bool(partial.posVoucherEnabled, base.posVoucherEnabled),
       posVoucherMinAmount: num(partial.posVoucherMinAmount, base.posVoucherMinAmount),
       posVoucherMaxAmount: num(partial.posVoucherMaxAmount, base.posVoucherMaxAmount),
       giftCardCatalogAmounts: String(partial.giftCardCatalogAmounts ?? base.giftCardCatalogAmounts),
-      giftCardDefaultCurrency: String(partial.giftCardDefaultCurrency ?? base.giftCardDefaultCurrency).toUpperCase(),
+      giftCardDefaultCurrency: String(
+        partial.giftCardDefaultCurrency ?? base.giftCardDefaultCurrency,
+      ).toUpperCase(),
       restoreBurnOnCancel: bool(partial.restoreBurnOnCancel, base.restoreBurnOnCancel),
       clawEarnOnCancel: bool(partial.clawEarnOnCancel, base.clawEarnOnCancel),
       restoreBurnOnReturn: bool(partial.restoreBurnOnReturn, base.restoreBurnOnReturn),
@@ -188,7 +207,11 @@ export class LoyaltySettingsService {
     if (next.posVoucherMinAmount > next.posVoucherMaxAmount) {
       throw new Error('posVoucherMinAmount cannot exceed posVoucherMaxAmount');
     }
-    const value = { ...next, updatedByUserId: updatedByUserId ?? null, updatedAt: new Date().toISOString() };
+    const value = {
+      ...next,
+      updatedByUserId: updatedByUserId ?? null,
+      updatedAt: new Date().toISOString(),
+    };
 
     await this.prisma.$transaction(async (tx) => {
       const existing = await tx.config.findFirst({

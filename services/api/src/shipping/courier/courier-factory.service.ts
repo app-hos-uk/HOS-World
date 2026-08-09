@@ -520,7 +520,7 @@ export class CourierFactoryService implements OnModuleInit {
       lastUsed?: Date;
     }> = [];
 
-    for (const [name, provider] of this.providers) {
+    for (const [name, _provider] of this.providers) {
       const config = this.providerConfigs.get(name);
 
       // Count shipments from logs

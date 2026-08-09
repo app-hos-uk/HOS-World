@@ -42,7 +42,8 @@ export class PaymentsService {
     @Optional()
     @Inject(forwardRef(() => PosInventorySyncService))
     private posInventorySync?: PosInventorySyncService,
-    @Optional() @Inject(forwardRef(() => MarketingEventBus))
+    @Optional()
+    @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
     @Optional() private redisService?: RedisService,
     @Optional() private integrationsService?: IntegrationsService,
@@ -158,7 +159,9 @@ export class PaymentsService {
               message: 'Payment already processed. Please wait for confirmation.',
             };
           }
-          this.logger.log(`Cancelled prior intent ${order.stripePaymentIntentId} for order ${order.id}`);
+          this.logger.log(
+            `Cancelled prior intent ${order.stripePaymentIntentId} for order ${order.id}`,
+          );
         }
       } catch (cancelErr: any) {
         this.logger.warn(
@@ -256,7 +259,7 @@ export class PaymentsService {
       return;
     }
 
-    const payment = await this.prisma.payment.findFirst({
+    const _payment = await this.prisma.payment.findFirst({
       where: {
         orderId,
         stripePaymentId: paymentIntentId,
@@ -417,7 +420,9 @@ export class PaymentsService {
           }
         } else if (order.sellerId) {
           const seller = await this.prisma.seller.findUnique({ where: { id: order.sellerId } });
-          const commissionRate = seller?.commissionRate ? Number(seller.commissionRate) : DEFAULT_PLATFORM_FEE_RATE;
+          const commissionRate = seller?.commissionRate
+            ? Number(seller.commissionRate)
+            : DEFAULT_PLATFORM_FEE_RATE;
           await this.vendorLedgerService.recordSale({
             sellerId: order.sellerId,
             orderId: order.id,
@@ -504,7 +509,9 @@ export class PaymentsService {
         }
       }
     } catch (commErr: any) {
-      this.logger.warn(`Influencer commission activation failed for order ${order.id}: ${commErr?.message}`);
+      this.logger.warn(
+        `Influencer commission activation failed for order ${order.id}: ${commErr?.message}`,
+      );
     }
 
     this.logger.log(`Payment confirmed for order ${order.id}`);
@@ -523,7 +530,9 @@ export class PaymentsService {
         const rootOrderId = order.parentOrderId || order.id;
         await this.loyaltyService.processOrderComplete(rootOrderId);
       } catch (err: any) {
-        this.logger.warn(`Loyalty earn failed after payment for ${order.id}: ${err?.message ?? err}`);
+        this.logger.warn(
+          `Loyalty earn failed after payment for ${order.id}: ${err?.message ?? err}`,
+        );
       }
     }
 
@@ -569,7 +578,9 @@ export class PaymentsService {
         const rootOrderId = order.parentOrderId || order.id;
         await this.posInventorySync.syncOnlineOrderToPos(rootOrderId);
       } catch (err: any) {
-        this.logger.warn(`POS inventory sync after payment failed for ${order.id}: ${err?.message ?? err}`);
+        this.logger.warn(
+          `POS inventory sync after payment failed for ${order.id}: ${err?.message ?? err}`,
+        );
       }
     }
   }
@@ -612,10 +623,7 @@ export class PaymentsService {
     // ('includes("succeeded")') can misfire on unrelated events whose data.object is not a
     // PaymentIntent, leading to incorrect order state changes.
     const SUCCESS_EVENTS = new Set(['payment_intent.succeeded', 'charge.succeeded']);
-    const FAILURE_EVENTS = new Set([
-      'payment_intent.payment_failed',
-      'charge.failed',
-    ]);
+    const FAILURE_EVENTS = new Set(['payment_intent.payment_failed', 'charge.failed']);
     const DISPUTE_EVENTS = new Set([
       'charge.dispute.created',
       'charge.dispute.updated',
@@ -672,7 +680,9 @@ export class PaymentsService {
 
       if (isSuccess) {
         // Amount actually captured by Stripe, in the smallest unit of the base currency.
-        const paidCents = Number(event.data?.object?.amount_received ?? event.data?.object?.amount ?? 0);
+        const paidCents = Number(
+          event.data?.object?.amount_received ?? event.data?.object?.amount ?? 0,
+        );
         await this.handlePaymentSuccess(order, result.paymentId || '', paidCents);
       } else if (isFailure) {
         await this.handlePaymentFailure(order, result.paymentId || '');
@@ -717,9 +727,7 @@ export class PaymentsService {
   private async handlePaymentFailure(order: any, paymentId: string): Promise<void> {
     // Never override an already-paid order with FAILED (out-of-order webhook delivery).
     if (order.paymentStatus === 'PAID') {
-      this.logger.warn(
-        `Ignoring failure webhook for already-paid order ${order.id}`,
-      );
+      this.logger.warn(`Ignoring failure webhook for already-paid order ${order.id}`);
       return;
     }
 

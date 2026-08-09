@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -25,9 +36,7 @@ export class TemplatesController {
   @ApiOperation({ summary: 'List all notification templates' })
   @ApiQuery({ name: 'channel', required: false, enum: ['EMAIL', 'WHATSAPP', 'SMS', 'IN_APP'] })
   @SwaggerApiResponse({ status: 200, description: 'Template list returned' })
-  async listTemplates(
-    @Query('channel') channel?: string,
-  ): Promise<ApiResponse<any>> {
+  async listTemplates(@Query('channel') channel?: string): Promise<ApiResponse<any>> {
     const templates = await this.templatesService.listTemplates(channel as TemplateChannel);
     return { data: templates, message: 'Templates retrieved' };
   }
@@ -60,9 +69,7 @@ export class TemplatesController {
   async getTemplate(@Param('slug') slug: string): Promise<ApiResponse<any>> {
     const template = await this.templatesService.getTemplate(slug);
     const isCustomized =
-      template.channel === 'EMAIL'
-        ? await this.templatesService.hasEmailOverride(slug)
-        : false;
+      template.channel === 'EMAIL' ? await this.templatesService.hasEmailOverride(slug) : false;
     return { data: { ...template, isCustomized }, message: 'Template retrieved' };
   }
 

@@ -66,7 +66,9 @@ export class FeatureFlagsService implements OnModuleInit {
     }
 
     const enabled = [...this.flags.entries()].filter(([, v]) => v).map(([k]) => k);
-    this.logger.log(`Feature flags loaded: ${enabled.length} enabled, ${this.flags.size - enabled.length} disabled`);
+    this.logger.log(
+      `Feature flags loaded: ${enabled.length} enabled, ${this.flags.size - enabled.length} disabled`,
+    );
   }
 
   isEnabled(flag: FeatureFlag): boolean {

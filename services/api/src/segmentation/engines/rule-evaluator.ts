@@ -31,46 +31,44 @@ export interface SegmentRuleGroup {
   groups?: SegmentRuleGroup[];
 }
 
-export const SEGMENT_DIMENSIONS: Record<
-  string,
-  { operators: RuleOperator[]; valueHint?: string }
-> = {
-  'tier.slug': { operators: ['eq', 'neq', 'in', 'not_in'] },
-  'tier.level': { operators: ['eq', 'gt', 'gte', 'lt', 'lte', 'between'] },
-  'points.balance': { operators: ['gt', 'gte', 'lt', 'lte', 'between', 'eq'] },
-  'points.lifetime': { operators: ['gt', 'gte', 'lt', 'lte', 'between', 'eq'] },
-  'spend.total': { operators: ['gt', 'gte', 'lt', 'lte', 'between', 'eq'] },
-  'purchase.count': { operators: ['gt', 'gte', 'lt', 'lte', 'between', 'eq'] },
-  'engagement.count': { operators: ['gt', 'gte', 'lt', 'lte', 'between', 'eq'] },
-  'composite.score': { operators: ['gt', 'gte', 'lt', 'lte', 'between', 'eq'] },
-  'activity.lastAt': { operators: ['days_ago_lt', 'days_ago_gt'] },
-  'activity.enrolledAt': { operators: ['days_ago_lt', 'days_ago_gt', 'gt', 'lt', 'gte', 'lte'] },
-  'activity.lastLogin': { operators: ['days_ago_lt', 'days_ago_gt'] },
-  'geo.country': { operators: ['eq', 'neq', 'in', 'not_in'] },
-  'geo.regionCode': { operators: ['eq', 'neq', 'in', 'not_in'] },
-  'geo.city': { operators: ['eq', 'in'] },
-  'geo.isTourist': { operators: ['eq'] },
-  'fandom.favorites': { operators: ['contains', 'not_contains', 'is_empty', 'is_not_empty'] },
-  'fandom.affinity': { operators: ['gt', 'gte', 'lt', 'lte'] },
-  'user.role': { operators: ['eq', 'in'] },
-  'user.birthday': { operators: ['is_empty', 'is_not_empty'] },
-  'user.customerGroup': { operators: ['eq', 'in', 'is_empty'] },
-  'enrollment.channel': { operators: ['eq', 'in'] },
-  'comms.optInEmail': { operators: ['eq'] },
-  'comms.optInSms': { operators: ['eq'] },
-  'comms.optInWhatsApp': { operators: ['eq'] },
-  'comms.optInPush': { operators: ['eq'] },
-  'events.attendanceCount': { operators: ['gt', 'gte', 'lt', 'lte', 'eq'] },
-  'events.hasAttended': { operators: ['eq'] },
-  'quiz.completedCount': { operators: ['gt', 'gte', 'lt', 'lte', 'eq'] },
-  'ambassador.status': { operators: ['eq', 'in'] },
-  'ambassador.tier': { operators: ['eq', 'in'] },
-  'ambassador.referralSignups': { operators: ['gt', 'gte', 'lt', 'lte', 'between'] },
-  'ambassador.ugcApproved': { operators: ['gt', 'gte', 'lt', 'lte', 'between'] },
-  'ambassador.isAmbassador': { operators: ['eq'] },
-  'brand.activeCampaignCount': { operators: ['gt', 'gte', 'lt', 'lte', 'eq'] },
-  'brand.hasRedeemed': { operators: ['eq'] },
-};
+export const SEGMENT_DIMENSIONS: Record<string, { operators: RuleOperator[]; valueHint?: string }> =
+  {
+    'tier.slug': { operators: ['eq', 'neq', 'in', 'not_in'] },
+    'tier.level': { operators: ['eq', 'gt', 'gte', 'lt', 'lte', 'between'] },
+    'points.balance': { operators: ['gt', 'gte', 'lt', 'lte', 'between', 'eq'] },
+    'points.lifetime': { operators: ['gt', 'gte', 'lt', 'lte', 'between', 'eq'] },
+    'spend.total': { operators: ['gt', 'gte', 'lt', 'lte', 'between', 'eq'] },
+    'purchase.count': { operators: ['gt', 'gte', 'lt', 'lte', 'between', 'eq'] },
+    'engagement.count': { operators: ['gt', 'gte', 'lt', 'lte', 'between', 'eq'] },
+    'composite.score': { operators: ['gt', 'gte', 'lt', 'lte', 'between', 'eq'] },
+    'activity.lastAt': { operators: ['days_ago_lt', 'days_ago_gt'] },
+    'activity.enrolledAt': { operators: ['days_ago_lt', 'days_ago_gt', 'gt', 'lt', 'gte', 'lte'] },
+    'activity.lastLogin': { operators: ['days_ago_lt', 'days_ago_gt'] },
+    'geo.country': { operators: ['eq', 'neq', 'in', 'not_in'] },
+    'geo.regionCode': { operators: ['eq', 'neq', 'in', 'not_in'] },
+    'geo.city': { operators: ['eq', 'in'] },
+    'geo.isTourist': { operators: ['eq'] },
+    'fandom.favorites': { operators: ['contains', 'not_contains', 'is_empty', 'is_not_empty'] },
+    'fandom.affinity': { operators: ['gt', 'gte', 'lt', 'lte'] },
+    'user.role': { operators: ['eq', 'in'] },
+    'user.birthday': { operators: ['is_empty', 'is_not_empty'] },
+    'user.customerGroup': { operators: ['eq', 'in', 'is_empty'] },
+    'enrollment.channel': { operators: ['eq', 'in'] },
+    'comms.optInEmail': { operators: ['eq'] },
+    'comms.optInSms': { operators: ['eq'] },
+    'comms.optInWhatsApp': { operators: ['eq'] },
+    'comms.optInPush': { operators: ['eq'] },
+    'events.attendanceCount': { operators: ['gt', 'gte', 'lt', 'lte', 'eq'] },
+    'events.hasAttended': { operators: ['eq'] },
+    'quiz.completedCount': { operators: ['gt', 'gte', 'lt', 'lte', 'eq'] },
+    'ambassador.status': { operators: ['eq', 'in'] },
+    'ambassador.tier': { operators: ['eq', 'in'] },
+    'ambassador.referralSignups': { operators: ['gt', 'gte', 'lt', 'lte', 'between'] },
+    'ambassador.ugcApproved': { operators: ['gt', 'gte', 'lt', 'lte', 'between'] },
+    'ambassador.isAmbassador': { operators: ['eq'] },
+    'brand.activeCampaignCount': { operators: ['gt', 'gte', 'lt', 'lte', 'eq'] },
+    'brand.hasRedeemed': { operators: ['eq'] },
+  };
 
 function subDays(days: number): Date {
   return new Date(Date.now() - days * 86_400_000);
@@ -89,7 +87,8 @@ function applyOp(
       if (!Array.isArray(value)) throw new BadRequestException('in operator requires array value');
       return { in: value as string[] };
     case 'not_in':
-      if (!Array.isArray(value)) throw new BadRequestException('not_in operator requires array value');
+      if (!Array.isArray(value))
+        throw new BadRequestException('not_in operator requires array value');
       return { notIn: value as string[] };
     default:
       throw new BadRequestException(`Operator ${op} not valid for string field`);
@@ -146,10 +145,7 @@ function applyDaysAgoOp(
   throw new BadRequestException(`Operator ${op} not valid for relative date`);
 }
 
-function applyArrayFavoritesOp(
-  operator: RuleOperator,
-  value: unknown,
-): Prisma.UserWhereInput {
+function applyArrayFavoritesOp(operator: RuleOperator, value: unknown): Prisma.UserWhereInput {
   switch (operator) {
     case 'contains':
       return { favoriteFandoms: { has: String(value) } };
@@ -269,14 +265,18 @@ function dimensionToWhere(rule: SegmentRule): Prisma.UserWhereInput {
       }
       return { loyaltyMembership: { tier: { slug: applyOp(operator, value) as string } } };
     case 'tier.level':
-      return { loyaltyMembership: { tier: { level: applyNumericOp(operator, value) as Prisma.IntFilter } } };
+      return {
+        loyaltyMembership: { tier: { level: applyNumericOp(operator, value) as Prisma.IntFilter } },
+      };
     case 'points.balance':
       return {
         loyaltyMembership: { currentBalance: applyNumericOp(operator, value) as Prisma.IntFilter },
       };
     case 'points.lifetime':
       return {
-        loyaltyMembership: { totalPointsEarned: applyNumericOp(operator, value) as Prisma.IntFilter },
+        loyaltyMembership: {
+          totalPointsEarned: applyNumericOp(operator, value) as Prisma.IntFilter,
+        },
       };
     case 'spend.total':
       return {
@@ -292,7 +292,9 @@ function dimensionToWhere(rule: SegmentRule): Prisma.UserWhereInput {
       };
     case 'composite.score':
       return {
-        loyaltyMembership: { compositeScore: applyNumericOp(operator, value) as Prisma.DecimalFilter },
+        loyaltyMembership: {
+          compositeScore: applyNumericOp(operator, value) as Prisma.DecimalFilter,
+        },
       };
     case 'activity.lastAt': {
       const days = value as number;
@@ -317,7 +319,11 @@ function dimensionToWhere(rule: SegmentRule): Prisma.UserWhereInput {
       if (operator === 'days_ago_lt' || operator === 'days_ago_gt') {
         return {
           loyaltyMembership: {
-            enrolledAt: applyDaysAgoOp('enrolledAt', operator, value as number) as Prisma.DateTimeFilter,
+            enrolledAt: applyDaysAgoOp(
+              'enrolledAt',
+              operator,
+              value as number,
+            ) as Prisma.DateTimeFilter,
           },
         };
       }
@@ -393,13 +399,15 @@ function dimensionToWhere(rule: SegmentRule): Prisma.UserWhereInput {
         return { customerGroupId: null };
       }
       if (operator === 'in') {
-        if (!Array.isArray(value)) throw new BadRequestException('user.customerGroup in requires array');
+        if (!Array.isArray(value))
+          throw new BadRequestException('user.customerGroup in requires array');
         return { customerGroupId: { in: value as string[] } };
       }
       return { customerGroupId: value as string };
     case 'enrollment.channel':
       if (operator === 'in') {
-        if (!Array.isArray(value)) throw new BadRequestException('enrollment.channel in requires array');
+        if (!Array.isArray(value))
+          throw new BadRequestException('enrollment.channel in requires array');
         return { loyaltyMembership: { enrollmentChannel: { in: value as string[] } } };
       }
       return { loyaltyMembership: { enrollmentChannel: applyOp('eq', value) as string } };
@@ -424,13 +432,15 @@ function dimensionToWhere(rule: SegmentRule): Prisma.UserWhereInput {
         : { eventAttendances: { none: {} } };
     case 'ambassador.status':
       if (operator === 'in') {
-        if (!Array.isArray(value)) throw new BadRequestException('ambassador.status in requires array');
+        if (!Array.isArray(value))
+          throw new BadRequestException('ambassador.status in requires array');
         return { ambassadorProfile: { status: { in: value as string[] } } };
       }
       return { ambassadorProfile: { status: applyOp(operator, value) as string } };
     case 'ambassador.tier':
       if (operator === 'in') {
-        if (!Array.isArray(value)) throw new BadRequestException('ambassador.tier in requires array');
+        if (!Array.isArray(value))
+          throw new BadRequestException('ambassador.tier in requires array');
         return { ambassadorProfile: { tier: { in: value as string[] } } };
       }
       return { ambassadorProfile: { tier: applyOp(operator, value) as string } };

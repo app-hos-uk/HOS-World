@@ -39,13 +39,12 @@ export class OrderShippingService {
     private readonly encryptionService: EncryptionService,
     private readonly transactionsService: TransactionsService,
     private readonly vendorLedgerService: VendorLedgerService,
-    @Optional() @Inject(NotificationsService) private readonly notificationsService?: NotificationsService,
+    @Optional()
+    @Inject(NotificationsService)
+    private readonly notificationsService?: NotificationsService,
   ) {}
 
-  async getOrderShippingRates(
-    orderId: string,
-    providerName?: string,
-  ): Promise<RateResponse[]> {
+  async getOrderShippingRates(orderId: string, providerName?: string): Promise<RateResponse[]> {
     const { packages, from, to } = await this.buildShipmentContext(orderId);
 
     const provider = this.resolveProvider(providerName);
@@ -123,9 +122,7 @@ export class OrderShippingService {
       if (error instanceof BadRequestException || error instanceof BadGatewayException) {
         throw error;
       }
-      throw new BadGatewayException(
-        error?.message || 'Failed to purchase shipping label',
-      );
+      throw new BadGatewayException(error?.message || 'Failed to purchase shipping label');
     }
 
     const carrier =
@@ -384,8 +381,10 @@ export class OrderShippingService {
             base.name ||
             order.seller?.storeName ||
             'Shipper',
-          phone: base.phone || order.seller?.opsContactPhone || order.seller?.user?.phone || undefined,
-          email: base.email || order.seller?.opsContactEmail || order.seller?.user?.email || undefined,
+          phone:
+            base.phone || order.seller?.opsContactPhone || order.seller?.user?.phone || undefined,
+          email:
+            base.email || order.seller?.opsContactEmail || order.seller?.user?.email || undefined,
         };
       }
     }
@@ -506,9 +505,18 @@ export class OrderShippingService {
       const unitWeight = product?.weight != null ? safeDim(product.weight, 0.5) : 0.5;
 
       return {
-        length: product?.length != null ? safeDim(product.length, DEFAULT_PACKAGE.length) : DEFAULT_PACKAGE.length,
-        width: product?.width != null ? safeDim(product.width, DEFAULT_PACKAGE.width) : DEFAULT_PACKAGE.width,
-        height: product?.height != null ? safeDim(product.height, DEFAULT_PACKAGE.height) : DEFAULT_PACKAGE.height,
+        length:
+          product?.length != null
+            ? safeDim(product.length, DEFAULT_PACKAGE.length)
+            : DEFAULT_PACKAGE.length,
+        width:
+          product?.width != null
+            ? safeDim(product.width, DEFAULT_PACKAGE.width)
+            : DEFAULT_PACKAGE.width,
+        height:
+          product?.height != null
+            ? safeDim(product.height, DEFAULT_PACKAGE.height)
+            : DEFAULT_PACKAGE.height,
         weight: Math.max(0.01, unitWeight * qty),
       };
     });
@@ -519,7 +527,10 @@ export class OrderShippingService {
       {
         length: Math.max(...packages.map((p) => p.length)),
         width: Math.max(...packages.map((p) => p.width)),
-        height: Math.max(packages.reduce((sum, p) => sum + p.height, 0), DEFAULT_PACKAGE.height),
+        height: Math.max(
+          packages.reduce((sum, p) => sum + p.height, 0),
+          DEFAULT_PACKAGE.height,
+        ),
         weight: packages.reduce((sum, p) => sum + p.weight, 0),
       },
     ];

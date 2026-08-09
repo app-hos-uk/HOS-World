@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateWebhookDto } from './dto/create-webhook.dto';
 import { ConfigService } from '@nestjs/config';
@@ -157,7 +163,11 @@ export class WebhooksService {
   /**
    * Update webhook
    */
-  async update(id: string, updateDto: Partial<CreateWebhookDto>, user?: { id: string; role: string }) {
+  async update(
+    id: string,
+    updateDto: Partial<CreateWebhookDto>,
+    user?: { id: string; role: string },
+  ) {
     if (user) {
       await this.assertWebhookAccess(id, user, 'write');
     } else {

@@ -20,10 +20,7 @@ describe('brand-campaign.engine', () => {
 
   it('productMatchesCampaign: all empty targets matches any', () => {
     expect(
-      productMatchesCampaign(
-        { id: 'p1', fandom: 'X', brand: 'Y', categoryId: 'c1' },
-        emptyTargets,
-      ),
+      productMatchesCampaign({ id: 'p1', fandom: 'X', brand: 'Y', categoryId: 'c1' }, emptyTargets),
     ).toBe(true);
   });
 

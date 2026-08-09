@@ -202,7 +202,7 @@ export class StripeTaxProvider extends BaseTaxProvider implements ITaxProvider {
   async refundTransaction(
     originalTransactionId: string,
     refundTransactionId: string,
-    items: TaxLineItem[],
+    _items: TaxLineItem[],
   ): Promise<TaxCalculationResponse> {
     this.logger.log(
       `Stripe Tax refund for transaction ${originalTransactionId}. Refund is handled automatically through Stripe Refunds.`,

@@ -399,10 +399,7 @@ export class LoyaltyBurnEngine {
    * Returns the row whatever its status — a REVERSED redemption still has a voucher the
    * caller should retry rather than burning a second time.
    */
-  private async findRedemptionByWalletKey(
-    tx: Prisma.TransactionClient,
-    idempotencyKey: string,
-  ) {
+  private async findRedemptionByWalletKey(tx: Prisma.TransactionClient, idempotencyKey: string) {
     const walletTx = await tx.loyaltyTransaction.findUnique({
       where: { idempotencyKey },
     });

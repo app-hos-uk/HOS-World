@@ -46,7 +46,11 @@ export class WebhooksController {
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
     // If user is seller/wholesaler, automatically set sellerId from their profile
-    if (req.user.role === 'SELLER' || req.user.role === 'B2C_SELLER' || req.user.role === 'WHOLESALER') {
+    if (
+      req.user.role === 'SELLER' ||
+      req.user.role === 'B2C_SELLER' ||
+      req.user.role === 'WHOLESALER'
+    ) {
       const seller = await this.webhooksService['prisma'].seller.findUnique({
         where: { userId: req.user.id },
       });
@@ -72,7 +76,11 @@ export class WebhooksController {
   @SwaggerApiResponse({ status: 200, description: 'Webhooks retrieved successfully' })
   async findAll(@Request() req: any): Promise<ApiResponse<any[]>> {
     let sellerId: string | undefined;
-    if (req.user.role === 'SELLER' || req.user.role === 'B2C_SELLER' || req.user.role === 'WHOLESALER') {
+    if (
+      req.user.role === 'SELLER' ||
+      req.user.role === 'B2C_SELLER' ||
+      req.user.role === 'WHOLESALER'
+    ) {
       const seller = await this.webhooksService['prisma'].seller.findUnique({
         where: { userId: req.user.id },
       });

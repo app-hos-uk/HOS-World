@@ -10,6 +10,7 @@ jest.mock('bcrypt');
 
 describe('AdminService', () => {
   let service: AdminService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let prismaService: PrismaService;
 
   const mockPrismaService = {
@@ -249,7 +250,7 @@ describe('AdminService', () => {
     it('should return aggregated user statistics', async () => {
       mockPrismaService.user.count
         .mockResolvedValueOnce(100) // total
-        .mockResolvedValueOnce(5)   // inactive
+        .mockResolvedValueOnce(5) // inactive
         .mockResolvedValueOnce(20); // newThisMonth
       (mockPrismaService.user as any).groupBy = jest.fn().mockResolvedValue([
         { role: 'ADMIN', _count: 2 },
@@ -369,9 +370,9 @@ describe('AdminService', () => {
         role: 'ADMIN',
       });
 
-      await expect(
-        service.updateUser('admin-1', { role: 'CUSTOMER' }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.updateUser('admin-1', { role: 'CUSTOMER' })).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should prevent deactivating a protected admin', async () => {
@@ -381,9 +382,9 @@ describe('AdminService', () => {
         role: 'ADMIN',
       });
 
-      await expect(
-        service.updateUser('admin-1', { isActive: false }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.updateUser('admin-1', { isActive: false })).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException for invalid role string', async () => {
@@ -392,9 +393,9 @@ describe('AdminService', () => {
         email: 'user@example.com',
       });
 
-      await expect(
-        service.updateUser('user-1', { role: 'INVALID_ROLE' }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.updateUser('user-1', { role: 'INVALID_ROLE' })).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw when email is already taken', async () => {
@@ -402,9 +403,9 @@ describe('AdminService', () => {
         .mockResolvedValueOnce({ id: 'user-1', email: 'old@example.com' })
         .mockResolvedValueOnce({ id: 'user-2', email: 'taken@example.com' });
 
-      await expect(
-        service.updateUser('user-1', { email: 'taken@example.com' }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.updateUser('user-1', { email: 'taken@example.com' })).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 

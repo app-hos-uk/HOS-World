@@ -38,10 +38,7 @@ describe('ShippingService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ShippingService,
-        { provide: PrismaService, useValue: mockPrisma },
-      ],
+      providers: [ShippingService, { provide: PrismaService, useValue: mockPrisma }],
     }).compile();
 
     service = module.get(ShippingService);
@@ -76,7 +73,13 @@ describe('ShippingService', () => {
     });
 
     it('creates a shipping method with isActive false', async () => {
-      const dto = { name: 'Draft', description: null, type: 'WEIGHT_BASED', sellerId: 's-1', isActive: false };
+      const dto = {
+        name: 'Draft',
+        description: null,
+        type: 'WEIGHT_BASED',
+        sellerId: 's-1',
+        isActive: false,
+      };
       const created = { id: 'sm-2', ...dto, rules: [], seller: { id: 's-1', storeName: 'Shop' } };
       mockPrisma.shippingMethod.create.mockResolvedValue(created);
 
@@ -1085,17 +1088,17 @@ describe('ShippingService', () => {
       });
 
       it('throws BadRequestException for empty name', async () => {
-        await expect(
-          service.createShippingCarrier({ name: '   ' } as any),
-        ).rejects.toThrow(BadRequestException);
+        await expect(service.createShippingCarrier({ name: '   ' } as any)).rejects.toThrow(
+          BadRequestException,
+        );
       });
 
       it('throws BadRequestException for duplicate name', async () => {
         mockPrisma.shippingCarrier.findUnique.mockResolvedValue({ id: 'c-existing' });
 
-        await expect(
-          service.createShippingCarrier({ name: 'UPS' } as any),
-        ).rejects.toThrow(BadRequestException);
+        await expect(service.createShippingCarrier({ name: 'UPS' } as any)).rejects.toThrow(
+          BadRequestException,
+        );
       });
 
       it('throws BadRequestException for duplicate code', async () => {
@@ -1121,16 +1124,16 @@ describe('ShippingService', () => {
 
       it('throws NotFoundException when carrier not found', async () => {
         mockPrisma.shippingCarrier.findUnique.mockResolvedValue(null);
-        await expect(
-          service.updateShippingCarrier('missing', {} as any),
-        ).rejects.toThrow(NotFoundException);
+        await expect(service.updateShippingCarrier('missing', {} as any)).rejects.toThrow(
+          NotFoundException,
+        );
       });
 
       it('throws BadRequestException for empty name', async () => {
         mockPrisma.shippingCarrier.findUnique.mockResolvedValue({ id: 'c-1' });
-        await expect(
-          service.updateShippingCarrier('c-1', { name: '  ' } as any),
-        ).rejects.toThrow(BadRequestException);
+        await expect(service.updateShippingCarrier('c-1', { name: '  ' } as any)).rejects.toThrow(
+          BadRequestException,
+        );
       });
 
       it('throws BadRequestException for duplicate name', async () => {

@@ -68,7 +68,8 @@ export class GuestCheckoutDto {
   @IsString()
   @MaxLength(32)
   @Matches(/^\+?[\d\s()-]+$/, {
-    message: 'Phone may only contain digits, spaces, hyphens, parentheses, and an optional leading +',
+    message:
+      'Phone may only contain digits, spaces, hyphens, parentheses, and an optional leading +',
   })
   phone?: string;
 

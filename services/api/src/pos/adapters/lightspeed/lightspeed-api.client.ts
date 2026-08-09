@@ -38,9 +38,7 @@ export class LightspeedApiClient {
       try {
         const lastRaw = await this.redis.get(key);
         const last = lastRaw ? Number(lastRaw) : 0;
-        const wait = Number.isFinite(last)
-          ? Math.max(0, MIN_INTERVAL_MS - (Date.now() - last))
-          : 0;
+        const wait = Number.isFinite(last) ? Math.max(0, MIN_INTERVAL_MS - (Date.now() - last)) : 0;
         if (wait > 0) await new Promise((r) => setTimeout(r, wait));
         await this.redis.set(key, String(Date.now()), 60);
         this.lastRequestAt = Date.now();
@@ -114,12 +112,16 @@ export class LightspeedApiClient {
       } catch (e) {
         lastErr = e as Error;
         if (attempt < MAX_RETRIES) {
-          await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt) + Math.random() * 200));
+          await new Promise((r) =>
+            setTimeout(r, 1000 * Math.pow(2, attempt) + Math.random() * 200),
+          );
         }
       }
     }
 
-    this.logger.warn(`Lightspeed request failed after ${MAX_RETRIES} attempts: ${lastErr?.message}`);
+    this.logger.warn(
+      `Lightspeed request failed after ${MAX_RETRIES} attempts: ${lastErr?.message}`,
+    );
     throw lastErr || new Error('Lightspeed request failed');
   }
 

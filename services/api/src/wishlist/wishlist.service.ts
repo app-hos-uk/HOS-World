@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import type { Product } from '@hos-marketplace/shared-types';
-import { ProductStatus, ImageType } from '@prisma/client';
+import { ImageType } from '@prisma/client';
 
 // Valid product status values for the shared types Product interface
 type ValidProductStatus = 'draft' | 'active' | 'inactive' | 'out_of_stock';

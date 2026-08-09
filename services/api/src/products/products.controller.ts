@@ -21,7 +21,6 @@ import {
   ApiResponse as SwaggerApiResponse,
   ApiBearerAuth,
   ApiParam,
-  ApiQuery,
   ApiBody,
 } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
@@ -108,15 +107,12 @@ export class ProductsController {
   })
   @ApiParam({ name: 'id', description: 'Product UUID', type: String })
   @SwaggerApiResponse({ status: 201, description: 'View tracked successfully' })
-  async trackView(
-    @Param('id') id: string,
-    @Req() req: any,
-  ) {
+  async trackView(@Param('id') id: string, @Req() req: any) {
     // Best-effort extraction of userId from JWT on this @Public() endpoint
     let userId: string | undefined;
     try {
-      const token = req.cookies?.[AUTH_COOKIE_NAME]
-        || req.headers?.authorization?.replace('Bearer ', '');
+      const token =
+        req.cookies?.[AUTH_COOKIE_NAME] || req.headers?.authorization?.replace('Bearer ', '');
       if (token) {
         const secret = this.configService.get<string>('JWT_SECRET');
         const payload = verify(token, secret!) as any;
@@ -129,7 +125,9 @@ export class ProductsController {
     await this.productsService.trackProductView(id, {
       userId,
       sessionId: req.headers['x-session-id'],
-      ipHash: req.ip ? createHash('sha256').update(req.ip).digest('hex').substring(0, 16) : undefined,
+      ipHash: req.ip
+        ? createHash('sha256').update(req.ip).digest('hex').substring(0, 16)
+        : undefined,
       userAgent: req.headers['user-agent']?.substring(0, 200),
       referrer: req.headers['referer']?.substring(0, 500),
     });
@@ -216,7 +214,8 @@ export class ProductsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Bulk update seller products',
-    description: 'Update status, stock, or apply price adjustment to multiple products (Seller only)',
+    description:
+      'Update status, stock, or apply price adjustment to multiple products (Seller only)',
   })
   async bulkUpdate(
     @Request() req: any,

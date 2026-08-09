@@ -126,7 +126,9 @@ export class ProductsService {
 
     // Sanitize and validate tagIds if provided
     if (createProductDto.tagIds) {
-      createProductDto.tagIds = createProductDto.tagIds.filter((id): id is string => typeof id === 'string' && id.length > 0);
+      createProductDto.tagIds = createProductDto.tagIds.filter(
+        (id): id is string => typeof id === 'string' && id.length > 0,
+      );
     }
     if (createProductDto.tagIds && createProductDto.tagIds.length > 0) {
       const tags = await this.prisma.tag.findMany({
@@ -349,7 +351,9 @@ export class ProductsService {
       where.categoryId = searchDto.categoryId;
     }
 
-    const validSearchTagIds = searchDto.tagIds?.filter((id): id is string => typeof id === 'string' && id.length > 0);
+    const validSearchTagIds = searchDto.tagIds?.filter(
+      (id): id is string => typeof id === 'string' && id.length > 0,
+    );
     if (validSearchTagIds && validSearchTagIds.length > 0) {
       where.tagsRelation = {
         some: {
@@ -631,7 +635,11 @@ export class ProductsService {
     return this.mapToProductType(product, includeSeller);
   }
 
-  async findBySlugOnly(slug: string, includeSeller: boolean = false, requireActive: boolean = true): Promise<Product> {
+  async findBySlugOnly(
+    slug: string,
+    includeSeller: boolean = false,
+    requireActive: boolean = true,
+  ): Promise<Product> {
     const product = await this.prisma.product.findFirst({
       where: { slug, ...(requireActive ? { status: 'ACTIVE' as any } : {}) },
       include: {
@@ -734,7 +742,9 @@ export class ProductsService {
 
     // Sanitize and validate tagIds if provided
     if (updateProductDto.tagIds) {
-      updateProductDto.tagIds = updateProductDto.tagIds.filter((id): id is string => typeof id === 'string' && id.length > 0);
+      updateProductDto.tagIds = updateProductDto.tagIds.filter(
+        (id): id is string => typeof id === 'string' && id.length > 0,
+      );
     }
     if (updateProductDto.tagIds && updateProductDto.tagIds.length > 0) {
       const tags = await this.prisma.tag.findMany({
@@ -903,10 +913,7 @@ export class ProductsService {
       throw new BadRequestException('No products selected');
     }
 
-    if (
-      updates.stock != null &&
-      (typeof updates.stock !== 'number' || updates.stock < 0)
-    ) {
+    if (updates.stock != null && (typeof updates.stock !== 'number' || updates.stock < 0)) {
       throw new BadRequestException('Stock cannot be negative');
     }
 
@@ -1016,13 +1023,16 @@ export class ProductsService {
     }
   }
 
-  async trackProductView(productId: string, data: {
-    userId?: string;
-    sessionId?: string;
-    ipHash?: string;
-    userAgent?: string;
-    referrer?: string;
-  }) {
+  async trackProductView(
+    productId: string,
+    data: {
+      userId?: string;
+      sessionId?: string;
+      ipHash?: string;
+      userAgent?: string;
+      referrer?: string;
+    },
+  ) {
     try {
       await this.prisma.$transaction([
         this.prisma.productView.create({
@@ -1054,8 +1064,12 @@ export class ProductsService {
       barcode: product.barcode || undefined,
       ean: product.ean || undefined,
       price: Number(product.price),
-      tradePrice: isPublicContext ? undefined : (product.tradePrice ? Number(product.tradePrice) : undefined),
-      rrp: isPublicContext ? undefined : (product.rrp ? Number(product.rrp) : undefined),
+      tradePrice: isPublicContext
+        ? undefined
+        : product.tradePrice
+          ? Number(product.tradePrice)
+          : undefined,
+      rrp: isPublicContext ? undefined : product.rrp ? Number(product.rrp) : undefined,
       currency: product.currency,
       taxRate: Number(product.taxRate),
       stock: product.stock,
@@ -1294,7 +1308,10 @@ export class ProductsService {
           /* fall through */
         }
       }
-      return trimmed.split(',').map((v) => v.trim()).filter(Boolean);
+      return trimmed
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
     }
     return [];
   }

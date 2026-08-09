@@ -334,8 +334,6 @@ function assertBalanced(lines: XeroJournalLine[]): void {
   const debit = lines.reduce((s, l) => s + (l.debit ?? 0), 0);
   const credit = lines.reduce((s, l) => s + (l.credit ?? 0), 0);
   if (Math.abs(round2(debit) - round2(credit)) > 0.009) {
-    throw new BadRequestException(
-      `Journal lines do not balance: debit=${debit} credit=${credit}`,
-    );
+    throw new BadRequestException(`Journal lines do not balance: debit=${debit} credit=${credit}`);
   }
 }

@@ -69,7 +69,10 @@ export class ReturnsEnhancementsService {
       throw new BadRequestException('Return must be approved before generating a return label');
     }
 
-    const baseUrl = this.configService.get<string>('RETURN_LABELS_BASE_URL') || this.configService.get<string>('FRONTEND_URL') || 'https://localhost';
+    const baseUrl =
+      this.configService.get<string>('RETURN_LABELS_BASE_URL') ||
+      this.configService.get<string>('FRONTEND_URL') ||
+      'https://localhost';
     const labelUrl = `${baseUrl}/returns/${returnRequest.id}`;
     const trackingNumber = `RTN${returnRequest.id.substring(0, 8).toUpperCase()}`;
 
@@ -77,8 +80,7 @@ export class ReturnsEnhancementsService {
       where: { id: returnRequestId },
       data: {
         notes:
-          (returnRequest.notes || '') +
-          ` [Return label: ${labelUrl}, tracking: ${trackingNumber}]`,
+          (returnRequest.notes || '') + ` [Return label: ${labelUrl}, tracking: ${trackingNumber}]`,
       },
     });
 

@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { CreateNewsletterSubscriptionDto } from './dto/create-newsletter-subscription.dto';
@@ -61,8 +56,7 @@ export class NewsletterService {
   }
 
   private async sendSubscriptionConfirmationEmail(email: string): Promise<void> {
-    const frontendUrl =
-      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
     const unsubscribeUrl = `${frontendUrl}/shop#newsletter`;
 
     try {

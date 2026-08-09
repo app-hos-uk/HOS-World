@@ -306,14 +306,13 @@ export class AdminProductsController {
   @Get(':id/publish-readiness')
   @ApiOperation({
     summary: 'Check product publish readiness',
-    description: 'Returns a checklist of requirements that must be met before a product can be published (set to ACTIVE).',
+    description:
+      'Returns a checklist of requirements that must be met before a product can be published (set to ACTIVE).',
   })
   @ApiParam({ name: 'id', description: 'Product UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Readiness checklist returned' })
   @SwaggerApiResponse({ status: 404, description: 'Product not found' })
-  async getPublishReadiness(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<any>> {
+  async getPublishReadiness(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
     const result = await this.productsService.getPublishReadiness(id);
     return {
       data: result,
@@ -334,7 +333,11 @@ export class AdminProductsController {
       required: ['canonicalProductId', 'duplicateProductId'],
       properties: {
         canonicalProductId: { type: 'string', format: 'uuid', description: 'Product to keep' },
-        duplicateProductId: { type: 'string', format: 'uuid', description: 'Product to merge/remove' },
+        duplicateProductId: {
+          type: 'string',
+          format: 'uuid',
+          description: 'Product to merge/remove',
+        },
       },
     },
   })

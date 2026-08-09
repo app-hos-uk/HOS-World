@@ -25,7 +25,8 @@ export class LoyaltyJobsService implements OnModuleInit {
     private featureFlags: FeatureFlagsService,
     private fandomProfiles: FandomProfileService,
     private settings: LoyaltySettingsService,
-    @Optional() @Inject(forwardRef(() => MarketingEventBus))
+    @Optional()
+    @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
   ) {}
 

@@ -431,9 +431,9 @@ export class PosSalesImportService {
     });
     if (!conn) return 0;
 
-    const settings = (conn.settings && typeof conn.settings === 'object'
-      ? conn.settings
-      : {}) as ConnectionSettings;
+    const settings = (
+      conn.settings && typeof conn.settings === 'object' ? conn.settings : {}
+    ) as ConnectionSettings;
     const afterVersion =
       typeof settings.lastSaleVersion === 'number' && Number.isFinite(settings.lastSaleVersion)
         ? settings.lastSaleVersion

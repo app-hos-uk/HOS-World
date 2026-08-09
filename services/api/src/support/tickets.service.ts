@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
@@ -12,23 +17,27 @@ export class TicketsService {
     return `${prefix}-${timestamp}-${random}`;
   }
 
-  async createTicket(data: {
-    userId?: string;
-    sellerId?: string;
-    orderId?: string;
-    subject: string;
-    category:
-      | 'ORDER_INQUIRY'
-      | 'PRODUCT_QUESTION'
-      | 'RETURN_REQUEST'
-      | 'PAYMENT_ISSUE'
-      | 'TECHNICAL_SUPPORT'
-      | 'SELLER_SUPPORT'
-      | 'OTHER';
-    priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-    initialMessage?: string;
-    description?: string; // Frontend may send description instead of initialMessage
-  }, requestingUserId?: string, requestingUserRole?: string) {
+  async createTicket(
+    data: {
+      userId?: string;
+      sellerId?: string;
+      orderId?: string;
+      subject: string;
+      category:
+        | 'ORDER_INQUIRY'
+        | 'PRODUCT_QUESTION'
+        | 'RETURN_REQUEST'
+        | 'PAYMENT_ISSUE'
+        | 'TECHNICAL_SUPPORT'
+        | 'SELLER_SUPPORT'
+        | 'OTHER';
+      priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+      initialMessage?: string;
+      description?: string; // Frontend may send description instead of initialMessage
+    },
+    requestingUserId?: string,
+    requestingUserRole?: string,
+  ) {
     const ticketNumber = await this.generateTicketNumber();
 
     // Calculate SLA due date (24 hours for URGENT, 48 hours for HIGH, 72 hours for others)
@@ -403,8 +412,7 @@ export class TicketsService {
     }
 
     const isAdmin = requestingUserRole === 'ADMIN';
-    const isAssignedAgent =
-      !!data.userId && (ticket as any).assignedAgent?.id === data.userId;
+    const isAssignedAgent = !!data.userId && (ticket as any).assignedAgent?.id === data.userId;
 
     // Only the ticket owner, the assigned agent, or an admin may post to a ticket.
     if (!isAdmin && !isAssignedAgent && ticket.userId !== data.userId) {
@@ -412,7 +420,7 @@ export class TicketsService {
     }
 
     // Internal notes may only be created by admins or the assigned agent.
-    const isInternal = (isAdmin || isAssignedAgent) ? data.isInternal || false : false;
+    const isInternal = isAdmin || isAssignedAgent ? data.isInternal || false : false;
 
     // Update ticket status if needed
     const statusUpdate: any = {};

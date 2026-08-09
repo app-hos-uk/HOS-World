@@ -51,9 +51,7 @@ export class RefundsService {
       throw new NotFoundException('Return request not found');
     }
 
-    const allowedStatuses = data.isRetry
-      ? ['APPROVED', 'PROCESSING']
-      : ['PENDING', 'APPROVED'];
+    const allowedStatuses = data.isRetry ? ['APPROVED', 'PROCESSING'] : ['PENDING', 'APPROVED'];
     if (!allowedStatuses.includes(returnRequest.status)) {
       throw new BadRequestException(
         data.isRetry
@@ -100,9 +98,7 @@ export class RefundsService {
 
     if (data.isRetry) {
       if (hasPending) {
-        throw new BadRequestException(
-          'A refund attempt is already in progress for this return',
-        );
+        throw new BadRequestException('A refund attempt is already in progress for this return');
       }
       if (!hasFailed) {
         throw new BadRequestException('No failed refund exists to retry');
@@ -118,9 +114,7 @@ export class RefundsService {
     const retryAttempt = priorTxs.length;
 
     const sellerId =
-      returnRequest.order.sellerId ||
-      returnRequest.order.childOrders?.[0]?.sellerId ||
-      undefined;
+      returnRequest.order.sellerId || returnRequest.order.childOrders?.[0]?.sellerId || undefined;
 
     const transaction = await this.transactionsService.createTransaction({
       type: 'REFUND',
@@ -233,7 +227,11 @@ export class RefundsService {
       await this.paymentProviderService.ensureAvailableProviders();
     }
 
-    if (stripePaymentId && cardRefundAmount > 0 && this.paymentProviderService.isProviderAvailable('stripe')) {
+    if (
+      stripePaymentId &&
+      cardRefundAmount > 0 &&
+      this.paymentProviderService.isProviderAvailable('stripe')
+    ) {
       const provider = this.paymentProviderService.getProvider('stripe');
       const result = await provider.refundPayment({
         paymentId: stripePaymentId,
@@ -308,9 +306,7 @@ export class RefundsService {
         reason: 'Gift-card-only or no card charge — refund completed without Stripe',
       });
       await this.updatePaymentRefundTotal(returnRequest.orderId, data.amount);
-      this.logger.log(
-        `Refund for return ${data.returnId} completed (no Stripe refund needed)`,
-      );
+      this.logger.log(`Refund for return ${data.returnId} completed (no Stripe refund needed)`);
     } else {
       stripeError = 'No payment provider configured for refund';
       await this.transactionsService.updateTransactionStatus(transaction.id, 'PENDING', {
@@ -324,10 +320,7 @@ export class RefundsService {
     // admin already restored still counts once and only once.
     const giftCardSettled =
       giftCardRefundAmount > 0
-        ? Math.min(
-            giftCardRefundAmount,
-            await this.giftCardRefundedForOrder(returnRequest.orderId),
-          )
+        ? Math.min(giftCardRefundAmount, await this.giftCardRefundedForOrder(returnRequest.orderId))
         : 0;
     const settledRefundAmount =
       Math.round((giftCardSettled + (stripeRefundSucceeded ? cardRefundAmount : 0)) * 100) / 100;
@@ -384,9 +377,7 @@ export class RefundsService {
       throw new NotFoundException('Return request not found');
     }
     if (!['APPROVED', 'PROCESSING'].includes(returnRequest.status)) {
-      throw new BadRequestException(
-        'Only approved returns with a failed refund can be retried',
-      );
+      throw new BadRequestException('Only approved returns with a failed refund can be retried');
     }
 
     const priorAttempts = await this.transactionsService.getTransactions({
@@ -454,20 +445,18 @@ export class RefundsService {
     const orderTotal = Number(order.total || 0);
     const ledgerBase =
       orderTotal > 0 && orderSubtotal > 0
-        ? Math.round((customerRefundAmount * orderSubtotal) / orderTotal * 100) / 100
+        ? Math.round(((customerRefundAmount * orderSubtotal) / orderTotal) * 100) / 100
         : customerRefundAmount;
 
     const childOrders = order.childOrders || [];
     if (childOrders.length > 0) {
-      const childSubtotalSum = childOrders.reduce(
-        (sum, c) => sum + Number(c.subtotal || 0),
-        0,
-      );
+      const childSubtotalSum = childOrders.reduce((sum, c) => sum + Number(c.subtotal || 0), 0);
       for (const child of childOrders) {
         if (!child.sellerId) continue;
         const share =
           childSubtotalSum > 0
-            ? Math.round((ledgerBase * Number(child.subtotal || 0)) / childSubtotalSum * 100) / 100
+            ? Math.round(((ledgerBase * Number(child.subtotal || 0)) / childSubtotalSum) * 100) /
+              100
             : ledgerBase / childOrders.length;
         const commissionRate = child.seller?.commissionRate
           ? Number(child.seller.commissionRate)

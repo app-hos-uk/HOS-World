@@ -1,10 +1,9 @@
-import { Controller, Get, Put, Param, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Put, Body, UseGuards, Request } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse as SwaggerApiResponse,
   ApiBearerAuth,
-  ApiParam,
 } from '@nestjs/swagger';
 import { InfluencerStorefrontsService } from './influencer-storefronts.service';
 import { UpdateStorefrontDto } from './dto/update-storefront.dto';
@@ -39,7 +38,10 @@ export class InfluencerStorefrontsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update my storefront settings' })
   @SwaggerApiResponse({ status: 200, description: 'Storefront updated successfully' })
-  async updateMyStorefront(@Request() req: any, @Body() dto: UpdateStorefrontDto): Promise<ApiResponse<any>> {
+  async updateMyStorefront(
+    @Request() req: any,
+    @Body() dto: UpdateStorefrontDto,
+  ): Promise<ApiResponse<any>> {
     const storefront = await this.storefrontsService.update(req.user.id, dto);
     return {
       data: storefront,

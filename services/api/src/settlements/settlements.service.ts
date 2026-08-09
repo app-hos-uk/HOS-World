@@ -51,10 +51,7 @@ export class SettlementsService {
         orderSettlements: {
           none: {},
         },
-        OR: [
-          { platformFeeAmount: null },
-          { platformFeeAmount: { lte: 0 } },
-        ],
+        OR: [{ platformFeeAmount: null }, { platformFeeAmount: { lte: 0 } }],
       },
       include: {
         items: true,
@@ -63,9 +60,7 @@ export class SettlementsService {
 
     let totalSales = new Decimal(0);
     let platformFees = new Decimal(0);
-    const platformFeeRate = new Decimal(
-      (seller as any).commissionRate ?? this.defaultFeeRate,
-    );
+    const platformFeeRate = new Decimal((seller as any).commissionRate ?? this.defaultFeeRate);
 
     for (const order of orders) {
       let orderTotalBase: Decimal;
@@ -168,9 +163,7 @@ export class SettlementsService {
       });
 
       // Use the same fee rate from calculation (seller's commissionRate or configured default)
-      const feeRate = new Decimal(
-        (seller as any).commissionRate ?? this.defaultFeeRate,
-      );
+      const feeRate = new Decimal((seller as any).commissionRate ?? this.defaultFeeRate);
 
       for (const { orderId, amountBase } of orderConversions) {
         const orderFee = new Decimal(amountBase).mul(feeRate);
@@ -328,9 +321,7 @@ export class SettlementsService {
         }
 
         // Apply same fee rate to get net payout for non-split orders
-        const feeRate = new Decimal(
-          (seller as any).commissionRate ?? this.defaultFeeRate,
-        );
+        const feeRate = new Decimal((seller as any).commissionRate ?? this.defaultFeeRate);
         const nonSplitFee = nonSplitTotal.mul(feeRate);
         const transferAmount = Number(nonSplitTotal.sub(nonSplitFee));
 
@@ -399,7 +390,9 @@ export class SettlementsService {
           },
         });
       } catch (txErr: any) {
-        this.logger.warn(`Finance transaction record failed for settlement ${id}: ${txErr?.message}`);
+        this.logger.warn(
+          `Finance transaction record failed for settlement ${id}: ${txErr?.message}`,
+        );
       }
     }
 

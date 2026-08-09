@@ -6,11 +6,7 @@ import { FinanceModule } from '../finance/finance.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [
-    forwardRef(() => OrdersModule),
-    FinanceModule,
-    forwardRef(() => NotificationsModule),
-  ],
+  imports: [forwardRef(() => OrdersModule), FinanceModule, forwardRef(() => NotificationsModule)],
   controllers: [CancellationsController],
   providers: [CancellationsService],
   exports: [CancellationsService],

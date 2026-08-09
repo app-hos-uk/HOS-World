@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Query,
-  Param,
   UseGuards,
   Request,
   Res,
@@ -23,9 +22,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
-// @ts-ignore - exceljs types may not be available
 import * as ExcelJS from 'exceljs';
-// @ts-ignore - pdfkit types may not be available
 import * as PDFDocument from 'pdfkit';
 
 @ApiTags('analytics')
@@ -273,10 +270,21 @@ export class AnalyticsController {
   @Roles('ADMIN')
   @ApiOperation({
     summary: 'Get wholesale metrics (admin only)',
-    description: 'Retrieves wholesale-specific operational analytics including order volume and revenue.',
+    description:
+      'Retrieves wholesale-specific operational analytics including order volume and revenue.',
   })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Start date (ISO format)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'End date (ISO format)' })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date (ISO format)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date (ISO format)',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Wholesale metrics retrieved successfully' })
   async getWholesaleMetrics(
     @Query('startDate') startDate?: string,
@@ -294,7 +302,8 @@ export class AnalyticsController {
   @Roles('ADMIN')
   @ApiOperation({
     summary: 'Get operational health metrics (admin only)',
-    description: 'Retrieves operational metrics for notifications, reviews, discrepancies, and activity logging.',
+    description:
+      'Retrieves operational metrics for notifications, reviews, discrepancies, and activity logging.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Operational metrics retrieved successfully' })
   async getOperationalMetrics(): Promise<ApiResponse<any>> {

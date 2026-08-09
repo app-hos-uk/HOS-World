@@ -12,7 +12,7 @@ export class ThemesSeedService implements OnModuleInit {
       try {
         // Check if themes table exists by attempting a simple query
         // If table doesn't exist, Prisma will throw an error
-        await this.prisma.$queryRaw`SELECT 1 FROM themes LIMIT 1`.catch((err: any) => {
+        await this.prisma.$queryRaw`SELECT 1 FROM themes LIMIT 1`.catch((_err: any) => {
           throw new Error('Themes table does not exist. Please run database migrations first.');
         });
 

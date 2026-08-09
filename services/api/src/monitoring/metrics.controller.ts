@@ -1,8 +1,12 @@
 import { Controller, Get, Header, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse as SwaggerApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse as SwaggerApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { MetricsService } from './metrics.service';
 import { MonitoringService } from './monitoring.service';
-import { Public } from '../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';

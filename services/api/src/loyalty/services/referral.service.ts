@@ -18,7 +18,11 @@ export class LoyaltyReferralService {
     if (existing) return existing.referralCode;
 
     const brand = this.config.get<string>('LOYALTY_CARD_PREFIX', 'HOS');
-    const prefix = (firstName || 'FRIEND').replace(/[^a-zA-Z0-9]/g, '').slice(0, 12).toUpperCase() || 'FRIEND';
+    const prefix =
+      (firstName || 'FRIEND')
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .slice(0, 12)
+        .toUpperCase() || 'FRIEND';
     const suffix = randomBytes(2).toString('hex').toUpperCase();
     const code = `${brand}-${prefix}-${suffix}`;
 

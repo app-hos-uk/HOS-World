@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { GeminiService } from '../ai/gemini.service';
 
@@ -21,7 +21,10 @@ export class ChatbotService {
       ticketId?: string;
     };
   }) {
-    if ((data.context?.orderId || data.context?.productId || data.context?.ticketId || data.userId) && !data.authenticatedUserId) {
+    if (
+      (data.context?.orderId || data.context?.productId || data.context?.ticketId || data.userId) &&
+      !data.authenticatedUserId
+    ) {
       throw new UnauthorizedException('Authentication required for personalized support');
     }
 
@@ -90,7 +93,7 @@ export class ChatbotService {
     }
 
     // Build the full prompt
-    const fullPrompt = `${contextPrompt}\n\n${conversationHistory}\n\nCustomer question: ${data.message}\n\nPlease provide a helpful, concise response. If you cannot help, suggest escalating to a human agent.`;
+    const _fullPrompt = `${contextPrompt}\n\n${conversationHistory}\n\nCustomer question: ${data.message}\n\nPlease provide a helpful, concise response. If you cannot help, suggest escalating to a human agent.`;
 
     // Get AI response
     const aiResponse = await this.geminiService.generateChatResponse(
@@ -170,7 +173,7 @@ export class ChatbotService {
     return false;
   }
 
-  async getChatHistory(conversationId: string) {
+  async getChatHistory(_conversationId: string) {
     // In a real implementation, you'd store and retrieve chat history
     // For now, return empty array
     return [];

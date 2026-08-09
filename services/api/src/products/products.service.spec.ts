@@ -7,6 +7,7 @@ import { ProductsCacheHook } from './products-cache.hook';
 
 describe('ProductsService - Phase 1 Tests', () => {
   let service: ProductsService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let prismaService: PrismaService;
 
   const mockPrismaService = {

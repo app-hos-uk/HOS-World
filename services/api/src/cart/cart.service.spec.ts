@@ -1,9 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { CartService } from './cart.service';
 import { PrismaService } from '../database/prisma.service';
@@ -136,7 +132,10 @@ describe('CartService', () => {
     mockPrisma.wishlistItem.deleteMany.mockResolvedValue({ count: 0 });
     mockPrisma.address.findFirst.mockResolvedValue(null);
     mockPrisma.user.findUnique.mockResolvedValue(null);
-    mockPromotionsService.applyPromotionsToCart.mockResolvedValue({ discount: 0, freeShipping: false });
+    mockPromotionsService.applyPromotionsToCart.mockResolvedValue({
+      discount: 0,
+      freeShipping: false,
+    });
   });
 
   describe('getCart', () => {
@@ -497,7 +496,12 @@ describe('CartService', () => {
       it('adds item to guest cart', async () => {
         mockPrisma.product.findUnique.mockResolvedValue(mockProduct);
         mockPrisma.cart.findUnique
-          .mockResolvedValueOnce({ id: 'g-cart', guestSessionId: validGuestId, userId: null, items: [] })
+          .mockResolvedValueOnce({
+            id: 'g-cart',
+            guestSessionId: validGuestId,
+            userId: null,
+            items: [],
+          })
           .mockResolvedValueOnce({ ...mockCart, userId: null, guestSessionId: validGuestId });
         mockPrisma.cartItem.create.mockResolvedValue(mockCartItem);
         mockPrisma.cart.update.mockResolvedValue({ ...mockCart, userId: null });
@@ -712,9 +716,7 @@ describe('CartService', () => {
       const guestCart = {
         id: 'g-cart',
         guestSessionId: validGuestId,
-        items: [
-          { productId: 'product-1', quantity: 2, variationOptions: {} },
-        ],
+        items: [{ productId: 'product-1', quantity: 2, variationOptions: {} }],
       };
       mockPrisma.cart.findUnique.mockResolvedValueOnce(guestCart);
       mockPrisma.product.findUnique.mockResolvedValue(mockProduct);

@@ -14,10 +14,7 @@ import type {
   POSSalesPage,
 } from '../../interfaces/pos-types';
 import { LightspeedApiClient, type LightspeedRedisThrottle } from './lightspeed-api.client';
-import {
-  LightspeedAuthService,
-  type LightspeedRedisLock,
-} from './lightspeed-auth.service';
+import { LightspeedAuthService, type LightspeedRedisLock } from './lightspeed-auth.service';
 import * as M from './lightspeed.mapper';
 
 export class LightspeedAdapter implements POSAdapter {
@@ -83,7 +80,11 @@ export class LightspeedAdapter implements POSAdapter {
       return String(pid || product.existingExternalId);
     }
 
-    const { data } = await this.client.request<{ data?: { id?: string } }>('POST', '/products', body);
+    const { data } = await this.client.request<{ data?: { id?: string } }>(
+      'POST',
+      '/products',
+      body,
+    );
     const id = data?.data?.id ?? (data as { id?: string })?.id;
     return String(id || product.internalId);
   }
@@ -153,21 +154,14 @@ export class LightspeedAdapter implements POSAdapter {
       email: row.email ? String(row.email) : undefined,
       firstName: row.first_name ? String(row.first_name) : undefined,
       lastName: row.last_name ? String(row.last_name) : undefined,
-      phone: row.phone
-        ? String(row.phone)
-        : row.mobile
-          ? String(row.mobile)
-          : undefined,
+      phone: row.phone ? String(row.phone) : row.mobile ? String(row.mobile) : undefined,
     };
   }
 
   /**
    * Page Lightspeed customers (version cursor). Used by identity backfill.
    */
-  async listCustomersPage(params: {
-    after?: number;
-    pageSize?: number;
-  }): Promise<{
+  async listCustomersPage(params: { after?: number; pageSize?: number }): Promise<{
     customers: Array<{
       id: string;
       email?: string;
@@ -310,8 +304,7 @@ export class LightspeedAdapter implements POSAdapter {
         }
         sales.push(mapped);
         if (mapped.version != null && Number.isFinite(mapped.version)) {
-          maxVersion =
-            maxVersion == null ? mapped.version : Math.max(maxVersion, mapped.version);
+          maxVersion = maxVersion == null ? mapped.version : Math.max(maxVersion, mapped.version);
         }
       }
 
@@ -369,9 +362,9 @@ export class LightspeedAdapter implements POSAdapter {
   }
 
   parseWebhookSale(payload: unknown): POSSale {
-    const p = (typeof payload === 'object' && payload !== null
-      ? (payload as Record<string, unknown>)
-      : {}) as Record<string, unknown>;
+    const p = (
+      typeof payload === 'object' && payload !== null ? (payload as Record<string, unknown>) : {}
+    ) as Record<string, unknown>;
 
     let inner: Record<string, unknown>;
     if (typeof p.payload === 'string') {
@@ -403,10 +396,7 @@ export class LightspeedAdapter implements POSAdapter {
       let path = `/gift_cards?page_size=${pageSize}`;
       if (before) path += `&before=${encodeURIComponent(before)}`;
 
-      const { data } = await this.client.request<{ data?: Record<string, unknown>[] }>(
-        'GET',
-        path,
-      );
+      const { data } = await this.client.request<{ data?: Record<string, unknown>[] }>('GET', path);
       const rows = Array.isArray(data?.data) ? data.data : [];
       if (rows.length === 0) break;
 
@@ -432,8 +422,7 @@ export class LightspeedAdapter implements POSAdapter {
       number: payload.number,
     };
     if (payload.expiresAt) {
-      const d =
-        payload.expiresAt instanceof Date ? payload.expiresAt : new Date(payload.expiresAt);
+      const d = payload.expiresAt instanceof Date ? payload.expiresAt : new Date(payload.expiresAt);
       if (!Number.isNaN(d.getTime())) {
         body.expires_at = d.toISOString().replace(/\.\d{3}Z$/, '+00:00');
       }
@@ -480,9 +469,7 @@ export class LightspeedAdapter implements POSAdapter {
         client_id: payload.clientId,
       },
     );
-    return this.mapGiftCardTransaction(
-      data?.data ?? (data as unknown as Record<string, unknown>),
-    );
+    return this.mapGiftCardTransaction(data?.data ?? (data as unknown as Record<string, unknown>));
   }
 
   async reverseGiftCardTransaction(transactionId: string): Promise<POSGiftCardTransaction> {
@@ -491,9 +478,7 @@ export class LightspeedAdapter implements POSAdapter {
       'DELETE',
       `/gift_cards/transactions/${encoded}`,
     );
-    return this.mapGiftCardTransaction(
-      data?.data ?? (data as unknown as Record<string, unknown>),
-    );
+    return this.mapGiftCardTransaction(data?.data ?? (data as unknown as Record<string, unknown>));
   }
 
   async voidGiftCard(number: string): Promise<POSGiftCard> {

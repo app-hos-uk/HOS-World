@@ -58,9 +58,7 @@ export class XeroAuthService {
     const clientId = this.config.get<string>('XERO_CLIENT_ID');
     const redirectUri = this.config.get<string>('XERO_REDIRECT_URI');
     if (!clientId || !redirectUri) {
-      throw new BadRequestException(
-        'XERO_CLIENT_ID and XERO_REDIRECT_URI must be configured',
-      );
+      throw new BadRequestException('XERO_CLIENT_ID and XERO_REDIRECT_URI must be configured');
     }
 
     const params = new URLSearchParams({
@@ -158,8 +156,7 @@ export class XeroAuthService {
       throw new BadRequestException('Xero is not connected — complete OAuth first');
     }
 
-    const tenantId =
-      creds.tenantId || this.config.get<string>('XERO_TENANT_ID') || '';
+    const tenantId = creds.tenantId || this.config.get<string>('XERO_TENANT_ID') || '';
     if (!tenantId) {
       throw new BadRequestException('Xero tenant id missing — set XERO_TENANT_ID or reconnect');
     }
@@ -197,11 +194,7 @@ export class XeroAuthService {
       // Another instance is refreshing — wait briefly and reload.
       await new Promise((r) => setTimeout(r, 750));
       const reloaded = await this.loadTokens();
-      if (
-        reloaded?.accessToken &&
-        reloaded.expiresAt &&
-        Date.now() < reloaded.expiresAt - 60_000
-      ) {
+      if (reloaded?.accessToken && reloaded.expiresAt && Date.now() < reloaded.expiresAt - 60_000) {
         return {
           accessToken: reloaded.accessToken,
           tenantId: reloaded.tenantId || tenantId,
@@ -210,11 +203,7 @@ export class XeroAuthService {
       // Still stale — try once more after another wait, then refresh ourselves.
       await new Promise((r) => setTimeout(r, 750));
       const again = await this.loadTokens();
-      if (
-        again?.accessToken &&
-        again.expiresAt &&
-        Date.now() < again.expiresAt - 60_000
-      ) {
+      if (again?.accessToken && again.expiresAt && Date.now() < again.expiresAt - 60_000) {
         return {
           accessToken: again.accessToken,
           tenantId: again.tenantId || tenantId,
@@ -307,9 +296,7 @@ export class XeroAuthService {
     });
   }
 
-  private async requestToken(
-    params: Record<string, string>,
-  ): Promise<XeroTokenCredentials> {
+  private async requestToken(params: Record<string, string>): Promise<XeroTokenCredentials> {
     const clientId = this.config.get<string>('XERO_CLIENT_ID');
     const clientSecret = this.config.get<string>('XERO_CLIENT_SECRET');
     if (!clientId || !clientSecret) {

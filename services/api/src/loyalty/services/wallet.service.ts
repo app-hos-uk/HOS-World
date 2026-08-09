@@ -127,7 +127,11 @@ export class LoyaltyWalletService {
       throw e;
     }
 
-    if (type === LoyaltyTxType.EARN || type === LoyaltyTxType.BURN || type === LoyaltyTxType.BONUS) {
+    if (
+      type === LoyaltyTxType.EARN ||
+      type === LoyaltyTxType.BURN ||
+      type === LoyaltyTxType.BONUS
+    ) {
       void this.segmentation.touchActivity(membership.userId);
     }
 

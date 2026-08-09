@@ -154,7 +154,11 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
   ): { zip: string; state?: string } {
     const rawZip = String(postalCode || '').trim();
     let nextState = state?.trim() || undefined;
-    const isUs = ['US', 'USA', 'UNITED STATES'].includes(String(country || '').trim().toUpperCase());
+    const isUs = ['US', 'USA', 'UNITED STATES'].includes(
+      String(country || '')
+        .trim()
+        .toUpperCase(),
+    );
 
     // "NY 10036" / "NY10036" / "ny-10036"
     const stateZip = rawZip.match(/^([A-Za-z]{2})[\s,.-]*(\d{5}(?:[-\s]?\d{4})?)$/);
@@ -216,7 +220,10 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
   }
 
   private toShippoParcels(packages: RateRequest['packages']): ShippoParcel[] {
-    const list = Array.isArray(packages) && packages.length > 0 ? packages : [{ length: 30, width: 20, height: 10, weight: 1 }];
+    const list =
+      Array.isArray(packages) && packages.length > 0
+        ? packages
+        : [{ length: 30, width: 20, height: 10, weight: 1 }];
     return list.map((pkg) => ({
       length: String(Math.max(1, Math.ceil(this.safePositive(pkg.length, 30)))),
       width: String(Math.max(1, Math.ceil(this.safePositive(pkg.width, 20)))),
@@ -265,7 +272,8 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
         providerId: this.providerId,
         providerName: this.providerName,
         serviceCode: rate.object_id,
-        serviceName: `${rate.provider || 'Carrier'} ${rate.servicelevel?.name || rate.servicelevel?.token || ''}`.trim(),
+        serviceName:
+          `${rate.provider || 'Carrier'} ${rate.servicelevel?.name || rate.servicelevel?.token || ''}`.trim(),
         rate: parseFloat(rate.amount),
         currency: rate.currency || 'USD',
         estimatedDays: Number(rate.estimated_days) || 5,
@@ -354,7 +362,10 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
 
     if (mapped.length === 0) {
       const messages = Array.isArray(shipment?.messages)
-        ? shipment.messages.map((m: any) => m.text || m).filter(Boolean).join('; ')
+        ? shipment.messages
+            .map((m: any) => m.text || m)
+            .filter(Boolean)
+            .join('; ')
         : '';
       this.logger.warn(
         `Shippo returned 0 rates (token=${tokenMode}). ${messages || 'No carrier messages returned.'}`,
@@ -442,7 +453,8 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
       rate: parseFloat(selectedRate.amount),
       currency: selectedRate.currency || 'USD',
       serviceCode: selectedRate.object_id,
-      serviceName: `${selectedRate.provider || 'Carrier'} ${selectedRate.servicelevel?.name || ''}`.trim(),
+      serviceName:
+        `${selectedRate.provider || 'Carrier'} ${selectedRate.servicelevel?.name || ''}`.trim(),
       estimatedDeliveryDate: selectedRate.estimated_days
         ? new Date(Date.now() + Number(selectedRate.estimated_days) * 86400000)
         : undefined,
@@ -484,7 +496,9 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
       status: this.mapTrackingStatus(event.status),
       statusDescription: event.status_details || event.status || 'Update',
       location: event.location?.city
-        ? [event.location.city, event.location.state, event.location.country].filter(Boolean).join(', ')
+        ? [event.location.city, event.location.state, event.location.country]
+            .filter(Boolean)
+            .join(', ')
         : undefined,
       city: event.location?.city,
       state: event.location?.state,

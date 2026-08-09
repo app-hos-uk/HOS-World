@@ -38,11 +38,11 @@ export class AmbassadorAdminController {
     @Query('period') period?: string,
     @Query('limit') limit?: string,
   ): Promise<ApiResponse<unknown>> {
-    const p = (period === 'month' || period === 'all' ? period : 'week') as 'week' | 'month' | 'all';
-    const data = await this.ambassador.getLeaderboard(
-      p,
-      limit ? parseInt(limit, 10) : 50,
-    );
+    const p = (period === 'month' || period === 'all' ? period : 'week') as
+      | 'week'
+      | 'month'
+      | 'all';
+    const data = await this.ambassador.getLeaderboard(p, limit ? parseInt(limit, 10) : 50);
     return { data, message: 'OK' };
   }
 

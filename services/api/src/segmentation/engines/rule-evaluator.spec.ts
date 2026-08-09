@@ -160,9 +160,7 @@ describe('rule-evaluator', () => {
       rules: [{ dimension: 'brand.activeCampaignCount', operator: 'gte', value: 2 }],
     };
     const c = extractCountRules(g);
-    expect(c).toEqual([
-      { dimension: 'brand.activeCampaignCount', operator: 'gte', value: 2 },
-    ]);
+    expect(c).toEqual([{ dimension: 'brand.activeCampaignCount', operator: 'gte', value: 2 }]);
   });
 
   it('stripCountRulesFromGroup removes brand.activeCampaignCount', () => {

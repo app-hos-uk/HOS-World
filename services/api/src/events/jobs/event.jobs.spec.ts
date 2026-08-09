@@ -1,7 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { EventJobsService } from './event.jobs';
 import { JobType } from '../../queue/queue.service';
-import { EventsService } from '../events.service';
 
 describe('EventJobsService', () => {
   it('registers processors and schedules repeatables', async () => {
@@ -20,7 +19,11 @@ describe('EventJobsService', () => {
       reconcileEndedEvents: jest.fn().mockResolvedValue(undefined),
     };
 
-    const svc = new EventJobsService(queue as any, config as unknown as ConfigService, events as any);
+    const svc = new EventJobsService(
+      queue as any,
+      config as unknown as ConfigService,
+      events as any,
+    );
     await svc.onModuleInit();
 
     expect(registerProcessor).toHaveBeenCalledWith(JobType.EVENT_REMINDER, expect.any(Function));
@@ -29,7 +32,9 @@ describe('EventJobsService', () => {
       expect.any(Function),
     );
 
-    const reminderFn = registerProcessor.mock.calls.find((c) => c[0] === JobType.EVENT_REMINDER)?.[1];
+    const reminderFn = registerProcessor.mock.calls.find(
+      (c) => c[0] === JobType.EVENT_REMINDER,
+    )?.[1];
     await reminderFn({} as any);
     expect(events.sendRemindersWindow).toHaveBeenCalled();
 

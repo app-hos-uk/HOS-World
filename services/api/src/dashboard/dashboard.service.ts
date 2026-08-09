@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { Decimal } from '@prisma/client/runtime/library';
 
 interface DashboardStats {
   totalSales: number;
@@ -726,7 +725,8 @@ export class DashboardService {
     const rows = await Promise.all(
       monthStarts.map((monthStart) => {
         const isCurrentMonth =
-          monthStart.getFullYear() === now.getFullYear() && monthStart.getMonth() === now.getMonth();
+          monthStart.getFullYear() === now.getFullYear() &&
+          monthStart.getMonth() === now.getMonth();
         const rangeEnd = isCurrentMonth
           ? now
           : new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0, 23, 59, 59, 999);

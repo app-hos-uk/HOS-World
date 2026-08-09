@@ -20,14 +20,28 @@ export class PeriodCloseController {
   }
 
   @Post('close')
-  async closePeriod(@Body() body: { year: number; month: number; notes?: string }, @Request() req: any) {
-    const result = await this.periodCloseService.closePeriod(body.year, body.month, req.user?.id, body.notes);
-    return { data: result, message: `Period ${body.year}-${String(body.month).padStart(2, '0')} closed` };
+  async closePeriod(
+    @Body() body: { year: number; month: number; notes?: string },
+    @Request() req: any,
+  ) {
+    const result = await this.periodCloseService.closePeriod(
+      body.year,
+      body.month,
+      req.user?.id,
+      body.notes,
+    );
+    return {
+      data: result,
+      message: `Period ${body.year}-${String(body.month).padStart(2, '0')} closed`,
+    };
   }
 
   @Put('reopen')
   async reopenPeriod(@Body() body: { year: number; month: number }) {
     const result = await this.periodCloseService.reopenPeriod(body.year, body.month);
-    return { data: result, message: `Period ${body.year}-${String(body.month).padStart(2, '0')} reopened` };
+    return {
+      data: result,
+      message: `Period ${body.year}-${String(body.month).padStart(2, '0')} reopened`,
+    };
   }
 }

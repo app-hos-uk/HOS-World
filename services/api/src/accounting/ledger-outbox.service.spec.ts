@@ -107,12 +107,10 @@ describe('LedgerOutboxService', () => {
     expect(first.idempotencyKey).toBe(key);
     expect(prisma.ledgerOutboxEntry.create).toHaveBeenCalledTimes(1);
 
-    const second = await service.enqueue(
-      LedgerEntryType.ONLINE_SALES,
-      '2026-08-01',
-      key,
-      { ...samplePayload, narration: 'updated' },
-    );
+    const second = await service.enqueue(LedgerEntryType.ONLINE_SALES, '2026-08-01', key, {
+      ...samplePayload,
+      narration: 'updated',
+    });
     expect(prisma.ledgerOutboxEntry.create).toHaveBeenCalledTimes(1);
     expect(prisma.ledgerOutboxEntry.update).toHaveBeenCalledTimes(1);
     expect(store.size).toBe(1);

@@ -13,7 +13,9 @@ export class RevenueRecognitionController {
   @Get('breakdown')
   async getBreakdown(@Query() query: { startDate?: string; endDate?: string }) {
     const now = new Date();
-    const periodStart = query.startDate ? new Date(query.startDate) : new Date(now.getFullYear(), now.getMonth(), 1);
+    const periodStart = query.startDate
+      ? new Date(query.startDate)
+      : new Date(now.getFullYear(), now.getMonth(), 1);
     const periodEnd = query.endDate ? new Date(query.endDate) : now;
     const result = await this.revenueRecognitionService.getRevenueBreakdown(periodStart, periodEnd);
     return { data: result };

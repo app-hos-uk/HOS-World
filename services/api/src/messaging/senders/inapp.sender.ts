@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import type { ChannelSender, ChannelSenderParams, MessagingChannel, SendResult } from '../interfaces/channel-sender.interface';
+import type {
+  ChannelSender,
+  ChannelSenderParams,
+  MessagingChannel,
+  SendResult,
+} from '../interfaces/channel-sender.interface';
 
 @Injectable()
 export class InAppSender implements ChannelSender {

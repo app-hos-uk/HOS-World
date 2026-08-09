@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { Decimal } from '@prisma/client/runtime/library';
 
 export interface AnalyticsFilters {
   startDate?: Date;
@@ -696,9 +695,7 @@ export class AnalyticsService {
     const averageWholesaleOrderValue =
       wholesaleOrderCount > 0 ? wholesaleRevenue / wholesaleOrderCount : 0;
 
-    const sellerIds = sellerGroups
-      .map((g) => g.sellerId)
-      .filter((id): id is string => id != null);
+    const sellerIds = sellerGroups.map((g) => g.sellerId).filter((id): id is string => id != null);
     const sellers = sellerIds.length
       ? await this.prisma.seller.findMany({
           where: { id: { in: sellerIds } },
@@ -770,8 +767,18 @@ export class AnalyticsService {
     ]);
 
     return {
-      notifications: { total: notifTotal, pending: notifPending, sent: notifSent, failed: notifFailed },
-      reviews: { total: reviewTotal, pending: reviewPending, approved: reviewApproved, rejected: reviewRejected },
+      notifications: {
+        total: notifTotal,
+        pending: notifPending,
+        sent: notifSent,
+        failed: notifFailed,
+      },
+      reviews: {
+        total: reviewTotal,
+        pending: reviewPending,
+        approved: reviewApproved,
+        rejected: reviewRejected,
+      },
       discrepancies: { total: discTotal, open: discOpen, resolved: discResolved },
       activityLogs: { today: logsToday, thisWeek: logsWeek },
     };

@@ -133,7 +133,9 @@ export class PosInventorySyncService {
           const next = Math.max(0, current - line.quantity);
           await adapter.updateInventory(mapping.externalId, outletId, next);
         } catch (e) {
-          this.logger.warn(`POS stock decrement failed for order ${orderId}: ${(e as Error).message}`);
+          this.logger.warn(
+            `POS stock decrement failed for order ${orderId}: ${(e as Error).message}`,
+          );
         }
       }
     }
@@ -185,11 +187,11 @@ export class PosInventorySyncService {
           const posQty = await adapter.getInventory(m.externalId, outletId);
           const loc = await this.resolveInventoryLocation(m.internalId, whId);
           const hosQty = loc
-            ? (
+            ? ((
                 await this.prisma.inventoryLocation.findUnique({
                   where: { id: loc.id },
                 })
-              )?.quantity ?? 0
+              )?.quantity ?? 0)
             : 0;
           if (Math.abs(posQty - hosQty) > threshold) {
             mismatches++;

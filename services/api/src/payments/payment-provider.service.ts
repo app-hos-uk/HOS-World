@@ -17,9 +17,7 @@ export class PaymentProviderService implements OnModuleInit {
     if (this.providers.size === 0) {
       setTimeout(() => {
         void this.ensureStripeRegistered({ forceReload: true }).then(() => {
-          this.logger.log(
-            `Payment provider retry: ${this.providers.size} provider(s) available`,
-          );
+          this.logger.log(`Payment provider retry: ${this.providers.size} provider(s) available`);
         });
       }, 500);
     }

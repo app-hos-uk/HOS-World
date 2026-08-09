@@ -319,7 +319,9 @@ export class CMSService {
       const createdId = data.data?.id;
       if (createdId != null) {
         try {
-          await this.strapiRequest<any>(`/banners/${createdId}/actions/publish`, { method: 'POST' });
+          await this.strapiRequest<any>(`/banners/${createdId}/actions/publish`, {
+            method: 'POST',
+          });
         } catch (publishErr: unknown) {
           const detail = publishErr instanceof Error ? publishErr.message : String(publishErr);
           this.logger.warn(`Banner ${createdId} created but publish failed: ${detail}`);
@@ -527,7 +529,7 @@ export class CMSService {
   async getMedia(): Promise<ApiResponse<any[]>> {
     try {
       const data = await this.strapiRequest<any>('/upload/files');
-      const files = Array.isArray(data) ? data : data?.data ?? [];
+      const files = Array.isArray(data) ? data : (data?.data ?? []);
       return {
         data: files.map((f: any) => ({
           id: f.id,

@@ -1,11 +1,6 @@
 import { ServiceUnavailableException } from '@nestjs/common';
 import { AccountingService } from './accounting.service';
-import {
-  DEFAULT_COA_MAPPING,
-  LedgerEntryType,
-  XERO_INTEGRATION_CATEGORY,
-  XERO_INTEGRATION_PROVIDER,
-} from './accounting.types';
+import { DEFAULT_COA_MAPPING, LedgerEntryType } from './accounting.types';
 
 function buildService(overrides?: {
   accountingEnabled?: string;
@@ -53,16 +48,19 @@ function buildService(overrides?: {
   const xeroAuth = {
     getConnectionStatus:
       overrides?.getConnectionStatus ??
-      jest.fn().mockResolvedValue({ connected: true, hasRefreshToken: true, tenantId: 't', expiresAt: null }),
+      jest.fn().mockResolvedValue({
+        connected: true,
+        hasRefreshToken: true,
+        tenantId: 't',
+        expiresAt: null,
+      }),
     getValidAccessToken:
       overrides?.getValidAccessToken ??
       jest.fn().mockResolvedValue({ accessToken: 'at', tenantId: 'tid' }),
   } as any;
 
   const xeroApi = {
-    getAccounts:
-      overrides?.getAccounts ??
-      jest.fn().mockResolvedValue({ Accounts: [] }),
+    getAccounts: overrides?.getAccounts ?? jest.fn().mockResolvedValue({ Accounts: [] }),
   } as any;
 
   const service = new AccountingService(

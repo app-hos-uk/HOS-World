@@ -15,7 +15,11 @@ import {
   ApiResponse as SwaggerApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { DepartmentsService, CreateDepartmentDto, UpdateDepartmentDto } from './departments.service';
+import {
+  DepartmentsService,
+  CreateDepartmentDto,
+  UpdateDepartmentDto,
+} from './departments.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';

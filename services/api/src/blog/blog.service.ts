@@ -15,14 +15,47 @@ const sanitizeHtml = (sanitizeHtmlModule as any).default || sanitizeHtmlModule;
 
 // Explicit allowed tags (sanitize-html defaults + additional tags for blog content)
 const ALLOWED_TAGS = [
-  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'p', 'br', 'hr',
-  'ul', 'ol', 'li',
-  'blockquote', 'pre', 'code',
-  'a', 'b', 'i', 'u', 's', 'em', 'strong', 'mark', 'small', 'del', 'ins', 'sub', 'sup',
-  'img', 'figure', 'figcaption',
-  'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption',
-  'div', 'span',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'p',
+  'br',
+  'hr',
+  'ul',
+  'ol',
+  'li',
+  'blockquote',
+  'pre',
+  'code',
+  'a',
+  'b',
+  'i',
+  'u',
+  's',
+  'em',
+  'strong',
+  'mark',
+  'small',
+  'del',
+  'ins',
+  'sub',
+  'sup',
+  'img',
+  'figure',
+  'figcaption',
+  'table',
+  'thead',
+  'tbody',
+  'tfoot',
+  'tr',
+  'th',
+  'td',
+  'caption',
+  'div',
+  'span',
 ];
 
 const SANITIZE_OPTIONS: sanitizeHtmlModule.IOptions = {
@@ -53,8 +86,14 @@ export class BlogService {
       error && typeof error === 'object' && 'code' in error
         ? String((error as { code?: string }).code)
         : '';
-    if (code === 'P2021' || code === 'P2010' || /does not exist|relation .*blog_/i.test(String(error))) {
-      this.logger.error(`Blog ${action} failed — blog tables missing or outdated: ${code || error}`);
+    if (
+      code === 'P2021' ||
+      code === 'P2010' ||
+      /does not exist|relation .*blog_/i.test(String(error))
+    ) {
+      this.logger.error(
+        `Blog ${action} failed — blog tables missing or outdated: ${code || error}`,
+      );
       throw new ServiceUnavailableException(
         'Blog content tables are not available. Run database migrations and try again.',
       );
@@ -373,10 +412,7 @@ export class BlogService {
     }
   }
 
-  async updateCategory(
-    id: string,
-    data: { name?: string; slug?: string; description?: string },
-  ) {
+  async updateCategory(id: string, data: { name?: string; slug?: string; description?: string }) {
     const category = await this.prisma.blogCategory.findUnique({ where: { id } });
     if (!category) throw new NotFoundException('Category not found');
 

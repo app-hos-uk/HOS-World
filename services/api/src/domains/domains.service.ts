@@ -237,7 +237,7 @@ export class DomainsService {
     }
 
     // Generate DNS configuration documentation
-    const baseUrl = process.env.FRONTEND_URL || 'https://houseofspells.com';
+    const _baseUrl = process.env.FRONTEND_URL || 'https://houseofspells.com';
     const domain = seller.customDomain || `${seller.subDomain}.houseofspells.com`;
 
     return {

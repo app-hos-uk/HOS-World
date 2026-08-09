@@ -21,11 +21,7 @@ export class ReconciliationService {
     private paymentProviderService: PaymentProviderService,
   ) {}
 
-  async startReconciliation(params: {
-    periodStart: Date;
-    periodEnd: Date;
-    startedById?: string;
-  }) {
+  async startReconciliation(params: { periodStart: Date; periodEnd: Date; startedById?: string }) {
     if (!(params.periodStart instanceof Date) || Number.isNaN(params.periodStart.getTime())) {
       throw new BadRequestException('Invalid periodStart');
     }
@@ -84,7 +80,7 @@ export class ReconciliationService {
       }
 
       // Get Stripe payments for the period (if provider available)
-      let stripeCharges: Array<{
+      const stripeCharges: Array<{
         id: string;
         amount: number;
         currency: string;
@@ -99,7 +95,8 @@ export class ReconciliationService {
           const stripeInstance = (stripe as any).getStripeInstance?.();
           if (!stripeInstance) {
             stripeFetchFailed = true;
-            stripeFetchError = 'Stripe provider is configured but the Stripe SDK instance is unavailable';
+            stripeFetchError =
+              'Stripe provider is configured but the Stripe SDK instance is unavailable';
           } else {
             const periodStart = Math.floor(params.periodStart.getTime() / 1000);
             const periodEnd = Math.floor(params.periodEnd.getTime() / 1000);
@@ -140,11 +137,7 @@ export class ReconciliationService {
       }
 
       // If Stripe was expected but failed and we have nothing to compare, fail the run clearly
-      if (
-        stripeFetchFailed &&
-        stripeCharges.length === 0 &&
-        internalTransactions.length === 0
-      ) {
+      if (stripeFetchFailed && stripeCharges.length === 0 && internalTransactions.length === 0) {
         throw new BadGatewayException(
           `Unable to reach Stripe for reconciliation: ${stripeFetchError || 'unknown error'}`,
         );

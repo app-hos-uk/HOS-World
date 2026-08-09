@@ -56,7 +56,7 @@ export class FedExLegacyProvider implements CourierProvider {
 
   async createLabel(
     orderId: string,
-    shipment: any,
+    _shipment: any,
   ): Promise<{ trackingNumber: string; labelUrl: string }> {
     this.logger.debug(`Creating FedEx label for order ${orderId}`);
 

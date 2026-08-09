@@ -58,7 +58,7 @@ export class MetricsService implements OnModuleInit {
   /**
    * Create a counter metric
    */
-  createCounter(name: string, help: string) {
+  createCounter(name: string, _help: string) {
     this.counters.set(name, 0);
   }
 
@@ -80,7 +80,7 @@ export class MetricsService implements OnModuleInit {
   /**
    * Create a histogram
    */
-  createHistogram(name: string, help: string) {
+  createHistogram(name: string, _help: string) {
     this.histograms.set(name, []);
   }
 
@@ -146,7 +146,7 @@ export class MetricsService implements OnModuleInit {
     }
 
     // Histograms
-    for (const [name, values] of this.histograms.entries()) {
+    for (const [name, _values] of this.histograms.entries()) {
       const stats = this.getHistogramStats(name);
       if (stats) {
         lines.push(`# TYPE ${name} histogram`);

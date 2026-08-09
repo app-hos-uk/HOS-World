@@ -249,7 +249,9 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
     });
   }
 
-  async cancelPaymentIntent(paymentIntentId: string): Promise<'cancelled' | 'already_succeeded' | 'skipped'> {
+  async cancelPaymentIntent(
+    paymentIntentId: string,
+  ): Promise<'cancelled' | 'already_succeeded' | 'skipped'> {
     if (!this.stripe) return 'skipped';
     try {
       const intent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
@@ -298,7 +300,9 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
         refund = await createRefund();
       } catch (error: any) {
         if (this.isStripeAuthError(error)) {
-          this.logger.warn('Stripe auth failed on refund — reloading credentials and retrying once');
+          this.logger.warn(
+            'Stripe auth failed on refund — reloading credentials and retrying once',
+          );
           await this.reloadStripeClient();
           if (!this.stripe) throw error;
           refund = await this.stripe.refunds.create(
@@ -390,12 +394,8 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
 
       // For charge events, the PI id is in payment_intent; for PI events, it's .id
       const isCharge = eventType.startsWith('charge.');
-      const paymentId = isCharge
-        ? (dataObject.payment_intent || dataObject.id)
-        : dataObject.id;
-      const metadata = isCharge
-        ? (dataObject.metadata || {})
-        : (dataObject.metadata || {});
+      const paymentId = isCharge ? dataObject.payment_intent || dataObject.id : dataObject.id;
+      const metadata = isCharge ? dataObject.metadata || {} : dataObject.metadata || {};
 
       return {
         processed: true,
@@ -517,10 +517,14 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
       return await createOnce(`order-split-${params.orderId}-${amountCents}-${feeCents}`);
     } catch (error: any) {
       if (this.isStripeAuthError(error)) {
-        this.logger.warn('Stripe auth failed on split intent — reloading credentials and retrying once');
+        this.logger.warn(
+          'Stripe auth failed on split intent — reloading credentials and retrying once',
+        );
         await this.reloadStripeClient();
         if (this.stripe) {
-          return await createOnce(`order-split-${params.orderId}-${amountCents}-${feeCents}-reload`);
+          return await createOnce(
+            `order-split-${params.orderId}-${amountCents}-${feeCents}-reload`,
+          );
         }
       }
       this.logger.error('Failed to create Stripe split payment intent:', error);

@@ -10,6 +10,7 @@ export class DatabaseModule implements OnModuleInit {
   async onModuleInit() {
     // Early check: Verify Prisma client has RefreshToken before any modules use it
     try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { PrismaClient } = require('@prisma/client');
       const testClient = new PrismaClient();
       const hasRefreshToken = typeof testClient.refreshToken !== 'undefined';

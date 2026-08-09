@@ -25,12 +25,8 @@ describe('DailyJournalService', () => {
     const journals = {
       buildOnlineSales: jest.fn().mockReturnValue({ meta: { entryType: 'ONLINE_SALES' } }),
       buildRefunds: jest.fn().mockReturnValue({ meta: { entryType: 'REFUNDS' } }),
-      buildPointsLiability: jest
-        .fn()
-        .mockReturnValue({ meta: { entryType: 'POINTS_LIABILITY' } }),
-      buildGcBridgeReclass: jest
-        .fn()
-        .mockReturnValue({ meta: { entryType: 'GC_BRIDGE_RECLASS' } }),
+      buildPointsLiability: jest.fn().mockReturnValue({ meta: { entryType: 'POINTS_LIABILITY' } }),
+      buildGcBridgeReclass: jest.fn().mockReturnValue({ meta: { entryType: 'GC_BRIDGE_RECLASS' } }),
       buildHosGiftCards: jest.fn().mockReturnValue({ meta: { entryType: 'HOS_GIFT_CARDS' } }),
     };
     const accounting: any = {

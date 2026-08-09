@@ -30,7 +30,8 @@ describe('LoyaltyBurnEngine', () => {
 
   describe('processRedemption region validation', () => {
     it('rejects redemption if region is not in option.regionCodes', async () => {
-      const mockFindUnique = jest.fn()
+      const mockFindUnique = jest
+        .fn()
         .mockResolvedValueOnce({ id: 'm1', currentBalance: 1000 })
         .mockResolvedValueOnce({
           id: 'opt1',
@@ -44,12 +45,25 @@ describe('LoyaltyBurnEngine', () => {
         });
 
       const mockPrisma = {
-        $transaction: jest.fn().mockImplementation(async (fn: any) => fn({
-          loyaltyMembership: { findUnique: mockFindUnique, update: jest.fn() },
-          loyaltyRedemptionOption: { findUnique: mockFindUnique, findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
-          loyaltyTransaction: { create: jest.fn(), findUnique: jest.fn().mockResolvedValue(null) },
-          loyaltyRedemption: { create: jest.fn().mockResolvedValue({ id: 'r1' }), findFirst: jest.fn() },
-        })),
+        $transaction: jest.fn().mockImplementation(async (fn: any) =>
+          fn({
+            loyaltyMembership: { findUnique: mockFindUnique, update: jest.fn() },
+            loyaltyRedemptionOption: {
+              findUnique: mockFindUnique,
+              findFirst: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+            },
+            loyaltyTransaction: {
+              create: jest.fn(),
+              findUnique: jest.fn().mockResolvedValue(null),
+            },
+            loyaltyRedemption: {
+              create: jest.fn().mockResolvedValue({ id: 'r1' }),
+              findFirst: jest.fn(),
+            },
+          }),
+        ),
       };
 
       const mockConfig = {
@@ -79,7 +93,8 @@ describe('LoyaltyBurnEngine', () => {
     });
 
     it('rejects redemption if channel is not in option.channels', async () => {
-      const mockFindUnique = jest.fn()
+      const mockFindUnique = jest
+        .fn()
         .mockResolvedValueOnce({ id: 'm1', currentBalance: 1000 })
         .mockResolvedValueOnce({
           id: 'opt1',
@@ -93,12 +108,25 @@ describe('LoyaltyBurnEngine', () => {
         });
 
       const mockPrisma = {
-        $transaction: jest.fn().mockImplementation(async (fn: any) => fn({
-          loyaltyMembership: { findUnique: mockFindUnique, update: jest.fn() },
-          loyaltyRedemptionOption: { findUnique: mockFindUnique, findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
-          loyaltyTransaction: { create: jest.fn(), findUnique: jest.fn().mockResolvedValue(null) },
-          loyaltyRedemption: { create: jest.fn().mockResolvedValue({ id: 'r1' }), findFirst: jest.fn() },
-        })),
+        $transaction: jest.fn().mockImplementation(async (fn: any) =>
+          fn({
+            loyaltyMembership: { findUnique: mockFindUnique, update: jest.fn() },
+            loyaltyRedemptionOption: {
+              findUnique: mockFindUnique,
+              findFirst: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+            },
+            loyaltyTransaction: {
+              create: jest.fn(),
+              findUnique: jest.fn().mockResolvedValue(null),
+            },
+            loyaltyRedemption: {
+              create: jest.fn().mockResolvedValue({ id: 'r1' }),
+              findFirst: jest.fn(),
+            },
+          }),
+        ),
       };
 
       const mockConfig = {
@@ -487,7 +515,10 @@ describe('LoyaltyBurnEngine', () => {
               update: jest.fn(),
             },
             loyaltyTransaction: { findUnique: jest.fn().mockResolvedValue(null) },
-            loyaltyRedemption: { create: redemptionCreate, findFirst: jest.fn().mockResolvedValue(null) },
+            loyaltyRedemption: {
+              create: redemptionCreate,
+              findFirst: jest.fn().mockResolvedValue(null),
+            },
             promotion: { create: jest.fn().mockResolvedValue({ id: 'promo-1' }) },
             coupon: { findUnique: jest.fn().mockResolvedValue(null), create: jest.fn() },
           }),

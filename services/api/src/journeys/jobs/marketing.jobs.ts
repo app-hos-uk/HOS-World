@@ -123,10 +123,7 @@ export class MarketingJobsService implements OnModuleInit {
     const memberships = await this.prisma.loyaltyMembership.findMany({
       where: {
         user: {
-          OR: [
-            { lastLoginAt: { lt: since } },
-            { lastLoginAt: null, updatedAt: { lt: since } },
-          ],
+          OR: [{ lastLoginAt: { lt: since } }, { lastLoginAt: null, updatedAt: { lt: since } }],
         },
       },
       take: 500,
@@ -156,13 +153,14 @@ export class MarketingJobsService implements OnModuleInit {
     );
 
     // Batch-fetch last paid order dates
-    const lastPaidOrders = candidateUserIds.length > 0
-      ? await this.prisma.order.groupBy({
-          by: ['userId'],
-          where: { userId: { in: candidateUserIds }, paymentStatus: 'PAID' },
-          _max: { createdAt: true },
-        })
-      : [];
+    const lastPaidOrders =
+      candidateUserIds.length > 0
+        ? await this.prisma.order.groupBy({
+            by: ['userId'],
+            where: { userId: { in: candidateUserIds }, paymentStatus: 'PAID' },
+            _max: { createdAt: true },
+          })
+        : [];
     const lastPaidMap = new Map(lastPaidOrders.map((o) => [o.userId, o._max.createdAt]));
 
     for (const m of memberships) {
@@ -170,9 +168,7 @@ export class MarketingJobsService implements OnModuleInit {
       if (activeWinBackUserIds.has(m.userId)) continue;
 
       const lastPaidDate = lastPaidMap.get(m.userId) ?? null;
-      const lastPurchaseDate = lastPaidDate
-        ? lastPaidDate.toISOString().split('T')[0]
-        : '';
+      const lastPurchaseDate = lastPaidDate ? lastPaidDate.toISOString().split('T')[0] : '';
       const daysSince = lastPaidDate
         ? Math.floor((Date.now() - lastPaidDate.getTime()) / 86400000)
         : days;

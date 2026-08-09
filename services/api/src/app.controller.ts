@@ -98,7 +98,9 @@ export class AppController {
       const isProduction = process.env.NODE_ENV === 'production';
       checks.database = {
         status: 'error',
-        message: isProduction ? 'Database connection failed' : (error.message || 'Database connection failed'),
+        message: isProduction
+          ? 'Database connection failed'
+          : error.message || 'Database connection failed',
       };
     }
 
@@ -113,7 +115,7 @@ export class AppController {
       const isProduction = process.env.NODE_ENV === 'production';
       checks.redis = {
         status: 'error',
-        message: isProduction ? 'Redis check failed' : (error.message || 'Redis check failed'),
+        message: isProduction ? 'Redis check failed' : error.message || 'Redis check failed',
       };
     }
 

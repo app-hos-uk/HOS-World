@@ -98,7 +98,7 @@ export class InfluencerCampaignsService {
     };
   }
 
-   /**
+  /**
    * Aggregated analytics for a campaign (referrals, commissions, time series, top products).
    */
   async getAnalytics(campaignId: string) {

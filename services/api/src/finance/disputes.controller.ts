@@ -41,7 +41,9 @@ export class DisputesController {
   constructor(private disputesService: DisputesService) {}
 
   @Get()
-  async getDisputes(@Query() query: { status?: string; sellerId?: string; page?: string; limit?: string }) {
+  async getDisputes(
+    @Query() query: { status?: string; sellerId?: string; page?: string; limit?: string },
+  ) {
     const result = await this.disputesService.getDisputes({
       status: query.status ? assertDisputeStatus(query.status) : undefined,
       sellerId: query.sellerId,
@@ -64,7 +66,10 @@ export class DisputesController {
   }
 
   @Put(':id/status')
-  async updateStatus(@Param('id', ParseUUIDPipe) id: string, @Body() body: { status: string; notes?: string }) {
+  async updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { status: string; notes?: string },
+  ) {
     if (!body?.status) throw new BadRequestException('status is required');
     const result = await this.disputesService.updateDisputeStatus(
       id,

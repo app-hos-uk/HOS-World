@@ -5,19 +5,24 @@ import { PaymentProvider } from './interfaces/payment-provider.interface';
 
 describe('PaymentProviderService', () => {
   let service: PaymentProviderService;
-  let stripeProvider: jest.Mocked<Pick<StripeProvider, 'isAvailable' | 'ensureReady' | 'clearClient'>>;
+  let stripeProvider: jest.Mocked<
+    Pick<StripeProvider, 'isAvailable' | 'ensureReady' | 'clearClient'>
+  >;
 
-  const mockStripeProvider = (overrides: Partial<Record<keyof PaymentProvider, unknown>> = {}): PaymentProvider => ({
-    name: 'stripe',
-    isAvailable: () => true,
-    createPaymentIntent: jest.fn(),
-    confirmPayment: jest.fn(),
-    refundPayment: jest.fn(),
-    getPaymentStatus: jest.fn(),
-    validateWebhook: jest.fn(),
-    processWebhook: jest.fn(),
-    ...overrides,
-  } as PaymentProvider);
+  const mockStripeProvider = (
+    overrides: Partial<Record<keyof PaymentProvider, unknown>> = {},
+  ): PaymentProvider =>
+    ({
+      name: 'stripe',
+      isAvailable: () => true,
+      createPaymentIntent: jest.fn(),
+      confirmPayment: jest.fn(),
+      refundPayment: jest.fn(),
+      getPaymentStatus: jest.fn(),
+      validateWebhook: jest.fn(),
+      processWebhook: jest.fn(),
+      ...overrides,
+    }) as PaymentProvider;
 
   beforeEach(() => {
     stripeProvider = {
@@ -72,9 +77,7 @@ describe('PaymentProviderService', () => {
 
   describe('ensureStripeRegistered', () => {
     it('registers stripe after ensureReady succeeds', async () => {
-      stripeProvider.isAvailable
-        .mockReturnValueOnce(false)
-        .mockReturnValue(true);
+      stripeProvider.isAvailable.mockReturnValueOnce(false).mockReturnValue(true);
 
       await service.ensureStripeRegistered();
 

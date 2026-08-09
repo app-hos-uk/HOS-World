@@ -14,11 +14,7 @@ import { RequestCancellationDto } from './dto/request-cancellation.dto';
 import { ReviewCancellationDto } from './dto/review-cancellation.dto';
 import { SellerReviewCancellationDto } from './dto/seller-review-cancellation.dto';
 import { EscalateCancellationDto } from './dto/escalate-cancellation.dto';
-import {
-  CancellationStatus,
-  OrderStatus,
-  Prisma,
-} from '@prisma/client';
+import { CancellationStatus, OrderStatus, Prisma } from '@prisma/client';
 import { canAccessAllOrders } from '../common/constants/order-access.constants';
 
 const DEFAULT_AUTO_APPROVAL_WINDOW_MINUTES = 30;
@@ -203,7 +199,9 @@ export class CancellationsService {
     if (!dto.approved) {
       const rejectionReason = dto.notes?.trim();
       if (!rejectionReason) {
-        throw new BadRequestException('Rejection reason is required when rejecting a cancellation request');
+        throw new BadRequestException(
+          'Rejection reason is required when rejecting a cancellation request',
+        );
       }
       return this.rejectRequest(request, {
         notes: rejectionReason,
@@ -298,7 +296,9 @@ export class CancellationsService {
   async adminResolve(requestId: string, adminId: string, dto: ReviewCancellationDto) {
     const request = await this.findRequestOrThrow(requestId);
     if (!['REJECTED', 'ESCALATED', 'PENDING_FINANCE'].includes(request.status)) {
-      throw new BadRequestException('Cancellation request cannot be resolved by admin in its current status');
+      throw new BadRequestException(
+        'Cancellation request cannot be resolved by admin in its current status',
+      );
     }
 
     if (dto.approved) {
@@ -338,7 +338,11 @@ export class CancellationsService {
     return updated;
   }
 
-  async findAll(userId: string, role: string, filters?: { status?: string; page?: number; limit?: number }) {
+  async findAll(
+    userId: string,
+    role: string,
+    filters?: { status?: string; page?: number; limit?: number },
+  ) {
     const page = filters?.page && filters.page > 0 ? filters.page : 1;
     const limit = filters?.limit && filters.limit > 0 ? Math.min(filters.limit, 100) : 20;
     const skip = (page - 1) * limit;
@@ -446,7 +450,9 @@ export class CancellationsService {
   }
 
   private async assertCanView(
-    request: Prisma.CancellationRequestGetPayload<{ include: ReturnType<CancellationsService['defaultInclude']> }>,
+    request: Prisma.CancellationRequestGetPayload<{
+      include: ReturnType<CancellationsService['defaultInclude']>;
+    }>,
     userId: string,
     role: string,
   ) {
@@ -481,12 +487,16 @@ export class CancellationsService {
       (order.childOrders || []).some((child) => child.sellerId === seller.id);
 
     if (!ownsOrder) {
-      throw new ForbiddenException('You do not have permission to review this cancellation request');
+      throw new ForbiddenException(
+        'You do not have permission to review this cancellation request',
+      );
     }
   }
 
   private async rejectRequest(
-    request: Prisma.CancellationRequestGetPayload<{ include: ReturnType<CancellationsService['defaultInclude']> }>,
+    request: Prisma.CancellationRequestGetPayload<{
+      include: ReturnType<CancellationsService['defaultInclude']>;
+    }>,
     options: {
       notes?: string;
       reviewerField: 'seller' | 'finance';
@@ -536,7 +546,9 @@ export class CancellationsService {
   }
 
   private async executeApprovedCancellation(
-    request: Prisma.CancellationRequestGetPayload<{ include: ReturnType<CancellationsService['defaultInclude']> }>,
+    request: Prisma.CancellationRequestGetPayload<{
+      include: ReturnType<CancellationsService['defaultInclude']>;
+    }>,
     reviewerId: string,
     notes: string | undefined,
     reviewerType: 'finance' | 'admin',

@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
-import { MeiliSearch, Index, SearchParams, SearchResponse, Settings } from 'meilisearch';
+import { MeiliSearch, Index, SearchParams, Settings } from 'meilisearch';
 
 export interface MeiliSearchResult {
   hits: any[];
@@ -244,7 +244,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         lightsaber: ['star wars', 'jedi', 'light saber'],
         'light saber': ['lightsaber', 'star wars'],
         pokemon: ['pokémon', 'pikachu', 'poke'],
-        'pokémon': ['pokemon', 'pikachu'],
+        pokémon: ['pokemon', 'pikachu'],
         pikachu: ['pokemon', 'pokémon'],
         'lord of the rings': ['lotr', 'tolkien', 'middle earth', 'middle-earth'],
         lotr: ['lord of the rings', 'tolkien', 'middle earth'],
@@ -682,7 +682,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
   /**
    * Get trending/popular search terms
    */
-  async getTrendingSearches(limit: number = 10): Promise<string[]> {
+  async getTrendingSearches(_limit: number = 10): Promise<string[]> {
     // Meilisearch doesn't track search analytics natively
     // This could be enhanced with Redis to track popular searches
     // For now, return empty array or implement with external tracking
@@ -870,9 +870,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
    * Compute category/fandom facet counts from the database so the storefront filter
    * sidebar still populates when results are served from the DB fallback.
    */
-  private async computeDbFacets(
-    where: any,
-  ): Promise<Record<string, Record<string, number>>> {
+  private async computeDbFacets(where: any): Promise<Record<string, Record<string, number>>> {
     try {
       const [categories, fandoms] = await Promise.all([
         this.prisma.product.groupBy({

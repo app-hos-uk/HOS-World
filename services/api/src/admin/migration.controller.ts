@@ -1,4 +1,4 @@
-import { Controller, Post, Get, UseGuards, Logger, ForbiddenException } from '@nestjs/common';
+import { Controller, Post, UseGuards, Logger, ForbiddenException } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -60,7 +60,7 @@ export class MigrationController {
       this.logger.log('🔄 Starting global features migration...');
 
       // Read the migration SQL file - try multiple possible paths
-      let migrationPath: string;
+      let _migrationPath: string;
       const possiblePaths = [
         join(process.cwd(), 'prisma/migrations/run_and_baseline.sql'),
         join(process.cwd(), 'services/api/prisma/migrations/run_and_baseline.sql'),

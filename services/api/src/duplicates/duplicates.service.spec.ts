@@ -98,7 +98,7 @@ describe('DuplicatesService', () => {
       mockPrismaService.productSubmission.findMany
         .mockResolvedValueOnce([sub1, sub2])
         .mockResolvedValueOnce([sub1, sub2]);
-      const groupId = `group-${sub1.id}-${sub2.id}`.slice(0, 50);
+      const _groupId = `group-${sub1.id}-${sub2.id}`.slice(0, 50);
       await expect(
         service.rejectOthersInGroup(`group-${sub1.id}-${sub2.id}`, 'not-in-group'),
       ).rejects.toThrow(BadRequestException);

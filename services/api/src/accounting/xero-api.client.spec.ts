@@ -42,12 +42,7 @@ describe('XeroApiClient', () => {
         }),
       });
 
-      const result = await client.postManualJournal(
-        'token',
-        'tenant',
-        sampleJournal,
-        'idem-key',
-      );
+      const result = await client.postManualJournal('token', 'tenant', sampleJournal, 'idem-key');
       expect(result.manualJournalId).toBe('mj-1');
 
       const [url, opts] = mockFetch.mock.calls[0];
@@ -86,9 +81,7 @@ describe('XeroApiClient', () => {
 
       const journal: XeroManualJournalPayload = {
         ...sampleJournal,
-        journalLines: [
-          { accountCode: '200', description: 'Rev', debit: 50 },
-        ],
+        journalLines: [{ accountCode: '200', description: 'Rev', debit: 50 }],
       };
       await client.postManualJournal('token', 'tenant', journal, 'key');
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
@@ -199,19 +192,17 @@ describe('XeroApiClient', () => {
         text: async () => 'Bad Request',
       });
 
-      await expect(
-        client.request('GET', '/test', 'token', 'tenant'),
-      ).rejects.toThrow('Xero API 400');
+      await expect(client.request('GET', '/test', 'token', 'tenant')).rejects.toThrow(
+        'Xero API 400',
+      );
     });
 
     it('retries on network error then succeeds', async () => {
-      mockFetch
-        .mockRejectedValueOnce(new Error('network failure'))
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          json: async () => ({ ok: true }),
-        });
+      mockFetch.mockRejectedValueOnce(new Error('network failure')).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true }),
+      });
 
       const promise = client.request('GET', '/test', 'token', 'tenant');
       await flushSleep();

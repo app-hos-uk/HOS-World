@@ -9,7 +9,7 @@ import { PrismaService } from '../database/prisma.service';
 import { ProductsService } from '../products/products.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { MeilisearchService } from '../meilisearch/meilisearch.service';
-import { ProductSubmissionStatus, ProductStatus, ImageType } from '@prisma/client';
+import { ImageType } from '@prisma/client';
 
 interface PricingData {
   basePrice: number;
@@ -286,7 +286,9 @@ export class PublishingService {
         );
       }
     } catch (notifyErr) {
-      this.logger.warn(`Post-publish notification failed for submission ${submissionId}: ${notifyErr}`);
+      this.logger.warn(
+        `Post-publish notification failed for submission ${submissionId}: ${notifyErr}`,
+      );
     }
 
     return {

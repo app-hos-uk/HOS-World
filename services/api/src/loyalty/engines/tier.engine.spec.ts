@@ -26,8 +26,30 @@ describe('LoyaltyTierEngine', () => {
 
   describe('recalculateTier', () => {
     it('upgrades member when enough points are earned', async () => {
-      const silverTier = { id: 'silver', name: 'Silver', slug: 'silver', level: 2, isActive: true, inviteOnly: false, pointsThreshold: 500, spendWeight: new Decimal(0.4), frequencyWeight: new Decimal(0.35), engagementWeight: new Decimal(0.25) };
-      const initiateTier = { id: 'initiate', name: 'Initiate', slug: 'initiate', level: 1, isActive: true, inviteOnly: false, pointsThreshold: 0, spendWeight: new Decimal(0.4), frequencyWeight: new Decimal(0.35), engagementWeight: new Decimal(0.25) };
+      const silverTier = {
+        id: 'silver',
+        name: 'Silver',
+        slug: 'silver',
+        level: 2,
+        isActive: true,
+        inviteOnly: false,
+        pointsThreshold: 500,
+        spendWeight: new Decimal(0.4),
+        frequencyWeight: new Decimal(0.35),
+        engagementWeight: new Decimal(0.25),
+      };
+      const initiateTier = {
+        id: 'initiate',
+        name: 'Initiate',
+        slug: 'initiate',
+        level: 1,
+        isActive: true,
+        inviteOnly: false,
+        pointsThreshold: 0,
+        spendWeight: new Decimal(0.4),
+        frequencyWeight: new Decimal(0.35),
+        engagementWeight: new Decimal(0.25),
+      };
 
       const mockPrisma = {
         loyaltyMembership: {
@@ -68,9 +90,42 @@ describe('LoyaltyTierEngine', () => {
     });
 
     it('skips invite-only tiers', async () => {
-      const inviteTier = { id: 'inner-circle', name: 'Inner Circle', slug: 'inner-circle', level: 6, isActive: true, inviteOnly: true, pointsThreshold: 50000, spendWeight: new Decimal(0.4), frequencyWeight: new Decimal(0.35), engagementWeight: new Decimal(0.25) };
-      const adeptTier = { id: 'adept', name: 'Adept', slug: 'adept', level: 3, isActive: true, inviteOnly: false, pointsThreshold: 2000, spendWeight: new Decimal(0.4), frequencyWeight: new Decimal(0.35), engagementWeight: new Decimal(0.25) };
-      const initiateTier = { id: 'initiate', name: 'Initiate', slug: 'initiate', level: 1, isActive: true, inviteOnly: false, pointsThreshold: 0, spendWeight: new Decimal(0.4), frequencyWeight: new Decimal(0.35), engagementWeight: new Decimal(0.25) };
+      const inviteTier = {
+        id: 'inner-circle',
+        name: 'Inner Circle',
+        slug: 'inner-circle',
+        level: 6,
+        isActive: true,
+        inviteOnly: true,
+        pointsThreshold: 50000,
+        spendWeight: new Decimal(0.4),
+        frequencyWeight: new Decimal(0.35),
+        engagementWeight: new Decimal(0.25),
+      };
+      const adeptTier = {
+        id: 'adept',
+        name: 'Adept',
+        slug: 'adept',
+        level: 3,
+        isActive: true,
+        inviteOnly: false,
+        pointsThreshold: 2000,
+        spendWeight: new Decimal(0.4),
+        frequencyWeight: new Decimal(0.35),
+        engagementWeight: new Decimal(0.25),
+      };
+      const initiateTier = {
+        id: 'initiate',
+        name: 'Initiate',
+        slug: 'initiate',
+        level: 1,
+        isActive: true,
+        inviteOnly: false,
+        pointsThreshold: 0,
+        spendWeight: new Decimal(0.4),
+        frequencyWeight: new Decimal(0.35),
+        engagementWeight: new Decimal(0.25),
+      };
 
       const mockPrisma = {
         loyaltyMembership: {

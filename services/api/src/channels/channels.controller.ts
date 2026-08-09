@@ -1,4 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  UseGuards,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -39,7 +49,9 @@ export class ChannelsController {
   }
 
   @Get('product/:productId')
-  async byProduct(@Param('productId', ParseUUIDPipe) productId: string): Promise<ApiResponse<unknown>> {
+  async byProduct(
+    @Param('productId', ParseUUIDPipe) productId: string,
+  ): Promise<ApiResponse<unknown>> {
     const data = await this.channels.getProductChannels(productId);
     return { data, message: 'OK' };
   }

@@ -15,7 +15,7 @@ import { TaxService } from '../tax/tax.service';
 import { ProductStatus, ImageType } from '@prisma/client';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
-import type { Cart, CartItem, Product } from '@hos-marketplace/shared-types';
+import type { Cart, Product } from '@hos-marketplace/shared-types';
 import { Decimal } from '@prisma/client/runtime/library';
 import { LoyaltyService } from '../loyalty/loyalty.service';
 
@@ -160,7 +160,9 @@ export class CartService {
 
       const MAX_CART_ITEMS = 50;
       if (cart.items.length >= MAX_CART_ITEMS) {
-        const hasMatchingItem = cart.items.some((item) => item.productId === addToCartDto.productId);
+        const hasMatchingItem = cart.items.some(
+          (item) => item.productId === addToCartDto.productId,
+        );
         if (!hasMatchingItem) {
           throw new BadRequestException(
             `Cart cannot contain more than ${MAX_CART_ITEMS} distinct items`,
@@ -183,7 +185,9 @@ export class CartService {
         const newKeys = Object.keys(newVariations).sort().join(',');
         if (itemKeys !== newKeys) return false;
 
-        return Object.keys(itemVariations).every((key) => itemVariations[key] === newVariations[key]);
+        return Object.keys(itemVariations).every(
+          (key) => itemVariations[key] === newVariations[key],
+        );
       });
 
       if (existingItem) {
@@ -222,7 +226,9 @@ export class CartService {
         },
       });
     } catch (err: any) {
-      this.logger.warn(`Failed to remove product from wishlist after adding to cart: ${err.message}`);
+      this.logger.warn(
+        `Failed to remove product from wishlist after adding to cart: ${err.message}`,
+      );
     }
 
     return this.recalculateCart(cartId, { userMutated: true });
@@ -334,12 +340,9 @@ export class CartService {
       throw new BadRequestException('Valid X-Guest-Session header is required');
     }
     // Require UUID v4 format to prevent guessable/sequential session IDs
-    const uuidV4Regex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuidV4Regex.test(id)) {
-      throw new BadRequestException(
-        'X-Guest-Session must be a valid UUID v4',
-      );
+      throw new BadRequestException('X-Guest-Session must be a valid UUID v4');
     }
     return id;
   }
@@ -625,10 +628,7 @@ export class CartService {
     return this.getCart(userId);
   }
 
-  async recalculateCart(
-    cartId: string,
-    options?: { userMutated?: boolean },
-  ): Promise<Cart> {
+  async recalculateCart(cartId: string, options?: { userMutated?: boolean }): Promise<Cart> {
     const cart = await this.prisma.cart.findUnique({
       where: { id: cartId },
       include: {
@@ -683,13 +683,17 @@ export class CartService {
     }
 
     // Consolidate duplicate items (same productId + variationOptions)
-    const consolidated = new Map<string, typeof cart.items[number]>();
+    const consolidated = new Map<string, (typeof cart.items)[number]>();
     const duplicateIds: string[] = [];
     for (const item of cart.items) {
       const vars = item.variationOptions as Record<string, string> | null;
-      const varKey = vars && Object.keys(vars).length > 0
-        ? Object.keys(vars).sort().map(k => `${k}=${vars[k]}`).join('|')
-        : '';
+      const varKey =
+        vars && Object.keys(vars).length > 0
+          ? Object.keys(vars)
+              .sort()
+              .map((k) => `${k}=${vars[k]}`)
+              .join('|')
+          : '';
       const key = `${item.productId}::${varKey}`;
       const existing = consolidated.get(key);
       if (existing) {
@@ -803,7 +807,7 @@ export class CartService {
     // Apply promotions and discounts
     let discount = new Decimal(0);
     const shipping = new Decimal(0);
-    const cartSubtotal = Number(subtotal);
+    const _cartSubtotal = Number(subtotal);
     let promotionFreeShipping = false;
 
     if (this.promotionsService && cart.userId && cart.items.length > 0) {

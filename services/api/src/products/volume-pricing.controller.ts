@@ -43,10 +43,14 @@ export class VolumePricingController {
     @Param('productId') productId: string,
     @Body() createDto: Omit<CreateVolumePricingDto, 'productId'>,
   ): Promise<ApiResponse<any>> {
-    const result = await this.volumePricingService.createVolumePricing({
-      ...createDto,
-      productId,
-    }, req.user.id, req.user.role);
+    const result = await this.volumePricingService.createVolumePricing(
+      {
+        ...createDto,
+        productId,
+      },
+      req.user.id,
+      req.user.role,
+    );
     return {
       data: result,
       message: 'Volume pricing tier created successfully',
@@ -100,7 +104,12 @@ export class VolumePricingController {
     @Param('id') id: string,
     @Body() updateDto: Partial<CreateVolumePricingDto>,
   ): Promise<ApiResponse<any>> {
-    const result = await this.volumePricingService.updateVolumePricing(id, updateDto, req.user.id, req.user.role);
+    const result = await this.volumePricingService.updateVolumePricing(
+      id,
+      updateDto,
+      req.user.id,
+      req.user.role,
+    );
     return {
       data: result,
       message: 'Volume pricing tier updated successfully',
@@ -114,7 +123,10 @@ export class VolumePricingController {
   })
   @ApiParam({ name: 'id', description: 'Volume pricing tier UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Volume pricing tier deleted successfully' })
-  async deleteVolumePricing(@Request() req: any, @Param('id') id: string): Promise<ApiResponse<void>> {
+  async deleteVolumePricing(
+    @Request() req: any,
+    @Param('id') id: string,
+  ): Promise<ApiResponse<void>> {
     await this.volumePricingService.deleteVolumePricing(id, req.user.id, req.user.role);
     return {
       data: null,

@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Delete, Body, Query, UseGuards, Request, Headers } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Query,
+  UseGuards,
+  Request,
+  Headers,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -179,8 +189,7 @@ export class GDPRController {
   @Roles('ADMIN')
   @ApiOperation({
     summary: 'Admin: consent audit log',
-    description:
-      'Returns paginated consent event log for all users. Restricted to ADMIN role.',
+    description: 'Returns paginated consent event log for all users. Restricted to ADMIN role.',
   })
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })

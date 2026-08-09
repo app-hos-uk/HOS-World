@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { ChannelSender, ChannelSenderParams, MessagingChannel, SendResult } from '../interfaces/channel-sender.interface';
+import type {
+  ChannelSender,
+  ChannelSenderParams,
+  MessagingChannel,
+  SendResult,
+} from '../interfaces/channel-sender.interface';
 
 @Injectable()
 export class SmsSender implements ChannelSender {
@@ -18,6 +23,7 @@ export class SmsSender implements ChannelSender {
       return { success: true, providerRef: 'skipped-no-config' };
     }
     try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const twilio = require('twilio');
       const client = twilio(sid, token);
       const msg = await client.messages.create({

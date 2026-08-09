@@ -86,7 +86,8 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   @Matches(/^\+?[\d\s\-()]+$/, {
-    message: 'WhatsApp number must contain only digits, spaces, hyphens, parentheses, and an optional leading +',
+    message:
+      'WhatsApp number must contain only digits, spaces, hyphens, parentheses, and an optional leading +',
   })
   whatsappNumber?: string;
 

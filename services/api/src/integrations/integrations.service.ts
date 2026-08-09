@@ -332,8 +332,7 @@ export class IntegrationsService {
     // Stripe mode always follows key prefixes (sk_/pk_ live|test), even when only the
     // checkbox is submitted — prevents "Test Mode" default from flipping live configs.
     if (existing.provider === 'stripe') {
-      const creds =
-        mergedCredentials || this.decryptCredentials(existing.credentials);
+      const creds = mergedCredentials || this.decryptCredentials(existing.credentials);
       const derived = this.resolveStripeTestMode(creds);
       if (derived !== null) {
         updateData.isTestMode = derived;
@@ -415,10 +414,7 @@ export class IntegrationsService {
         testStatus: result.success ? 'SUCCESS' : 'FAILED',
         testMessage: result.message,
       };
-      if (
-        integration.provider === 'stripe' &&
-        effectiveTestMode !== integration.isTestMode
-      ) {
+      if (integration.provider === 'stripe' && effectiveTestMode !== integration.isTestMode) {
         statusUpdate.isTestMode = effectiveTestMode;
       }
       await this.prisma.integrationConfig.update({
@@ -571,8 +567,7 @@ export class IntegrationsService {
    */
   private resolveStripeTestMode(credentials?: Record<string, any> | null): boolean | null {
     if (!credentials) return null;
-    const secretKey =
-      typeof credentials.secretKey === 'string' ? credentials.secretKey.trim() : '';
+    const secretKey = typeof credentials.secretKey === 'string' ? credentials.secretKey.trim() : '';
     const publishableKey =
       typeof credentials.publishableKey === 'string' ? credentials.publishableKey.trim() : '';
 
@@ -829,13 +824,13 @@ export class IntegrationsService {
     if (!secretKey.startsWith('sk_test_') && !secretKey.startsWith('sk_live_')) {
       return {
         success: false,
-        message: 'Secret key must start with sk_test_ or sk_live_ (placeholder values like "1" are rejected)',
+        message:
+          'Secret key must start with sk_test_ or sk_live_ (placeholder values like "1" are rejected)',
       };
     }
     const isTestKey = secretKey.startsWith('sk_test_');
     // Mode is derived from the key; warn if the stored checkbox disagrees but still test the key.
-    const modeMismatch =
-      (isTestMode && !isTestKey) || (!isTestMode && isTestKey);
+    const modeMismatch = (isTestMode && !isTestKey) || (!isTestMode && isTestKey);
 
     try {
       const headers = { Authorization: `Bearer ${secretKey}` };

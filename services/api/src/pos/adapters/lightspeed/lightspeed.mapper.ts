@@ -1,4 +1,10 @@
-import type { POSSale, POSSaleItem, POSOutlet, POSProductPayload, POSCustomerPayload } from '../../interfaces/pos-types';
+import type {
+  POSSale,
+  POSSaleItem,
+  POSOutlet,
+  POSProductPayload,
+  POSCustomerPayload,
+} from '../../interfaces/pos-types';
 
 /** Lightspeed / Vend API response shapes (partial). */
 export function mapOutletFromVend(row: {
@@ -68,7 +74,8 @@ function mapLineItem(li: Record<string, unknown>): POSSaleItem {
   const quantity =
     Number.isFinite(rawQty) && rawQty !== 0 ? Math.trunc(rawQty) || (rawQty < 0 ? -1 : 1) : 1;
   const absQty = Math.abs(quantity);
-  const hasPriceTotal = li.price_total !== undefined && li.price_total !== null && li.price_total !== '';
+  const hasPriceTotal =
+    li.price_total !== undefined && li.price_total !== null && li.price_total !== '';
   const hasPrice = li.price !== undefined && li.price !== null && li.price !== '';
 
   let unitPrice: number;
@@ -167,11 +174,7 @@ export function isClosedSale(sale: Pick<POSSale, 'state'>): boolean {
   const s = (sale.state || '').toLowerCase();
   if (!s) return true; // legacy payloads without state — import (poller + webhook closed path)
   return (
-    s === 'closed' ||
-    s === 'completed' ||
-    s === 'complete' ||
-    s === 'CLOSED' ||
-    s === 'COMPLETED'
+    s === 'closed' || s === 'completed' || s === 'complete' || s === 'CLOSED' || s === 'COMPLETED'
   );
 }
 

@@ -83,10 +83,7 @@ describe('LoyaltyWalletService', () => {
         }),
       },
       loyaltyTransaction: {
-        findUnique: jest
-          .fn()
-          .mockResolvedValueOnce(null)
-          .mockResolvedValue(existing),
+        findUnique: jest.fn().mockResolvedValueOnce(null).mockResolvedValue(existing),
         create: jest.fn().mockImplementation(async () => {
           createCalls++;
           return existing;
@@ -139,10 +136,7 @@ describe('LoyaltyWalletService', () => {
         }),
       },
       loyaltyTransaction: {
-        findUnique: jest
-          .fn()
-          .mockResolvedValueOnce(null)
-          .mockResolvedValue(existing),
+        findUnique: jest.fn().mockResolvedValueOnce(null).mockResolvedValue(existing),
         create: jest.fn().mockRejectedValue(
           new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
             code: 'P2002',

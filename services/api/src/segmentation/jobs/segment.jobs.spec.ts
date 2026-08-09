@@ -7,15 +7,23 @@ describe('SegmentJobsService', () => {
       registerProcessor: jest.fn(),
       addRepeatable: jest.fn().mockResolvedValue(undefined),
     };
-    const config = { get: jest.fn((k: string, def: string) => (k === 'SEGMENT_REFRESH_CRON' ? '0 3 * * *' : def)) };
+    const config = {
+      get: jest.fn((k: string, def: string) => (k === 'SEGMENT_REFRESH_CRON' ? '0 3 * * *' : def)),
+    };
     const segmentation = {
       evaluateSegment: jest.fn().mockResolvedValue(undefined),
       evaluateAllActive: jest.fn().mockResolvedValue({ evaluated: 1, errors: 0 }),
     };
     const jobs = new SegmentJobsService(queue as any, config as any, segmentation as any);
     await jobs.onModuleInit();
-    expect(queue.registerProcessor).toHaveBeenCalledWith(JobType.SEGMENT_REFRESH, expect.any(Function));
-    expect(queue.registerProcessor).toHaveBeenCalledWith(JobType.SEGMENT_REFRESH_ALL, expect.any(Function));
+    expect(queue.registerProcessor).toHaveBeenCalledWith(
+      JobType.SEGMENT_REFRESH,
+      expect.any(Function),
+    );
+    expect(queue.registerProcessor).toHaveBeenCalledWith(
+      JobType.SEGMENT_REFRESH_ALL,
+      expect.any(Function),
+    );
     expect(queue.addRepeatable).toHaveBeenCalledWith(JobType.SEGMENT_REFRESH_ALL, {}, '0 3 * * *');
   });
 
@@ -26,7 +34,10 @@ describe('SegmentJobsService', () => {
       addRepeatable: jest.fn().mockResolvedValue(undefined),
     };
     const config = { get: jest.fn(() => '0 3 * * *') };
-    const segmentation = { evaluateSegment: jest.fn().mockResolvedValue(undefined), evaluateAllActive: jest.fn() };
+    const segmentation = {
+      evaluateSegment: jest.fn().mockResolvedValue(undefined),
+      evaluateAllActive: jest.fn(),
+    };
     const jobs = new SegmentJobsService(queue as any, config as any, segmentation as any);
     await jobs.onModuleInit();
     await processors.get(JobType.SEGMENT_REFRESH)!({ data: { segmentId: 's1' } });
@@ -40,7 +51,10 @@ describe('SegmentJobsService', () => {
       addRepeatable: jest.fn().mockResolvedValue(undefined),
     };
     const config = { get: jest.fn(() => '0 3 * * *') };
-    const segmentation = { evaluateSegment: jest.fn(), evaluateAllActive: jest.fn().mockResolvedValue({ evaluated: 2, errors: 0 }) };
+    const segmentation = {
+      evaluateSegment: jest.fn(),
+      evaluateAllActive: jest.fn().mockResolvedValue({ evaluated: 2, errors: 0 }),
+    };
     const jobs = new SegmentJobsService(queue as any, config as any, segmentation as any);
     await jobs.onModuleInit();
     await processors.get(JobType.SEGMENT_REFRESH_ALL)!();

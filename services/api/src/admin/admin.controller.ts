@@ -92,7 +92,8 @@ export class AdminController {
   @Get('users/stats')
   @ApiOperation({
     summary: 'Get user statistics',
-    description: 'Returns aggregate counts by role, status, and recent activity. Admin access required.',
+    description:
+      'Returns aggregate counts by role, status, and recent activity. Admin access required.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Stats retrieved successfully' })
   async getUserStats(): Promise<ApiResponse<any>> {
@@ -427,7 +428,12 @@ export class AdminController {
   async getAllSellers(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
     @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number = 50,
-  ): Promise<ApiResponse<{ data: unknown[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>> {
+  ): Promise<
+    ApiResponse<{
+      data: unknown[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>
+  > {
     const result = await this.adminService.getAllSellers({ page, limit });
     return {
       data: result,
@@ -487,7 +493,8 @@ export class AdminController {
   @Put('reviews/:id/approve')
   @ApiOperation({
     summary: 'Approve a pending review',
-    description: 'Approves a review, making it visible. Notifies the review author. Admin access required.',
+    description:
+      'Approves a review, making it visible. Notifies the review author. Admin access required.',
   })
   @ApiParam({ name: 'id', description: 'Review UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Review approved successfully' })

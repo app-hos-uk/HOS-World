@@ -93,10 +93,7 @@ describe('LoyaltyEarnEngine', () => {
           }),
         },
         loyaltyMembership: {
-          findUnique: jest
-            .fn()
-            .mockResolvedValueOnce(null)
-            .mockResolvedValue(createdMembership),
+          findUnique: jest.fn().mockResolvedValueOnce(null).mockResolvedValue(createdMembership),
           create: jest.fn().mockResolvedValue(createdMembership),
           update: jest.fn(),
         },

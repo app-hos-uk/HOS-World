@@ -9,7 +9,6 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { ReviewStatus } from '@prisma/client';
 import { LoyaltyListener } from '../loyalty/listeners/loyalty.listener';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ActivityService } from '../activity/activity.service';
@@ -114,23 +113,29 @@ export class ReviewsService {
     });
 
     // Log activity
-    this.activityService.createLog({
-      userId,
-      action: 'REVIEW_SUBMITTED',
-      entityType: 'ProductReview',
-      entityId: review.id,
-      description: `Review submitted for product "${product.name}" (rating: ${createReviewDto.rating}/5)`,
-      metadata: { productId, rating: createReviewDto.rating, verified: !!hasPurchased },
-    }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+    this.activityService
+      .createLog({
+        userId,
+        action: 'REVIEW_SUBMITTED',
+        entityType: 'ProductReview',
+        entityId: review.id,
+        description: `Review submitted for product "${product.name}" (rating: ${createReviewDto.rating}/5)`,
+        metadata: { productId, rating: createReviewDto.rating, verified: !!hasPurchased },
+      })
+      .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
     // Notify admins about pending review for moderation
-    this.notificationsService.sendNotificationToRole(
-      'ADMIN',
-      'GENERAL',
-      'New Review Pending Moderation',
-      `A new ${review.verified ? 'verified' : ''} review (${createReviewDto.rating}/5 stars) has been submitted for "${product.name}" and requires moderation.`,
-      { reviewId: review.id, productId, productName: product.name },
-    ).catch((e) => this.logger.warn(`Review moderation notification failed: ${(e as Error).message}`));
+    this.notificationsService
+      .sendNotificationToRole(
+        'ADMIN',
+        'GENERAL',
+        'New Review Pending Moderation',
+        `A new ${review.verified ? 'verified' : ''} review (${createReviewDto.rating}/5 stars) has been submitted for "${product.name}" and requires moderation.`,
+        { reviewId: review.id, productId, productName: product.name },
+      )
+      .catch((e) =>
+        this.logger.warn(`Review moderation notification failed: ${(e as Error).message}`),
+      );
 
     // Award loyalty points on submit (idempotent if also awarded on approve)
     this.loyaltyListener
@@ -145,7 +150,9 @@ export class ReviewsService {
               `You earned ${pts} Enchanted Circle points for reviewing "${product.name}".`,
               { reviewId: review.id, productId, points: pts },
             )
-            .catch((e) => this.logger.warn(`Review earn notification failed: ${(e as Error).message}`));
+            .catch((e) =>
+              this.logger.warn(`Review earn notification failed: ${(e as Error).message}`),
+            );
         }
       })
       .catch((e) => this.logger.warn(`Loyalty review earn on submit: ${(e as Error).message}`));
@@ -354,9 +361,11 @@ export class ReviewsService {
     };
   }
 
-  async getAllReviewsForAdmin(
-    filters?: { status?: string; page?: number; limit?: number },
-  ): Promise<{
+  async getAllReviewsForAdmin(filters?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{
     reviews: any[];
     pagination: { page: number; limit: number; total: number; totalPages: number };
   }> {
@@ -445,29 +454,39 @@ export class ReviewsService {
     }
 
     // Log moderation activity
-    this.activityService.createLog({
-      userId: moderatorId,
-      action: `REVIEW_${newStatus}`,
-      entityType: 'ProductReview',
-      entityId: reviewId,
-      description: `Review for "${review.product.name}" was ${action === 'approve' ? 'approved' : 'rejected'} by moderator`,
-      metadata: { productId: review.productId, reviewUserId: review.userId, action, pointsAwarded },
-    }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+    this.activityService
+      .createLog({
+        userId: moderatorId,
+        action: `REVIEW_${newStatus}`,
+        entityType: 'ProductReview',
+        entityId: reviewId,
+        description: `Review for "${review.product.name}" was ${action === 'approve' ? 'approved' : 'rejected'} by moderator`,
+        metadata: {
+          productId: review.productId,
+          reviewUserId: review.userId,
+          action,
+          pointsAwarded,
+        },
+      })
+      .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
     // Notify the review author about the moderation decision (include points when newly awarded)
-    const statusMessage = action === 'approve'
-      ? pointsAwarded > 0
-        ? `Your review for "${review.product.name}" has been approved and is now visible. You earned ${pointsAwarded} Enchanted Circle points.`
-        : `Your review for "${review.product.name}" has been approved and is now visible.`
-      : `Your review for "${review.product.name}" was not approved. Please ensure your review follows our community guidelines.`;
+    const statusMessage =
+      action === 'approve'
+        ? pointsAwarded > 0
+          ? `Your review for "${review.product.name}" has been approved and is now visible. You earned ${pointsAwarded} Enchanted Circle points.`
+          : `Your review for "${review.product.name}" has been approved and is now visible.`
+        : `Your review for "${review.product.name}" was not approved. Please ensure your review follows our community guidelines.`;
 
-    this.notificationsService.sendNotificationToUser(
-      review.userId,
-      'GENERAL',
-      action === 'approve' ? 'Your Review Has Been Approved' : 'Review Update',
-      statusMessage,
-      { reviewId, productId: review.productId, action, pointsAwarded },
-    ).catch((e) => this.logger.warn(`Review notification failed: ${(e as Error).message}`));
+    this.notificationsService
+      .sendNotificationToUser(
+        review.userId,
+        'GENERAL',
+        action === 'approve' ? 'Your Review Has Been Approved' : 'Review Update',
+        statusMessage,
+        { reviewId, productId: review.productId, action, pointsAwarded },
+      )
+      .catch((e) => this.logger.warn(`Review notification failed: ${(e as Error).message}`));
 
     return this.mapToReviewType(updated);
   }

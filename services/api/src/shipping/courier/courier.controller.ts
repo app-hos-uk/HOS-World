@@ -152,11 +152,7 @@ export class CourierController {
   ): Promise<ApiResponse<any>> {
     const factoryProvider = this.courierFactory.getProvider(provider);
     if (factoryProvider) {
-      const result = await this.courierFactory.trackShipment(
-        trackingNumber,
-        provider,
-        carrier,
-      );
+      const result = await this.courierFactory.trackShipment(trackingNumber, provider, carrier);
       return {
         data: result,
         message: 'Tracking information retrieved successfully',

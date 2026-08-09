@@ -98,6 +98,7 @@ export class GeocodingService {
    * Uses internal lookup tables first, can be extended to use external APIs
    */
   async geocode(address: AddressInput): Promise<GeocodingResult | null> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { city, state, postalCode, country } = address;
 
     // Try city-level lookup first (most accurate for our fallback)

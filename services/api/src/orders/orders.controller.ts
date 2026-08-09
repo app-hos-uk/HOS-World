@@ -106,9 +106,7 @@ export class OrdersController {
   @ApiParam({ name: 'orderNumber', description: 'Human-readable order number', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Order tracking info retrieved successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Order not found' })
-  async findByOrderNumber(
-    @Param('orderNumber') orderNumber: string,
-  ): Promise<ApiResponse<any>> {
+  async findByOrderNumber(@Param('orderNumber') orderNumber: string): Promise<ApiResponse<any>> {
     const tracking = await this.ordersService.getPublicOrderTracking(orderNumber);
     return {
       data: tracking,
@@ -121,8 +119,7 @@ export class OrdersController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     summary: 'Live carrier tracking by order number (public)',
-    description:
-      'Returns live carrier tracking events for a shipped order. No PII is exposed.',
+    description: 'Returns live carrier tracking events for a shipped order. No PII is exposed.',
   })
   @ApiParam({ name: 'orderNumber', description: 'Human-readable order number', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Live tracking retrieved successfully' })
@@ -333,7 +330,8 @@ export class OrdersController {
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiOperation({
     summary: 'Get carrier shipping rates for an order',
-    description: 'Returns live carrier rates (Shippo or other configured providers) for the order shipment.',
+    description:
+      'Returns live carrier rates (Shippo or other configured providers) for the order shipment.',
   })
   @ApiParam({ name: 'id', description: 'Order UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Shipping rates retrieved successfully' })

@@ -288,9 +288,9 @@ describe('LoyaltyService', () => {
   describe('updatePreferences', () => {
     it('throws NotFoundException when not enrolled', async () => {
       mockPrisma.loyaltyMembership.findUnique.mockResolvedValue(null);
-      await expect(
-        service.updatePreferences('user-1', { optInEmail: true }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.updatePreferences('user-1', { optInEmail: true })).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws BadRequestException when no preferences are provided', async () => {

@@ -10,7 +10,8 @@ export class LoyaltyEventService {
   constructor(
     private prisma: PrismaService,
     @Optional() private config?: ConfigService,
-    @Optional() @Inject(forwardRef(() => MarketingEventBus))
+    @Optional()
+    @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
   ) {}
 

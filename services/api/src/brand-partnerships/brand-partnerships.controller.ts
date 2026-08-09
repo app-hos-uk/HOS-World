@@ -38,10 +38,7 @@ export class BrandPartnershipsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Query('limit') limit?: string,
   ): Promise<ApiResponse<unknown>> {
-    const data = await this.brand.getCampaignProducts(
-      id,
-      limit ? parseInt(limit, 10) : undefined,
-    );
+    const data = await this.brand.getCampaignProducts(id, limit ? parseInt(limit, 10) : undefined);
     return { data, message: 'OK' };
   }
 }

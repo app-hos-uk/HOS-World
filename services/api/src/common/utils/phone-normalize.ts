@@ -68,10 +68,7 @@ function stripTrunkZeroAfterCountryCode(nsn: string): string {
  * @param countryHint ISO / free-form country used only when the number has no `+` / `00` prefix.
  *   Required for national-format numbers — there is no default country.
  */
-export function normalizePhoneToE164(
-  phone: string,
-  countryHint?: string | null,
-): string | null {
+export function normalizePhoneToE164(phone: string, countryHint?: string | null): string | null {
   if (!phone || typeof phone !== 'string') return null;
   const trimmed = phone.trim();
   if (!trimmed) return null;

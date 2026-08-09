@@ -19,12 +19,22 @@ describe('CLV engine', () => {
   });
 
   it('high-value member gets higher CLV', () => {
-    const r = computeClv({ ...base, avgOrderValue: 200, totalOrders: 50, monthsSinceEnrollment: 12 });
+    const r = computeClv({
+      ...base,
+      avgOrderValue: 200,
+      totalOrders: 50,
+      monthsSinceEnrollment: 12,
+    });
     expect(r.clvScore).toBeGreaterThan(1000);
   });
 
   it('churned member has high churn risk', () => {
-    const r = computeClv({ ...base, daysSinceLastPurchase: 365, totalOrders: 3, monthsSinceEnrollment: 6 });
+    const r = computeClv({
+      ...base,
+      daysSinceLastPurchase: 365,
+      totalOrders: 3,
+      monthsSinceEnrollment: 6,
+    });
     expect(r.churnRisk).toBeGreaterThan(0.5);
   });
 
@@ -35,7 +45,13 @@ describe('CLV engine', () => {
   });
 
   it('zero orders gives zero CLV', () => {
-    const r = computeClv({ ...base, totalOrders: 0, avgOrderValue: 0, totalSpend: 0, daysSinceLastPurchase: 999 });
+    const r = computeClv({
+      ...base,
+      totalOrders: 0,
+      avgOrderValue: 0,
+      totalSpend: 0,
+      daysSinceLastPurchase: 999,
+    });
     expect(r.clvScore).toBe(0);
   });
 

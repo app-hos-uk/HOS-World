@@ -95,11 +95,7 @@ describe('XeroAuthService', () => {
       const { service, redis } = buildService();
       redis.isRedisConnected.mockReturnValue(true);
       const { state } = await service.createConnectUrl();
-      expect(redis.set).toHaveBeenCalledWith(
-        `xero:oauth:state:${state}`,
-        expect.any(String),
-        600,
-      );
+      expect(redis.set).toHaveBeenCalledWith(`xero:oauth:state:${state}`, expect.any(String), 600);
     });
   });
 
@@ -197,8 +193,7 @@ describe('XeroAuthService', () => {
 
     it('throws when XERO_CLIENT_ID/SECRET are missing', async () => {
       const { service } = buildService({
-        configGet: (key: string) =>
-          key === 'XERO_REDIRECT_URI' ? 'https://cb' : undefined,
+        configGet: (key: string) => (key === 'XERO_REDIRECT_URI' ? 'https://cb' : undefined),
       });
       await expect(service.exchangeCode('code')).rejects.toThrow(BadRequestException);
     });

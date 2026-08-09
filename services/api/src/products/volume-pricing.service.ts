@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateVolumePricingDto } from './dto/create-volume-pricing.dto';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -32,7 +38,9 @@ export class VolumePricingService {
     }
     if (userId && role && role !== 'ADMIN') {
       if (!product.seller || product.seller.userId !== userId) {
-        throw new ForbiddenException('You do not have permission to manage pricing for this product');
+        throw new ForbiddenException(
+          'You do not have permission to manage pricing for this product',
+        );
       }
     }
     return product;
@@ -216,7 +224,12 @@ export class VolumePricingService {
   /**
    * Update volume pricing tier
    */
-  async updateVolumePricing(id: string, updateDto: Partial<CreateVolumePricingDto>, userId?: string, role?: string) {
+  async updateVolumePricing(
+    id: string,
+    updateDto: Partial<CreateVolumePricingDto>,
+    userId?: string,
+    role?: string,
+  ) {
     const tier = await this.prisma.volumePricing.findUnique({
       where: { id },
     });

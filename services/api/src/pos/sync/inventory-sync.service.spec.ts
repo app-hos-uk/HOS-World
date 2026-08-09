@@ -162,10 +162,9 @@ describe('PosInventorySyncService', () => {
 
   describe('nightlyReconciliation', () => {
     it('skips when POS disabled', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { service, prisma, config, discrepancies } = makeMocks();
-      config.get.mockImplementation((key: string) =>
-        key === 'POS_ENABLED' ? 'false' : undefined,
-      );
+      config.get.mockImplementation((key: string) => (key === 'POS_ENABLED' ? 'false' : undefined));
       await service.nightlyReconciliation();
       expect(discrepancies.createDiscrepancy).not.toHaveBeenCalled();
     });

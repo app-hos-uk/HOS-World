@@ -44,7 +44,9 @@ describe('JourneyService', () => {
   });
 
   it('enrollUser creates enrollment when none exists', async () => {
-    prisma.marketingJourney.findUnique.mockResolvedValue(journeyRow([{ stepIndex: 0, type: 'SEND', channel: 'EMAIL', templateSlug: 't' }]));
+    prisma.marketingJourney.findUnique.mockResolvedValue(
+      journeyRow([{ stepIndex: 0, type: 'SEND', channel: 'EMAIL', templateSlug: 't' }]),
+    );
     prisma.journeyEnrollment.findUnique.mockResolvedValue(null);
     prisma.journeyEnrollment.create.mockResolvedValue({ id: 'e1' });
     const r = await service.enrollUser('test', 'u1', {});
@@ -121,7 +123,11 @@ describe('JourneyService', () => {
       ]);
       const enrollment = makeEnrollment(0, journey);
       prisma.journeyEnrollment.findUnique.mockResolvedValueOnce(enrollment);
-      prisma.journeyEnrollment.findUnique.mockResolvedValueOnce({ ...enrollment, currentStep: 1, status: 'ACTIVE' });
+      prisma.journeyEnrollment.findUnique.mockResolvedValueOnce({
+        ...enrollment,
+        currentStep: 1,
+        status: 'ACTIVE',
+      });
       prisma.journeyEnrollment.update.mockResolvedValue({});
 
       await service.processStep('e1');
@@ -173,9 +179,7 @@ describe('JourneyService', () => {
     });
 
     it('WAIT step with positive delay schedules and pauses', async () => {
-      const journey = journeyRow([
-        { stepIndex: 0, type: 'WAIT', delayMinutes: 60 },
-      ]);
+      const journey = journeyRow([{ stepIndex: 0, type: 'WAIT', delayMinutes: 60 }]);
       const enrollment = makeEnrollment(0, journey);
       prisma.journeyEnrollment.findUnique.mockResolvedValue(enrollment);
       prisma.journeyEnrollment.update.mockResolvedValue({});
@@ -183,9 +187,7 @@ describe('JourneyService', () => {
       await service.processStep('e1');
 
       const updateCall = prisma.journeyEnrollment.update.mock.calls[0][0].data;
-      expect(updateCall.metadata).toEqual(
-        expect.objectContaining({ waitScheduledForStep: 0 }),
-      );
+      expect(updateCall.metadata).toEqual(expect.objectContaining({ waitScheduledForStep: 0 }));
       expect(updateCall.nextStepAt.getTime()).toBeGreaterThan(Date.now());
     });
 

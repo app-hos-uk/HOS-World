@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateCustomerGroupDto } from './dto/create-customer-group.dto';
-import { CustomerGroupType } from '@prisma/client';
 
 @Injectable()
 export class CustomerGroupsService {
@@ -106,9 +105,7 @@ export class CustomerGroupsService {
     }
 
     if (group.isActive) {
-      throw new BadRequestException(
-        'Deactivate the customer group before deleting it.',
-      );
+      throw new BadRequestException('Deactivate the customer group before deleting it.');
     }
 
     if (group._count.customers > 0) {
@@ -125,7 +122,7 @@ export class CustomerGroupsService {
    * Add customer to group
    */
   async addCustomerToGroup(groupId: string, userId: string) {
-    const group = await this.findOne(groupId);
+    const _group = await this.findOne(groupId);
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });

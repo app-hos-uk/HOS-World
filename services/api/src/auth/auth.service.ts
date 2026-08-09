@@ -69,9 +69,11 @@ export class AuthService {
     private templatesService: TemplatesService,
     private cartService: CartService,
     private addressesService: AddressesService,
-    @Optional() @Inject(forwardRef(() => FoundingMembersService))
+    @Optional()
+    @Inject(forwardRef(() => FoundingMembersService))
     private foundingMembersService?: FoundingMembersService,
-    @Optional() @Inject(forwardRef(() => LoyaltyService))
+    @Optional()
+    @Inject(forwardRef(() => LoyaltyService))
     private loyaltyService?: LoyaltyService,
   ) {
     // Check if RefreshToken model is available on startup
@@ -215,7 +217,11 @@ export class AuthService {
     }
   }
 
-  async register(registerDto: RegisterDto, ipAddress?: string, userAgent?: string): Promise<AuthResponse> {
+  async register(
+    registerDto: RegisterDto,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<AuthResponse> {
     registerDto.email = registerDto.email?.trim().toLowerCase();
 
     await this.assertRegistrationAllowed(
@@ -356,10 +362,7 @@ export class AuthService {
               referralCode = inviteAsReferral;
             }
           }
-          await this.loyaltyService.enroll(
-            user.id,
-            referralCode ? { referralCode } : undefined,
-          );
+          await this.loyaltyService.enroll(user.id, referralCode ? { referralCode } : undefined);
         } catch (loyaltyErr: unknown) {
           this.logger.warn(
             `Customer loyalty auto-enroll failed for ${user.email}: ${loyaltyErr instanceof Error ? loyaltyErr.message : 'unknown'}`,
@@ -541,9 +544,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException(
-        'An account with this email already exists. Please sign in.',
-      );
+      throw new ConflictException('An account with this email already exists. Please sign in.');
     }
 
     // Guest checkout creates a customer account — honor invite-only mode.
@@ -863,7 +864,10 @@ export class AuthService {
 
       if (!user) {
         // Spend time on a dummy hash to prevent timing-based user enumeration
-        await bcrypt.compare(loginDto.password, '$2b$12$000000000000000000000000000000000000000000000000000000');
+        await bcrypt.compare(
+          loginDto.password,
+          '$2b$12$000000000000000000000000000000000000000000000000000000',
+        );
         throw new UnauthorizedException('Invalid credentials');
       }
 
@@ -914,6 +918,7 @@ export class AuthService {
       });
 
       // Remove password and lockout fields from response
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, failedLoginAttempts, lockedUntil, ...userWithoutPassword } = user;
 
       // Generate tokens
@@ -1089,9 +1094,7 @@ export class AuthService {
 
     // Find and verify refresh token in DB
     if (!this.refreshTokenAvailable) {
-      this.logger.warn(
-        'RefreshToken model not available - refresh token functionality disabled',
-      );
+      this.logger.warn('RefreshToken model not available - refresh token functionality disabled');
       throw new UnauthorizedException(
         'Token refresh is currently unavailable. Please log in again.',
       );
@@ -1146,6 +1149,7 @@ export class AuthService {
     }
 
     // Generate new tokens (rotation) — strip all sensitive fields
+    /* eslint-disable @typescript-eslint/no-unused-vars */
     const {
       password,
       failedLoginAttempts,
@@ -1154,6 +1158,7 @@ export class AuthService {
       resetTokenExpiry,
       ...userWithoutSensitive
     } = user as any;
+    /* eslint-enable @typescript-eslint/no-unused-vars */
     const tokens = await this.generateTokens(userWithoutSensitive);
 
     return {
@@ -1479,7 +1484,9 @@ export class AuthService {
         verifyLink,
       });
       const subject = rendered?.subject || 'Verify your email — House of Spells';
-      const html = rendered?.body || `<p>Hi ${customerName},</p><p>Please verify your email by clicking <a href="${verifyLink}">here</a>.</p>`;
+      const html =
+        rendered?.body ||
+        `<p>Hi ${customerName},</p><p>Please verify your email by clicking <a href="${verifyLink}">here</a>.</p>`;
       await this.notificationsService.queueNotification(user.email, subject, html);
     } catch (err: any) {
       this.logger.warn(`Failed to send verification email to ${user.email}: ${err?.message}`);

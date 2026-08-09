@@ -32,10 +32,7 @@ export function getStrapiOrigin(strapiApiUrl: string): string {
 }
 
 /** Resolve Strapi media (populated relation, flat URL, or legacy string). */
-export function resolveStrapiMediaUrl(
-  media: unknown,
-  strapiApiUrl: string,
-): string | undefined {
+export function resolveStrapiMediaUrl(media: unknown, strapiApiUrl: string): string | undefined {
   if (!media) return undefined;
   if (typeof media === 'string') {
     const trimmed = media.trim();

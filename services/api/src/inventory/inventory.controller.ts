@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, NotFoundException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -18,7 +29,6 @@ import { CreateStockMovementDto } from './dto/create-stock-movement.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { Public } from '../common/decorators/public.decorator';
 import { Request } from '@nestjs/common';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
@@ -110,7 +120,11 @@ export class InventoryController {
     @Body() createDto: CreateInventoryLocationDto,
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
-    const location = await this.inventoryService.upsertInventoryLocation(createDto, req.user?.id, req.user?.role);
+    const location = await this.inventoryService.upsertInventoryLocation(
+      createDto,
+      req.user?.id,
+      req.user?.role,
+    );
     return {
       data: location,
       message: 'Inventory location created/updated successfully',
@@ -184,11 +198,12 @@ export class InventoryController {
   })
   @ApiParam({ name: 'id', description: 'Reservation UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Reservation cancelled successfully' })
-  async cancelReservation(
-    @Param('id') id: string,
-    @Request() req: any,
-  ): Promise<ApiResponse<any>> {
-    const reservation = await this.inventoryService.cancelReservation(id, req.user?.id, req.user?.role);
+  async cancelReservation(@Param('id') id: string, @Request() req: any): Promise<ApiResponse<any>> {
+    const reservation = await this.inventoryService.cancelReservation(
+      id,
+      req.user?.id,
+      req.user?.role,
+    );
     return {
       data: reservation,
       message: 'Reservation cancelled successfully',

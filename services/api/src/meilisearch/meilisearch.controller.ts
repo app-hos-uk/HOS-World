@@ -224,7 +224,8 @@ export class MeilisearchController {
   @Get('suggestions')
   @ApiOperation({
     summary: 'Get search suggestions (autocomplete)',
-    description: 'Returns product name suggestions based on query prefix. Supports typo tolerance and fuzzy matching.',
+    description:
+      'Returns product name suggestions based on query prefix. Supports typo tolerance and fuzzy matching.',
   })
   @ApiQuery({ name: 'q', required: true, type: String, description: 'Search prefix (min 2 chars)' })
   @ApiQuery({

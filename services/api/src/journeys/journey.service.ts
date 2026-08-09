@@ -131,7 +131,9 @@ export class JourneyService {
 
       if (step.type === 'SEND') {
         if (!step.templateSlug) {
-          this.logger.warn(`SEND step at index ${enrollment.currentStep} missing templateSlug — marking FAILED`);
+          this.logger.warn(
+            `SEND step at index ${enrollment.currentStep} missing templateSlug — marking FAILED`,
+          );
           await this.prisma.journeyEnrollment.update({
             where: { id: enrollmentId },
             data: { status: 'FAILED', nextStepAt: null },
@@ -144,7 +146,10 @@ export class JourneyService {
       }
 
       if (step.type === 'CONDITION') {
-        const nextIdx = await this.evaluateConditionBranch(enrollment as EnrollmentWithJourney, step);
+        const nextIdx = await this.evaluateConditionBranch(
+          enrollment as EnrollmentWithJourney,
+          step,
+        );
         await this.advance(enrollmentId, nextIdx);
         continue;
       }
@@ -154,7 +159,9 @@ export class JourneyService {
         continue;
       }
 
-      this.logger.warn(`Unknown step type "${step.type}" at index ${enrollment.currentStep} — skipping`);
+      this.logger.warn(
+        `Unknown step type "${step.type}" at index ${enrollment.currentStep} — skipping`,
+      );
       await this.advance(enrollmentId, enrollment.currentStep + 1);
     }
     this.logger.warn(`processStep aborted after ${maxIterations} iterations (${enrollmentId})`);
@@ -232,7 +239,10 @@ export class JourneyService {
     });
   }
 
-  private async handleSendStep(enrollment: EnrollmentWithJourney, step: JourneyStep): Promise<void> {
+  private async handleSendStep(
+    enrollment: EnrollmentWithJourney,
+    step: JourneyStep,
+  ): Promise<void> {
     const vars = await this.buildRuntimeVars(enrollment);
     const staticVars = Object.fromEntries(
       Object.entries(step.templateVars || {}).map(([k, v]) => [k, String(v)]),
@@ -249,7 +259,9 @@ export class JourneyService {
     });
   }
 
-  private async buildRuntimeVars(enrollment: EnrollmentWithJourney): Promise<Record<string, string>> {
+  private async buildRuntimeVars(
+    enrollment: EnrollmentWithJourney,
+  ): Promise<Record<string, string>> {
     const user = await this.prisma.user.findUnique({
       where: { id: enrollment.userId },
       include: { loyaltyMembership: { include: { tier: true } } },

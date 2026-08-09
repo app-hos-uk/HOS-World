@@ -64,10 +64,7 @@ export function parseUploadRelativePath(relativePath: string): {
     throw new BadRequestException('Invalid filename');
   }
 
-  const folderParts = parts
-    .slice(0, -1)
-    .map(sanitizeSegment)
-    .filter(Boolean);
+  const folderParts = parts.slice(0, -1).map(sanitizeSegment).filter(Boolean);
 
   if (folderParts.length === 0) {
     throw new BadRequestException('Invalid file path');

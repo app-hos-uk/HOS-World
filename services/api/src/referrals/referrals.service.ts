@@ -63,9 +63,7 @@ export class ReferralsService {
       });
 
       if (existing && Date.now() - existing.createdAt.getTime() < REFERRAL_DEDUP_WINDOW_MS) {
-        const campaignChanged =
-          dto.campaignId != null &&
-          dto.campaignId !== existing.campaignId;
+        const campaignChanged = dto.campaignId != null && dto.campaignId !== existing.campaignId;
 
         const updated = await this.prisma.referral.update({
           where: { id: existing.id },

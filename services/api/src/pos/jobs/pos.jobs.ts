@@ -74,11 +74,14 @@ export class PosJobsService implements OnModuleInit {
       await this.inventorySync.nightlyReconciliation();
     });
 
-    this.queue.registerProcessor(JobType.POS_CUSTOMER_SYNC, async (job: Job<{ userId: string }>) => {
-      const userId = job.data?.userId;
-      if (!userId) return;
-      await this.customerSync.syncMembershipToAllPosStores(userId);
-    });
+    this.queue.registerProcessor(
+      JobType.POS_CUSTOMER_SYNC,
+      async (job: Job<{ userId: string }>) => {
+        const userId = job.data?.userId;
+        if (!userId) return;
+        await this.customerSync.syncMembershipToAllPosStores(userId);
+      },
+    );
 
     this.queue.registerProcessor(
       JobType.POS_CUSTOMER_IDENTITY_BACKFILL,

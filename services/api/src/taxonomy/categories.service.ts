@@ -23,7 +23,10 @@ export interface UpdateCategoryDto {
 
 @Injectable()
 export class CategoriesService {
-  constructor(private prisma: PrismaService, private cache: CacheService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cache: CacheService,
+  ) {}
 
   async createCategory(data: CreateCategoryDto) {
     // Validate Fandom (parent) if provided
@@ -148,7 +151,11 @@ export class CategoriesService {
       orderBy: [{ order: 'asc' }, { name: 'asc' }],
     });
 
-    await this.cache.set(CategoriesService.TREE_CACHE_KEY, rootCategories, CategoriesService.TREE_CACHE_TTL);
+    await this.cache.set(
+      CategoriesService.TREE_CACHE_KEY,
+      rootCategories,
+      CategoriesService.TREE_CACHE_TTL,
+    );
     return rootCategories;
   }
 

@@ -120,11 +120,13 @@ export class LoyaltyEarnEngine {
     platformDefaultRate: number,
   ): { pts: Decimal; skippedDisabledSeller: boolean } {
     if (seller.loyaltyEnabled && seller.loyaltyEarnRate != null) {
-      return { pts: itemTotal.mul(new Decimal(seller.loyaltyEarnRate)), skippedDisabledSeller: false };
+      return {
+        pts: itemTotal.mul(new Decimal(seller.loyaltyEarnRate)),
+        skippedDisabledSeller: false,
+      };
     }
 
-    const platformRule =
-      purchaseRule && purchaseRule.isActive !== false ? purchaseRule : null;
+    const platformRule = purchaseRule && purchaseRule.isActive !== false ? purchaseRule : null;
 
     if (platformRule?.pointsType === 'PER_CURRENCY_UNIT') {
       return { pts: itemTotal.mul(platformRule.pointsAmount), skippedDisabledSeller: false };
@@ -199,7 +201,11 @@ export class LoyaltyEarnEngine {
   private async resolveSellerForItem(
     product: { id: string; sellerId: string | null; isPlatformOwned: boolean; seller?: any },
     hosSellerId: string,
-  ): Promise<{ id: string; loyaltyEnabled: boolean; loyaltyEarnRate: Prisma.Decimal | null } | null> {
+  ): Promise<{
+    id: string;
+    loyaltyEnabled: boolean;
+    loyaltyEarnRate: Prisma.Decimal | null;
+  } | null> {
     const activeVp = await this.prisma.vendorProduct.findFirst({
       where: { productId: product.id, status: 'ACTIVE' as any },
       select: { sellerId: true },
@@ -460,8 +466,7 @@ export class LoyaltyEarnEngine {
       const p = line.product;
       if (!p) continue;
 
-      const seller =
-        (await this.resolveSellerForItem(p, hosSellerId)) ??
+      const seller = (await this.resolveSellerForItem(p, hosSellerId)) ??
         // Unresolved seller: still apply platform PURCHASE rule / default rate
         { id: null as string | null, loyaltyEnabled: true, loyaltyEarnRate: null };
 
@@ -506,8 +511,12 @@ export class LoyaltyEarnEngine {
 
     const region = membership.regionCode || order.user?.country || 'GB';
     const activeCampaigns = await this.campaigns.getActiveForContext(region, 'WEB');
-    const { points: campPoints, campaignId, mult: internalMult, bonus: internalBonus } =
-      this.campaigns.applyCampaignsToBasePoints(activeCampaigns, basePoints.toNumber());
+    const {
+      points: campPoints,
+      campaignId,
+      mult: internalMult,
+      bonus: internalBonus,
+    } = this.campaigns.applyCampaignsToBasePoints(activeCampaigns, basePoints.toNumber());
 
     const applyTierMult = purchaseRule?.multiplierStack !== false;
     const tierMult =
@@ -724,9 +733,11 @@ export class LoyaltyEarnEngine {
       const p = line.product;
       if (!p) continue;
 
-      const seller =
-        (await this.resolveSellerForItem(p, hosSellerId)) ??
-        { id: null as string | null, loyaltyEnabled: true, loyaltyEarnRate: null };
+      const seller = (await this.resolveSellerForItem(p, hosSellerId)) ?? {
+        id: null as string | null,
+        loyaltyEnabled: true,
+        loyaltyEarnRate: null,
+      };
 
       if (seller.id) sellerIds.push(seller.id);
       const itemTotal = new Decimal(line.unitPrice).mul(line.quantity);
@@ -770,8 +781,12 @@ export class LoyaltyEarnEngine {
     const user = await this.prisma.user.findUnique({ where: { id: sale.customerId } });
     const region = membership.regionCode || user?.country || 'GB';
     const activeCampaigns = await this.campaigns.getActiveForContext(region, 'HOS_OUTLET_POS');
-    const { points: campPoints, campaignId, mult: internalMult, bonus: internalBonus } =
-      this.campaigns.applyCampaignsToBasePoints(activeCampaigns, basePoints.toNumber());
+    const {
+      points: campPoints,
+      campaignId,
+      mult: internalMult,
+      bonus: internalBonus,
+    } = this.campaigns.applyCampaignsToBasePoints(activeCampaigns, basePoints.toNumber());
 
     const applyTierMult = purchaseRule?.multiplierStack !== false;
     const tierMult =

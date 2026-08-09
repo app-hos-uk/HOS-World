@@ -49,7 +49,10 @@ describe('Cart and Orders Integration Tests', () => {
         console.warn('⚠️ Skipping integration tests: Database not available');
         return;
       }
-      console.warn('⚠️ Skipping integration tests: Module compilation failed —', error?.message?.slice(0, 120));
+      console.warn(
+        '⚠️ Skipping integration tests: Module compilation failed —',
+        error?.message?.slice(0, 120),
+      );
       return;
     }
 

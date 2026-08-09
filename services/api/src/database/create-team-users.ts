@@ -6,6 +6,7 @@ import { getSeedTestPassword } from '../config/seed-password';
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const dotenv = require('dotenv');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const path = require('path');
   dotenv.config({ path: path.join(__dirname, '../../.env') });
 } catch {
@@ -16,10 +17,25 @@ const prisma = new PrismaClient();
 
 const teamUsers = [
   { email: 'admin@hos.test', firstName: 'Admin', lastName: 'User', role: UserRole.ADMIN },
-  { email: 'procurement@hos.test', firstName: 'Procurement', lastName: 'Manager', role: UserRole.PROCUREMENT },
-  { email: 'fulfillment@hos.test', firstName: 'Fulfillment', lastName: 'Staff', role: UserRole.FULFILLMENT },
+  {
+    email: 'procurement@hos.test',
+    firstName: 'Procurement',
+    lastName: 'Manager',
+    role: UserRole.PROCUREMENT,
+  },
+  {
+    email: 'fulfillment@hos.test',
+    firstName: 'Fulfillment',
+    lastName: 'Staff',
+    role: UserRole.FULFILLMENT,
+  },
   { email: 'catalog@hos.test', firstName: 'Catalog', lastName: 'Editor', role: UserRole.CATALOG },
-  { email: 'marketing@hos.test', firstName: 'Marketing', lastName: 'Manager', role: UserRole.MARKETING },
+  {
+    email: 'marketing@hos.test',
+    firstName: 'Marketing',
+    lastName: 'Manager',
+    role: UserRole.MARKETING,
+  },
   { email: 'finance@hos.test', firstName: 'Finance', lastName: 'Manager', role: UserRole.FINANCE },
   { email: 'cms@hos.test', firstName: 'CMS', lastName: 'Editor', role: UserRole.CMS_EDITOR },
 ];

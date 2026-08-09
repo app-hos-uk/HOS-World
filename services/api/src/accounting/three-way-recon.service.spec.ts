@@ -2,12 +2,14 @@ import { ThreeWayReconService } from './three-way-recon.service';
 import { LedgerEntryType, LedgerOutboxStatus } from './accounting.types';
 
 describe('ThreeWayReconService', () => {
-  function createService(overrides: {
-    prisma?: Record<string, unknown>;
-    config?: Record<string, unknown>;
-    accounting?: Record<string, unknown>;
-    xeroAuth?: Record<string, unknown>;
-  } = {}) {
+  function createService(
+    overrides: {
+      prisma?: Record<string, unknown>;
+      config?: Record<string, unknown>;
+      accounting?: Record<string, unknown>;
+      xeroAuth?: Record<string, unknown>;
+    } = {},
+  ) {
     const prisma = {
       loyaltyMembership: {
         aggregate: jest.fn().mockResolvedValue({ _sum: { currentBalance: 10_000 } }),

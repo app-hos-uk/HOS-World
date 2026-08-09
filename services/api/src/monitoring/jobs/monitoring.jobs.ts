@@ -39,7 +39,9 @@ export class MonitoringJobsService implements OnModuleInit {
         {},
         this.config.get<string>('MONITORING_DISCREPANCY_SCAN_CRON', '0 */4 * * *'),
       );
-      this.logger.log('Monitoring crons scheduled (health check every 15min, discrepancy scan every 4h)');
+      this.logger.log(
+        'Monitoring crons scheduled (health check every 15min, discrepancy scan every 4h)',
+      );
     } catch (e) {
       this.logger.warn(`Monitoring cron schedule failed: ${(e as Error).message}`);
     }
@@ -49,33 +51,40 @@ export class MonitoringJobsService implements OnModuleInit {
     const now = new Date();
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
 
-    const [
-      pendingNotifications,
-      failedNotifications,
-      stuckOrders,
-      openDiscrepancies,
-    ] = await Promise.all([
-      this.prisma.notification.count({ where: { status: 'PENDING' as any, createdAt: { lt: fiveMinutesAgo } } }),
-      this.prisma.notification.count({ where: { status: 'FAILED' as any } }),
-      this.prisma.order.count({
-        where: { status: 'PROCESSING', updatedAt: { lt: new Date(now.getTime() - 24 * 60 * 60 * 1000) } },
-      }),
-      this.prisma.discrepancy.count({ where: { status: 'OPEN' } }),
-    ]);
+    const [pendingNotifications, failedNotifications, stuckOrders, openDiscrepancies] =
+      await Promise.all([
+        this.prisma.notification.count({
+          where: { status: 'PENDING' as any, createdAt: { lt: fiveMinutesAgo } },
+        }),
+        this.prisma.notification.count({ where: { status: 'FAILED' as any } }),
+        this.prisma.order.count({
+          where: {
+            status: 'PROCESSING',
+            updatedAt: { lt: new Date(now.getTime() - 24 * 60 * 60 * 1000) },
+          },
+        }),
+        this.prisma.discrepancy.count({ where: { status: 'OPEN' } }),
+      ]);
 
     if (pendingNotifications > 50) {
-      this.logger.warn(`Health check: ${pendingNotifications} notifications stuck in PENDING state`);
+      this.logger.warn(
+        `Health check: ${pendingNotifications} notifications stuck in PENDING state`,
+      );
     }
 
     if (failedNotifications > 10) {
-      this.logger.warn(`Health check: ${failedNotifications} failed notifications require attention`);
+      this.logger.warn(
+        `Health check: ${failedNotifications} failed notifications require attention`,
+      );
     }
 
     if (stuckOrders > 0) {
       this.logger.warn(`Health check: ${stuckOrders} orders stuck in PROCESSING for >24h`);
     }
 
-    this.logger.log(`Health check: notifications(pending=${pendingNotifications}, failed=${failedNotifications}), stuckOrders=${stuckOrders}, discrepancies=${openDiscrepancies}`);
+    this.logger.log(
+      `Health check: notifications(pending=${pendingNotifications}, failed=${failedNotifications}), stuckOrders=${stuckOrders}, discrepancies=${openDiscrepancies}`,
+    );
   }
 
   private async scanForDiscrepancies(): Promise<void> {
@@ -107,7 +116,9 @@ export class MonitoringJobsService implements OnModuleInit {
           detected++;
         }
       } catch (e) {
-        this.logger.warn(`Discrepancy scan failed for product ${product.id}: ${(e as Error).message}`);
+        this.logger.warn(
+          `Discrepancy scan failed for product ${product.id}: ${(e as Error).message}`,
+        );
       }
     }
 
@@ -171,16 +182,25 @@ export class MonitoringJobsService implements OnModuleInit {
           detected++;
         }
       } catch (e) {
-        this.logger.warn(`Payment discrepancy scan failed for order ${order.id}: ${(e as Error).message}`);
+        this.logger.warn(
+          `Payment discrepancy scan failed for order ${order.id}: ${(e as Error).message}`,
+        );
       }
     }
 
-    this.activityService.createLog({
-      action: 'DISCREPANCY_SCAN_COMPLETED',
-      entityType: 'System',
-      description: `Discrepancy scan completed: ${detected} new discrepancies detected (${negativeStockProducts.length} negative stock, ${stuckOrders.length} stuck orders, ${unpaidFulfilled.length} unpaid fulfilled)`,
-      metadata: { detected, negativeStock: negativeStockProducts.length, stuckOrders: stuckOrders.length, unpaidFulfilled: unpaidFulfilled.length },
-    }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+    this.activityService
+      .createLog({
+        action: 'DISCREPANCY_SCAN_COMPLETED',
+        entityType: 'System',
+        description: `Discrepancy scan completed: ${detected} new discrepancies detected (${negativeStockProducts.length} negative stock, ${stuckOrders.length} stuck orders, ${unpaidFulfilled.length} unpaid fulfilled)`,
+        metadata: {
+          detected,
+          negativeStock: negativeStockProducts.length,
+          stuckOrders: stuckOrders.length,
+          unpaidFulfilled: unpaidFulfilled.length,
+        },
+      })
+      .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
     this.logger.log(`Discrepancy scan complete: ${detected} new discrepancies detected`);
 
@@ -210,7 +230,9 @@ export class MonitoringJobsService implements OnModuleInit {
             detected++;
           }
         } catch (e) {
-          this.logger.warn(`Pricing discrepancy scan failed for ${product.id}: ${(e as Error).message}`);
+          this.logger.warn(
+            `Pricing discrepancy scan failed for ${product.id}: ${(e as Error).message}`,
+          );
         }
       }
     }
@@ -240,9 +262,10 @@ export class MonitoringJobsService implements OnModuleInit {
         if (recentNotification) continue;
 
         const type = product.stock <= 0 ? 'OUT_OF_STOCK' : 'LOW_STOCK';
-        const message = product.stock <= 0
-          ? `Product "${product.name}" is out of stock. Customers cannot purchase it until restocked.`
-          : `Product "${product.name}" is low on stock (${product.stock} remaining). Consider restocking soon.`;
+        const message =
+          product.stock <= 0
+            ? `Product "${product.name}" is out of stock. Customers cannot purchase it until restocked.`
+            : `Product "${product.name}" is low on stock (${product.stock} remaining). Consider restocking soon.`;
 
         await this.notificationsService.sendNotificationToUser(
           sellerUserId,
@@ -252,7 +275,9 @@ export class MonitoringJobsService implements OnModuleInit {
           { productId: product.id, stock: product.stock },
         );
       } catch (e) {
-        this.logger.warn(`Stock notification failed for product ${product.id}: ${(e as Error).message}`);
+        this.logger.warn(
+          `Stock notification failed for product ${product.id}: ${(e as Error).message}`,
+        );
       }
     }
   }

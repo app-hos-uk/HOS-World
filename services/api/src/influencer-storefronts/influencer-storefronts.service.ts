@@ -342,9 +342,7 @@ export class InfluencerStorefrontsService {
         },
       });
       const byId = new Map(products.map((p) => [p.id, p]));
-      featuredProducts = featuredIds
-        .filter((id) => byId.has(id))
-        .map((id) => byId.get(id)!);
+      featuredProducts = featuredIds.filter((id) => byId.has(id)).map((id) => byId.get(id)!);
     }
 
     return {
@@ -357,9 +355,7 @@ export class InfluencerStorefrontsService {
         socialLinks: influencer.socialLinks,
         referralCode: influencer.referralCode,
       },
-      storefront: influencer.storefront
-        ? this.toPublicStorefront(influencer.storefront)
-        : null,
+      storefront: influencer.storefront ? this.toPublicStorefront(influencer.storefront) : null,
       featuredProducts,
     };
   }

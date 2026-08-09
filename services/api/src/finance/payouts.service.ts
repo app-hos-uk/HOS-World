@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, Optional, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Optional,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { TransactionsService } from './transactions.service';
 import { VendorLedgerService } from '../vendor-ledger/vendor-ledger.service';
@@ -184,10 +190,7 @@ export class PayoutsService {
           status: 'PAID',
           paidAt,
           paymentMethod: meta.paymentMethod || 'MANUAL_PAYOUT',
-          notes: [
-            existing.notes,
-            `Paid via payout transaction ${transaction.id}`,
-          ]
+          notes: [existing.notes, `Paid via payout transaction ${transaction.id}`]
             .filter(Boolean)
             .join('\n'),
         },
@@ -230,7 +233,11 @@ export class PayoutsService {
   }) {
     // UI uses PAID; ledger uses COMPLETED
     const status =
-      filters?.status === 'PAID' ? 'COMPLETED' : filters?.status === 'PROCESSING' ? 'PENDING' : filters?.status;
+      filters?.status === 'PAID'
+        ? 'COMPLETED'
+        : filters?.status === 'PROCESSING'
+          ? 'PENDING'
+          : filters?.status;
 
     return this.transactionsService.getTransactions({
       ...filters,

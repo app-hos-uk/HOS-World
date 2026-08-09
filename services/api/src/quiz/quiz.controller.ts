@@ -17,9 +17,7 @@ export class QuizController {
   @Get()
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'List active fandom quizzes' })
-  async list(
-    @Query('fandomId') fandomId?: string,
-  ): Promise<ApiResponse<unknown>> {
+  async list(@Query('fandomId') fandomId?: string): Promise<ApiResponse<unknown>> {
     const data = await this.quiz.listQuizzes(fandomId);
     return { data, message: 'OK' };
   }
@@ -51,5 +49,4 @@ export class QuizController {
     const data = await this.quiz.submitQuiz(req.user.id, id, body.answers);
     return { data, message: 'OK' };
   }
-
 }

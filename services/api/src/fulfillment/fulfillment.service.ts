@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import {
@@ -11,7 +6,7 @@ import {
   UpdateFulfillmentCenterDto,
 } from './dto/create-fulfillment-center.dto';
 import { VerifyShipmentDto, CreateShipmentDto } from './dto/verify-shipment.dto';
-import { ShipmentStatus, ProductSubmissionStatus } from '@prisma/client';
+import { ShipmentStatus } from '@prisma/client';
 
 @Injectable()
 export class FulfillmentService {
@@ -324,7 +319,7 @@ export class FulfillmentService {
 
       // Send notifications to Procurement, Catalog, and Operations teams
       try {
-        const teams = await this.prisma.user.findMany({
+        const _teams = await this.prisma.user.findMany({
           where: {
             role: { in: ['PROCUREMENT', 'CATALOG', 'ADMIN'] },
           },

@@ -49,7 +49,8 @@ export class LoyaltyService implements OnModuleInit {
     private queue: QueueService,
     private loyaltyListener: LoyaltyListener,
     private loyaltySettings: LoyaltySettingsService,
-    @Optional() @Inject(forwardRef(() => MarketingEventBus))
+    @Optional()
+    @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
   ) {}
 
@@ -178,7 +179,9 @@ export class LoyaltyService implements OnModuleInit {
     }
 
     this.events.onWelcome(userId, tier.name).catch((e: unknown) => {
-      this.logger.warn(`Welcome event failed for ${userId}: ${e instanceof Error ? e.message : 'unknown'}`);
+      this.logger.warn(
+        `Welcome event failed for ${userId}: ${e instanceof Error ? e.message : 'unknown'}`,
+      );
     });
 
     void this.marketingBus
@@ -187,12 +190,16 @@ export class LoyaltyService implements OnModuleInit {
         firstName: user.firstName || '',
       })
       .catch((e: unknown) => {
-        this.logger.warn(`Marketing welcome event failed for ${userId}: ${e instanceof Error ? e.message : 'unknown'}`);
+        this.logger.warn(
+          `Marketing welcome event failed for ${userId}: ${e instanceof Error ? e.message : 'unknown'}`,
+        );
       });
 
     if (isPosRuntimeEnabled(this.config, this.featureFlags)) {
       void this.queue.addJob(JobType.POS_CUSTOMER_SYNC, { userId }).catch((e: unknown) => {
-        this.logger.warn(`POS sync job enqueue failed for ${userId}: ${e instanceof Error ? e.message : 'unknown'}`);
+        this.logger.warn(
+          `POS sync job enqueue failed for ${userId}: ${e instanceof Error ? e.message : 'unknown'}`,
+        );
       });
     }
 
@@ -225,7 +232,9 @@ export class LoyaltyService implements OnModuleInit {
     if (signupRule) {
       points = signupRule.pointsAmount ?? 0;
       if (points <= 0) {
-        this.logger.debug(`Signup bonus skipped for user ${userId}: active SIGNUP rule has 0 points`);
+        this.logger.debug(
+          `Signup bonus skipped for user ${userId}: active SIGNUP rule has 0 points`,
+        );
         return false;
       }
     } else {
@@ -239,8 +248,7 @@ export class LoyaltyService implements OnModuleInit {
       }
 
       const envBonusRaw = this.config.get<string | number>('LOYALTY_SIGNUP_BONUS');
-      const envBonus =
-        typeof envBonusRaw === 'number' ? envBonusRaw : Number(envBonusRaw);
+      const envBonus = typeof envBonusRaw === 'number' ? envBonusRaw : Number(envBonusRaw);
       points = Number.isFinite(envBonus) && envBonus > 0 ? envBonus : 100;
       this.logger.warn(
         `No SIGNUP earn rule configured; awarding fallback ${points} pts for user ${userId}`,
@@ -364,16 +372,44 @@ export class LoyaltyService implements OnModuleInit {
       userAgent: string | null;
     }> = [];
     if (dto.optInEmail !== undefined) {
-      consentRows.push({ userId, consentType: 'LOYALTY_MARKETING_EMAIL', granted: dto.optInEmail, grantedAt: now, ipAddress: ip, userAgent: ua });
+      consentRows.push({
+        userId,
+        consentType: 'LOYALTY_MARKETING_EMAIL',
+        granted: dto.optInEmail,
+        grantedAt: now,
+        ipAddress: ip,
+        userAgent: ua,
+      });
     }
     if (dto.optInSms !== undefined) {
-      consentRows.push({ userId, consentType: 'LOYALTY_MARKETING_SMS', granted: dto.optInSms, grantedAt: now, ipAddress: ip, userAgent: ua });
+      consentRows.push({
+        userId,
+        consentType: 'LOYALTY_MARKETING_SMS',
+        granted: dto.optInSms,
+        grantedAt: now,
+        ipAddress: ip,
+        userAgent: ua,
+      });
     }
     if (dto.optInWhatsApp !== undefined) {
-      consentRows.push({ userId, consentType: 'LOYALTY_MARKETING_WHATSAPP', granted: dto.optInWhatsApp, grantedAt: now, ipAddress: ip, userAgent: ua });
+      consentRows.push({
+        userId,
+        consentType: 'LOYALTY_MARKETING_WHATSAPP',
+        granted: dto.optInWhatsApp,
+        grantedAt: now,
+        ipAddress: ip,
+        userAgent: ua,
+      });
     }
     if (dto.optInPush !== undefined) {
-      consentRows.push({ userId, consentType: 'LOYALTY_MARKETING_PUSH', granted: dto.optInPush, grantedAt: now, ipAddress: ip, userAgent: ua });
+      consentRows.push({
+        userId,
+        consentType: 'LOYALTY_MARKETING_PUSH',
+        granted: dto.optInPush,
+        grantedAt: now,
+        ipAddress: ip,
+        userAgent: ua,
+      });
     }
     const updated = await this.prisma.$transaction(async (tx) => {
       const result = await tx.loyaltyMembership.update({ where: { userId }, data });
@@ -425,7 +461,13 @@ export class LoyaltyService implements OnModuleInit {
       include: { tier: true },
     });
     if (!membership) {
-      return { enrolled: false, currentTier: null, nextTier: null, progressPercent: 0, pointsToNext: 0 };
+      return {
+        enrolled: false,
+        currentTier: null,
+        nextTier: null,
+        progressPercent: 0,
+        pointsToNext: 0,
+      };
     }
 
     const next = await this.prisma.loyaltyTier.findFirst({
@@ -450,7 +492,8 @@ export class LoyaltyService implements OnModuleInit {
     const need = next.pointsThreshold - membership.totalPointsEarned;
     const span = next.pointsThreshold - prevThreshold;
     const gained = membership.totalPointsEarned - prevThreshold;
-    const progressPercent = span > 0 ? Math.min(100, Math.max(0, Math.round((gained / span) * 100))) : 0;
+    const progressPercent =
+      span > 0 ? Math.min(100, Math.max(0, Math.round((gained / span) * 100))) : 0;
 
     return {
       currentTier: membership.tier,
@@ -830,14 +873,18 @@ export class LoyaltyService implements OnModuleInit {
     return this.earn.processOrderComplete(orderId);
   }
 
-  async validateCartRedemption(userId: string, optionId: string): Promise<{ points: number; discount: Decimal }> {
+  async validateCartRedemption(
+    userId: string,
+    optionId: string,
+  ): Promise<{ points: number; discount: Decimal }> {
     this.assertEnabled();
     const { settings } = await this.loyaltySettings.getResolved();
     if (!settings.redemptionAtCheckout) {
       throw new BadRequestException('Checkout redemption is not enabled');
     }
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
-    if (!membership) throw new BadRequestException('Enroll in The Enchanted Circle to redeem points');
+    if (!membership)
+      throw new BadRequestException('Enroll in The Enchanted Circle to redeem points');
 
     const opt = await this.prisma.loyaltyRedemptionOption.findFirst({
       where: { id: optionId, isActive: true },
@@ -845,7 +892,8 @@ export class LoyaltyService implements OnModuleInit {
     if (!opt) throw new BadRequestException('Invalid reward');
 
     const now = new Date();
-    if (opt.startsAt && opt.startsAt > now) throw new BadRequestException('Reward is not available yet');
+    if (opt.startsAt && opt.startsAt > now)
+      throw new BadRequestException('Reward is not available yet');
     if (opt.endsAt && opt.endsAt < now) throw new BadRequestException('Reward has expired');
     if (opt.stock != null && opt.stock < 1) throw new BadRequestException('Reward is out of stock');
 
@@ -878,26 +926,34 @@ export class LoyaltyService implements OnModuleInit {
   }
 
   async adminDashboard() {
-    const [members, tiers, issued, redeemed, earnRuleCount, redemptionOptionCount, campaignCount, balanceAgg] =
-      await Promise.all([
-        this.prisma.loyaltyMembership.count(),
-        this.prisma.loyaltyTier.findMany({
-          where: { isActive: true },
-          include: { _count: { select: { members: true } } },
-        }),
-        this.prisma.loyaltyTransaction.aggregate({
-          where: { type: 'EARN' },
-          _sum: { points: true },
-        }),
-        this.prisma.loyaltyTransaction.aggregate({
-          where: { type: 'BURN' },
-          _sum: { points: true },
-        }),
-        this.prisma.loyaltyEarnRule.count({ where: { isActive: true } }),
-        this.prisma.loyaltyRedemptionOption.count({ where: { isActive: true } }),
-        this.prisma.loyaltyBonusCampaign.count({ where: { isActive: true } }),
-        this.prisma.loyaltyMembership.aggregate({ _sum: { currentBalance: true } }),
-      ]);
+    const [
+      members,
+      tiers,
+      issued,
+      redeemed,
+      earnRuleCount,
+      redemptionOptionCount,
+      campaignCount,
+      balanceAgg,
+    ] = await Promise.all([
+      this.prisma.loyaltyMembership.count(),
+      this.prisma.loyaltyTier.findMany({
+        where: { isActive: true },
+        include: { _count: { select: { members: true } } },
+      }),
+      this.prisma.loyaltyTransaction.aggregate({
+        where: { type: 'EARN' },
+        _sum: { points: true },
+      }),
+      this.prisma.loyaltyTransaction.aggregate({
+        where: { type: 'BURN' },
+        _sum: { points: true },
+      }),
+      this.prisma.loyaltyEarnRule.count({ where: { isActive: true } }),
+      this.prisma.loyaltyRedemptionOption.count({ where: { isActive: true } }),
+      this.prisma.loyaltyBonusCampaign.count({ where: { isActive: true } }),
+      this.prisma.loyaltyMembership.aggregate({ _sum: { currentBalance: true } }),
+    ]);
 
     const { settings } = await this.loyaltySettings.getResolved();
     const redeemValue = settings.defaultRedeemValue;
@@ -929,7 +985,9 @@ export class LoyaltyService implements OnModuleInit {
     idempotencyKey?: string,
   ): Promise<void> {
     if (points <= 0) return;
-    const membership = await this.prisma.loyaltyMembership.findUnique({ where: { id: membershipId } });
+    const membership = await this.prisma.loyaltyMembership.findUnique({
+      where: { id: membershipId },
+    });
     if (!membership) return;
 
     await this.prisma.$transaction(async (tx) => {

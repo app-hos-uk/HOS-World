@@ -138,10 +138,7 @@ describe('PosWebhookController', () => {
       });
       encryption.decryptJson.mockReturnValue({ clientSecret: 'oauth-client-secret' });
 
-      const hex = crypto
-        .createHmac('sha256', 'oauth-client-secret')
-        .update(raw)
-        .digest('hex');
+      const hex = crypto.createHmac('sha256', 'oauth-client-secret').update(raw).digest('hex');
       const header = `signature=${hex},algorithm=HMAC-SHA256`;
 
       await controller.handleWebhook(

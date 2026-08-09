@@ -15,7 +15,14 @@ export class AdminService {
 
   async getUserStats() {
     const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-    const teamRoles = ['PROCUREMENT', 'FULFILLMENT', 'CATALOG', 'MARKETING', 'FINANCE', 'CMS_EDITOR'];
+    const teamRoles = [
+      'PROCUREMENT',
+      'FULFILLMENT',
+      'CATALOG',
+      'MARKETING',
+      'FINANCE',
+      'CMS_EDITOR',
+    ];
 
     const notDeleted = { deletedAt: null } as const;
 
@@ -701,7 +708,9 @@ export class AdminService {
       maintenanceMode: process.env.MAINTENANCE_MODE === 'true',
       allowRegistration: process.env.ALLOW_REGISTRATION !== 'false',
       requireEmailVerification: process.env.REQUIRE_EMAIL_VERIFICATION === 'true',
-      platformFeeRate: parseFloat(process.env.PLATFORM_FEE_RATE || String(DEFAULT_PLATFORM_FEE_RATE)),
+      platformFeeRate: parseFloat(
+        process.env.PLATFORM_FEE_RATE || String(DEFAULT_PLATFORM_FEE_RATE),
+      ),
       currency: process.env.DEFAULT_CURRENCY || 'USD',
       maxUploadSize: parseInt(process.env.MAX_UPLOAD_SIZE || '10485760', 10),
       enableOAuth: process.env.ENABLE_OAUTH !== 'false',
@@ -720,8 +729,10 @@ export class AdminService {
       footerAbout:
         process.env.FOOTER_ABOUT ||
         'An immersive fandom experience — franchises, collectibles, and unforgettable finds online and in our stores.',
-      socialFacebookUrl: process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK_URL || 'https://www.facebook.com/houseofspellsuk',
-      socialInstagramUrl: process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL || 'https://www.instagram.com/houseofspells',
+      socialFacebookUrl:
+        process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK_URL || 'https://www.facebook.com/houseofspellsuk',
+      socialInstagramUrl:
+        process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM_URL || 'https://www.instagram.com/houseofspells',
       socialXUrl:
         process.env.NEXT_PUBLIC_SOCIAL_X_URL ||
         process.env.NEXT_PUBLIC_SOCIAL_TWITTER_URL ||
@@ -911,12 +922,15 @@ export class AdminService {
         })
       : [];
     const revenueMap = new Map(
-      revenueBySellerRows.map((r) => [r.sellerId, { revenue: Number(r._sum.total || 0), orders: r._count._all }]),
+      revenueBySellerRows.map((r) => [
+        r.sellerId,
+        { revenue: Number(r._sum.total || 0), orders: r._count._all },
+      ]),
     );
 
     const sellersWithAddresses = sellers.map((seller) => {
       const warehouseAddress = seller.warehouseAddressId
-        ? byAddressId.get(seller.warehouseAddressId) ?? null
+        ? (byAddressId.get(seller.warehouseAddressId) ?? null)
         : null;
       const sellerRevenue = revenueMap.get(seller.id);
       return {
@@ -929,6 +943,7 @@ export class AdminService {
     });
 
     const stripped = sellersWithAddresses.map(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ({ accountNumberEnc, sortCodeEnc, stripeConnectAccountId, ...rest }) => rest,
     );
 

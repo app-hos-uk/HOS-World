@@ -165,15 +165,12 @@ export class FinanceController {
   @Get('pricing-history')
   @ApiOperation({
     summary: 'Get all pricing history',
-    description:
-      'Retrieves all approved pricing records. Finance/Admin access required.',
+    description: 'Retrieves all approved pricing records. Finance/Admin access required.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Pricing history retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
-  async getAllPricingHistory(
-    @Query('limit') limit?: string,
-  ): Promise<ApiResponse<any>> {
+  async getAllPricingHistory(@Query('limit') limit?: string): Promise<ApiResponse<any>> {
     const history = await this.financeService.getAllPricingHistory(limit ? parseInt(limit) : 50);
     return {
       data: history,

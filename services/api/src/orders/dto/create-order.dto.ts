@@ -1,4 +1,14 @@
-import { IsString, IsUUID, IsOptional, IsNumber, IsBoolean, IsEmail, Min, MaxLength, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsUUID,
+  IsOptional,
+  IsNumber,
+  IsBoolean,
+  IsEmail,
+  Min,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class GiftDetailsDto {

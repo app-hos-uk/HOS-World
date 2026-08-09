@@ -123,7 +123,16 @@ describe('PaymentsService', () => {
     stripePaymentIntentId: null,
     platformFeeAmount: null,
     parentOrderId: null,
-    seller: { id: 'seller-1', userId: 'seller-user', storeName: 'Shop', slug: 'shop', logo: null, country: 'US', city: 'LA', stripeConnectAccountId: null },
+    seller: {
+      id: 'seller-1',
+      userId: 'seller-user',
+      storeName: 'Shop',
+      slug: 'shop',
+      logo: null,
+      country: 'US',
+      city: 'LA',
+      stripeConnectAccountId: null,
+    },
     items: [],
     shippingAddress: null,
     billingAddress: null,
@@ -177,9 +186,7 @@ describe('PaymentsService', () => {
 
     it('marks order paid when gift cards fully cover total', async () => {
       mockPrisma.order.findFirst.mockResolvedValue(baseOrder);
-      mockPrisma.giftCardTransaction.findMany.mockResolvedValue([
-        { amount: new Decimal(100) },
-      ]);
+      mockPrisma.giftCardTransaction.findMany.mockResolvedValue([{ amount: new Decimal(100) }]);
       mockPrisma.$transaction.mockImplementation(async (cb) =>
         cb({
           order: {
@@ -344,7 +351,10 @@ describe('PaymentsService', () => {
       });
       mockPrisma.order.update.mockResolvedValue(baseOrder);
 
-      await service.createPaymentIntent('user-1', { orderId: 'order-1', paymentMethod: 'stripe' } as any);
+      await service.createPaymentIntent('user-1', {
+        orderId: 'order-1',
+        paymentMethod: 'stripe',
+      } as any);
       expect(mockPaymentProviderService.getProvider).toHaveBeenCalledWith('paypal');
     });
   });
@@ -353,9 +363,9 @@ describe('PaymentsService', () => {
     it('throws NotFoundException when order does not exist', async () => {
       mockPrisma.order.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.confirmPayment('pi_123', 'missing-order'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.confirmPayment('pi_123', 'missing-order')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws ForbiddenException when userId does not match', async () => {
@@ -364,9 +374,9 @@ describe('PaymentsService', () => {
         userId: 'other-user',
       });
 
-      await expect(
-        service.confirmPayment('pi_123', 'order-1', 'user-1'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.confirmPayment('pi_123', 'order-1', 'user-1')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('throws BadRequestException when payment intent does not match order', async () => {
@@ -375,9 +385,9 @@ describe('PaymentsService', () => {
         stripePaymentIntentId: 'pi_different',
       });
 
-      await expect(
-        service.confirmPayment('pi_123', 'order-1'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.confirmPayment('pi_123', 'order-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('returns early when order is already paid', async () => {
@@ -386,9 +396,7 @@ describe('PaymentsService', () => {
         paymentStatus: 'PAID',
       });
 
-      await expect(
-        service.confirmPayment('pi_123', 'order-1'),
-      ).resolves.toBeUndefined();
+      await expect(service.confirmPayment('pi_123', 'order-1')).resolves.toBeUndefined();
     });
 
     it('confirms payment successfully and marks order paid', async () => {
@@ -420,9 +428,7 @@ describe('PaymentsService', () => {
       mockPrisma.order.findMany.mockResolvedValue([]);
       mockPrisma.transaction.create.mockResolvedValue({});
 
-      await expect(
-        service.confirmPayment('pi_123', 'order-1'),
-      ).resolves.toBeUndefined();
+      await expect(service.confirmPayment('pi_123', 'order-1')).resolves.toBeUndefined();
       expect(mockProvider.confirmPayment).toHaveBeenCalled();
     });
 
@@ -438,9 +444,9 @@ describe('PaymentsService', () => {
         error: 'Card declined',
       });
 
-      await expect(
-        service.confirmPayment('pi_123', 'order-1'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.confirmPayment('pi_123', 'order-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws BadRequestException when metadata orderId does not match', async () => {
@@ -456,9 +462,9 @@ describe('PaymentsService', () => {
         metadata: { orderId: 'order-other' },
       });
 
-      await expect(
-        service.confirmPayment('pi_123', 'order-1'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.confirmPayment('pi_123', 'order-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws BadRequestException when amount does not match', async () => {
@@ -474,9 +480,9 @@ describe('PaymentsService', () => {
         metadata: { orderId: 'order-1' },
       });
 
-      await expect(
-        service.confirmPayment('pi_123', 'order-1'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.confirmPayment('pi_123', 'order-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws BadRequestException on provider error', async () => {
@@ -487,9 +493,9 @@ describe('PaymentsService', () => {
       mockPrisma.payment.findFirst.mockResolvedValue(null);
       mockProvider.confirmPayment.mockRejectedValue(new Error('Network error'));
 
-      await expect(
-        service.confirmPayment('pi_123', 'order-1'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.confirmPayment('pi_123', 'order-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -497,18 +503,16 @@ describe('PaymentsService', () => {
     it('throws BadRequestException on invalid signature', async () => {
       mockProvider.validateWebhook.mockReturnValue(false);
 
-      await expect(
-        service.handleWebhook(Buffer.from('{}'), 'bad_sig', 'stripe'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.handleWebhook(Buffer.from('{}'), 'bad_sig', 'stripe')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('ignores unhandled event types', async () => {
       mockProvider.validateWebhook.mockReturnValue(true);
       const payload = JSON.stringify({ type: 'customer.created', id: 'evt_1' });
 
-      await expect(
-        service.handleWebhook(payload, 'sig', 'stripe'),
-      ).resolves.toBeUndefined();
+      await expect(service.handleWebhook(payload, 'sig', 'stripe')).resolves.toBeUndefined();
     });
 
     it('deduplicates webhook events via Redis', async () => {
@@ -822,18 +826,16 @@ describe('PaymentsService', () => {
         data: { object: { amount_received: 5000 } }, // 50 != 100
       });
 
-      await expect(
-        service.handleWebhook(payload, 'sig', 'stripe'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.handleWebhook(payload, 'sig', 'stripe')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('handles string payload (not Buffer)', async () => {
       mockProvider.validateWebhook.mockReturnValue(true);
       const payload = JSON.stringify({ type: 'customer.updated', id: 'evt_str' });
 
-      await expect(
-        service.handleWebhook(payload, 'sig', 'stripe'),
-      ).resolves.toBeUndefined();
+      await expect(service.handleWebhook(payload, 'sig', 'stripe')).resolves.toBeUndefined();
     });
 
     it('skips idempotent failure record when one already exists', async () => {

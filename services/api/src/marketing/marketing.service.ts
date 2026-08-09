@@ -2,7 +2,7 @@ import { Injectable, Logger, NotFoundException, BadRequestException } from '@nes
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateMaterialDto, UpdateMaterialDto } from './dto/create-material.dto';
-import { MaterialType, ProductSubmissionStatus } from '@prisma/client';
+import { MaterialType } from '@prisma/client';
 
 @Injectable()
 export class MarketingService {
@@ -284,7 +284,9 @@ export class MarketingService {
         { submissionId },
       );
     } catch (notifyErr) {
-      this.logger.warn(`Post-complete notification failed for submission ${submissionId}: ${notifyErr}`);
+      this.logger.warn(
+        `Post-complete notification failed for submission ${submissionId}: ${notifyErr}`,
+      );
     }
 
     return updated;

@@ -86,9 +86,7 @@ export class PosCustomerIdentityBackfillService {
       try {
         await ls.authenticate(creds);
       } catch (e) {
-        this.logger.warn(
-          `Backfill auth failed for ${accountKey}: ${(e as Error).message}`,
-        );
+        this.logger.warn(`Backfill auth failed for ${accountKey}: ${(e as Error).message}`);
         continue;
       }
 
@@ -220,8 +218,7 @@ export class PosCustomerIdentityBackfillService {
       });
       codeBelongsToOther = !!otherMembership;
     }
-    const mappingConflict =
-      !!existingByExternal && existingByExternal.internalId !== membership.id;
+    const mappingConflict = !!existingByExternal && existingByExternal.internalId !== membership.id;
 
     if (codeBelongsToOther || mappingConflict) {
       result.conflicts++;

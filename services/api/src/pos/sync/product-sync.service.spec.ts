@@ -67,6 +67,7 @@ describe('PosProductSyncService', () => {
     });
 
     it('creates mapping on first sync', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { service, prisma, factory } = makeMocks();
       prisma.pOSConnection.findFirst.mockResolvedValue({
         id: 'c1',
@@ -110,6 +111,7 @@ describe('PosProductSyncService', () => {
     });
 
     it('updates existing mapping on subsequent sync', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { service, prisma, factory } = makeMocks();
       prisma.pOSConnection.findFirst.mockResolvedValue({
         id: 'c1',
@@ -193,10 +195,7 @@ describe('PosProductSyncService', () => {
   describe('syncAllProductsForStore', () => {
     it('syncs each product channel', async () => {
       const { service, prisma } = makeMocks();
-      prisma.productChannel.findMany.mockResolvedValue([
-        { productId: 'p1' },
-        { productId: 'p2' },
-      ]);
+      prisma.productChannel.findMany.mockResolvedValue([{ productId: 'p1' }, { productId: 'p2' }]);
       const spy = jest.spyOn(service, 'syncProductToStore').mockResolvedValue();
       await service.syncAllProductsForStore('s1');
       expect(spy).toHaveBeenCalledTimes(2);

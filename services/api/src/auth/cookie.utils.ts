@@ -12,8 +12,8 @@ export function setAuthCookies(
   configService: ConfigService,
 ) {
   const isProduction = configService.get<string>('NODE_ENV') === 'production';
-  const frontendUrl = configService.get<string>('FRONTEND_URL') || '';
-  const sameSite = isProduction ? 'none' as const : 'lax' as const;
+  const _frontendUrl = configService.get<string>('FRONTEND_URL') || '';
+  const sameSite = isProduction ? ('none' as const) : ('lax' as const);
 
   const accessMaxAge = parseMaxAge(configService.get<string>('JWT_EXPIRES_IN') || '15m');
   const refreshMaxAge = parseMaxAge(configService.get<string>('REFRESH_TOKEN_TTL') || '30d');
@@ -47,7 +47,7 @@ export function setAuthCookies(
 
 export function clearAuthCookies(res: Response, configService: ConfigService) {
   const isProduction = configService.get<string>('NODE_ENV') === 'production';
-  const sameSite = isProduction ? 'none' as const : 'lax' as const;
+  const sameSite = isProduction ? ('none' as const) : ('lax' as const);
 
   const cookieOptions = {
     httpOnly: true,
@@ -66,10 +66,15 @@ function parseMaxAge(ttl: string): number {
   if (!match) return 15 * 60 * 1000; // default 15m
   const value = parseInt(match[1], 10);
   switch (match[2]) {
-    case 'd': return value * 24 * 60 * 60 * 1000;
-    case 'h': return value * 60 * 60 * 1000;
-    case 'm': return value * 60 * 1000;
-    case 's': return value * 1000;
-    default: return 15 * 60 * 1000;
+    case 'd':
+      return value * 24 * 60 * 60 * 1000;
+    case 'h':
+      return value * 60 * 60 * 1000;
+    case 'm':
+      return value * 60 * 1000;
+    case 's':
+      return value * 1000;
+    default:
+      return 15 * 60 * 1000;
   }
 }

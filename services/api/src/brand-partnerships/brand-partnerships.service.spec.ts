@@ -44,11 +44,7 @@ describe('BrandPartnershipsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new BrandPartnershipsService(
-      prisma as any,
-      segmentation as any,
-      marketingBus as any,
-    );
+    service = new BrandPartnershipsService(prisma as any, segmentation as any, marketingBus as any);
   });
 
   it('createPartnership rejects invalid contract range', async () => {

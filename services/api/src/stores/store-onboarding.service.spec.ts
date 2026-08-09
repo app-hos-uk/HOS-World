@@ -46,14 +46,12 @@ describe('StoreOnboardingService', () => {
   });
 
   it('createStore creates checklist', async () => {
-    prisma.store.findUnique
-      .mockResolvedValueOnce(null)
-      .mockResolvedValue({
-        id: 's1',
-        onboardingChecklist: { steps: [], status: 'IN_PROGRESS' },
-        tenant: { id: 't1', name: 'T' },
-        posConnection: null,
-      });
+    prisma.store.findUnique.mockResolvedValueOnce(null).mockResolvedValue({
+      id: 's1',
+      onboardingChecklist: { steps: [], status: 'IN_PROGRESS' },
+      tenant: { id: 't1', name: 'T' },
+      posConnection: null,
+    });
     prisma.store.create.mockResolvedValue({ id: 's1' });
     prisma.storeOnboardingChecklist.create.mockResolvedValue({});
     await service.createStore({ tenantId: 't1', name: 'A', code: 'NEW' } as any);
@@ -61,14 +59,12 @@ describe('StoreOnboardingService', () => {
   });
 
   it('createStore always sets isActive false regardless of dto', async () => {
-    prisma.store.findUnique
-      .mockResolvedValueOnce(null)
-      .mockResolvedValue({
-        id: 's1',
-        onboardingChecklist: { steps: [], status: 'IN_PROGRESS' },
-        tenant: { id: 't1', name: 'T' },
-        posConnection: null,
-      });
+    prisma.store.findUnique.mockResolvedValueOnce(null).mockResolvedValue({
+      id: 's1',
+      onboardingChecklist: { steps: [], status: 'IN_PROGRESS' },
+      tenant: { id: 't1', name: 'T' },
+      posConnection: null,
+    });
     prisma.store.create.mockResolvedValue({ id: 's1' });
     prisma.storeOnboardingChecklist.create.mockResolvedValue({});
     await service.createStore({ tenantId: 't1', name: 'A', code: 'NEW', isActive: true } as any);

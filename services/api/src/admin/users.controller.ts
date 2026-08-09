@@ -27,11 +27,31 @@ export class AdminUsersController {
     description:
       'Retrieves a paginated list of all users sorted by role hierarchy (Admin first). Supports search, role, and status filtering.',
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 50, max: 100)' })
-  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search by email, first name, or last name' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page (default: 50, max: 100)',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search by email, first name, or last name',
+  })
   @ApiQuery({ name: 'role', required: false, type: String, description: 'Filter by user role' })
-  @ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by status: active | inactive' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Filter by status: active | inactive',
+  })
   @ApiQuery({
     name: 'newThisMonth',
     required: false,

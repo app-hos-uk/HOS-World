@@ -4,9 +4,9 @@ describe('MarketingEventBus', () => {
   it('emit iterates journeys and enrolls', async () => {
     const prisma = {
       marketingJourney: {
-        findMany: jest.fn().mockResolvedValue([
-          { id: 'j1', slug: 'a', triggerEvent: 'E', triggerConditions: null },
-        ]),
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ id: 'j1', slug: 'a', triggerEvent: 'E', triggerConditions: null }]),
       },
     };
     const journeyService = {

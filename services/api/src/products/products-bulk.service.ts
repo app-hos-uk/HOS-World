@@ -133,7 +133,7 @@ export class ProductsBulkService implements OnModuleInit {
     return !!existing;
   }
 
-  private getImportValidationErrors(productData: any, sellerId: string): string[] {
+  private getImportValidationErrors(productData: any, _sellerId: string): string[] {
     const errors: string[] = [];
     if (!productData.name?.trim()) {
       errors.push('Name is required');
@@ -147,7 +147,10 @@ export class ProductsBulkService implements OnModuleInit {
     return errors;
   }
 
-  private async getImportValidationErrorsAsync(productData: any, sellerId: string): Promise<string[]> {
+  private async getImportValidationErrorsAsync(
+    productData: any,
+    sellerId: string,
+  ): Promise<string[]> {
     const errors = this.getImportValidationErrors(productData, sellerId);
     if (productData.sku?.trim()) {
       const duplicate = await this.checkDuplicateSku(sellerId, productData.sku.trim());
@@ -223,18 +226,18 @@ export class ProductsBulkService implements OnModuleInit {
           tags: this.normalizeTags(productData.tags),
           status: (productData.status as ProductStatus) || ProductStatus.DRAFT,
           images: productData.images
-            ? (typeof productData.images === 'string'
-                ? productData.images.split('|').map((url: string, index: number) => ({
-                    url: url.trim(),
-                    order: index,
+            ? typeof productData.images === 'string'
+              ? productData.images.split('|').map((url: string, index: number) => ({
+                  url: url.trim(),
+                  order: index,
+                }))
+              : Array.isArray(productData.images)
+                ? productData.images.map((img: any, index: number) => ({
+                    url: typeof img === 'string' ? img.trim() : img.url?.trim() || '',
+                    alt: typeof img === 'object' ? img.alt : undefined,
+                    order: typeof img === 'object' && img.order != null ? img.order : index,
                   }))
-                : Array.isArray(productData.images)
-                  ? productData.images.map((img: any, index: number) => ({
-                      url: typeof img === 'string' ? img.trim() : img.url?.trim() || '',
-                      alt: typeof img === 'object' ? img.alt : undefined,
-                      order: typeof img === 'object' && img.order != null ? img.order : index,
-                    }))
-                  : [])
+                : []
             : [],
           variations: productData.variations ? JSON.parse(productData.variations) : undefined,
         });
@@ -282,7 +285,10 @@ export class ProductsBulkService implements OnModuleInit {
           /* fall through to comma split */
         }
       }
-      return trimmed.split(',').map((t) => t.trim()).filter(Boolean);
+      return trimmed
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
     }
     return [];
   }

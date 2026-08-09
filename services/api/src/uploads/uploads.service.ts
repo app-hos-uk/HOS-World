@@ -8,7 +8,6 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { existsSync, unlinkSync, mkdirSync, readFileSync } from 'fs';
 import { join, parse as parsePath, resolve } from 'path';
-import { randomUUID } from 'crypto';
 import { QueueService, JobType } from '../queue/queue.service';
 import { StorageService } from '../storage/storage.service';
 import {

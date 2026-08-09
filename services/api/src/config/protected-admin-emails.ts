@@ -31,10 +31,7 @@ export function normalizeEmailAddress(email: string | null | undefined): string 
   if (angle?.[1]) raw = angle[1].trim();
   if (/^mailto:/i.test(raw)) raw = raw.slice(7).trim();
   // Strip wrapping quotes
-  if (
-    (raw.startsWith('"') && raw.endsWith('"')) ||
-    (raw.startsWith("'") && raw.endsWith("'"))
-  ) {
+  if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
     raw = raw.slice(1, -1).trim();
   }
   return raw || null;

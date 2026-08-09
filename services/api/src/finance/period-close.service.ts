@@ -11,7 +11,11 @@ export class PeriodCloseService {
 
   private normalizeStatus(status: string): string {
     const normalized = status.trim().toUpperCase();
-    if (!PeriodCloseService.STATUSES.includes(normalized as (typeof PeriodCloseService.STATUSES)[number])) {
+    if (
+      !PeriodCloseService.STATUSES.includes(
+        normalized as (typeof PeriodCloseService.STATUSES)[number],
+      )
+    ) {
       throw new BadRequestException(
         `Invalid period status "${status}". Expected one of: ${PeriodCloseService.STATUSES.join(', ')}`,
       );
@@ -49,7 +53,9 @@ export class PeriodCloseService {
 
     const period = await this.getOrCreatePeriod(year, month);
     if (period.status === 'CLOSED') {
-      throw new BadRequestException(`Period ${year}-${String(month).padStart(2, '0')} is already closed`);
+      throw new BadRequestException(
+        `Period ${year}-${String(month).padStart(2, '0')} is already closed`,
+      );
     }
 
     // A stale or non-persisted token subject would otherwise trip the closedBy foreign key.
@@ -62,15 +68,27 @@ export class PeriodCloseService {
 
     const [revenue, refunds, payouts, fees] = await Promise.all([
       this.prisma.transaction.aggregate({
-        where: { type: 'PAYMENT', status: 'COMPLETED', createdAt: { gte: periodStart, lt: periodEnd } },
+        where: {
+          type: 'PAYMENT',
+          status: 'COMPLETED',
+          createdAt: { gte: periodStart, lt: periodEnd },
+        },
         _sum: { amount: true },
       }),
       this.prisma.transaction.aggregate({
-        where: { type: 'REFUND', status: 'COMPLETED', createdAt: { gte: periodStart, lt: periodEnd } },
+        where: {
+          type: 'REFUND',
+          status: 'COMPLETED',
+          createdAt: { gte: periodStart, lt: periodEnd },
+        },
         _sum: { amount: true },
       }),
       this.prisma.transaction.aggregate({
-        where: { type: 'PAYOUT', status: 'COMPLETED', createdAt: { gte: periodStart, lt: periodEnd } },
+        where: {
+          type: 'PAYOUT',
+          status: 'COMPLETED',
+          createdAt: { gte: periodStart, lt: periodEnd },
+        },
         _sum: { amount: true },
       }),
       this.prisma.transaction.aggregate({

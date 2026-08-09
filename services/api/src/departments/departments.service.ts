@@ -99,7 +99,8 @@ export class DepartmentsService {
 
     if (dto.slug && dto.slug !== existing.slug) {
       const conflict = await this.prisma.department.findUnique({ where: { slug: dto.slug } });
-      if (conflict) throw new ConflictException(`Department with slug "${dto.slug}" already exists`);
+      if (conflict)
+        throw new ConflictException(`Department with slug "${dto.slug}" already exists`);
     }
 
     if (dto.categoryId) {

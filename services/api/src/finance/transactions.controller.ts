@@ -203,7 +203,10 @@ export class TransactionsController {
     description: 'Export format: csv for CSV download payload, omit/other for JSON pagination',
   })
   @SwaggerApiResponse({ status: 200, description: 'Transactions exported successfully' })
-  @SwaggerApiResponse({ status: 400, description: 'CSV export exceeds the row cap - narrow the date range' })
+  @SwaggerApiResponse({
+    status: 400,
+    description: 'CSV export exceeds the row cap - narrow the date range',
+  })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   @SwaggerApiResponse({ status: 403, description: 'Forbidden - Finance/Admin access required' })
   async exportTransactions(

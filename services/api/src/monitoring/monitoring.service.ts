@@ -188,6 +188,7 @@ export class MonitoringService implements OnModuleInit {
 
     // Send to Sentry if configured
     try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const Sentry = require('@sentry/node');
       if (Sentry && Sentry.captureException) {
         Sentry.captureException(error, {
@@ -209,6 +210,7 @@ export class MonitoringService implements OnModuleInit {
 
     // Send to Sentry if configured
     try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const Sentry = require('@sentry/node');
       if (Sentry && Sentry.captureMessage) {
         const sentryLevel = level === 'error' ? 'error' : level === 'warning' ? 'warning' : 'info';

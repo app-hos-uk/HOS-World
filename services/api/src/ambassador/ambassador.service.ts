@@ -6,7 +6,6 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  Optional,
   forwardRef,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -70,11 +69,12 @@ export class AmbassadorService {
   }
 
   private async generateReferralCode(displayName: string): Promise<string> {
-    const slug = displayName
-      .replace(/[^a-zA-Z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      .slice(0, 20)
-      .toUpperCase() || 'AMB';
+    const slug =
+      displayName
+        .replace(/[^a-zA-Z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 20)
+        .toUpperCase() || 'AMB';
     for (let i = 0; i < 12; i++) {
       const code = `AMB-${slug}-${randomBytes(3).toString('hex').toUpperCase()}`;
       const exists = await this.prisma.ambassadorProfile.findUnique({
@@ -119,7 +119,11 @@ export class AmbassadorService {
     const min = this.minTierLevel();
     return {
       eligible: membership.tier.level >= min,
-      currentTier: { name: membership.tier.name, level: membership.tier.level, slug: membership.tier.slug },
+      currentTier: {
+        name: membership.tier.name,
+        level: membership.tier.level,
+        slug: membership.tier.slug,
+      },
       requiredTierLevel: min,
       enrolled,
     };
@@ -131,9 +135,12 @@ export class AmbassadorService {
       where: { userId },
       include: { tier: true },
     });
-    if (!membership) throw new BadRequestException('Join The Enchanted Circle before becoming an ambassador');
+    if (!membership)
+      throw new BadRequestException('Join The Enchanted Circle before becoming an ambassador');
     if (membership.tier.level < min) {
-      throw new ForbiddenException(`Ambassador unlock requires loyalty tier level ${min} or higher`);
+      throw new ForbiddenException(
+        `Ambassador unlock requires loyalty tier level ${min} or higher`,
+      );
     }
 
     const existing = await this.prisma.ambassadorProfile.findUnique({ where: { userId } });
@@ -186,7 +193,8 @@ export class AmbassadorService {
   async updateProfile(userId: string, dto: UpdateAmbassadorDto) {
     const profile = await this.prisma.ambassadorProfile.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundException('Ambassador profile not found');
-    if (profile.status !== 'ACTIVE') throw new ForbiddenException('Ambassador account is not active');
+    if (profile.status !== 'ACTIVE')
+      throw new ForbiddenException('Ambassador account is not active');
 
     return this.prisma.ambassadorProfile.update({
       where: { userId },
@@ -219,49 +227,49 @@ export class AmbassadorService {
   async submitUgc(userId: string, dto: SubmitUgcDto) {
     const profile = await this.prisma.ambassadorProfile.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundException('Ambassador profile not found');
-    if (profile.status !== 'ACTIVE') throw new ForbiddenException('Ambassador account is not active');
+    if (profile.status !== 'ACTIVE')
+      throw new ForbiddenException('Ambassador account is not active');
 
     const maxWeek = Number(this.config.get<string>('AMBASSADOR_UGC_MAX_PER_WEEK', '5'));
     const weekStart = startOfIsoWeekLocal();
 
-    return this.prisma.$transaction(async (tx) => {
-      const weekCount = await tx.uGCSubmission.count({
-        where: { ambassadorId: profile.id, createdAt: { gte: weekStart } },
-      });
-      if (weekCount >= maxWeek) {
-        throw new BadRequestException(`Maximum ${maxWeek} UGC submissions per week`);
-      }
+    return this.prisma
+      .$transaction(async (tx) => {
+        const weekCount = await tx.uGCSubmission.count({
+          where: { ambassadorId: profile.id, createdAt: { gte: weekStart } },
+        });
+        if (weekCount >= maxWeek) {
+          throw new BadRequestException(`Maximum ${maxWeek} UGC submissions per week`);
+        }
 
-      const sub = await tx.uGCSubmission.create({
-        data: {
-          ambassadorId: profile.id,
-          userId,
-          type: dto.type,
-          title: dto.title,
-          description: dto.description,
-          mediaUrls: dto.mediaUrls ?? [],
-          socialUrl: dto.socialUrl,
-          platform: dto.platform,
-          productId: dto.productId,
-          fandomId: dto.fandomId,
-        },
-      });
+        const sub = await tx.uGCSubmission.create({
+          data: {
+            ambassadorId: profile.id,
+            userId,
+            type: dto.type,
+            title: dto.title,
+            description: dto.description,
+            mediaUrls: dto.mediaUrls ?? [],
+            socialUrl: dto.socialUrl,
+            platform: dto.platform,
+            productId: dto.productId,
+            fandomId: dto.fandomId,
+          },
+        });
 
-      await tx.ambassadorProfile.update({
-        where: { id: profile.id },
-        data: { totalUgcSubmissions: { increment: 1 }, lastActiveAt: new Date() },
+        await tx.ambassadorProfile.update({
+          where: { id: profile.id },
+          data: { totalUgcSubmissions: { increment: 1 }, lastActiveAt: new Date() },
+        });
+        return sub;
+      })
+      .then((sub) => {
+        void this.segmentation.touchActivity(userId);
+        return sub;
       });
-      return sub;
-    }).then((sub) => {
-      void this.segmentation.touchActivity(userId);
-      return sub;
-    });
   }
 
-  async listOwnUgc(
-    userId: string,
-    filters: { status?: string; page?: number; limit?: number },
-  ) {
+  async listOwnUgc(userId: string, filters: { status?: string; page?: number; limit?: number }) {
     const profile = await this.prisma.ambassadorProfile.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundException('Ambassador profile not found');
     return this.listUgcForAmbassador(profile.id, filters);
@@ -494,10 +502,7 @@ export class AmbassadorService {
           where: {
             membershipId: profile.membershipId,
             createdAt: { gte: start, lt: end },
-            OR: [
-              { source: { in: AMBASSADOR_POINT_SOURCES } },
-              { source: 'REFERRAL_REWARD' },
-            ],
+            OR: [{ source: { in: AMBASSADOR_POINT_SOURCES } }, { source: 'REFERRAL_REWARD' }],
           },
           _sum: { points: true },
         }),
@@ -680,8 +685,10 @@ export class AmbassadorService {
   async convertCommissionToPoints(userId: string, commissionId: string) {
     const profile = await this.prisma.ambassadorProfile.findUnique({ where: { userId } });
     if (!profile) throw new NotFoundException('Ambassador profile not found');
-    if (!profile.commissionAsPoints) throw new BadRequestException('Commission-as-points is disabled');
-    if (profile.status !== 'ACTIVE') throw new ForbiddenException('Ambassador account is not active');
+    if (!profile.commissionAsPoints)
+      throw new BadRequestException('Commission-as-points is disabled');
+    if (profile.status !== 'ACTIVE')
+      throw new ForbiddenException('Ambassador account is not active');
 
     const influencer = await this.prisma.influencer.findUnique({ where: { userId } });
     if (!influencer) throw new BadRequestException('No influencer profile linked');
@@ -759,7 +766,9 @@ export class AmbassadorService {
     }
   }
 
-  async checkTierProgression(ambassadorId: string): Promise<{ upgraded: boolean; newTier: string }> {
+  async checkTierProgression(
+    ambassadorId: string,
+  ): Promise<{ upgraded: boolean; newTier: string }> {
     const profile = await this.prisma.ambassadorProfile.findUnique({ where: { id: ambassadorId } });
     if (!profile || profile.status !== 'ACTIVE') {
       return { upgraded: false, newTier: profile?.tier ?? 'ADVOCATE' };

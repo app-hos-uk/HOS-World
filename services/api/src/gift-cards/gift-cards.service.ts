@@ -3,7 +3,6 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
-  NotImplementedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
@@ -12,7 +11,8 @@ import { CreateGiftCardDto } from './dto/create-gift-card.dto';
 import { RedeemGiftCardDto } from './dto/redeem-gift-card.dto';
 
 /** Matches codes from generateCode(): XXXX-XXXX-XXXX-XXXX, charset without I,O,0,1 */
-const GIFT_CARD_CODE_REGEX = /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
+const GIFT_CARD_CODE_REGEX =
+  /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
 
 @Injectable()
 export class GiftCardsService {
@@ -40,14 +40,16 @@ export class GiftCardsService {
    * then GIFT_CARD_CATALOG_AMOUNTS / GIFT_CARD_DEFAULT_CURRENCY env.
    */
   async getCatalog(): Promise<{ currency: string; amounts: number[] }> {
-    let raw =
-      this.configService.get<string>('GIFT_CARD_CATALOG_AMOUNTS') || '25,50,100,250,500';
+    let raw = this.configService.get<string>('GIFT_CARD_CATALOG_AMOUNTS') || '25,50,100,250,500';
     let currency = this.configService.get<string>('GIFT_CARD_DEFAULT_CURRENCY') || 'GBP';
     try {
       const row = await this.prisma.config.findFirst({
         where: { level: 'PLATFORM', levelId: 'PLATFORM', key: 'LOYALTY_PROGRAMME_SETTINGS' },
       });
-      const v = row?.value as { giftCardCatalogAmounts?: string; giftCardDefaultCurrency?: string } | null;
+      const v = row?.value as {
+        giftCardCatalogAmounts?: string;
+        giftCardDefaultCurrency?: string;
+      } | null;
       if (v?.giftCardCatalogAmounts) raw = v.giftCardCatalogAmounts;
       if (v?.giftCardDefaultCurrency) currency = v.giftCardDefaultCurrency;
     } catch {
@@ -196,104 +198,107 @@ export class GiftCardsService {
     const normalizedCode = this.parseGiftCardCode(dto.code);
 
     // Use transaction with Serializable isolation to prevent race conditions on balance
-    return this.prisma.$transaction(async (tx) => {
-      const giftCard = await (tx as any).giftCard.findUnique({
-        where: { code: normalizedCode },
-      });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const giftCard = await (tx as any).giftCard.findUnique({
+          where: { code: normalizedCode },
+        });
 
-      if (!giftCard) {
-        throw new NotFoundException('Gift card not found');
-      }
+        if (!giftCard) {
+          throw new NotFoundException('Gift card not found');
+        }
 
-      if (giftCard.userId && giftCard.userId !== userId) {
-        throw new ForbiddenException('You do not own this gift card');
-      }
+        if (giftCard.userId && giftCard.userId !== userId) {
+          throw new ForbiddenException('You do not own this gift card');
+        }
 
-      // Unassigned cards: claim on first redemption attempt (prevents interception)
-      if (!giftCard.userId) {
-        await (tx as any).giftCard.update({
+        // Unassigned cards: claim on first redemption attempt (prevents interception)
+        if (!giftCard.userId) {
+          await (tx as any).giftCard.update({
+            where: { id: giftCard.id },
+            data: { userId },
+          });
+        }
+
+        if (giftCard.expiresAt && giftCard.expiresAt < new Date()) {
+          throw new BadRequestException('Gift card has expired');
+        }
+
+        if (giftCard.status === 'REDEEMED' || Number(giftCard.balance) <= 0) {
+          throw new BadRequestException('Gift card has no remaining balance');
+        }
+
+        if (giftCard.status === 'CANCELLED') {
+          throw new BadRequestException('Gift card has been cancelled');
+        }
+
+        // Only fully-activated (paid) cards are redeemable.
+        if (giftCard.status !== 'ACTIVE') {
+          throw new BadRequestException('Gift card is not active');
+        }
+
+        const currentBalance = Number(giftCard.balance);
+        const redeemAmount = dto.amount;
+
+        if (redeemAmount > currentBalance) {
+          throw new BadRequestException(`Insufficient balance. Available: ${currentBalance}`);
+        }
+
+        // Cap total redemptions for an order to that order's outstanding total, and verify
+        // the order belongs to the redeeming user.
+        if (dto.orderId) {
+          const order = await (tx as any).order.findUnique({
+            where: { id: dto.orderId },
+            select: { id: true, userId: true, total: true, paymentStatus: true },
+          });
+          if (!order) {
+            throw new NotFoundException('Order not found');
+          }
+          if (order.userId && order.userId !== userId) {
+            throw new ForbiddenException('You do not own this order');
+          }
+          if (order.paymentStatus && order.paymentStatus !== 'PENDING') {
+            throw new BadRequestException('Order is not awaiting payment');
+          }
+          const priorRedemptions = await (tx as any).giftCardTransaction.aggregate({
+            where: { orderId: dto.orderId, type: 'REDEMPTION' },
+            _sum: { amount: true },
+          });
+          const alreadyRedeemed = Number(priorRedemptions?._sum?.amount ?? 0);
+          if (alreadyRedeemed + redeemAmount > Number(order.total)) {
+            throw new BadRequestException(
+              'Redemption exceeds the order total already covered by gift cards',
+            );
+          }
+        }
+
+        const newBalance = currentBalance - redeemAmount;
+
+        const updatedGiftCard = await tx.giftCard.update({
           where: { id: giftCard.id },
-          data: { userId },
+          data: {
+            balance: newBalance,
+            status: newBalance <= 0 ? 'REDEEMED' : 'ACTIVE',
+            redeemedAt: newBalance <= 0 ? new Date() : giftCard.redeemedAt,
+            userId: giftCard.userId || userId,
+          },
         });
-      }
 
-      if (giftCard.expiresAt && giftCard.expiresAt < new Date()) {
-        throw new BadRequestException('Gift card has expired');
-      }
-
-      if (giftCard.status === 'REDEEMED' || Number(giftCard.balance) <= 0) {
-        throw new BadRequestException('Gift card has no remaining balance');
-      }
-
-      if (giftCard.status === 'CANCELLED') {
-        throw new BadRequestException('Gift card has been cancelled');
-      }
-
-      // Only fully-activated (paid) cards are redeemable.
-      if (giftCard.status !== 'ACTIVE') {
-        throw new BadRequestException('Gift card is not active');
-      }
-
-      const currentBalance = Number(giftCard.balance);
-      const redeemAmount = dto.amount;
-
-      if (redeemAmount > currentBalance) {
-        throw new BadRequestException(`Insufficient balance. Available: ${currentBalance}`);
-      }
-
-      // Cap total redemptions for an order to that order's outstanding total, and verify
-      // the order belongs to the redeeming user.
-      if (dto.orderId) {
-        const order = await (tx as any).order.findUnique({
-          where: { id: dto.orderId },
-          select: { id: true, userId: true, total: true, paymentStatus: true },
+        await (tx as any).giftCardTransaction.create({
+          data: {
+            giftCardId: giftCard.id,
+            orderId: dto.orderId,
+            type: 'REDEMPTION',
+            amount: redeemAmount,
+            balanceAfter: newBalance,
+            notes: dto.orderId ? `Redeemed for order ${dto.orderId}` : 'Redeemed',
+          },
         });
-        if (!order) {
-          throw new NotFoundException('Order not found');
-        }
-        if (order.userId && order.userId !== userId) {
-          throw new ForbiddenException('You do not own this order');
-        }
-        if (order.paymentStatus && order.paymentStatus !== 'PENDING') {
-          throw new BadRequestException('Order is not awaiting payment');
-        }
-        const priorRedemptions = await (tx as any).giftCardTransaction.aggregate({
-          where: { orderId: dto.orderId, type: 'REDEMPTION' },
-          _sum: { amount: true },
-        });
-        const alreadyRedeemed = Number(priorRedemptions?._sum?.amount ?? 0);
-        if (alreadyRedeemed + redeemAmount > Number(order.total)) {
-          throw new BadRequestException(
-            'Redemption exceeds the order total already covered by gift cards',
-          );
-        }
-      }
 
-      const newBalance = currentBalance - redeemAmount;
-
-      const updatedGiftCard = await tx.giftCard.update({
-        where: { id: giftCard.id },
-        data: {
-          balance: newBalance,
-          status: newBalance <= 0 ? 'REDEEMED' : 'ACTIVE',
-          redeemedAt: newBalance <= 0 ? new Date() : giftCard.redeemedAt,
-          userId: giftCard.userId || userId,
-        },
-      });
-
-      await (tx as any).giftCardTransaction.create({
-        data: {
-          giftCardId: giftCard.id,
-          orderId: dto.orderId,
-          type: 'REDEMPTION',
-          amount: redeemAmount,
-          balanceAfter: newBalance,
-          notes: dto.orderId ? `Redeemed for order ${dto.orderId}` : 'Redeemed',
-        },
-      });
-
-      return updatedGiftCard;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+        return updatedGiftCard;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   /**
@@ -344,12 +349,7 @@ export class GiftCardsService {
   /**
    * List all gift cards (admin)
    */
-  async listAll(
-    page = 1,
-    limit = 20,
-    status?: string,
-    type?: string,
-  ) {
+  async listAll(page = 1, limit = 20, status?: string, type?: string) {
     const skip = (page - 1) * limit;
     const where: any = {};
     if (status) where.status = status;
@@ -424,65 +424,68 @@ export class GiftCardsService {
       throw new BadRequestException('Refund amount must be greater than zero');
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const giftCard = await tx.giftCard.findUnique({
-        where: { id: giftCardId },
-      });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const giftCard = await tx.giftCard.findUnique({
+          where: { id: giftCardId },
+        });
 
-      if (!giftCard) {
-        throw new NotFoundException('Gift card not found');
-      }
+        if (!giftCard) {
+          throw new NotFoundException('Gift card not found');
+        }
 
-      // A card can be redeemed against the same order more than once (top-ups at
-      // checkout), so the refundable amount is every redemption on that pair.
-      const redemptions = await (tx as any).giftCardTransaction.aggregate({
-        where: { giftCardId, orderId, type: 'REDEMPTION' },
-        _sum: { amount: true },
-        _count: { _all: true },
-      });
+        // A card can be redeemed against the same order more than once (top-ups at
+        // checkout), so the refundable amount is every redemption on that pair.
+        const redemptions = await (tx as any).giftCardTransaction.aggregate({
+          where: { giftCardId, orderId, type: 'REDEMPTION' },
+          _sum: { amount: true },
+          _count: { _all: true },
+        });
 
-      if (!redemptions?._count?._all) {
-        throw new BadRequestException('This gift card was not used for the specified order');
-      }
+        if (!redemptions?._count?._all) {
+          throw new BadRequestException('This gift card was not used for the specified order');
+        }
 
-      const existingRefunds = await (tx as any).giftCardTransaction.aggregate({
-        where: { giftCardId, orderId, type: 'REFUND' },
-        _sum: { amount: true },
-      });
-      const alreadyRefunded = Number(existingRefunds._sum?.amount || 0);
-      const maxRefund = Number(redemptions._sum?.amount || 0) - alreadyRefunded;
+        const existingRefunds = await (tx as any).giftCardTransaction.aggregate({
+          where: { giftCardId, orderId, type: 'REFUND' },
+          _sum: { amount: true },
+        });
+        const alreadyRefunded = Number(existingRefunds._sum?.amount || 0);
+        const maxRefund = Number(redemptions._sum?.amount || 0) - alreadyRefunded;
 
-      if (amount > maxRefund) {
-        throw new BadRequestException(
-          `Refund amount ($${amount}) exceeds refundable amount ($${maxRefund})`,
-        );
-      }
+        if (amount > maxRefund) {
+          throw new BadRequestException(
+            `Refund amount ($${amount}) exceeds refundable amount ($${maxRefund})`,
+          );
+        }
 
-      const currentBalance = Number(giftCard.balance);
-      const originalAmount = Number(giftCard.amount);
-      const newBalance = Math.min(currentBalance + amount, originalAmount);
+        const currentBalance = Number(giftCard.balance);
+        const originalAmount = Number(giftCard.amount);
+        const newBalance = Math.min(currentBalance + amount, originalAmount);
 
-      const updatedGiftCard = await tx.giftCard.update({
-        where: { id: giftCardId },
-        data: {
-          balance: newBalance,
-          status: 'ACTIVE',
-          redeemedAt: null,
-        },
-      });
+        const updatedGiftCard = await tx.giftCard.update({
+          where: { id: giftCardId },
+          data: {
+            balance: newBalance,
+            status: 'ACTIVE',
+            redeemedAt: null,
+          },
+        });
 
-      await (tx as any).giftCardTransaction.create({
-        data: {
-          giftCardId,
-          orderId,
-          type: 'REFUND',
-          amount,
-          balanceAfter: newBalance,
-          notes: `Refund for order ${orderId}`,
-        },
-      });
+        await (tx as any).giftCardTransaction.create({
+          data: {
+            giftCardId,
+            orderId,
+            type: 'REFUND',
+            amount,
+            balanceAfter: newBalance,
+            notes: `Refund for order ${orderId}`,
+          },
+        });
 
-      return updatedGiftCard;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+        return updatedGiftCard;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 }

@@ -106,9 +106,12 @@ export class WhatsAppController {
       if (!signature) {
         throw new UnauthorizedException('Missing Twilio signature');
       }
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const twilio = require('twilio');
-      const proto = (req.headers['x-forwarded-proto'] as string)?.split(',')[0]?.trim() || req.protocol;
-      const host = (req.headers['x-forwarded-host'] as string)?.split(',')[0]?.trim() || req.headers.host;
+      const proto =
+        (req.headers['x-forwarded-proto'] as string)?.split(',')[0]?.trim() || req.protocol;
+      const host =
+        (req.headers['x-forwarded-host'] as string)?.split(',')[0]?.trim() || req.headers.host;
       const webhookUrl = `${proto}://${host}/api/whatsapp/webhook`;
       const isValid = twilio.validateRequest(authToken, signature, webhookUrl, body);
       if (!isValid) {

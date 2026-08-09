@@ -24,7 +24,10 @@ import {
 export class PromotionsService {
   private readonly logger = new Logger(PromotionsService.name);
 
-  constructor(private prisma: PrismaService, private cache: CacheService) {}
+  constructor(
+    private prisma: PrismaService,
+    private cache: CacheService,
+  ) {}
 
   /**
    * Create a new promotion
@@ -102,7 +105,11 @@ export class PromotionsService {
     const cached = await this.cache.get<any[]>(PromotionsService.PROMO_CACHE_KEY);
     if (cached) return cached;
     const data = await this.findAll();
-    await this.cache.set(PromotionsService.PROMO_CACHE_KEY, data, PromotionsService.PROMO_CACHE_TTL);
+    await this.cache.set(
+      PromotionsService.PROMO_CACHE_KEY,
+      data,
+      PromotionsService.PROMO_CACHE_TTL,
+    );
     return data;
   }
 
@@ -134,7 +141,7 @@ export class PromotionsService {
    * Update promotion
    */
   async update(id: string, updateDto: Partial<CreatePromotionDto>) {
-    const promotion = await this.findOne(id);
+    const _promotion = await this.findOne(id);
 
     const updateData: any = {
       name: updateDto.name,
@@ -212,7 +219,7 @@ export class PromotionsService {
    * Create a coupon for a promotion
    */
   async createCoupon(createDto: CreateCouponDto) {
-    const promotion = await this.findOne(createDto.promotionId);
+    const _promotion = await this.findOne(createDto.promotionId);
 
     // Check if coupon code already exists
     const existing = await this.prisma.coupon.findUnique({
@@ -322,11 +329,7 @@ export class PromotionsService {
     return {
       coupon,
       promotion,
-      discount: this.calculateDiscount(
-        promotion as PromotionWithDetails,
-        cartValue,
-        cartItems,
-      ),
+      discount: this.calculateDiscount(promotion as PromotionWithDetails, cartValue, cartItems),
     };
   }
 
@@ -634,7 +637,9 @@ export class PromotionsService {
       if (!grantsFs) {
         totalDiscount = totalDiscount.add(discount);
       }
-      appliedPromotions.push(this.buildAppliedPromotionEntry(promo, 'promotion', undefined, discount));
+      appliedPromotions.push(
+        this.buildAppliedPromotionEntry(promo, 'promotion', undefined, discount),
+      );
     }
 
     if (totalDiscount.gt(cartSubtotal)) {
@@ -669,10 +674,7 @@ export class PromotionsService {
       const bumped = await tx.coupon.updateMany({
         where: {
           id: couponId,
-          OR: [
-            { usageLimit: null },
-            { usageCount: { lt: coupon.usageLimit ?? 999999999 } },
-          ],
+          OR: [{ usageLimit: null }, { usageCount: { lt: coupon.usageLimit ?? 999999999 } }],
         },
         data: { usageCount: { increment: 1 } },
       });
@@ -742,10 +744,7 @@ export class PromotionsService {
             const bumped = await tx.promotion.updateMany({
               where: {
                 id: ap.id!,
-                OR: [
-                  { usageLimit: null },
-                  { usageCount: { lt: promo.usageLimit ?? 999999999 } },
-                ],
+                OR: [{ usageLimit: null }, { usageCount: { lt: promo.usageLimit ?? 999999999 } }],
               },
               data: { usageCount: { increment: 1 } },
             });

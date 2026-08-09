@@ -49,12 +49,11 @@ export class AdminProductsService {
     const fandom = data.fandom ?? existingProduct?.fandom ?? null;
 
     const imageCount =
-      data.images !== undefined
-        ? data.images.length
-        : existingProduct?._count?.images ?? 0;
+      data.images !== undefined ? data.images.length : (existingProduct?._count?.images ?? 0);
 
     if (!name || name.trim().length === 0) errors.push('Product name is required');
-    if (!description || description.trim().length < 10) errors.push('Description must be at least 10 characters');
+    if (!description || description.trim().length < 10)
+      errors.push('Description must be at least 10 characters');
     if (!price || price <= 0) errors.push('Price must be greater than $0');
     if (imageCount === 0) errors.push('At least one product image is required');
     if (!categoryId && !fandom) errors.push('A fandom or category must be assigned');
@@ -157,7 +156,9 @@ export class AdminProductsService {
 
     // Sanitize and validate tagIds if provided
     if (data.tagIds) {
-      data.tagIds = data.tagIds.filter((id): id is string => typeof id === 'string' && id.length > 0);
+      data.tagIds = data.tagIds.filter(
+        (id): id is string => typeof id === 'string' && id.length > 0,
+      );
     }
     if (data.tagIds && data.tagIds.length > 0) {
       const tags = await this.prisma.tag.findMany({
@@ -460,7 +461,9 @@ export class AdminProductsService {
 
     // Sanitize and validate tagIds if provided
     if (data.tagIds) {
-      data.tagIds = data.tagIds.filter((id): id is string => typeof id === 'string' && id.length > 0);
+      data.tagIds = data.tagIds.filter(
+        (id): id is string => typeof id === 'string' && id.length > 0,
+      );
     }
     if (data.tagIds && data.tagIds.length > 0) {
       const tags = await this.prisma.tag.findMany({
@@ -835,11 +838,7 @@ export class AdminProductsService {
     const products = await this.prisma.product.findMany({
       where: {
         status: { in: ['ACTIVE', 'DRAFT'] },
-        OR: [
-          { sku: { not: null } },
-          { barcode: { not: null } },
-          { ean: { not: null } },
-        ],
+        OR: [{ sku: { not: null } }, { barcode: { not: null } }, { ean: { not: null } }],
       },
       take: 5000,
       select: {
@@ -902,10 +901,7 @@ export class AdminProductsService {
     };
   }
 
-  async mergeProducts(
-    canonicalProductId: string,
-    duplicateProductId: string,
-  ) {
+  async mergeProducts(canonicalProductId: string, duplicateProductId: string) {
     const [canonical, duplicate] = await Promise.all([
       this.prisma.product.findUnique({
         where: { id: canonicalProductId },

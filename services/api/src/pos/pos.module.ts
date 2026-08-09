@@ -38,6 +38,11 @@ import { PosJobsService } from './jobs/pos.jobs';
     PosGiftCardReconService,
     PosJobsService,
   ],
-  exports: [POSAdapterFactory, PosProductSyncService, PosInventorySyncService, PosSalesImportService],
+  exports: [
+    POSAdapterFactory,
+    PosProductSyncService,
+    PosInventorySyncService,
+    PosSalesImportService,
+  ],
 })
 export class PosModule {}

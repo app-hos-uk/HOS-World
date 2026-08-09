@@ -29,7 +29,9 @@ export interface PaymentProvider {
    * 'already_succeeded' — intent already charged; caller should NOT create a new one.
    * 'skipped' — provider unavailable or intent not found.
    */
-  cancelPaymentIntent?(paymentIntentId: string): Promise<'cancelled' | 'already_succeeded' | 'skipped'>;
+  cancelPaymentIntent?(
+    paymentIntentId: string,
+  ): Promise<'cancelled' | 'already_succeeded' | 'skipped'>;
 
   /**
    * Refund a payment

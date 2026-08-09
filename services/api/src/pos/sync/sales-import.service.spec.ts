@@ -49,13 +49,7 @@ function makeMocks() {
     encryptJson: jest.fn().mockReturnValue('encrypted'),
   };
 
-  const service = new PosSalesImportService(
-    prisma,
-    inventorySync,
-    earnEngine,
-    factory,
-    encryption,
-  );
+  const service = new PosSalesImportService(prisma, inventorySync, earnEngine, factory, encryption);
   return { service, prisma, inventorySync, earnEngine, factory };
 }
 

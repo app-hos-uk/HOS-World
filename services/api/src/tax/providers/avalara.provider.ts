@@ -5,7 +5,6 @@ import {
   TaxCalculationRequest,
   TaxCalculationResponse,
   TaxLineItemResult,
-  TaxJurisdictionDetail,
   TaxSummary,
   TaxAddress,
   AddressValidationResult,

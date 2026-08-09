@@ -47,9 +47,7 @@ function makeMocks() {
 describe('PosGiftCardReconService', () => {
   it('skips when POS_ENABLED is not true', async () => {
     const { service, config, prisma, discrepancies } = makeMocks();
-    config.get.mockImplementation((key: string) =>
-      key === 'POS_ENABLED' ? 'false' : 'true',
-    );
+    config.get.mockImplementation((key: string) => (key === 'POS_ENABLED' ? 'false' : 'true'));
     const summary = await service.reconcile();
     expect(summary.discrepancies).toBe(0);
     expect(prisma.loyaltyPosVoucher.findMany).not.toHaveBeenCalled();

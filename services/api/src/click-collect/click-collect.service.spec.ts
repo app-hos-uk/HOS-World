@@ -60,9 +60,7 @@ describe('ClickCollectService', () => {
   });
 
   it('expireStaleOrders cancels reservations and sets EXPIRED', async () => {
-    prisma.clickCollectOrder.findMany.mockResolvedValue([
-      { id: 'cc1', orderId: 'o1' },
-    ]);
+    prisma.clickCollectOrder.findMany.mockResolvedValue([{ id: 'cc1', orderId: 'o1' }]);
     prisma.stockReservation.findMany.mockResolvedValue([]);
     const n = await service.expireStaleOrders();
     expect(n).toBe(1);

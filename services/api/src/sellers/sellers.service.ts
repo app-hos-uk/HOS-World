@@ -31,8 +31,11 @@ export class SellersService {
           'ENCRYPTION_KEY must be set in production/staging for seller field encryption',
         );
       }
-      this.logger.warn('ENCRYPTION_KEY not set — seller encryption uses a random ephemeral key (dev only)');
+      this.logger.warn(
+        'ENCRYPTION_KEY not set — seller encryption uses a random ephemeral key (dev only)',
+      );
     }
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     this.encryptionKey = key || require('crypto').randomBytes(32).toString('hex');
   }
 
@@ -53,6 +56,7 @@ export class SellersService {
   }
 
   private encryptField(value: string): string {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const crypto = require('crypto');
     const salt = crypto.randomBytes(16);
     const key = crypto.scryptSync(this.encryptionKey, salt, 32);
@@ -67,6 +71,7 @@ export class SellersService {
 
   private decryptField(encrypted: string): string {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const crypto = require('crypto');
       if (encrypted.startsWith('gcm:')) {
         const parts = encrypted.split(':');
@@ -99,7 +104,10 @@ export class SellersService {
    * Transparently re-encrypts legacy CBC-encrypted fields to GCM on read.
    * Call after loading a seller to migrate in-place without downtime.
    */
-  private async migrateEncryptionIfNeeded(sellerId: string, fields: { accountNumberEnc?: string | null; sortCodeEnc?: string | null }) {
+  private async migrateEncryptionIfNeeded(
+    sellerId: string,
+    fields: { accountNumberEnc?: string | null; sortCodeEnc?: string | null },
+  ) {
     const updates: Record<string, string> = {};
     if (fields.accountNumberEnc && !fields.accountNumberEnc.startsWith('gcm:')) {
       const plaintext = this.decryptField(fields.accountNumberEnc);
@@ -822,23 +830,27 @@ export class SellersService {
       },
     });
 
-    this.activityService?.createLog({
-      userId,
-      sellerId: seller.id,
-      action: 'VERIFICATION_SUBMITTED',
-      entityType: 'SellerVerificationDocument',
-      entityId: doc.id,
-      description: `Verification document "${data.documentType}" submitted for review`,
-      metadata: { documentType: data.documentType },
-    }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+    this.activityService
+      ?.createLog({
+        userId,
+        sellerId: seller.id,
+        action: 'VERIFICATION_SUBMITTED',
+        entityType: 'SellerVerificationDocument',
+        entityId: doc.id,
+        description: `Verification document "${data.documentType}" submitted for review`,
+        metadata: { documentType: data.documentType },
+      })
+      .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
-    this.notificationsService?.sendNotificationToUser(
-      userId,
-      'GENERAL',
-      'Verification document submitted',
-      `Your ${data.documentType} document has been submitted for review. You will be notified once the review is complete.`,
-      { documentId: doc.id },
-    ).catch((e) => this.logger.warn(`Notification failed: ${(e as Error).message}`));
+    this.notificationsService
+      ?.sendNotificationToUser(
+        userId,
+        'GENERAL',
+        'Verification document submitted',
+        `Your ${data.documentType} document has been submitted for review. You will be notified once the review is complete.`,
+        { documentId: doc.id },
+      )
+      .catch((e) => this.logger.warn(`Notification failed: ${(e as Error).message}`));
 
     return doc;
   }
@@ -889,7 +901,12 @@ export class SellersService {
       if (approvedCount >= 1) {
         await this.prisma.seller.update({
           where: { id: doc.sellerId },
-          data: { vendorStatus: 'APPROVED', verified: true, approvedAt: new Date(), approvedBy: reviewerId },
+          data: {
+            vendorStatus: 'APPROVED',
+            verified: true,
+            approvedAt: new Date(),
+            approvedBy: reviewerId,
+          },
         });
       }
     }
@@ -909,28 +926,30 @@ export class SellersService {
       }
     }
 
-    this.activityService?.createLog({
-      userId: reviewerId,
-      sellerId: doc.sellerId,
-      action: data.status === 'APPROVED' ? 'VERIFICATION_APPROVED' : 'VERIFICATION_REJECTED',
-      entityType: 'SellerVerificationDocument',
-      entityId: documentId,
-      description: `Verification document "${doc.documentType}" ${data.status.toLowerCase()}${data.reviewNotes ? `: ${data.reviewNotes}` : ''}`,
-      metadata: { status: data.status, documentType: doc.documentType },
-    }).catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+    this.activityService
+      ?.createLog({
+        userId: reviewerId,
+        sellerId: doc.sellerId,
+        action: data.status === 'APPROVED' ? 'VERIFICATION_APPROVED' : 'VERIFICATION_REJECTED',
+        entityType: 'SellerVerificationDocument',
+        entityId: documentId,
+        description: `Verification document "${doc.documentType}" ${data.status.toLowerCase()}${data.reviewNotes ? `: ${data.reviewNotes}` : ''}`,
+        metadata: { status: data.status, documentType: doc.documentType },
+      })
+      .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
     if (doc.seller?.userId) {
       const title = data.status === 'APPROVED' ? 'Verification approved' : 'Verification rejected';
-      const message = data.status === 'APPROVED'
-        ? `Your ${doc.documentType} document has been approved. Your account is now verified.`
-        : `Your ${doc.documentType} document was rejected.${data.reviewNotes ? ` Reason: ${data.reviewNotes}` : ' Please resubmit with a valid document.'}`;
-      this.notificationsService?.sendNotificationToUser(
-        doc.seller.userId,
-        'GENERAL',
-        title,
-        message,
-        { documentId, status: data.status },
-      ).catch((e) => this.logger.warn(`Notification failed: ${(e as Error).message}`));
+      const message =
+        data.status === 'APPROVED'
+          ? `Your ${doc.documentType} document has been approved. Your account is now verified.`
+          : `Your ${doc.documentType} document was rejected.${data.reviewNotes ? ` Reason: ${data.reviewNotes}` : ' Please resubmit with a valid document.'}`;
+      this.notificationsService
+        ?.sendNotificationToUser(doc.seller.userId, 'GENERAL', title, message, {
+          documentId,
+          status: data.status,
+        })
+        .catch((e) => this.logger.warn(`Notification failed: ${(e as Error).message}`));
     }
 
     return updated;

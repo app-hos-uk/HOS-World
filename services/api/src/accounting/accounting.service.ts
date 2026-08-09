@@ -76,7 +76,9 @@ export class AccountingService {
   }
 
   /** Stub: persist JSON CoA mapping on the Xero integration settings. */
-  async updateCoaMapping(mapping: Partial<ChartOfAccountsMapping>): Promise<ChartOfAccountsMapping> {
+  async updateCoaMapping(
+    mapping: Partial<ChartOfAccountsMapping>,
+  ): Promise<ChartOfAccountsMapping> {
     this.assertEnabled();
     const next = { ...(await this.getCoaMapping()), ...mapping };
 
@@ -134,11 +136,7 @@ export class AccountingService {
    * Enqueue a pre-built daily summary journal (callers supply aggregated totals).
    * Idempotency key convention: `${entryType}:${periodDate}`
    */
-  async enqueueDailyJournal(
-    entryType: LedgerEntryType,
-    periodDate: string,
-    payload: unknown,
-  ) {
+  async enqueueDailyJournal(entryType: LedgerEntryType, periodDate: string, payload: unknown) {
     this.assertEnabled();
     const key = `${entryType}:${periodDate}`;
     return this.outbox.enqueue(entryType, periodDate, key, payload);

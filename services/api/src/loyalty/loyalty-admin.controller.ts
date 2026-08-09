@@ -119,12 +119,16 @@ export class LoyaltyAdminController {
 
   @Get('redemption-options')
   async redemptionOptions(): Promise<ApiResponse<unknown>> {
-    const data = await this.prisma.loyaltyRedemptionOption.findMany({ orderBy: { pointsCost: 'asc' } });
+    const data = await this.prisma.loyaltyRedemptionOption.findMany({
+      orderBy: { pointsCost: 'asc' },
+    });
     return { data, message: 'OK' };
   }
 
   @Post('redemption-options')
-  async createRedemptionOption(@Body() body: CreateRedemptionOptionDto): Promise<ApiResponse<unknown>> {
+  async createRedemptionOption(
+    @Body() body: CreateRedemptionOptionDto,
+  ): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyRedemptionOption.create({ data: body as any });
     return { data, message: 'Created' };
   }
@@ -134,12 +138,17 @@ export class LoyaltyAdminController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateRedemptionOptionDto,
   ): Promise<ApiResponse<unknown>> {
-    const data = await this.prisma.loyaltyRedemptionOption.update({ where: { id }, data: body as any });
+    const data = await this.prisma.loyaltyRedemptionOption.update({
+      where: { id },
+      data: body as any,
+    });
     return { data, message: 'Updated' };
   }
 
   @Delete('redemption-options/:id')
-  async deleteRedemptionOption(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
+  async deleteRedemptionOption(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ApiResponse<unknown>> {
     const redeemed = await this.prisma.loyaltyRedemption.count({ where: { optionId: id } });
     if (redeemed > 0) {
       await this.prisma.loyaltyRedemptionOption.update({
@@ -171,7 +180,10 @@ export class LoyaltyAdminController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateCampaignDto,
   ): Promise<ApiResponse<unknown>> {
-    const data = await this.prisma.loyaltyBonusCampaign.update({ where: { id }, data: body as any });
+    const data = await this.prisma.loyaltyBonusCampaign.update({
+      where: { id },
+      data: body as any,
+    });
     return { data, message: 'Updated' };
   }
 
@@ -208,7 +220,14 @@ export class LoyaltyAdminController {
                   {
                     AND: [
                       { user: { firstName: { contains: parts[0], mode: 'insensitive' as const } } },
-                      { user: { lastName: { contains: parts.slice(1).join(' '), mode: 'insensitive' as const } } },
+                      {
+                        user: {
+                          lastName: {
+                            contains: parts.slice(1).join(' '),
+                            mode: 'insensitive' as const,
+                          },
+                        },
+                      },
                     ],
                   },
                 ]
@@ -260,10 +279,7 @@ export class LoyaltyAdminController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Query('deleteUser') deleteUserRaw?: string,
   ): Promise<ApiResponse<unknown>> {
-    const deleteUser =
-      deleteUserRaw === '1' ||
-      deleteUserRaw === 'true' ||
-      deleteUserRaw === 'yes';
+    const deleteUser = deleteUserRaw === '1' || deleteUserRaw === 'true' || deleteUserRaw === 'yes';
     const data = await this.loyalty.adminDeleteMember(userId, { deleteUser });
     return {
       data,
@@ -275,7 +291,9 @@ export class LoyaltyAdminController {
 
   @Get('fandom-profile/:userId')
   @ApiOperation({ summary: 'Member fandom affinity profile (JSON)' })
-  async fandomProfile(@Param('userId', ParseUUIDPipe) userId: string): Promise<ApiResponse<unknown>> {
+  async fandomProfile(
+    @Param('userId', ParseUUIDPipe) userId: string,
+  ): Promise<ApiResponse<unknown>> {
     const m = await this.prisma.loyaltyMembership.findUnique({
       where: { userId },
       select: { fandomProfile: true, userId: true },
@@ -358,7 +376,9 @@ export class LoyaltyAdminController {
 
   @Put('settings')
   @ApiOperation({ summary: 'Update loyalty programme settings' })
-  async putSettings(@Body() body: Partial<LoyaltyProgrammeSettings>): Promise<ApiResponse<unknown>> {
+  async putSettings(
+    @Body() body: Partial<LoyaltyProgrammeSettings>,
+  ): Promise<ApiResponse<unknown>> {
     try {
       const settings = await this.settings.update(body || {});
       return { data: settings, message: 'Settings saved' };
@@ -376,10 +396,15 @@ export class LoyaltyAdminController {
 
   @Get('members/:userId/instruments')
   @ApiOperation({ summary: 'Member balance instruments (points, GCs, vouchers)' })
-  async memberInstruments(@Param('userId', ParseUUIDPipe) userId: string): Promise<ApiResponse<unknown>> {
+  async memberInstruments(
+    @Param('userId', ParseUUIDPipe) userId: string,
+  ): Promise<ApiResponse<unknown>> {
     const membership = await this.prisma.loyaltyMembership.findUnique({
       where: { userId },
-      include: { tier: true, user: { select: { id: true, email: true, firstName: true, lastName: true } } },
+      include: {
+        tier: true,
+        user: { select: { id: true, email: true, firstName: true, lastName: true } },
+      },
     });
     if (!membership) throw new BadRequestException('Membership not found');
     const [giftCards, vouchers] = await Promise.all([
@@ -463,9 +488,7 @@ export class LoyaltyAdminController {
     description:
       'Re-attempts the Lightspeed gift-card issuance for an existing voucher, re-debiting the points if the burn was reversed. Safe to call repeatedly — an already ISSUED voucher is returned unchanged.',
   })
-  async retryPosVoucher(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<ApiResponse<unknown>> {
+  async retryPosVoucher(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.posVouchers.retryFailedVoucher(id);
     return { data, message: 'Voucher issuance retried' };
   }

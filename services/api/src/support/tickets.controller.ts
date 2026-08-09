@@ -23,7 +23,6 @@ import { TicketsService } from './tickets.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
-import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('support')
@@ -214,11 +213,7 @@ export class TicketsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
-    const ticket = await this.ticketsService.getTicketById(
-      id,
-      req.user?.id,
-      req.user?.role,
-    );
+    const ticket = await this.ticketsService.getTicketById(id, req.user?.id, req.user?.role);
     return {
       data: ticket,
       message: 'Ticket retrieved successfully',

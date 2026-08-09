@@ -8,6 +8,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 
 describe('OrdersService - Phase 1 Tests', () => {
   let service: OrdersService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let prismaService: PrismaService;
 
   const mockPrismaService = {
@@ -73,6 +74,7 @@ describe('OrdersService - Phase 1 Tests', () => {
     },
     $transaction: jest.fn((callback) => {
       if (typeof callback === 'function') {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const { Decimal } = require('@prisma/client/runtime/library');
         const mockOrder = {
           id: 'order-id',
@@ -117,7 +119,9 @@ describe('OrdersService - Phase 1 Tests', () => {
           ...mockPrismaService,
           product: {
             findUnique: mockPrismaService.product.findUnique,
-            findMany: jest.fn().mockResolvedValue([{ id: 'product-id', stock: 100, name: 'Test Product' }]),
+            findMany: jest
+              .fn()
+              .mockResolvedValue([{ id: 'product-id', stock: 100, name: 'Test Product' }]),
             update: jest.fn().mockResolvedValue({ id: 'product-id', stock: 98 }),
             updateMany: jest.fn().mockResolvedValue({ count: 1 }),
           },
@@ -189,6 +193,7 @@ describe('OrdersService - Phase 1 Tests', () => {
     };
 
     it('should create order from cart successfully', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { Decimal } = require('@prisma/client/runtime/library');
       const mockCart = {
         id: 'cart-id',
@@ -554,9 +559,9 @@ describe('OrdersService - Phase 1 Tests', () => {
     it('throws NotFoundException when order number does not exist', async () => {
       mockPrismaService.order.findFirst.mockResolvedValue(null);
 
-      await expect(
-        service.findByOrderNumber('HOS-MISSING', 'user-id', 'CUSTOMER'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findByOrderNumber('HOS-MISSING', 'user-id', 'CUSTOMER')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('delegates to findOne when order number exists', async () => {
@@ -640,7 +645,9 @@ describe('OrdersService - Phase 1 Tests', () => {
         childOrders: [],
       });
 
-      await expect(service.cancel(orderId, userId, 'CUSTOMER')).rejects.toThrow(BadRequestException);
+      await expect(service.cancel(orderId, userId, 'CUSTOMER')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw ForbiddenException when customer does not own the order', async () => {
@@ -709,10 +716,13 @@ describe('OrdersService - Phase 1 Tests', () => {
         childOrders: [],
       });
 
-      await expect(service.cancel(orderId, userId, 'CUSTOMER')).rejects.toThrow(BadRequestException);
+      await expect(service.cancel(orderId, userId, 'CUSTOMER')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should cancel an unpaid PENDING order for customer and restore stock', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { Decimal } = require('@prisma/client/runtime/library');
       const mockOrder = {
         id: orderId,
@@ -763,6 +773,7 @@ describe('OrdersService - Phase 1 Tests', () => {
     });
 
     it('should cancel with skipApproval for ADMIN on paid order', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { Decimal } = require('@prisma/client/runtime/library');
       const mockOrder = {
         id: orderId,
@@ -825,9 +836,14 @@ describe('OrdersService - Phase 1 Tests', () => {
         items: [],
         childOrders: [],
       });
-      mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-id', userId: 'seller-user' });
+      mockPrismaService.seller.findUnique.mockResolvedValue({
+        id: 'seller-id',
+        userId: 'seller-user',
+      });
 
-      await expect(service.cancel(orderId, 'seller-user', 'SELLER')).rejects.toThrow(BadRequestException);
+      await expect(service.cancel(orderId, 'seller-user', 'SELLER')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -891,7 +907,9 @@ describe('OrdersService - Phase 1 Tests', () => {
 
       await service.findAll('b2c-user', 'B2C_SELLER');
 
-      expect(mockPrismaService.seller.findUnique).toHaveBeenCalledWith({ where: { userId: 'b2c-user' } });
+      expect(mockPrismaService.seller.findUnique).toHaveBeenCalledWith({
+        where: { userId: 'b2c-user' },
+      });
     });
   });
 
@@ -938,7 +956,9 @@ describe('OrdersService - Phase 1 Tests', () => {
       mockPrismaService.order.findUnique.mockResolvedValue(mockOrder);
       mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'my-seller' });
 
-      await expect(service.findOne('order-id', 'seller-user', 'SELLER')).rejects.toThrow(ForbiddenException);
+      await expect(service.findOne('order-id', 'seller-user', 'SELLER')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw ForbiddenException for roles that cannot access all orders', async () => {
@@ -957,7 +977,9 @@ describe('OrdersService - Phase 1 Tests', () => {
 
       mockPrismaService.order.findUnique.mockResolvedValue(mockOrder);
 
-      await expect(service.findOne('order-id', 'random-user', 'RANDOM_ROLE')).rejects.toThrow(ForbiddenException);
+      await expect(service.findOne('order-id', 'random-user', 'RANDOM_ROLE')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -968,7 +990,9 @@ describe('OrdersService - Phase 1 Tests', () => {
     it('should throw NotFoundException when order does not exist', async () => {
       mockPrismaService.order.findUnique.mockResolvedValue(null);
 
-      await expect(service.update(orderId, sellerId, 'ADMIN', { status: 'CONFIRMED' })).rejects.toThrow(NotFoundException);
+      await expect(
+        service.update(orderId, sellerId, 'ADMIN', { status: 'CONFIRMED' }),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException for non-admin non-seller role', async () => {
@@ -980,7 +1004,9 @@ describe('OrdersService - Phase 1 Tests', () => {
         childOrders: [],
       });
 
-      await expect(service.update(orderId, 'user', 'CUSTOMER', { status: 'CONFIRMED' })).rejects.toThrow(ForbiddenException);
+      await expect(
+        service.update(orderId, 'user', 'CUSTOMER', { status: 'CONFIRMED' }),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw BadRequestException when trying to set status to CANCELLED', async () => {
@@ -994,7 +1020,9 @@ describe('OrdersService - Phase 1 Tests', () => {
       });
       mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-id', userId: sellerId });
 
-      await expect(service.update(orderId, sellerId, 'SELLER', { status: 'CANCELLED' })).rejects.toThrow(BadRequestException);
+      await expect(
+        service.update(orderId, sellerId, 'SELLER', { status: 'CANCELLED' }),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException for invalid status transition', async () => {
@@ -1008,7 +1036,9 @@ describe('OrdersService - Phase 1 Tests', () => {
       });
       mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-id', userId: sellerId });
 
-      await expect(service.update(orderId, sellerId, 'SELLER', { status: 'PENDING' })).rejects.toThrow(BadRequestException);
+      await expect(
+        service.update(orderId, sellerId, 'SELLER', { status: 'PENDING' }),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when seller tries to ship without tracking code', async () => {
@@ -1068,7 +1098,9 @@ describe('OrdersService - Phase 1 Tests', () => {
       });
       mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'my-seller', userId: sellerId });
 
-      await expect(service.update(orderId, sellerId, 'SELLER', { status: 'PROCESSING' })).rejects.toThrow(ForbiddenException);
+      await expect(
+        service.update(orderId, sellerId, 'SELLER', { status: 'PROCESSING' }),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -1093,9 +1125,9 @@ describe('OrdersService - Phase 1 Tests', () => {
       });
       mockPrismaService.seller.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.addNote(orderId, userId, 'SELLER', { content: 'note' }),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.addNote(orderId, userId, 'SELLER', { content: 'note' })).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should allow customer (order owner) to add a note', async () => {
@@ -1116,7 +1148,15 @@ describe('OrdersService - Phase 1 Tests', () => {
           shippingAddress: null,
           billingAddress: null,
           seller: null,
-          notes: [{ id: 'n1', content: 'note', internal: false, createdAt: new Date(), createdBy: userId }],
+          notes: [
+            {
+              id: 'n1',
+              content: 'note',
+              internal: false,
+              createdAt: new Date(),
+              createdBy: userId,
+            },
+          ],
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -1170,15 +1210,18 @@ describe('OrdersService - Phase 1 Tests', () => {
     });
 
     it('should attempt to cancel stale orders', async () => {
-      mockPrismaService.order.findMany.mockResolvedValue([
-        { id: 'stale-1', userId: 'user-1' },
-      ]);
+      mockPrismaService.order.findMany.mockResolvedValue([{ id: 'stale-1', userId: 'user-1' }]);
 
       const cancelSpy = jest.spyOn(service, 'cancel').mockResolvedValue({} as any);
 
       const result = await service.expireUnpaidOrders();
 
-      expect(cancelSpy).toHaveBeenCalledWith('stale-1', 'user-1', 'ADMIN', expect.objectContaining({ skipApproval: true }));
+      expect(cancelSpy).toHaveBeenCalledWith(
+        'stale-1',
+        'user-1',
+        'ADMIN',
+        expect.objectContaining({ skipApproval: true }),
+      );
       expect(result).toBe(1);
 
       cancelSpy.mockRestore();
@@ -1204,7 +1247,8 @@ describe('OrdersService - Phase 1 Tests', () => {
         { id: 'stale-2', userId: 'user-2' },
       ]);
 
-      const cancelSpy = jest.spyOn(service, 'cancel')
+      const cancelSpy = jest
+        .spyOn(service, 'cancel')
         .mockRejectedValueOnce(new Error('fail'))
         .mockResolvedValueOnce({} as any);
 
@@ -1220,14 +1264,18 @@ describe('OrdersService - Phase 1 Tests', () => {
     it('should throw ForbiddenException when seller profile not found', async () => {
       mockPrismaService.seller.findUnique.mockResolvedValue(null);
 
-      await expect(service.vendorAcceptOrder('order-1', 'user-1')).rejects.toThrow(ForbiddenException);
+      await expect(service.vendorAcceptOrder('order-1', 'user-1')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw NotFoundException when order not found', async () => {
       mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-1' });
       mockPrismaService.order.findUnique.mockResolvedValue(null);
 
-      await expect(service.vendorAcceptOrder('order-1', 'user-1')).rejects.toThrow(NotFoundException);
+      await expect(service.vendorAcceptOrder('order-1', 'user-1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ForbiddenException when order is not assigned to the seller', async () => {
@@ -1241,7 +1289,9 @@ describe('OrdersService - Phase 1 Tests', () => {
         seller: { id: 'other-seller' },
       });
 
-      await expect(service.vendorAcceptOrder('order-1', 'user-1')).rejects.toThrow(ForbiddenException);
+      await expect(service.vendorAcceptOrder('order-1', 'user-1')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw BadRequestException when order has no parentOrderId', async () => {
@@ -1255,7 +1305,9 @@ describe('OrdersService - Phase 1 Tests', () => {
         seller: { id: 'seller-1' },
       });
 
-      await expect(service.vendorAcceptOrder('order-1', 'user-1')).rejects.toThrow(BadRequestException);
+      await expect(service.vendorAcceptOrder('order-1', 'user-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException when order is not paid', async () => {
@@ -1269,7 +1321,9 @@ describe('OrdersService - Phase 1 Tests', () => {
         seller: { id: 'seller-1' },
       });
 
-      await expect(service.vendorAcceptOrder('order-1', 'user-1')).rejects.toThrow(BadRequestException);
+      await expect(service.vendorAcceptOrder('order-1', 'user-1')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -1277,18 +1331,18 @@ describe('OrdersService - Phase 1 Tests', () => {
     it('should throw ForbiddenException when seller profile not found', async () => {
       mockPrismaService.seller.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.vendorRejectOrder('order-1', 'user-1', 'Out of stock'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.vendorRejectOrder('order-1', 'user-1', 'Out of stock')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw NotFoundException when order not found', async () => {
       mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-1' });
       mockPrismaService.order.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.vendorRejectOrder('order-1', 'user-1', 'No inventory'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.vendorRejectOrder('order-1', 'user-1', 'No inventory')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw ForbiddenException when order not assigned to seller', async () => {
@@ -1302,9 +1356,9 @@ describe('OrdersService - Phase 1 Tests', () => {
         seller: { id: 'other-seller' },
       });
 
-      await expect(
-        service.vendorRejectOrder('order-1', 'user-1', 'reason'),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.vendorRejectOrder('order-1', 'user-1', 'reason')).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw BadRequestException when order has no parentOrderId', async () => {
@@ -1318,9 +1372,9 @@ describe('OrdersService - Phase 1 Tests', () => {
         seller: { id: 'seller-1' },
       });
 
-      await expect(
-        service.vendorRejectOrder('order-1', 'user-1', 'reason'),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.vendorRejectOrder('order-1', 'user-1', 'reason')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -1357,16 +1411,14 @@ describe('OrdersService - Phase 1 Tests', () => {
     });
 
     it('should create cart if none exists and add items', async () => {
-      const mockProduct = { id: 'p1', stock: 10, price: 25.00 };
+      const mockProduct = { id: 'p1', stock: 10, price: 25.0 };
 
       mockPrismaService.order.findUnique.mockResolvedValue({
         id: orderId,
         userId,
         status: 'DELIVERED',
         orderNumber: 'HOS-RE',
-        items: [
-          { productId: 'p1', quantity: 2, variationOptions: null, product: mockProduct },
-        ],
+        items: [{ productId: 'p1', quantity: 2, variationOptions: null, product: mockProduct }],
       });
       mockPrismaService.cart.findUnique.mockResolvedValue(null);
       mockPrismaService.cart.create.mockResolvedValue({ id: 'new-cart', userId });
@@ -1384,16 +1436,14 @@ describe('OrdersService - Phase 1 Tests', () => {
     });
 
     it('should update existing cart item quantity', async () => {
-      const mockProduct = { id: 'p1', stock: 10, price: 20.00 };
+      const mockProduct = { id: 'p1', stock: 10, price: 20.0 };
 
       mockPrismaService.order.findUnique.mockResolvedValue({
         id: orderId,
         userId,
         status: 'DELIVERED',
         orderNumber: 'HOS-RE2',
-        items: [
-          { productId: 'p1', quantity: 3, variationOptions: null, product: mockProduct },
-        ],
+        items: [{ productId: 'p1', quantity: 3, variationOptions: null, product: mockProduct }],
       });
       mockPrismaService.cart.findUnique.mockResolvedValue({ id: 'cart-id', userId });
       mockPrismaService.product.findUnique.mockResolvedValue(mockProduct);
@@ -1414,9 +1464,7 @@ describe('OrdersService - Phase 1 Tests', () => {
         userId,
         status: 'DELIVERED',
         orderNumber: 'HOS-SKIP',
-        items: [
-          { productId: 'p-deleted', quantity: 1, variationOptions: null, product: null },
-        ],
+        items: [{ productId: 'p-deleted', quantity: 1, variationOptions: null, product: null }],
       });
       mockPrismaService.cart.findUnique.mockResolvedValue({ id: 'cart-id', userId });
       mockPrismaService.product.findUnique.mockResolvedValue(null);
@@ -1436,7 +1484,12 @@ describe('OrdersService - Phase 1 Tests', () => {
         status: 'DELIVERED',
         orderNumber: 'HOS-OOS',
         items: [
-          { productId: 'p-oos', quantity: 2, variationOptions: null, product: { id: 'p-oos', stock: 0 } },
+          {
+            productId: 'p-oos',
+            quantity: 2,
+            variationOptions: null,
+            product: { id: 'p-oos', stock: 0 },
+          },
         ],
       });
       mockPrismaService.cart.findUnique.mockResolvedValue({ id: 'cart-id', userId });
@@ -1471,6 +1524,7 @@ describe('OrdersService - Phase 1 Tests', () => {
     });
 
     it('should cancel PENDING commissions without decrementing stats', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { Decimal } = require('@prisma/client/runtime/library');
       mockPrismaService.influencerCommission.findMany.mockResolvedValue([
         {
@@ -1495,6 +1549,7 @@ describe('OrdersService - Phase 1 Tests', () => {
     });
 
     it('should cancel APPROVED commissions and decrement influencer stats', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { Decimal } = require('@prisma/client/runtime/library');
       mockPrismaService.influencerCommission.findMany.mockResolvedValue([
         {
@@ -1529,6 +1584,7 @@ describe('OrdersService - Phase 1 Tests', () => {
     });
 
     it('should log warning for PAID commissions but still cancel them', async () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { Decimal } = require('@prisma/client/runtime/library');
       mockPrismaService.influencerCommission.findMany.mockResolvedValue([
         {

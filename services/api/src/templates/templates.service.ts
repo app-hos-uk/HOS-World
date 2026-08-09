@@ -103,7 +103,8 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
     slug: 'abandoned_cart',
     channel: 'EMAIL',
     subject: 'You left something in your cart',
-    description: 'Sent when a logged-in customer has items in cart but has not checked out for a while.',
+    description:
+      'Sent when a logged-in customer has items in cart but has not checked out for a while.',
     variables: ['customerName', 'itemsTable', 'cartTotal', 'cartLink'],
     body: `<!DOCTYPE html>
 <html><head><style>
@@ -642,7 +643,8 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
     slug: 'founding_member_account_invitation',
     channel: 'EMAIL',
     subject: 'Your Invitation to Create Your House of Spells Account',
-    description: 'Sent to founding members to invite them to create their account before public launch.',
+    description:
+      'Sent to founding members to invite them to create their account before public launch.',
     variables: ['firstName', 'email', 'registerLink'],
     body: `<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -828,9 +830,11 @@ export class TemplatesService {
     variables: Record<string, string>,
   ): Promise<{ subject: string; body: string; channel: TemplateChannel }> {
     const globalDefaults: Record<string, string> = {
-      socialInstagramUrl: process.env.SOCIAL_INSTAGRAM_URL || 'https://www.instagram.com/houseofspells',
+      socialInstagramUrl:
+        process.env.SOCIAL_INSTAGRAM_URL || 'https://www.instagram.com/houseofspells',
       socialTiktokUrl: process.env.SOCIAL_TIKTOK_URL || 'https://www.tiktok.com/@houseofspells',
-      socialFacebookUrl: process.env.SOCIAL_FACEBOOK_URL || 'https://www.facebook.com/houseofspellsuk',
+      socialFacebookUrl:
+        process.env.SOCIAL_FACEBOOK_URL || 'https://www.facebook.com/houseofspellsuk',
       platformName: process.env.PLATFORM_NAME || 'House of Spells',
     };
     const mergedVariables = { ...globalDefaults, ...variables };
@@ -838,7 +842,8 @@ export class TemplatesService {
     const template = await this.resolve(slug);
 
     const escapeHtml = (str: string): string =>
-      str.replace(/&/g, '&amp;')
+      str
+        .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
@@ -890,9 +895,7 @@ export class TemplatesService {
             channel: 'EMAIL',
             subject: emailOverride.subject ?? builtIn.subject,
             body: emailOverride.body,
-            variables: emailOverride.variables.length
-              ? emailOverride.variables
-              : builtIn.variables,
+            variables: emailOverride.variables.length ? emailOverride.variables : builtIn.variables,
             description: emailOverride.description ?? builtIn.description,
           };
         }
@@ -946,7 +949,7 @@ export class TemplatesService {
           body: override.body,
           variables: override.variables.length
             ? override.variables
-            : templates[idx]?.variables ?? [],
+            : (templates[idx]?.variables ?? []),
           description: override.description ?? templates[idx]?.description,
           isCustomized: true,
         };
@@ -1002,7 +1005,9 @@ export class TemplatesService {
    *   const preview = await templateService.preview('order_shipped');
    *   // Returns rendered HTML with sample values
    */
-  async preview(slug: string): Promise<{ subject: string; body: string; channel: TemplateChannel }> {
+  async preview(
+    slug: string,
+  ): Promise<{ subject: string; body: string; channel: TemplateChannel }> {
     const template = await this.resolve(slug);
     const sampleVars: Record<string, string> = {};
     for (const v of template.variables) {
@@ -1153,7 +1158,8 @@ export class TemplatesService {
     const samples: Record<string, string> = {
       orderNumber: 'ORD-20260219-001',
       customerName: 'Jane Doe',
-      itemsTable: '<table><tr><td>Wand of Elder</td><td>1</td><td>$29.99</td><td>$29.99</td></tr></table>',
+      itemsTable:
+        '<table><tr><td>Wand of Elder</td><td>1</td><td>$29.99</td><td>$29.99</td></tr></table>',
       orderTotal: '59.99',
       currency: '$',
       trackingCode: 'USPS-9400111899223456789012',
@@ -1167,7 +1173,7 @@ export class TemplatesService {
       expiresInMinutes: '30',
       subject: 'New Product Submission',
       bodyContent: '<p>A new product has been submitted for review.</p>',
-      productName: 'Marauder\'s Map Replica',
+      productName: "Marauder's Map Replica",
       reason: 'Image quality does not meet requirements.',
       firstName: 'Jane',
       verifyLink: 'https://hos-marketplace.com/auth/verify-email?token=example',

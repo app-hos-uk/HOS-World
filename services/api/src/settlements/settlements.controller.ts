@@ -128,7 +128,8 @@ export class SettlementsController {
   @Get('calculate/:sellerId')
   @ApiOperation({
     summary: 'Calculate settlement (Admin/Finance only)',
-    description: 'Calculates settlement amount for a seller within a date range. Admin or Finance access required.',
+    description:
+      'Calculates settlement amount for a seller within a date range. Admin or Finance access required.',
   })
   @ApiParam({ name: 'sellerId', description: 'Seller UUID', type: String })
   @ApiQuery({

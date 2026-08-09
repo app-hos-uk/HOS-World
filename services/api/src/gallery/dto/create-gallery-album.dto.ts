@@ -1,5 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateGalleryAlbumDto {
   @ApiProperty({ example: 'Times Square Launch Night' })
@@ -13,13 +21,19 @@ export class CreateGalleryAlbumDto {
   @MaxLength(200)
   location?: string;
 
-  @ApiPropertyOptional({ example: 'us', description: 'Country/region code for nested storage (e.g. us, uk, ae)' })
+  @ApiPropertyOptional({
+    example: 'us',
+    description: 'Country/region code for nested storage (e.g. us, uk, ae)',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(32)
   countryCode?: string;
 
-  @ApiPropertyOptional({ example: 'times-square', description: 'Outlet/venue slug for nested storage' })
+  @ApiPropertyOptional({
+    example: 'times-square',
+    description: 'Outlet/venue slug for nested storage',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(64)

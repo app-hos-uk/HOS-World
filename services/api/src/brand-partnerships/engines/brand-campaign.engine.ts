@@ -5,7 +5,12 @@ export function norm(s: string | null | undefined): string {
 }
 
 export function productMatchesCampaign(
-  product: { id: string; fandom?: string | null; brand?: string | null; categoryId?: string | null },
+  product: {
+    id: string;
+    fandom?: string | null;
+    brand?: string | null;
+    categoryId?: string | null;
+  },
   campaign: Pick<
     BrandCampaign,
     'targetProductIds' | 'targetBrands' | 'targetFandoms' | 'targetCategoryIds'

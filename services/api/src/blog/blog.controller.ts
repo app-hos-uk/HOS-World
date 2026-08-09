@@ -1,21 +1,5 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Param,
-  Body,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiParam,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
 import { BlogService } from './blog.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -98,9 +82,7 @@ export class BlogController {
   @Get('admin/posts')
   @ApiOperation({ summary: 'List all blog posts (admin)' })
   async getAllPosts(@Query('limit') limit?: string): Promise<ApiResponse<any[]>> {
-    const posts = await this.blogService.getAllPosts(
-      limit ? parseInt(limit, 10) : 100,
-    );
+    const posts = await this.blogService.getAllPosts(limit ? parseInt(limit, 10) : 100);
     return { data: posts, message: 'Blog posts retrieved successfully' };
   }
 

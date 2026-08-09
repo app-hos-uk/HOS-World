@@ -33,9 +33,12 @@ describe('AmbassadorController', () => {
   });
 
   it('POST enroll', async () => {
-    await controller.enroll({ user: { id: 'u1' } } as any, {
-      displayName: 'Test',
-    } as any);
+    await controller.enroll(
+      { user: { id: 'u1' } } as any,
+      {
+        displayName: 'Test',
+      } as any,
+    );
     expect(ambassador.enroll).toHaveBeenCalled();
   });
 

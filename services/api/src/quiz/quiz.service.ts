@@ -189,7 +189,8 @@ export class QuizService {
     if (patch.pointsReward != null) data.pointsReward = patch.pointsReward;
     if (patch.difficulty != null) data.difficulty = patch.difficulty;
     if (patch.isActive != null) data.isActive = patch.isActive;
-    if (patch.startsAt !== undefined) data.startsAt = patch.startsAt ? new Date(patch.startsAt) : null;
+    if (patch.startsAt !== undefined)
+      data.startsAt = patch.startsAt ? new Date(patch.startsAt) : null;
     if (patch.endsAt !== undefined) data.endsAt = patch.endsAt ? new Date(patch.endsAt) : null;
     if (patch.questions) {
       for (const q of patch.questions) {

@@ -1,9 +1,10 @@
 import { IsOptional, IsString, IsUUID } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ShipOrderDto {
   @ApiPropertyOptional({
-    description: 'Shipping provider to use (defaults to shippo or highest-priority active provider)',
+    description:
+      'Shipping provider to use (defaults to shippo or highest-priority active provider)',
     example: 'shippo',
   })
   @IsOptional()

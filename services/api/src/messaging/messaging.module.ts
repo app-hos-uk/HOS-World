@@ -31,14 +31,7 @@ import { InAppSender } from './senders/inapp.sender';
       },
     }),
   ],
-  providers: [
-    MessagingService,
-    EmailSender,
-    SmsSender,
-    WhatsAppSender,
-    PushSender,
-    InAppSender,
-  ],
+  providers: [MessagingService, EmailSender, SmsSender, WhatsAppSender, PushSender, InAppSender],
   exports: [MessagingService],
 })
 export class MessagingModule {}

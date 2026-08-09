@@ -31,7 +31,8 @@ export class InfluencerCommissionsService {
 
   constructor(
     private prisma: PrismaService,
-    @Optional() @Inject(forwardRef(() => AmbassadorService))
+    @Optional()
+    @Inject(forwardRef(() => AmbassadorService))
     private ambassador?: AmbassadorService,
   ) {}
 
@@ -178,9 +179,7 @@ export class InfluencerCommissionsService {
     }
 
     if (commission.payoutId) {
-      throw new BadRequestException(
-        'Cannot change status of a commission linked to a payout',
-      );
+      throw new BadRequestException('Cannot change status of a commission linked to a payout');
     }
 
     const { status, notes } = dto;

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
@@ -82,9 +87,7 @@ export class TenantsService {
 
     // Non-ADMIN users must be active members of the tenant to view it
     if (userId && role && role !== 'ADMIN') {
-      const isMember = tenant.tenantUsers.some(
-        (tu: any) => tu.user?.id === userId,
-      );
+      const isMember = tenant.tenantUsers.some((tu: any) => tu.user?.id === userId);
       if (!isMember) {
         throw new ForbiddenException('You do not have access to this tenant');
       }
@@ -135,7 +138,7 @@ export class TenantsService {
   }
 
   async addUser(tenantId: string, userId: string, role: string) {
-    const tenant = await this.findOne(tenantId);
+    const _tenant = await this.findOne(tenantId);
 
     const existing = await this.prisma.tenantUser.findUnique({
       where: {

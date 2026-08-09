@@ -217,9 +217,7 @@ export function validateEnvironmentVariables(
 
   if (isTruthy(config.ACCOUNTING_ENABLED as string | undefined)) {
     if (!config.XERO_CLIENT_ID || !config.XERO_CLIENT_SECRET) {
-      warnings.push(
-        'ACCOUNTING_ENABLED: set XERO_CLIENT_ID and XERO_CLIENT_SECRET for OAuth',
-      );
+      warnings.push('ACCOUNTING_ENABLED: set XERO_CLIENT_ID and XERO_CLIENT_SECRET for OAuth');
     }
     if (!config.XERO_REDIRECT_URI) {
       warnings.push('ACCOUNTING_ENABLED: set XERO_REDIRECT_URI for OAuth callback');

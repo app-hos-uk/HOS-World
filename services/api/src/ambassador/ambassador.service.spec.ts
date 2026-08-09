@@ -8,7 +8,9 @@ describe('AmbassadorService', () => {
   let service: AmbassadorService;
   let prisma: any;
   let wallet: any;
-  let achievementService: jest.Mocked<Pick<AmbassadorAchievementService, 'grant' | 'checkAndAward'>>;
+  let achievementService: jest.Mocked<
+    Pick<AmbassadorAchievementService, 'grant' | 'checkAndAward'>
+  >;
   let marketingBus: any;
   let loyalty: any;
   let config: any;
@@ -45,7 +47,12 @@ describe('AmbassadorService', () => {
       loyaltyReferral: { count: jest.fn(), findMany: jest.fn() },
       ambassadorAchievement: { findMany: jest.fn(), findUnique: jest.fn() },
       influencer: { findUnique: jest.fn() },
-      influencerCommission: { findMany: jest.fn(), findFirst: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+      influencerCommission: {
+        findMany: jest.fn(),
+        findFirst: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+      },
       $transaction: jest.fn((fn: any) => fn(prisma)),
     };
     wallet = {
@@ -56,14 +63,16 @@ describe('AmbassadorService', () => {
       checkAndAward: jest.fn().mockResolvedValue(undefined),
     };
     marketingBus = { emit: jest.fn().mockResolvedValue(undefined) };
-    loyalty = { referralInfo: jest.fn().mockResolvedValue({
-      totalReferrals: 1,
-      convertedReferrals: 0,
-      pendingReferrals: 1,
-      totalPointsEarned: 0,
-      shareUrl: 'http://x/ref/c',
-      code: 'c',
-    }) };
+    loyalty = {
+      referralInfo: jest.fn().mockResolvedValue({
+        totalReferrals: 1,
+        convertedReferrals: 0,
+        pendingReferrals: 1,
+        totalPointsEarned: 0,
+        shareUrl: 'http://x/ref/c',
+        code: 'c',
+      }),
+    };
     config = {
       get: jest.fn((k: string, d?: string) => {
         if (k === 'AMBASSADOR_MIN_TIER_LEVEL') return '4';
@@ -88,17 +97,17 @@ describe('AmbassadorService', () => {
 
   it('enroll rejects below min tier level', async () => {
     prisma.loyaltyMembership.findUnique.mockResolvedValue(membership(3));
-    await expect(
-      service.enroll('u1', { displayName: 'A' } as any),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(service.enroll('u1', { displayName: 'A' } as any)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
   });
 
   it('enroll rejects duplicate', async () => {
     prisma.loyaltyMembership.findUnique.mockResolvedValue(membership(4));
     prisma.ambassadorProfile.findUnique.mockResolvedValue({ id: 'x' });
-    await expect(
-      service.enroll('u1', { displayName: 'A' } as any),
-    ).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.enroll('u1', { displayName: 'A' } as any)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
   });
 
   it('enroll creates profile and grants unlock', async () => {
@@ -120,11 +129,7 @@ describe('AmbassadorService', () => {
 
     expect(prisma.ambassadorProfile.create).toHaveBeenCalled();
     expect(achievementService.grant).toHaveBeenCalledWith('a1', 'm1', 'u1', 'ambassador-unlocked');
-    expect(marketingBus.emit).toHaveBeenCalledWith(
-      'AMBASSADOR_ENROLLED',
-      'u1',
-      expect.any(Object),
-    );
+    expect(marketingBus.emit).toHaveBeenCalledWith('AMBASSADOR_ENROLLED', 'u1', expect.any(Object));
   });
 
   it('submitUgc enforces weekly cap', async () => {
@@ -133,9 +138,9 @@ describe('AmbassadorService', () => {
       status: 'ACTIVE',
     });
     prisma.uGCSubmission.count.mockResolvedValue(5);
-    await expect(
-      service.submitUgc('u1', { type: 'PHOTO' } as any),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.submitUgc('u1', { type: 'PHOTO' } as any)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it('onLoyaltyReferralConverted updates profile', async () => {

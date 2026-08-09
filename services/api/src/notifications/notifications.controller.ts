@@ -35,7 +35,10 @@ export class NotificationsController {
   @Public()
   @ApiOperation({ summary: 'Notification channel health (public)' })
   async getHealth(): Promise<ApiResponse<any>> {
-    return { data: this.notificationsService.getChannelHealth(), message: 'Notification channel status' };
+    return {
+      data: this.notificationsService.getChannelHealth(),
+      message: 'Notification channel status',
+    };
   }
 
   @Post('admin/test-email')
