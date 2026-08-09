@@ -127,15 +127,7 @@ export class StoreOnboardingService {
   }
 
   async updateStore(id: string, dto: UpdateStoreDto) {
-    const existing = await this.getStore(id);
-    if (dto.isActive === true) {
-      const checklist = existing.onboardingChecklist;
-      if (!checklist || checklist.status !== 'COMPLETED') {
-        throw new BadRequestException(
-          'Store onboarding must be completed before activation; use POST /admin/stores/:id/activate',
-        );
-      }
-    }
+    await this.getStore(id);
     const data: Prisma.StoreUpdateInput = {};
     if (dto.sellerId !== undefined) {
       data.seller = dto.sellerId ? { connect: { id: dto.sellerId } } : { disconnect: true };
@@ -210,15 +202,19 @@ export class StoreOnboardingService {
   }
 
   async activateStore(storeId: string) {
-    const store = await this.getStore(storeId);
-    const checklist = store.onboardingChecklist;
-    if (!checklist || checklist.status !== 'COMPLETED') {
-      throw new BadRequestException('Store onboarding must be completed before activation');
-    }
+    await this.getStore(storeId);
     await this.prisma.store.update({
       where: { id: storeId },
       data: { isActive: true },
     });
+    const updated = await this.getStore(storeId);
+
+    if (updated.onboardingChecklist && updated.onboardingChecklist.status !== 'COMPLETED') {
+      await this.prisma.storeOnboardingChecklist.update({
+        where: { storeId },
+        data: { status: 'COMPLETED', completedAt: new Date() },
+      });
+    }
     return this.getStore(storeId);
   }
 
@@ -229,6 +225,34 @@ export class StoreOnboardingService {
       data: { isActive: false },
     });
     return this.getStore(storeId);
+  }
+
+  async getReadiness(storeId: string) {
+    const store = await this.prisma.store.findUnique({
+      where: { id: storeId },
+      include: {
+        posConnection: { select: { id: true, isActive: true, syncStatus: true } },
+        productChannels: { select: { id: true } },
+        posSales: { select: { id: true }, take: 1 },
+      },
+    });
+    if (!store) throw new NotFoundException('Store not found');
+
+    const hasSeller = !!store.sellerId;
+    const hasPosConnection = !!store.posConnection;
+    const posActive = store.posConnection?.isActive === true;
+    const hasProducts = store.productChannels.length > 0;
+    const hasSales = store.posSales.length > 0;
+
+    const checks = [
+      { key: 'seller', label: 'Seller assigned', ok: hasSeller },
+      { key: 'pos_connection', label: 'POS connection created', ok: hasPosConnection },
+      { key: 'pos_active', label: 'POS connection active', ok: posActive },
+      { key: 'products', label: 'Products assigned to store', ok: hasProducts },
+      { key: 'test_sale', label: 'Test transaction recorded', ok: hasSales },
+    ];
+
+    return { checks, allPassed: checks.every((c) => c.ok) };
   }
 
   /** Ensure legacy stores have a checklist row (for seeds / migrations). */

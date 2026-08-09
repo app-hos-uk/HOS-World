@@ -1474,6 +1474,10 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>(`/admin/stores/${id}`);
   }
 
+  async adminGetStoreReadiness(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/stores/${id}/readiness`);
+  }
+
   async adminUpdateStore(id: string, body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>(`/admin/stores/${id}`, {
       method: 'PATCH',

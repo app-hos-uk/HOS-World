@@ -57,8 +57,15 @@ export class StoreAdminController {
     return { data, message: 'OK' };
   }
 
+  @Get(':id/readiness')
+  @ApiOperation({ summary: 'Auto-derived readiness checks for a store' })
+  async readiness(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
+    const data = await this.stores.getReadiness(id);
+    return { data, message: 'OK' };
+  }
+
   @Post(':id/activate')
-  @ApiOperation({ summary: 'Activate store (onboarding must be complete)' })
+  @ApiOperation({ summary: 'Activate store' })
   async activate(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.stores.activateStore(id);
     return { data, message: 'OK' };
