@@ -338,6 +338,7 @@ export class ApiClient {
     role: 'customer' | 'seller';
     storeName?: string;
     country: string;
+    countryCode?: string;
     whatsappNumber?: string;
     preferredCommunicationMethod: 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PHONE';
     gdprConsent: boolean;
