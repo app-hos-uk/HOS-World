@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Post,
   Body,
@@ -60,6 +61,9 @@ export class AuthController {
   @SwaggerApiResponse({ status: 200, description: 'Invitation is valid' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid or expired token' })
   async validateInvitation(@Query('token') token: string): Promise<ApiResponse<any>> {
+    if (!token?.trim()) {
+      throw new BadRequestException('token query parameter is required');
+    }
     const invitation = await this.adminSellersService.getInvitationByToken(token);
     return {
       data: {

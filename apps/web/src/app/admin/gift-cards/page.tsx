@@ -218,23 +218,32 @@ export default function AdminGiftCardsPage() {
       toast.error(`Refund cannot exceed ${selected.max}`);
       return;
     }
+    // Only the refund itself may report failure. A refresh that fails afterwards must not be
+    // reported as a failed refund, or an admin will retry one that already moved money.
+    setRefundSubmitting(true);
     try {
-      setRefundSubmitting(true);
       await apiClient.refundGiftCard(gc.id, amount, refundOrderId);
-      toast.success('Gift card balance restored');
-      setRefundingId(null);
-      setRefundAmount('');
-      setRefundOrderId('');
-      setRefundOrders([]);
-      await fetchGiftCards();
-      if (expandedId === gc.id) {
-        const res = await apiClient.getGiftCardTransactions(gc.id);
-        setTransactions(res?.data || []);
-      }
     } catch (err: any) {
       toast.error(err?.message || 'Refund failed');
+      return;
     } finally {
       setRefundSubmitting(false);
+    }
+
+    toast.success('Gift card balance restored');
+    setRefundingId(null);
+    setRefundAmount('');
+    setRefundOrderId('');
+    setRefundOrders([]);
+
+    await fetchGiftCards();
+    if (expandedId === gc.id) {
+      try {
+        const res = await apiClient.getGiftCardTransactions(gc.id);
+        setTransactions(res?.data || []);
+      } catch {
+        toast.error('Refund saved, but the transaction list could not be refreshed');
+      }
     }
   };
 

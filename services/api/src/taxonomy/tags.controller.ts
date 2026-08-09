@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Post,
@@ -78,6 +79,9 @@ export class TagsController {
   @ApiQuery({ name: 'q', required: true, type: String, description: 'Search query' })
   @SwaggerApiResponse({ status: 200, description: 'Tags search completed successfully' })
   async searchTags(@Query('q') query: string): Promise<ApiResponse<any[]>> {
+    if (!query?.trim()) {
+      throw new BadRequestException('q query parameter is required');
+    }
     const tags = await this.tagsService.searchTags(query);
     return {
       data: tags,

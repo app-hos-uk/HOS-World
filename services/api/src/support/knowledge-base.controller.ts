@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  BadRequestException,
+  Controller,
+  Get,
+  Post,
+  Put,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -89,6 +100,9 @@ export class KnowledgeBaseController {
     @Query('tags') tags?: string,
     @Query('limit') limit?: string,
   ): Promise<ApiResponse<any[]>> {
+    if (!query?.trim()) {
+      throw new BadRequestException('q query parameter is required');
+    }
     const articles = await this.knowledgeBaseService.searchArticles(query, {
       category,
       tags: tags ? tags.split(',') : undefined,
