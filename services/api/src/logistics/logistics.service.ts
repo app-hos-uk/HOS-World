@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { EncryptionService } from '../integrations/encryption.service';
 import {
   CreateLogisticsPartnerDto,
   UpdateLogisticsPartnerDto,
@@ -7,7 +8,10 @@ import {
 
 @Injectable()
 export class LogisticsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private encryption: EncryptionService,
+  ) {}
 
   /** Remove the stored carrier apiKey before returning partner data to API clients. */
   private sanitizePartner<T extends { apiKey?: string | null } | null>(partner: T): T {
@@ -17,12 +21,14 @@ export class LogisticsService {
   }
 
   async createPartner(createDto: CreateLogisticsPartnerDto) {
-    const partner = await this.prisma.logisticsPartner.create({
-      data: {
-        ...createDto,
-        contactInfo: createDto.contactInfo as any, // Cast to Json type
-      },
-    });
+    const data: any = {
+      ...createDto,
+      contactInfo: createDto.contactInfo as any,
+    };
+    if (data.apiKey) {
+      data.apiKey = this.encryption.encrypt(data.apiKey);
+    }
+    const partner = await this.prisma.logisticsPartner.create({ data });
     return this.sanitizePartner(partner);
   }
 
@@ -71,13 +77,18 @@ export class LogisticsService {
       throw new NotFoundException('Logistics partner not found');
     }
 
-    const updated = await this.prisma.logisticsPartner.update({
-      where: { id },
-      data: {
-        ...updateDto,
-        contactInfo: updateDto.contactInfo ? (updateDto.contactInfo as any) : undefined, // Cast to Json type
-      },
-    });
+    const data: any = {
+      ...updateDto,
+      contactInfo: updateDto.contactInfo ? (updateDto.contactInfo as any) : undefined,
+    };
+    if (data.apiKey) {
+      if (this.encryption.isMaskedSecret(data.apiKey)) {
+        delete data.apiKey;
+      } else {
+        data.apiKey = this.encryption.encrypt(data.apiKey);
+      }
+    }
+    const updated = await this.prisma.logisticsPartner.update({ where: { id }, data });
     return this.sanitizePartner(updated);
   }
 

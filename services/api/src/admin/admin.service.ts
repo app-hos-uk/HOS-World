@@ -804,6 +804,25 @@ export class AdminService {
           const minutes = parseInt(v, 10);
           return Number.isFinite(minutes) && minutes >= 0 ? minutes : undefined;
         },
+        // Email/SMTP settings
+        smtpHost: (v) => String(v).trim(),
+        smtpPort: (v) => {
+          const port = parseInt(v, 10);
+          return Number.isFinite(port) && port > 0 && port <= 65535 ? port : undefined;
+        },
+        smtpUser: (v) => String(v).trim(),
+        smtpFrom: (v) => String(v).trim(),
+        emailNotifications: (v) => Boolean(v),
+        // Payment settings
+        stripeEnabled: (v) => Boolean(v),
+        stripeTestMode: (v) => Boolean(v),
+        // Fulfillment settings
+        autoCreateShipments: (v) => Boolean(v),
+        requireTrackingNumber: (v) => Boolean(v),
+        // Notification settings
+        notifyOnNewSubmission: (v) => Boolean(v),
+        notifyOnNewOrder: (v) => Boolean(v),
+        notifyOnShipmentReceived: (v) => Boolean(v),
       };
 
       const validSettings: Record<string, any> = {};

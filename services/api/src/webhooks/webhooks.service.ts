@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../database/prisma.service';
 import { CreateWebhookDto } from './dto/create-webhook.dto';
 import { ConfigService } from '@nestjs/config';
+import { EncryptionService } from '../integrations/encryption.service';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -18,6 +19,7 @@ export class WebhooksService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    private encryption: EncryptionService,
   ) {}
 
   /**
@@ -57,7 +59,8 @@ export class WebhooksService {
     }
 
     // Generate secret if not provided
-    const secret = createDto.secret || crypto.randomBytes(32).toString('hex');
+    const rawSecret = createDto.secret || crypto.randomBytes(32).toString('hex');
+    const secret = this.encryption.encrypt(rawSecret);
 
     return this.sanitizeWebhook(
       await this.prisma.webhook.create({
@@ -70,15 +73,16 @@ export class WebhooksService {
         },
       }),
       true,
+      rawSecret,
     );
   }
 
-  private sanitizeWebhook(webhook: any, revealSecret = false) {
+  private sanitizeWebhook(webhook: any, revealSecret = false, rawSecret?: string) {
     if (!webhook) return webhook;
     const { secret, ...rest } = webhook;
     return {
       ...rest,
-      secret: revealSecret ? secret : undefined,
+      secret: revealSecret ? rawSecret || secret : undefined,
       hasSecret: !!secret,
     };
   }
@@ -178,6 +182,9 @@ export class WebhooksService {
     if (updateDto.events) {
       updateData.events = updateDto.events;
     }
+    if (updateData.secret) {
+      updateData.secret = this.encryption.encrypt(updateData.secret);
+    }
 
     return this.sanitizeWebhook(
       await this.prisma.webhook.update({
@@ -255,8 +262,15 @@ export class WebhooksService {
     });
 
     try {
-      // Generate signature
-      const signature = this.generateSignature(JSON.stringify(payload), webhook.secret || '');
+      // Decrypt the stored secret. Legacy rows may still contain plaintext hex
+      // from before encryption-at-rest was added; fall back gracefully.
+      let signingSecret = webhook.secret || '';
+      try {
+        signingSecret = this.encryption.decrypt(signingSecret);
+      } catch {
+        // Already plaintext (legacy) — use as-is
+      }
+      const signature = this.generateSignature(JSON.stringify(payload), signingSecret);
 
       // Make HTTP request
       const response = await fetch(webhook.url, {
