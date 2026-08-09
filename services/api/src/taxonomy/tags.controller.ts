@@ -9,6 +9,7 @@ import {
   Param,
   Query,
   UseGuards,
+  ParseEnumPipe,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import {
@@ -96,9 +97,14 @@ export class TagsController {
     description:
       'Retrieves all tags for a specific category. Public endpoint, no authentication required.',
   })
-  @ApiParam({ name: 'category', description: 'Tag category', type: String })
+  @ApiParam({ name: 'category', description: 'Tag category', enum: TagCategory })
   @SwaggerApiResponse({ status: 200, description: 'Tags retrieved successfully' })
-  async getTagsByCategory(@Param('category') category: TagCategory): Promise<ApiResponse<any[]>> {
+  @SwaggerApiResponse({ status: 400, description: 'Unknown tag category' })
+  async getTagsByCategory(
+    // The TypeScript annotation alone is erased at runtime, so anything at all reached the Prisma
+    // enum filter and came back as a 500.
+    @Param('category', new ParseEnumPipe(TagCategory)) category: TagCategory,
+  ): Promise<ApiResponse<any[]>> {
     const tags = await this.tagsService.getTagsByCategory(category);
     return {
       data: tags,

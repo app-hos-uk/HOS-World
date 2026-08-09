@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -14,6 +25,8 @@ import {
   CreateShippingCarrierDto,
   UpdateShippingCarrierDto,
 } from './dto/create-shipping-carrier.dto';
+import { CalculateShippingRateDto } from './dto/calculate-shipping-rate.dto';
+import { GetShippingOptionsDto } from './dto/get-shipping-options.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -87,7 +100,10 @@ export class ShippingController {
   @ApiBearerAuth('JWT-auth')
   async seedDefaultShipping(): Promise<ApiResponse<{ created: number }>> {
     const created = await this.shippingService.ensurePlatformShippingDefaults();
-    return { data: { created }, message: created ? 'Default shipping methods created' : 'Methods already exist' };
+    return {
+      data: { created },
+      message: created ? 'Default shipping methods created' : 'Methods already exist',
+    };
   }
 
   @Get('methods/:id')
@@ -178,19 +194,9 @@ export class ShippingController {
       'Calculates shipping rates for given cart value, weight, and destination. Public endpoint.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Shipping rates calculated successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Invalid request body' })
   async calculateShippingRate(
-    @Body()
-    body: {
-      cartValue: number;
-      weight: number;
-      destination: {
-        country: string;
-        state?: string;
-        city?: string;
-        postalCode?: string;
-      };
-      sellerId?: string;
-    },
+    @Body() body: CalculateShippingRateDto,
   ): Promise<ApiResponse<ShippingOption[]>> {
     const options = await this.shippingService.calculateShippingRate(
       body.weight,
@@ -234,7 +240,10 @@ export class ShippingController {
     summary: 'List active shipping carriers for manual tracking entry',
     description: 'Returns admin-configured active carriers used in seller manual shipment entry.',
   })
-  @SwaggerApiResponse({ status: 200, description: 'Active shipping carriers retrieved successfully' })
+  @SwaggerApiResponse({
+    status: 200,
+    description: 'Active shipping carriers retrieved successfully',
+  })
   async findActiveShippingCarriers(): Promise<ApiResponse<any[]>> {
     const carriers = await this.shippingService.findActiveShippingCarriers();
     return { data: carriers, message: 'Shipping carriers retrieved successfully' };
@@ -295,23 +304,9 @@ export class ShippingController {
       'Returns available shipping options for cart items and destination. Public endpoint.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Shipping options retrieved successfully' })
+  @SwaggerApiResponse({ status: 400, description: 'Invalid request body' })
   async getShippingOptions(
-    @Body()
-    body: {
-      cartItems: Array<{
-        productId: string;
-        quantity: number;
-        weight?: number;
-      }>;
-      cartValue: number;
-      destination: {
-        country: string;
-        state?: string;
-        city?: string;
-        postalCode?: string;
-      };
-      sellerId?: string;
-    },
+    @Body() body: GetShippingOptionsDto,
   ): Promise<ApiResponse<ShippingOption[]>> {
     const options = await this.shippingService.getShippingOptions(
       body.cartItems,

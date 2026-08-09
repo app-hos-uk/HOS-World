@@ -11,6 +11,7 @@ import { TaxService } from './tax.service';
 import { CreateTaxZoneDto } from './dto/create-tax-zone.dto';
 import { CreateTaxClassDto } from './dto/create-tax-class.dto';
 import { CreateTaxRateDto } from './dto/create-tax-rate.dto';
+import { CalculateTaxDto } from './dto/calculate-tax.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -328,19 +329,8 @@ export class TaxController {
     description: 'Calculates tax for a given amount, tax class, and location. Public endpoint.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Tax calculated successfully' })
-  async calculateTax(
-    @Body()
-    body: {
-      amount: number;
-      taxClassId: string;
-      location: {
-        country: string;
-        state?: string;
-        city?: string;
-        postalCode?: string;
-      };
-    },
-  ): Promise<ApiResponse<any>> {
+  @SwaggerApiResponse({ status: 400, description: 'Invalid request body' })
+  async calculateTax(@Body() body: CalculateTaxDto): Promise<ApiResponse<any>> {
     const result = await this.taxService.calculateTax(body.amount, body.taxClassId, body.location);
     return {
       data: result,

@@ -17,6 +17,12 @@ export class CacheService {
    * Set value in cache
    */
   async set(key: string, value: any, ttl?: number): Promise<void> {
+    // A lookup that found nothing is a legitimate result, but cache-manager rejects null and
+    // undefined with "not a cacheable value". That turned an address with no matching tax zone
+    // into a 500 at checkout. There is nothing to store, so skip rather than throw; the next
+    // read is simply a miss.
+    if (value === null || value === undefined) return;
+
     await this.cacheManager.set(key, value, ttl);
   }
 

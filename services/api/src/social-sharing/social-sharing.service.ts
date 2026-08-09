@@ -140,14 +140,23 @@ export class SocialSharingService {
   }
 
   async trackShareView(shareId: string): Promise<void> {
-    await this.prisma.sharedItem.update({
-      where: { id: shareId },
-      data: {
-        views: {
-          increment: 1,
+    try {
+      await this.prisma.sharedItem.update({
+        where: { id: shareId },
+        data: {
+          views: {
+            increment: 1,
+          },
         },
-      },
-    });
+      });
+    } catch (err: any) {
+      // Share links are public and long-lived, so a view of a deleted or mistyped share is
+      // ordinary traffic, not a server fault.
+      if (err?.code === 'P2025') {
+        throw new NotFoundException('Shared item not found');
+      }
+      throw err;
+    }
   }
 
   async generateShareUrl(type: string, itemId: string): Promise<string> {
