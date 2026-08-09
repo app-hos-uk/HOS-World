@@ -10,6 +10,7 @@ import {
   seedAdmin,
   createProduct,
   createAddress,
+  seedShipping,
 } from './helpers';
 
 /**
@@ -48,6 +49,7 @@ describe('Order Processing Workflow E2E', () => {
     await app.init();
 
     adminToken = await seedAdmin(app);
+    await seedShipping(app, adminToken);
     productId = await createProduct(app, adminToken, {
       name: 'Order Workflow Product',
       price: 79.99,

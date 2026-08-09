@@ -10,6 +10,7 @@ import {
   seedAdmin,
   createProduct,
   createAddress,
+  seedShipping,
 } from './helpers';
 
 describe('Orders E2E Tests', () => {
@@ -42,6 +43,7 @@ describe('Orders E2E Tests', () => {
 
     // Admin owns the catalog product (and therefore the resulting order as seller).
     adminToken = await seedAdmin(app);
+    await seedShipping(app, adminToken);
     productId = await createProduct(app, adminToken, { name: 'Order Test Product', price: 79.99 });
 
     // Create customer + address + cart item
@@ -74,9 +76,7 @@ describe('Orders E2E Tests', () => {
       expect(res.status).toBe(201);
       const order = res.body?.data;
       if (!order?.id) {
-        throw new Error(
-          `Order creation did not return an id. Body: ${JSON.stringify(res.body)}`,
-        );
+        throw new Error(`Order creation did not return an id. Body: ${JSON.stringify(res.body)}`);
       }
       orderId = order.id;
     });

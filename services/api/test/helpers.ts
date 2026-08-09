@@ -91,6 +91,22 @@ export async function createProduct(
   return res.body?.data?.id;
 }
 
+/**
+ * Seed the platform's default shipping methods.
+ *
+ * Order creation quotes shipping server-side and refuses to continue when nothing matches the
+ * address ("Shipping is not free"), so any suite that places an order needs these to exist.
+ * The seeded rules are conditioned on country US, which is what createAddress uses.
+ *
+ * Idempotent: the endpoint returns early when active platform methods are already present, so
+ * every suite can call it without stepping on the others.
+ */
+export async function seedShipping(app: INestApplication, adminToken: string): Promise<void> {
+  await request(app.getHttpServer())
+    .post('/api/shipping/admin/seed-defaults')
+    .set('Authorization', `Bearer ${adminToken}`);
+}
+
 /** Create a default address for the given user token and return its id. */
 export async function createAddress(
   app: INestApplication,
