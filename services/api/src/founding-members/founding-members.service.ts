@@ -5,6 +5,7 @@ import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { CreateFoundingMemberDto } from './dto/create-founding-member.dto';
 import { ImportFoundingMemberRowDto } from './dto/import-founding-members.dto';
+import { normalizeCountryCode } from '../common/utils/country-code';
 
 export interface FoundingMemberImportResult {
   total: number;
@@ -432,6 +433,11 @@ export class FoundingMembersService {
     metadata?: Record<string, unknown>,
     options?: { sendConfirmationEmail?: boolean; registeredAt?: Date },
   ) {
+    // Normalize country code to ISO format, fallback to normalizing legacy country field
+    const normalizedCode = dto.countryCode 
+      ? dto.countryCode.toUpperCase()
+      : normalizeCountryCode(dto.country);
+
     const member = await this.prisma.foundingMember.create({
       data: {
         email: dto.email.toLowerCase().trim(),
@@ -439,6 +445,7 @@ export class FoundingMembersService {
         lastName: dto.lastName?.trim() || null,
         phone: dto.phone?.trim() || null,
         country: dto.country?.trim() || null,
+        countryCode: normalizedCode || null,
         fandoms: dto.fandoms ?? [],
         otherFranchises: dto.otherFranchises?.trim() || null,
         source: dto.source?.trim() || null,

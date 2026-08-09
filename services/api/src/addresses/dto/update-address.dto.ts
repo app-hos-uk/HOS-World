@@ -8,6 +8,7 @@ import {
   Matches,
   MaxLength,
   ValidateIf,
+  Length,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -76,8 +77,15 @@ export class UpdateAddressDto {
   postalCode?: string;
 
   @IsOptional()
+  @ValidateIf((_: UpdateAddressDto, v: unknown) => typeof v === 'string' && v.trim().length > 0)
   @IsString()
-  country?: string;
+  @Length(2, 2, { message: 'Country code must be exactly 2 characters (ISO 3166-1 alpha-2)' })
+  @Matches(/^[A-Z]{2}$/, { message: 'Country code must be uppercase ISO format (e.g., US, GB, AE, MY)' })
+  countryCode?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string; // Legacy field
 
   @IsOptional()
   @ValidateIf((_: UpdateAddressDto, v: unknown) => typeof v === 'string' && v.trim().length > 0)

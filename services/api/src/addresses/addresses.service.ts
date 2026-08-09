@@ -5,6 +5,7 @@ import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import type { Address } from '@hos-marketplace/shared-types';
 import { Prisma } from '@prisma/client';
+import { normalizeCountryCode } from '../common/utils/country-code';
 
 @Injectable()
 export class AddressesService {
@@ -24,10 +25,16 @@ export class AddressesService {
       });
     }
 
+    // Normalize country code to ISO format
+    const normalizedCode = createAddressDto.countryCode 
+      ? createAddressDto.countryCode.toUpperCase()
+      : normalizeCountryCode(createAddressDto.country);
+
     // Prepare address data
     const addressData: any = {
       userId,
       ...createAddressDto,
+      countryCode: normalizedCode || null,
       isDefault: createAddressDto.isDefault || false,
     };
 
@@ -109,8 +116,18 @@ export class AddressesService {
       });
     }
 
+    // Normalize country code to ISO format if provided
+    const normalizedCode = updateAddressDto.countryCode
+      ? updateAddressDto.countryCode.toUpperCase()
+      : updateAddressDto.country
+        ? normalizeCountryCode(updateAddressDto.country)
+        : undefined;
+
     // Prepare update data
-    const updateData: any = { ...updateAddressDto };
+    const updateData: any = { 
+      ...updateAddressDto,
+      ...(normalizedCode !== undefined && { countryCode: normalizedCode }),
+    };
 
     // Check if address fields changed and need re-geocoding
     const addressFieldsChanged =

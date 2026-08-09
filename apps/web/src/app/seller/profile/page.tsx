@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
+import { CountrySelect } from '@/components/CountrySelect';
+import { COUNTRIES } from '@/lib/countries';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AppShellLayout } from '@/components/AppShellLayout';
 import { useAuth } from '@/contexts/AuthContext';

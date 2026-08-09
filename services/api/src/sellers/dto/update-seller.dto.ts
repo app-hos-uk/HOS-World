@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsEnum, IsBoolean, IsEmail, ValidateNested } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsBoolean, IsEmail, ValidateNested, Length, Matches } from 'class-validator';
 import { Type } from 'class-transformer';
 import { SellerType, LogisticsOption } from '@prisma/client';
 import {
@@ -29,7 +29,13 @@ class WarehouseAddressDto {
 
   @IsOptional()
   @IsString()
-  country?: string;
+  @Length(2, 2, { message: 'Country code must be exactly 2 characters (ISO 3166-1 alpha-2)' })
+  @Matches(/^[A-Z]{2}$/, { message: 'Country code must be uppercase ISO format' })
+  countryCode?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string; // Legacy field
 }
 
 export class UpdateSellerDto {
@@ -47,7 +53,13 @@ export class UpdateSellerDto {
 
   @IsOptional()
   @IsString()
-  country?: string;
+  @Length(2, 2, { message: 'Country code must be exactly 2 characters (ISO 3166-1 alpha-2)' })
+  @Matches(/^[A-Z]{2}$/, { message: 'Country code must be uppercase ISO format (e.g., US, GB, AE, MY)' })
+  countryCode?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string; // Legacy field
 
   @IsOptional()
   @IsString()

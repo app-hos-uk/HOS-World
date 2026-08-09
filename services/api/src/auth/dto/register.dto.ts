@@ -7,6 +7,7 @@ import {
   IsBoolean,
   Matches,
   MaxLength,
+  Length,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
@@ -80,8 +81,14 @@ export class RegisterDto {
   logisticsOption?: LogisticsOption; // Optional, defaults to HOS_LOGISTICS
 
   // Global Platform Fields
+  @IsOptional()
   @IsString()
-  country: string; // Required
+  @Length(2, 2, { message: 'Country code must be exactly 2 characters (ISO 3166-1 alpha-2)' })
+  @Matches(/^[A-Z]{2}$/, { message: 'Country code must be uppercase ISO format (e.g., US, GB, AE, MY)' })
+  countryCode?: string; // ISO 3166-1 alpha-2 code (preferred)
+
+  @IsString()
+  country: string; // Required for backward compatibility
 
   @IsOptional()
   @IsString()

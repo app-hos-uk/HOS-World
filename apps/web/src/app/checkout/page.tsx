@@ -3,6 +3,8 @@
 import { MinimalCheckoutHeader } from '@/components/storefront/MinimalCheckoutHeader';
 import { MinimalCheckoutFooter } from '@/components/storefront/MinimalCheckoutFooter';
 import { LoyaltyRedemptionWidget } from '@/components/checkout/LoyaltyRedemptionWidget';
+import { CountrySelect } from '@/components/CountrySelect';
+import { COUNTRIES } from '@/lib/countries';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient, getOrCreateGuestCartSessionId, clearGuestCartSessionId, markLoginSuccess, setFrontendSessionCookie, GUEST_CHECKOUT_ACCOUNT_KEY } from '@/lib/api';
@@ -79,15 +81,15 @@ export default function CheckoutPage() {
       city: '',
       state: '',
       postalCode: '',
-      country: regionCountryToFormValue(regionCountry) || 'United States',
+      countryCode: 'US',
       phone: '',
       inviteCode,
       gdprConsent: false,
     };
   });
   const guestAddressLabels = useMemo(
-    () => getAddressFieldLabels(guestForm.country || regionCountry),
-    [guestForm.country, regionCountry],
+    () => getAddressFieldLabels(guestForm.countryCode || 'US'),
+    [guestForm.countryCode],
   );
   const checkoutSteps = useMemo(
     () => [
@@ -443,7 +445,7 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!guestForm.country) {
+    if (!guestForm.countryCode) {
       setGuestError('Please select your country.');
       return;
     }
@@ -475,7 +477,7 @@ export default function CheckoutPage() {
         city: guestForm.city.trim(),
         state: guestForm.state.trim() || undefined,
         postalCode: guestForm.postalCode.trim(),
-        country: guestForm.country,
+        country: COUNTRIES.find(c => c.code === guestForm.countryCode)?.name || guestForm.countryCode,
         phone: guestForm.phone.trim() || undefined,
         guestSessionId,
         gdprConsent: true,
@@ -826,34 +828,14 @@ export default function CheckoutPage() {
                         <label htmlFor="guest-country" className="block text-sm font-medium text-hos-text-secondary mb-1">
                           Country *
                         </label>
-                        <select
+                        <CountrySelect
                           id="guest-country"
-                          autoComplete="country-name"
+                          name="countryCode"
+                          value={guestForm.countryCode}
+                          onChange={(e) => setGuestForm({ ...guestForm, countryCode: e.target.value })}
                           required
-                          value={guestForm.country}
-                          onChange={(e) => setGuestForm({ ...guestForm, country: e.target.value })}
                           className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
-                        >
-                          <option value="">Select country</option>
-                          <option value="United States">United States</option>
-                          <option value="United Arab Emirates">United Arab Emirates</option>
-                          <option value="Germany">Germany</option>
-                          <option value="France">France</option>
-                          <option value="Italy">Italy</option>
-                          <option value="Spain">Spain</option>
-                          <option value="Netherlands">Netherlands</option>
-                          <option value="Belgium">Belgium</option>
-                          <option value="Austria">Austria</option>
-                          <option value="Portugal">Portugal</option>
-                          <option value="Ireland">Ireland</option>
-                          <option value="Greece">Greece</option>
-                          <option value="Finland">Finland</option>
-                          <option value="Saudi Arabia">Saudi Arabia</option>
-                          <option value="Kuwait">Kuwait</option>
-                          <option value="Qatar">Qatar</option>
-                          <option value="Bahrain">Bahrain</option>
-                          <option value="Oman">Oman</option>
-                        </select>
+                        />
                       </div>
                     </div>
 

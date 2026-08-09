@@ -28,6 +28,7 @@ import { LoyaltyService } from '../loyalty/loyalty.service';
 import { slugify } from '@hos-marketplace/utils';
 import type { User, AuthResponse } from '@hos-marketplace/shared-types';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
+import { normalizeCountryCode } from '../common/utils/country-code';
 
 @Injectable()
 export class AuthService {
@@ -272,8 +273,13 @@ export class AuthService {
     // Hash password
     const hashedPassword = await bcrypt.hash(registerDto.password, BCRYPT_PASSWORD_ROUNDS);
 
-    // Determine currency preference based on country
-    const countryCode = this.getCountryCode(registerDto.country);
+    // Normalize country code to ISO format and determine currency preference
+    const normalizedIsoCode = registerDto.countryCode 
+      ? registerDto.countryCode.toUpperCase()
+      : normalizeCountryCode(registerDto.country);
+    
+    // Use normalized ISO code for currency lookup instead of legacy country name
+    const countryCode = normalizedIsoCode || this.getCountryCode(registerDto.country);
     const currencyPreference =
       this.geolocationService.getCurrencyForCountry(countryCode) || PLATFORM_DEFAULT_CURRENCY;
 
@@ -286,6 +292,7 @@ export class AuthService {
         lastName: registerDto.lastName,
         role: userRole as any,
         country: registerDto.country,
+        countryCode: normalizedIsoCode || null,
         whatsappNumber: registerDto.whatsappNumber,
         preferredCommunicationMethod: registerDto.preferredCommunicationMethod,
         currencyPreference,
@@ -349,6 +356,7 @@ export class AuthService {
         data: {
           userId: user.id,
           country: registerDto.country,
+          countryCode: normalizedIsoCode || null,
           currencyPreference,
         },
       });
@@ -388,6 +396,7 @@ export class AuthService {
           storeName: registerDto.storeName!,
           slug,
           country: registerDto.country ?? (user as { country?: string }).country ?? 'US',
+          countryCode: normalizedIsoCode || null,
           timezone: 'UTC',
           sellerType: sellerType || registerDto.sellerType || 'B2C_SELLER',
           logisticsOption: registerDto.logisticsOption || 'HOS_LOGISTICS',
@@ -552,7 +561,8 @@ export class AuthService {
     // Guest checkout creates a customer account — honor invite-only mode.
     await this.assertRegistrationAllowed(email, guestCheckoutDto.inviteCode);
 
-    const countryCode = this.getCountryCode(guestCheckoutDto.country);
+    const normalizedIsoCode = normalizeCountryCode(guestCheckoutDto.country);
+    const countryCode = normalizedIsoCode || this.getCountryCode(guestCheckoutDto.country);
     const currencyPreference =
       this.geolocationService.getCurrencyForCountry(countryCode) || PLATFORM_DEFAULT_CURRENCY;
 
@@ -564,6 +574,7 @@ export class AuthService {
         lastName: guestCheckoutDto.lastName,
         role: 'CUSTOMER',
         country: guestCheckoutDto.country,
+        countryCode: normalizedIsoCode || null,
         preferredCommunicationMethod: 'EMAIL',
         currencyPreference,
         gdprConsent: true,
@@ -603,6 +614,7 @@ export class AuthService {
       data: {
         userId: user.id,
         country: guestCheckoutDto.country,
+        countryCode: normalizedIsoCode || null,
         currencyPreference,
       },
     });
@@ -649,6 +661,7 @@ export class AuthService {
       city: guestCheckoutDto.city,
       state: guestCheckoutDto.state,
       postalCode: guestCheckoutDto.postalCode,
+      countryCode: normalizeCountryCode(guestCheckoutDto.country) || 'US',
       country: guestCheckoutDto.country,
       phone: guestCheckoutDto.phone,
       isDefault: true,
@@ -735,8 +748,13 @@ export class AuthService {
     // Hash password
     const hashedPassword = await bcrypt.hash(registerDto.password, BCRYPT_PASSWORD_ROUNDS);
 
-    // Determine currency preference based on country
-    const countryCode = this.getCountryCode(registerDto.country);
+    // Normalize country code to ISO format and determine currency preference
+    const normalizedIsoCode = registerDto.countryCode 
+      ? registerDto.countryCode.toUpperCase()
+      : normalizeCountryCode(registerDto.country);
+    
+    // Use normalized ISO code for currency lookup
+    const countryCode = normalizedIsoCode || this.getCountryCode(registerDto.country);
     const currencyPreference =
       this.geolocationService.getCurrencyForCountry(countryCode) || PLATFORM_DEFAULT_CURRENCY;
 
@@ -749,6 +767,7 @@ export class AuthService {
         lastName: registerDto.lastName,
         role: userRole as any,
         country: registerDto.country,
+        countryCode: normalizedIsoCode || null,
         whatsappNumber: registerDto.whatsappNumber,
         preferredCommunicationMethod: registerDto.preferredCommunicationMethod,
         currencyPreference,
@@ -821,6 +840,7 @@ export class AuthService {
         storeName: registerDto.storeName,
         slug,
         country: registerDto.country,
+        countryCode: normalizedIsoCode || null,
         timezone: 'UTC',
         sellerType: invitation.sellerType,
         logisticsOption: registerDto.logisticsOption || 'HOS_LOGISTICS',

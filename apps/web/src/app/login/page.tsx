@@ -11,6 +11,8 @@ import {
 } from '@/lib/referralAttribution';
 import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
+import { CountrySelect } from '@/components/CountrySelect';
+import { COUNTRIES } from '@/lib/countries';
 import { getDirectApiBaseUrl } from '@/lib/apiBaseUrl';
 import { resolvePostAuthRedirect, resolvePostRegisterRedirect, getSafeReturnUrl, stashAuthReturnUrl } from '@/lib/authRedirect';
 import { Header } from '@/components/Header';
@@ -48,7 +50,7 @@ function LoginPageInner() {
   // Global Platform Registration Fields
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [country, setCountry] = useState('');
+  const [countryCode, setCountryCode] = useState('');
   const [detectedCountry, setDetectedCountry] = useState<any>(null);
   const [detectingCountry, setDetectingCountry] = useState(false);
   const [whatsappNumber, setWhatsappNumber] = useState('');
@@ -178,13 +180,16 @@ function LoginPageInner() {
       const response = await apiClient.detectCountry();
       if (response?.data) {
         setDetectedCountry(response.data);
-        setCountry(response.data.country || '');
+        // Map country name to ISO code
+        const detectedName = response.data.country;
+        const matchedCountry = COUNTRIES.find(c => c.name === detectedName);
+        setCountryCode(matchedCountry?.code || 'US');
         setCurrencyPreference(response.data.currency || 'USD');
       }
     } catch (error) {
       console.error('Failed to detect country:', error);
       // Set defaults
-      setCountry('United States');
+      setCountryCode('US');
       setCurrencyPreference('USD');
     } finally {
       setDetectingCountry(false);
@@ -193,7 +198,8 @@ function LoginPageInner() {
 
   const handleCountryConfirm = () => {
     if (detectedCountry) {
-      setCountry(detectedCountry.country);
+      const matchedCountry = COUNTRIES.find(c => c.name === detectedCountry.country);
+      setCountryCode(matchedCountry?.code || 'US');
       setCurrencyPreference(detectedCountry.currency || 'USD');
     }
   };
@@ -304,7 +310,7 @@ function LoginPageInner() {
     }
 
     // Validate required fields
-    if (!country) {
+    if (!countryCode) {
       setError('Please select your country');
       setLoading(false);
       return;
@@ -346,7 +352,8 @@ function LoginPageInner() {
         role: role || 'customer',
         firstName: firstName || undefined,
         lastName: lastName || undefined,
-        country,
+        countryCode,
+        country: COUNTRIES.find(c => c.code === countryCode)?.name || countryCode,
         whatsappNumber: whatsappNumber || undefined,
         preferredCommunicationMethod,
         gdprConsent,
@@ -746,14 +753,14 @@ function LoginPageInner() {
 
                   {/* Country Detection */}
                   <div>
-                    <label htmlFor="country" className={AUTH_LABEL_CLASS}>
+                    <label htmlFor="countryCode" className={AUTH_LABEL_CLASS}>
                       Country <span className="text-red-500">*</span>
                     </label>
                     {detectingCountry ? (
                       <div className="w-full px-4 py-2.5 bg-hos-bg border-2 border-hos-border-input rounded-lg text-sm text-hos-text-muted font-ui">
                         Detecting your location...
                       </div>
-                    ) : detectedCountry && !country ? (
+                    ) : detectedCountry && !countryCode ? (
                       <div className="space-y-2">
                         <div className="p-3 bg-hos-gold/10 border border-hos-border-accent rounded-lg">
                           <p className="text-sm text-hos-gold font-medium mb-1">
@@ -781,50 +788,30 @@ function LoginPageInner() {
                         </div>
                       </div>
                     ) : (
-                      <select
-                        id="country"
-                        name="country"
-                        autoComplete="country-name"
-                        value={country}
+                      <CountrySelect
+                        id="countryCode"
+                        name="countryCode"
+                        value={countryCode}
                         onChange={(e) => {
-                          setCountry(e.target.value);
-                          // Update currency based on country
+                          setCountryCode(e.target.value);
+                          // Update currency based on country code
                           const countryCurrencies: Record<string, string> = {
-                            'United States': 'USD',
-                            'United Arab Emirates': 'AED',
-                            'Germany': 'EUR',
-                            'France': 'EUR',
-                            'Italy': 'EUR',
-                            'Spain': 'EUR',
+                            'US': 'USD',
+                            'AE': 'AED',
+                            'DE': 'EUR',
+                            'FR': 'EUR',
+                            'IT': 'EUR',
+                            'ES': 'EUR',
+                            'GB': 'GBP',
+                            'MY': 'MYR',
                           };
                           setCurrencyPreference(countryCurrencies[e.target.value] || 'USD');
                         }}
                         required
                         className={AUTH_SELECT_CLASS}
-                        
-                      >
-                        <option value="">Select your country</option>
-                        <option value="United States">United States</option>
-                        <option value="United Arab Emirates">United Arab Emirates</option>
-                        <option value="Germany">Germany</option>
-                        <option value="France">France</option>
-                        <option value="Italy">Italy</option>
-                        <option value="Spain">Spain</option>
-                        <option value="Netherlands">Netherlands</option>
-                        <option value="Belgium">Belgium</option>
-                        <option value="Austria">Austria</option>
-                        <option value="Portugal">Portugal</option>
-                        <option value="Ireland">Ireland</option>
-                        <option value="Greece">Greece</option>
-                        <option value="Finland">Finland</option>
-                        <option value="Saudi Arabia">Saudi Arabia</option>
-                        <option value="Kuwait">Kuwait</option>
-                        <option value="Qatar">Qatar</option>
-                        <option value="Bahrain">Bahrain</option>
-                        <option value="Oman">Oman</option>
-                      </select>
+                      />
                     )}
-                    {country && currencyPreference && (
+                    {countryCode && currencyPreference && (
                       <p className="mt-1 text-sm text-hos-text-muted font-ui">
                         Prices will be displayed in {currencyPreference}
                       </p>
@@ -992,7 +979,7 @@ function LoginPageInner() {
                   if (!isLogin) {
                     setFirstName('');
                     setLastName('');
-                    setCountry('');
+                    setCountryCode('');
                     setWhatsappNumber('');
                     setPreferredCommunicationMethod('EMAIL');
                     setGdprConsent(false);

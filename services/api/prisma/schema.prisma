@@ -35,6 +35,7 @@ model User {
 
   // Global Platform Features
   country                      String?
+  countryCode                  String? // ISO 3166-1 alpha-2 code
   whatsappNumber               String?
   // IMPORTANT: Keep as String to match existing production migrations which created this column as TEXT.
   // Validation still happens at the API boundary (DTO). Using a Prisma enum here requires a Postgres enum
@@ -251,6 +252,7 @@ model Store {
   city         String?
   state        String?
   country      String  @default("US")
+  countryCode  String? // ISO 3166-1 alpha-2 code
   postalCode   String?
   latitude     Float?
   longitude    Float?
@@ -284,6 +286,7 @@ model Store {
   @@index([tenantId])
   @@index([sellerId])
   @@index([country])
+  @@index([countryCode])
   @@index([code])
   @@map("stores")
 }
@@ -339,6 +342,7 @@ model Customer {
   loyaltyPoints      Int     @default(0)
   themePreference    String?
   country            String?
+  countryCode        String? // ISO 3166-1 alpha-2 code
   currencyPreference String  @default("USD")
 
   // B2B/Wholesaler fields (null for regular customers)
@@ -363,6 +367,7 @@ model Seller {
   themeId                String?
   logo                   String?
   country                String
+  countryCode            String? // ISO 3166-1 alpha-2 code
   city                   String?
   region                 String?
   timezone               String          @default("UTC")
@@ -878,6 +883,7 @@ model Address {
   state                String?
   postalCode           String
   country              String
+  countryCode          String? // ISO 3166-1 alpha-2 code
   phone                String?
   landmark             String?
   deliveryInstructions String?  @db.Text
@@ -893,6 +899,7 @@ model Address {
 
   @@index([userId])
   @@index([country])
+  @@index([countryCode])
   @@index([city])
   @@map("addresses")
 }
@@ -1480,6 +1487,7 @@ model FulfillmentCenter {
   address      String
   city         String
   country      String
+  countryCode  String? // ISO 3166-1 alpha-2 code
   postalCode   String?
   latitude     Float?
   longitude    Float?
@@ -1497,6 +1505,7 @@ model FulfillmentCenter {
   @@index([isActive])
   @@index([city])
   @@index([country])
+  @@index([countryCode])
   @@map("fulfillment_centers")
 }
 
@@ -1591,6 +1600,7 @@ model LogisticsPartner {
   description    String?  @db.Text
   website        String?
   country        String?
+  countryCode    String? // ISO 3166-1 alpha-2 code
   isActive       Boolean  @default(true)
   contactInfo    Json? // Contact information
   trackingApiUrl String?
@@ -2819,6 +2829,7 @@ model Warehouse {
   city          String
   state         String?
   country       String
+  countryCode   String? // ISO 3166-1 alpha-2 code
   postalCode    String
   latitude      Float?
   longitude     Float?
@@ -2839,6 +2850,7 @@ model Warehouse {
   @@index([isActive])
   @@index([city])
   @@index([country])
+  @@index([countryCode])
   @@map("warehouses")
 }
 
@@ -2963,6 +2975,7 @@ model TaxZone {
   id          String    @id @default(uuid())
   name        String
   country     String?
+  countryCode String? // ISO 3166-1 alpha-2 code
   state       String?
   city        String?
   postalCodes String[] // Array of postal code ranges
@@ -2972,6 +2985,7 @@ model TaxZone {
   updatedAt   DateTime  @updatedAt
 
   @@index([country])
+  @@index([countryCode])
   @@index([isActive])
   @@map("tax_zones")
 }
@@ -4422,6 +4436,7 @@ model FoundingMember {
   lastName         String?
   phone            String?
   country          String?
+  countryCode      String? // ISO 3166-1 alpha-2 code
   fandoms          String[] @default([])
   otherFranchises  String?
   source           String?

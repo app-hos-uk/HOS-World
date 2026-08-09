@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { OTHER_UNIVERSE_NAME } from '../lib/fandoms';
+import { COUNTRIES } from '@/lib/countries';
 import { useCatalogFandoms } from '@/hooks/useCatalogFandoms';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 import {
@@ -33,7 +34,8 @@ async function postRegistrationPayload(data: Record<string, unknown>) {
     lastName: String(data.lastName || '').trim(),
     email,
     phone: data.phone,
-    country: data.country,
+    countryCode: data.countryCode,
+    country: COUNTRIES.find(c => c.code === data.countryCode)?.name || data.countryCode,
     fandoms: data.fandoms,
     otherFranchises: data.otherFranchises,
     source: data.source,
@@ -212,10 +214,10 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
     const data = {
       firstName,
       lastName,
-      email,
-      phone,
-      country: (form.querySelector<HTMLSelectElement>('#co')?.value || ''),
-      source: (form.querySelector<HTMLSelectElement>('#src')?.value || ''),
+    email,
+    phone,
+    countryCode: (form.querySelector<HTMLSelectElement>('#co')?.value || undefined),
+    source: (form.querySelector<HTMLSelectElement>('#src')?.value || ''),
       spend: (form.querySelector<HTMLSelectElement>('#sp')?.value || ''),
       fandoms,
       otherFranchises,
@@ -370,18 +372,13 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
               <div className="f-row">
                 <div className="f-g">
                   <label htmlFor="co">Country</label>
-                  <select id="co" name="country" required defaultValue="">
+                  <select id="co" name="countryCode" required defaultValue="">
                     <option value="">Select country</option>
-                    <option>United States</option>
-                    <option>United Kingdom</option>
-                    <option>Canada</option>
-                    <option>Australia</option>
-                    <option>Germany</option>
-                    <option>France</option>
-                    <option>Japan</option>
-                    <option>India</option>
-                    <option>Brazil</option>
-                    <option>Other</option>
+                    {COUNTRIES.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="f-g">

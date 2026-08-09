@@ -1,9 +1,10 @@
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsOptional, IsString, MaxLength, Length, Matches } from 'class-validator';
 
 export class EnrollLoyaltyDto {
   @IsOptional()
   @IsString()
-  @MaxLength(8)
+  @Length(2, 2, { message: 'Region code must be exactly 2 characters (ISO 3166-1 alpha-2)' })
+  @Matches(/^[A-Z]{2}$/, { message: 'Region code must be uppercase ISO format (e.g., US, GB, AE, MY)' })
   regionCode?: string;
 
   @IsOptional()

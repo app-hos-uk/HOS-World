@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { CountrySelect } from '@/components/CountrySelect';
+import { COUNTRIES } from '@/lib/countries';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
