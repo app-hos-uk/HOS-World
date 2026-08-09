@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useDateTime } from '@/hooks/useDateTime';
 import { SafeImage } from '@/components/SafeImage';
 
 interface VendorProduct {
@@ -65,6 +66,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function VendorProductsContent() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const [listings, setListings] = useState<VendorProduct[]>([]);
@@ -435,10 +437,10 @@ function VendorProductsContent() {
             <div>
               <h4 className="text-xs font-medium text-hos-text-muted uppercase mb-2">Timeline</h4>
               <div className="space-y-1.5 text-sm">
-                <p><span className="text-hos-text-muted">Created:</span> {new Date(selectedListing.createdAt).toLocaleDateString()}</p>
-                {selectedListing.submittedAt && <p><span className="text-hos-text-muted">Submitted:</span> {new Date(selectedListing.submittedAt).toLocaleDateString()}</p>}
-                {selectedListing.approvedAt && <p><span className="text-hos-text-muted">Approved:</span> {new Date(selectedListing.approvedAt).toLocaleDateString()}</p>}
-                {selectedListing.rejectedAt && <p><span className="text-hos-text-muted">Rejected:</span> {new Date(selectedListing.rejectedAt).toLocaleDateString()}</p>}
+                <p><span className="text-hos-text-muted">Created:</span> {formatDate(selectedListing.createdAt)}</p>
+                {selectedListing.submittedAt && <p><span className="text-hos-text-muted">Submitted:</span> {formatDate(selectedListing.submittedAt)}</p>}
+                {selectedListing.approvedAt && <p><span className="text-hos-text-muted">Approved:</span> {formatDate(selectedListing.approvedAt)}</p>}
+                {selectedListing.rejectedAt && <p><span className="text-hos-text-muted">Rejected:</span> {formatDate(selectedListing.rejectedAt)}</p>}
               </div>
             </div>
             {selectedListing.rejectionReason && (

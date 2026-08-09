@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { RouteGuard } from '@/components/RouteGuard';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 const api = apiClient as any;
 
@@ -44,6 +46,8 @@ interface Influencer {
 }
 
 export default function InfluencerDetailPage() {
+  const { formatDate } = useDateTime();
+  const { formatMoney } = useMoney();
   const params = useParams();
   const router = useRouter();
   const toast = useToast();
@@ -130,10 +134,7 @@ export default function InfluencerDetailPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount || 0);
+    return formatMoney(amount || 0);
   };
 
   const getStatusBadge = (status: string) => {
@@ -284,7 +285,7 @@ export default function InfluencerDetailPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-hos-text-muted">Joined</span>
-                  <span className="font-medium">{new Date(influencer.createdAt).toLocaleDateString()}</span>
+                  <span className="font-medium">{formatDate(influencer.createdAt)}</span>
                 </div>
                 {influencer.bio && (
                   <div className="pt-2 border-t">

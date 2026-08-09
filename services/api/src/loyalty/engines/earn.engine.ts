@@ -10,6 +10,7 @@ import { LoyaltyTierEngine } from './tier.engine';
 import { BrandPartnershipsService } from '../../brand-partnerships/brand-partnerships.service';
 import { ProductCampaignsService } from '../../product-campaigns/product-campaigns.service';
 import { FeatureFlagsService } from '../../config/feature-flags.service';
+import { PlatformRegionService } from '../../config/platform-region.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 import { LoyaltySettingsService } from '../services/loyalty-settings.service';
 
@@ -26,6 +27,7 @@ export class LoyaltyEarnEngine {
     private tiers: LoyaltyTierEngine,
     private brandPartnerships: BrandPartnershipsService,
     private productCampaigns: ProductCampaignsService,
+    private region: PlatformRegionService,
     @Optional() private loyaltySettings?: LoyaltySettingsService,
   ) {}
 
@@ -81,14 +83,15 @@ export class LoyaltyEarnEngine {
 
     const prefix = this.config.get<string>('LOYALTY_CARD_PREFIX', 'HOS');
     const cardNumber = `${prefix}-${randomBytes(4).toString('hex').toUpperCase()}-${randomBytes(2).toString('hex').toUpperCase()}`;
+    const region = await this.region.getRegion();
 
     try {
       return await this.prisma.loyaltyMembership.create({
         data: {
           userId,
           tierId: tier.id,
-          regionCode: user.country || 'GB',
-          preferredCurrency: user.currencyPreference || 'USD',
+          regionCode: user.country || region.country,
+          preferredCurrency: user.currencyPreference || region.currency,
           enrollmentChannel: 'AUTO_PURCHASE',
           cardNumber,
           birthday: user.birthday ?? undefined,

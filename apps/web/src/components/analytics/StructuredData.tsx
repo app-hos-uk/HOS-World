@@ -3,6 +3,7 @@
 import { getSiteUrl } from '@/lib/siteUrls';
 import { useSiteSettings } from '@/contexts/SiteSettingsContext';
 import { brandDisplayName } from '@/lib/siteSettingsDefaults';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 const SITE_URL = getSiteUrl();
 
@@ -92,7 +93,7 @@ export function ProductStructuredData({ product, pathId }: ProductStructuredData
     offers: {
       '@type': 'Offer',
       price: product.price,
-      priceCurrency: product.currency || 'USD',
+      priceCurrency: product.currency || DEFAULT_CURRENCY,
       availability:
         product.inStock === false || product.stock === 0
           ? 'https://schema.org/OutOfStock'

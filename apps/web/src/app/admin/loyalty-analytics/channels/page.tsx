@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
+import { useMoney } from '@/hooks/useMoney';
 
 export default function ChannelPerformancePage() {
+  const { formatMoney } = useMoney();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -22,9 +24,9 @@ export default function ChannelPerformancePage() {
     <div className="border rounded-lg p-4 bg-hos-bg-secondary shadow-sm text-sm space-y-1">
       <p className="font-medium text-hos-text-secondary">{label}</p>
       <p>Orders: {c?.orders ?? 0}</p>
-      <p>Revenue: ${Number(c?.revenue ?? 0).toFixed(2)}</p>
+      <p>Revenue: {formatMoney(Number(c?.revenue ?? 0))}</p>
       <p>Points earned: {c?.pointsEarned ?? 0}</p>
-      <p>Avg order: ${Number(c?.avgOrder ?? 0).toFixed(2)}</p>
+      <p>Avg order: {formatMoney(Number(c?.avgOrder ?? 0))}</p>
     </div>
   );
 

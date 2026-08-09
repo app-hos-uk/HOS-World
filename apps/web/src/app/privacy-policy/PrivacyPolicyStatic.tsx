@@ -1,6 +1,7 @@
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import Link from 'next/link';
+import { formatDate } from '@/lib/datetime';
 
 export default function PrivacyPolicyStatic() {
   return (
@@ -10,7 +11,7 @@ export default function PrivacyPolicyStatic() {
         <div className="prose prose-purple max-w-none">
           <h1 className="text-3xl sm:text-4xl font-bold mb-6">Privacy Policy</h1>
           <p className="text-sm text-hos-text-secondary mb-8">
-            Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            Last updated: {formatDate(new Date(), { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
 
           <section className="mb-8">

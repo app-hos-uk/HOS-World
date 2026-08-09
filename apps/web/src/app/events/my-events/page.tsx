@@ -6,8 +6,10 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function MyEventsPage() {
+  const { formatDate } = useDateTime();
   const [rsvps, setRsvps] = useState<any[]>([]);
   const [past, setPast] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,7 @@ export default function MyEventsPage() {
                     <li key={x.id} className="border border-stone-800 rounded-lg p-3">
                       <span className="text-stone-200">{x.event?.title}</span>
                       <p className="text-xs text-stone-500 mt-1">
-                        +{x.pointsAwarded} pts · {new Date(x.checkedInAt).toLocaleDateString()}
+                        +{x.pointsAwarded} pts · {formatDate(x.checkedInAt)}
                       </p>
                     </li>
                   ))

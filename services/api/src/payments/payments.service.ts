@@ -23,11 +23,13 @@ import { RedisService } from '../cache/redis.service';
 import { IntegrationsService } from '../integrations/integrations.service';
 import { RefundsService } from '../finance/refunds.service';
 import { DEFAULT_PLATFORM_FEE_RATE } from '../common/platform-config';
+import { fromMinorUnits, toMinorUnits } from '../common/money';
 import { Decimal } from '@prisma/client/runtime/library';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
 export class PaymentsService {
-  private readonly BASE_CURRENCY = 'USD';
+  private readonly BASE_CURRENCY = PLATFORM_DEFAULT_CURRENCY;
   private readonly logger = new Logger(PaymentsService.name);
 
   constructor(
@@ -296,8 +298,9 @@ export class PaymentsService {
               order.currency,
               this.BASE_CURRENCY,
             );
-      const expectedCents = Math.round(expectedAmountBase * 100);
-      const paidCents = Math.round((result.amount || 0) * 100);
+      const verifyCurrency = result.currency || this.BASE_CURRENCY;
+      const expectedCents = toMinorUnits(expectedAmountBase, this.BASE_CURRENCY);
+      const paidCents = toMinorUnits(result.amount || 0, verifyCurrency);
       if (Math.abs(paidCents - expectedCents) > 1) {
         throw new BadRequestException('Payment amount does not match order total');
       }
@@ -708,7 +711,7 @@ export class PaymentsService {
             order.currency,
             this.BASE_CURRENCY,
           );
-    const expectedCents = Math.round(expectedAmountBase * 100);
+    const expectedCents = toMinorUnits(expectedAmountBase, this.BASE_CURRENCY);
 
     if (paidCents > 0 && Math.abs(paidCents - expectedCents) > 1) {
       this.logger.error(
@@ -774,7 +777,7 @@ export class PaymentsService {
 
     const refundId = obj.id?.startsWith('re_') ? obj.id : obj.refunds?.data?.[0]?.id;
     const amountCents = obj.amount_refunded ?? obj.amount ?? 0;
-    const amount = Number(amountCents) / 100;
+    const amount = fromMinorUnits(Number(amountCents), obj.currency || this.BASE_CURRENCY);
     const stripeStatus =
       obj.status === 'succeeded' || event.type === 'charge.refunded'
         ? 'succeeded'

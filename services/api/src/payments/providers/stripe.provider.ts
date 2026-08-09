@@ -13,6 +13,7 @@ import {
   WebhookResult,
 } from '../interfaces/payment-provider.interface';
 import { CircuitBreaker } from '../../common/utils/circuit-breaker';
+import { fromMinorUnits, toMinorUnits } from '../../common/money';
 import { IntegrationsService } from '../../integrations/integrations.service';
 
 function isValidStripeSecretKey(key?: string | null): key is string {
@@ -167,11 +168,11 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
     }
 
     return this.circuitBreaker.execute(async () => {
-      const amountCents = Math.round(params.amount * 100);
+      const amountMinor = toMinorUnits(params.amount, params.currency);
       const createOnce = async (idempotencyKey: string) => {
         const paymentIntent = await this.stripe!.paymentIntents.create(
           {
-            amount: amountCents,
+            amount: amountMinor,
             currency: params.currency.toLowerCase(),
             metadata: {
               orderId: params.orderId,
@@ -195,14 +196,14 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
       };
 
       try {
-        return await createOnce(`order-${params.orderId}-${amountCents}`);
+        return await createOnce(`order-${params.orderId}-${amountMinor}`);
       } catch (error: any) {
         if (this.isStripeAuthError(error)) {
           // Admin may have rotated keys after boot; IntegrationsController used to miss re-init.
           this.logger.warn('Stripe auth failed — reloading credentials and retrying once');
           await this.reloadStripeClient();
           if (this.stripe) {
-            return await createOnce(`order-${params.orderId}-${amountCents}-reload`);
+            return await createOnce(`order-${params.orderId}-${amountMinor}-reload`);
           }
         }
 
@@ -226,7 +227,7 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
             success: true,
             paymentId: paymentIntent.id,
             transactionId: paymentIntent.latest_charge as string,
-            amount: paymentIntent.amount / 100,
+            amount: fromMinorUnits(paymentIntent.amount, paymentIntent.currency),
             currency: paymentIntent.currency,
             status: PaymentStatus.SUCCEEDED,
             metadata: paymentIntent.metadata,
@@ -236,7 +237,7 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
         return {
           success: false,
           paymentId: paymentIntent.id,
-          amount: paymentIntent.amount / 100,
+          amount: fromMinorUnits(paymentIntent.amount, paymentIntent.currency),
           currency: paymentIntent.currency,
           status: this.mapStripeStatus(paymentIntent.status),
           metadata: paymentIntent.metadata,
@@ -283,11 +284,21 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
     }
 
     const idempotencyKey = `refund-${params.paymentId}-${params.amount || 'full'}-${params.metadata?.returnId || params.metadata?.reason || 'cancel'}-${params.metadata?.retryAttempt || '0'}`;
+    let amountMinor: number | undefined;
+    if (params.amount) {
+      let currency =
+        params.currency ||
+        (typeof params.metadata?.currency === 'string' ? params.metadata.currency : undefined);
+      if (!currency) {
+        currency = (await this.stripe.paymentIntents.retrieve(params.paymentId)).currency;
+      }
+      amountMinor = toMinorUnits(params.amount, currency);
+    }
     const createRefund = async () =>
       this.stripe!.refunds.create(
         {
           payment_intent: params.paymentId,
-          amount: params.amount ? Math.round(params.amount * 100) : undefined,
+          amount: amountMinor,
           reason: params.reason as any,
           metadata: params.metadata,
         },
@@ -308,7 +319,7 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
           refund = await this.stripe.refunds.create(
             {
               payment_intent: params.paymentId,
-              amount: params.amount ? Math.round(params.amount * 100) : undefined,
+              amount: amountMinor,
               reason: params.reason as any,
               metadata: params.metadata,
             },
@@ -323,7 +334,7 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
       return {
         success: refund.status === 'succeeded',
         refundId: refund.id,
-        amount: refund.amount / 100,
+        amount: fromMinorUnits(refund.amount, refund.currency),
         status:
           refund.status === 'succeeded'
             ? 'succeeded'
@@ -485,14 +496,14 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
     await this.ensureStripeClient();
     if (!this.stripe) throw new Error('Stripe provider is not available');
 
-    const amountCents = Math.round(params.amount * 100);
-    const feeCents = Math.round(params.applicationFeeAmount * 100);
+    const amountMinor = toMinorUnits(params.amount, params.currency);
+    const feeMinor = toMinorUnits(params.applicationFeeAmount, params.currency);
     const createOnce = async (idempotencyKey: string) => {
       const paymentIntent = await this.stripe!.paymentIntents.create(
         {
-          amount: amountCents,
+          amount: amountMinor,
           currency: params.currency.toLowerCase(),
-          application_fee_amount: feeCents,
+          application_fee_amount: feeMinor,
           transfer_data: {
             destination: params.connectedAccountId,
           },
@@ -514,7 +525,7 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
     };
 
     try {
-      return await createOnce(`order-split-${params.orderId}-${amountCents}-${feeCents}`);
+      return await createOnce(`order-split-${params.orderId}-${amountMinor}-${feeMinor}`);
     } catch (error: any) {
       if (this.isStripeAuthError(error)) {
         this.logger.warn(
@@ -523,7 +534,7 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
         await this.reloadStripeClient();
         if (this.stripe) {
           return await createOnce(
-            `order-split-${params.orderId}-${amountCents}-${feeCents}-reload`,
+            `order-split-${params.orderId}-${amountMinor}-${feeMinor}-reload`,
           );
         }
       }
@@ -543,7 +554,7 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
     if (!this.stripe) throw new Error('Stripe provider is not available');
 
     const transfer = await this.stripe.transfers.create({
-      amount: Math.round(params.amount * 100),
+      amount: toMinorUnits(params.amount, params.currency),
       currency: params.currency.toLowerCase(),
       destination: params.connectedAccountId,
       source_transaction: params.sourceTransaction,

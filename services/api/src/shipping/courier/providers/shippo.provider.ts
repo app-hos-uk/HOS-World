@@ -13,6 +13,7 @@ import {
   Address,
   TestConnectionResult,
 } from '../interfaces/courier-provider.interface';
+import { PLATFORM_DEFAULT_CURRENCY } from '../../../common/currency-defaults';
 
 interface ShippoAddress {
   name: string;
@@ -275,7 +276,7 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
         serviceName:
           `${rate.provider || 'Carrier'} ${rate.servicelevel?.name || rate.servicelevel?.token || ''}`.trim(),
         rate: parseFloat(rate.amount),
-        currency: rate.currency || 'USD',
+        currency: rate.currency || PLATFORM_DEFAULT_CURRENCY,
         estimatedDays: Number(rate.estimated_days) || 5,
         estimatedDeliveryDate: rate.estimated_days
           ? new Date(Date.now() + Number(rate.estimated_days) * 86400000)
@@ -451,7 +452,7 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
         },
       ],
       rate: parseFloat(selectedRate.amount),
-      currency: selectedRate.currency || 'USD',
+      currency: selectedRate.currency || PLATFORM_DEFAULT_CURRENCY,
       serviceCode: selectedRate.object_id,
       serviceName:
         `${selectedRate.provider || 'Carrier'} ${selectedRate.servicelevel?.name || ''}`.trim(),

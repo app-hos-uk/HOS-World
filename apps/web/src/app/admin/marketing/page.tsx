@@ -6,6 +6,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { navIcon } from '@/lib/navIcons';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface MarketingMaterial {
   id: string;
@@ -63,6 +64,7 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export default function AdminMarketingPage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -349,7 +351,7 @@ export default function AdminMarketingPage() {
                                 Seller: {submission.seller?.storeName || 'Unknown'}
                               </p>
                               <p className="text-xs text-hos-text-muted mt-1">
-                                Catalog completed: {new Date(submission.catalogCompletedAt).toLocaleDateString()}
+                                Catalog completed: {formatDate(submission.catalogCompletedAt)}
                               </p>
                             </div>
                             <div className="flex gap-2">
@@ -495,7 +497,7 @@ export default function AdminMarketingPage() {
                                 </a>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                                {new Date(material.createdAt).toLocaleDateString()}
+                                {formatDate(material.createdAt)}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <button

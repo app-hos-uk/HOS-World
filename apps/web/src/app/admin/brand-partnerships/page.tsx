@@ -5,8 +5,11 @@ import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 export default function AdminBrandPartnershipsPage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,11 +127,11 @@ export default function AdminBrandPartnershipsPage() {
                         </td>
                         <td className="p-2">{String(row.status)}</td>
                         <td className="p-2">
-                          {spent} / {total} {String(row.currency ?? 'USD')}
+                          {spent} / {total} {String(row.currency ?? DEFAULT_CURRENCY)}
                         </td>
                         <td className="p-2 text-xs text-hos-text-secondary">
-                          {row.contractStart ? new Date(String(row.contractStart)).toLocaleDateString() : '—'}{' '}
-                          – {row.contractEnd ? new Date(String(row.contractEnd)).toLocaleDateString() : '—'}
+                          {row.contractStart ? formatDate(String(row.contractStart)) : '—'}{' '}
+                          – {row.contractEnd ? formatDate(String(row.contractEnd)) : '—'}
                         </td>
                         <td className="p-2 space-x-2">
                           <Link href={`/admin/brand-partnerships/${id}`} className="text-violet-400">

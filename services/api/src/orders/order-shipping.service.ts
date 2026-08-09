@@ -20,6 +20,7 @@ import {
 import { NotificationsService } from '../notifications/notifications.service';
 import { TransactionsService } from '../finance/transactions.service';
 import { VendorLedgerService } from '../vendor-ledger/vendor-ledger.service';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 const DEFAULT_PACKAGE: PackageDimensions = {
   length: 30,
@@ -148,7 +149,7 @@ export class OrderShippingService {
         await this.transactionsService.createTransaction({
           type: 'FEE',
           amount: response.rate,
-          currency: response.currency || order.currency || 'USD',
+          currency: response.currency || order.currency || PLATFORM_DEFAULT_CURRENCY,
           orderId: order.id,
           sellerId: order.sellerId || undefined,
           description: `Shipping label cost via ${providerName} (${response.serviceName})`,
@@ -173,7 +174,7 @@ export class OrderShippingService {
             sellerId: order.sellerId,
             orderId: order.id,
             amount: response.rate,
-            currency: response.currency || order.currency || 'USD',
+            currency: response.currency || order.currency || PLATFORM_DEFAULT_CURRENCY,
             description: `Shipping label cost via ${providerName} (${response.serviceName})`,
             metadata: {
               shipmentId: response.shipmentId,

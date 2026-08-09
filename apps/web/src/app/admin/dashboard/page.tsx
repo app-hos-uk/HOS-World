@@ -24,6 +24,8 @@ import {
   ResponsiveContainer,
   LabelList,
 } from 'recharts';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface DashboardStats {
   totalProducts: number;
@@ -91,6 +93,8 @@ const quickActions = [
 ];
 
 export default function AdminDashboardPage() {
+  const { formatDateTime } = useDateTime();
+  const { formatMoney, formatMoneyCompact } = useMoney();
   const [dashboardData, setDashboardData] = useState<AdminDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -211,12 +215,12 @@ export default function AdminDashboardPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
               <StatCard
                 label="Total Revenue"
-                value={`$${(stats.totalRevenue || 0).toLocaleString()}`}
+                value={formatMoney((stats.totalRevenue || 0))}
                 icon={navIcon('dollar', 'w-5 h-5')}
                 iconBgColor="bg-green-500/10"
                 trend={{
                   value: 0,
-                  label: `$${(stats.monthlyRevenue || 0).toLocaleString()} this month`,
+                  label: `${formatMoney((stats.monthlyRevenue || 0))} this month`,
                 }}
               />
               <StatCard
@@ -283,17 +287,13 @@ export default function AdminDashboardPage() {
                           (dataMin: number) => Math.max(0, Math.floor(dataMin * 0.85)),
                           'auto',
                         ]}
-                        tickFormatter={(value: number) =>
-                          Math.abs(value) >= 1000
-                            ? `$${(value / 1000).toLocaleString(undefined, { maximumFractionDigits: 1 })}k`
-                            : `$${value}`
-                        }
+                        tickFormatter={(value: number) => formatMoneyCompact(value)}
                       />
                       <Tooltip 
                         contentStyle={DARK_CHART_TOOLTIP}
                         itemStyle={DARK_CHART_TOOLTIP_ITEM}
                         labelStyle={DARK_CHART_TOOLTIP_LABEL}
-                        formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                        formatter={(value: number) => [formatMoney(value), 'Revenue']}
                       />
                       <Line 
                         type="monotone" 
@@ -481,7 +481,7 @@ export default function AdminDashboardPage() {
                         iconBg="bg-hos-gold/20"
                         title={formatActivityTitle(activity)}
                         subtitle={formatActivityDescription(activity)}
-                        timestamp={activity.createdAt ? new Date(activity.createdAt).toLocaleString() : 'Recently'}
+                        timestamp={activity.createdAt ? formatDateTime(activity.createdAt) : 'Recently'}
                       />
                     ))}
                   </div>

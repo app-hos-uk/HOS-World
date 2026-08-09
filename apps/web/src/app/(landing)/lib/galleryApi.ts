@@ -1,3 +1,4 @@
+import { formatDate } from '@/lib/datetime';
 export type GalleryImage = {
   id: string;
   url: string;
@@ -66,11 +67,9 @@ export async function fetchGalleryAlbum(slug: string): Promise<GalleryAlbum | nu
 export function formatGalleryDate(value?: string | null): string {
   if (!value) return '';
   try {
-    return new Date(value).toLocaleDateString('en-GB', {
-      day: 'numeric',
+    return formatDate(value, { day: 'numeric',
       month: 'long',
-      year: 'numeric',
-    });
+      year: 'numeric', });
   } catch {
     return '';
   }

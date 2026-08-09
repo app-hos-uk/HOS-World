@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface SearchStats {
   totalDocuments?: number;
@@ -21,6 +23,8 @@ interface SearchResult {
 }
 
 export default function AdminSearchPage() {
+  const { formatDateTime } = useDateTime();
+  const { formatMoney } = useMoney();
   const [stats, setStats] = useState<SearchStats | null>(null);
   const [healthy, setHealthy] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -193,7 +197,7 @@ export default function AdminSearchPage() {
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Last Updated</h3>
               <p className="text-lg font-semibold text-hos-text-secondary mt-2">
-                {stats?.lastUpdate ? new Date(stats.lastUpdate).toLocaleString() : '—'}
+                {stats?.lastUpdate ? formatDateTime(stats.lastUpdate) : '—'}
               </p>
             </div>
           </div>
@@ -316,7 +320,7 @@ export default function AdminSearchPage() {
                               {item.name || item.title || '—'}
                             </td>
                             <td className="tabular-nums text-right px-4 py-3 text-sm text-hos-text-secondary">
-                              {item.price != null ? `$${Number(item.price).toFixed(2)}` : '—'}
+                              {item.price != null ? formatMoney(Number(item.price)) : '—'}
                             </td>
                           </tr>
                         ))}

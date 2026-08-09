@@ -6,6 +6,8 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { DataExport } from '@/components/DataExport';
+import { useMoney } from '@/hooks/useMoney';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface Product {
   id: string;
@@ -46,6 +48,7 @@ interface PriceUpdate {
 }
 
 export default function AdminPricingPage() {
+  const { formatMoney } = useMoney();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const [products, setProducts] = useState<Product[]>([]);
@@ -378,9 +381,9 @@ export default function AdminPricingPage() {
     { key: 'name', header: 'Product Name' },
     { key: 'seller', header: 'Seller', format: (_v: any, r: Product) => r.seller?.storeName || (r.isPlatformOwned ? 'Platform' : '') },
     { key: 'sku', header: 'SKU' },
-    { key: 'price', header: 'Price', format: (v: number, r: Product) => `${r.currency || 'USD'} ${Number(v || 0).toFixed(2)}` },
-    { key: 'tradePrice', header: 'Trade Price', format: (v: number, r: Product) => v ? `${r.currency || 'USD'} ${Number(v).toFixed(2)}` : '' },
-    { key: 'rrp', header: 'RRP', format: (v: number, r: Product) => v ? `${r.currency || 'USD'} ${Number(v).toFixed(2)}` : '' },
+    { key: 'price', header: 'Price', format: (v: number, r: Product) => formatMoney(Number(v || 0), r.currency || DEFAULT_CURRENCY) },
+    { key: 'tradePrice', header: 'Trade Price', format: (v: number, r: Product) => v ? formatMoney(Number(v), r.currency || DEFAULT_CURRENCY) : '' },
+    { key: 'rrp', header: 'RRP', format: (v: number, r: Product) => v ? formatMoney(Number(v), r.currency || DEFAULT_CURRENCY) : '' },
     { key: 'stock', header: 'Stock' },
     { key: 'taxRate', header: 'Tax Rate', format: (v: number) => v ? `${v}%` : '' },
     { key: 'status', header: 'Status' },

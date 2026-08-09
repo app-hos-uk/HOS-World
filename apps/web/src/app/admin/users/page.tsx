@@ -17,6 +17,7 @@ import {
   useAdminColumnVisibility,
   type AdminColumnDef,
 } from '@/components/ui/AdminColumnToggle';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface User {
   id: string;
@@ -86,6 +87,7 @@ const ROLE_DESCRIPTIONS: Record<string, string> = {
 };
 
 export default function AdminUsersPage() {
+  const { formatDate, formatDateTime } = useDateTime();
   const toast = useToast();
   const { user: currentUser } = useAuth();
   const isSuperAdmin = isSuperAdminEmail(currentUser?.email);
@@ -616,8 +618,8 @@ export default function AdminUsersPage() {
     { key: 'storeName', header: 'Store Name' },
     { key: 'isActive', header: 'Status', format: (v: boolean) => v !== false ? 'Active' : 'Inactive' },
     { key: 'emailVerified', header: 'Email Verified', format: (v: boolean) => v ? 'Yes' : 'No' },
-    { key: 'createdAt', header: 'Created', format: (v: string) => v ? new Date(v).toLocaleDateString() : '' },
-    { key: 'lastLoginAt', header: 'Last Login', format: (v: string) => v ? new Date(v).toLocaleDateString() : 'Never' },
+    { key: 'createdAt', header: 'Created', format: (v: string) => v ? formatDate(v) : '' },
+    { key: 'lastLoginAt', header: 'Last Login', format: (v: string) => v ? formatDate(v) : 'Never' },
   ];
 
   const tableUsesEmailVerifiedFilter = statusFilter === 'VERIFIED' || statusFilter === 'UNVERIFIED';
@@ -959,7 +961,7 @@ export default function AdminUsersPage() {
                         )}
                         {isUserColumnVisible('created') && (
                         <td className="px-4 py-3 text-sm text-hos-text-muted">
-                          {new Date(user.createdAt).toLocaleDateString()}
+                          {formatDate(user.createdAt)}
                         </td>
                         )}
                         {isUserColumnVisible('actions') && (
@@ -1100,12 +1102,12 @@ export default function AdminUsersPage() {
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Member Since</p>
-                        <p className="font-medium">{new Date(selectedUser.createdAt).toLocaleDateString()}</p>
+                        <p className="font-medium">{formatDate(selectedUser.createdAt)}</p>
                       </div>
                       {selectedUser.lastLoginAt && (
                         <div className="col-span-2">
                           <p className="text-sm text-hos-text-muted">Last Login</p>
-                          <p className="font-medium">{new Date(selectedUser.lastLoginAt).toLocaleString()}</p>
+                          <p className="font-medium">{formatDateTime(selectedUser.lastLoginAt)}</p>
                         </div>
                       )}
                     </div>

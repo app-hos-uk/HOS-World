@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { AlignedDataTable, type AlignedColumn } from '@/components/ui/AlignedDataTable';
+import { useMoney } from '@/hooks/useMoney';
 
 type CampaignRow = {
   campaignId: string;
@@ -17,6 +18,7 @@ type CampaignRow = {
 };
 
 export default function AttributionPage() {
+  const { formatMoney } = useMoney();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -60,7 +62,7 @@ export default function AttributionPage() {
         header: 'Revenue',
         width: '1.1fr',
         align: 'right',
-        cell: (c) => `$${Number(c.totalRevenue).toFixed(2)}`,
+        cell: (c) => formatMoney(Number(c.totalRevenue)),
       },
       {
         key: 'points',
@@ -77,7 +79,7 @@ export default function AttributionPage() {
         cell: (c) => `${c.roi}x`,
       },
     ],
-    [],
+    [formatMoney],
   );
 
   return (
@@ -101,7 +103,7 @@ export default function AttributionPage() {
                 </div>
                 <div className="rounded border border-hos-border bg-hos-bg-secondary p-3">
                   <p className="text-hos-text-muted">Revenue</p>
-                  <p className="text-xl font-semibold">${Number(totals.revenue).toFixed(2)}</p>
+                  <p className="text-xl font-semibold">{formatMoney(Number(totals.revenue))}</p>
                 </div>
                 <div className="rounded border border-hos-border bg-hos-bg-secondary p-3">
                   <p className="text-hos-text-muted">Points</p>
@@ -109,7 +111,7 @@ export default function AttributionPage() {
                 </div>
                 <div className="rounded border border-hos-border bg-hos-bg-secondary p-3">
                   <p className="text-hos-text-muted">Cost</p>
-                  <p className="text-xl font-semibold">${Number(totals.cost).toFixed(2)}</p>
+                  <p className="text-xl font-semibold">{formatMoney(Number(totals.cost))}</p>
                 </div>
                 <div className="rounded border border-hos-border bg-hos-bg-secondary p-3">
                   <p className="text-hos-text-muted">Avg ROI</p>

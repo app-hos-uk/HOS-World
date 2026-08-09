@@ -17,6 +17,7 @@ import {
   validateNameLike,
   validatePhoneMaxDigits,
 } from '@/lib/formFieldValidation';
+import { useDateTime } from '@/hooks/useDateTime';
 
 const ALLOWED_ROLES = ['ADMIN', 'MARKETING'] as const;
 
@@ -77,6 +78,7 @@ const STATUS_COLORS: Record<PreviewRow['status'], string> = {
 };
 
 export default function AdminFoundingMembersPage() {
+  const { formatDate: formatDateShared } = useDateTime();
   const [tab, setTab] = useState<Tab>('list');
   const [members, setMembers] = useState<FoundingMember[]>([]);
   const [total, setTotal] = useState(0);
@@ -339,7 +341,7 @@ export default function AdminFoundingMembersPage() {
 
   const formatDate = (s: string) => {
     try {
-      return new Date(s).toLocaleDateString(undefined, { dateStyle: 'medium' });
+      return formatDateShared(s, { dateStyle: 'medium' });
     } catch {
       return s;
     }

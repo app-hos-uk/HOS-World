@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useRouter } from 'next/navigation';
+import { useMoney } from '@/hooks/useMoney';
 
 interface TaxClass {
   id: string;
@@ -22,6 +23,7 @@ interface TaxClass {
  * Access: FINANCE, ADMIN roles
  */
 export default function PriceManagementPage() {
+  const { formatMoney } = useMoney();
   const router = useRouter();
   const toast = useToast();
   const [products, setProducts] = useState<any[]>([]);
@@ -328,7 +330,7 @@ export default function PriceManagementPage() {
                           <div className="text-sm text-hos-text-muted">{product.sku || 'No SKU'}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary align-middle">
-                          {product.currency || 'USD'} {Number(product.price || 0).toFixed(2)}
+                          {formatMoney(Number(product.price || 0), product.currency || 'USD')}
                         </td>
                         <td className="text-right px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary align-middle">
                           {product.stock || 0}

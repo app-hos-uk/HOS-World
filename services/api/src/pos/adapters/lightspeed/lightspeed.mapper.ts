@@ -5,6 +5,7 @@ import type {
   POSProductPayload,
   POSCustomerPayload,
 } from '../../interfaces/pos-types';
+import { PLATFORM_DEFAULT_CURRENCY } from '../../../common/currency-defaults';
 
 /** Lightspeed / Vend API response shapes (partial). */
 export function mapOutletFromVend(row: {
@@ -115,7 +116,12 @@ function resolveLineItems(payload: Record<string, unknown>): Record<string, unkn
   return [];
 }
 
-export function mapSaleFromVend(payload: Record<string, unknown>, outletId: string): POSSale {
+export function mapSaleFromVend(
+  payload: Record<string, unknown>,
+  outletId: string,
+  /** Region/platform currency when Lightspeed omits `currency` on the sale. */
+  defaultCurrency = PLATFORM_DEFAULT_CURRENCY,
+): POSSale {
   const items: POSSaleItem[] = resolveLineItems(payload).map(mapLineItem);
 
   const totals =
@@ -162,7 +168,7 @@ export function mapSaleFromVend(payload: Record<string, unknown>, outletId: stri
     ),
     taxAmount: firstNumber(totals?.total_tax, payload.total_tax),
     discountAmount: firstNumber(totals?.total_discount, payload.total_discount),
-    currency: String(payload.currency ?? 'GBP'),
+    currency: String(payload.currency ?? defaultCurrency),
     state,
     version,
     rawPayload: payload,

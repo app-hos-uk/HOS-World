@@ -6,10 +6,12 @@ import { useParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 type Tab = 'details' | 'rsvps' | 'attendance' | 'stats';
 
 export default function AdminEventDetailPage() {
+  const { formatDateTime } = useDateTime();
   const params = useParams();
   const id = params.id as string;
   const toast = useToast();
@@ -118,7 +120,7 @@ export default function AdminEventDetailPage() {
             <>
               <h1 className="text-2xl font-semibold text-hos-text-secondary">{event.title}</h1>
               <p className="text-sm text-hos-text-secondary">
-                {event.status} · {event.slug} · {new Date(event.startsAt).toLocaleString()}
+                {event.status} · {event.slug} · {formatDateTime(event.startsAt)}
               </p>
               <div className="flex gap-2 border-b border-hos-border">
                 {tabBtn('details', 'Details')}
@@ -222,7 +224,7 @@ export default function AdminEventDetailPage() {
                       <tr key={a.id} className="border-t">
                         <td className="px-2 py-1">{a.user?.email ?? a.userId}</td>
                         <td className="text-right px-2 py-1">{a.pointsAwarded}</td>
-                        <td className="px-2 py-1">{new Date(a.checkedInAt).toLocaleString()}</td>
+                        <td className="px-2 py-1">{formatDateTime(a.checkedInAt)}</td>
                       </tr>
                     ))}
                   </tbody>

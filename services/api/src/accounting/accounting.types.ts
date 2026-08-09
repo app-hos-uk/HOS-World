@@ -1,3 +1,4 @@
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 /**
  * HOS → Xero ledger entry types (daily summary journals only).
  * Lightspeed's native Xero connector owns in-store POS sales — never post POSSale here.
@@ -46,7 +47,7 @@ export const DEFAULT_COA_MAPPING: ChartOfAccountsMapping = {
   giftCardLiability: '855',
   giftCardExpiryRevenue: '265',
   loyaltyDiscount: '215',
-  currency: 'GBP',
+  currency: PLATFORM_DEFAULT_CURRENCY,
 };
 
 export interface XeroJournalLine {

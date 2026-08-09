@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface CurrencyData {
   supported: string[];
@@ -12,6 +13,7 @@ interface CurrencyData {
 }
 
 export default function AdminCurrenciesPage() {
+  const { formatDateTime } = useDateTime();
   const toast = useToast();
   const [data, setData] = useState<CurrencyData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,7 +101,7 @@ export default function AdminCurrenciesPage() {
                     </td>
                     <td className="px-6 py-4 text-hos-text-muted text-sm">
                       {data.lastUpdated
-                        ? new Date(data.lastUpdated).toLocaleString()
+                        ? formatDateTime(data.lastUpdated)
                         : '—'}
                     </td>
                   </tr>

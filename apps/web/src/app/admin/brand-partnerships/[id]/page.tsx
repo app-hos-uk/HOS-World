@@ -6,11 +6,13 @@ import { useParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useMoney } from '@/hooks/useMoney';
 
 export default function AdminBrandPartnershipDetailPage() {
   const params = useParams();
   const id = String(params.id);
   const toast = useToast();
+  const { currency: regionCurrency } = useMoney();
   const [row, setRow] = useState<Record<string, unknown> | null>(null);
   const [report, setReport] = useState<Record<string, unknown> | null>(null);
   const [editing, setEditing] = useState(false);
@@ -25,7 +27,7 @@ export default function AdminBrandPartnershipDetailPage() {
     contractStart: '',
     contractEnd: '',
     totalBudget: 0,
-    currency: 'GBP',
+    currency: regionCurrency,
   });
 
   const load = useCallback(() => {
@@ -58,7 +60,7 @@ export default function AdminBrandPartnershipDetailPage() {
         contractStart: row.contractStart ? String(row.contractStart).slice(0, 10) : '',
         contractEnd: row.contractEnd ? String(row.contractEnd).slice(0, 10) : '',
         totalBudget: Number(row.totalBudget ?? 0),
-        currency: String(row.currency ?? 'GBP'),
+        currency: String(row.currency ?? regionCurrency),
       });
     }
     setEditing(true);

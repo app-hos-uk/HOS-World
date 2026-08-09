@@ -6,6 +6,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { SocialShare } from '@/components/SocialShare';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useMoney } from '@/hooks/useMoney';
 
 interface ProductLink {
   id: string;
@@ -32,6 +33,7 @@ interface Product {
 }
 
 export default function InfluencerProductLinksPage() {
+  const { formatMoney } = useMoney();
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -146,10 +148,7 @@ export default function InfluencerProductLinksPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+    return formatMoney(amount);
   };
 
   // Filter products not already linked

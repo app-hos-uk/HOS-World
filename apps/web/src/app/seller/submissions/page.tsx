@@ -8,6 +8,7 @@ import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+import { useDateTime } from '@/hooks/useDateTime';
 
 function canSellerEditSubmission(status: string): boolean {
   return ['SUBMITTED', 'UNDER_REVIEW', 'PROCUREMENT_REJECTED'].includes(status);
@@ -18,6 +19,7 @@ function canSellerDeleteSubmission(status: string): boolean {
 }
 
 export default function SellerSubmissionsPage() {
+  const { formatDate } = useDateTime();
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -174,7 +176,7 @@ export default function SellerSubmissionsPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                          {new Date(submission.createdAt).toLocaleDateString()}
+                          {formatDate(submission.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex flex-wrap items-center gap-3">

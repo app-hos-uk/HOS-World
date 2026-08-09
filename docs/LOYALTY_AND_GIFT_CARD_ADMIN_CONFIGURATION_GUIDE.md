@@ -118,7 +118,7 @@ Earn rules define how customers accumulate points.
      - `QUIZ` — Quiz completion
    - **Name** — Human-readable label
    - **Points Amount** — Number of points awarded
-   - **Points Type** — `FIXED` (flat amount) or `PER_CURRENCY_UNIT` (per £1)
+   - **Points Type** — `FIXED` (flat amount) or `PER_CURRENCY_UNIT` (per $1)
    - **Is Active** — Toggle to enable/disable without deleting
    - **Max Per Period** — Optional limit (e.g., 3 reviews per month)
 3. Click **Save**.
@@ -127,7 +127,7 @@ Earn rules define how customers accumulate points.
 
 | Goal | Action |
 |------|--------|
-| Change base earn rate from 1pt/£1 to 2pt/£1 | Edit `PURCHASE` rule → set Points Amount to `2` |
+| Change base earn rate from 1pt/$1 to 2pt/$1 | Edit `PURCHASE` rule → set Points Amount to `2` |
 | Disable review rewards | Edit `REVIEW` and `PHOTO_REVIEW` rules → uncheck Is Active |
 | Increase signup bonus to 200 | Edit `SIGNUP` rule → set Points Amount to `200` |
 | Add a new earn activity | Create new rule with a custom action name |
@@ -143,7 +143,7 @@ These are the rewards customers can redeem their points for.
 **To create/edit a redemption option:**
 1. Click **Add Option** or click an existing option.
 2. Fields:
-   - **Name** — Display name (e.g., "£5 Discount")
+   - **Name** — Display name (e.g., "$5 Discount")
    - **Type** — Reward type:
      - `DISCOUNT` — Money off order (generates coupon code)
      - `FREE_SHIPPING` — Shipping cost waived
@@ -230,8 +230,8 @@ The full ledger of all loyalty transactions across all members. Filter by:
 5. Customer uses the gift card at the register.
 
 **POS voucher limits:**
-- `POS_GIFT_CARD_MIN_AMOUNT` — Default: £1
-- `POS_GIFT_CARD_MAX_AMOUNT` — Default: £500
+- `POS_GIFT_CARD_MIN_AMOUNT` — Default: $1
+- `POS_GIFT_CARD_MAX_AMOUNT` — Default: $500
 
 ---
 
@@ -290,7 +290,7 @@ If no settings have been saved, the API falls back to the environment:
 
 ```
 GIFT_CARD_CATALOG_AMOUNTS=25,50,100,250,500
-GIFT_CARD_DEFAULT_CURRENCY=GBP
+GIFT_CARD_DEFAULT_CURRENCY=USD
 ```
 
 ---
@@ -305,8 +305,8 @@ settings have been saved; the values here are the fallback only.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `LOYALTY_ENABLED` | `true` | Runtime switch (combine with feature flag) |
-| `LOYALTY_DEFAULT_EARN_RATE` | `1` | **(Settings)** Points per £1 spent (fallback) |
-| `LOYALTY_DEFAULT_REDEEM_VALUE` | `0.01` | **(Settings)** £ per point on redemption |
+| `LOYALTY_DEFAULT_EARN_RATE` | `1` | **(Settings)** Points per $1 spent (fallback) |
+| `LOYALTY_DEFAULT_REDEEM_VALUE` | `0.01` | **(Settings)** $ per point on redemption |
 | `LOYALTY_MIN_REDEMPTION_POINTS` | `100` | **(Settings)** Minimum points to redeem |
 | `LOYALTY_POINTS_EXPIRY_MONTHS` | `24` | **(Settings)** Months before points expire (0 = no expiry) |
 | `LOYALTY_CARD_PREFIX` | `HOS` | **(Settings)** Prefix for digital loyalty card numbers |
@@ -326,7 +326,7 @@ settings have been saved; the values here are the fallback only.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `GIFT_CARD_CATALOG_AMOUNTS` | `25,50,100,250,500` | **(Settings)** Customer-facing denominations |
-| `GIFT_CARD_DEFAULT_CURRENCY` | `GBP` | **(Settings)** Default currency for new cards |
+| `GIFT_CARD_DEFAULT_CURRENCY` | `USD` | **(Settings)** Default currency for new cards |
 | `POS_GIFT_CARD_MIN_AMOUNT` | `1` | **(Settings)** Minimum POS voucher amount |
 | `POS_GIFT_CARD_MAX_AMOUNT` | `500` | **(Settings)** Maximum POS voucher amount |
 | `POS_GIFT_CARD_RECON_CRON` | `0 */6 * * *` | POS reconciliation schedule |

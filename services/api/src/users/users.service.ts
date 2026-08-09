@@ -14,6 +14,7 @@ import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';
 import type { User } from '@hos-marketplace/shared-types';
 import { isProtectedAdminEmail } from '../config/protected-admin-emails';
 import { LoyaltyListener } from '../loyalty/listeners/loyalty.listener';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
 export class UsersService {
@@ -163,7 +164,7 @@ export class UsersService {
         create: {
           userId,
           country: u?.country,
-          currencyPreference: u?.currencyPreference || 'USD',
+          currencyPreference: u?.currencyPreference || PLATFORM_DEFAULT_CURRENCY,
           ...b2bUpdate,
         },
         update: b2bUpdate,

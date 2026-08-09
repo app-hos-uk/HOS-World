@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+import { useDateTime } from '@/hooks/useDateTime';
 
 type PromotionType = 'PERCENTAGE_DISCOUNT' | 'FIXED_DISCOUNT' | 'BUY_X_GET_Y' | 'FREE_SHIPPING';
 type RequirementType = 'MIN_ORDER_AMOUNT' | 'MIN_QUANTITY' | 'NONE';
@@ -95,6 +96,7 @@ function getUsageSummary(promo: any): string {
 }
 
 export default function AdminPromotionsPage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const [promotions, setPromotions] = useState<any[]>([]);
@@ -564,8 +566,8 @@ export default function AdminPromotionsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                        {promo.startDate && new Date(promo.startDate).toLocaleDateString()}
-                        {promo.endDate ? ` – ${new Date(promo.endDate).toLocaleDateString()}` : ''}
+                        {promo.startDate && formatDate(promo.startDate)}
+                        {promo.endDate ? ` – ${formatDate(promo.endDate)}` : ''}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center gap-3">

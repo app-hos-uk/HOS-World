@@ -10,6 +10,8 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
 import { PortalMobileCard } from '@/components/ui/PortalMobileCard';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface Product {
   id: string;
@@ -37,6 +39,8 @@ interface SubmissionItem {
 }
 
 export default function SellerProductsPage() {
+  const { formatDate } = useDateTime();
+  const { formatMoney } = useMoney();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const [products, setProducts] = useState<Product[]>([]);
@@ -353,7 +357,7 @@ export default function SellerProductsPage() {
             </button>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Inventory Value</h3>
-              <p className="text-xl font-bold text-green-400 mt-1">${stats.totalValue.toFixed(2)}</p>
+              <p className="text-xl font-bold text-green-400 mt-1">{formatMoney(stats.totalValue)}</p>
             </div>
           </div>
 
@@ -486,7 +490,7 @@ export default function SellerProductsPage() {
                         { label: 'Price', value: formatPrice(Number(product.price || 0)) },
                         { label: 'Stock', value: product.stock ?? 0 },
                         { label: 'Fandom', value: product.category || product.fandom || '—' },
-                        { label: 'Created', value: new Date(product.createdAt).toLocaleDateString() },
+                        { label: 'Created', value: formatDate(product.createdAt) },
                       ]}
                       actions={
                         !product._isSubmission ? (
@@ -601,7 +605,7 @@ export default function SellerProductsPage() {
                             {product.category || product.fandom || '-'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                            {new Date(product.createdAt).toLocaleDateString()}
+                            {formatDate(product.createdAt)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {!product._isSubmission && (

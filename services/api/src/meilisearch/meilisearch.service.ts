@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { MeiliSearch, Index, SearchParams, Settings } from 'meilisearch';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 export interface MeiliSearchResult {
   hits: any[];
@@ -394,7 +395,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       sku: product.sku || null,
       barcode: product.barcode || null,
       price: parseFloat(product.price || '0'),
-      currency: product.currency || 'USD',
+      currency: product.currency || PLATFORM_DEFAULT_CURRENCY,
       stock: product.stock || 0,
       category: this.sanitizeCategory(product.category),
       categoryId: product.categoryId || null,

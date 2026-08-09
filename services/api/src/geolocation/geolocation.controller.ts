@@ -10,6 +10,7 @@ import { GeolocationService } from './geolocation.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @ApiTags('geolocation')
 @Controller('geolocation')
@@ -59,7 +60,7 @@ export class GeolocationController {
   ): Promise<ApiResponse<any>> {
     const currency = body.countryCode
       ? this.geolocationService.getCurrencyForCountry(body.countryCode)
-      : 'USD';
+      : PLATFORM_DEFAULT_CURRENCY;
 
     // Update user's country and currency
     await this.geolocationService['prisma'].user.update({

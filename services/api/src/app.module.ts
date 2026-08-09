@@ -109,6 +109,7 @@ import { UniversesModule } from './universes/universes.module';
 import { TestimonialsModule } from './testimonials/testimonials.module';
 import { GalleryModule } from './gallery/gallery.module';
 import { FeatureFlagsModule } from './config/feature-flags.module';
+import { PlatformRegionModule } from './config/platform-region.module';
 import { validateEnvironmentVariables } from './config/env.validation';
 import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 
@@ -126,6 +127,7 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     LoggerModule,
     ScheduleModule.forRoot(),
     FeatureFlagsModule,
+    PlatformRegionModule,
     DatabaseModule,
     CacheModule,
     RateLimitModule,

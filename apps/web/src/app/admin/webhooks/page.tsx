@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 const EVENT_OPTIONS = [
   'order.created',
@@ -28,6 +29,7 @@ const EVENT_OPTIONS = [
 ];
 
 export default function WebhooksPage() {
+  const { formatDateTime } = useDateTime();
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -399,7 +401,7 @@ export default function WebhooksPage() {
                         )}
                       </div>
                       <p className="text-xs text-hos-text-muted mt-2">
-                        Created: {webhook.createdAt ? new Date(webhook.createdAt).toLocaleString() : 'N/A'}
+                        Created: {webhook.createdAt ? formatDateTime(webhook.createdAt) : 'N/A'}
                         {webhook.sellerId && ` | Seller: ${webhook.sellerId.slice(0, 8)}...`}
                       </p>
                     </div>
@@ -469,7 +471,7 @@ export default function WebhooksPage() {
                                 </div>
                                 <p className="text-xs text-hos-text-muted mt-1">
                                   {delivery.createdAt
-                                    ? new Date(delivery.createdAt).toLocaleString()
+                                    ? formatDateTime(delivery.createdAt)
                                     : 'N/A'}
                                   {delivery.duration ? ` | ${delivery.duration}ms` : ''}
                                 </p>

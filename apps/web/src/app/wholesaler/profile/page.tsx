@@ -19,6 +19,7 @@ import {
   SELLER_PROFILE_HINTS,
 } from '@/lib/sellerProfileFieldValidation';
 import { navIcon } from '@/lib/navIcons';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface WholesalerProfile {
   id: string;
@@ -52,6 +53,7 @@ interface WholesalerProfile {
 }
 
 export default function WholesalerProfilePage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const [profile, setProfile] = useState<WholesalerProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -964,29 +966,25 @@ export default function WholesalerProfilePage() {
                                   </a>
                                 )}
                                 <p className="text-xs text-hos-text-muted">
-                                  Submitted {new Date(doc.createdAt).toLocaleDateString(undefined, {
-                                    year: 'numeric',
+                                  Submitted {formatDate(doc.createdAt, { year: 'numeric',
                                     month: 'short',
                                     day: 'numeric',
                                     hour: '2-digit',
-                                    minute: '2-digit',
-                                  })}
+                                    minute: '2-digit', })}
                                 </p>
                                 {doc.reviewedAt && (
                                   <p className="text-xs text-hos-text-muted">
-                                    Reviewed {new Date(doc.reviewedAt).toLocaleDateString(undefined, {
-                                      year: 'numeric',
+                                    Reviewed {formatDate(doc.reviewedAt, { year: 'numeric',
                                       month: 'short',
                                       day: 'numeric',
                                       hour: '2-digit',
-                                      minute: '2-digit',
-                                    })}
+                                      minute: '2-digit', })}
                                     {reviewedByName ? ` by ${reviewedByName}` : ''}
                                   </p>
                                 )}
                                 {doc.status === 'APPROVED' && doc.reviewedAt && (
                                   <p className="text-xs text-green-400">
-                                    Approved {new Date(doc.reviewedAt).toLocaleDateString()}
+                                    Approved {formatDate(doc.reviewedAt)}
                                   </p>
                                 )}
                                 {doc.reviewNotes && (

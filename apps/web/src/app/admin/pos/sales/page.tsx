@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 import Link from 'next/link';
 
 type PosSale = {
@@ -51,21 +53,10 @@ const BADGE: Record<string, string> = {
   error: 'bg-red-500/20 text-red-300',
 };
 
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(amount);
-}
-
 export default function AdminPosSalesPage() {
   const toast = useToast();
+  const { formatMoney } = useMoney();
+  const { formatDate } = useDateTime();
   const [sales, setSales] = useState<PosSale[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -300,7 +291,7 @@ export default function AdminPosSalesPage() {
                             {sale.storeName || sale.storeId || '—'}
                           </td>
                           <td className="px-4 py-3 text-sm text-hos-text-secondary text-right">
-                            {formatCurrency(sale.total)}
+                            {formatMoney(sale.total)}
                           </td>
                           <td className="px-4 py-3 text-sm text-hos-text-secondary text-right">
                             {sale.itemCount}
@@ -380,10 +371,10 @@ export default function AdminPosSalesPage() {
                                                 {li.quantity}
                                               </td>
                                               <td className="py-1 pr-4 text-right">
-                                                {formatCurrency(li.unitPrice)}
+                                                {formatMoney(li.unitPrice)}
                                               </td>
                                               <td className="py-1 text-right">
-                                                {formatCurrency(li.total)}
+                                                {formatMoney(li.total)}
                                               </td>
                                             </tr>
                                           ))}

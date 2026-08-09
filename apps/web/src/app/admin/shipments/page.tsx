@@ -9,6 +9,7 @@ import { toSafeExternalHref } from '@/lib/httpUrlValidation';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface Shipment {
   id: string;
@@ -55,6 +56,7 @@ const STATUSES = [
 ];
 
 export default function AdminShipmentsPage() {
+  const { formatDate, formatDateTime } = useDateTime();
   const toast = useToast();
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -331,9 +333,9 @@ export default function AdminShipmentsPage() {
     { key: 'carrier', header: 'Carrier' },
     { key: 'trackingNumber', header: 'Tracking Number' },
     { key: 'status', header: 'Status' },
-    { key: 'createdAt', header: 'Created', format: (v: string) => new Date(v).toLocaleDateString() },
-    { key: 'estimatedDelivery', header: 'Est. Delivery', format: (v: string) => v ? new Date(v).toLocaleDateString() : '' },
-    { key: 'actualDelivery', header: 'Delivered', format: (v: string) => v ? new Date(v).toLocaleDateString() : '' },
+    { key: 'createdAt', header: 'Created', format: (v: string) => formatDate(v) },
+    { key: 'estimatedDelivery', header: 'Est. Delivery', format: (v: string) => v ? formatDate(v) : '' },
+    { key: 'actualDelivery', header: 'Delivered', format: (v: string) => v ? formatDate(v) : '' },
   ];
 
   return (
@@ -567,7 +569,7 @@ export default function AdminShipmentsPage() {
                           </td>
                           <td className="px-4 py-3">{getStatusBadge(shipment.status)}</td>
                           <td className="px-4 py-3 text-sm text-hos-text-muted">
-                            {new Date(shipment.createdAt).toLocaleDateString()}
+                            {formatDate(shipment.createdAt)}
                           </td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex justify-end gap-1">
@@ -643,16 +645,16 @@ export default function AdminShipmentsPage() {
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Created</p>
-                        <p className="font-medium">{new Date(selectedShipment.createdAt).toLocaleString()}</p>
+                        <p className="font-medium">{formatDateTime(selectedShipment.createdAt)}</p>
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Est. Delivery</p>
-                        <p className="font-medium">{selectedShipment.estimatedDelivery ? new Date(selectedShipment.estimatedDelivery).toLocaleDateString() : 'N/A'}</p>
+                        <p className="font-medium">{selectedShipment.estimatedDelivery ? formatDate(selectedShipment.estimatedDelivery) : 'N/A'}</p>
                       </div>
                       {selectedShipment.actualDelivery && (
                         <div>
                           <p className="text-sm text-hos-text-muted">Delivered</p>
-                          <p className="font-medium text-green-400">{new Date(selectedShipment.actualDelivery).toLocaleString()}</p>
+                          <p className="font-medium text-green-400">{formatDateTime(selectedShipment.actualDelivery)}</p>
                         </div>
                       )}
                       {selectedShipment.weight && (

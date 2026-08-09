@@ -10,6 +10,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useMoney } from '@/hooks/useMoney';
 
 interface Collection {
   id: string;
@@ -36,6 +37,7 @@ interface Product {
 }
 
 export default function CollectionDetailPage() {
+  const { formatMoney } = useMoney();
   const params = useParams();
   const router = useRouter();
   const toast = useToast();
@@ -338,7 +340,7 @@ export default function CollectionDetailPage() {
                       </div>
                     )}
                     <h3 className="font-semibold mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-hos-gold font-bold">${product.price}</p>
+                    <p className="text-hos-gold font-bold">{formatMoney(product.price)}</p>
                   </Link>
                   {isOwner && (
                     <button

@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { PlatformRegionService } from '../config/platform-region.service';
 import { PrismaService } from '../database/prisma.service';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
@@ -44,7 +45,10 @@ function parseSteps(data: unknown): Array<{
 
 @Injectable()
 export class StoreOnboardingService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private region: PlatformRegionService,
+  ) {}
 
   async createStore(dto: CreateStoreDto) {
     const tenant = await this.prisma.tenant.findUnique({ where: { id: dto.tenantId } });
@@ -58,6 +62,8 @@ export class StoreOnboardingService {
     const redeem =
       dto.loyaltyRedeemValue != null ? new Decimal(dto.loyaltyRedeemValue) : new Decimal(0.01);
 
+    const region = await this.region.getRegion();
+
     const store = await this.prisma.store.create({
       data: {
         tenantId: dto.tenantId,
@@ -67,16 +73,16 @@ export class StoreOnboardingService {
         address: dto.address ?? null,
         city: dto.city ?? null,
         state: dto.state ?? null,
-        country: dto.country ?? 'GB',
+        country: dto.country ?? region.country,
         postalCode: dto.postalCode ?? null,
         latitude: dto.latitude ?? null,
         longitude: dto.longitude ?? null,
-        timezone: dto.timezone ?? 'Europe/London',
-        currency: dto.currency ?? 'USD',
+        timezone: dto.timezone ?? region.timezone,
+        currency: dto.currency ?? region.currency,
         contactEmail: dto.contactEmail ?? null,
         contactPhone: dto.contactPhone ?? null,
         managerName: dto.managerName ?? null,
-        defaultRegionCode: dto.defaultRegionCode ?? 'GB',
+        defaultRegionCode: dto.defaultRegionCode ?? region.country,
         loyaltyRedeemValue: redeem,
         isActive: false,
       },

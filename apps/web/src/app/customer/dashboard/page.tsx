@@ -29,6 +29,8 @@ import {
   Legend,
 } from 'recharts';
 import { navIcon } from '@/lib/navIcons';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface DashboardStats {
   totalOrders: number;
@@ -46,6 +48,7 @@ interface DashboardOrder {
   status: string;
   paymentStatus?: string;
   total: number;
+  currency?: string;
   createdAt: string | Date;
   items?: any[];
 }
@@ -53,6 +56,7 @@ interface DashboardOrder {
 type TabType = 'overview' | 'orders' | 'analytics' | 'activity';
 
 export default function CustomerDashboardPage() {
+  const { formatDate: formatDateShared } = useDateTime();
   const router = useRouter();
   const toast = useToast();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -187,7 +191,7 @@ export default function CustomerDashboardPage() {
           id: `order-${order.id}`,
           type: 'order',
           title: `Order #${order.orderNumber || order.id.slice(0, 8)}`,
-          description: `${order.status} - ${formatPrice(order.total, 'USD')}`,
+          description: `${order.status} - ${formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}`,
           date: order.createdAt,
           icon: navIcon('package'),
           link: `/orders/${order.id}`,
@@ -256,7 +260,7 @@ export default function CustomerDashboardPage() {
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = date.toLocaleString('default', { month: 'short', year: '2-digit' });
+      const key = formatDateShared(date, { month: 'short', year: '2-digit' });
       monthlyData[key] = 0;
     }
 
@@ -264,7 +268,7 @@ export default function CustomerDashboardPage() {
       const orderDate = new Date(order.createdAt);
       const monthsAgo = (now.getFullYear() - orderDate.getFullYear()) * 12 + (now.getMonth() - orderDate.getMonth());
       if (monthsAgo >= 0 && monthsAgo < 6) {
-        const key = orderDate.toLocaleString('default', { month: 'short', year: '2-digit' });
+        const key = formatDateShared(orderDate, { month: 'short', year: '2-digit' });
         if (monthlyData[key] !== undefined) {
           monthlyData[key] += Number(order.total) || 0;
         }
@@ -326,11 +330,9 @@ export default function CustomerDashboardPage() {
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
     const lastOrderDate = sortedByDate[0]?.createdAt
-      ? new Date(sortedByDate[0].createdAt).toLocaleDateString(undefined, {
-          month: 'short',
+      ? formatDateShared(sortedByDate[0].createdAt, { month: 'short',
           day: 'numeric',
-          year: 'numeric',
-        })
+          year: 'numeric', })
       : '—';
 
     const firstOrderDate = sortedByDate[sortedByDate.length - 1]?.createdAt
@@ -364,7 +366,7 @@ export default function CustomerDashboardPage() {
       avgPurchaseFrequency,
       highestSpendingMonth,
     };
-  }, [allOrders]);
+  }, [allOrders, formatDateShared]);
 
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {
@@ -393,7 +395,7 @@ export default function CustomerDashboardPage() {
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
     if (diffDays < 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+    return formatDateShared(date, { day: 'numeric', month: 'short' });
   };
 
   const showSkeleton = loading && !hasLoadedOnce;
@@ -663,7 +665,7 @@ export default function CustomerDashboardPage() {
                               )}
                             </div>
                             <p className="text-xs font-medium text-hos-text-secondary truncate">{product.name}</p>
-                            <p className="text-xs text-hos-gold">{formatPrice(product.price)}</p>
+                            <p className="text-xs text-hos-gold">{formatPrice(product.price, product.currency || DEFAULT_CURRENCY)}</p>
                           </Link>
                         );
                       })}
@@ -692,7 +694,7 @@ export default function CustomerDashboardPage() {
                             )}
                           </div>
                           <p className="text-xs font-medium text-hos-text-secondary truncate">{product.name}</p>
-                          <p className="text-xs text-hos-gold">{formatPrice(product.price, product.currency || 'USD')}</p>
+                          <p className="text-xs text-hos-gold">{formatPrice(product.price, product.currency || DEFAULT_CURRENCY)}</p>
                         </Link>
                       );
                     })}
@@ -790,7 +792,7 @@ export default function CustomerDashboardPage() {
                           <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                             {order.status}
                           </span>
-                          <p className="text-sm font-semibold text-hos-text-secondary mt-1">{formatPrice(order.total)}</p>
+                          <p className="text-sm font-semibold text-hos-text-secondary mt-1">{formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}</p>
                         </div>
                       </Link>
                     ))
@@ -859,11 +861,9 @@ export default function CustomerDashboardPage() {
                               Order #{order.orderNumber || order.id.slice(0, 8)}
                             </p>
                             <p className="text-sm text-hos-text-muted">
-                              {new Date(order.createdAt).toLocaleDateString('en-US', {
-                                day: 'numeric',
+                              {formatDateShared(order.createdAt, { day: 'numeric',
                                 month: 'short',
-                                year: 'numeric',
-                              })}
+                                year: 'numeric', })}
                             </p>
                           </div>
                         </div>
@@ -871,7 +871,7 @@ export default function CustomerDashboardPage() {
                           <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                             {order.status}
                           </span>
-                          <p className="text-sm font-semibold text-hos-text-secondary mt-1">{formatPrice(order.total)}</p>
+                          <p className="text-sm font-semibold text-hos-text-secondary mt-1">{formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}</p>
                         </div>
                       </Link>
                     ))

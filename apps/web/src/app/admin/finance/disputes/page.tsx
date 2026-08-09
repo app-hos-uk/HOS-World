@@ -7,10 +7,12 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useDateTime } from '@/hooks/useDateTime';
 
 const STATUS_OPTIONS = ['OPEN', 'UNDER_REVIEW', 'EVIDENCE_REQUIRED', 'WON', 'LOST', 'CLOSED'];
 
 export default function DisputesPage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const { open: openDialog, close: closeDialog, dialogProps } = useConfirmDialog();
@@ -101,7 +103,7 @@ export default function DisputesPage() {
                       {dispute.seller && <p className="text-sm text-hos-text-muted">Seller: {dispute.seller.storeName}</p>}
                       {dispute.customer && <p className="text-sm text-hos-text-muted">Customer: {dispute.customer.email}</p>}
                       {dispute.reason && <p className="text-sm text-hos-text-secondary mt-2">Reason: {dispute.reason}</p>}
-                      {dispute.evidenceDeadline && <p className="text-sm text-orange-400 mt-1">Evidence due: {new Date(dispute.evidenceDeadline).toLocaleDateString()}</p>}
+                      {dispute.evidenceDeadline && <p className="text-sm text-orange-400 mt-1">Evidence due: {formatDate(dispute.evidenceDeadline)}</p>}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {['OPEN', 'EVIDENCE_REQUIRED'].includes(dispute.status) && (

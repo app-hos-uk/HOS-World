@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { AlignedDataTable, type AlignedColumn } from '@/components/ui/AlignedDataTable';
+import { useMoney } from '@/hooks/useMoney';
 
 type TierRow = {
   tier: string;
@@ -17,6 +18,7 @@ type TierRow = {
 };
 
 export default function TierAnalysisPage() {
+  const { formatMoney } = useMoney();
   const [data, setData] = useState<TierRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -50,14 +52,14 @@ export default function TierAnalysisPage() {
         header: 'Avg spend',
         width: '1.1fr',
         align: 'right',
-        cell: (t) => `$${Number(t.avgSpend).toFixed(2)}`,
+        cell: (t) => formatMoney(Number(t.avgSpend)),
       },
       {
         key: 'avgClv',
         header: 'Avg CLV',
         width: '1.1fr',
         align: 'right',
-        cell: (t) => `$${Number(t.avgClv).toFixed(2)}`,
+        cell: (t) => formatMoney(Number(t.avgClv)),
       },
       {
         key: 'freq',
@@ -78,10 +80,10 @@ export default function TierAnalysisPage() {
         header: 'Revenue',
         width: '1.2fr',
         align: 'right',
-        cell: (t) => `$${Number(t.revenueContribution).toFixed(2)}`,
+        cell: (t) => formatMoney(Number(t.revenueContribution)),
       },
     ],
-    [],
+    [formatMoney],
   );
 
   return (

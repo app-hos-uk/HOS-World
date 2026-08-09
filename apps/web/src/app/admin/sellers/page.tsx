@@ -12,6 +12,7 @@ import {
   PieChart, Pie, Cell, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface Seller {
   id: string;
@@ -82,6 +83,7 @@ function isInvitationPending(inv: Invitation): boolean {
 const COLORS = ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
 export default function AdminSellersPage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -436,7 +438,7 @@ export default function AdminSellersPage() {
     { key: 'totalRevenue', header: 'Revenue', format: (v: number, s: Seller) => formatPrice(v || 0) },
     { key: 'customDomain', header: 'Custom Domain' },
     { key: 'subDomain', header: 'Subdomain' },
-    { key: 'createdAt', header: 'Joined', format: (v: string) => new Date(v).toLocaleDateString() },
+    { key: 'createdAt', header: 'Joined', format: (v: string) => formatDate(v) },
   ];
 
   const tabs = [
@@ -743,7 +745,7 @@ export default function AdminSellersPage() {
                                 {formatPrice(seller.totalRevenue || 0)}
                               </td>
                               <td className="px-4 py-3 text-sm text-hos-text-muted">
-                                {new Date(seller.createdAt).toLocaleDateString()}
+                                {formatDate(seller.createdAt)}
                               </td>
                               <td className="px-4 py-3 text-right">
                                 <div className="flex justify-end gap-1">
@@ -880,10 +882,10 @@ export default function AdminSellersPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                            {new Date(inv.createdAt).toLocaleDateString()}
+                            {formatDate(inv.createdAt)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                            {inv.expiresAt ? new Date(inv.expiresAt).toLocaleDateString() : 'N/A'}
+                            {inv.expiresAt ? formatDate(inv.expiresAt) : 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                             {isInvitationPending(inv) && (
@@ -1090,7 +1092,7 @@ export default function AdminSellersPage() {
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Member Since</p>
-                        <p className="font-medium">{new Date(selectedSeller.createdAt).toLocaleDateString()}</p>
+                        <p className="font-medium">{formatDate(selectedSeller.createdAt)}</p>
                       </div>
                     </div>
 

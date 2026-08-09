@@ -10,6 +10,7 @@ import { ProductsService } from '../products/products.service';
 import { ProductsCacheHook } from '../products/products-cache.hook';
 import { MeilisearchService } from '../meilisearch/meilisearch.service';
 import { slugify } from '@hos-marketplace/utils';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
 export class AdminProductsService {
@@ -274,7 +275,7 @@ export class AdminProductsService {
         shortDescription: data.shortDescription,
         slug,
         price: data.price,
-        currency: data.currency || 'USD',
+        currency: data.currency || PLATFORM_DEFAULT_CURRENCY,
         stock: data.stock || 0,
         productType,
         category: data.category, // Keep for backward compatibility

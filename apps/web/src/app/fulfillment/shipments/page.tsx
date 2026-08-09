@@ -5,8 +5,10 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { getFulfillmentMenu } from '@/lib/teamMenus';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function FulfillmentShipmentsPage() {
+  const { formatDate } = useDateTime();
   const [shipments, setShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -185,7 +187,7 @@ export default function FulfillmentShipmentsPage() {
                           <span>
                             <strong>Received:</strong>{' '}
                             {shipment.createdAt
-                              ? new Date(shipment.createdAt).toLocaleDateString()
+                              ? formatDate(shipment.createdAt)
                               : 'N/A'}
                           </span>
                         </div>

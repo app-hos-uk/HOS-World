@@ -4,9 +4,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useMoney } from '@/hooks/useMoney';
+import { getCurrencySymbol } from '@/lib/money';
 
 export default function AdminLoyaltyLiabilityPage() {
   const toast = useToast();
+  const { formatMoney, currency } = useMoney();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState('');
@@ -30,9 +33,6 @@ export default function AdminLoyaltyLiabilityPage() {
   useEffect(() => {
     load();
   }, [load]);
-
-  const fmt = (n: number) =>
-    new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(n || 0);
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'FINANCE']} showAccessDenied>
@@ -71,16 +71,16 @@ export default function AdminLoyaltyLiabilityPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             ['Points outstanding', `${data.pointsOutstanding} pts`],
-            ['Points liability value', fmt(data.pointsOutstandingValue)],
+            ['Points liability value', formatMoney(data.pointsOutstandingValue)],
             ['Period earn', `${data.periodEarnPoints} pts`],
             ['Period burn', `${data.periodBurnPoints} pts`],
-            ['Period breakage value', fmt(data.periodBreakageValue)],
-            ['HOS GC liability', fmt(data.hosGiftCardLiability)],
-            ['Period GC issued', fmt(data.periodGcIssued)],
-            ['Period GC redeemed', fmt(data.periodGcRedeemed)],
-            ['Period GC refunded', fmt(data.periodGcRefunded)],
-            ['Period POS vouchers issued', fmt(data.periodPosVouchersIssued)],
-            ['Redeem £/pt', String(data.redeemValuePerPoint)],
+            ['Period breakage value', formatMoney(data.periodBreakageValue)],
+            ['HOS GC liability', formatMoney(data.hosGiftCardLiability)],
+            ['Period GC issued', formatMoney(data.periodGcIssued)],
+            ['Period GC redeemed', formatMoney(data.periodGcRedeemed)],
+            ['Period GC refunded', formatMoney(data.periodGcRefunded)],
+            ['Period POS vouchers issued', formatMoney(data.periodPosVouchersIssued)],
+            [`Redeem ${getCurrencySymbol(currency)}/pt`, String(data.redeemValuePerPoint)],
           ].map(([label, value]) => (
             <div
               key={label}

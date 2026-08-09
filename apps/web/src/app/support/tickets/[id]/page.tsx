@@ -9,6 +9,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface Message {
   id: string;
@@ -51,6 +52,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 };
 
 export default function TicketDetailPage() {
+  const { formatDate, formatDateTime } = useDateTime();
   const params = useParams();
   const ticketId = params.id as string;
   const toast = useToast();
@@ -170,11 +172,9 @@ export default function TicketDetailPage() {
                   <div>
                     <span className="text-hos-text-muted block">Created</span>
                     <span className="font-medium text-hos-text-secondary">
-                      {new Date(ticket.createdAt).toLocaleDateString('en-US', {
-                        day: 'numeric',
+                      {formatDate(ticket.createdAt, { day: 'numeric',
                         month: 'short',
-                        year: 'numeric',
-                      })}
+                        year: 'numeric', })}
                     </span>
                   </div>
                 </div>
@@ -218,13 +218,11 @@ export default function TicketDetailPage() {
                               </div>
                             </div>
                             <span className="text-xs text-hos-text-muted">
-                              {new Date(msg.createdAt).toLocaleString('en-US', {
-                                day: 'numeric',
+                              {formatDateTime(msg.createdAt, { day: 'numeric',
                                 month: 'short',
                                 year: 'numeric',
                                 hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                                minute: '2-digit', })}
                             </span>
                           </div>
                           <div className="pl-10 text-sm text-hos-text-secondary whitespace-pre-wrap">

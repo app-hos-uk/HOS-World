@@ -6,6 +6,8 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface InventoryStats {
   totalWarehouses: number;
@@ -47,6 +49,8 @@ export default function AdminInventoryDashboardPage() {
 }
 
 function AdminInventoryContent() {
+  const { formatDate: formatDateShared } = useDateTime();
+  const { formatMoney } = useMoney();
   const searchParams = useSearchParams();
   const activeTab = searchParams.get('tab') || 'overview';
   const toast = useToast();
@@ -150,13 +154,11 @@ function AdminInventoryContent() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
+    return formatDateShared(dateString, { year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit',
-    });
+      minute: '2-digit', });
   };
 
   const getStatusColor = (status: string) => {
@@ -288,7 +290,7 @@ function AdminInventoryContent() {
                 <div className="bg-hos-bg-secondary rounded-lg shadow p-4 min-h-[5.5rem] flex flex-col justify-between">
                   <div className="text-sm text-hos-text-secondary">Total Stock Value</div>
                   <div className="text-2xl font-bold text-hos-gold tabular-nums">
-                    ${(stats?.totalStockValue ?? 0).toLocaleString()}
+                    {formatMoney((stats?.totalStockValue ?? 0))}
                   </div>
                 </div>
               </div>

@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { EmailTestPanel } from '@/components/admin/EmailTestPanel';
 import { navIcon } from '@/lib/navIcons';
+import { DEFAULT_REGION, type RegionConfig } from '@/lib/regionConfig';
 
 const defaultSettings = {
   // General Settings
@@ -62,6 +63,7 @@ export default function AdminSettingsPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   
   const [settings, setSettings] = useState(defaultSettings);
+  const [platformRegion, setPlatformRegion] = useState<RegionConfig>(DEFAULT_REGION);
 
   // Fetch existing settings on mount
   useEffect(() => {
@@ -72,13 +74,28 @@ export default function AdminSettingsPage() {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.getSystemSettings();
-      if (response?.data) {
-        const d = response.data;
+      const [settingsResponse, region] = await Promise.all([
+        apiClient.getSystemSettings(),
+        apiClient.getRegion().catch(() => null),
+      ]);
+      if (region?.currency) {
+        setPlatformRegion({
+          currency: region.currency,
+          country: region.country,
+          locale: region.locale,
+          timezone: region.timezone,
+        });
+      }
+      if (settingsResponse?.data) {
+        const d = settingsResponse.data;
         setSettings({
           ...defaultSettings,
           ...d,
-          defaultCurrency: d.defaultCurrency || d.currency || defaultSettings.defaultCurrency,
+          defaultCurrency:
+            d.defaultCurrency ||
+            d.currency ||
+            region?.currency ||
+            defaultSettings.defaultCurrency,
           platformFee: d.platformFee ?? (d.platformFeeRate != null ? d.platformFeeRate * 100 : defaultSettings.platformFee),
         });
       }
@@ -365,7 +382,7 @@ export default function AdminSettingsPage() {
                         type="url"
                         value={settings.socialFacebookUrl}
                         onChange={(e) => updateSetting('socialFacebookUrl', e.target.value)}
-                        placeholder="https://www.facebook.com/houseofspellsuk"
+                        placeholder="https://www.facebook.com/houseofspells"
                         className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       />
                     </div>
@@ -516,6 +533,31 @@ export default function AdminSettingsPage() {
             {activeTab === 'payment' && (
               <div className="space-y-6">
                 <div>
+                  <h3 className="text-lg font-semibold mb-1">Platform Region</h3>
+                  <p className="text-sm text-hos-text-muted mb-4">
+                    Read-only snapshot from deployment config (<code>/config/region</code>). Change via{' '}
+                    <code>PLATFORM_CURRENCY</code>, <code>PLATFORM_COUNTRY</code>, <code>PLATFORM_LOCALE</code>, and{' '}
+                    <code>PLATFORM_TIMEZONE</code> on the API — not editable here.
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    {[
+                      { label: 'Currency', value: platformRegion.currency },
+                      { label: 'Country', value: platformRegion.country },
+                      { label: 'Locale', value: platformRegion.locale },
+                      { label: 'Timezone', value: platformRegion.timezone },
+                    ].map((item) => (
+                      <div
+                        key={item.label}
+                        className="rounded-lg border border-hos-border bg-hos-bg px-4 py-3"
+                      >
+                        <p className="text-xs text-hos-text-muted uppercase tracking-wide">{item.label}</p>
+                        <p className="mt-1 font-medium text-hos-text-primary">{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
                   <h3 className="text-lg font-semibold mb-4">Payment Settings</h3>
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
@@ -551,10 +593,19 @@ export default function AdminSettingsPage() {
                         onChange={(e) => updateSetting('defaultCurrency', e.target.value)}
                         className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                       >
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="AED">AED</option>
+                        <option value={platformRegion.currency}>{platformRegion.currency}</option>
+                        {['USD', 'EUR', 'AED']
+                          .filter((c) => c !== platformRegion.currency)
+                          .map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
                       </select>
+                      <p className="text-xs text-hos-text-muted mt-1">
+                        Shopper-facing currency follows platform region ({platformRegion.currency}). Multi-currency
+                        requires <code>FF_MULTI_CURRENCY</code>.
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-hos-text-secondary mb-1">

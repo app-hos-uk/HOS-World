@@ -16,13 +16,16 @@ import type {
 import { LightspeedApiClient, type LightspeedRedisThrottle } from './lightspeed-api.client';
 import { LightspeedAuthService, type LightspeedRedisLock } from './lightspeed-auth.service';
 import * as M from './lightspeed.mapper';
+import { PLATFORM_DEFAULT_CURRENCY } from '../../../common/currency-defaults';
 
 export class LightspeedAdapter implements POSAdapter {
   readonly providerName = 'lightspeed';
   private auth: LightspeedAuthService;
   private client: LightspeedApiClient;
+  private readonly defaultCurrency: string;
 
-  constructor(initial: LightspeedCredentials) {
+  constructor(initial: LightspeedCredentials, defaultCurrency = PLATFORM_DEFAULT_CURRENCY) {
+    this.defaultCurrency = defaultCurrency;
     this.auth = new LightspeedAuthService(initial);
     this.client = new LightspeedApiClient(
       initial,
@@ -298,6 +301,7 @@ export class LightspeedAdapter implements POSAdapter {
         const mapped = M.mapSaleFromVend(
           r as Record<string, unknown>,
           params.outletId || String((r as { outlet_id?: string }).outlet_id ?? ''),
+          this.defaultCurrency,
         );
         if (params.outletId && mapped.outletId && mapped.outletId !== params.outletId) {
           continue;
@@ -380,7 +384,7 @@ export class LightspeedAdapter implements POSAdapter {
     }
 
     const outletId = String(inner.outlet_id ?? inner.register_id ?? '');
-    return M.mapSaleFromVend(inner, outletId);
+    return M.mapSaleFromVend(inner, outletId, this.defaultCurrency);
   }
 
   /**

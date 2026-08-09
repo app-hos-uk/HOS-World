@@ -12,6 +12,7 @@ import {
   Address,
   TestConnectionResult,
 } from '../interfaces/courier-provider.interface';
+import { PLATFORM_DEFAULT_CURRENCY } from '../../../common/currency-defaults';
 
 /**
  * FedEx API Integration
@@ -228,7 +229,7 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
           serviceCode: serviceType,
           serviceName: serviceInfo.name,
           rate: parseFloat(totalNetCharge),
-          currency: ratedShipment?.currency || 'USD',
+          currency: ratedShipment?.currency || PLATFORM_DEFAULT_CURRENCY,
           estimatedDays: serviceInfo.days,
           estimatedDeliveryDate: rateReply.commit?.dateDetail?.dayFormat
             ? new Date(rateReply.commit.dateDetail.dayFormat)
@@ -386,7 +387,7 @@ export class FedExProvider extends BaseCourierProvider implements ICourierProvid
         rate:
           shipmentResponse.completedShipmentDetail?.shipmentRating?.shipmentRateDetails?.[0]
             ?.totalNetCharge || 0,
-        currency: 'USD',
+        currency: PLATFORM_DEFAULT_CURRENCY,
         serviceCode: request.serviceCode,
         serviceName: FedExProvider.SERVICES[request.serviceCode]?.name || request.serviceCode,
         estimatedDeliveryDate: shipmentResponse.completedShipmentDetail?.deliveryDate

@@ -6,12 +6,17 @@ import { isProtectedAdminEmail, isSuperAdminEmail } from '../config/protected-ad
 import { randomBytes } from 'crypto';
 import { UserRole } from '@prisma/client';
 import { DEFAULT_PLATFORM_FEE_RATE } from '../common/platform-config';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
+import { PlatformRegionService } from '../config/platform-region.service';
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private platformRegion: PlatformRegionService,
+  ) {}
 
   async getUserStats() {
     const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
@@ -711,7 +716,7 @@ export class AdminService {
       platformFeeRate: parseFloat(
         process.env.PLATFORM_FEE_RATE || String(DEFAULT_PLATFORM_FEE_RATE),
       ),
-      currency: process.env.DEFAULT_CURRENCY || 'USD',
+      currency: process.env.DEFAULT_CURRENCY || PLATFORM_DEFAULT_CURRENCY,
       maxUploadSize: parseInt(process.env.MAX_UPLOAD_SIZE || '10485760', 10),
       enableOAuth: process.env.ENABLE_OAUTH !== 'false',
       enableStripe: process.env.STRIPE_SECRET_KEY ? true : false,
@@ -843,6 +848,10 @@ export class AdminService {
         } else {
           await this.setPlatformConfig(key, value);
         }
+      }
+
+      if ('currency' in validSettings) {
+        await this.platformRegion.invalidate();
       }
 
       // Audit trail

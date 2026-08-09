@@ -8,6 +8,8 @@ import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface SettlementOrderRow {
   id: string;
@@ -56,6 +58,7 @@ function toNumber(value: number | string | undefined): number {
 }
 
 export default function SellerEarningsPage() {
+  const { formatDate } = useDateTime();
   const { formatPrice } = useCurrency();
   const { user } = useAuth();
   const isWholesaler = user?.role === 'WHOLESALER';
@@ -230,15 +233,15 @@ export default function SellerEarningsPage() {
                         >
                           <td className="py-3 px-4 text-hos-text-secondary">
                             {settlement.periodStart && settlement.periodEnd
-                              ? `${new Date(settlement.periodStart).toLocaleDateString()} – ${new Date(settlement.periodEnd).toLocaleDateString()}`
-                              : new Date(settlement.createdAt).toLocaleDateString()}
+                              ? `${formatDate(settlement.periodStart)} – ${formatDate(settlement.periodEnd)}`
+                              : formatDate(settlement.createdAt)}
                           </td>
                           <td className="tabular-nums text-right py-3 px-4 text-hos-text-secondary font-medium">
-                            {formatPrice(toNumber(settlement.netAmount), settlement.currency || 'USD')}
+                            {formatPrice(toNumber(settlement.netAmount), settlement.currency || DEFAULT_CURRENCY)}
                           </td>
                           <td className="py-3 px-4">{statusBadge(settlement.status)}</td>
                           <td className="py-3 px-4 text-hos-text-muted text-xs">
-                            {settlement.paidAt ? new Date(settlement.paidAt).toLocaleDateString() : '—'}
+                            {settlement.paidAt ? formatDate(settlement.paidAt) : '—'}
                           </td>
                           <td className="py-3 px-4 text-right">
                             <button
@@ -277,8 +280,8 @@ export default function SellerEarningsPage() {
                   <h3 className="text-lg font-semibold text-hos-text-secondary">Settlement Details</h3>
                   <p className="text-sm text-hos-text-muted mt-1">
                     {detailSettlement.periodStart && detailSettlement.periodEnd
-                      ? `${new Date(detailSettlement.periodStart).toLocaleDateString()} – ${new Date(detailSettlement.periodEnd).toLocaleDateString()}`
-                      : new Date(detailSettlement.createdAt).toLocaleDateString()}
+                      ? `${formatDate(detailSettlement.periodStart)} – ${formatDate(detailSettlement.periodEnd)}`
+                      : formatDate(detailSettlement.createdAt)}
                   </p>
                 </div>
                 <button
@@ -294,13 +297,13 @@ export default function SellerEarningsPage() {
                 <div className="rounded-lg border border-hos-border p-3">
                   <p className="text-hos-text-muted">Net Amount</p>
                   <p className="font-semibold text-hos-text-secondary">
-                    {formatPrice(toNumber(detailSettlement.netAmount), detailSettlement.currency || 'USD')}
+                    {formatPrice(toNumber(detailSettlement.netAmount), detailSettlement.currency || DEFAULT_CURRENCY)}
                   </p>
                 </div>
                 <div className="rounded-lg border border-hos-border p-3">
                   <p className="text-hos-text-muted">Platform Fee</p>
                   <p className="font-semibold text-hos-text-secondary">
-                    {formatPrice(toNumber(detailSettlement.platformFee), detailSettlement.currency || 'USD')}
+                    {formatPrice(toNumber(detailSettlement.platformFee), detailSettlement.currency || DEFAULT_CURRENCY)}
                   </p>
                 </div>
                 <div className="rounded-lg border border-hos-border p-3">
@@ -347,13 +350,13 @@ export default function SellerEarningsPage() {
                               {productLabel}
                             </td>
                             <td className="tabular-nums text-right py-2 px-2 text-hos-text-secondary">
-                              {formatPrice(orderAmount, detailSettlement.currency || 'USD')}
+                              {formatPrice(orderAmount, detailSettlement.currency || DEFAULT_CURRENCY)}
                             </td>
                             <td className="tabular-nums text-right py-2 px-2 text-hos-text-muted">
-                              {formatPrice(fee, detailSettlement.currency || 'USD')}
+                              {formatPrice(fee, detailSettlement.currency || DEFAULT_CURRENCY)}
                             </td>
                             <td className="tabular-nums text-right py-2 px-2 text-hos-text-secondary font-medium">
-                              {formatPrice(net, detailSettlement.currency || 'USD')}
+                              {formatPrice(net, detailSettlement.currency || DEFAULT_CURRENCY)}
                             </td>
                           </tr>
                         );

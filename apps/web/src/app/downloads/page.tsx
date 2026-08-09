@@ -8,6 +8,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface DigitalProduct {
   id: string;
@@ -27,6 +28,7 @@ interface DigitalProduct {
 }
 
 export default function DownloadsPage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const [downloads, setDownloads] = useState<DigitalProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -314,13 +316,13 @@ export default function DownloadsPage() {
 
                         {product.purchasedAt && (
                           <p className="text-xs text-hos-text-muted mt-2">
-                            Purchased on {new Date(product.purchasedAt).toLocaleDateString()}
+                            Purchased on {formatDate(product.purchasedAt)}
                           </p>
                         )}
 
                         {product.expiresAt && product.status === 'available' && (
                           <p className="text-xs text-orange-400 mt-1">
-                            Expires on {new Date(product.expiresAt).toLocaleDateString()}
+                            Expires on {formatDate(product.expiresAt)}
                           </p>
                         )}
                       </div>

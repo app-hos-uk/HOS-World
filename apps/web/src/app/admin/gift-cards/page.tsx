@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, Fragment } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface GiftCard {
   id: string;
@@ -55,21 +57,10 @@ function statusBadge(status: string) {
   }
 }
 
-function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat('en-GB', { style: 'currency', currency }).format(amount);
-}
-
-function formatDate(dateStr?: string) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
 export default function AdminGiftCardsPage() {
   const toast = useToast();
+  const { formatMoney, currency: regionCurrency } = useMoney();
+  const { formatDate } = useDateTime();
 
   // List state
   const [giftCards, setGiftCards] = useState<GiftCard[]>([]);
@@ -98,12 +89,16 @@ export default function AdminGiftCardsPage() {
   const [form, setForm] = useState({
     type: 'digital' as 'digital' | 'physical',
     amount: '',
-    currency: 'GBP',
+    currency: regionCurrency,
     issuedToEmail: '',
     issuedToName: '',
     message: '',
     expiresAt: '',
   });
+
+  useEffect(() => {
+    setForm((f) => ({ ...f, currency: regionCurrency }));
+  }, [regionCurrency]);
 
   const fetchGiftCards = useCallback(async () => {
     try {
@@ -184,7 +179,7 @@ export default function AdminGiftCardsPage() {
           return {
             orderId,
             max,
-            label: `${info.orderNumber || orderId.slice(0, 8)} · max ${formatCurrency(max, gc.currency)}`,
+            label: `${info.orderNumber || orderId.slice(0, 8)} · max ${formatMoney(max, gc.currency)}`,
           };
         })
         .filter((o) => o.max > 0);
@@ -266,7 +261,7 @@ export default function AdminGiftCardsPage() {
         expiresAt: form.expiresAt || undefined,
       });
       toast.success('Gift card issued successfully');
-      setForm({ type: 'digital', amount: '', currency: 'GBP', issuedToEmail: '', issuedToName: '', message: '', expiresAt: '' });
+      setForm({ type: 'digital', amount: '', currency: regionCurrency, issuedToEmail: '', issuedToName: '', message: '', expiresAt: '' });
       setShowForm(false);
       setPage(1);
       fetchGiftCards();
@@ -333,9 +328,7 @@ export default function AdminGiftCardsPage() {
                   onChange={(e) => setForm((f) => ({ ...f, currency: e.target.value }))}
                   className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:outline-none focus:border-hos-gold"
                 >
-                  <option value="GBP">GBP</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
+                  <option value={regionCurrency}>{regionCurrency}</option>
                 </select>
               </div>
               <div>
@@ -461,8 +454,8 @@ export default function AdminGiftCardsPage() {
                     >
                       <td className="px-4 py-3 font-mono text-xs text-hos-text-primary">{maskCode(gc.code)}</td>
                       <td className="px-4 py-3 capitalize text-hos-text-secondary">{gc.type}</td>
-                      <td className="px-4 py-3 text-right text-hos-text-secondary">{formatCurrency(Number(gc.amount), gc.currency)}</td>
-                      <td className="px-4 py-3 text-right text-hos-text-primary font-medium">{formatCurrency(Number(gc.balance), gc.currency)}</td>
+                      <td className="px-4 py-3 text-right text-hos-text-secondary">{formatMoney(Number(gc.amount), gc.currency)}</td>
+                      <td className="px-4 py-3 text-right text-hos-text-primary font-medium">{formatMoney(Number(gc.balance), gc.currency)}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-block px-2 py-0.5 text-xs font-semibold rounded-full ${statusBadge(gc.status)}`}>
                           {gc.status}
@@ -589,10 +582,10 @@ export default function AdminGiftCardsPage() {
                                       </span>
                                     </td>
                                     <td className="px-3 py-2 text-right text-hos-text-secondary">
-                                      {formatCurrency(Number(tx.amount), gc.currency)}
+                                      {formatMoney(Number(tx.amount), gc.currency)}
                                     </td>
                                     <td className="px-3 py-2 text-right text-hos-text-secondary">
-                                      {formatCurrency(Number(tx.balanceAfter), gc.currency)}
+                                      {formatMoney(Number(tx.balanceAfter), gc.currency)}
                                     </td>
                                     <td className="px-3 py-2 text-hos-text-muted">
                                       {tx.order?.orderNumber || tx.order?.id?.slice(0, 8) || '—'}

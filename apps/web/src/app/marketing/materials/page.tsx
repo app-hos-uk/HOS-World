@@ -7,10 +7,12 @@ import { AppShellLayout } from '@/components/AppShellLayout';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 import { ImageSpecsHint } from '@/components/ImageSpecsHint';
 import { getMarketingMenu } from '@/lib/teamMenus';
 
 function MarketingMaterialsPageContent() {
+  const { formatDate } = useDateTime();
   const searchParams = useSearchParams();
   const [pendingSubmissions, setPendingSubmissions] = useState<any[]>([]);
   const [materials, setMaterials] = useState<any[]>([]);
@@ -342,7 +344,7 @@ function MarketingMaterialsPageContent() {
                     </p>
                     <p className="text-xs text-hos-text-muted mt-1">{material.type}</p>
                     <p className="text-xs text-hos-text-muted mt-1">
-                      {new Date(material.createdAt).toLocaleDateString()}
+                      {formatDate(material.createdAt)}
                     </p>
                   </div>
                 );

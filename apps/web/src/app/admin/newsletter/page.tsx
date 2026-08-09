@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface Subscription {
   id: string;
@@ -20,6 +21,7 @@ interface Subscription {
 const ALLOWED_ROLES = ['ADMIN', 'MARKETING', 'CMS_EDITOR'] as const;
 
 export default function AdminNewsletterPage() {
+  const { formatDate: formatDateShared } = useDateTime();
   const toast = useToast();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [total, setTotal] = useState(0);
@@ -68,7 +70,7 @@ export default function AdminNewsletterPage() {
 
   const formatDate = (s: string) => {
     try {
-      return new Date(s).toLocaleDateString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+      return formatDateShared(s, { dateStyle: 'medium', timeStyle: 'short' });
     } catch {
       return s;
     }

@@ -3,6 +3,7 @@ import { PrismaService } from '../database/prisma.service';
 import { ProductsService } from './products.service';
 import { ProductStatus } from '@prisma/client';
 import { QueueService, JobType } from '../queue/queue.service';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
 export class ProductsBulkService implements OnModuleInit {
@@ -218,7 +219,7 @@ export class ProductsBulkService implements OnModuleInit {
           price: Number(productData.price) || 0,
           tradePrice: productData.tradePrice ? Number(productData.tradePrice) : undefined,
           rrp: productData.rrp ? Number(productData.rrp) : undefined,
-          currency: productData.currency || 'USD',
+          currency: productData.currency || PLATFORM_DEFAULT_CURRENCY,
           taxRate: productData.taxRate ? Number(productData.taxRate) : 0,
           stock: Number(productData.stock) || 0,
           fandom: productData.fandom,

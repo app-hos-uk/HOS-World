@@ -11,6 +11,7 @@ import { CreateVendorProductDto } from './dto/create-vendor-product.dto';
 import { UpdateVendorProductDto } from './dto/update-vendor-product.dto';
 import { ApproveVendorProductDto, RejectVendorProductDto } from './dto/approve-vendor-product.dto';
 import { QueryVendorProductsDto } from './dto/query-vendor-products.dto';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
 export class VendorProductsService {
@@ -44,7 +45,7 @@ export class VendorProductsService {
         sellerId: seller.id,
         productId: dto.productId,
         vendorPrice: dto.vendorPrice,
-        vendorCurrency: dto.vendorCurrency || 'USD',
+        vendorCurrency: dto.vendorCurrency || PLATFORM_DEFAULT_CURRENCY,
         costPrice: dto.costPrice,
         vendorStock: dto.vendorStock ?? 0,
         lowStockThreshold: dto.lowStockThreshold ?? 5,

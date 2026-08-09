@@ -8,6 +8,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import Image from 'next/image';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 function getStatusBadgeClass(status: string): string {
   switch (status) {
@@ -32,6 +35,8 @@ function canSellerEditSubmissionStatus(status: string): boolean {
 }
 
 export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
+  const { formatDateTime } = useDateTime();
+  const { formatMoney } = useMoney();
   const { user, effectiveRole } = useAuth();
   const [submission, setSubmission] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -123,11 +128,11 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
                   </span>
                 </div>
                 <p className="text-sm text-hos-text-muted mt-2">
-                  Submitted on {new Date(submission.createdAt).toLocaleString()}
+                  Submitted on {formatDateTime(submission.createdAt)}
                 </p>
                 {submission.updatedAt && submission.updatedAt !== submission.createdAt && (
                   <p className="text-sm text-hos-text-muted mt-1">
-                    Last updated {new Date(submission.updatedAt).toLocaleString()}
+                    Last updated {formatDateTime(submission.updatedAt)}
                   </p>
                 )}
               </div>
@@ -197,7 +202,7 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
                   <div>
                     <label className="block text-sm font-medium text-hos-text-muted">Price</label>
                     <p className="mt-1 text-hos-text-secondary font-semibold text-lg">
-                      {productData.currency || 'USD'} {Number(productData.price || 0).toFixed(2)}
+                      {formatMoney(Number(productData.price || 0), productData.currency || DEFAULT_CURRENCY)}
                     </p>
                   </div>
                   <div>
@@ -207,13 +212,17 @@ export function SubmissionViewMode({ submissionId }: { submissionId: string }) {
                   {productData.tradePrice && (
                     <div>
                       <label className="block text-sm font-medium text-hos-text-muted">Trade Price</label>
-                      <p className="mt-1 text-hos-text-secondary">{productData.currency || 'USD'} {Number(productData.tradePrice).toFixed(2)}</p>
+                      <p className="mt-1 text-hos-text-secondary">
+                        {formatMoney(Number(productData.tradePrice), productData.currency || DEFAULT_CURRENCY)}
+                      </p>
                     </div>
                   )}
                   {productData.rrp && (
                     <div>
                       <label className="block text-sm font-medium text-hos-text-muted">RRP</label>
-                      <p className="mt-1 text-hos-text-secondary">{productData.currency || 'USD'} {Number(productData.rrp).toFixed(2)}</p>
+                      <p className="mt-1 text-hos-text-secondary">
+                        {formatMoney(Number(productData.rrp), productData.currency || DEFAULT_CURRENCY)}
+                      </p>
                     </div>
                   )}
                   {productData.taxRate !== undefined && productData.taxRate !== null && (

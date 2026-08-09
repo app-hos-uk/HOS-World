@@ -332,7 +332,7 @@ export default function AdminShippingCarriersPage() {
                     type="text"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="e.g. Royal Mail"
+                    placeholder="e.g. USPS"
                     className="w-full px-3 py-2 border border-hos-border rounded-lg bg-hos-bg text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:outline-none"
                     required
                   />

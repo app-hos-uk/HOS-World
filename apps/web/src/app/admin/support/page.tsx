@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface Ticket {
   id: string;
@@ -57,6 +58,7 @@ const STATUS_LABELS: Record<string, string> = {
 const TICKET_PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
 
 export default function AdminSupportPage() {
+  const { formatDate: formatDateShared, formatDateTime: formatDateTimeShared } = useDateTime();
   const toast = useToast();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -304,13 +306,11 @@ export default function AdminSupportPage() {
   });
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
-      day: '2-digit',
+    return formatDateTimeShared(dateString, { day: '2-digit',
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit',
-    });
+      minute: '2-digit', });
   };
 
   return (
@@ -448,7 +448,7 @@ export default function AdminSupportPage() {
                           </select>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                          {new Date(ticket.createdAt).toLocaleDateString()}
+                          {formatDate(ticket.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button

@@ -7,10 +7,12 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useDateTime } from '@/hooks/useDateTime';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export default function FinancialPeriodsPage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const { open: openDialog, close: closeDialog, dialogProps } = useConfirmDialog();
@@ -124,7 +126,7 @@ export default function FinancialPeriodsPage() {
                     )}
 
                     {isClosed && period?.closedBy && (
-                      <p className="text-xs text-hos-text-muted mb-3">Closed by {period.closedBy.email} on {new Date(period.closedAt).toLocaleDateString()}</p>
+                      <p className="text-xs text-hos-text-muted mb-3">Closed by {period.closedBy.email} on {formatDate(period.closedAt)}</p>
                     )}
 
                     <div className="flex gap-2">

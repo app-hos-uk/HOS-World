@@ -3,6 +3,7 @@ import { PrismaService } from '../database/prisma.service';
 import { DEFAULT_PLATFORM_FEE_RATE } from '../common/platform-config';
 // Decimal is used via Prisma's auto-coercion at the DB layer
 import { Prisma } from '@prisma/client';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
 export class VendorLedgerService {
@@ -17,7 +18,13 @@ export class VendorLedgerService {
     commissionRate: number;
     currency?: string;
   }) {
-    const { sellerId, orderId, saleAmount, commissionRate, currency = 'USD' } = params;
+    const {
+      sellerId,
+      orderId,
+      saleAmount,
+      commissionRate,
+      currency = PLATFORM_DEFAULT_CURRENCY,
+    } = params;
 
     const commissionAmount = +(saleAmount * commissionRate).toFixed(2);
     const netAmount = +(saleAmount - commissionAmount).toFixed(2);
@@ -80,7 +87,7 @@ export class VendorLedgerService {
       orderId,
       refundAmount,
       commissionRate = DEFAULT_PLATFORM_FEE_RATE,
-      currency = 'USD',
+      currency = PLATFORM_DEFAULT_CURRENCY,
     } = params;
 
     // Adjust refund to account for commission: vendor only gets debited the net portion
@@ -134,7 +141,14 @@ export class VendorLedgerService {
     description?: string;
     metadata?: Record<string, unknown>;
   }) {
-    const { sellerId, orderId, amount, currency = 'USD', description, metadata } = params;
+    const {
+      sellerId,
+      orderId,
+      amount,
+      currency = PLATFORM_DEFAULT_CURRENCY,
+      description,
+      metadata,
+    } = params;
 
     if (amount <= 0) {
       throw new BadRequestException('Shipping cost amount must be greater than zero');
@@ -187,7 +201,7 @@ export class VendorLedgerService {
     },
     options?: { tx?: Prisma.TransactionClient },
   ) {
-    const { sellerId, amount, referenceId, currency = 'USD' } = params;
+    const { sellerId, amount, referenceId, currency = PLATFORM_DEFAULT_CURRENCY } = params;
 
     if (amount <= 0) {
       throw new BadRequestException('Payout amount must be greater than zero');

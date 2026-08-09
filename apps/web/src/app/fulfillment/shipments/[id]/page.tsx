@@ -8,6 +8,8 @@ import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { getFulfillmentMenu } from '@/lib/teamMenus';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 const STATUS_STEPS = ['CREATED', 'PROCESSING', 'SHIPPED', 'DELIVERED'] as const;
 
@@ -21,6 +23,8 @@ function getStepIndex(status: string): number {
 }
 
 export default function ShipmentDetailPage() {
+  const { formatDateTime } = useDateTime();
+  const { formatMoney } = useMoney();
   const params = useParams();
   const shipmentId = params.id as string;
 
@@ -169,7 +173,7 @@ export default function ShipmentDetailPage() {
                       <p><span className="font-medium">Destination:</span> {shipment.destination}</p>
                     )}
                     {shipment.createdAt && (
-                      <p><span className="font-medium">Created:</span> {new Date(shipment.createdAt).toLocaleString()}</p>
+                      <p><span className="font-medium">Created:</span> {formatDateTime(shipment.createdAt)}</p>
                     )}
                   </div>
                 </div>
@@ -281,7 +285,7 @@ export default function ShipmentDetailPage() {
                           <td className="py-3 px-4 text-hos-text-muted">{item.sku || 'N/A'}</td>
                           <td className="text-right py-3 px-4 text-hos-text-secondary">{item.quantity || 1}</td>
                           <td className="tabular-nums text-right py-3 px-4 text-hos-text-secondary">
-                            {item.price != null ? `$${Number(item.price).toFixed(2)}` : 'N/A'}
+                            {item.price != null ? formatMoney(Number(item.price)) : 'N/A'}
                           </td>
                         </tr>
                       ))}
@@ -299,7 +303,7 @@ export default function ShipmentDetailPage() {
                     </div>
                     {shipment.submission.productData.price != null && (
                       <p className="font-medium text-hos-text-secondary">
-                        ${Number(shipment.submission.productData.price).toFixed(2)}
+                        {formatMoney(Number(shipment.submission.productData.price))}
                       </p>
                     )}
                   </div>
@@ -317,7 +321,7 @@ export default function ShipmentDetailPage() {
                 <h3 className="text-lg font-semibold mb-4">Verification Details</h3>
                 <div className="space-y-2 text-sm text-hos-text-secondary">
                   {shipment.verifiedAt && (
-                    <p><span className="font-medium">Verified At:</span> {new Date(shipment.verifiedAt).toLocaleString()}</p>
+                    <p><span className="font-medium">Verified At:</span> {formatDateTime(shipment.verifiedAt)}</p>
                   )}
                   {shipment.verifiedBy && (
                     <p><span className="font-medium">Verified By:</span> {shipment.verifiedBy.name || shipment.verifiedBy.email || shipment.verifiedBy}</p>

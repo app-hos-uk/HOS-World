@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface AuditEntry {
   id: string;
@@ -22,6 +23,7 @@ interface AuditEntry {
 }
 
 export default function PrivacyAuditPage() {
+  const { formatDateTime } = useDateTime();
   const toast = useToast();
   const [logs, setLogs] = useState<AuditEntry[]>([]);
   const [total, setTotal] = useState(0);
@@ -142,10 +144,8 @@ export default function PrivacyAuditPage() {
                   {filteredLogs.map((entry) => (
                     <tr key={entry.id} className="hover:bg-hos-bg-tertiary">
                       <td className="px-4 py-3 whitespace-nowrap text-hos-text-secondary">
-                        {new Date(entry.grantedAt).toLocaleString('en-US', {
-                          month: 'short', day: 'numeric', year: 'numeric',
-                          hour: '2-digit', minute: '2-digit',
-                        })}
+                        {formatDateTime(entry.grantedAt, { month: 'short', day: 'numeric', year: 'numeric',
+                          hour: '2-digit', minute: '2-digit', })}
                       </td>
                       <td className="px-4 py-3">
                         <div className="font-medium text-hos-text-secondary">

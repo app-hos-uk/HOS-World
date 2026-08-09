@@ -1,5 +1,8 @@
 /** Admin UI formatting helpers */
 
+import { formatMoney } from '@/lib/money';
+import { getRegionConfig } from '@/lib/regionConfig';
+
 const AVATAR_COLORS = [
   'bg-violet-500/25 text-violet-300',
   'bg-cyan-500/25 text-cyan-300',
@@ -19,19 +22,11 @@ export function avatarColorClass(seed: string): string {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
-export function formatAdminPrice(amount: number | string | null | undefined, currency = 'USD'): string {
-  const value = typeof amount === 'string' ? parseFloat(amount) : amount;
-  if (value == null || Number.isNaN(value)) return '—';
-  try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value);
-  } catch {
-    return `${currency} ${value.toFixed(2)}`;
-  }
+export function formatAdminPrice(
+  amount: number | string | null | undefined,
+  currency?: string,
+): string {
+  return formatMoney(amount, currency ?? getRegionConfig().currency);
 }
 
 const ENTITY_LABELS: Record<string, string> = {

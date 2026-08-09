@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { AlignedDataTable, type AlignedColumn } from '@/components/ui/AlignedDataTable';
+import { useMoney } from '@/hooks/useMoney';
 
 type TopMember = {
   membershipId: string;
@@ -16,6 +17,7 @@ type TopMember = {
 };
 
 export default function ClvReportPage() {
+  const { formatMoney } = useMoney();
   const [dist, setDist] = useState<any[]>([]);
   const [top, setTop] = useState<TopMember[]>([]);
   const [churn, setChurn] = useState<any>(null);
@@ -60,7 +62,7 @@ export default function ClvReportPage() {
         header: 'CLV',
         width: '1fr',
         align: 'right',
-        cell: (m) => `$${Number(m.clvScore).toFixed(2)}`,
+        cell: (m) => formatMoney(Number(m.clvScore)),
       },
       {
         key: 'tier',
@@ -74,7 +76,7 @@ export default function ClvReportPage() {
         header: 'Spend',
         width: '1fr',
         align: 'right',
-        cell: (m) => `$${Number(m.totalSpend).toFixed(2)}`,
+        cell: (m) => formatMoney(Number(m.totalSpend)),
       },
       {
         key: 'orders',
@@ -84,7 +86,7 @@ export default function ClvReportPage() {
         cell: (m) => m.purchaseCount,
       },
     ],
-    [],
+    [formatMoney],
   );
 
   return (
@@ -108,7 +110,7 @@ export default function ClvReportPage() {
                   <div key={b.bucket} className="rounded-lg border border-hos-border bg-hos-bg-secondary p-3">
                     <p className="text-hos-text-muted">{b.bucket}</p>
                     <p className="text-xl font-semibold">{b.count}</p>
-                    <p className="text-xs text-hos-text-muted">avg ${Number(b.avgClv).toFixed(2)}</p>
+                    <p className="text-xs text-hos-text-muted">avg {formatMoney(Number(b.avgClv))}</p>
                   </div>
                 ))}
               </div>

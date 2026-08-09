@@ -63,6 +63,10 @@ function buildService(overrides?: {
     getAccounts: overrides?.getAccounts ?? jest.fn().mockResolvedValue({ Accounts: [] }),
   } as any;
 
+  const platformRegion = {
+    getCurrency: jest.fn().mockResolvedValue('USD'),
+  } as any;
+
   const service = new AccountingService(
     config,
     featureFlags,
@@ -72,9 +76,21 @@ function buildService(overrides?: {
     outbox,
     xeroAuth,
     xeroApi,
+    platformRegion,
   );
 
-  return { service, config, featureFlags, prisma, encryption, journals, outbox, xeroAuth, xeroApi };
+  return {
+    service,
+    config,
+    featureFlags,
+    prisma,
+    encryption,
+    journals,
+    outbox,
+    xeroAuth,
+    xeroApi,
+    platformRegion,
+  };
 }
 
 describe('AccountingService', () => {

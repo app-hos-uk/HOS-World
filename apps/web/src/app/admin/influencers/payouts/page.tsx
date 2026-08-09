@@ -5,6 +5,8 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useDateTime } from '@/hooks/useDateTime';
+import { useMoney } from '@/hooks/useMoney';
 
 const api = apiClient as any;
 
@@ -37,6 +39,8 @@ interface Influencer {
 }
 
 export default function AdminInfluencerPayoutsPage() {
+  const { formatMoney } = useMoney();
+  const { formatDate: formatDateShared } = useDateTime();
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -141,19 +145,12 @@ export default function AdminInfluencerPayoutsPage() {
     });
   };
 
-  const formatCurrency = (amount: number, currency = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-    }).format(amount);
-  };
+  
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      day: 'numeric',
+    return formatDateShared(dateString, { day: 'numeric',
       month: 'short',
-      year: 'numeric',
-    });
+      year: 'numeric', });
   };
 
   const getStatusBadge = (status: string) => {
@@ -236,7 +233,7 @@ export default function AdminInfluencerPayoutsPage() {
                         {payout._count.commissions} commissions
                       </td>
                       <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-400">
-                        {formatCurrency(payout.totalAmount, payout.currency)}
+                        {formatMoney(payout.totalAmount, payout.currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusBadge(payout.status)}`}>
@@ -357,7 +354,7 @@ export default function AdminInfluencerPayoutsPage() {
               </div>
               <div className="p-6 space-y-4">
                 <p className="text-hos-text-secondary">
-                  Recording payment of <strong>{formatCurrency(showPayModal.totalAmount)}</strong> to{' '}
+                  Recording payment of <strong>{formatMoney(showPayModal.totalAmount, showPayModal.currency)}</strong> to{' '}
                   <strong>{showPayModal.influencer.displayName}</strong>
                 </p>
                 <div>

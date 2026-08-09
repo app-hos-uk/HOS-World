@@ -14,6 +14,7 @@ import {
   PickupRequest,
   PickupResponse,
 } from '../interfaces/courier-provider.interface';
+import { PLATFORM_DEFAULT_CURRENCY } from '../../../common/currency-defaults';
 
 /**
  * DHL Express API Integration
@@ -312,7 +313,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
           packageIndex: index,
         })),
         rate: response.shipmentCharges?.[0]?.price || 0,
-        currency: response.shipmentCharges?.[0]?.priceCurrency || 'USD',
+        currency: response.shipmentCharges?.[0]?.priceCurrency || PLATFORM_DEFAULT_CURRENCY,
         serviceCode: request.serviceCode,
         serviceName: DHLProvider.SERVICES[request.serviceCode]?.name || request.serviceCode,
         estimatedDeliveryDate: response.estimatedDeliveryDate?.estimatedDeliveryDate
@@ -384,7 +385,7 @@ export class DHLProvider extends BaseCourierProvider implements ICourierProvider
         })),
         isCustomsDeclarable: isInternational,
         declaredValue: request.insurance?.amount || 0,
-        declaredValueCurrency: request.insurance?.currency || 'USD',
+        declaredValueCurrency: request.insurance?.currency || PLATFORM_DEFAULT_CURRENCY,
         description: 'Merchandise',
         incoterm: 'DAP',
         unitOfMeasurement: 'metric',

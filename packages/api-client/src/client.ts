@@ -2755,6 +2755,23 @@ export class ApiClient {
     });
   }
 
+  // Bare object (not ApiResponse-wrapped) — matches PublicConfigController.getRegion
+  async getRegion(): Promise<{
+    currency: string;
+    country: string;
+    locale: string;
+    timezone: string;
+  }> {
+    return this.request<{
+      currency: string;
+      country: string;
+      locale: string;
+      timezone: string;
+    }>('/config/region', {
+      method: 'GET',
+    });
+  }
+
   async updateSystemSettings(settings: any): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/admin/settings', {
       method: 'PUT',

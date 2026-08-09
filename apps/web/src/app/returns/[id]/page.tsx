@@ -12,6 +12,8 @@ import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 
 import type { UserRole } from '@hos-marketplace/shared-types';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 const RETURN_ROLES: UserRole[] = ['CUSTOMER', 'ADMIN', 'FINANCE', 'SELLER', 'B2C_SELLER', 'WHOLESALER'];
 
@@ -35,6 +37,7 @@ export default function ReturnDetailPage() {
 }
 
 function ReturnDetailContent() {
+  const { formatDateTime } = useDateTime();
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -138,7 +141,7 @@ function ReturnDetailContent() {
     );
   }
 
-  const currency = returnRequest.order?.currency || 'USD';
+  const currency = returnRequest.order?.currency || DEFAULT_CURRENCY;
 
   const formatReturnStatus = (status: string) => {
     const labels: Record<string, string> = {
@@ -193,7 +196,7 @@ function ReturnDetailContent() {
                     </p>
                     {step.at && (
                       <p className="text-xs text-hos-text-muted">
-                        {new Date(step.at).toLocaleString()}
+                        {formatDateTime(step.at)}
                       </p>
                     )}
                   </div>
@@ -269,7 +272,7 @@ function ReturnDetailContent() {
                       {formatPrice(Number(tx.amount), tx.currency || currency)} — {tx.status}
                     </p>
                     <p className="text-xs text-hos-text-muted mt-1">
-                      {new Date(tx.createdAt).toLocaleString()}
+                      {formatDateTime(tx.createdAt)}
                       {tx.stripeRefundId ? ` · Ref: ${tx.stripeRefundId}` : ''}
                     </p>
                   </div>
@@ -282,7 +285,7 @@ function ReturnDetailContent() {
             <dt className="text-sm font-medium text-hos-text-muted">Created</dt>
             <dd className="mt-1 text-hos-text-secondary">
               {returnRequest.createdAt
-                ? new Date(returnRequest.createdAt).toLocaleString()
+                ? formatDateTime(returnRequest.createdAt)
                 : 'N/A'}
             </dd>
           </div>

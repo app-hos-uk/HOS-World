@@ -24,6 +24,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { PaymentProviderModule } from '../payments/payment-provider.module';
 import { VendorLedgerModule } from '../vendor-ledger/vendor-ledger.module';
 import { LoyaltyModule } from '../loyalty/loyalty.module';
+import { CurrencyModule } from '../currency/currency.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { LoyaltyModule } from '../loyalty/loyalty.module';
     NotificationsModule,
     PaymentProviderModule,
     VendorLedgerModule,
+    CurrencyModule,
     forwardRef(() => LoyaltyModule),
   ],
   controllers: [

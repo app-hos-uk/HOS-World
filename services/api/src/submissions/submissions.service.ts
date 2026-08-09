@@ -10,6 +10,7 @@ import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { ProductSubmissionStatus } from '@prisma/client';
 import { DuplicatesService } from '../duplicates/duplicates.service';
 import { MeilisearchService } from '../meilisearch/meilisearch.service';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
 export class SubmissionsService {
@@ -101,7 +102,7 @@ export class SubmissionsService {
       price: createSubmissionDto.price,
       tradePrice: createSubmissionDto.tradePrice,
       rrp: createSubmissionDto.rrp,
-      currency: createSubmissionDto.currency || 'USD',
+      currency: createSubmissionDto.currency || PLATFORM_DEFAULT_CURRENCY,
       taxRate: createSubmissionDto.taxRate || 0,
       stock: createSubmissionDto.stock,
       quantity: createSubmissionDto.quantity,
@@ -668,7 +669,7 @@ export class SubmissionsService {
           slug: hit.slug,
           sku: hit.sku || null,
           price: hit.price,
-          currency: hit.currency || 'USD',
+          currency: hit.currency || PLATFORM_DEFAULT_CURRENCY,
           stock: hit.stock,
           fandom: hit.fandom,
           status: hit.isActive ? 'ACTIVE' : 'DRAFT',
@@ -761,7 +762,7 @@ export class SubmissionsService {
         price: submissionDto.price,
         tradePrice: submissionDto.tradePrice,
         rrp: submissionDto.rrp,
-        currency: submissionDto.currency || 'USD',
+        currency: submissionDto.currency || PLATFORM_DEFAULT_CURRENCY,
         taxRate: submissionDto.taxRate || 0,
         stock: submissionDto.stock,
         quantity: submissionDto.quantity,

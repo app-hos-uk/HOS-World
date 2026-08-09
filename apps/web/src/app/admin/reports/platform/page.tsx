@@ -16,6 +16,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { format, subMonths, subWeeks, subDays, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval } from 'date-fns';
+import { useMoney } from '@/hooks/useMoney';
 
 type Period = 'daily' | 'weekly' | 'monthly';
 
@@ -70,6 +71,7 @@ function axisTickInterval(pointCount: number): number {
 const USER_GROWTH_PAGE_SIZE = 10;
 
 export default function AdminPlatformMetricsPage() {
+  const { formatMoney, formatMoneyCompact } = useMoney();
   const [metrics, setMetrics] = useState<PlatformMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -243,7 +245,7 @@ export default function AdminPlatformMetricsPage() {
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Revenue</h3>
               <p className="text-3xl font-bold text-green-400 mt-2">
-                ${Number(metrics?.totalRevenue || 0).toFixed(2)}
+                {formatMoney(Number(metrics?.totalRevenue || 0))}
               </p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
@@ -317,10 +319,10 @@ export default function AdminPlatformMetricsPage() {
                     minTickGap={8}
                   />
                   <YAxis yAxisId="left" allowDecimals={false} />
-                  <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => `$${v}`} />
+                  <YAxis yAxisId="right" orientation="right" tickFormatter={(v) => formatMoneyCompact(v)} />
                   <Tooltip
                     formatter={(value: any, name: string) =>
-                      name === 'Revenue' ? `$${Number(value).toFixed(2)}` : value
+                      name === 'Revenue' ? formatMoney(Number(value)) : value
                     }
                   />
                   <Legend />
@@ -347,8 +349,8 @@ export default function AdminPlatformMetricsPage() {
                     tick={{ fontSize: 11 }}
                     minTickGap={8}
                   />
-                  <YAxis tickFormatter={(v) => `$${Number(v).toFixed(0)}`} />
-                  <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} labelFormatter={(l) => `Period: ${l}`} />
+                  <YAxis tickFormatter={(v) => formatMoneyCompact(Number(v))} />
+                  <Tooltip formatter={(value: any) => formatMoney(Number(value))} labelFormatter={(l) => `Period: ${l}`} />
                   <Legend />
                   <Line type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} name="Revenue" />
                 </LineChart>
@@ -474,8 +476,8 @@ export default function AdminPlatformMetricsPage() {
                         <tr key={row.label} className="hover:bg-hos-bg-tertiary">
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">{row.label}</td>
                           <td className="text-right px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">{row.count}</td>
-                          <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm text-green-400 font-medium">${row.revenue.toFixed(2)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted text-right">${avg.toFixed(2)}</td>
+                          <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm text-green-400 font-medium">{formatMoney(row.revenue)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted text-right">{formatMoney(avg)}</td>
                         </tr>
                       );
                     })

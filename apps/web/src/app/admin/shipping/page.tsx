@@ -6,6 +6,8 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useMoney } from '@/hooks/useMoney';
+import { formatMoney as formatMoneyLib } from '@/lib/money';
 
 const SHIPPING_METHOD_TYPES = [
   { value: 'FLAT_RATE', label: 'Flat Rate', description: 'Fixed rate per order' },
@@ -112,9 +114,9 @@ function formatConditions(conditions?: ShippingRuleConditions): string {
   }
   if (conditions.cartValueRange) {
     const { min, max } = conditions.cartValueRange;
-    if (min != null && max != null) parts.push(`Cart: $${min}-$${max}`);
-    else if (min != null) parts.push(`Cart: $${min}+`);
-    else if (max != null) parts.push(`Cart: ≤$${max}`);
+    if (min != null && max != null) parts.push(`Cart: ${formatMoneyLib(min)}-${formatMoneyLib(max)}`);
+    else if (min != null) parts.push(`Cart: ${formatMoneyLib(min)}+`);
+    else if (max != null) parts.push(`Cart: ≤${formatMoneyLib(max)}`);
   }
   return parts.length > 0 ? parts.join(', ') : '—';
 }
@@ -132,6 +134,7 @@ function getTypeBadgeColor(type: string): string {
 }
 
 export default function AdminShippingPage() {
+  const { formatMoney } = useMoney();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const [methods, setMethods] = useState<ShippingMethod[]>([]);

@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 type JobStatus = 'queued' | 'processing' | 'completed' | 'failed';
 
@@ -176,7 +177,7 @@ export default function SellerBulkProductsPage() {
         'HP-WAND-001',
         '49.99',
         '100',
-        'USD',
+        DEFAULT_CURRENCY,
         'Collectibles',
         'harry-potter',
         'wand|replica|collectible',
@@ -189,7 +190,7 @@ export default function SellerBulkProductsPage() {
         'HP-SCARF-GRY',
         '29.99',
         '250',
-        'USD',
+        DEFAULT_CURRENCY,
         'Apparel',
         'harry-potter',
         'scarf|gryffindor|apparel',
@@ -202,7 +203,7 @@ export default function SellerBulkProductsPage() {
         'LOTR-RING-001',
         '34.99',
         '75',
-        'USD',
+        DEFAULT_CURRENCY,
         'Jewelry',
         'lord-of-the-rings',
         'ring|replica|jewelry',

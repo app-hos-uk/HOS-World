@@ -11,10 +11,21 @@ import {
 } from 'recharts';
 import { todayDateInputValue } from '@/lib/formFieldValidation';
 import { navIcon } from '@/lib/navIcons';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
+import {
+  calendarDay,
+  addCalendarDays,
+  startOfDayInRegion,
+  endOfDayInRegion,
+} from '@/lib/datetime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
 export default function AdminFinancePage() {
+  const { formatDate, timezone } = useDateTime();
+  const { formatMoney, formatMoneyCompact } = useMoney();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'payouts' | 'refunds' | 'reports'>('overview');
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -42,29 +53,25 @@ export default function AdminFinancePage() {
   const safePayouts = useMemo(() => Array.isArray(payouts) ? payouts : [], [payouts]);
   const safeRefunds = useMemo(() => Array.isArray(refunds) ? refunds : [], [refunds]);
 
-  const formatLocalDate = (d: Date): string => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  const rangeDays = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
 
+  /**
+   * The window is built entirely from platform business days so it lines up with the buckets
+   * the results are grouped into; stepping a browser-local Date would build the range in the
+   * viewer's calendar instead.
+   */
   const getDateRangeBounds = useCallback(() => {
-    const now = new Date();
-    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
-    const start = new Date(now);
-    start.setDate(start.getDate() - (days - 1));
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(now);
-    end.setHours(23, 59, 59, 999);
+    const today = calendarDay(new Date(), timezone);
+    const start = startOfDayInRegion(addCalendarDays(today, -(rangeDays - 1)), timezone);
+    const end = endOfDayInRegion(today, timezone);
+
     return {
-      // ISO preserves local day bounds across timezones on the API
       startDate: start.toISOString(),
       endDate: end.toISOString(),
       start,
       end,
     };
-  }, [dateRange]);
+  }, [rangeDays, timezone]);
 
   // After server-side date filtering, use the same lists for overview + tabs
   const rangedTransactions = safeTransactions;
@@ -179,34 +186,34 @@ export default function AdminFinancePage() {
 
   // Revenue chart data (last 30 days)
   const revenueChartData = useMemo(() => {
-    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
+    // Group transactions by platform business day once, rather than rescanning the list per day.
+    const revenueByDay = new Map<string, { revenue: number; count: number }>();
+    for (const tx of rangedTransactions) {
+      if (tx.status !== 'COMPLETED') continue;
+      const day = calendarDay(tx.createdAt, timezone);
+      const bucket = revenueByDay.get(day) ?? { revenue: 0, count: 0 };
+      bucket.revenue += Number(tx.amount) || 0;
+      bucket.count += 1;
+      revenueByDay.set(day, bucket);
+    }
+
+    const today = calendarDay(new Date(), timezone);
     const data = [];
-    const now = new Date();
-    
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      // Use local date format consistently to avoid timezone mismatches
-      const dateStr = formatLocalDate(date);
-      
-      const dayTransactions = rangedTransactions.filter(tx => {
-        // Convert transaction date to local date string for consistent comparison
-        const txDate = new Date(tx.createdAt);
-        const txDateStr = formatLocalDate(txDate);
-        return txDateStr === dateStr && tx.status === 'COMPLETED';
-      });
-      
-      const dayRevenue = dayTransactions.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-      
+
+    for (let i = rangeDays - 1; i >= 0; i--) {
+      // Walk the platform calendar directly so bucket and label always name the same day.
+      const day = addCalendarDays(today, -i);
+      const bucket = revenueByDay.get(day);
+
       data.push({
-        date: date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }),
-        revenue: dayRevenue,
-        transactions: dayTransactions.length,
+        date: formatDate(day, { day: '2-digit', month: 'short' }),
+        revenue: bucket?.revenue ?? 0,
+        transactions: bucket?.count ?? 0,
       });
     }
-    
+
     return data;
-  }, [rangedTransactions, dateRange]);
+  }, [rangedTransactions, rangeDays, formatDate, timezone]);
 
   // Transaction type breakdown
   const transactionTypeData = useMemo(() => {
@@ -296,22 +303,22 @@ export default function AdminFinancePage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                       <h3 className="text-sm font-medium text-hos-text-muted mb-1">Total Revenue</h3>
-                      <p className="text-3xl font-bold text-green-400">${metrics.totalRevenue.toFixed(2)}</p>
+                      <p className="text-3xl font-bold text-green-400">{formatMoney(metrics.totalRevenue)}</p>
                       <p className="text-xs text-hos-text-muted mt-1">{metrics.transactionCount} transactions</p>
                     </div>
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                       <h3 className="text-sm font-medium text-hos-text-muted mb-1">Net Revenue</h3>
-                      <p className="text-3xl font-bold text-hos-gold">${metrics.netRevenue.toFixed(2)}</p>
+                      <p className="text-3xl font-bold text-hos-gold">{formatMoney(metrics.netRevenue)}</p>
                       <p className="text-xs text-hos-text-muted mt-1">After refunds</p>
                     </div>
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                       <h3 className="text-sm font-medium text-hos-text-muted mb-1">Platform Fees</h3>
-                      <p className="text-3xl font-bold text-hos-gold">${metrics.platformFees.toFixed(2)}</p>
+                      <p className="text-3xl font-bold text-hos-gold">{formatMoney(metrics.platformFees)}</p>
                       <p className="text-xs text-hos-text-muted mt-1">5% commission</p>
                     </div>
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
                       <h3 className="text-sm font-medium text-hos-text-muted mb-1">Pending</h3>
-                      <p className="text-3xl font-bold text-yellow-400">${metrics.pendingAmount.toFixed(2)}</p>
+                      <p className="text-3xl font-bold text-yellow-400">{formatMoney(metrics.pendingAmount)}</p>
                       <p className="text-xs text-hos-text-muted mt-1">Awaiting settlement</p>
                     </div>
                   </div>
@@ -319,16 +326,16 @@ export default function AdminFinancePage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                       <h3 className="text-sm font-medium text-hos-text-muted">Seller Payouts</h3>
-                      <p className="text-xl font-bold text-hos-text-secondary mt-1">${metrics.totalPayouts.toFixed(2)}</p>
+                      <p className="text-xl font-bold text-hos-text-secondary mt-1">{formatMoney(metrics.totalPayouts)}</p>
                     </div>
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                       <h3 className="text-sm font-medium text-hos-text-muted">Total Refunds</h3>
-                      <p className="text-xl font-bold text-red-400 mt-1">${metrics.totalRefunds.toFixed(2)}</p>
+                      <p className="text-xl font-bold text-red-400 mt-1">{formatMoney(metrics.totalRefunds)}</p>
                     </div>
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                       <h3 className="text-sm font-medium text-hos-text-muted">Avg Transaction</h3>
                       <p className="text-xl font-bold text-hos-text-secondary mt-1">
-                        ${isNaN(metrics.avgTransactionValue) ? '0.00' : metrics.avgTransactionValue.toFixed(2)}
+                        {formatMoney(isNaN(metrics.avgTransactionValue) ? 0 : metrics.avgTransactionValue)}
                       </p>
                     </div>
                     <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
@@ -347,8 +354,8 @@ export default function AdminFinancePage() {
                         <AreaChart data={revenueChartData}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                          <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
-                          <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']} />
+                          <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => formatMoneyCompact(v)} />
+                          <Tooltip formatter={(value: number) => [formatMoney(value), 'Revenue']} />
                           <Area type="monotone" dataKey="revenue" stroke="#8b5cf6" fill="#8b5cf680" />
                         </AreaChart>
                       </ResponsiveContainer>
@@ -378,7 +385,7 @@ export default function AdminFinancePage() {
                                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                               </Pie>
-                              <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+                              <Tooltip formatter={(value: number) => formatMoney(value)} />
                             </PieChart>
                           </ResponsiveContainer>
                         </div>
@@ -422,9 +429,9 @@ export default function AdminFinancePage() {
                       data={rangedTransactions}
                       columns={[
                         { key: 'type', header: 'Type' },
-                        { key: 'amount', header: 'Amount', format: (v: number, t: any) => `${t.currency || 'USD'} ${Number(v).toFixed(2)}` },
+                        { key: 'amount', header: 'Amount', format: (v: number, t: any) => formatMoney(Number(v), t.currency || DEFAULT_CURRENCY) },
                         { key: 'status', header: 'Status' },
-                        { key: 'createdAt', header: 'Date', format: (v: string) => new Date(v).toLocaleDateString() },
+                        { key: 'createdAt', header: 'Date', format: (v: string) => formatDate(v) },
                       ]}
                       filename="transactions-export"
                     />
@@ -448,7 +455,7 @@ export default function AdminFinancePage() {
                           <tr key={tx.id} className="hover:bg-hos-bg-tertiary">
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{tx.type}</td>
                             <td className="text-right px-6 py-4 whitespace-nowrap text-sm tabular-nums font-medium">
-                              {tx.currency || 'USD'} {Number(tx.amount).toFixed(2)}
+                              {formatMoney(Number(tx.amount), tx.currency || DEFAULT_CURRENCY)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs rounded-full ${
@@ -460,7 +467,7 @@ export default function AdminFinancePage() {
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                              {new Date(tx.createdAt).toLocaleDateString()}
+                              {formatDate(tx.createdAt)}
                             </td>
                           </tr>
                         ))
@@ -508,9 +515,9 @@ export default function AdminFinancePage() {
                               ? `${p.seller.storeName} (${p.sellerId || ''})`
                               : p?.sellerId || '',
                         },
-                        { key: 'amount', header: 'Amount', format: (v: number, p: any) => `${p.currency || 'USD'} ${Number(v).toFixed(2)}` },
+                        { key: 'amount', header: 'Amount', format: (v: number, p: any) => formatMoney(Number(v), p.currency || DEFAULT_CURRENCY) },
                         { key: 'status', header: 'Status' },
-                        { key: 'createdAt', header: 'Date', format: (v: string) => new Date(v).toLocaleDateString() },
+                        { key: 'createdAt', header: 'Date', format: (v: string) => formatDate(v) },
                       ]}
                       filename="payouts-export"
                     />
@@ -549,7 +556,7 @@ export default function AdminFinancePage() {
                               </p>
                             </td>
                             <td className="text-right px-6 py-4 whitespace-nowrap text-sm tabular-nums font-medium">
-                              {payout.currency || 'USD'} {Number(payout.amount).toFixed(2)}
+                              {formatMoney(Number(payout.amount), payout.currency || DEFAULT_CURRENCY)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs rounded-full ${
@@ -561,7 +568,7 @@ export default function AdminFinancePage() {
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                              {new Date(payout.createdAt).toLocaleDateString()}
+                              {formatDate(payout.createdAt)}
                             </td>
                           </tr>
                         ))
@@ -579,9 +586,9 @@ export default function AdminFinancePage() {
                       data={rangedRefunds}
                       columns={[
                         { key: 'orderId', header: 'Order' },
-                        { key: 'amount', header: 'Amount', format: (v: number, r: any) => `${r.currency || 'USD'} ${Number(v).toFixed(2)}` },
+                        { key: 'amount', header: 'Amount', format: (v: number, r: any) => formatMoney(Number(v), r.currency || DEFAULT_CURRENCY) },
                         { key: 'status', header: 'Status' },
-                        { key: 'createdAt', header: 'Date', format: (v: string) => new Date(v).toLocaleDateString() },
+                        { key: 'createdAt', header: 'Date', format: (v: string) => formatDate(v) },
                       ]}
                       filename="refunds-export"
                     />
@@ -605,7 +612,7 @@ export default function AdminFinancePage() {
                           <tr key={refund.id} className="hover:bg-hos-bg-tertiary">
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{refund.orderId}</td>
                             <td className="text-right px-6 py-4 whitespace-nowrap text-sm tabular-nums font-medium">
-                              {refund.currency || 'USD'} {Number(refund.amount).toFixed(2)}
+                              {formatMoney(Number(refund.amount), refund.currency || DEFAULT_CURRENCY)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2 py-1 text-xs rounded-full ${
@@ -617,7 +624,7 @@ export default function AdminFinancePage() {
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                              {new Date(refund.createdAt).toLocaleDateString()}
+                              {formatDate(refund.createdAt)}
                             </td>
                           </tr>
                         ))
@@ -638,6 +645,7 @@ export default function AdminFinancePage() {
 }
 
 function RevenueReportsTab() {
+  const { formatMoney } = useMoney();
   const [reportData, setReportData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [dateRange, setDateRange] = useState(() => {
@@ -704,19 +712,19 @@ function RevenueReportsTab() {
             <div className="bg-hos-gold/10 rounded-lg p-4">
               <div className="text-sm text-hos-text-secondary">Total Revenue</div>
               <div className="text-2xl font-bold text-hos-gold">
-                {reportData.totalRevenue ? `$${Number(reportData.totalRevenue).toFixed(2)}` : 'N/A'}
+                {reportData.totalRevenue ? formatMoney(Number(reportData.totalRevenue)) : 'N/A'}
               </div>
             </div>
             <div className="bg-green-500/10 rounded-lg p-4">
               <div className="text-sm text-hos-text-secondary">Platform Fees</div>
               <div className="text-2xl font-bold text-green-300">
-                {reportData.platformFees ? `$${Number(reportData.platformFees).toFixed(2)}` : 'N/A'}
+                {reportData.platformFees ? formatMoney(Number(reportData.platformFees)) : 'N/A'}
               </div>
             </div>
             <div className="bg-hos-gold/10 rounded-lg p-4">
               <div className="text-sm text-hos-text-secondary">Seller Payouts</div>
               <div className="text-2xl font-bold text-hos-gold">
-                {reportData.sellerPayouts ? `$${Number(reportData.sellerPayouts).toFixed(2)}` : 'N/A'}
+                {reportData.sellerPayouts ? formatMoney(Number(reportData.sellerPayouts)) : 'N/A'}
               </div>
             </div>
           </div>

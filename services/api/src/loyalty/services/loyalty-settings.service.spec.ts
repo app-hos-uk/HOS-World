@@ -39,10 +39,12 @@ function createService(
     get: (key: string) => (key === 'LOYALTY_SETTINGS_CACHE_TTL_MS' ? ttlMs : undefined),
   };
   const featureFlags = { isEnabled: () => false };
+  const platformRegion = { getCurrency: jest.fn().mockResolvedValue('USD') };
   return new LoyaltySettingsService(
     prisma as any,
     config as any,
     featureFlags as any,
+    platformRegion as any,
     sharedCache as any,
   );
 }

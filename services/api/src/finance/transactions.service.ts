@@ -6,18 +6,20 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { CurrencyService } from '../currency/currency.service';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 const ALLOWED_TRANSACTION_TYPES = ['PAYMENT', 'PAYOUT', 'REFUND', 'FEE', 'ADJUSTMENT'] as const;
 type TransactionType = (typeof ALLOWED_TRANSACTION_TYPES)[number];
-
-// Must stay aligned with CurrencyService.DEFAULT_SUPPORTED and GLOBAL_SUPPORTED_CURRENCIES env
-const ALLOWED_CURRENCIES = ['USD', 'EUR', 'GBP', 'AED', 'JPY', 'AUD', 'CAD', 'SGD'] as const;
 
 @Injectable()
 export class TransactionsService implements OnModuleInit {
   private readonly logger = new Logger(TransactionsService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private currencyService: CurrencyService,
+  ) {}
 
   async onModuleInit() {
     // Auto-backfill on startup: create Transaction records for paid orders that lack them
@@ -50,10 +52,13 @@ export class TransactionsService implements OnModuleInit {
       );
     }
 
-    if (data.currency && !ALLOWED_CURRENCIES.includes(data.currency as any)) {
-      throw new BadRequestException(
-        `Unsupported currency "${data.currency}". Allowed: ${ALLOWED_CURRENCIES.join(', ')}`,
-      );
+    if (data.currency) {
+      const allowed = this.currencyService.getSupportedCurrencies();
+      if (!allowed.includes(data.currency.toUpperCase())) {
+        throw new BadRequestException(
+          `Unsupported currency "${data.currency}". Allowed: ${allowed.join(', ')}`,
+        );
+      }
     }
 
     // Validate related entities exist
@@ -106,7 +111,7 @@ export class TransactionsService implements OnModuleInit {
       data: {
         type: data.type,
         amount: data.amount,
-        currency: data.currency || 'USD',
+        currency: data.currency || PLATFORM_DEFAULT_CURRENCY,
         status: data.status || 'PENDING',
         sellerId: data.sellerId,
         customerId: data.customerId,
@@ -655,7 +660,7 @@ export class TransactionsService implements OnModuleInit {
 
       const payment = order.payments[0];
       const amount = payment ? Number(payment.amount) : Number(order.total);
-      const currency = payment?.currency || order.currency || 'USD';
+      const currency = payment?.currency || order.currency || PLATFORM_DEFAULT_CURRENCY;
 
       try {
         await this.prisma.transaction.create({

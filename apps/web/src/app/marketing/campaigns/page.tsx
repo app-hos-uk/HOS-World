@@ -13,6 +13,7 @@ import {
   validateOptionalDescriptiveText,
 } from '@/lib/formFieldValidation';
 import { getMarketingMenu } from '@/lib/teamMenus';
+import { useDateTime } from '@/hooks/useDateTime';
 
 type CampaignStatus = 'DRAFT' | 'ACTIVE' | 'PAUSED' | 'COMPLETED';
 
@@ -78,6 +79,7 @@ const FILTER_TABS: { label: string; value: CampaignStatus | 'ALL' }[] = [
 ];
 
 function MarketingCampaignsPageContent() {
+  const { formatDate } = useDateTime();
   const searchParams = useSearchParams();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [influencers, setInfluencers] = useState<InfluencerOption[]>([]);
@@ -421,8 +423,8 @@ function MarketingCampaignsPageContent() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-hos-text-secondary">
-                        {campaign.startDate ? new Date(campaign.startDate).toLocaleDateString() : '—'} –{' '}
-                        {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString() : '—'}
+                        {campaign.startDate ? formatDate(campaign.startDate) : '—'} –{' '}
+                        {campaign.endDate ? formatDate(campaign.endDate) : '—'}
                       </td>
                       <td className="px-4 py-3 text-sm text-hos-text-secondary">{campaign.totalClicks ?? 0}</td>
                       <td className="px-4 py-3 text-sm text-hos-text-secondary">{campaign.totalConversions ?? 0}</td>

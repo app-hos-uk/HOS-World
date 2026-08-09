@@ -10,8 +10,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { PortalMobileCard } from '@/components/ui/PortalMobileCard';
 import { PORTAL_INPUT_CLASS, PORTAL_SELECT_CLASS } from '@/lib/portalFieldClasses';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function WholesalerProductsPage() {
+  const { formatDate } = useDateTime();
   const { formatPrice } = useCurrency();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -190,7 +192,7 @@ export default function WholesalerProductsPage() {
                       { label: 'Price', value: formatPrice(parseFloat(product.price || 0)) },
                       { label: 'Stock', value: product.stock ?? 0 },
                       { label: 'Min. Order', value: product.quantity || '—' },
-                      { label: 'Created', value: new Date(product.createdAt).toLocaleDateString() },
+                      { label: 'Created', value: formatDate(product.createdAt) },
                     ]}
                     actions={
                       <div className="flex items-center gap-3">
@@ -281,7 +283,7 @@ export default function WholesalerProductsPage() {
                           {product.quantity || '—'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                          {new Date(product.createdAt).toLocaleDateString()}
+                          {formatDate(product.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">

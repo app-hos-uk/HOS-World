@@ -175,16 +175,17 @@ describe('lightspeed.mapper', () => {
       expect(sale.taxAmount).toBe(5);
     });
 
-    it('defaults missing currency to GBP', () => {
+    it('defaults missing currency to the region currency', () => {
       const sale = M.mapSaleFromVend(
         {
-          id: 'sale-gbp',
+          id: 'sale-usd',
           total_payment: 10,
           line_items: [{ product_id: 'p', name: 'X', quantity: 1, price: 10 }],
         },
         'o1',
+        'USD',
       );
-      expect(sale.currency).toBe('GBP');
+      expect(sale.currency).toBe('USD');
     });
 
     it('uses nested totals over top-level zeros when totals are present', () => {

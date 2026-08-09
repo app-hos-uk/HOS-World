@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 export default function RevenueRecognitionPage() {
   const toast = useToast();
@@ -134,7 +135,7 @@ export default function RevenueRecognitionPage() {
                         {deferred.map((order: any) => (
                           <tr key={order.id} className="border-b border-hos-border/50">
                             <td className="px-3 py-2 font-medium truncate">{order.orderNumber || order.id.slice(0, 8)}</td>
-                            <td className="tabular-nums text-right px-3 py-2">{formatPrice(order.total)}</td>
+                            <td className="tabular-nums text-right px-3 py-2">{formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}</td>
                             <td className="px-3 py-2">
                               <span className="inline-block px-2 py-0.5 text-xs rounded bg-yellow-500/20 text-yellow-400">
                                 {order.status}

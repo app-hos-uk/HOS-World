@@ -7,8 +7,10 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function LoyaltyHistoryPage() {
+  const { formatDateTime } = useDateTime();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<any[]>([]);
@@ -77,7 +79,7 @@ export default function LoyaltyHistoryPage() {
                   {rows.map((t) => (
                     <tr key={t.id} className="border-t border-stone-800 text-stone-200">
                       <td className="px-3 py-2 text-xs text-stone-400">
-                        {t.createdAt ? new Date(t.createdAt).toLocaleString() : '—'}
+                        {t.createdAt ? formatDateTime(t.createdAt) : '—'}
                       </td>
                       <td className="px-3 py-2">{t.type}</td>
                       <td className="px-3 py-2 text-right tabular-nums">

@@ -6,8 +6,10 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function LoyaltyMessagesPage() {
+  const { formatDateTime } = useDateTime();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,7 +49,7 @@ export default function LoyaltyMessagesPage() {
                   className="rounded-lg border border-stone-800 bg-stone-900/50 px-4 py-3 font-secondary text-sm"
                 >
                   <div className="flex justify-between gap-2 text-stone-400 text-xs mb-1">
-                    <span>{new Date(m.createdAt).toLocaleString()}</span>
+                    <span>{formatDateTime(m.createdAt)}</span>
                     <span>
                       {m.channel} · {m.status}
                     </span>

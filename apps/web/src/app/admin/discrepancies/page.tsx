@@ -4,12 +4,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 const RESOLVABLE_STATUSES = ['OPEN', 'INVESTIGATING'];
 const STATUS_OPTIONS = ['', 'OPEN', 'INVESTIGATING', 'RESOLVED', 'DISMISSED'];
 const TYPE_OPTIONS = ['', 'INVENTORY_DRIFT', 'GIFT_CARD_BALANCE', 'PRICE_MISMATCH', 'ORDER_TOTAL'];
 
 export default function AdminDiscrepanciesPage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const [discrepancies, setDiscrepancies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -164,7 +166,7 @@ export default function AdminDiscrepanciesPage() {
                         {disc.description}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                        {new Date(disc.createdAt).toLocaleDateString()}
+                        {formatDate(disc.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                         {RESOLVABLE_STATUSES.includes(disc.status) ? (

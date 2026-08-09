@@ -14,6 +14,7 @@ import { SafeImage } from '@/components/SafeImage';
 import { ProductImageGallery } from '@/components/products/ProductImageGallery';
 import Link from 'next/link';
 import { StorefrontBreadcrumbs } from '@/components/storefront/StorefrontBreadcrumbs';
+import { useDateTime } from '@/hooks/useDateTime';
 
 const CATEGORY_DISPLAY_RENAMES: Record<string, string> = {
   'collectibles hos uk': 'Collectibles',
@@ -27,6 +28,7 @@ function displayCategory(raw: string): string {
 }
 import { trackViewItem, trackAddToCart } from '@/lib/analytics';
 import { withShopPreview } from '@/lib/shopPreviewClient';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 function isUuid(s: string): boolean {
@@ -44,6 +46,7 @@ function extractProductReviews(payload: unknown): any[] {
 }
 
 export default function ProductDetailClient() {
+  const { formatDate } = useDateTime();
   const params = useParams();
   const router = useRouter();
   const productIdOrSlug = params.id as string;
@@ -455,7 +458,7 @@ export default function ProductDetailClient() {
 
             <div className="mb-6">
               <div className="text-3xl font-bold text-hos-gold mb-2">
-                {formatPrice(product.price, product.currency || 'USD')}
+                {formatPrice(product.price, product.currency || DEFAULT_CURRENCY)}
               </div>
               {product.stock !== undefined && (
                 <p className={`text-sm ${product.stock > 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -498,7 +501,7 @@ export default function ProductDetailClient() {
                             }`}
                           >
                             {label}
-                            {optionPrice != null && <span className="ml-1 text-hos-gold">({formatPrice(optionPrice, product.currency || 'USD')})</span>}
+                            {optionPrice != null && <span className="ml-1 text-hos-gold">({formatPrice(optionPrice, product.currency || DEFAULT_CURRENCY)})</span>}
                           </button>
                         );
                       })}
@@ -832,7 +835,7 @@ export default function ProductDetailClient() {
                   <p className="text-hos-text-secondary">{review.comment}</p>
                   {review.createdAt && (
                     <p className="text-sm text-hos-text-muted mt-2">
-                      {new Date(review.createdAt).toLocaleDateString()}
+                      {formatDate(review.createdAt)}
                     </p>
                   )}
                 </div>
@@ -871,7 +874,7 @@ export default function ProductDetailClient() {
                       <div className="p-3">
                         <p className="text-sm font-medium text-hos-text-primary line-clamp-2">{related.name}</p>
                         <p className="text-hos-gold font-semibold mt-1">
-                          {formatPrice(related.price, related.currency || 'USD')}
+                          {formatPrice(related.price, related.currency || DEFAULT_CURRENCY)}
                         </p>
                       </div>
                     </Link>

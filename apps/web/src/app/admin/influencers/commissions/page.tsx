@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { RouteGuard } from '@/components/RouteGuard';
+import { useDateTime } from '@/hooks/useDateTime';
+import { useMoney } from '@/hooks/useMoney';
 
 const api = apiClient as any;
 
@@ -26,6 +28,8 @@ interface Commission {
 }
 
 export default function AdminInfluencerCommissionsPage() {
+  const { formatMoney } = useMoney();
+  const { formatDate: formatDateShared } = useDateTime();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [commissions, setCommissions] = useState<Commission[]>([]);
@@ -70,19 +74,12 @@ export default function AdminInfluencerCommissionsPage() {
     }
   };
 
-  const formatCurrency = (amount: number, currency = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-    }).format(amount);
-  };
+  
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      day: 'numeric',
+    return formatDateShared(dateString, { day: 'numeric',
       month: 'short',
-      year: 'numeric',
-    });
+      year: 'numeric', });
   };
 
   const getStatusBadge = (status: string) => {
@@ -119,11 +116,11 @@ export default function AdminInfluencerCommissionsPage() {
           </div>
           <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
             <p className="text-sm text-hos-text-muted">Pending Approval</p>
-            <p className="text-2xl font-bold text-yellow-400">{formatCurrency(pendingTotal)}</p>
+            <p className="text-2xl font-bold text-yellow-400">{formatMoney(pendingTotal)}</p>
           </div>
           <div className="bg-hos-bg-secondary rounded-lg p-4 shadow-sm">
             <p className="text-sm text-hos-text-muted">Ready for Payout</p>
-            <p className="text-2xl font-bold text-green-400">{formatCurrency(approvedTotal)}</p>
+            <p className="text-2xl font-bold text-green-400">{formatMoney(approvedTotal)}</p>
           </div>
         </div>
 
@@ -179,13 +176,13 @@ export default function AdminInfluencerCommissionsPage() {
                         {commission.orderId.slice(0, 8)}...
                       </td>
                       <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
-                        {formatCurrency(commission.orderTotal, commission.currency)}
+                        {formatMoney(commission.orderTotal, commission.currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         {(commission.rateApplied * 100).toFixed(0)}% ({commission.rateSource})
                       </td>
                       <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-400">
-                        {formatCurrency(commission.amount, commission.currency)}
+                        {formatMoney(commission.amount, commission.currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusBadge(commission.status)}`}>

@@ -14,6 +14,7 @@ import Image from 'next/image';
 import { ImageSpecsHint } from '@/components/ImageSpecsHint';
 import Link from 'next/link';
 import { normalizeWhitespace, validateNameLike } from '@/lib/formFieldValidation';
+import { useMoney } from '@/hooks/useMoney';
 
 interface ImageUpload {
   url: string;
@@ -51,6 +52,7 @@ function isValidHttpProductImageUrl(urlString: string): boolean {
 }
 
 export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: string }) {
+  const { formatMoney } = useMoney();
   const router = useRouter();
   const { user, effectiveRole } = useAuth();
   const toast = useToast();
@@ -709,7 +711,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                                 {product.sku ? `SKU: ${product.sku}` : ''}{product.fandom ? ` · ${product.fandom}` : ''}
                               </p>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className="text-sm font-bold text-hos-text-secondary">${Number(product.price || 0).toFixed(2)}</span>
+                                <span className="text-sm font-bold text-hos-text-secondary">{formatMoney(Number(product.price || 0))}</span>
                                 <span className="text-xs text-hos-text-muted">·</span>
                                 <span className="text-xs text-hos-text-muted">{product.vendorCount} vendor{product.vendorCount !== 1 ? 's' : ''}</span>
                               </div>
@@ -718,7 +720,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                           <div className="mt-3 flex gap-2">
                             {product.alreadyListed ? (
                               <span className="flex-1 text-center py-1.5 bg-green-500/10 text-green-400 rounded-lg text-xs font-medium border border-green-500/30">
-                                Already Listed (${Number(product.myListing?.vendorPrice || 0).toFixed(2)})
+                                Already Listed ({formatMoney(Number(product.myListing?.vendorPrice || 0))})
                               </span>
                             ) : (
                               <button
@@ -798,7 +800,7 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
                         className="w-full px-3 py-2 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50"
                         placeholder="Enter your selling price"
                       />
-                      <p className="text-xs text-hos-text-muted mt-1">Catalog price: ${Number(listAsVendorModal.price || 0).toFixed(2)}</p>
+                      <p className="text-xs text-hos-text-muted mt-1">Catalog price: {formatMoney(Number(listAsVendorModal.price || 0))}</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-hos-text-secondary mb-1">Your Stock</label>

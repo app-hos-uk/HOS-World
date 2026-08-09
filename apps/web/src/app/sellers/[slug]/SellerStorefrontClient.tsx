@@ -9,6 +9,8 @@ import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { GoogleFontLink } from '@/components/GoogleFontLink';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface PublicSellerTheme {
   theme: {
@@ -60,6 +62,7 @@ interface Product {
 }
 
 export default function SellerStorefrontClient() {
+  const { formatDate } = useDateTime();
   const params = useParams();
   const slug = params?.slug as string;
   const { formatPrice } = useCurrency();
@@ -269,7 +272,7 @@ export default function SellerStorefrontClient() {
                     </span>
                   )}
                   <span className="text-xs text-hos-gold/30">
-                    Member since {new Date(seller.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    Member since {formatDate(seller.createdAt, { month: 'long', year: 'numeric' })}
                   </span>
                 </div>
               </div>
@@ -366,7 +369,7 @@ export default function SellerStorefrontClient() {
                     )}
                     <div className="mt-2 flex items-center justify-between">
                       <p className="text-lg font-bold" style={hasCustomTheme ? { color: themeColors['--storefront-primary'] } : undefined}>
-                        {formatPrice(product.price, product.currency || 'USD')}
+                        {formatPrice(product.price, product.currency || DEFAULT_CURRENCY)}
                       </p>
                       {product.averageRating != null && product.averageRating > 0 && (
                         <div className="flex items-center gap-1 text-xs text-hos-text-muted">

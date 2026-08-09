@@ -15,6 +15,9 @@ import {
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 const DARK_CHART_TOOLTIP = {
   backgroundColor: '#1a1a1c',
@@ -129,6 +132,8 @@ const SUBMISSION_TABLE_COLUMNS: AdminColumnDef[] = [
 ];
 
 export default function AdminSubmissionsPage() {
+  const { formatDate, formatDateTime } = useDateTime();
+  const { formatMoney } = useMoney();
   const toast = useToast();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -381,8 +386,8 @@ export default function AdminSubmissionsPage() {
     { key: 'productData', header: 'Product', format: (v: any) => v?.name || '' },
     { key: 'seller', header: 'Seller', format: (v: any) => v?.storeName || v?.email || '' },
     { key: 'status', header: 'Status' },
-    { key: 'createdAt', header: 'Submitted', format: (v: string) => new Date(v).toLocaleDateString() },
-    { key: 'productData', header: 'Price', format: (v: any) => (v?.price ? formatAdminPrice(v.price, v.currency || 'USD') : '') },
+    { key: 'createdAt', header: 'Submitted', format: (v: string) => formatDate(v) },
+    { key: 'productData', header: 'Price', format: (v: any) => (v?.price ? formatAdminPrice(v.price, v.currency || DEFAULT_CURRENCY) : '') },
   ];
 
   return (
@@ -739,7 +744,7 @@ export default function AdminSubmissionsPage() {
                           {isSubmissionColumnVisible('price') && (
                           <td className="tabular-nums text-right px-4 py-3 text-sm text-hos-text-secondary">
                             {submission.productData?.price
-                              ? formatAdminPrice(submission.productData.price, submission.productData.currency || 'USD')
+                              ? formatAdminPrice(submission.productData.price, submission.productData.currency || DEFAULT_CURRENCY)
                               : 'N/A'}
                           </td>
                           )}
@@ -748,7 +753,7 @@ export default function AdminSubmissionsPage() {
                           )}
                           {isSubmissionColumnVisible('submitted') && (
                           <td className="px-4 py-3 text-sm text-hos-text-muted">
-                            {new Date(submission.createdAt).toLocaleDateString()}
+                            {formatDate(submission.createdAt)}
                           </td>
                           )}
                           {isSubmissionColumnVisible('actions') && (
@@ -933,7 +938,7 @@ export default function AdminSubmissionsPage() {
                             <p className="text-hos-text-muted">Price</p>
                             <p className="font-medium">
                               {selectedSubmission.productData?.price 
-                                ? formatAdminPrice(selectedSubmission.productData.price, selectedSubmission.productData.currency || 'USD')
+                                ? formatAdminPrice(selectedSubmission.productData.price, selectedSubmission.productData.currency || DEFAULT_CURRENCY)
                                 : 'Not set'}
                             </p>
                           </div>
@@ -1011,7 +1016,11 @@ export default function AdminSubmissionsPage() {
                                     {ep?.sku && <span>SKU: {ep.sku}</span>}
                                     {ep?.barcode && <span>Barcode: {ep.barcode}</span>}
                                     {ep?.ean && <span>EAN: {ep.ean}</span>}
-                                    {ep?.price != null && <span>Price: {ep.currency || 'USD'} {Number(ep.price).toFixed(2)}</span>}
+                                    {ep?.price != null && (
+                                      <span>
+                                        Price: {formatMoney(Number(ep.price), ep.currency || DEFAULT_CURRENCY)}
+                                      </span>
+                                    )}
                                     {ep?.status && <span className="px-1 py-0.5 bg-hos-bg-tertiary rounded">{ep.status}</span>}
                                   </div>
                                 </div>
@@ -1038,7 +1047,7 @@ export default function AdminSubmissionsPage() {
                             </p>
                             {selectedSubmission.procurementApprovedAt && (
                               <p className="text-xs text-amber-400 mt-1">
-                                Approved at: {new Date(selectedSubmission.procurementApprovedAt).toLocaleString()}
+                                Approved at: {formatDateTime(selectedSubmission.procurementApprovedAt)}
                               </p>
                             )}
                           </div>
@@ -1057,7 +1066,7 @@ export default function AdminSubmissionsPage() {
                             {selectedSubmission.procurementApprovedAt && (
                               <>
                                 <p className="text-hos-gold">Approved at:</p>
-                                <p className="text-hos-gold">{new Date(selectedSubmission.procurementApprovedAt).toLocaleString()}</p>
+                                <p className="text-hos-gold">{formatDateTime(selectedSubmission.procurementApprovedAt)}</p>
                               </>
                             )}
                             {selectedSubmission.selectedQuantity != null && (

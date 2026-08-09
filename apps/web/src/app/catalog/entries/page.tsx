@@ -9,6 +9,8 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { ImageSpecsHint } from '@/components/ImageSpecsHint';
 import { getCatalogMenu } from '@/lib/teamMenus';
+import { useDateTime } from '@/hooks/useDateTime';
+import { useMoney } from '@/hooks/useMoney';
 
 type CatalogStatusTab = 'pending' | 'in_progress' | 'completed';
 
@@ -40,6 +42,8 @@ export default function CatalogEntriesPage() {
 }
 
 function CatalogEntriesContent() {
+  const { formatMoney } = useMoney();
+  const { formatDate } = useDateTime();
   const searchParams = useSearchParams();
   const statusFilter = parseStatusParam(searchParams.get('status'));
 
@@ -344,8 +348,7 @@ function CatalogEntriesContent() {
                           )}
                           {productData.price && (
                             <span>
-                              <strong>Price:</strong> {productData.currency || 'USD'}{' '}
-                              {parseFloat(productData.price).toFixed(2)}
+                              <strong>Price:</strong> {formatMoney(parseFloat(productData.price), productData.currency)}
                             </span>
                           )}
                         </div>
@@ -404,7 +407,7 @@ function CatalogEntriesContent() {
                           )}
                           {entry.createdAt && (
                             <span>
-                              <strong>Started:</strong> {new Date(entry.createdAt).toLocaleDateString()}
+                              <strong>Started:</strong> {formatDate(entry.createdAt)}
                             </span>
                           )}
                         </div>
@@ -457,7 +460,7 @@ function CatalogEntriesContent() {
                           )}
                           {entry.completedAt && (
                             <span>
-                              <strong>Completed:</strong> {new Date(entry.completedAt).toLocaleDateString()}
+                              <strong>Completed:</strong> {formatDate(entry.completedAt)}
                             </span>
                           )}
                         </div>

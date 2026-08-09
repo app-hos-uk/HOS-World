@@ -12,6 +12,7 @@ import { sanitizeBlogHtml } from '@/lib/sanitizeHtml';
 import type { Metadata } from 'next';
 
 import { getSiteUrl } from '@/lib/siteUrls';
+import { formatDate } from '@/lib/datetime';
 
 const SITE_URL = getSiteUrl();
 
@@ -61,11 +62,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const sanitizedContent = sanitizeBlogHtml(post.contentHtml);
   const { html: contentWithIds, toc } = processBlogHeadings(sanitizedContent);
   const publishedDate = post.publishedAt
-    ? new Date(post.publishedAt).toLocaleDateString('en-US', {
-        year: 'numeric',
+    ? formatDate(post.publishedAt, { year: 'numeric',
         month: 'long',
-        day: 'numeric',
-      })
+        day: 'numeric', })
     : null;
 
   return (

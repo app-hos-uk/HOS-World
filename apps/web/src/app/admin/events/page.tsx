@@ -6,8 +6,10 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function AdminEventsPage() {
+  const { formatDateTime } = useDateTime();
   const toast = useToast();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,7 +119,7 @@ export default function AdminEventsPage() {
                     <tr key={e.id} className="border-t border-hos-border">
                       <td className="px-4 py-2 font-medium">{e.title}</td>
                       <td className="px-4 py-2">{e.status}</td>
-                      <td className="px-4 py-2">{new Date(e.startsAt).toLocaleString()}</td>
+                      <td className="px-4 py-2">{formatDateTime(e.startsAt)}</td>
                       <td className="px-4 py-2">{e.store?.name ?? '—'}</td>
                       <td className="px-4 py-2">
                         <div className="flex justify-end items-center gap-2">

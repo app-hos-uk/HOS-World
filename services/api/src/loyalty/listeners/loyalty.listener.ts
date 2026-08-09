@@ -9,6 +9,7 @@ import { SegmentationService } from '../../segmentation/segmentation.service';
 import { AmbassadorService } from '../../ambassador/ambassador.service';
 import { FeatureFlagsService } from '../../config/feature-flags.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
+import { PLATFORM_DEFAULT_CURRENCY } from '../../common/currency-defaults';
 
 const PHOTO_IN_REVIEW = /\bhttps?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?\b/i;
 
@@ -224,7 +225,7 @@ export class LoyaltyListener {
             userId,
             tierId: tier.id,
             regionCode: user.country || 'GB',
-            preferredCurrency: user.currencyPreference || 'USD',
+            preferredCurrency: user.currencyPreference || PLATFORM_DEFAULT_CURRENCY,
             enrollmentChannel: 'AUTO_REVIEW',
             cardNumber: `${prefix}-${randomBytes(4).toString('hex').toUpperCase()}-${randomBytes(2).toString('hex').toUpperCase()}`,
             birthday: user.birthday ?? undefined,

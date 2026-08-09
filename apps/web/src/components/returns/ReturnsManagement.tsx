@@ -7,6 +7,8 @@ import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface ReturnRow {
   id: string;
@@ -52,6 +54,7 @@ function formatReturnStatus(status: string): string {
 }
 
 export function ReturnsManagement({ mode }: ReturnsManagementProps) {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -205,13 +208,13 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     {row.refundAmount != null
-                      ? formatPrice(row.refundAmount, row.order?.currency || 'USD')
+                      ? formatPrice(row.refundAmount, row.order?.currency || DEFAULT_CURRENCY)
                       : row.order?.total != null
-                        ? formatPrice(Number(row.order.total), row.order?.currency || 'USD')
+                        ? formatPrice(Number(row.order.total), row.order?.currency || DEFAULT_CURRENCY)
                         : '—'}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-hos-text-muted">
-                    {new Date(row.createdAt).toLocaleDateString()}
+                    {formatDate(row.createdAt)}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">

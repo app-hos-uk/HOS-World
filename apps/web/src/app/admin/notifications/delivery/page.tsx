@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface ChannelHealth {
   email: { configured: boolean; enabled: boolean; provider?: string };
@@ -23,6 +24,7 @@ interface FailedJob {
 }
 
 export default function AdminNotificationDeliveryPage() {
+  const { formatDateTime } = useDateTime();
   const toast = useToast();
   const [health, setHealth] = useState<ChannelHealth | null>(null);
   const [failedJobs, setFailedJobs] = useState<FailedJob[]>([]);
@@ -158,7 +160,7 @@ export default function AdminNotificationDeliveryPage() {
                           <td className="py-3 px-4 text-hos-text-muted text-xs">{job.recipient || '—'}</td>
                           <td className="py-3 px-4 text-red-400 text-xs max-w-xs truncate">{job.error || '—'}</td>
                           <td className="py-3 px-4 text-hos-text-muted text-xs">
-                            {new Date(job.createdAt).toLocaleString()}
+                            {formatDateTime(job.createdAt)}
                           </td>
                           <td className="py-3 px-4">
                             <button

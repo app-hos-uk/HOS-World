@@ -6,6 +6,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { formatDate } from '@/lib/datetime';
 import { Dialog, Transition } from '@headlessui/react';
 
 interface Integration {
@@ -308,7 +309,8 @@ export default function TaxIntegrationsPage() {
                 </p>
                 <p className="text-sm text-green-400">
                   {activeProvider.isTestMode ? 'Running in test mode' : 'Running in production mode'}
-                  {activeProvider.lastTestedAt && ` • Last tested ${new Date(activeProvider.lastTestedAt).toLocaleDateString()}`}
+                  {activeProvider.lastTestedAt &&
+                    ` • Last tested ${formatDate(activeProvider.lastTestedAt)}`}
                 </p>
               </div>
             </div>

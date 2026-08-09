@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function AdminMessagingLogsPage() {
+  const { formatDateTime } = useDateTime();
   const [items, setItems] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [channel, setChannel] = useState('');
@@ -121,7 +123,7 @@ export default function AdminMessagingLogsPage() {
                       {items.map((m) => (
                         <tr key={m.id}>
                           <td className="whitespace-nowrap px-4 py-3 text-sm text-hos-text-secondary">
-                            {new Date(m.createdAt).toLocaleString()}
+                            {formatDateTime(m.createdAt)}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 text-sm text-hos-text-secondary">
                             {m.channel}

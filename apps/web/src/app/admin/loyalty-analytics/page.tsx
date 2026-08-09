@@ -6,10 +6,12 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useMoney } from '@/hooks/useMoney';
 
 const EXPORT_TYPES = ['clv', 'attribution', 'fandom', 'health'] as const;
 
 export default function LoyaltyAnalyticsPage() {
+  const { formatMoney } = useMoney();
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -129,10 +131,10 @@ export default function LoyaltyAnalyticsPage() {
               {card('Total members', d.totalMembers)}
               {card('Active (30d)', d.activeLast30d)}
               {card('Active (90d)', d.activeLast90d)}
-              {card('Avg CLV', d.avgClv != null ? `$${Number(d.avgClv).toFixed(2)}` : '—')}
+              {card('Avg CLV', d.avgClv != null ? formatMoney(Number(d.avgClv)) : '—')}
               {card('Churn rate', d.churnRate != null ? `${(Number(d.churnRate) * 100).toFixed(1)}%` : '—')}
               {card('Points liability', d.pointsLiability?.total)}
-              {card('Liability cost', d.pointsLiability?.estimatedCost != null ? `$${d.pointsLiability.estimatedCost}` : '—')}
+              {card('Liability cost', d.pointsLiability?.estimatedCost != null ? formatMoney(d.pointsLiability.estimatedCost) : '—')}
               {card('Revenue lift', d.revenueImpact?.liftPercent != null ? `${d.revenueImpact.liftPercent}%` : '—')}
             </div>
 

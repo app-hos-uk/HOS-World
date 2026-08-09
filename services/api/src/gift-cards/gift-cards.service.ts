@@ -9,6 +9,7 @@ import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
 import { CreateGiftCardDto } from './dto/create-gift-card.dto';
 import { RedeemGiftCardDto } from './dto/redeem-gift-card.dto';
+import { PlatformRegionService } from '../config/platform-region.service';
 
 /** Matches codes from generateCode(): XXXX-XXXX-XXXX-XXXX, charset without I,O,0,1 */
 const GIFT_CARD_CODE_REGEX =
@@ -19,6 +20,7 @@ export class GiftCardsService {
   constructor(
     private prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly platformRegion: PlatformRegionService,
   ) {}
 
   private parseGiftCardCode(raw: string): string {
@@ -39,9 +41,16 @@ export class GiftCardsService {
    * Preset purchase amounts. Prefers Admin Loyalty Settings (PLATFORM config),
    * then GIFT_CARD_CATALOG_AMOUNTS / GIFT_CARD_DEFAULT_CURRENCY env.
    */
+  private async defaultCurrency(): Promise<string> {
+    return (
+      this.configService.get<string>('GIFT_CARD_DEFAULT_CURRENCY') ||
+      (await this.platformRegion.getCurrency())
+    );
+  }
+
   async getCatalog(): Promise<{ currency: string; amounts: number[] }> {
     let raw = this.configService.get<string>('GIFT_CARD_CATALOG_AMOUNTS') || '25,50,100,250,500';
-    let currency = this.configService.get<string>('GIFT_CARD_DEFAULT_CURRENCY') || 'GBP';
+    let currency = await this.defaultCurrency();
     try {
       const row = await this.prisma.config.findFirst({
         where: { level: 'PLATFORM', levelId: 'PLATFORM', key: 'LOYALTY_PROGRAMME_SETTINGS' },
@@ -53,7 +62,7 @@ export class GiftCardsService {
       if (v?.giftCardCatalogAmounts) raw = v.giftCardCatalogAmounts;
       if (v?.giftCardDefaultCurrency) currency = v.giftCardDefaultCurrency;
     } catch {
-      /* env fallback */
+      /* env / region fallback */
     }
     const amounts = raw
       .split(/[,;\s]+/)
@@ -123,7 +132,7 @@ export class GiftCardsService {
         type: dto.type,
         amount: dto.amount,
         balance: dto.amount, // Initial balance equals amount
-        currency: dto.currency || 'USD',
+        currency: dto.currency || (await this.defaultCurrency()),
         status: 'ACTIVE',
         issuedToEmail: dto.issuedToEmail,
         issuedToName: dto.issuedToName,

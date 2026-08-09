@@ -2,11 +2,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { PrismaService } from '../database/prisma.service';
+import { CurrencyService } from '../currency/currency.service';
 
 describe('TransactionsService', () => {
   let service: TransactionsService;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let prismaService: PrismaService;
+
+  const mockCurrencyService = {
+    getSupportedCurrencies: jest
+      .fn()
+      .mockReturnValue(['USD', 'EUR', 'GBP', 'AED', 'JPY', 'AUD', 'CAD', 'SGD']),
+  };
 
   const mockPrismaService = {
     transaction: {
@@ -40,6 +47,10 @@ describe('TransactionsService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: CurrencyService,
+          useValue: mockCurrencyService,
         },
       ],
     }).compile();

@@ -4,11 +4,14 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useMoney } from '@/hooks/useMoney';
+import { formatDate } from '@/lib/datetime';
 
 const LEDGER_TYPES = ['ALL', 'SALE', 'COMMISSION', 'REFUND', 'PAYOUT'] as const;
 
 export default function AdminVendorLedgerPage() {
   const toast = useToast();
+  const { formatMoney } = useMoney();
 
   // Sellers
   const [sellers, setSellers] = useState<any[]>([]);
@@ -128,10 +131,6 @@ export default function AdminVendorLedgerPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount || 0);
-  };
-
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
       <div className="space-y-6">
@@ -168,7 +167,7 @@ export default function AdminVendorLedgerPage() {
                 <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                   <p className="text-sm text-hos-text-muted">Balance</p>
                   <p className="text-xl font-bold text-hos-gold">
-                    {formatCurrency(summary.balance ?? summary.currentBalance ?? 0)}
+                    {formatMoney(summary.balance ?? summary.currentBalance ?? 0)}
                   </p>
                 </div>
                 {['SALE', 'COMMISSION', 'REFUND', 'PAYOUT'].map((type) => {
@@ -177,7 +176,7 @@ export default function AdminVendorLedgerPage() {
                     <div key={type} className="bg-hos-bg-secondary rounded-lg shadow p-4">
                       <p className="text-sm text-hos-text-muted">{type}</p>
                       <p className="text-lg font-semibold text-hos-text-secondary">
-                        {formatCurrency(typeData.total ?? typeData.amount ?? 0)}
+                        {formatMoney(typeData.total ?? typeData.amount ?? 0)}
                       </p>
                       <p className="text-xs text-hos-text-muted">
                         {typeData.count ?? 0} entries
@@ -228,7 +227,7 @@ export default function AdminVendorLedgerPage() {
                       {entries.map((entry, idx) => (
                         <tr key={entry.id || idx} className="hover:bg-hos-bg-tertiary">
                           <td className="px-6 py-4 text-sm text-hos-text-muted whitespace-nowrap">
-                            {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString() : '—'}
+                            {formatDate(entry.createdAt)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-1 text-xs rounded-full ${getTypeBadgeClass(entry.type)}`}>
@@ -241,10 +240,10 @@ export default function AdminVendorLedgerPage() {
                           <td className={`px-6 py-4 text-sm font-medium text-right whitespace-nowrap ${
                             (entry.amount ?? 0) >= 0 ? 'text-green-300' : 'text-red-300'
                           }`}>
-                            {formatCurrency(entry.amount)}
+                            {formatMoney(entry.amount ?? 0)}
                           </td>
                           <td className="px-6 py-4 text-sm text-hos-text-secondary text-right whitespace-nowrap">
-                            {formatCurrency(entry.runningBalance ?? entry.balance)}
+                            {formatMoney(entry.runningBalance ?? entry.balance ?? 0)}
                           </td>
                         </tr>
                       ))}

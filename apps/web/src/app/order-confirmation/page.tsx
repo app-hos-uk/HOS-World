@@ -8,6 +8,8 @@ import { SafeImage } from '@/components/SafeImage';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface OrderItemSummary {
   name: string;
@@ -30,6 +32,7 @@ interface OrderSummary {
   shippingCost?: number;
   taxAmount?: number;
   discountAmount?: number;
+  currency?: string;
   items: OrderItemSummary[];
   shippingAddress?: {
     firstName?: string;
@@ -83,6 +86,7 @@ export default function OrderConfirmationPage() {
 }
 
 function OrderConfirmationContent() {
+  const { formatDate } = useDateTime();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   const { formatPrice } = useCurrency();
@@ -130,6 +134,7 @@ function OrderConfirmationContent() {
               data.discountAmount != null || data.discount != null
                 ? Number(data.discountAmount ?? data.discount)
                 : undefined,
+            currency: data.currency || DEFAULT_CURRENCY,
             items: (data.items || data.orderItems || []).map((item: any) => {
               const product = item.product || {};
               const image =
@@ -244,7 +249,7 @@ function OrderConfirmationContent() {
                   </div>
                   <div className="text-right">
                     <p className="text-hos-text-secondary text-sm">Order Total</p>
-                    <p className="text-hos-gold font-bold text-xl">{formatPrice(order.total)}</p>
+                    <p className="text-hos-gold font-bold text-xl">{formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}</p>
                   </div>
                 </div>
 
@@ -276,11 +281,11 @@ function OrderConfirmationContent() {
                             {item.sellerName ? ` · ${item.sellerName}` : ''}
                           </p>
                           <p className="text-hos-text-secondary text-sm">
-                            {formatPrice(item.price)} each
+                            {formatPrice(item.price, order.currency || DEFAULT_CURRENCY)} each
                           </p>
                         </div>
                         <p className="text-hos-text-secondary text-sm font-medium">
-                          {formatPrice(item.price * item.quantity)}
+                          {formatPrice(item.price * item.quantity, order.currency || DEFAULT_CURRENCY)}
                         </p>
                       </div>
                     ))}
@@ -294,30 +299,30 @@ function OrderConfirmationContent() {
                   {order.subtotal != null && (
                     <div className="flex justify-between">
                       <span className="text-hos-text-secondary">Subtotal</span>
-                      <span className="text-hos-text-secondary">{formatPrice(order.subtotal)}</span>
+                      <span className="text-hos-text-secondary">{formatPrice(order.subtotal, order.currency || DEFAULT_CURRENCY)}</span>
                     </div>
                   )}
                   {order.shippingCost != null && (
                     <div className="flex justify-between">
                       <span className="text-hos-text-secondary">Shipping</span>
-                      <span className="text-hos-text-secondary">{formatPrice(order.shippingCost)}</span>
+                      <span className="text-hos-text-secondary">{formatPrice(order.shippingCost, order.currency || DEFAULT_CURRENCY)}</span>
                     </div>
                   )}
                   {order.taxAmount != null && order.taxAmount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-hos-text-secondary">Tax</span>
-                      <span className="text-hos-text-secondary">{formatPrice(order.taxAmount)}</span>
+                      <span className="text-hos-text-secondary">{formatPrice(order.taxAmount, order.currency || DEFAULT_CURRENCY)}</span>
                     </div>
                   )}
                   {order.discountAmount != null && order.discountAmount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-hos-text-secondary">Discount</span>
-                      <span className="text-hos-text-secondary">−{formatPrice(order.discountAmount)}</span>
+                      <span className="text-hos-text-secondary">−{formatPrice(order.discountAmount, order.currency || DEFAULT_CURRENCY)}</span>
                     </div>
                   )}
                   <div className="flex justify-between pt-1 font-semibold">
                     <span className="text-hos-text-secondary">Total</span>
-                    <span className="text-hos-gold">{formatPrice(order.total)}</span>
+                    <span className="text-hos-gold">{formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}</span>
                   </div>
                 </div>
 
@@ -340,11 +345,9 @@ function OrderConfirmationContent() {
                     <p className="text-hos-text-secondary text-sm font-medium mb-1">Estimated Delivery</p>
                     <p className="text-hos-text-secondary text-base">
                       {order.estimatedDelivery
-                        ? new Date(order.estimatedDelivery).toLocaleDateString(undefined, {
-                            month: 'short',
+                        ? formatDate(order.estimatedDelivery, { month: 'short',
                             day: 'numeric',
-                            year: 'numeric',
-                          })
+                            year: 'numeric', })
                         : '1–3 business days after shipment'}
                     </p>
                   </div>

@@ -12,6 +12,9 @@ import {
   LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface Settlement {
   id: string;
@@ -56,6 +59,8 @@ interface Stats {
 }
 
 export default function AdminSettlementsPage() {
+  const { formatDate, formatDateTime } = useDateTime();
+  const { formatMoney, formatMoneyCompact } = useMoney();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const { open: openDialog, close: closeDialog, dialogProps } = useConfirmDialog();
@@ -225,7 +230,7 @@ export default function AdminSettlementsPage() {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
-      last30Days[dateStr] = { date: date.toLocaleDateString('en-US', { day: '2-digit', month: 'short' }), amount: 0, count: 0 };
+      last30Days[dateStr] = { date: formatDate(date, { day: '2-digit', month: 'short' }), amount: 0, count: 0 };
     }
     
     settlements
@@ -239,7 +244,7 @@ export default function AdminSettlementsPage() {
       });
     
     return Object.values(last30Days);
-  }, [settlements]);
+  }, [settlements, formatDate]);
 
   const handleViewDetails = (settlement: Settlement) => {
     setSelectedSettlement(settlement);
@@ -399,14 +404,14 @@ export default function AdminSettlementsPage() {
   const exportColumns = [
     { key: 'id', header: 'Settlement ID' },
     { key: 'seller', header: 'Seller', format: (v: any) => v?.storeName || '' },
-    { key: 'totalSales', header: 'Gross Amount', format: (v: number, r: Settlement) => `${r.currency || 'USD'} ${Number(r.totalSales ?? r.amount ?? 0).toFixed(2)}` },
-    { key: 'netAmount', header: 'Net Amount', format: (v: number, r: Settlement) => `${r.currency || 'USD'} ${Number(v).toFixed(2)}` },
-    { key: 'platformFee', header: 'Platform Fee', format: (v: number, r: Settlement) => `${r.currency || 'USD'} ${Number(v).toFixed(2)}` },
+    { key: 'totalSales', header: 'Gross Amount', format: (v: number, r: Settlement) => formatMoney(Number(r.totalSales ?? r.amount ?? 0), r.currency || DEFAULT_CURRENCY) },
+    { key: 'netAmount', header: 'Net Amount', format: (v: number, r: Settlement) => formatMoney(Number(v), r.currency || DEFAULT_CURRENCY) },
+    { key: 'platformFee', header: 'Platform Fee', format: (v: number, r: Settlement) => formatMoney(Number(v), r.currency || DEFAULT_CURRENCY) },
     { key: 'totalOrders', header: 'Orders', format: (v: number, r: Settlement) => String(r.totalOrders ?? r.ordersCount ?? 0) },
     { key: 'status', header: 'Status' },
-    { key: 'periodStart', header: 'Period Start', format: (v: string) => new Date(v).toLocaleDateString() },
-    { key: 'periodEnd', header: 'Period End', format: (v: string) => new Date(v).toLocaleDateString() },
-    { key: 'paidAt', header: 'Paid Date', format: (v: string) => v ? new Date(v).toLocaleDateString() : '' },
+    { key: 'periodStart', header: 'Period Start', format: (v: string) => formatDate(v) },
+    { key: 'periodEnd', header: 'Period End', format: (v: string) => formatDate(v) },
+    { key: 'paidAt', header: 'Paid Date', format: (v: string) => v ? formatDate(v) : '' },
   ];
 
   if (loading) {
@@ -476,8 +481,8 @@ export default function AdminSettlementsPage() {
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
-                  <Tooltip formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']} />
+                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => formatMoneyCompact(v)} />
+                  <Tooltip formatter={(value: number) => [formatMoney(value), 'Amount']} />
                   <Bar dataKey="amount" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -614,12 +619,12 @@ export default function AdminSettlementsPage() {
                           <div className="text-xs text-hos-text-muted">{settlement.seller?.email}</div>
                         </td>
                         <td className="px-4 py-3 text-sm text-hos-text-secondary">
-                          {new Date(settlement.periodStart).toLocaleDateString()} - {new Date(settlement.periodEnd).toLocaleDateString()}
+                          {formatDate(settlement.periodStart)} - {formatDate(settlement.periodEnd)}
                         </td>
                         <td className="text-right px-4 py-3 text-sm tabular-nums text-hos-text-secondary">{getOrdersCount(settlement)}</td>
-                        <td className="text-right px-4 py-3 text-sm tabular-nums text-hos-text-secondary">{formatPrice(getGrossAmount(settlement))}</td>
-                        <td className="text-right px-4 py-3 text-sm tabular-nums text-red-400">-{formatPrice(settlement.platformFee)}</td>
-                        <td className="text-right px-4 py-3 text-sm tabular-nums font-medium text-green-400">{formatPrice(settlement.netAmount)}</td>
+                        <td className="text-right px-4 py-3 text-sm tabular-nums text-hos-text-secondary">{formatMoney(getGrossAmount(settlement), settlement.currency || DEFAULT_CURRENCY)}</td>
+                        <td className="text-right px-4 py-3 text-sm tabular-nums text-red-400">-{formatMoney(settlement.platformFee, settlement.currency || DEFAULT_CURRENCY)}</td>
+                        <td className="text-right px-4 py-3 text-sm tabular-nums font-medium text-green-400">{formatMoney(settlement.netAmount, settlement.currency || DEFAULT_CURRENCY)}</td>
                         <td className="px-4 py-3">{getStatusBadge(settlement.status)}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex justify-end gap-1">
@@ -681,7 +686,7 @@ export default function AdminSettlementsPage() {
                       <div>
                         <p className="text-sm text-hos-text-muted">Period</p>
                         <p className="font-medium">
-                          {new Date(selectedSettlement.periodStart).toLocaleDateString()} - {new Date(selectedSettlement.periodEnd).toLocaleDateString()}
+                          {formatDate(selectedSettlement.periodStart)} - {formatDate(selectedSettlement.periodEnd)}
                         </p>
                       </div>
                       <div>
@@ -690,15 +695,15 @@ export default function AdminSettlementsPage() {
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Gross Amount</p>
-                        <p className="font-medium">{formatPrice(getGrossAmount(selectedSettlement))}</p>
+                        <p className="font-medium">{formatMoney(getGrossAmount(selectedSettlement), selectedSettlement.currency || DEFAULT_CURRENCY)}</p>
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Platform Fee</p>
-                        <p className="font-medium text-red-400">-{formatPrice(selectedSettlement.platformFee)}</p>
+                        <p className="font-medium text-red-400">-{formatMoney(selectedSettlement.platformFee, selectedSettlement.currency || DEFAULT_CURRENCY)}</p>
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Net Amount</p>
-                        <p className="text-xl font-bold text-green-400">{formatPrice(selectedSettlement.netAmount)}</p>
+                        <p className="text-xl font-bold text-green-400">{formatMoney(selectedSettlement.netAmount, selectedSettlement.currency || DEFAULT_CURRENCY)}</p>
                       </div>
                       <div>
                         <p className="text-sm text-hos-text-muted">Status</p>
@@ -716,7 +721,7 @@ export default function AdminSettlementsPage() {
                     {selectedSettlement.paidAt && (
                       <div>
                         <p className="text-sm text-hos-text-muted">Paid At</p>
-                        <p className="font-medium">{new Date(selectedSettlement.paidAt).toLocaleString()}</p>
+                        <p className="font-medium">{formatDateTime(selectedSettlement.paidAt)}</p>
                       </div>
                     )}
 

@@ -92,6 +92,8 @@ export interface PaymentResult {
 export interface RefundPaymentParams {
   paymentId: string;
   amount?: number; // If not provided, full refund
+  /** ISO currency of `amount` (must match the original PaymentIntent currency). */
+  currency?: string;
   reason?: string;
   metadata?: Record<string, any>;
 }

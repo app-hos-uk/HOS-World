@@ -38,6 +38,7 @@ import {
   PaymentStatus as PrismaPaymentStatus,
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
 export class OrdersService {
@@ -722,7 +723,7 @@ export class OrdersService {
               total: grandTotal,
               shippingAmount: cartShipping,
               discountAmount: cartDiscount,
-              currency: cart.items[0].product.currency || 'USD',
+              currency: cart.items[0].product.currency || PLATFORM_DEFAULT_CURRENCY,
               status: 'PENDING',
               paymentStatus: 'PENDING',
               shippingAddressId: createOrderDto.shippingAddressId,
@@ -811,7 +812,7 @@ export class OrdersService {
                   shippingAmount: childShipping,
                   discountAmount: childDiscount,
                   platformFeeAmount: platformFee,
-                  currency: group.items[0].product.currency || 'USD',
+                  currency: group.items[0].product.currency || PLATFORM_DEFAULT_CURRENCY,
                   status: 'PENDING',
                   paymentStatus: 'PENDING',
                   shippingAddressId: createOrderDto.shippingAddressId,
@@ -2305,6 +2306,7 @@ export class OrdersService {
             const result = await provider.refundPayment({
               paymentId: order.stripePaymentIntentId,
               amount: cardRefundAmount,
+              currency: order.currency,
               metadata: { currency: order.currency, reason: 'order_cancelled' },
             });
             if (result?.success) {

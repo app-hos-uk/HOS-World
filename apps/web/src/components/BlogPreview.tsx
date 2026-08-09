@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface BlogPost {
   slug: string;
@@ -13,6 +14,7 @@ interface BlogPost {
 }
 
 export default function BlogPreview() {
+  const { formatDate } = useDateTime();
   const [posts, setPosts] = useState<BlogPost[]>([]);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export default function BlogPreview() {
           {posts.map((post) => {
             const dateStr = post.publishedAt || post.createdAt;
             const formatted = dateStr
-              ? new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+              ? formatDate(dateStr, { year: 'numeric', month: 'long', day: 'numeric' })
               : '';
             return (
               <article

@@ -5,8 +5,10 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function AdminPosSyncPage() {
+  const { formatDateTime } = useDateTime();
   const toast = useToast();
   const [mappings, setMappings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +72,7 @@ export default function AdminPosSyncPage() {
                         <td className="px-4 py-3">{m.entityType}</td>
                         <td className="px-4 py-3">{m.syncStatus}</td>
                         <td className="px-4 py-3 text-hos-text-muted">
-                          {m.updatedAt ? new Date(m.updatedAt).toLocaleString() : '—'}
+                          {m.updatedAt ? formatDateTime(m.updatedAt) : '—'}
                         </td>
                       </tr>
                     ))

@@ -6,6 +6,8 @@ import { DataExport } from '@/components/DataExport';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { flattenLedgerRow, LEDGER_EXPORT_COLUMNS } from '@/lib/loyaltyLedgerExport';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 const PAGE_SIZE = 50;
 const EXPORT_PAGE_SIZE = 200;
@@ -13,6 +15,8 @@ const EXPORT_PAGE_SIZE = 200;
 const EXPORT_MAX_PAGES = 100;
 
 export default function AdminLoyaltyTransactionsPage() {
+  const { formatDateTime } = useDateTime();
+  const { formatCount } = useMoney();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -66,11 +70,11 @@ export default function AdminLoyaltyTransactionsPage() {
     } while (current <= pages && current <= EXPORT_MAX_PAGES);
     if (pages > EXPORT_MAX_PAGES) {
       toast.warning(
-        `Export capped at ${(EXPORT_MAX_PAGES * EXPORT_PAGE_SIZE).toLocaleString()} rows — narrow the date range for a complete period export.`,
+        `Export capped at ${formatCount(EXPORT_MAX_PAGES * EXPORT_PAGE_SIZE)} rows — narrow the date range for a complete period export.`,
       );
     }
     return all.map(flattenLedgerRow);
-  }, [type, from, to, toast]);
+  }, [type, from, to, toast, formatCount]);
 
   const exportRows = useMemo(() => transactions.map(flattenLedgerRow), [transactions]);
 
@@ -162,7 +166,7 @@ export default function AdminLoyaltyTransactionsPage() {
                 {transactions.map((tx) => (
                   <tr key={tx.id} className="hover:bg-hos-bg-tertiary">
                     <td className="px-4 py-3 text-hos-text-muted text-xs whitespace-nowrap">
-                      {new Date(tx.createdAt).toLocaleString()}
+                      {formatDateTime(tx.createdAt)}
                     </td>
                     <td className="px-4 py-3 text-hos-text-secondary text-xs">
                       {tx.membership?.user?.email ? (

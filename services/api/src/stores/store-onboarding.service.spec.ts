@@ -20,7 +20,16 @@ describe('StoreOnboardingService', () => {
         update: jest.fn(),
       },
     };
-    service = new StoreOnboardingService(prisma);
+    const region = {
+      getRegion: jest.fn().mockResolvedValue({
+        currency: 'USD',
+        country: 'US',
+        locale: 'en-US',
+        timezone: 'America/New_York',
+        taxOrigin: null,
+      }),
+    };
+    service = new StoreOnboardingService(prisma, region as any);
   });
 
   it('createStore rejects missing tenant', async () => {

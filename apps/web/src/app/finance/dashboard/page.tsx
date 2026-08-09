@@ -6,8 +6,12 @@ import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import Link from 'next/link';
 import { getFinanceMenu } from '@/lib/teamMenus';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function FinanceDashboardPage() {
+  const { formatDateTime } = useDateTime();
+  const { formatMoney } = useMoney();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -118,7 +122,7 @@ export default function FinanceDashboardPage() {
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Total Revenue</h3>
                     <p className="text-3xl font-bold text-green-400">
-                      ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatMoney(totalRevenue)}
                     </p>
                   </div>
                   <div className="text-4xl">💵</div>
@@ -136,7 +140,7 @@ export default function FinanceDashboardPage() {
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Platform Fees</h3>
                     <p className="text-3xl font-bold text-hos-gold">
-                      ${platformFees.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatMoney(platformFees)}
                     </p>
                   </div>
                   <div className="text-4xl">📊</div>
@@ -154,7 +158,7 @@ export default function FinanceDashboardPage() {
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Payouts Pending</h3>
                     <p className="text-3xl font-bold text-orange-400">
-                      ${payoutsPending.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {formatMoney(payoutsPending)}
                     </p>
                   </div>
                   <div className="text-4xl">💸</div>
@@ -201,7 +205,7 @@ export default function FinanceDashboardPage() {
                             <div className="flex gap-4 mt-2 text-xs text-hos-text-muted">
                               {approval.productData?.price && (
                                 <span>
-                                  Price: ${parseFloat(approval.productData.price).toFixed(2)}
+                                  Price: {formatMoney(parseFloat(approval.productData.price))}
                                 </span>
                               )}
                             </div>
@@ -247,7 +251,7 @@ export default function FinanceDashboardPage() {
                               Margin: {((Number(item.hosMargin) || 0) * 100).toFixed(1)}% | Visibility: {item.visibilityLevel || 'STANDARD'}
                             </p>
                             <p className="text-xs text-hos-text-muted mt-1">
-                              {new Date(item.approvedAt || item.createdAt).toLocaleString()}
+                              {formatDateTime(item.approvedAt || item.createdAt)}
                             </p>
                           </div>
                           <span className="px-2 py-1 text-xs font-medium bg-green-500/15 text-green-300 rounded">

@@ -16,6 +16,7 @@ import { Prisma, ProductStatus, ImageType } from '@prisma/client';
 import { slugify } from '@hos-marketplace/utils';
 import { ProductsCacheHook } from './products-cache.hook';
 import { MeilisearchService } from '../meilisearch/meilisearch.service';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
 export class ProductsService {
@@ -180,7 +181,7 @@ export class ProductsService {
         price: createProductDto.price,
         tradePrice: createProductDto.tradePrice,
         rrp: createProductDto.rrp,
-        currency: createProductDto.currency || 'USD',
+        currency: createProductDto.currency || PLATFORM_DEFAULT_CURRENCY,
         taxRate: createProductDto.taxRate || 0,
         stock: createProductDto.stock,
         fandom: createProductDto.fandom,
@@ -1250,7 +1251,7 @@ export class ProductsService {
         slug,
         sku: createBundleDto.sku,
         price: createBundleDto.price,
-        currency: products[0]?.currency || 'USD',
+        currency: products[0]?.currency || PLATFORM_DEFAULT_CURRENCY,
         stock: bundleStock,
         categoryId: createBundleDto.categoryId,
         productType: 'BUNDLED',

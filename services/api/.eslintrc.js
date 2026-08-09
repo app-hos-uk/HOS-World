@@ -1,3 +1,24 @@
+/**
+ * Currency / region migration guardrails.
+ * Prefer no-restricted-syntax (AST selectors) over a custom plugin: the patterns
+ * are expressible with esquery, and a plugin would be more machinery than value.
+ */
+const CURRENCY_CODE =
+  'AED|AUD|BHD|CAD|CHF|CNY|EUR|GBP|HKD|INR|JPY|KRW|KWD|MXN|NZD|OMR|SAR|SGD|USD|ZAR';
+
+const intlCurrencyLiteralRule = {
+  selector:
+    "CallExpression[callee.object.name='Intl'][callee.property.name='NumberFormat'] Property[key.name='currency'][value.type='Literal']",
+  message:
+    'Do not pass a literal currency code to Intl.NumberFormat. Use shared money helpers / PlatformRegionService.',
+};
+
+const currencyCodeLiteralRule = {
+  selector: `Literal[value=/^(?:${CURRENCY_CODE})$/]`,
+  message:
+    "Do not hardcode currency codes ('USD', 'GBP', …). Import PLATFORM_DEFAULT_CURRENCY, use PlatformRegionService, or add to an allowlisted currency metadata module.",
+};
+
 module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -30,7 +51,29 @@ module.exports = {
         destructuredArrayIgnorePattern: '^_',
       },
     ],
+    'no-restricted-syntax': ['error', intlCurrencyLiteralRule, currencyCodeLiteralRule],
   },
+  overrides: [
+    {
+      // Tests may fixture any currency.
+      files: ['**/*.{spec,test}.ts'],
+      rules: {
+        'no-restricted-syntax': ['error', intlCurrencyLiteralRule],
+      },
+    },
+    {
+      // Source-of-truth defaults, ISO metadata maps, and Stripe minor-unit tables.
+      files: [
+        'src/common/currency-defaults.ts',
+        'src/common/money.ts',
+        'src/currency/currency.service.ts',
+        'src/geolocation/geolocation.service.ts',
+        'src/invoices/invoices.service.ts',
+        'src/admin/migration.controller.ts',
+      ],
+      rules: {
+        'no-restricted-syntax': ['error', intlCurrencyLiteralRule],
+      },
+    },
+  ],
 };
-
-

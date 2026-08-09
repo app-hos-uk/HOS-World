@@ -10,6 +10,7 @@ import { ProductsService } from '../products/products.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { MeilisearchService } from '../meilisearch/meilisearch.service';
 import { ImageType } from '@prisma/client';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 interface PricingData {
   basePrice: number;
@@ -160,7 +161,7 @@ export class PublishingService {
             sellerId: submission.seller.id,
             productId: existingProduct.id,
             vendorPrice: finalPrice,
-            vendorCurrency: productData.currency || 'USD',
+            vendorCurrency: productData.currency || PLATFORM_DEFAULT_CURRENCY,
             costPrice: productData.tradePrice || null,
             vendorStock: submission.selectedQuantity || productData.stock || 0,
             lowStockThreshold: 5,
@@ -204,7 +205,7 @@ export class PublishingService {
           price: finalPrice,
           tradePrice: productData.tradePrice,
           rrp: productData.rrp,
-          currency: productData.currency || 'USD',
+          currency: productData.currency || PLATFORM_DEFAULT_CURRENCY,
           taxRate: productData.taxRate > 1 ? productData.taxRate / 100 : productData.taxRate || 0,
           stock: submission.selectedQuantity || productData.stock || 0,
           fandom: productData.fandom,

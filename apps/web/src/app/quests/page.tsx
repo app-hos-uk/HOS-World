@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface Quest {
   id: string;
@@ -33,6 +34,7 @@ interface Quest {
 }
 
 export default function QuestsPage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'available' | 'active' | 'completed'>('available');
   const [availableQuests, setAvailableQuests] = useState<Quest[]>([]);
@@ -192,7 +194,7 @@ export default function QuestsPage() {
             )}
             {quest.completedAt && (
               <p className="text-xs text-hos-text-muted">
-                Completed: {new Date(quest.completedAt).toLocaleDateString()}
+                Completed: {formatDate(quest.completedAt)}
               </p>
             )}
           </div>

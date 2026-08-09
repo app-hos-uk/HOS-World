@@ -5,6 +5,8 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 const STATUS_FILTERS = [
   { value: '', label: 'All Active' },
@@ -15,6 +17,7 @@ const STATUS_FILTERS = [
 ];
 
 export default function AdminCancellationsPage() {
+  const { formatDateTime } = useDateTime();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const [requests, setRequests] = useState<any[]>([]);
@@ -128,7 +131,7 @@ export default function AdminCancellationsPage() {
                           Customer: {request.requestedBy?.email || request.requestedById}
                         </p>
                         <p className="text-sm text-hos-text-muted">
-                          Amount: {formatPrice(Number(request.order?.total || 0), request.order?.currency || 'USD')}
+                          Amount: {formatPrice(Number(request.order?.total || 0), request.order?.currency || DEFAULT_CURRENCY)}
                         </p>
                         <p className="text-sm text-hos-text-muted">
                           Status: <span className="font-medium">{request.status}</span>
@@ -145,7 +148,7 @@ export default function AdminCancellationsPage() {
                         )}
                       </div>
                       <div className="text-sm text-hos-text-muted">
-                        Requested {new Date(request.createdAt).toLocaleString()}
+                        Requested {formatDateTime(request.createdAt)}
                       </div>
                     </div>
 

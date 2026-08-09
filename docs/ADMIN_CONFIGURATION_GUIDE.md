@@ -17,6 +17,7 @@ This guide covers every configurable area in the HOS admin panel, how credential
 9. [Logistics Partners](#9-logistics-partners)
 10. [Environment-Only Settings](#10-environment-only-settings)
 11. [Credential Security Model](#11-credential-security-model)
+12. [Platform Region Configuration](#12-platform-region-configuration)
 
 ---
 
@@ -62,11 +63,11 @@ This guide covers every configurable area in the HOS admin panel, how credential
 |-------|-----|------|-------------|
 | Stripe Enabled | `stripeEnabled` | Boolean | Toggle Stripe payment processing |
 | Stripe Test Mode | `stripeTestMode` | Boolean | Use Stripe test keys vs live keys |
-| Currency | `currency` (sent as `defaultCurrency`) | String | Default platform currency (USD, EUR, AED, GBP) |
+| Currency | `currency` (sent as `defaultCurrency`) | String | Legacy admin payment setting; shopper-facing currency follows platform region (see [§12](#12-platform-region-configuration)) |
 | Platform Fee | `platformFeeRate` (sent as `platformFee`) | Number (0–100%) | Percentage fee on seller transactions |
 | Cancellation Window | `cancellationAutoApprovalWindowMinutes` | Number (minutes) | Auto-approve cancellation requests within this window |
 
-> **Note:** The frontend sends `platformFee` as a percentage (e.g., 15.0) and `defaultCurrency` as the key. The backend maps `platformFee / 100` to `platformFeeRate` and `defaultCurrency` to `currency`. Stripe API keys are managed separately through Integrations.
+> **Note:** The Payment tab also shows a **read-only Platform Region** snapshot from `GET /config/region` (currency, country, locale, timezone). That snapshot is driven by deployment config (`PLATFORM_*`), not by the Default Currency dropdown. The frontend sends `platformFee` as a percentage (e.g., 15.0) and `defaultCurrency` as the key; the backend maps `platformFee / 100` to `platformFeeRate` and `defaultCurrency` to Config key `currency`. Stripe API keys are managed separately through Integrations.
 
 ### Fulfillment Tab
 
@@ -235,11 +236,11 @@ Failed deliveries (5+ attempts) are moved to a dead letter queue accessible at:
 
 | Setting | Type | Default Source |
 |---------|------|---------------|
-| Points per pound spent | Number | DB over `LOYALTY_POINTS_PER_POUND` env |
-| Points value in pence | Number | DB over `LOYALTY_POINTS_VALUE_PENCE` env |
-| Minimum redemption | Number | DB over env |
-| Points expiry (months) | Number | DB over env |
-| POS voucher limits | Number | DB |
+| Points per dollar spent | Number | DB over `LOYALTY_DEFAULT_EARN_RATE` env (default `1`) |
+| Points redeem value (USD per point) | Number | DB over `LOYALTY_DEFAULT_REDEEM_VALUE` env (default `0.01`) |
+| Minimum redemption | Number | DB over `LOYALTY_MIN_REDEMPTION_POINTS` env |
+| Points expiry (months) | Number | DB over `LOYALTY_POINTS_EXPIRY_MONTHS` env |
+| POS voucher limits | Number | DB over `POS_GIFT_CARD_MIN_AMOUNT` / `POS_GIFT_CARD_MAX_AMOUNT` |
 | Tier multipliers | JSON | DB |
 
 ### Feature Gates
@@ -263,11 +264,14 @@ Feature flags use a three-level cascade: **Database** > **Environment (`FF_*`)**
 | Flag | Default | Description |
 |------|---------|-------------|
 | `POS_INTEGRATION` | false | Enable POS integration features |
-| `XERO_INTEGRATION` | false | Enable Xero accounting sync |
-| `LOYALTY_PROGRAMME` | false | Enable loyalty programme |
-| `BRAND_PARTNERSHIPS` | false | Enable brand partnership campaigns |
-| `AMBASSADOR_PROGRAMME` | false | Enable ambassador programme |
-| `ADVANCED_ANALYTICS` | false | Enable advanced analytics dashboards |
+| `ACCOUNTING_XERO` | false | Enable Xero accounting sync (also requires `ACCOUNTING_ENABLED`) |
+| `LOYALTY_PROGRAMME` | true | Enable loyalty programme |
+| `BRAND_PARTNERSHIPS` | true | Enable brand partnership campaigns |
+| `AMBASSADOR_PROGRAMME` | true | Enable ambassador programme |
+| `MULTI_CURRENCY` | false | Expand shopper currencies beyond the platform region currency (env: `FF_MULTI_CURRENCY`) |
+| `AI_RECOMMENDATIONS` | false | Enable AI product recommendations |
+
+Other flags loaded from the same cascade include `FOUNDING_MEMBERS`, `GUEST_CHECKOUT`, `CLICK_COLLECT`, `DIGITAL_PRODUCTS`, `INFLUENCER_STOREFRONTS`, and `EMAIL_TEMPLATE_OVERRIDES` (see `FeatureFlag` in `feature-flags.service.ts`).
 
 ---
 
@@ -310,6 +314,9 @@ These settings have **no admin UI** and must be configured via deployment enviro
 
 | Service | Environment Variables | Used By |
 |---------|----------------------|---------|
+| **Platform region** | `PLATFORM_CURRENCY`, `PLATFORM_COUNTRY`, `PLATFORM_LOCALE`, `PLATFORM_TIMEZONE`, `PLATFORM_REGION_CACHE_TTL_MS` | Region defaults for money, dates, tax origin country fallback (see [§12](#12-platform-region-configuration)) |
+| **Tax origin** | `TAX_ORIGIN_STREET`, `TAX_ORIGIN_CITY`, `TAX_ORIGIN_STATE`, `TAX_ORIGIN_POSTAL_CODE`, `TAX_ORIGIN_COUNTRY` | Ship-from address for tax providers (env-only; see [§12](#12-platform-region-configuration)) |
+| **Multi-currency** | `FF_MULTI_CURRENCY`, `GLOBAL_SUPPORTED_CURRENCIES`, `EXCHANGE_RATE_API_KEY` | Re-open FX conversion beyond single launch currency |
 | **SMTP Fallback** | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Email notifications when no SendGrid integration |
 | **Twilio SMS/WhatsApp** | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_SMS_NUMBER`, `TWILIO_WHATSAPP_FROM` | SMS and WhatsApp messaging |
 | **Meilisearch** | `MEILISEARCH_HOST`, `MEILISEARCH_API_KEY` | Full-text search engine |
@@ -358,3 +365,92 @@ These settings have **no admin UI** and must be configured via deployment enviro
 | `JWT_SECRET` (32+ chars) | Auth tokens cannot be signed |
 | `JWT_REFRESH_SECRET` (32+ chars) | Refresh tokens cannot be signed |
 | `DATABASE_URL` | No database connection |
+| Complete `TAX_ORIGIN_*` when a tax provider is active | API fails closed on tax-provider load in production/staging (see [§12](#12-platform-region-configuration)) |
+
+---
+
+## 12. Platform Region Configuration
+
+The platform migrated from GBP/UK defaults to **USD / US / en-US / America/New_York**. Region-dependent behaviour (display currency, locale, timezone, tax ship-from) is centralised in `PlatformRegionService` on the API and exposed publicly as `GET /config/region`.
+
+For launching an additional market (UK, UAE, Malaysia, etc.), see [`NEW_MARKET_ONBOARDING_RUNBOOK.md`](./NEW_MARKET_ONBOARDING_RUNBOOK.md).
+
+### Precedence chain
+
+Resolution order for currency, country, locale, and timezone:
+
+1. **Database override** — Config rows at `level: 'PLATFORM'`, `levelId: 'PLATFORM'`, keys `platformCurrency`, `platformCountry`, `platformLocale`, `platformTimezone`
+2. **Environment variables** — `PLATFORM_CURRENCY`, `PLATFORM_COUNTRY`, `PLATFORM_LOCALE`, `PLATFORM_TIMEZONE`
+3. **Code defaults** — `USD`, `US`, `en-US`, `America/New_York`
+
+**Which knob to use**
+
+| Goal | Use |
+|------|-----|
+| Normal deploy / market switch | Set `PLATFORM_*` (and `TAX_ORIGIN_*`) in the deployment environment, then restart the API |
+| Emergency override without redeploy | Insert/update the four Config keys above in the database (no admin UI writes these keys today) |
+| Confirm what the storefront sees | `GET /config/region` or Admin → Settings → Payment → **Platform Region** (read-only) |
+
+> **Important:** Admin Payment → **Default Currency** writes Config key `currency`. That is a separate legacy setting and does **not** drive `PlatformRegionService`. Shopper-facing formatting follows `/config/region`.
+
+Tax ship-from (`TAX_ORIGIN_*`) is **environment-only**. It is never read from the Config table. Incomplete origin fields resolve to `taxOrigin: null`.
+
+### Environment variables
+
+Malformed values fail **boot** via `validateEnvironmentVariables` (`Environment validation failed: …`).
+
+| Variable | Format | Valid examples | On malformed value |
+|----------|--------|----------------|--------------------|
+| `PLATFORM_CURRENCY` | 3-letter ISO 4217, uppercase | `USD`, `GBP`, `AED`, `MYR` | Boot failure |
+| `PLATFORM_COUNTRY` | 2-letter ISO 3166-1 alpha-2, uppercase | `US`, `GB`, `AE`, `MY` | Boot failure |
+| `PLATFORM_LOCALE` | BCP 47: `xx` or `xx-YY` | `en`, `en-US`, `en-GB`, `ar-AE`, `ms-MY` | Boot failure |
+| `PLATFORM_TIMEZONE` | IANA time zone | `America/New_York`, `Europe/London`, `Asia/Dubai`, `Asia/Kuala_Lumpur` | Boot failure |
+| `PLATFORM_REGION_CACHE_TTL_MS` | Non-negative number (ms) | `15000` (default) | Invalid numbers fall back to `15000` (not a boot failure) |
+| `TAX_ORIGIN_STREET` | Non-empty string | `1564 Broadway` | Incomplete origin → `null` (see fail-closed below) |
+| `TAX_ORIGIN_CITY` | Non-empty string | `New York` | Incomplete origin → `null` |
+| `TAX_ORIGIN_STATE` | Required when country is `US` | `NY` | Incomplete US origin → `null` |
+| `TAX_ORIGIN_POSTAL_CODE` | Non-empty string | `10036` | Incomplete origin → `null` |
+| `TAX_ORIGIN_COUNTRY` | 2-letter ISO, uppercase (falls back to platform country) | `US` | Malformed code → boot failure; missing → fall back to platform country |
+
+### Tax origin (`TAX_ORIGIN_*`)
+
+Tax providers (Avalara, TaxJar, Stripe Tax) need a complete **ship-from** address. Without it, US sales tax estimates use the wrong (or no) nexus origin.
+
+**Why it matters:** A wrong or missing origin can silently produce incorrect US sales tax amounts. That was a production bug class we fixed by centralising origin and failing closed when a provider is active without a complete address.
+
+**Completeness rules** (from `PlatformRegionService.buildTaxOrigin`):
+
+- Required: street, city, postal code, country
+- State is required when country is `US`; optional elsewhere
+
+**Fail-closed behaviour**
+
+| Environment | Tax provider active? | Incomplete origin |
+|-------------|----------------------|-------------------|
+| `production` or `staging` | Yes | Throws on tax-provider load / refresh — API must not calculate tax without origin |
+| `production` or `staging` | No | No throw (origin still recommended before enabling a provider) |
+| Other (`development`, etc.) | Yes | Warning + fall back to tax zones; does not invent an origin |
+
+### Cache and propagation delay
+
+Resolved region config is cached:
+
+- **Local in-process cache** on each API instance (default TTL **15 seconds**)
+- **Shared cache** (Redis when `CacheService` is available) under key `platform:region:resolved`, same TTL
+- Override TTL with `PLATFORM_REGION_CACHE_TTL_MS`
+
+`PlatformRegionService.invalidate()` clears local + shared cache. As of this writing, no admin save path calls `invalidate()` for region keys, so **expect up to one TTL window (~15s) before every instance observes a DB Config change**. Environment variable changes require an API restart (they are not hot-reloaded).
+
+### Single-currency launch and re-enabling multi-currency
+
+Launch mode is **single currency**: `CurrencyService` exposes only the platform region currency unless multi-currency is reopened.
+
+| Control | Effect |
+|---------|--------|
+| Default (neither set) | Supported list = `[platform currency]` only |
+| `FF_MULTI_CURRENCY=true` (or admin feature flag `MULTI_CURRENCY`) | Supported list expands to the built-in catalog: USD, EUR, GBP, AED, JPY, AUD, CAD, SGD |
+| `GLOBAL_SUPPORTED_CURRENCIES=USD,EUR,GBP` | Explicit CSV overrides the catalog (platform currency is always included) |
+
+FX rates come from ExchangeRate-API (`https://api.exchangerate-api.com/v4/latest` open, or authenticated v6 when `EXCHANGE_RATE_API_KEY` is set), with DB + Redis caching. Conversion between arbitrary currencies throws while multi-currency is disabled.
+
+> Region config is **platform-wide**, not per storefront. Running US and UK simultaneously from one deployment is not supported today — see the limitations section in the new-market runbook.

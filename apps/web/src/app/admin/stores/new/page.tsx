@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 export default function AdminStoreNewPage() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function AdminStoreNewPage() {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [country, setCountry] = useState('GB');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState(DEFAULT_CURRENCY);
   const [region, setRegion] = useState('GB');
   const [saving, setSaving] = useState(false);
 

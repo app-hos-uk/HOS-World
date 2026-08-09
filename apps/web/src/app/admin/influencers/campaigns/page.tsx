@@ -5,6 +5,8 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 // Influencer/campaign methods exist at runtime; cast for type-check until api-client types are regenerated
 const api = apiClient as any;
@@ -35,6 +37,8 @@ interface Influencer {
 }
 
 export default function AdminInfluencerCampaignsPage() {
+  const { formatDate: formatDateShared } = useDateTime();
+  const { formatMoney } = useMoney();
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -185,18 +189,13 @@ export default function AdminInfluencerCampaignsPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount || 0);
+    return formatMoney(amount || 0);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      day: 'numeric',
+    return formatDateShared(dateString, { day: 'numeric',
       month: 'short',
-      year: 'numeric',
-    });
+      year: 'numeric', });
   };
 
   const getStatusBadge = (status: string) => {

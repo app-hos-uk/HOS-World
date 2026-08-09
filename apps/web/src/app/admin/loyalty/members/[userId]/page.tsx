@@ -8,10 +8,14 @@ import { DataExport } from '@/components/DataExport';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { flattenLedgerRow, LEDGER_EXPORT_COLUMNS } from '@/lib/loyaltyLedgerExport';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 const EXPORT_PAGE_SIZE = 200;
 
 export default function AdminLoyaltyMemberLedgerPage() {
+  const { formatDate, formatDateTime } = useDateTime();
+  const { formatMoney } = useMoney();
   const params = useParams();
   const userId = String(params?.userId || '');
   const toast = useToast();
@@ -185,7 +189,7 @@ export default function AdminLoyaltyMemberLedgerPage() {
                 {txs.map((t) => (
                   <tr key={t.id} className="border-t border-hos-border text-hos-text-primary">
                     <td className="px-3 py-2 font-ui text-xs">
-                      {t.createdAt ? new Date(t.createdAt).toLocaleString() : '—'}
+                      {t.createdAt ? formatDateTime(t.createdAt) : '—'}
                     </td>
                     <td className="px-3 py-2 font-ui text-xs">{t.type}</td>
                     <td className="px-3 py-2 font-ui">{t.points}</td>
@@ -204,8 +208,8 @@ export default function AdminLoyaltyMemberLedgerPage() {
               <ul className="space-y-1 text-sm font-ui text-hos-text-secondary">
                 {instruments.posVouchers.map((v: any) => (
                   <li key={v.id}>
-                    {v.status} · {v.currency} {Number(v.amount).toFixed(2)} ·{' '}
-                    {v.createdAt ? new Date(v.createdAt).toLocaleDateString() : ''}
+                    {v.status} · {formatMoney(Number(v.amount), v.currency)} ·{' '}
+                    {v.createdAt ? formatDate(v.createdAt) : ''}
                   </li>
                 ))}
               </ul>

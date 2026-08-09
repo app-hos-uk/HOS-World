@@ -19,10 +19,12 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { subMonths } from 'date-fns';
+import { useMoney } from '@/hooks/useMoney';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function AdminProductAnalyticsPage() {
+  const { formatMoney, formatMoneyCompact } = useMoney();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -167,7 +169,7 @@ export default function AdminProductAnalyticsPage() {
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Revenue</h3>
               <p className="text-3xl font-bold text-hos-text-secondary mt-2">
-                ${totalRevenue.toFixed(2)}
+                {formatMoney(totalRevenue)}
               </p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
@@ -191,7 +193,7 @@ export default function AdminProductAnalyticsPage() {
                     margin={{ top: 8, right: 24, bottom: 8, left: 8 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" tickFormatter={(v) => `$${Number(v).toFixed(0)}`} />
+                    <XAxis type="number" tickFormatter={(v) => formatMoneyCompact(Number(v))} />
                     <YAxis
                       dataKey="name"
                       type="category"
@@ -199,7 +201,7 @@ export default function AdminProductAnalyticsPage() {
                       interval={0}
                       tick={{ fontSize: 12 }}
                     />
-                    <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} />
+                    <Tooltip formatter={(value: any) => formatMoney(Number(value))} />
                     <Legend />
                     <Bar dataKey="revenue" fill="#3b82f6" name="Revenue" maxBarSize={28} />
                   </BarChart>
@@ -268,7 +270,7 @@ export default function AdminProductAnalyticsPage() {
                         {product.sku || '-'}
                       </td>
                       <td className="text-right px-6 py-4 whitespace-nowrap text-sm tabular-nums text-hos-text-secondary">
-                        ${Number(product.revenue || 0).toFixed(2)}
+                        {formatMoney(Number(product.revenue || 0))}
                       </td>
                       <td className="text-right px-6 py-4 whitespace-nowrap text-sm tabular-nums text-hos-text-secondary">
                         {product.orders || 0}
@@ -277,7 +279,7 @@ export default function AdminProductAnalyticsPage() {
                         {product.quantity || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm tabular-nums text-hos-text-secondary">
-                        ${Number(product.averagePrice || 0).toFixed(2)}
+                        {formatMoney(Number(product.averagePrice || 0))}
                       </td>
                     </tr>
                   ))}

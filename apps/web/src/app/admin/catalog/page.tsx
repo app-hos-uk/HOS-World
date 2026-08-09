@@ -4,8 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function AdminCatalogPage() {
+  const { formatDate } = useDateTime();
   const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -142,7 +144,7 @@ export default function AdminCatalogPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                           {entry.createdAt
-                            ? new Date(entry.createdAt).toLocaleDateString()
+                            ? formatDate(entry.createdAt)
                             : 'N/A'}
                         </td>
                       </tr>

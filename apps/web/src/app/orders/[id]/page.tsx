@@ -12,6 +12,8 @@ import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 const api = apiClient as any;
 
@@ -89,6 +91,7 @@ interface Order {
 }
 
 export default function OrderDetailPage() {
+  const { formatDate, formatDateTime } = useDateTime();
   const params = useParams();
   const router = useRouter();
   const toast = useToast();
@@ -390,13 +393,11 @@ export default function OrderDetailPage() {
                   Order #{order.orderNumber || order.id.slice(0, 8)}
                 </h1>
                 <p className="text-hos-text-secondary mt-1">
-                  Placed on {new Date(order.createdAt).toLocaleDateString('en-US', {
-                    day: 'numeric',
+                  Placed on {formatDate(order.createdAt, { day: 'numeric',
                     month: 'long',
                     year: 'numeric',
                     hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                    minute: '2-digit', })}
                 </p>
               </div>
               <span className={`px-4 py-2 text-sm font-medium rounded-full ${getStatusColor(order.status)}`}>
@@ -460,11 +461,11 @@ export default function OrderDetailPage() {
                               {item.product?.name || 'Product'}
                             </Link>
                             <p className="text-sm text-hos-text-muted">Quantity: {item.quantity}</p>
-                            <p className="text-sm text-hos-text-muted">Unit Price: {formatPrice(item.price, order.currency || 'USD')}</p>
+                            <p className="text-sm text-hos-text-muted">Unit Price: {formatPrice(item.price, order.currency || DEFAULT_CURRENCY)}</p>
                           </div>
                           <div className="text-right">
                             <p className="font-semibold text-hos-text-secondary">
-                              {formatPrice(item.price * item.quantity, order.currency || 'USD')}
+                              {formatPrice(item.price * item.quantity, order.currency || DEFAULT_CURRENCY)}
                             </p>
                             {['DELIVERED', 'COMPLETED'].includes(order.status.toUpperCase()) && (
                               <Link
@@ -511,11 +512,9 @@ export default function OrderDetailPage() {
                       <div>
                         <p className="text-sm text-hos-text-secondary mb-1">Estimated Delivery</p>
                         <p className="text-hos-text-secondary">
-                          {new Date(order.estimatedDelivery).toLocaleDateString('en-US', {
-                            day: 'numeric',
+                          {formatDate(order.estimatedDelivery, { day: 'numeric',
                             month: 'long',
-                            year: 'numeric',
-                          })}
+                            year: 'numeric', })}
                         </p>
                       </div>
                     )}
@@ -574,7 +573,7 @@ export default function OrderDetailPage() {
                               )}
                             </p>
                             <p className="text-sm text-hos-text-muted">
-                              {new Date(event.timestamp).toLocaleString()}
+                              {formatDateTime(event.timestamp)}
                               {formatLiveEventLocation(event) && ` • ${formatLiveEventLocation(event)}`}
                             </p>
                           </div>
@@ -599,7 +598,7 @@ export default function OrderDetailPage() {
                       <div key={note.id} className="border-l-4 border-hos-border-accent pl-4 py-2">
                         <p className="text-hos-text-secondary">{note.content}</p>
                         <p className="text-xs text-hos-text-muted mt-1">
-                          {new Date(note.createdAt).toLocaleDateString()}
+                          {formatDate(note.createdAt)}
                         </p>
                       </div>
                     ))}
@@ -617,30 +616,30 @@ export default function OrderDetailPage() {
                   {order.subtotal !== undefined && (
                     <div className="flex justify-between text-sm">
                       <span className="text-hos-text-secondary">Subtotal</span>
-                      <span className="text-hos-text-secondary">{formatPrice(order.subtotal, order.currency || 'USD')}</span>
+                      <span className="text-hos-text-secondary">{formatPrice(order.subtotal, order.currency || DEFAULT_CURRENCY)}</span>
                     </div>
                   )}
                   {(order.shippingCost || order.shippingAmount) ? (
                     <div className="flex justify-between text-sm">
                       <span className="text-hos-text-secondary">Shipping</span>
-                      <span className="text-hos-text-secondary">{formatPrice(order.shippingCost || order.shippingAmount || 0, order.currency || 'USD')}</span>
+                      <span className="text-hos-text-secondary">{formatPrice(order.shippingCost || order.shippingAmount || 0, order.currency || DEFAULT_CURRENCY)}</span>
                     </div>
                   ) : null}
                   {order.tax !== undefined && order.tax > 0 && (
                     <div className="flex justify-between text-sm">
                       <span className="text-hos-text-secondary">Tax</span>
-                      <span className="text-hos-text-secondary">{formatPrice(order.tax, order.currency || 'USD')}</span>
+                      <span className="text-hos-text-secondary">{formatPrice(order.tax, order.currency || DEFAULT_CURRENCY)}</span>
                     </div>
                   )}
                   {(order.discount || order.discountAmount) ? (
                     <div className="flex justify-between text-sm text-green-400">
                       <span>Discount</span>
-                      <span>-{formatPrice(order.discount || order.discountAmount || 0, order.currency || 'USD')}</span>
+                      <span>-{formatPrice(order.discount || order.discountAmount || 0, order.currency || DEFAULT_CURRENCY)}</span>
                     </div>
                   ) : null}
                   <div className="flex justify-between font-bold text-base pt-3 border-t">
                     <span className="text-hos-text-secondary">Total</span>
-                    <span className="text-hos-gold">{formatPrice(order.total, order.currency || 'USD')}</span>
+                    <span className="text-hos-gold">{formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}</span>
                   </div>
                 </div>
               </div>

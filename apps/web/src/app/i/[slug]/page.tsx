@@ -18,6 +18,7 @@ import type {
   PublicStorefrontProduct,
 } from '@hos-marketplace/api-client';
 import { GoogleFontLink } from '@/components/GoogleFontLink';
+import { useMoney } from '@/hooks/useMoney';
 
 interface ContentBlock {
   type: string;
@@ -86,6 +87,7 @@ function ContentBlocksSection({ blocks }: { blocks: ContentBlock[] }) {
 }
 
 export default function InfluencerStorefrontPage() {
+  const { formatMoney } = useMoney();
   const params = useParams();
   const slug = params.slug as string;
   
@@ -154,10 +156,7 @@ export default function InfluencerStorefrontPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+    return formatMoney(amount);
   };
 
   const getSocialIcon = (platform: string) => {

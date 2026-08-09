@@ -223,7 +223,7 @@ Baseline gaps and how they were closed (Phase 2):
 | Variable / field | Purpose |
 |------------------|---------|
 | `LOYALTY_DEFAULT_EARN_RATE` | Fallback pts per currency unit |
-| `LOYALTY_DEFAULT_REDEEM_VALUE` | £ per point |
+| `LOYALTY_DEFAULT_REDEEM_VALUE` | $ per point |
 | `LOYALTY_MIN_REDEMPTION_POINTS` | Floor to redeem |
 | `LOYALTY_POINTS_EXPIRY_MONTHS` | Expiry window (0 = off) |
 | `LOYALTY_CARD_PREFIX` | Digital card prefix |
@@ -397,7 +397,7 @@ model LoyaltyProgrammeSettings {
   posVoucherMinAmount       Decimal  @default(1) @db.Decimal(10, 2)
   posVoucherMaxAmount       Decimal  @default(500) @db.Decimal(10, 2)
   giftCardCatalogAmounts    String   @default("25,50,100,250,500") // CSV
-  giftCardDefaultCurrency   String   @default("GBP")
+  giftCardDefaultCurrency   String   @default("USD")
   /// Returns policy
   restoreBurnOnCancel       Boolean  @default(true)
   clawEarnOnCancel          Boolean  @default(true)
@@ -687,7 +687,7 @@ See conversation sketch: daily `ONLINE_SALES`, `POINTS_LIABILITY`, `GC_BRIDGE_RE
 ## 15. Open decisions for Product (track explicitly)
 
 1. Confirm returns defaults in Section 5 (especially partial returns).  
-2. Currency default for gift cards: GBP vs USD for UK store.  
+2. Currency default for gift cards when a UK market launches (platform is USD today; per-market GC defaults are not yet supported).  
 3. Whether Council of Realms invite-only remains manual-only.  
 4. Whether customer self-purchase of HOS gift cards is payment-backed before public launch.  
 5. Soft vs hard delete of loyalty data under GDPR requests.

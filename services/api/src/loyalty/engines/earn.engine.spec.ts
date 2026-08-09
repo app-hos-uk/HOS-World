@@ -18,6 +18,16 @@ const mockFeatureFlags = {
   isEnabled: jest.fn().mockReturnValue(true),
 };
 
+const mockRegion = {
+  getRegion: jest.fn().mockResolvedValue({
+    currency: 'USD',
+    country: 'US',
+    locale: 'en-US',
+    timezone: 'America/New_York',
+    taxOrigin: null,
+  }),
+};
+
 describe('LoyaltyEarnEngine', () => {
   describe('processOrderComplete', () => {
     it('skips when loyalty is disabled', async () => {
@@ -34,6 +44,7 @@ describe('LoyaltyEarnEngine', () => {
         null as any,
         mockBrandPartnerships as any,
         mockProductCampaigns as any,
+        mockRegion as any,
       );
       await engine.processOrderComplete('order-1');
       expect(mockConfig.get).toHaveBeenCalledWith('LOYALTY_ENABLED');
@@ -151,6 +162,7 @@ describe('LoyaltyEarnEngine', () => {
         mockTiers as any,
         mockBrandPartnerships as any,
         mockProductCampaigns as any,
+        mockRegion as any,
       );
       await engine.processOrderComplete('order-1');
       expect(mockPrisma.loyaltyMembership.create).toHaveBeenCalled();
@@ -200,6 +212,7 @@ describe('LoyaltyEarnEngine', () => {
         null as any,
         mockBrandPartnerships as any,
         mockProductCampaigns as any,
+        mockRegion as any,
       );
       await engine.processOrderComplete('order-1');
       expect(mockPrisma.loyaltyMembership.findUnique).not.toHaveBeenCalled();
@@ -237,6 +250,7 @@ describe('LoyaltyEarnEngine', () => {
         null as any,
         mockBrandPartnerships as any,
         mockProductCampaigns as any,
+        mockRegion as any,
       );
       await engine.processPosSale('sale-1');
       expect(mockPrisma.loyaltyMembership.findUnique).not.toHaveBeenCalled();
@@ -329,6 +343,7 @@ describe('LoyaltyEarnEngine', () => {
         mockTiers as any,
         mockBrandPartnerships as any,
         mockProductCampaigns as any,
+        mockRegion as any,
       );
       await engine.processPosSale('sale-1');
       expect(mockWallet.applyDelta).toHaveBeenCalledWith(
@@ -392,6 +407,7 @@ describe('LoyaltyEarnEngine', () => {
         mockTiers as any,
         mockBrandPartnerships as any,
         mockProductCampaigns as any,
+        mockRegion as any,
       );
       return { engine, mockWallet, membershipUpdate, saleUpdate, mockTiers };
     };

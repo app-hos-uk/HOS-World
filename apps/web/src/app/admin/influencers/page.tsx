@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { RouteGuard } from '@/components/RouteGuard';
+import { useMoney } from '@/hooks/useMoney';
 
 const api = apiClient as any;
 
@@ -32,6 +33,7 @@ interface Influencer {
 }
 
 export default function AdminInfluencersPage() {
+  const { formatMoney } = useMoney();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [influencers, setInfluencers] = useState<Influencer[]>([]);
@@ -65,10 +67,7 @@ export default function AdminInfluencersPage() {
   }, [fetchInfluencers]);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+    return formatMoney(amount);
   };
 
   const getStatusBadge = (status: string) => {

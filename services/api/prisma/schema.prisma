@@ -250,11 +250,11 @@ model Store {
   address      String?
   city         String?
   state        String?
-  country      String  @default("GB")
+  country      String  @default("US")
   postalCode   String?
   latitude     Float?
   longitude    Float?
-  timezone     String  @default("Europe/London")
+  timezone     String  @default("America/New_York")
   currency     String  @default("USD")
   contactEmail String?
   contactPhone String?
@@ -271,7 +271,7 @@ model Store {
   posSales        POSSale[]
   events          Event[]
 
-  defaultRegionCode  String   @default("GB")
+  defaultRegionCode  String   @default("US")
   loyaltyRedeemValue Decimal  @default(0.01) @db.Decimal(8, 6)
 
   clickCollectOrders   ClickCollectOrder[]
@@ -3508,7 +3508,7 @@ model LoyaltyMembership {
   enrolledAt          DateTime @default(now())
   enrollmentChannel   String   @default("WEB")
   preferredCurrency   String   @default("USD")
-  regionCode          String   @default("GB")
+  regionCode          String   @default("US")
   fandomProfile       Json?
   optInEmail          Boolean  @default(true)
   optInSms            Boolean  @default(false)
@@ -3657,7 +3657,7 @@ model LoyaltyPosVoucher {
   store                 Store             @relation(fields: [storeId], references: [id], onDelete: Restrict)
   cardNumber            String
   amount                Decimal           @db.Decimal(10, 2)
-  currency              String            @default("GBP")
+  currency              String            @default("USD")
   /// Lightspeed gift card transaction client_id — stable idempotency key (set once to redemptionId).
   clientId              String            @unique
   externalTransactionId String?
@@ -4270,7 +4270,7 @@ model Event {
 
   startsAt    DateTime
   endsAt      DateTime
-  timezone    String    @default("Europe/London")
+  timezone    String    @default("America/New_York")
   doorsOpenAt DateTime?
 
   capacity       Int?

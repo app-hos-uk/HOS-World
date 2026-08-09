@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { validateFulfillmentCenterFields } from '@/lib/fulfillmentCenterFormValidation';
 import { getFulfillmentMenu } from '@/lib/teamMenus';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface FulfillmentCenter {
   id: string;
@@ -32,6 +33,7 @@ interface CenterFormData {
 const initialFormData: CenterFormData = { name: '', address: '', city: '', country: '', capacity: 0 };
 
 export default function FulfillmentCentersPage() {
+  const { formatDate } = useDateTime();
   const [centers, setCenters] = useState<FulfillmentCenter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -253,7 +255,7 @@ export default function FulfillmentCentersPage() {
                   </div>
                   {center.createdAt && (
                     <div className="flex items-center gap-2 text-xs text-hos-text-muted">
-                      <span>Created: {new Date(center.createdAt).toLocaleDateString()}</span>
+                      <span>Created: {formatDate(center.createdAt)}</span>
                     </div>
                   )}
                 </div>

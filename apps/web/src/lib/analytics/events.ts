@@ -6,6 +6,7 @@ import {
   trackMetaPurchase,
   trackMetaViewContent,
 } from './meta-events';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 type AnalyticsItem = {
   item_id: string;
@@ -51,7 +52,7 @@ export function trackViewItem(product: Parameters<typeof toItem>[0]): void {
   if (canTrack()) {
     const item = toItem(product);
     gtag('event', 'view_item', {
-      currency: product.currency || 'USD',
+      currency: product.currency || DEFAULT_CURRENCY,
       value: product.price,
       items: [item],
     });
@@ -69,7 +70,7 @@ export function trackAddToCart(
   if (canTrack()) {
     const item = toItem(product, quantity);
     gtag('event', 'add_to_cart', {
-      currency: product.currency || 'USD',
+      currency: product.currency || DEFAULT_CURRENCY,
       value: (product.price || 0) * quantity,
       items: [item],
     });
@@ -106,7 +107,7 @@ export function trackBeginCheckout(cart: {
     );
 
     gtag('event', 'begin_checkout', {
-      currency: cart.currency || 'USD',
+      currency: cart.currency || DEFAULT_CURRENCY,
       value: cart.total ?? cart.subtotal ?? 0,
       items,
     });
@@ -158,7 +159,7 @@ export function trackPurchase(order: {
 
     gtag('event', 'purchase', {
       transaction_id: order.id,
-      currency: order.currency || 'USD',
+      currency: order.currency || DEFAULT_CURRENCY,
       value: order.total ?? 0,
       items,
     });

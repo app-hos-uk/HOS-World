@@ -12,8 +12,10 @@ import {
   validateNameLike,
   validateOptionalDescriptiveText,
 } from '@/lib/formFieldValidation';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function AdminLoyaltyCampaignsPage() {
+  const { formatDate } = useDateTime();
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -229,8 +231,8 @@ export default function AdminLoyaltyCampaignsPage() {
                       <p className="text-sm text-hos-text-secondary mb-2">{c.description || 'No description'}</p>
                       <div className="flex flex-wrap gap-4 text-sm text-hos-text-muted">
                         <span><strong>{c.multiplier}x</strong> multiplier</span>
-                        {c.startsAt && <span>From: {new Date(c.startsAt).toLocaleDateString()}</span>}
-                        {c.endsAt && <span>Until: {new Date(c.endsAt).toLocaleDateString()}</span>}
+                        {c.startsAt && <span>From: {formatDate(c.startsAt)}</span>}
+                        {c.endsAt && <span>Until: {formatDate(c.endsAt)}</span>}
                       </div>
                     </div>
                     <div className="flex gap-2 shrink-0">

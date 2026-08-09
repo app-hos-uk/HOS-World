@@ -1,6 +1,8 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
+import { PLATFORM_DEFAULT_CURRENCY } from '../../common/currency-defaults';
+import { normalizeCountryCode } from '../../common/utils/country-code';
 
 export interface CourierProvider {
   name: string;
@@ -73,6 +75,21 @@ export class CourierService {
   ) {}
 
   /**
+   * Providers compare against ISO alpha-2 and forward the value straight to carrier APIs, so a
+   * stored display name like "United States" would both defeat the domestic check and be
+   * rejected by the carrier. Normalising once here keeps every provider on codes.
+   */
+  private toIsoAddress<T extends { country?: string | null }>(address: T, label: string): T {
+    const iso = normalizeCountryCode(address?.country);
+    if (!iso) {
+      throw new BadRequestException(
+        `Unrecognised ${label} country ${JSON.stringify(address?.country ?? null)}; expected an ISO 3166-1 alpha-2 code`,
+      );
+    }
+    return { ...address, country: iso };
+  }
+
+  /**
    * Register a courier provider
    */
   registerProvider(name: string, provider: CourierProvider) {
@@ -106,26 +123,20 @@ export class CourierService {
       throw new BadRequestException(`Courier provider '${providerName}' not found`);
     }
 
+    const from = this.toIsoAddress(request.from, 'origin');
+    const to = this.toIsoAddress(request.to, 'destination');
+
     try {
-      const rate = await provider.calculateRate(
-        request.weight,
-        request.dimensions,
-        request.from,
-        request.to,
-      );
+      const rate = await provider.calculateRate(request.weight, request.dimensions, from, to);
 
       // Estimate delivery days (default 3-5 days, can be provider-specific)
-      const estimatedDays = this.estimateDeliveryDays(
-        providerName,
-        request.from.country,
-        request.to.country,
-      );
+      const estimatedDays = this.estimateDeliveryDays(providerName, from.country, to.country);
 
       return {
         provider: providerName,
         service: request.service || 'STANDARD',
         rate,
-        currency: 'USD',
+        currency: PLATFORM_DEFAULT_CURRENCY,
         estimatedDays,
       };
     } catch (error: any) {
@@ -150,8 +161,14 @@ export class CourierService {
       throw new BadRequestException(`Courier provider '${providerName}' not found`);
     }
 
+    const shipment = {
+      ...request.shipment,
+      from: this.toIsoAddress(request.shipment.from, 'origin'),
+      to: this.toIsoAddress(request.shipment.to, 'destination'),
+    };
+
     try {
-      return await provider.createLabel(request.orderId, request.shipment);
+      return await provider.createLabel(request.orderId, shipment);
     } catch (error: any) {
       this.logger.error(`Failed to create label with ${providerName}: ${error.message}`);
       throw new BadRequestException(`Failed to create shipping label: ${error.message}`);

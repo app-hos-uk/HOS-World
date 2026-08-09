@@ -6,6 +6,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/useToast';
 import { useState } from 'react';
 import { trackAddToCart } from '@/lib/analytics';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface ProductCardProps {
   id: string;
@@ -54,7 +55,7 @@ export function ProductCard({
     setAdding(true);
     try {
       await addToCart(id, 1);
-      trackAddToCart({ id, name, price, currency: currency || 'USD' }, 1);
+      trackAddToCart({ id, name, price, currency: currency || DEFAULT_CURRENCY }, 1);
       toast.success('Added to basket');
     } catch {
       toast.error('Could not add to basket');

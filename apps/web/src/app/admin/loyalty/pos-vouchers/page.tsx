@@ -5,6 +5,8 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { DataExport } from '@/components/DataExport';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 const PAGE_SIZE = 50;
 const EXPORT_PAGE_SIZE = 200;
@@ -44,6 +46,8 @@ function flatten(v: Voucher) {
 }
 
 export default function AdminLoyaltyPosVouchersPage() {
+  const { formatDateTime } = useDateTime();
+  const { formatMoney } = useMoney();
   const toast = useToast();
   const [rows, setRows] = useState<Voucher[]>([]);
   const [loading, setLoading] = useState(true);
@@ -184,14 +188,14 @@ export default function AdminLoyaltyPosVouchersPage() {
               {rows.map((v) => (
                 <tr key={v.id} className="border-t border-hos-border text-hos-text-primary">
                   <td className="px-3 py-2 font-ui text-xs">
-                    {v.createdAt ? new Date(v.createdAt).toLocaleString() : '—'}
+                    {v.createdAt ? formatDateTime(v.createdAt) : '—'}
                   </td>
                   <td className="px-3 py-2 font-ui text-xs">
                     {v.membership?.user?.email || v.membershipId}
                   </td>
                   <td className="px-3 py-2 font-ui text-xs">{v.store?.name || v.storeId}</td>
                   <td className="px-3 py-2 font-ui">
-                    {v.currency} {Number(v.amount).toFixed(2)}
+                    {formatMoney(Number(v.amount), v.currency)}
                   </td>
                   <td className="px-3 py-2 font-ui text-xs">
                     {v.cardNumber ? `****${String(v.cardNumber).slice(-4)}` : '—'}

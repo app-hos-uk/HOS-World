@@ -13,6 +13,8 @@ import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 import { trackPurchase } from '@/lib/analytics';
 import { withShopPreview } from '@/lib/shopPreviewClient';
+import { useMoney } from '@/hooks/useMoney';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 let stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
 let stripePromise: ReturnType<typeof loadStripe> | null = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
@@ -165,6 +167,7 @@ function StripeCardCheckout({
 }
 
 function PaymentContent() {
+  const { formatMoney } = useMoney();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   const [order, setOrder] = useState<any>(null);
@@ -288,40 +291,40 @@ function PaymentContent() {
             {order.items?.map((item: any, index: number) => (
               <div key={index} className="flex justify-between">
                 <span>{item.product?.name || 'Product'} x {item.quantity}</span>
-                <span>{formatPrice(item.price * item.quantity, order.currency || 'USD')}</span>
+                <span>{formatPrice(item.price * item.quantity, order.currency || DEFAULT_CURRENCY)}</span>
               </div>
             ))}
           </div>
           <div className="border-t mt-4 pt-4">
             <div className="flex justify-between mb-2">
               <span>Subtotal</span>
-              <span>{formatPrice(order.subtotal || 0, order.currency || 'USD')}</span>
+              <span>{formatPrice(order.subtotal || 0, order.currency || DEFAULT_CURRENCY)}</span>
             </div>
             {(order.discount || order.discountAmount) > 0 && (
               <div className="flex justify-between mb-2 text-green-400">
                 <span>Discount</span>
-                <span>-{formatPrice(order.discount || order.discountAmount, order.currency || 'USD')}</span>
+                <span>-{formatPrice(order.discount || order.discountAmount, order.currency || DEFAULT_CURRENCY)}</span>
               </div>
             )}
             {(order.shipping || order.shippingAmount) > 0 && (
               <div className="flex justify-between mb-2">
                 <span>Shipping</span>
-                <span>{formatPrice(order.shipping || order.shippingAmount, order.currency || 'USD')}</span>
+                <span>{formatPrice(order.shipping || order.shippingAmount, order.currency || DEFAULT_CURRENCY)}</span>
               </div>
             )}
             {order.tax > 0 && (
               <div className="flex justify-between mb-2">
                 <span>Tax</span>
-                <span>{formatPrice(order.tax, order.currency || 'USD')}</span>
+                <span>{formatPrice(order.tax, order.currency || DEFAULT_CURRENCY)}</span>
               </div>
             )}
             <div className="flex justify-between font-bold text-lg pt-2 border-t">
               <span>Total</span>
-              <span>{formatPrice(order.total, order.currency || 'USD')}</span>
+              <span>{formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}</span>
             </div>
-            {order.currency && order.currency !== 'USD' && (
+            {order.currency && order.currency !== DEFAULT_CURRENCY && (
               <p className="text-xs text-hos-text-muted mt-2">
-                Original amount: ${typeof order.total === 'number' ? order.total.toFixed(2) : '0.00'} USD
+                Original amount: {formatMoney(typeof order.total === 'number' ? order.total : 0, order.currency)}
               </p>
             )}
           </div>
@@ -596,7 +599,7 @@ function PaymentForm({ order }: { order: any }) {
               const zeroResponse = await apiClient.createPaymentIntent({
                 orderId: order.id,
                 paymentMethod: selectedProvider || 'stripe',
-                currency: order.currency || 'USD',
+                currency: order.currency || DEFAULT_CURRENCY,
               });
               if (zeroResponse?.data?.paid) {
                 toast.success('Payment successful with gift card!', { id: 'payment-success' });
@@ -616,7 +619,7 @@ function PaymentForm({ order }: { order: any }) {
           }
           
           // If partial coverage, continue to payment for remaining amount
-          toast.success(`Gift card applied: ${formatPrice(giftCardRedemptionAmount, order.currency || 'USD')} deducted`);
+          toast.success(`Gift card applied: ${formatPrice(giftCardRedemptionAmount, order.currency || DEFAULT_CURRENCY)} deducted`);
         } catch (err: any) {
           console.error('Gift card redemption error:', err);
           const errorMessage = err.message || 'Gift card redemption failed';
@@ -647,7 +650,7 @@ function PaymentForm({ order }: { order: any }) {
           const response = await apiClient.createPaymentIntent({
             orderId: order.id,
             paymentMethod: selectedProvider,
-            currency: order.currency || 'USD',
+            currency: order.currency || DEFAULT_CURRENCY,
           });
 
           if (!response?.data) {
@@ -702,7 +705,7 @@ function PaymentForm({ order }: { order: any }) {
           const zeroResponse = await apiClient.createPaymentIntent({
             orderId: order.id,
             paymentMethod: selectedProvider || 'stripe',
-            currency: order.currency || 'USD',
+            currency: order.currency || DEFAULT_CURRENCY,
           });
           if (zeroResponse?.data?.paid) {
             toast.success('Payment successful!', { id: 'payment-success' });
@@ -843,7 +846,7 @@ function PaymentForm({ order }: { order: any }) {
         {giftCardApplied && giftCardBalance !== null && (
           <div className="mt-2 p-2 bg-green-500/10 border border-green-500/30 rounded">
             <p className="text-sm text-green-300">
-              Gift card applied: {formatPrice(giftCardBalance, order.currency || 'USD')} available
+              Gift card applied: {formatPrice(giftCardBalance, order.currency || DEFAULT_CURRENCY)} available
             </p>
           </div>
         )}
@@ -854,23 +857,23 @@ function PaymentForm({ order }: { order: any }) {
         <div className="mb-4 p-4 bg-hos-gold/10 border border-hos-border-accent rounded-lg">
           <div className="flex justify-between text-sm mb-2">
             <span>Original Order Total:</span>
-            <span>{formatPrice(order.total, order.currency || 'USD')}</span>
+            <span>{formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}</span>
           </div>
           {giftCardRedeemedAmount > 0 && (
             <div className="flex justify-between text-sm mb-2 text-green-400">
               <span>Previously Redeemed Gift Cards:</span>
-              <span>-{formatPrice(giftCardRedeemedAmount, order.currency || 'USD')}</span>
+              <span>-{formatPrice(giftCardRedeemedAmount, order.currency || DEFAULT_CURRENCY)}</span>
             </div>
           )}
           {giftCardApplied && giftCardBalance !== null && giftCardBalance !== undefined && giftCardBalance > 0 && (
             <div className="flex justify-between text-sm mb-2 text-green-400">
               <span>Gift Card Applied (Not Yet Redeemed):</span>
-              <span>-{formatPrice(Math.min(giftCardBalance, Math.max(0, (order.total || 0) - giftCardRedeemedAmount)), order.currency || 'USD')}</span>
+              <span>-{formatPrice(Math.min(giftCardBalance, Math.max(0, (order.total || 0) - giftCardRedeemedAmount)), order.currency || DEFAULT_CURRENCY)}</span>
             </div>
           )}
           <div className="flex justify-between font-bold text-lg pt-2 border-t border-hos-border">
             <span>Amount to Pay:</span>
-            <span>{formatPrice(calculateTotal(), order.currency || 'USD')}</span>
+            <span>{formatPrice(calculateTotal(), order.currency || DEFAULT_CURRENCY)}</span>
           </div>
         </div>
       )}
@@ -910,7 +913,7 @@ function PaymentForm({ order }: { order: any }) {
             order={order}
             clientSecret={stripeClientSecret}
             paymentIntentId={stripePaymentIntentId!}
-            displayTotal={formatPrice(calculateTotal(), order?.currency || 'USD')}
+            displayTotal={formatPrice(calculateTotal(), order?.currency || DEFAULT_CURRENCY)}
             setProcessing={setProcessing}
             setPaymentError={setPaymentError}
             onClearStripe={() => {
@@ -959,7 +962,7 @@ function PaymentForm({ order }: { order: any }) {
           disabled={processing || loadingProviders || availableProviders.length === 0 || !selectedProvider}
           className="w-full bg-hos-gold text-[#1a1406] py-2.5 sm:py-3 text-sm sm:text-base rounded-lg font-medium hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {processing ? 'Processing...' : loadingProviders ? 'Loading payment methods...' : availableProviders.length === 0 ? 'No Payment Methods Available' : !selectedProvider ? 'Select a Payment Method' : `Complete Payment - ${formatPrice(calculateTotal(), order?.currency || 'USD')}`}
+          {processing ? 'Processing...' : loadingProviders ? 'Loading payment methods...' : availableProviders.length === 0 ? 'No Payment Methods Available' : !selectedProvider ? 'Select a Payment Method' : `Complete Payment - ${formatPrice(calculateTotal(), order?.currency || DEFAULT_CURRENCY)}`}
         </button>
       )}
     </div>

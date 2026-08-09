@@ -5,6 +5,8 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DataExport } from '@/components/DataExport';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface ActivityLog {
   id: string;
@@ -96,6 +98,8 @@ const ENTITY_ICONS: Record<string, string> = {
 };
 
 export default function AdminActivityPage() {
+  const { formatDate, formatDateTime, formatTime } = useDateTime();
+  const { formatCount } = useMoney();
   const toast = useToast();
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -198,7 +202,7 @@ export default function AdminActivityPage() {
 
       if (typeof serverTotal === 'number' && logData.length < serverTotal) {
         toast.error(
-          `Loaded ${logData.length.toLocaleString()} of ${serverTotal.toLocaleString()} logs. Narrow the date range to see older entries.`,
+          `Loaded ${formatCount(logData.length)} of ${formatCount(serverTotal)} logs. Narrow the date range to see older entries.`,
         );
       }
 
@@ -361,7 +365,7 @@ export default function AdminActivityPage() {
     if (diffMins < 60) return `${diffMins}m ago`;
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
-    return then.toLocaleDateString();
+    return formatDate(then);
   };
 
   const exportColumns = [
@@ -371,7 +375,7 @@ export default function AdminActivityPage() {
     { key: 'description', header: 'Description' },
     { key: 'user', header: 'User', format: (v: any) => v?.email || '' },
     { key: 'ipAddress', header: 'IP Address' },
-    { key: 'createdAt', header: 'Date', format: (v: string) => new Date(v).toLocaleString() },
+    { key: 'createdAt', header: 'Date', format: (v: string) => formatDateTime(v) },
   ];
 
   return (
@@ -558,7 +562,7 @@ export default function AdminActivityPage() {
                         <tr key={log.id} className="hover:bg-hos-bg-tertiary">
                           <td className="px-4 py-3 text-sm text-hos-text-muted whitespace-nowrap">
                             <div>{formatTimeAgo(log.createdAt)}</div>
-                            <div className="text-xs">{new Date(log.createdAt).toLocaleTimeString()}</div>
+                            <div className="text-xs">{formatTime(log.createdAt, { second: "2-digit" })}</div>
                           </td>
                           <td className="px-4 py-3">{getActionBadge(log.action)}</td>
                           <td className="px-4 py-3">
@@ -667,7 +671,7 @@ export default function AdminActivityPage() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-hos-text-muted">Timestamp</p>
-                        <p className="font-medium">{new Date(selectedLog.createdAt).toLocaleString()}</p>
+                        <p className="font-medium">{formatDateTime(selectedLog.createdAt)}</p>
                       </div>
                       {selectedLog.entityId && (
                         <div>

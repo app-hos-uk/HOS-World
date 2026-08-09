@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { clampDateInputToToday, todayDateInputValue } from '@/lib/formFieldValidation';
 import { getFinanceMenu } from '@/lib/teamMenus';
+import { useMoney } from '@/hooks/useMoney';
 
 function getDefaultDateRange() {
   const end = new Date();
@@ -19,6 +20,7 @@ function getDefaultDateRange() {
 }
 
 export default function FinanceFeesPage() {
+  const { formatMoney } = useMoney();
   const [reportData, setReportData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -161,10 +163,7 @@ export default function FinanceFeesPage() {
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Total Fees</h3>
                     <p className="text-3xl font-bold text-hos-gold">
-                      ${totalFees.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      {formatMoney(totalFees)}
                     </p>
                   </div>
                   <div className="text-4xl">💰</div>
@@ -186,10 +185,7 @@ export default function FinanceFeesPage() {
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Average Fee Rate</h3>
                     <p className="text-3xl font-bold text-hos-gold">
-                      ${avgFeeRate.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      {formatMoney(avgFeeRate)}
                     </p>
                   </div>
                   <div className="text-4xl">📋</div>
@@ -237,19 +233,13 @@ export default function FinanceFeesPage() {
                               {row.period || row.date || `Period ${idx + 1}`}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm tabular-nums text-hos-text-secondary">
-                              ${fees.toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
+                              {formatMoney(fees)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm tabular-nums text-hos-text-secondary">
                               {txCount.toLocaleString()}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm tabular-nums text-hos-text-secondary">
-                              ${avgFee.toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
+                              {formatMoney(avgFee)}
                             </td>
                           </tr>
                         );

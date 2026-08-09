@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function EventsListingPage() {
+  const { formatDateTime } = useDateTime();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,7 +50,7 @@ export default function EventsListingPage() {
                   {e.title}
                 </Link>
                 <p className="text-sm text-stone-400 mt-1 font-secondary">
-                  {new Date(e.startsAt).toLocaleString()} · {e.store?.name || e.type}
+                  {formatDateTime(e.startsAt)} · {e.store?.name || e.type}
                   {e.spotsLeft != null ? ` · ${e.spotsLeft} spots left` : ''}
                 </p>
                 {e.tierRestricted && (

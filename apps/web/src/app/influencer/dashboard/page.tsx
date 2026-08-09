@@ -17,6 +17,8 @@ import {
   Legend,
 } from 'recharts';
 import { navIcon } from '@/lib/navIcons';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface Analytics {
   totalClicks: number;
@@ -97,6 +99,8 @@ async function recordReferralShare(referralCode: string, platform: string) {
 }
 
 export default function InfluencerDashboardPage() {
+  const { formatDate } = useDateTime();
+  const { formatMoney } = useMoney();
   const router = useRouter();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
@@ -188,10 +192,7 @@ export default function InfluencerDashboardPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+    return formatMoney(amount);
   };
 
   // Combine clicks and conversions data for chart
@@ -221,9 +222,9 @@ export default function InfluencerDashboardPage() {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .map(item => ({
         ...item,
-        displayDate: new Date(item.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }),
+        displayDate: formatDate(item.date, { day: 'numeric', month: 'short' }),
       }));
-  }, [analytics?.clicksByDay, analytics?.conversionsByDay]);
+  }, [analytics?.clicksByDay, analytics?.conversionsByDay, formatDate]);
 
   // Calculate tier progress
   const tierProgress = useMemo(() => {

@@ -200,4 +200,47 @@ describe('validateEnvironmentVariables', () => {
     const result = validateEnvironmentVariables({ ...validBase });
     expect(result).toBeDefined();
   });
+
+  it('throws when PLATFORM_CURRENCY is malformed', () => {
+    expect(() => validateEnvironmentVariables({ ...validBase, PLATFORM_CURRENCY: 'usd' })).toThrow(
+      'PLATFORM_CURRENCY must be a 3-letter ISO 4217 code',
+    );
+  });
+
+  it('throws when PLATFORM_COUNTRY is malformed', () => {
+    expect(() => validateEnvironmentVariables({ ...validBase, PLATFORM_COUNTRY: 'USA' })).toThrow(
+      'PLATFORM_COUNTRY must be a 2-letter ISO 3166-1 alpha-2 code',
+    );
+  });
+
+  it('throws when TAX_ORIGIN_COUNTRY is malformed', () => {
+    expect(() => validateEnvironmentVariables({ ...validBase, TAX_ORIGIN_COUNTRY: 'us' })).toThrow(
+      'TAX_ORIGIN_COUNTRY must be a 2-letter ISO 3166-1 alpha-2 code',
+    );
+  });
+
+  it('throws when PLATFORM_LOCALE is malformed', () => {
+    expect(() => validateEnvironmentVariables({ ...validBase, PLATFORM_LOCALE: 'EN_us' })).toThrow(
+      'PLATFORM_LOCALE must look like a BCP 47 tag',
+    );
+  });
+
+  it('throws when PLATFORM_TIMEZONE is not a real IANA zone', () => {
+    expect(() =>
+      validateEnvironmentVariables({ ...validBase, PLATFORM_TIMEZONE: 'Not/A_Zone' }),
+    ).toThrow('PLATFORM_TIMEZONE must be a valid IANA time zone');
+  });
+
+  it('accepts valid platform region env vars', () => {
+    expect(() =>
+      validateEnvironmentVariables({
+        ...validBase,
+        PLATFORM_CURRENCY: 'USD',
+        PLATFORM_COUNTRY: 'US',
+        PLATFORM_LOCALE: 'en-US',
+        PLATFORM_TIMEZONE: 'America/New_York',
+        TAX_ORIGIN_COUNTRY: 'US',
+      }),
+    ).not.toThrow();
+  });
 });

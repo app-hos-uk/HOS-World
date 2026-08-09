@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface SellerInvitation {
   id: string;
@@ -24,6 +25,7 @@ interface SellerInvitation {
 }
 
 export default function AdminSellerApplicationsPage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -295,10 +297,10 @@ export default function AdminSellerApplicationsPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                            {new Date(invitation.createdAt).toLocaleDateString()}
+                            {formatDate(invitation.createdAt)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                            {new Date(invitation.expiresAt).toLocaleDateString()}
+                            {formatDate(invitation.expiresAt)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             {/* Cancel uses DB status PENDING (backend allows cancel only for PENDING),

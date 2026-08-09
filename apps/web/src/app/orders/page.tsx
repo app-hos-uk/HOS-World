@@ -10,6 +10,8 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Modal } from '@/components/ui/Modal';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface OrderItem {
   id: string;
@@ -81,6 +83,7 @@ const TRACKABLE_STATUSES = [
 ];
 
 export default function OrdersPage() {
+  const { formatDate, formatDateTime } = useDateTime();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -285,7 +288,7 @@ export default function OrdersPage() {
     if (Number.isNaN(date.getTime())) return null;
     return {
       label: order.deliveredAt ? 'Delivered' : 'Estimated delivery',
-      value: date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+      value: formatDate(date, { day: 'numeric', month: 'short', year: 'numeric' }),
     };
   };
 
@@ -483,16 +486,14 @@ export default function OrdersPage() {
                           {getPaymentBadge(order)}
                         </div>
                         <p className="text-sm text-hos-text-muted mt-2">
-                          Placed on {new Date(order.createdAt).toLocaleDateString('en-US', {
-                            day: 'numeric',
+                          Placed on {formatDate(order.createdAt, { day: 'numeric',
                             month: 'long',
-                            year: 'numeric',
-                          })}
+                            year: 'numeric', })}
                         </p>
                       </div>
                       <div className="sm:text-right shrink-0">
                         <p className="text-xl font-bold text-hos-gold">
-                          {formatPrice(order.total, order.currency || 'USD')}
+                          {formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}
                         </p>
                         <p className="text-sm text-hos-text-muted">
                           {order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? 's' : ''}
@@ -540,7 +541,7 @@ export default function OrdersPage() {
                             <p className="text-sm text-hos-text-muted">Qty: {item.quantity}</p>
                           </div>
                           <p className="shrink-0 text-sm font-medium text-hos-text-secondary">
-                            {formatPrice(item.price * item.quantity, order.currency || 'USD')}
+                            {formatPrice(item.price * item.quantity, order.currency || DEFAULT_CURRENCY)}
                           </p>
                         </div>
                       );
@@ -663,7 +664,7 @@ export default function OrdersPage() {
                       Order #{selectedOrder.orderNumber || selectedOrder.id.slice(0, 8)}
                     </h2>
                     <p className="text-sm text-hos-text-muted mt-1">
-                      Placed on {new Date(selectedOrder.createdAt).toLocaleString()}
+                      Placed on {formatDateTime(selectedOrder.createdAt)}
                     </p>
                   </div>
                   <button
@@ -795,7 +796,7 @@ export default function OrdersPage() {
                             <p className="text-sm text-hos-text-muted">Qty: {item.quantity}</p>
                           </div>
                           <p className="font-medium text-hos-text-secondary">
-                            {formatPrice(item.price * item.quantity, selectedOrder.currency || 'USD')}
+                            {formatPrice(item.price * item.quantity, selectedOrder.currency || DEFAULT_CURRENCY)}
                           </p>
                         </div>
                       );
@@ -810,30 +811,30 @@ export default function OrdersPage() {
                     {selectedOrder.subtotal && (
                       <div className="flex justify-between">
                         <span className="text-hos-text-muted">Subtotal</span>
-                        <span className="text-hos-text-secondary">{formatPrice(selectedOrder.subtotal, selectedOrder.currency || 'USD')}</span>
+                        <span className="text-hos-text-secondary">{formatPrice(selectedOrder.subtotal, selectedOrder.currency || DEFAULT_CURRENCY)}</span>
                       </div>
                     )}
                     {(selectedOrder.shippingCost || selectedOrder.shippingAmount) ? (
                       <div className="flex justify-between">
                         <span className="text-hos-text-muted">Shipping</span>
-                        <span className="text-hos-text-secondary">{formatPrice(selectedOrder.shippingCost || selectedOrder.shippingAmount || 0, selectedOrder.currency || 'USD')}</span>
+                        <span className="text-hos-text-secondary">{formatPrice(selectedOrder.shippingCost || selectedOrder.shippingAmount || 0, selectedOrder.currency || DEFAULT_CURRENCY)}</span>
                       </div>
                     ) : null}
                     {selectedOrder.tax ? (
                       <div className="flex justify-between">
                         <span className="text-hos-text-muted">Tax</span>
-                        <span className="text-hos-text-secondary">{formatPrice(selectedOrder.tax, selectedOrder.currency || 'USD')}</span>
+                        <span className="text-hos-text-secondary">{formatPrice(selectedOrder.tax, selectedOrder.currency || DEFAULT_CURRENCY)}</span>
                       </div>
                     ) : null}
                     {(selectedOrder.discount || selectedOrder.discountAmount) ? (
                       <div className="flex justify-between text-green-400">
                         <span>Discount</span>
-                        <span>-{formatPrice(selectedOrder.discount || selectedOrder.discountAmount || 0, selectedOrder.currency || 'USD')}</span>
+                        <span>-{formatPrice(selectedOrder.discount || selectedOrder.discountAmount || 0, selectedOrder.currency || DEFAULT_CURRENCY)}</span>
                       </div>
                     ) : null}
                     <div className="flex justify-between font-bold text-base pt-2 border-t">
                       <span className="text-hos-text-secondary">Total</span>
-                      <span className="text-hos-gold">{formatPrice(selectedOrder.total, selectedOrder.currency || 'USD')}</span>
+                      <span className="text-hos-gold">{formatPrice(selectedOrder.total, selectedOrder.currency || DEFAULT_CURRENCY)}</span>
                     </div>
                   </div>
                 </div>

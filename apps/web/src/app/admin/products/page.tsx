@@ -15,6 +15,9 @@ import { DataExport } from '@/components/DataExport';
 import { SafeImage } from '@/components/SafeImage';
 import { ImageSpecsHint } from '@/components/ImageSpecsHint';
 import Link from 'next/link';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 const ITEMS_PER_PAGE = 25;
 const BULK_BATCH_SIZE = 5;
@@ -70,6 +73,8 @@ interface Stats {
 }
 
 function AdminProductsContent() {
+  const { formatDate } = useDateTime();
+  const { formatMoney } = useMoney();
   const searchParams = useSearchParams();
   const toast = useToast();
   const { formatPrice } = useCurrency();
@@ -873,7 +878,7 @@ function AdminProductsContent() {
   const exportColumns = [
     { key: 'name', header: 'Name' },
     { key: 'sku', header: 'SKU' },
-    { key: 'price', header: 'Price', format: (v: number, r: Product) => `${r.currency || 'USD'} ${Number(v || 0).toFixed(2)}` },
+    { key: 'price', header: 'Price', format: (v: number, r: Product) => formatMoney(Number(v || 0), r.currency || DEFAULT_CURRENCY) },
     { key: 'stock', header: 'Stock' },
     { key: 'status', header: 'Status' },
     { key: 'category', header: 'Category', format: (v: any) => v?.name || '' },
@@ -1213,7 +1218,7 @@ function AdminProductsContent() {
                           </div>
                         </td>
                         <td className="text-right px-4 py-3 align-middle text-sm text-hos-text-secondary tabular-nums whitespace-nowrap">
-                          {formatPrice(Number(product.price) || 0, product.currency || 'USD')}
+                          {formatPrice(Number(product.price) || 0, product.currency || DEFAULT_CURRENCY)}
                         </td>
                         <td className="text-right px-4 py-3 align-middle">{getStockBadge(product.stock)}</td>
                         <td className="px-4 py-3 align-middle">
@@ -1234,7 +1239,7 @@ function AdminProductsContent() {
                           </span>
                         </td>
                         <td className="px-4 py-3 align-middle text-sm text-hos-text-muted whitespace-nowrap tabular-nums overflow-hidden">
-                          <span className="block truncate">{new Date(product.createdAt).toLocaleDateString()}</span>
+                          <span className="block truncate">{formatDate(product.createdAt)}</span>
                         </td>
                         <td className="px-4 py-3 align-middle">
                           <div className="flex items-center justify-end gap-1 flex-nowrap shrink-0">

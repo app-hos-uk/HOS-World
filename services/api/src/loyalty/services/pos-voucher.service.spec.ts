@@ -163,6 +163,10 @@ describe('PosVoucherService', () => {
       }),
     };
 
+    const platformRegion: any = {
+      getCurrency: jest.fn().mockResolvedValue('USD'),
+    };
+
     const svc = new PosVoucherService(
       prisma,
       config,
@@ -173,6 +177,7 @@ describe('PosVoucherService', () => {
       encryption,
       metrics,
       loyaltySettings,
+      platformRegion,
     );
 
     return { svc, adapter, prisma, burn, wallet, voucherRow, metrics, loyaltySettings };

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useMoney } from '@/hooks/useMoney';
+import { getCurrencySymbol } from '@/lib/money';
 
 type Settings = {
   defaultEarnRate: number;
@@ -36,6 +38,7 @@ function GateBadge({ on, label }: { on: boolean; label: string }) {
 }
 
 export default function AdminLoyaltySettingsPage() {
+  const { formatMoney, currency } = useMoney();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -124,7 +127,7 @@ export default function AdminLoyaltySettingsPage() {
               />
             </label>
             <label className="block text-sm text-hos-text-secondary font-ui">
-              Redeem value (£ per point)
+              Redeem value ({getCurrencySymbol(currency)} per point)
               <input
                 type="number"
                 step="0.001"

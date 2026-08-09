@@ -6,8 +6,12 @@ import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { getSellerMenuItems } from '@/lib/sellerMenu';
 import Link from 'next/link';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function WholesalerDashboardPage() {
+  const { formatDateTime } = useDateTime();
+  const { formatMoney } = useMoney();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +86,7 @@ export default function WholesalerDashboardPage() {
                   <div>
                     <h3 className="text-sm font-medium text-hos-text-secondary mb-1">Total Sales</h3>
                     <p className="text-3xl font-bold text-green-400">
-                      ${dashboardData?.totalSales?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                      {formatMoney(dashboardData?.totalSales)}
                     </p>
                   </div>
                   <div className="text-4xl">💵</div>
@@ -178,7 +182,7 @@ export default function WholesalerDashboardPage() {
                               Stock: {submission.productData?.stock ?? 'N/A'}{submission.productData?.quantity ? ` · Min. Order: ${submission.productData.quantity}` : ''} | Status: {submission.status}
                             </p>
                             <p className="text-xs text-hos-text-muted mt-1">
-                              {new Date(submission.createdAt).toLocaleString()}
+                              {formatDateTime(submission.createdAt)}
                             </p>
                           </div>
                           <span
@@ -229,7 +233,7 @@ export default function WholesalerDashboardPage() {
                   <div className="flex items-center justify-between p-3 bg-hos-bg-secondary rounded-lg">
                     <span className="text-sm font-medium text-hos-text-secondary">Average Order Value</span>
                     <span className="text-lg font-bold text-hos-gold">
-                      ${dashboardData?.averageOrderValue?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                      {formatMoney(dashboardData?.averageOrderValue)}
                     </span>
                   </div>
                 </div>

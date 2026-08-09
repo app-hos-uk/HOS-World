@@ -15,6 +15,9 @@ import {
   useAdminColumnVisibility,
   type AdminColumnDef,
 } from '@/components/ui/AdminColumnToggle';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 /** API returns lowercase; normalize so stats/filters work if casing differs */
 function normalizeOrderStatus(status: string | undefined): string {
@@ -124,6 +127,8 @@ export default function AdminOrdersPage() {
 }
 
 function AdminOrdersContent() {
+  const { formatDate, formatDateTime } = useDateTime();
+  const { formatMoney } = useMoney();
   const searchParams = useSearchParams();
   const sellerIdFilter = searchParams.get('sellerId') || searchParams.get('seller') || '';
   const toast = useToast();
@@ -321,10 +326,10 @@ function AdminOrdersContent() {
   const exportColumns = [
     { key: 'orderNumber', header: 'Order #', format: (v: string, o: Order) => o.orderNumber || o.id.slice(0, 8) },
     { key: 'user', header: 'Customer', format: (v: any, o: Order) => o.user?.email || o.customer?.email || 'N/A' },
-    { key: 'total', header: 'Total', format: (v: number, o: Order) => formatAdminPrice(v || 0, o.currency || 'USD') },
+    { key: 'total', header: 'Total', format: (v: number, o: Order) => formatAdminPrice(v || 0, o.currency || DEFAULT_CURRENCY) },
     { key: 'status', header: 'Status' },
     { key: 'paymentStatus', header: 'Payment Status' },
-    { key: 'createdAt', header: 'Date', format: (v: string) => new Date(v).toLocaleDateString() },
+    { key: 'createdAt', header: 'Date', format: (v: string) => formatDate(v) },
   ];
 
   return (
@@ -360,7 +365,7 @@ function AdminOrdersContent() {
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="admin-metric-label">Revenue</h3>
-              <p className="text-2xl font-bold text-hos-gold mt-1">${stats.totalRevenue.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-hos-gold mt-1">{formatMoney(stats.totalRevenue)}</p>
             </div>
             <button
               type="button"
@@ -525,10 +530,10 @@ function AdminOrdersContent() {
                         },
                         {
                           label: 'Total',
-                          value: formatAdminPrice(order.total || 0, order.currency || 'USD'),
+                          value: formatAdminPrice(order.total || 0, order.currency || DEFAULT_CURRENCY),
                         },
                         { label: 'Status', value: order.status },
-                        { label: 'Date', value: new Date(order.createdAt).toLocaleDateString() },
+                        { label: 'Date', value: formatDate(order.createdAt) },
                       ]}
                       actions={
                         <button
@@ -604,7 +609,7 @@ function AdminOrdersContent() {
                           )}
                           {isOrderColumnVisible('total') && (
                           <td className="text-right px-6 py-4 whitespace-nowrap text-sm tabular-nums font-medium text-hos-text-secondary">
-                            {formatAdminPrice(order.total || 0, order.currency || 'USD')}
+                            {formatAdminPrice(order.total || 0, order.currency || DEFAULT_CURRENCY)}
                           </td>
                           )}
                           {isOrderColumnVisible('status') && (
@@ -625,7 +630,7 @@ function AdminOrdersContent() {
                           )}
                           {isOrderColumnVisible('date') && (
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                            {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
+                            {order.createdAt ? formatDate(order.createdAt) : 'N/A'}
                           </td>
                           )}
                           {isOrderColumnVisible('actions') && (
@@ -726,7 +731,7 @@ function AdminOrdersContent() {
                       Order #{selectedOrder.orderNumber || selectedOrder.id.substring(0, 8)}
                     </h2>
                     <p className="text-sm text-hos-text-muted mt-1">
-                      Placed on {new Date(selectedOrder.createdAt).toLocaleString()}
+                      Placed on {formatDateTime(selectedOrder.createdAt)}
                     </p>
                   </div>
                   <button
@@ -833,9 +838,9 @@ function AdminOrdersContent() {
                                   )}
                                 </td>
                                 <td className="text-right px-4 py-3 text-sm">{item.quantity}</td>
-                                <td className="tabular-nums text-right px-4 py-3 text-sm">${Number(item.price).toFixed(2)}</td>
+                                <td className="tabular-nums text-right px-4 py-3 text-sm">{formatMoney(Number(item.price), selectedOrder.currency || DEFAULT_CURRENCY)}</td>
                                 <td className="tabular-nums text-right px-4 py-3 text-sm font-medium">
-                                  ${(Number(item.price) * item.quantity).toFixed(2)}
+                                  {formatMoney((Number(item.price) * item.quantity), selectedOrder.currency || DEFAULT_CURRENCY)}
                                 </td>
                               </tr>
                             ))}
@@ -854,30 +859,30 @@ function AdminOrdersContent() {
                       {selectedOrder.subtotal !== undefined && (
                         <div className="flex justify-between">
                           <span className="text-hos-text-muted">Subtotal:</span>
-                          <span>${Number(selectedOrder.subtotal).toFixed(2)}</span>
+                          <span>{formatMoney(Number(selectedOrder.subtotal), selectedOrder.currency || DEFAULT_CURRENCY)}</span>
                         </div>
                       )}
                       {(selectedOrder.shippingAmount ?? selectedOrder.shipping) !== undefined && (
                         <div className="flex justify-between">
                           <span className="text-hos-text-muted">Shipping:</span>
-                          <span>${Number(selectedOrder.shippingAmount ?? selectedOrder.shipping).toFixed(2)}</span>
+                          <span>{formatMoney(Number(selectedOrder.shippingAmount ?? selectedOrder.shipping), selectedOrder.currency || DEFAULT_CURRENCY)}</span>
                         </div>
                       )}
                       {selectedOrder.tax !== undefined && (
                         <div className="flex justify-between">
                           <span className="text-hos-text-muted">Tax:</span>
-                          <span>${Number(selectedOrder.tax).toFixed(2)}</span>
+                          <span>{formatMoney(Number(selectedOrder.tax), selectedOrder.currency || DEFAULT_CURRENCY)}</span>
                         </div>
                       )}
                       {(selectedOrder.discountAmount ?? selectedOrder.discount ?? 0) > 0 && (
                         <div className="flex justify-between text-green-400">
                           <span>Discount:</span>
-                          <span>-${Number(selectedOrder.discountAmount ?? selectedOrder.discount).toFixed(2)}</span>
+                          <span>{formatMoney(-(Number(selectedOrder.discountAmount ?? selectedOrder.discount)), selectedOrder.currency || DEFAULT_CURRENCY)}</span>
                         </div>
                       )}
                       <div className="flex justify-between font-bold text-lg pt-2 border-t">
                         <span>Total:</span>
-                        <span>{selectedOrder.currency || 'USD'} {Number(selectedOrder.total).toFixed(2)}</span>
+                        <span>{formatMoney(Number(selectedOrder.total), selectedOrder.currency || DEFAULT_CURRENCY)}</span>
                       </div>
                     </div>
                   </div>

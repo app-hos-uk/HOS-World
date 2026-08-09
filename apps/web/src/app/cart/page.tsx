@@ -39,9 +39,16 @@ interface Cart {
   couponCode?: string;
 }
 
+type ShippingDestination = {
+  country: string;
+  state?: string;
+  city?: string;
+  postalCode?: string;
+};
+
 export default function CartPage() {
   const router = useRouter();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, country: regionCountry } = useCurrency();
   const { syncCart } = useCart();
   const { isAuthenticated } = useAuth();
   const toast = useToast();
@@ -61,15 +68,55 @@ export default function CartPage() {
   const [updatingQuantityItemId, setUpdatingQuantityItemId] = useState<string | null>(null);
   const [removingItemId, setRemovingItemId] = useState<string | null>(null);
   const [deliveryEstimate, setDeliveryEstimate] = useState<string | null>(null);
+  const [estimateUnavailable, setEstimateUnavailable] = useState(false);
+  const [estimateDestination, setEstimateDestination] = useState<ShippingDestination | null>(null);
 
   useEffect(() => {
     fetchCart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
+  // Prefer a saved address; otherwise quote by platform region country only (no fabricated city/ZIP).
+  useEffect(() => {
+    let cancelled = false;
+    const resolveDestination = async () => {
+      if (isAuthenticated) {
+        try {
+          const response = await apiClient.getAddresses();
+          const list = Array.isArray(response?.data) ? response.data : [];
+          const preferred = list.find((a: any) => a.isDefault) || list[0];
+          if (preferred?.country && !cancelled) {
+            setEstimateDestination({
+              country: preferred.country,
+              state: preferred.state || undefined,
+              city: preferred.city || undefined,
+              postalCode: preferred.postalCode || undefined,
+            });
+            return;
+          }
+        } catch {
+          // Fall through to region country
+        }
+      }
+      if (!cancelled) {
+        setEstimateDestination(regionCountry ? { country: regionCountry } : null);
+      }
+    };
+    void resolveDestination();
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, regionCountry]);
+
   useEffect(() => {
     if (!cart?.items?.length) {
       setDeliveryEstimate(null);
+      setEstimateUnavailable(false);
+      return;
+    }
+    if (!estimateDestination?.country) {
+      setDeliveryEstimate(null);
+      setEstimateUnavailable(true);
       return;
     }
     let cancelled = false;
@@ -83,9 +130,10 @@ export default function CartPage() {
             price: item.price,
           })),
           cartValue: subtotal,
-          destination: { country: 'US', state: 'NY', city: 'New York', postalCode: '10001' },
+          destination: estimateDestination,
         });
-        if (!cancelled && response?.data?.length) {
+        if (cancelled) return;
+        if (response?.data?.length) {
           const days = response.data
             .map((opt: any) => opt.estimatedDays)
             .filter((d: number | null | undefined) => d != null && d > 0) as number[];
@@ -97,19 +145,22 @@ export default function CartPage() {
                 ? `${min} business day${min !== 1 ? 's' : ''}`
                 : `${min}–${max} business days`,
             );
-          } else {
-            setDeliveryEstimate('3–7 business days');
+            setEstimateUnavailable(false);
+            return;
           }
-        } else if (!cancelled) {
-          setDeliveryEstimate('3–7 business days');
         }
+        setDeliveryEstimate(null);
+        setEstimateUnavailable(true);
       } catch {
-        if (!cancelled) setDeliveryEstimate('3–7 business days');
+        if (!cancelled) {
+          setDeliveryEstimate(null);
+          setEstimateUnavailable(true);
+        }
       }
     };
     loadEstimate();
     return () => { cancelled = true; };
-  }, [cart?.items, cart?.id]);
+  }, [cart?.items, cart?.id, estimateDestination]);
 
   const sellerGroups = useMemo(() => {
     if (!cart?.items) return [];
@@ -648,10 +699,12 @@ export default function CartPage() {
                 </div>
               )}
 
-              {deliveryEstimate && (
-                <div className="flex justify-between text-sm mb-3">
+              {(deliveryEstimate || estimateUnavailable) && (
+                <div className="flex justify-between text-sm mb-3 gap-3">
                   <span className="text-hos-text-secondary">Est. delivery</span>
-                  <span className="text-hos-text-primary">{deliveryEstimate}</span>
+                  <span className="text-hos-text-primary text-right">
+                    {deliveryEstimate || 'Available at checkout'}
+                  </span>
                 </div>
               )}
 
@@ -684,7 +737,7 @@ export default function CartPage() {
 
               {!isAuthenticated && (
                 <p className="text-xs text-hos-text-muted mt-3 text-center">
-                  Sign in or create an account to complete your purchase. Your basket is saved.
+                  Sign in or create an account to complete your purchase. Your cart is saved.
                 </p>
               )}
 

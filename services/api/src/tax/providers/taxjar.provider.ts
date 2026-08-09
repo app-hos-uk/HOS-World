@@ -12,6 +12,7 @@ import {
   TestConnectionResult,
   TaxLineItem,
 } from '../interfaces/tax-provider.interface';
+import { PLATFORM_DEFAULT_CURRENCY } from '../../common/currency-defaults';
 
 /**
  * TaxJar API Integration
@@ -345,7 +346,7 @@ export class TaxJarProvider extends BaseTaxProvider implements ITaxProvider {
         totalTaxableAmount: response.refund?.amount || 0,
         totalTaxAmount: response.refund?.sales_tax || 0,
         totalExemptAmount: 0,
-        currencyCode: 'USD',
+        currencyCode: PLATFORM_DEFAULT_CURRENCY,
         lineItems: [],
         summary: [],
       };

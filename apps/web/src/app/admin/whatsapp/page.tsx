@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 type Tab = 'conversations' | 'templates' | 'send';
 
 export default function AdminWhatsAppPage() {
+  const { formatDate, formatDateTime } = useDateTime();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<Tab>('conversations');
 
@@ -266,10 +268,10 @@ export default function AdminWhatsAppPage() {
                                   </span>
                                 </div>
                                 <div className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted flex-1">
-                                  {conv.lastMessageAt ? new Date(conv.lastMessageAt).toLocaleString() : 'No messages'}
+                                  {conv.lastMessageAt ? formatDateTime(conv.lastMessageAt) : 'No messages'}
                                 </div>
                                 <div className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted flex-1">
-                                  {new Date(conv.createdAt).toLocaleDateString()}
+                                  {formatDate(conv.createdAt)}
                                 </div>
                               </div>
                             </button>
@@ -295,7 +297,7 @@ export default function AdminWhatsAppPage() {
                                         }`}>
                                           <p>{msg.content || msg.body || msg.message}</p>
                                           <p className="text-xs text-hos-text-muted mt-1">
-                                            {msg.createdAt ? new Date(msg.createdAt).toLocaleString() : ''}
+                                            {msg.createdAt ? formatDateTime(msg.createdAt) : ''}
                                           </p>
                                         </div>
                                       </div>

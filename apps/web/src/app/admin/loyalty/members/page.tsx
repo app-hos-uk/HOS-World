@@ -6,6 +6,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DataExport } from '@/components/DataExport';
+import { useDateTime } from '@/hooks/useDateTime';
 
 const PAGE_SIZE = 25;
 const EXPORT_PAGE_SIZE = 5000;
@@ -29,6 +30,7 @@ type LoyaltyMember = {
 };
 
 export default function AdminLoyaltyMembersPage() {
+  const { formatDate } = useDateTime();
   const [members, setMembers] = useState<LoyaltyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -185,7 +187,7 @@ export default function AdminLoyaltyMembersPage() {
       {
         key: 'enrolledAt',
         header: 'Enrolled',
-        format: (v: string | null | undefined) => (v ? new Date(v).toLocaleDateString() : ''),
+        format: (v: string | null | undefined) => (v ? formatDate(v) : ''),
       },
       {
         key: 'userId',
@@ -193,7 +195,7 @@ export default function AdminLoyaltyMembersPage() {
         format: (v: string) => v || '',
       },
     ],
-    [],
+    [formatDate],
   );
 
   const handleAdjust = async () => {
@@ -384,7 +386,7 @@ export default function AdminLoyaltyMembersPage() {
                       {Number(m.totalPointsEarned ?? m.lifetimePoints ?? 0).toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-hos-text-muted text-xs">
-                      {m.enrolledAt ? new Date(m.enrolledAt).toLocaleDateString() : '—'}
+                      {m.enrolledAt ? formatDate(m.enrolledAt) : '—'}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-3">

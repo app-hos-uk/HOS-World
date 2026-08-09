@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface Review {
   id: string;
@@ -66,6 +67,7 @@ function reviewerName(review: Review) {
 }
 
 function ModerationQueue() {
+  const { formatDateTime } = useDateTime();
   const toast = useToast();
   const [filter, setFilter] = useState<ModerationFilter>('PENDING');
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -223,7 +225,7 @@ function ModerationQueue() {
                       </p>
                       <div className="flex flex-wrap items-center gap-4 text-xs text-hos-text-muted">
                         <span>By: {reviewerName(review)}</span>
-                        <span>{new Date(review.createdAt).toLocaleString()}</span>
+                        <span>{formatDateTime(review.createdAt)}</span>
                       </div>
                     </div>
 
@@ -279,6 +281,7 @@ function ModerationQueue() {
 }
 
 function ReviewsByProduct() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -548,7 +551,7 @@ function ReviewsByProduct() {
                           </p>
                           <div className="flex items-center gap-4 text-xs text-hos-text-muted">
                             <span>By: {reviewerName(review)}</span>
-                            <span>{new Date(review.createdAt).toLocaleDateString()}</span>
+                            <span>{formatDate(review.createdAt)}</span>
                             {review.helpfulCount !== undefined && review.helpfulCount > 0 && (
                               <span>{review.helpfulCount} found helpful</span>
                             )}

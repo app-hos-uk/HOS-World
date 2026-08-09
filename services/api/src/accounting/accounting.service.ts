@@ -2,6 +2,7 @@ import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
+import { PlatformRegionService } from '../config/platform-region.service';
 import { isTruthy } from '../common/utils/config';
 import { EncryptionService } from '../integrations/encryption.service';
 import { JournalBuilderService } from './journal-builder.service';
@@ -29,6 +30,7 @@ export class AccountingService {
     private outbox: LedgerOutboxService,
     private xeroAuth: XeroAuthService,
     private xeroApi: XeroApiClient,
+    private platformRegion: PlatformRegionService,
   ) {}
 
   /**
@@ -72,7 +74,12 @@ export class AccountingService {
     });
     const settings = (row?.settings || {}) as Record<string, unknown>;
     const mapped = settings[COA_SETTINGS_KEY] as Partial<ChartOfAccountsMapping> | undefined;
-    return { ...DEFAULT_COA_MAPPING, ...(mapped || {}) };
+    const regionCurrency = await this.platformRegion.getCurrency();
+    return {
+      ...DEFAULT_COA_MAPPING,
+      currency: regionCurrency,
+      ...(mapped || {}),
+    };
   }
 
   /** Stub: persist JSON CoA mapping on the Xero integration settings. */

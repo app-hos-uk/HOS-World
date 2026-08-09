@@ -11,6 +11,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { CmsPortalErrorBanner } from '@/components/CmsPortalErrorBanner';
 import { cmsActionToastMessage, cmsLoadingErrorMessage } from '@/lib/cmsPortalFeedback';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface BlogPost {
   id: string;
@@ -25,6 +26,7 @@ interface BlogPost {
 }
 
 export default function CMSBlogPage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -176,7 +178,7 @@ export default function CMSBlogPage() {
                             <span>By {post.author}</span>
                             {post.category && <span>{post.category.name}</span>}
                             {post.publishedAt && (
-                              <span>Published {new Date(post.publishedAt).toLocaleDateString()}</span>
+                              <span>Published {formatDate(post.publishedAt)}</span>
                             )}
                           </div>
                           <span className={`inline-block mt-2 text-xs px-2 py-1 rounded ${

@@ -12,6 +12,9 @@ import { StatusBadge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { PortalMobileCard } from '@/components/ui/PortalMobileCard';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface OrderItem {
   id: string;
@@ -33,6 +36,7 @@ interface Order {
   subtotal?: number;
   shippingCost?: number;
   shippingAmount?: number;
+  currency?: string;
   trackingCode?: string;
   createdAt: string;
   updatedAt?: string;
@@ -115,6 +119,8 @@ function buildTrackingUrlFromTemplate(template: string | null | undefined, track
 }
 
 export default function SellerOrdersPage() {
+  const { formatDate, formatDateTime } = useDateTime();
+  const { formatMoney } = useMoney();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -673,7 +679,7 @@ export default function SellerOrdersPage() {
             </button>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Revenue</h3>
-              <p className="text-2xl font-bold text-green-400 mt-1">${stats.totalRevenue.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-green-400 mt-1">{formatMoney(stats.totalRevenue)}</p>
             </div>
           </div>
 
@@ -766,9 +772,9 @@ export default function SellerOrdersPage() {
                           label: 'Customer',
                           value: `${order.user?.firstName || ''} ${order.user?.lastName || ''}`.trim() || '—',
                         },
-                        { label: 'Total', value: formatPrice(Number(order.total || 0)) },
+                        { label: 'Total', value: formatPrice(Number(order.total || 0), order.currency || DEFAULT_CURRENCY) },
                         { label: 'Status', value: <StatusBadge status={order.status} /> },
-                        { label: 'Date', value: new Date(order.createdAt).toLocaleDateString() },
+                        { label: 'Date', value: formatDate(order.createdAt) },
                       ]}
                       actions={
                         <button
@@ -809,13 +815,13 @@ export default function SellerOrdersPage() {
                             </div>
                           </td>
                           <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm font-medium text-hos-text-secondary">
-                            {formatPrice(Number(order.total || 0))}
+                            {formatPrice(Number(order.total || 0), order.currency || DEFAULT_CURRENCY)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <StatusBadge status={order.status} />
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                            {new Date(order.createdAt).toLocaleDateString()}
+                            {formatDate(order.createdAt)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <button
@@ -850,7 +856,7 @@ export default function SellerOrdersPage() {
                       Order #{selectedOrder.orderNumber || selectedOrder.id.slice(0, 8)}
                     </h2>
                     <p className="text-sm text-hos-text-muted mt-1">
-                      Placed on {new Date(selectedOrder.createdAt).toLocaleString()}
+                      Placed on {formatDateTime(selectedOrder.createdAt)}
                     </p>
                   </div>
                   <button
@@ -1044,7 +1050,7 @@ export default function SellerOrdersPage() {
                             <p className="text-sm text-hos-text-muted">Qty: {item.quantity}</p>
                           </div>
                           <p className="font-medium text-hos-text-secondary">
-                            ${Number(item.price || 0).toFixed(2)}
+                            {formatMoney(Number(item.price || 0), selectedOrder.currency || DEFAULT_CURRENCY)}
                           </p>
                         </div>
                       ))
@@ -1063,24 +1069,24 @@ export default function SellerOrdersPage() {
                     {selectedOrder.subtotal && (
                       <div className="flex justify-between">
                         <span className="text-hos-text-muted">Subtotal</span>
-                        <span className="text-hos-text-secondary">${Number(selectedOrder.subtotal).toFixed(2)}</span>
+                        <span className="text-hos-text-secondary">{formatMoney(Number(selectedOrder.subtotal), selectedOrder.currency || DEFAULT_CURRENCY)}</span>
                       </div>
                     )}
                     {(selectedOrder.shippingAmount) ? (
                       <div className="flex justify-between">
                         <span className="text-hos-text-muted">Shipping (customer)</span>
-                        <span className="text-hos-text-secondary">${Number(selectedOrder.shippingAmount || 0).toFixed(2)}</span>
+                        <span className="text-hos-text-secondary">{formatMoney(Number(selectedOrder.shippingAmount || 0), selectedOrder.currency || DEFAULT_CURRENCY)}</span>
                       </div>
                     ) : null}
                     {selectedOrder.shippingCost ? (
                       <div className="flex justify-between">
                         <span className="text-hos-text-muted">Label cost</span>
-                        <span className="text-hos-text-secondary">${Number(selectedOrder.shippingCost).toFixed(2)}</span>
+                        <span className="text-hos-text-secondary">{formatMoney(Number(selectedOrder.shippingCost), selectedOrder.currency || DEFAULT_CURRENCY)}</span>
                       </div>
                     ) : null}
                     <div className="flex justify-between font-medium text-base pt-2 border-t">
                       <span className="text-hos-text-secondary">Total</span>
-                      <span className="text-hos-text-secondary">${Number(selectedOrder.total).toFixed(2)}</span>
+                      <span className="text-hos-text-secondary">{formatMoney(Number(selectedOrder.total), selectedOrder.currency || DEFAULT_CURRENCY)}</span>
                     </div>
                   </div>
                 </div>
@@ -1171,7 +1177,7 @@ export default function SellerOrdersPage() {
                                       </p>
                                     </div>
                                     <p className="font-semibold text-hos-gold">
-                                      {formatPrice(Number(rate.rate || 0), rate.currency || 'USD')}
+                                      {formatPrice(Number(rate.rate || 0), rate.currency || DEFAULT_CURRENCY)}
                                     </p>
                                   </div>
                                 </button>

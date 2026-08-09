@@ -16,6 +16,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface SellerDashboardData {
   totalSales: number;
@@ -32,6 +33,7 @@ interface SellerDashboardData {
 }
 
 export default function SellerDashboardPage() {
+  const { formatDateTime } = useDateTime();
   const { formatPrice } = useCurrency();
   const [dashboardData, setDashboardData] = useState<SellerDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -298,7 +300,7 @@ export default function SellerDashboardPage() {
                               Status: {submission.status}
                             </p>
                             <p className="text-xs text-hos-text-muted mt-1">
-                              {new Date(submission.createdAt).toLocaleString()}
+                              {formatDateTime(submission.createdAt)}
                             </p>
                           </div>
                           <span
@@ -356,7 +358,7 @@ export default function SellerDashboardPage() {
                               {formatPrice(parseFloat(order.total || 0))}
                             </p>
                             <p className="text-xs text-hos-text-muted mt-1">
-                              {new Date(order.createdAt).toLocaleString()}
+                              {formatDateTime(order.createdAt)}
                             </p>
                           </div>
                           <span

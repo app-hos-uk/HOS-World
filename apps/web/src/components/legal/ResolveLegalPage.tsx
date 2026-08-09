@@ -1,5 +1,6 @@
 import { getCMSPage } from '@/lib/cms';
 import { LegalPageLayout } from '@/components/legal/LegalPageLayout';
+import { formatDate } from '@/lib/datetime';
 
 type ResolveLegalPageProps = {
   slug: string;
@@ -12,11 +13,9 @@ export async function ResolveLegalPage({ slug, fallbackTitle, children }: Resolv
   const page = await getCMSPage(slug);
   if (page?.content?.trim()) {
     const lastUpdated = page.publishedAt
-      ? new Date(page.publishedAt).toLocaleDateString('en-US', {
-          year: 'numeric',
+      ? formatDate(page.publishedAt, { year: 'numeric',
           month: 'long',
-          day: 'numeric',
-        })
+          day: 'numeric', })
       : undefined;
     return (
       <LegalPageLayout

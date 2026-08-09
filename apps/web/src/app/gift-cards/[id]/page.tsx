@@ -9,8 +9,11 @@ import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 export default function GiftCardDetailPage() {
+  const { formatDate } = useDateTime();
   const params = useParams();
   const id = params?.id as string;
   const { formatPrice } = useCurrency();
@@ -76,7 +79,7 @@ export default function GiftCardDetailPage() {
     );
   }
 
-  const currency = giftCard.currency || 'USD';
+  const currency = giftCard.currency || DEFAULT_CURRENCY;
   const balance = Number(giftCard.balance ?? 0);
   const amount = Number(giftCard.amount ?? 0);
 
@@ -128,7 +131,7 @@ export default function GiftCardDetailPage() {
                 {giftCard.expiresAt && (
                   <div className="flex justify-between">
                     <dt className="text-hos-gold/30">Expires</dt>
-                    <dd>{new Date(giftCard.expiresAt).toLocaleDateString()}</dd>
+                    <dd>{formatDate(giftCard.expiresAt)}</dd>
                   </div>
                 )}
               </dl>

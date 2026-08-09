@@ -8,6 +8,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 import { ImageSpecsHint } from '@/components/ImageSpecsHint';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface MediaAsset {
   id: string;
@@ -29,6 +30,7 @@ interface MediaResponse {
 }
 
 export default function AdminMediaLibraryPage() {
+  const { formatDate: formatDateShared } = useDateTime();
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -169,11 +171,9 @@ export default function AdminMediaLibraryPage() {
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '—';
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      day: 'numeric',
+    return formatDateShared(dateStr, { day: 'numeric',
       month: 'short',
-      year: 'numeric',
-    });
+      year: 'numeric', });
   };
 
   return (

@@ -9,6 +9,9 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { SafeImage } from '@/components/SafeImage';
 import { getCatalogMenu, getProcurementMenu } from '@/lib/teamMenus';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 type DuplicateGroup = {
   groupId: string;
@@ -35,6 +38,8 @@ export default function ProcurementSubmissionsPage() {
 }
 
 function ProcurementSubmissionsContent() {
+  const { formatDate, formatDateTime } = useDateTime();
+  const { formatMoney } = useMoney();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, effectiveRole } = useAuth();
@@ -350,7 +355,7 @@ function ProcurementSubmissionsContent() {
                               {['name', 'sku', 'barcode', 'ean', 'price', 'stock', 'category'].map((field) => {
                                 const vals = group.submissions.map((s) => {
                                   const pd = s.productData as Record<string, any>;
-                                  if (field === 'price' && pd?.price != null) return `${pd.currency || 'USD'} ${parseFloat(pd.price).toFixed(2)}`;
+                                  if (field === 'price' && pd?.price != null) return formatMoney(parseFloat(pd.price), pd.currency || DEFAULT_CURRENCY);
                                   return pd?.[field]?.toString() || '—';
                                 });
                                 const allSame = vals.every((v) => v === vals[0]);
@@ -369,7 +374,7 @@ function ProcurementSubmissionsContent() {
                                 <td className="px-3 py-2 font-medium text-hos-text-secondary border-r border-hos-border">Submitted</td>
                                 {group.submissions.map((s) => (
                                   <td key={s.id} className="px-3 py-2 border-r last:border-r-0 border-hos-border text-hos-text-secondary">
-                                    {new Date(s.createdAt).toLocaleDateString()}
+                                    {formatDate(s.createdAt)}
                                   </td>
                                 ))}
                               </tr>
@@ -395,7 +400,7 @@ function ProcurementSubmissionsContent() {
                             <div>
                               <p className="font-medium text-hos-text-secondary">{sub.productName}</p>
                               <p className="text-sm text-hos-text-secondary">
-                                Seller: {sub.sellerStoreName} · {new Date(sub.createdAt).toLocaleDateString()}
+                                Seller: {sub.sellerStoreName} · {formatDate(sub.createdAt)}
                               </p>
                             </div>
                             <div className="flex gap-2">
@@ -543,8 +548,7 @@ function ProcurementSubmissionsContent() {
                           )}
                           {productData.price && (
                             <span>
-                              <strong>Price:</strong> {productData.currency || 'USD'}{' '}
-                              {parseFloat(productData.price).toFixed(2)}
+                              <strong>Price:</strong> {formatMoney(parseFloat(productData.price), productData.currency)}
                             </span>
                           )}
                           {productData.stock !== undefined && (
@@ -554,7 +558,7 @@ function ProcurementSubmissionsContent() {
                           )}
                           <span>
                             <strong>Submitted:</strong>{' '}
-                            {new Date(submission.createdAt).toLocaleDateString()}
+                            {formatDate(submission.createdAt)}
                           </span>
                         </div>
 
@@ -704,8 +708,7 @@ function ProcurementSubmissionsContent() {
                           <div>
                             <p className="text-sm font-medium text-hos-text-muted">Price</p>
                             <p className="text-hos-text-secondary">
-                              {selectedSubmission.productData.currency || 'USD'}{' '}
-                              {parseFloat(selectedSubmission.productData.price).toFixed(2)}
+                              {formatMoney(parseFloat(selectedSubmission.productData.price), selectedSubmission.productData.currency)}
                             </p>
                           </div>
                         )}
@@ -719,7 +722,7 @@ function ProcurementSubmissionsContent() {
                           <p className="text-sm font-medium text-hos-text-muted">Submitted</p>
                           <p className="text-hos-text-secondary">
                             {selectedSubmission.createdAt
-                              ? new Date(selectedSubmission.createdAt).toLocaleString()
+                              ? formatDateTime(selectedSubmission.createdAt)
                               : '—'}
                           </p>
                         </div>
@@ -767,7 +770,11 @@ function ProcurementSubmissionsContent() {
                                         {ep?.sku && <span>SKU: {ep.sku}</span>}
                                         {ep?.barcode && <span>Barcode: {ep.barcode}</span>}
                                         {ep?.ean && <span>EAN: {ep.ean}</span>}
-                                        {ep?.price && <span>Price: {ep.currency || 'USD'} {parseFloat(ep.price).toFixed(2)}</span>}
+                                        {ep?.price != null && ep.price !== '' && (
+                                          <span>
+                                            Price: {formatMoney(parseFloat(ep.price), ep.currency || DEFAULT_CURRENCY)}
+                                          </span>
+                                        )}
                                         {ep?.status && <span className="px-1.5 py-0.5 bg-hos-bg-tertiary rounded">{ep.status}</span>}
                                       </div>
                                       {ep?.images && ep.images.length > 0 && (
@@ -987,7 +994,7 @@ function ProcurementSubmissionsContent() {
                       { label: 'SKU', subVal: sub?.sku || '—', exVal: ex?.sku || '—' },
                       { label: 'Barcode', subVal: sub?.barcode || '—', exVal: ex?.barcode || '—' },
                       { label: 'EAN', subVal: sub?.ean || '—', exVal: ex?.ean || '—' },
-                      { label: 'Price', subVal: sub?.price ? `${sub.currency || 'USD'} ${parseFloat(sub.price).toFixed(2)}` : '—', exVal: ex?.price ? `${ex.currency || 'USD'} ${parseFloat(ex.price).toFixed(2)}` : '—' },
+                      { label: 'Price', subVal: sub?.price ? formatMoney(parseFloat(sub.price), sub.currency || DEFAULT_CURRENCY) : '—', exVal: ex?.price ? formatMoney(parseFloat(ex.price), ex.currency || DEFAULT_CURRENCY) : '—' },
                       { label: 'Stock', subVal: sub?.stock?.toString() ?? '—', exVal: ex?.stock?.toString() ?? '—' },
                       { label: 'Category', subVal: sub?.category || '—', exVal: ex?.category || '—' },
                       { label: 'Status', subVal: 'Submission', exVal: ex?.status || '—' },

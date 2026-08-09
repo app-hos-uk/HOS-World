@@ -9,6 +9,7 @@ import { DataExport } from '@/components/DataExport';
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface Seller {
   id: string;
@@ -52,6 +53,7 @@ interface DomainHistory {
 const CHART_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
 
 export default function AdminDomainsPage() {
+  const { formatDateTime } = useDateTime();
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -941,7 +943,7 @@ export default function AdminDomainsPage() {
 
                     {selectedSeller.domainUpdatedAt && (
                       <p className="text-sm text-hos-text-muted">
-                        Last updated: {new Date(selectedSeller.domainUpdatedAt).toLocaleString()}
+                        Last updated: {formatDateTime(selectedSeller.domainUpdatedAt)}
                       </p>
                     )}
 

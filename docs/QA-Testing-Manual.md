@@ -840,7 +840,7 @@ Use any future expiry (e.g. `12/30`) and any 3-digit CVC.
 
 | Step | Action | Expected Result |
 |------|--------|-----------------|
-| 1 | Find currency selector in header | Dropdown with USD, EUR, GBP, AED, etc. |
+| 1 | Find currency selector in header | Launch: USD only. With `FF_MULTI_CURRENCY` or `GLOBAL_SUPPORTED_CURRENCIES`: USD, EUR, GBP, AED, etc. |
 | 2 | Change currency to EUR | All prices on page update to EUR |
 | 3 | Add item to cart | Cart prices in selected currency |
 | 4 | Navigate through checkout | Consistent currency throughout |

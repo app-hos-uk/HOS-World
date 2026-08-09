@@ -104,6 +104,16 @@ interface EnvSchema {
   GLOBAL_SUPPORTED_CURRENCIES?: string;
   REGISTRATION_MODE?: string;
   REGISTRATION_INVITE_CODES?: string;
+  PLATFORM_CURRENCY?: string;
+  PLATFORM_COUNTRY?: string;
+  PLATFORM_LOCALE?: string;
+  PLATFORM_TIMEZONE?: string;
+  TAX_ORIGIN_STREET?: string;
+  TAX_ORIGIN_CITY?: string;
+  TAX_ORIGIN_STATE?: string;
+  TAX_ORIGIN_POSTAL_CODE?: string;
+  TAX_ORIGIN_COUNTRY?: string;
+  PLATFORM_REGION_CACHE_TTL_MS?: string;
 }
 
 const required: (keyof EnvSchema)[] = ['DATABASE_URL', 'JWT_SECRET', 'JWT_REFRESH_SECRET'];
@@ -221,6 +231,50 @@ export function validateEnvironmentVariables(
     }
     if (!config.XERO_REDIRECT_URI) {
       warnings.push('ACCOUNTING_ENABLED: set XERO_REDIRECT_URI for OAuth callback');
+    }
+  }
+
+  if (config.PLATFORM_CURRENCY !== undefined && config.PLATFORM_CURRENCY !== '') {
+    if (!/^[A-Z]{3}$/.test(String(config.PLATFORM_CURRENCY))) {
+      errors.push('PLATFORM_CURRENCY must be a 3-letter ISO 4217 code (e.g. USD)');
+    }
+  }
+
+  if (config.PLATFORM_COUNTRY !== undefined && config.PLATFORM_COUNTRY !== '') {
+    if (!/^[A-Z]{2}$/.test(String(config.PLATFORM_COUNTRY))) {
+      errors.push('PLATFORM_COUNTRY must be a 2-letter ISO 3166-1 alpha-2 code (e.g. US)');
+    }
+  }
+
+  if (config.TAX_ORIGIN_COUNTRY !== undefined && config.TAX_ORIGIN_COUNTRY !== '') {
+    if (!/^[A-Z]{2}$/.test(String(config.TAX_ORIGIN_COUNTRY))) {
+      errors.push('TAX_ORIGIN_COUNTRY must be a 2-letter ISO 3166-1 alpha-2 code (e.g. US)');
+    }
+  }
+
+  if (config.PLATFORM_LOCALE !== undefined && config.PLATFORM_LOCALE !== '') {
+    if (!/^[a-z]{2}(-[A-Z]{2})?$/.test(String(config.PLATFORM_LOCALE))) {
+      errors.push('PLATFORM_LOCALE must look like a BCP 47 tag (e.g. en or en-US)');
+    }
+  }
+
+  if (config.PLATFORM_TIMEZONE !== undefined && config.PLATFORM_TIMEZONE !== '') {
+    const tz = String(config.PLATFORM_TIMEZONE);
+    let validTz = false;
+    const supportedValuesOf = (Intl as unknown as { supportedValuesOf?: (key: string) => string[] })
+      .supportedValuesOf;
+    if (typeof supportedValuesOf === 'function') {
+      validTz = supportedValuesOf('timeZone').includes(tz);
+    } else {
+      try {
+        new Intl.DateTimeFormat(undefined, { timeZone: tz });
+        validTz = true;
+      } catch {
+        validTz = false;
+      }
+    }
+    if (!validTz) {
+      errors.push(`PLATFORM_TIMEZONE must be a valid IANA time zone (got "${tz}")`);
     }
   }
 

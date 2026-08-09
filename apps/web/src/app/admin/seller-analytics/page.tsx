@@ -19,6 +19,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface SellerData {
   id: string;
@@ -50,6 +52,8 @@ interface AnalyticsData {
 const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
 
 export default function AdminSellerAnalyticsPage() {
+  const { formatDate } = useDateTime();
+  const { formatMoney, formatCount } = useMoney();
   const toast = useToast();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -100,9 +104,9 @@ export default function AdminSellerAnalyticsPage() {
       }
       const incompleteWarning =
         typeof serverTotal === 'number' && rawSellers.length < serverTotal
-          ? `Loaded ${rawSellers.length.toLocaleString()} of ${serverTotal.toLocaleString()} sellers. Totals may be incomplete.`
+          ? `Loaded ${formatCount(rawSellers.length)} of ${formatCount(serverTotal)} sellers. Totals may be incomplete.`
           : page > MAX_PAGES && totalPages > MAX_PAGES
-            ? `Loaded first ${(MAX_PAGES * PAGE_LIMIT).toLocaleString()} sellers. Totals may be incomplete.`
+            ? `Loaded first ${formatCount(MAX_PAGES * PAGE_LIMIT)} sellers. Totals may be incomplete.`
             : null;
 
       // Map seller profile data to the format expected by analytics
@@ -172,7 +176,7 @@ export default function AdminSellerAnalyticsPage() {
         const periodStart = new Date(periodEnd.getTime() - intervalDays * 24 * 60 * 60 * 1000);
         let label: string;
         if (timeRange === '7d') {
-          label = periodEnd.toLocaleDateString('en-US', { weekday: 'short' });
+          label = formatDate(periodEnd, { weekday: 'short' });
         } else if (timeRange === '1y') {
           label = months[periodEnd.getMonth()];
         } else {
@@ -305,7 +309,7 @@ export default function AdminSellerAnalyticsPage() {
                     <span className="text-2xl">💰</span>
                   </div>
                   <p className="text-3xl font-bold text-hos-text-secondary mt-2">
-                    ${analytics.totalRevenue.toLocaleString()}
+                    {formatMoney(analytics.totalRevenue)}
                   </p>
                 </div>
               </div>
@@ -503,7 +507,7 @@ export default function AdminSellerAnalyticsPage() {
                               {seller._count?.products || 0}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                              {new Date(seller.createdAt).toLocaleDateString()}
+                              {formatDate(seller.createdAt)}
                             </td>
                           </tr>
                         ))

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { AlignedDataTable, type AlignedColumn } from '@/components/ui/AlignedDataTable';
+import { useMoney } from '@/hooks/useMoney';
 
 type FandomRow = {
   fandom: string;
@@ -16,6 +17,7 @@ type FandomRow = {
 };
 
 export default function FandomTrendsPage() {
+  const { formatMoney } = useMoney();
   const [data, setData] = useState<FandomRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -49,7 +51,7 @@ export default function FandomTrendsPage() {
         header: 'Revenue',
         width: '1.1fr',
         align: 'right',
-        cell: (f) => `$${Number(f.revenue).toFixed(2)}`,
+        cell: (f) => formatMoney(Number(f.revenue)),
       },
       {
         key: 'orders',
@@ -63,7 +65,7 @@ export default function FandomTrendsPage() {
         header: 'Avg spend',
         width: '1.1fr',
         align: 'right',
-        cell: (f) => `$${Number(f.avgSpend).toFixed(2)}`,
+        cell: (f) => formatMoney(Number(f.avgSpend)),
       },
       {
         key: 'growth',
@@ -73,7 +75,7 @@ export default function FandomTrendsPage() {
         cell: (f) => `${f.growth > 0 ? '+' : ''}${f.growth}%`,
       },
     ],
-    [],
+    [formatMoney],
   );
 
   return (

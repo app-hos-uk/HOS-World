@@ -4,6 +4,7 @@ import { PrismaService } from '../database/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import type { AuthResponse, User } from '@hos-marketplace/shared-types';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 interface OAuthUserData {
   provider: 'google' | 'facebook' | 'apple';
@@ -127,7 +128,7 @@ export class AuthOAuthService {
           },
           customerProfile: {
             create: {
-              currencyPreference: 'USD',
+              currencyPreference: PLATFORM_DEFAULT_CURRENCY,
             },
           },
         },

@@ -2,6 +2,7 @@ import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '../../cache/cache.service';
 import { FeatureFlagsService, FeatureFlag } from '../../config/feature-flags.service';
+import { PlatformRegionService } from '../../config/platform-region.service';
 import { PrismaService } from '../../database/prisma.service';
 import { isTruthy } from '../../common/utils/config';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
@@ -71,12 +72,14 @@ export class LoyaltySettingsService {
     private prisma: PrismaService,
     private config: ConfigService,
     private featureFlags: FeatureFlagsService,
+    private platformRegion: PlatformRegionService,
     @Optional() private sharedCache?: CacheService,
   ) {
     this.cacheTtlMs = Math.max(0, num(this.config.get('LOYALTY_SETTINGS_CACHE_TTL_MS'), 2_000));
   }
 
-  envDefaults(): LoyaltyProgrammeSettings {
+  async envDefaults(): Promise<LoyaltyProgrammeSettings> {
+    const regionCurrency = await this.platformRegion.getCurrency();
     return {
       defaultEarnRate: num(this.config.get('LOYALTY_DEFAULT_EARN_RATE'), 1),
       defaultRedeemValue: num(this.config.get('LOYALTY_DEFAULT_REDEEM_VALUE'), 0.01),
@@ -97,7 +100,8 @@ export class LoyaltySettingsService {
       posVoucherMaxAmount: num(this.config.get('POS_GIFT_CARD_MAX_AMOUNT'), 500),
       giftCardCatalogAmounts:
         this.config.get<string>('GIFT_CARD_CATALOG_AMOUNTS') || '25,50,100,250,500',
-      giftCardDefaultCurrency: this.config.get<string>('GIFT_CARD_DEFAULT_CURRENCY') || 'GBP',
+      giftCardDefaultCurrency:
+        this.config.get<string>('GIFT_CARD_DEFAULT_CURRENCY') || regionCurrency,
       restoreBurnOnCancel: true,
       clawEarnOnCancel: true,
       restoreBurnOnReturn: true,
@@ -178,7 +182,7 @@ export class LoyaltySettingsService {
         return shared;
       }
     }
-    const base = this.envDefaults();
+    const base = await this.envDefaults();
     let resolved: ResolvedSettings = { settings: base, source: 'env' };
     try {
       const row = await this.prisma.config.findFirst({

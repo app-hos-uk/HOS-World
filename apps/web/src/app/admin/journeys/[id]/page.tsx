@@ -6,10 +6,12 @@ import { useParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 type TabId = 'details' | 'enrollments';
 
 export default function AdminJourneyDetailPage() {
+  const { formatDate } = useDateTime();
   const params = useParams();
   const id = params.id as string;
   const toast = useToast();
@@ -179,9 +181,9 @@ export default function AdminJourneyDetailPage() {
                               </span>
                             </td>
                             <td className="px-3 py-2">{e.currentStep}</td>
-                            <td className="px-3 py-2">{e.startedAt ? new Date(e.startedAt).toLocaleDateString() : '—'}</td>
+                            <td className="px-3 py-2">{e.startedAt ? formatDate(e.startedAt) : '—'}</td>
                             <td className="px-3 py-2">
-                              {e.completedAt ? new Date(e.completedAt).toLocaleDateString() : '—'}
+                              {e.completedAt ? formatDate(e.completedAt) : '—'}
                             </td>
                           </tr>
                         ))}

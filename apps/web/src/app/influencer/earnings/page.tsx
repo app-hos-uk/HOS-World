@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
+import { useMoney } from '@/hooks/useMoney';
 
 interface Commission {
   id: string;
@@ -26,6 +28,8 @@ interface EarningsSummary {
 }
 
 export default function InfluencerEarningsPage() {
+  const { formatMoney } = useMoney();
+  const { formatDate: formatDateShared } = useDateTime();
   const toast = useToast();
   const [initialLoading, setInitialLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -73,19 +77,12 @@ export default function InfluencerEarningsPage() {
     fetchData(!hasLoadedRef.current);
   }, [fetchData]);
 
-  const formatCurrency = (amount: number, currency = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency,
-    }).format(amount);
-  };
+  
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      day: 'numeric',
+    return formatDateShared(dateString, { day: 'numeric',
       month: 'short',
-      year: 'numeric',
-    });
+      year: 'numeric', });
   };
 
   const getStatusBadge = (status: string) => {
@@ -134,28 +131,28 @@ export default function InfluencerEarningsPage() {
           <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
             <p className="text-hos-text-muted text-sm">Pending</p>
             <p className="text-2xl font-bold text-yellow-400 mt-1">
-              {formatCurrency(earnings?.pending || 0)}
+              {formatMoney(earnings?.pending || 0)}
             </p>
             <p className="text-xs text-hos-text-muted mt-1">Awaiting order completion</p>
           </div>
           <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
             <p className="text-hos-text-muted text-sm">Available</p>
             <p className="text-2xl font-bold text-green-400 mt-1">
-              {formatCurrency(earnings?.available || 0)}
+              {formatMoney(earnings?.available || 0)}
             </p>
             <p className="text-xs text-hos-text-muted mt-1">Ready for payout</p>
           </div>
           <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
             <p className="text-hos-text-muted text-sm">Paid</p>
             <p className="text-2xl font-bold text-hos-gold mt-1">
-              {formatCurrency(earnings?.paid || 0)}
+              {formatMoney(earnings?.paid || 0)}
             </p>
             <p className="text-xs text-hos-text-muted mt-1">Total received</p>
           </div>
           <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm">
             <p className="text-hos-text-muted text-sm">Total Earned</p>
             <p className="text-2xl font-bold text-hos-text-secondary mt-1">
-              {formatCurrency(earnings?.total || 0)}
+              {formatMoney(earnings?.total || 0)}
             </p>
             <p className="text-xs text-hos-text-muted mt-1">Lifetime earnings</p>
           </div>
@@ -219,7 +216,7 @@ export default function InfluencerEarningsPage() {
                         {commission.orderId.slice(0, 8)}...
                       </td>
                       <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm text-hos-text-secondary">
-                        {formatCurrency(commission.orderTotal, commission.currency)}
+                        {formatMoney(commission.orderTotal, commission.currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
                         <span className="flex items-center gap-1">
@@ -234,7 +231,7 @@ export default function InfluencerEarningsPage() {
                         </span>
                       </td>
                       <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-400">
-                        {formatCurrency(commission.amount, commission.currency)}
+                        {formatMoney(commission.amount, commission.currency)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusBadge(commission.status)}`}>

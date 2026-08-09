@@ -49,9 +49,9 @@
 
 | Data | Value |
 |------|-------|
-| Default earn rate | 1 pt/£1 |
+| Default earn rate | 1 pt/$1 |
 | Minimum redemption | 100 points |
-| Point value | £0.01 |
+| Point value | $0.01 |
 | Gift card test code format | `XXXX-XXXX-XXXX-XXXX` |
 
 ---
@@ -103,7 +103,7 @@
 | Field | Detail |
 |-------|--------|
 | **Pre-condition** | Enrolled customer, Initiate tier (1.0× multiplier) |
-| **Steps** | 1. Add £50 worth of products to cart <br> 2. Complete checkout and pay <br> 3. Check loyalty balance |
+| **Steps** | 1. Add $50 worth of products to cart <br> 2. Complete checkout and pay <br> 3. Check loyalty balance |
 | **Expected** | - 50 points earned <br> - Transaction shows `EARN`, source `PURCHASE`, channel `WEB` |
 | **Pass** | [ ] |
 
@@ -112,7 +112,7 @@
 | Field | Detail |
 |-------|--------|
 | **Pre-condition** | Enrolled customer at "Dragon Keeper" tier (2.0× multiplier). Admin adjust points to reach threshold if needed. |
-| **Steps** | 1. Place £50 order <br> 2. Check points earned |
+| **Steps** | 1. Place $50 order <br> 2. Check points earned |
 | **Expected** | - 100 points earned (50 base × 2.0 multiplier) |
 | **Pass** | [ ] |
 
@@ -120,8 +120,8 @@
 
 | Field | Detail |
 |-------|--------|
-| **Pre-condition** | Vendor has `loyaltyEarnRate = 2` (2 pts per £1) |
-| **Steps** | 1. Purchase £30 product from that vendor <br> 2. Check points |
+| **Pre-condition** | Vendor has `loyaltyEarnRate = 2` (2 pts per $1) |
+| **Steps** | 1. Purchase $30 product from that vendor <br> 2. Check points |
 | **Expected** | - 60 points earned (30 × 2) before tier multiplier |
 | **Pass** | [ ] |
 
@@ -193,7 +193,7 @@
 | Field | Detail |
 |-------|--------|
 | **Pre-condition** | Active bonus campaign with 2.0× multiplier |
-| **Steps** | 1. Place £20 order (Initiate tier, 1.0×) <br> 2. Check points |
+| **Steps** | 1. Place $20 order (Initiate tier, 1.0×) <br> 2. Check points |
 | **Expected** | - 40 points earned (20 base × 2.0 campaign) <br> - Transaction references campaign |
 | **Pass** | [ ] |
 
@@ -206,8 +206,8 @@
 | Field | Detail |
 |-------|--------|
 | **Pre-condition** | Enrolled, 500+ points balance, items in cart |
-| **Steps** | 1. Proceed to checkout <br> 2. See loyalty widget <br> 3. Select "£5 Discount" (500 pts) <br> 4. Verify order total reduced by £5 <br> 5. Complete payment |
-| **Expected** | - Points deducted: 500 <br> - Order total reduced by £5 <br> - Order record shows `loyaltyPointsRedeemed=500`, `loyaltyDiscountAmount=5` <br> - Transaction shows `BURN`, channel `MARKETPLACE_CHECKOUT` |
+| **Steps** | 1. Proceed to checkout <br> 2. See loyalty widget <br> 3. Select "$5 Discount" (500 pts) <br> 4. Verify order total reduced by $5 <br> 5. Complete payment |
+| **Expected** | - Points deducted: 500 <br> - Order total reduced by $5 <br> - Order record shows `loyaltyPointsRedeemed=500`, `loyaltyDiscountAmount=5` <br> - Transaction shows `BURN`, channel `MARKETPLACE_CHECKOUT` |
 | **Pass** | [ ] |
 
 ### TC-L-031: Remove loyalty reward at checkout
@@ -225,7 +225,7 @@
 |-------|--------|
 | **Pre-condition** | 200+ points, order with shipping charge |
 | **Steps** | 1. At checkout, select "Free Shipping Upgrade" (200 pts) <br> 2. Verify shipping cost removed |
-| **Expected** | - 200 points deducted <br> - Shipping charge = £0 |
+| **Expected** | - 200 points deducted <br> - Shipping charge = $0 |
 | **Pass** | [ ] |
 
 ### TC-L-033: Insufficient points — redemption blocked
@@ -259,9 +259,9 @@
 
 | Field | Detail |
 |-------|--------|
-| **Pre-condition** | A DISCOUNT redemption option with Value set (e.g. £5), member holds enough points |
+| **Pre-condition** | A DISCOUNT redemption option with Value set (e.g. $5), member holds enough points |
 | **Steps** | 1. Redeem the reward and copy the `HOS-LYL-…` code <br> 2. Add items to cart and apply the code as a coupon <br> 3. Complete the order <br> 4. Try the same code on a second order |
-| **Expected** | - £5 comes off the first order <br> - A `Promotion` + `Coupon` pair exists for the code <br> - Second use is rejected (one use only) |
+| **Expected** | - $5 comes off the first order <br> - A `Promotion` + `Coupon` pair exists for the code <br> - Second use is rejected (one use only) |
 | **Pass** | [ ] |
 
 ### TC-L-037: DISCOUNT reward with no Value is refused
@@ -300,7 +300,7 @@
 | Field | Detail |
 |-------|--------|
 | **Pre-condition** | Customer at Spellcaster (1.25×) |
-| **Steps** | 1. Place £100 order |
+| **Steps** | 1. Place $100 order |
 | **Expected** | - 125 points earned (100 × 1.25) |
 | **Pass** | [ ] |
 
@@ -394,14 +394,14 @@
 |-------|--------|
 | **Pre-condition** | Staff auth, customer with 500+ points, `LOYALTY_POS_VOUCHER_ENABLED=true` |
 | **Steps** | 1. `POST /loyalty/lookup` with customer email <br> 2. `POST /loyalty/pos/redeem-for-voucher` with amount=5 (500 pts) <br> 3. Check Lightspeed for new gift card |
-| **Expected** | - 500 points deducted <br> - POS voucher status = `ISSUED` <br> - Lightspeed gift card created with £5 balance <br> - Metrics counter `loyalty_pos_voucher_issued_total` incremented |
+| **Expected** | - 500 points deducted <br> - POS voucher status = `ISSUED` <br> - Lightspeed gift card created with $5 balance <br> - Metrics counter `loyalty_pos_voucher_issued_total` incremented |
 | **Pass** | [ ] |
 
 ### TC-L-071: POS voucher — amount below minimum
 
 | Field | Detail |
 |-------|--------|
-| **Pre-condition** | Attempt voucher for £0.50 (below £1 min) |
+| **Pre-condition** | Attempt voucher for $0.50 (below $1 min) |
 | **Steps** | 1. `POST /loyalty/pos/redeem-for-voucher` with amount=0.5 |
 | **Expected** | - Rejected with validation error |
 | **Pass** | [ ] |
@@ -410,7 +410,7 @@
 
 | Field | Detail |
 |-------|--------|
-| **Pre-condition** | Attempt voucher for £600 (above £500 max) |
+| **Pre-condition** | Attempt voucher for $600 (above $500 max) |
 | **Steps** | 1. `POST /loyalty/pos/redeem-for-voucher` with amount=600 |
 | **Expected** | - Rejected with validation error |
 | **Pass** | [ ] |
@@ -470,7 +470,7 @@
 |-------|--------|
 | **Pre-condition** | Admin logged in |
 | **Steps** | 1. Admin > Loyalty > Earn Rules <br> 2. Edit PURCHASE rule: change points to 2 <br> 3. Save <br> 4. Place test order |
-| **Expected** | - New orders earn 2 pts/£1 <br> - Old orders unaffected |
+| **Expected** | - New orders earn 2 pts/$1 <br> - Old orders unaffected |
 | **Pass** | [ ] |
 
 ### TC-L-083: Admin disable earn rule
@@ -518,8 +518,8 @@
 | Field | Detail |
 |-------|--------|
 | **Pre-condition** | Admin logged in |
-| **Steps** | 1. Admin > Gift Cards <br> 2. Issue New Card: amount=£50, type=digital, recipient="Test User", email="test@test.com" <br> 3. Save |
-| **Expected** | - Card created with status `ACTIVE` <br> - Code in `XXXX-XXXX-XXXX-XXXX` format <br> - Balance = £50 <br> - PURCHASE transaction recorded |
+| **Steps** | 1. Admin > Gift Cards <br> 2. Issue New Card: amount=$50, type=digital, recipient="Test User", email="test@test.com" <br> 3. Save |
+| **Expected** | - Card created with status `ACTIVE` <br> - Code in `XXXX-XXXX-XXXX-XXXX` format <br> - Balance = $50 <br> - PURCHASE transaction recorded |
 | **Pass** | [ ] |
 
 ### TC-GC-002: Admin creates physical gift card
@@ -527,8 +527,8 @@
 | Field | Detail |
 |-------|--------|
 | **Pre-condition** | Admin logged in |
-| **Steps** | 1. Issue New Card: amount=£100, type=physical |
-| **Expected** | - Card created with type=`physical`, status=`ACTIVE`, balance=£100 |
+| **Steps** | 1. Issue New Card: amount=$100, type=physical |
+| **Expected** | - Card created with type=`physical`, status=`ACTIVE`, balance=$100 |
 | **Pass** | [ ] |
 
 ### TC-GC-003: Gift card code uniqueness
@@ -556,18 +556,18 @@
 
 | Field | Detail |
 |-------|--------|
-| **Pre-condition** | Gift card with £50 balance, order total = £30 |
-| **Steps** | 1. Add items to cart (total £30) <br> 2. Proceed to checkout, then payment <br> 3. Enter gift card code <br> 4. Apply |
-| **Expected** | - £30 deducted from gift card <br> - Remaining balance = £20 <br> - Order marked paid (gift card covers full amount) <br> - No Stripe charge |
+| **Pre-condition** | Gift card with $50 balance, order total = $30 |
+| **Steps** | 1. Add items to cart (total $30) <br> 2. Proceed to checkout, then payment <br> 3. Enter gift card code <br> 4. Apply |
+| **Expected** | - $30 deducted from gift card <br> - Remaining balance = $20 <br> - Order marked paid (gift card covers full amount) <br> - No Stripe charge |
 | **Pass** | [ ] |
 
 ### TC-GC-011: Partial redemption + Stripe
 
 | Field | Detail |
 |-------|--------|
-| **Pre-condition** | Gift card with £20 balance, order total = £50 |
-| **Steps** | 1. Apply gift card <br> 2. Pay remaining £30 via Stripe |
-| **Expected** | - Gift card balance = £0, status = `REDEEMED` <br> - Stripe charges £30 <br> - Order marked paid |
+| **Pre-condition** | Gift card with $20 balance, order total = $50 |
+| **Steps** | 1. Apply gift card <br> 2. Pay remaining $30 via Stripe |
+| **Expected** | - Gift card balance = $0, status = `REDEEMED` <br> - Stripe charges $30 <br> - Order marked paid |
 | **Pass** | [ ] |
 
 ### TC-GC-012: Invalid gift card code
@@ -591,7 +591,7 @@
 
 | Field | Detail |
 |-------|--------|
-| **Pre-condition** | Gift card with balance = £0 |
+| **Pre-condition** | Gift card with balance = $0 |
 | **Steps** | 1. Enter code at payment |
 | **Expected** | - Rejected: no remaining balance |
 | **Pass** | [ ] |
@@ -638,9 +638,9 @@
 
 | Field | Detail |
 |-------|--------|
-| **Pre-condition** | Order paid with gift card (£30 redeemed) |
+| **Pre-condition** | Order paid with gift card ($30 redeemed) |
 | **Steps** | 1. Cancel the order (admin or customer) |
-| **Expected** | - Gift card balance restored by £30 <br> - REFUND transaction created <br> - Card status back to `ACTIVE` if was `REDEEMED` |
+| **Expected** | - Gift card balance restored by $30 <br> - REFUND transaction created <br> - Card status back to `ACTIVE` if was `REDEEMED` |
 | **Pass** | [ ] |
 
 ### TC-GC-021: Admin manual refund
@@ -656,7 +656,7 @@
 
 | Field | Detail |
 |-------|--------|
-| **Pre-condition** | £50 card, fully refunded once already |
+| **Pre-condition** | $50 card, fully refunded once already |
 | **Steps** | 1. Attempt another refund |
 | **Expected** | - Rejected: balance already at original amount |
 | **Pass** | [ ] |
@@ -706,9 +706,9 @@
 
 | Field | Detail |
 |-------|--------|
-| **Pre-condition** | Customer with 500 loyalty points + £20 gift card, order = £40 |
-| **Steps** | 1. At checkout, apply £5 loyalty discount (500 pts) <br> 2. At payment, apply gift card <br> 3. Pay remaining via Stripe |
-| **Expected** | - Loyalty burns 500 pts, order reduced to £35 <br> - Gift card covers £20, customer pays £15 via Stripe <br> - Order shows both `loyaltyDiscountAmount=5` and gift card redemption <br> - Customer earns purchase points on original pre-discount amount |
+| **Pre-condition** | Customer with 500 loyalty points + $20 gift card, order = $40 |
+| **Steps** | 1. At checkout, apply $5 loyalty discount (500 pts) <br> 2. At payment, apply gift card <br> 3. Pay remaining via Stripe |
+| **Expected** | - Loyalty burns 500 pts, order reduced to $35 <br> - Gift card covers $20, customer pays $15 via Stripe <br> - Order shows both `loyaltyDiscountAmount=5` and gift card redemption <br> - Customer earns purchase points on original pre-discount amount |
 | **Pass** | [ ] |
 
 ### TC-INT-002: Loyalty earn after gift card full coverage
@@ -764,7 +764,7 @@
 
 | Field | Detail |
 |-------|--------|
-| **Pre-condition** | Gift card with £10, two orders of £10 each |
+| **Pre-condition** | Gift card with $10, two orders of $10 each |
 | **Steps** | 1. Simultaneously redeem on both orders |
 | **Expected** | - Exactly one succeeds <br> - Other fails: insufficient balance <br> - Serializable isolation prevents double-spend |
 | **Pass** | [ ] |
@@ -782,9 +782,9 @@
 
 | Field | Detail |
 |-------|--------|
-| **Pre-condition** | Order total = £5, loyalty discount = £5 |
-| **Steps** | 1. Apply £5 loyalty discount <br> 2. Proceed to payment |
-| **Expected** | - Order total = £0 <br> - No Stripe charge required <br> - Order marked as paid |
+| **Pre-condition** | Order total = $5, loyalty discount = $5 |
+| **Steps** | 1. Apply $5 loyalty discount <br> 2. Proceed to payment |
+| **Expected** | - Order total = $0 <br> - No Stripe charge required <br> - Order marked as paid |
 | **Pass** | [ ] |
 
 ### TC-EDGE-005: Gift card with special characters in code input
@@ -897,9 +897,9 @@
 
 | Field | Detail |
 |-------|--------|
-| **Pre-condition** | Order of £100 paid £40 by gift card and £60 by card; admin has already refunded the £40 from Admin > Gift Cards |
+| **Pre-condition** | Order of $100 paid $40 by gift card and $60 by card; admin has already refunded the $40 from Admin > Gift Cards |
 | **Steps** | 1. Approve a full return for the same order |
-| **Expected** | - The gift card is not credited a second time (balance stays at the £40 restore) <br> - Log warns the gift-card portion was short <br> - Loyalty reverses on the £60 that actually settled <br> - Reversing the order of the two actions gives the same end balance |
+| **Expected** | - The gift card is not credited a second time (balance stays at the $40 restore) <br> - Log warns the gift-card portion was short <br> - Loyalty reverses on the $60 that actually settled <br> - Reversing the order of the two actions gives the same end balance |
 | **Pass** | [ ] |
 
 ### TC-EDGE-016: Clawback capped by balance, then topped up
@@ -924,9 +924,9 @@
 
 | Field | Detail |
 |-------|--------|
-| **Pre-condition** | One gift card redeemed twice against the same order (e.g. £20 then £15) |
-| **Steps** | 1. Admin > Gift Cards > Refund, pick that order <br> 2. Submit the full £35 |
-| **Expected** | - UI max and API cap agree at £35 <br> - Refund succeeds and balance is restored <br> - A second refund attempt for the same order is capped at what is left |
+| **Pre-condition** | One gift card redeemed twice against the same order (e.g. $20 then $15) |
+| **Steps** | 1. Admin > Gift Cards > Refund, pick that order <br> 2. Submit the full $35 |
+| **Expected** | - UI max and API cap agree at $35 <br> - Refund succeeds and balance is restored <br> - A second refund attempt for the same order is capped at what is left |
 | **Pass** | [ ] |
 
 ---

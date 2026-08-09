@@ -10,6 +10,8 @@ import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface Order {
   id: string;
@@ -53,6 +55,7 @@ export default function ReturnsPage() {
 }
 
 function ReturnsContent() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const searchParams = useSearchParams();
@@ -312,12 +315,12 @@ function ReturnsContent() {
                         Order #{order.orderNumber}
                       </h3>
                       <p className="text-sm text-hos-text-muted">
-                        Placed on {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}
+                        Placed on {order.createdAt ? formatDate(order.createdAt) : 'N/A'}
                       </p>
                     </div>
                     <div className="mt-2 sm:mt-0 text-right">
                       <p className="text-lg font-semibold text-hos-gold">
-                        {formatPrice(order.total, order.currency || 'USD')}
+                        {formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}
                       </p>
                       <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
                         (order.status || '').toLowerCase() === 'delivered'
@@ -342,7 +345,7 @@ function ReturnsContent() {
                         <div className="flex-grow">
                           <p className="font-medium text-hos-text-secondary">{item.product.name}</p>
                           <p className="text-sm text-hos-text-muted">
-                            Quantity: {item.quantity} × {formatPrice(item.price, order.currency || 'USD')}
+                            Quantity: {item.quantity} × {formatPrice(item.price, order.currency || DEFAULT_CURRENCY)}
                           </p>
                         </div>
                       </div>
@@ -389,7 +392,7 @@ function ReturnsContent() {
                           </p>
                         )}
                         <p className="text-sm text-hos-text-muted">
-                          Created on {returnRequest.createdAt ? new Date(returnRequest.createdAt).toLocaleDateString() : 'N/A'}
+                          Created on {returnRequest.createdAt ? formatDate(returnRequest.createdAt) : 'N/A'}
                         </p>
                       </div>
                       <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full mt-2 sm:mt-0 ${getStatusColor(returnRequest.status)}`}>
@@ -412,7 +415,7 @@ function ReturnsContent() {
                         <div>
                           <p className="text-sm font-medium text-hos-text-secondary">Refund Amount:</p>
                           <p className="text-lg font-semibold text-green-400">
-                            {formatPrice(returnRequest.refundAmount, order?.currency || 'USD')}
+                            {formatPrice(returnRequest.refundAmount, order?.currency || DEFAULT_CURRENCY)}
                           </p>
                         </div>
                       )}
@@ -482,7 +485,7 @@ function ReturnsContent() {
                         <div className="flex-grow">
                           <p className="font-medium text-hos-text-secondary">{item.product.name}</p>
                           <p className="text-sm text-hos-text-muted">
-                            Qty: {item.quantity} × {formatPrice(item.price, selectedOrder.currency || 'USD')}
+                            Qty: {item.quantity} × {formatPrice(item.price, selectedOrder.currency || DEFAULT_CURRENCY)}
                           </p>
                         </div>
                       </label>

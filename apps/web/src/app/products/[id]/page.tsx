@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import ProductDetailClient from './ProductDetailClient';
 import { ProductStructuredData } from '@/components/analytics/StructuredData';
 import { getApiBaseForServer, getSiteUrl } from '@/lib/siteUrls';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 const API_BASE = getApiBaseForServer();
 const SITE_URL = getSiteUrl();
@@ -66,7 +67,7 @@ export async function generateMetadata({
     },
     other: {
       'product:price:amount': product.price?.toString() || '',
-      'product:price:currency': product.currency || 'USD',
+      'product:price:currency': product.currency || DEFAULT_CURRENCY,
     },
   };
 }

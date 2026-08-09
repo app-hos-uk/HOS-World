@@ -5,19 +5,37 @@ describe('ErrorPage', () => {
   const mockReset = jest.fn();
   const mockError = new Error('Test error message');
 
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('renders error message', () => {
     render(<ErrorPage error={mockError} reset={mockReset} />);
     expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
   });
 
-  it('shows error details', () => {
+  it('shows a generic recovery message without leaking error.message', () => {
     render(<ErrorPage error={mockError} reset={mockReset} />);
-    expect(screen.getByText('Test error message')).toBeInTheDocument();
+    expect(
+      screen.getByText(/an unexpected error occurred/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Test error message')).not.toBeInTheDocument();
+  });
+
+  it('shows error digest when provided', () => {
+    const digestError = Object.assign(new Error('hidden'), { digest: 'abc123' });
+    render(<ErrorPage error={digestError} reset={mockReset} />);
+    expect(screen.getByText(/Error ID: abc123/i)).toBeInTheDocument();
   });
 
   it('calls reset when Try Again is clicked', () => {
     render(<ErrorPage error={mockError} reset={mockReset} />);
-    fireEvent.click(screen.getByText(/try again/i));
+    fireEvent.click(screen.getByRole('button', { name: /^try again$/i }));
     expect(mockReset).toHaveBeenCalled();
   });
 });
+

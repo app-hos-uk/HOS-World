@@ -6,6 +6,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { navIcon } from '@/lib/navIcons';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface AgingBucket {
   label: string;
@@ -15,6 +16,7 @@ interface AgingBucket {
 }
 
 export default function AgingAnalysisPage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const [report, setReport] = useState<any>(null);
@@ -71,7 +73,7 @@ export default function AgingAnalysisPage() {
                 </div>
                 <div className="text-right">
                   <p className="font-medium">{formatPrice(item.amount)}</p>
-                  <p className="text-xs text-hos-text-muted">{new Date(item.createdAt).toLocaleDateString()}</p>
+                  <p className="text-xs text-hos-text-muted">{formatDate(item.createdAt)}</p>
                 </div>
               </div>
             ))}

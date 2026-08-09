@@ -8,7 +8,9 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
+import { fromMinorUnits } from '../common/money';
 import { PaymentProviderService } from '../payments/payment-provider.service';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 type ReconciliationItemType = 'MATCHED' | 'AMOUNT_MISMATCH' | 'MISSING_INTERNAL' | 'MISSING_STRIPE';
 
@@ -111,7 +113,7 @@ export class ReconciliationService {
               stripeCharges.push(
                 ...charges.data.map((c: any) => ({
                   id: String(c.id),
-                  amount: Number(c.amount) / 100,
+                  amount: fromMinorUnits(Number(c.amount), c.currency || 'usd'),
                   currency: String(c.currency || 'usd').toUpperCase(),
                   payment_intent:
                     typeof c.payment_intent === 'string'
@@ -176,7 +178,9 @@ export class ReconciliationService {
           });
         } else {
           const internalAmt = this.toMoney(Number(internal.amount));
-          const internalCurrency = String(internal.currency || 'USD').toUpperCase();
+          const internalCurrency = String(
+            internal.currency || PLATFORM_DEFAULT_CURRENCY,
+          ).toUpperCase();
           const stripeAmt = this.toMoney(charge.amount);
           const diff = Math.abs(internalAmt - stripeAmt);
           if (diff < 0.02 && internalCurrency === charge.currency) {
@@ -215,7 +219,7 @@ export class ReconciliationService {
             type: 'MISSING_STRIPE',
             transactionId: txRow.id,
             internalAmount: this.toMoney(Number(txRow.amount)),
-            currency: String(txRow.currency || 'USD').toUpperCase(),
+            currency: String(txRow.currency || PLATFORM_DEFAULT_CURRENCY).toUpperCase(),
           });
         }
       }
@@ -245,7 +249,7 @@ export class ReconciliationService {
             type: 'MATCHED',
             transactionId: refundTx.id,
             internalAmount: this.toMoney(actual),
-            currency: String(refundTx.currency || 'USD').toUpperCase(),
+            currency: String(refundTx.currency || PLATFORM_DEFAULT_CURRENCY).toUpperCase(),
           });
         } else {
           mismatched++;
@@ -255,7 +259,7 @@ export class ReconciliationService {
             transactionId: refundTx.id,
             internalAmount: this.toMoney(actual),
             stripeAmount: this.toMoney(expected),
-            currency: String(refundTx.currency || 'USD').toUpperCase(),
+            currency: String(refundTx.currency || PLATFORM_DEFAULT_CURRENCY).toUpperCase(),
             discrepancyAmount: this.toMoney(actual - expected),
           });
         }
@@ -271,7 +275,7 @@ export class ReconciliationService {
               type: 'MISSING_STRIPE',
               transactionId: txRow.id,
               internalAmount: this.toMoney(Number(txRow.amount)),
-              currency: String(txRow.currency || 'USD').toUpperCase(),
+              currency: String(txRow.currency || PLATFORM_DEFAULT_CURRENCY).toUpperCase(),
             });
           }
         }

@@ -19,10 +19,12 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { format, subMonths } from 'date-fns';
+import { useMoney } from '@/hooks/useMoney';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export default function AdminCustomerAnalyticsPage() {
+  const { formatMoney } = useMoney();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -167,7 +169,7 @@ export default function AdminCustomerAnalyticsPage() {
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted mb-2">Average Lifetime Value</h3>
               <p className="text-4xl font-bold text-hos-text-secondary">
-                ${data?.averageLTV ? data.averageLTV.toFixed(2) : '0.00'}
+                {formatMoney(data?.averageLTV ? data.averageLTV : '0.00')}
               </p>
               <p className="text-sm text-hos-text-muted mt-2">
                 Average total value of purchases per customer

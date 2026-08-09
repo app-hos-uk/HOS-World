@@ -4,9 +4,22 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { usePathname } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { getCurrencySymbol } from '@hos-marketplace/utils';
+import { formatMoney } from '@/lib/money';
+import {
+  getInitialRegion,
+  normalizeRegion,
+  persistRegion,
+  setRegionConfig,
+  type RegionConfig,
+} from '@/lib/regionConfig';
 
 interface CurrencyContextType {
   currency: string;
+  regionCurrency: string;
+  locale: string;
+  country: string;
+  timezone: string;
+  region: RegionConfig;
   rates: Record<string, number>;
   loading: boolean;
   setCurrency: (currency: string) => void;
@@ -17,12 +30,50 @@ interface CurrencyContextType {
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
+function readSavedCurrencyPreference(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem('currency_preference');
+  } catch {
+    return null;
+  }
+}
+
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-  const [currency, setCurrencyState] = useState<string>('USD');
+  const initialRegion = getInitialRegion();
+  const [region, setRegion] = useState<RegionConfig>(initialRegion);
+  const [currency, setCurrencyState] = useState<string>(
+    () => readSavedCurrencyPreference() || initialRegion.currency,
+  );
   const [rates, setRates] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
   const lastPathnameRef = useRef<string | null>(null);
+  const regionLoadedRef = useRef(false);
+
+  const applyRegion = useCallback((next: RegionConfig) => {
+    const normalized = normalizeRegion(next);
+    setRegionConfig(normalized);
+    persistRegion(normalized);
+    setRegion(normalized);
+    if (!readSavedCurrencyPreference()) {
+      setCurrencyState(normalized.currency);
+    }
+  }, []);
+
+  const loadRegion = useCallback(async () => {
+    if (regionLoadedRef.current) return;
+    regionLoadedRef.current = true;
+    try {
+      const data = await apiClient.getRegion();
+      if (data?.currency) {
+        applyRegion(data);
+      }
+    } catch (error) {
+      console.error('Failed to load region config:', error);
+      // Keep getInitialRegion() snapshot (localStorage or DEFAULT_REGION) so prices still format.
+    }
+  }, [applyRegion]);
 
   const loadCurrencyData = useCallback(async () => {
     try {
@@ -48,7 +99,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         // Try to get user's currency preference
         const userCurrencyResponse = await apiClient.getUserCurrency();
         if (userCurrencyResponse?.data) {
-          setCurrencyState(userCurrencyResponse.data.currency || 'USD');
+          setCurrencyState(userCurrencyResponse.data.currency || region.currency);
           setRates(userCurrencyResponse.data.rates || {});
           return;
         }
@@ -59,15 +110,9 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       if (ratesResponse?.data) {
         setRates(ratesResponse.data);
       }
-      if (typeof window !== 'undefined') {
-        try {
-          const savedCurrency = localStorage.getItem('currency_preference');
-          if (savedCurrency) {
-            setCurrencyState(savedCurrency);
-          }
-        } catch {
-          // ignore
-        }
+      const savedCurrency = readSavedCurrencyPreference();
+      if (savedCurrency) {
+        setCurrencyState(savedCurrency);
       }
     } catch (error) {
       console.error('Failed to load currency data:', error);
@@ -80,7 +125,11 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [pathname]);
+  }, [pathname, region.currency]);
+
+  useEffect(() => {
+    loadRegion();
+  }, [loadRegion]);
 
   // Load user's currency preference and rates
   // Re-run when pathname changes to ensure we use the current pathname value
@@ -120,7 +169,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   }, [updateCurrencyPreference]);
 
   const convertPrice = useCallback(
-    (amount: number, fromCurrency: string = 'USD'): number => {
+    (amount: number, fromCurrency: string = region.currency): number => {
       if (fromCurrency === currency) {
         return amount;
       }
@@ -133,33 +182,32 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       const amountInUSD = amount / rates[fromCurrency];
       return amountInUSD * rates[currency];
     },
-    [currency, rates]
+    [currency, rates, region.currency]
   );
 
   const formatPrice = useCallback(
-    (amount: number, fromCurrency: string = 'USD'): string => {
+    (amount: number, fromCurrency: string = region.currency): string => {
       const convertedAmount = convertPrice(amount, fromCurrency);
       const safeAmount = typeof convertedAmount === 'number' && !Number.isNaN(convertedAmount) ? convertedAmount : 0;
       try {
-        return new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: currency,
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }).format(safeAmount);
+        return formatMoney(safeAmount, currency, region.locale);
       } catch {
         const symbol = getCurrencySymbol(currency);
         return `${symbol}${safeAmount.toFixed(2)}`;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currency, convertPrice]
+    [currency, convertPrice, region.currency, region.locale]
   );
 
   return (
     <CurrencyContext.Provider
       value={{
         currency,
+        regionCurrency: region.currency,
+        locale: region.locale,
+        country: region.country,
+        timezone: region.timezone,
+        region,
         rates,
         loading,
         setCurrency,
@@ -180,4 +228,3 @@ export function useCurrency() {
   }
   return context;
 }
-

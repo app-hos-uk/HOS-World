@@ -18,8 +18,10 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { subMonths } from 'date-fns';
+import { useMoney } from '@/hooks/useMoney';
 
 export default function AdminInventoryAnalyticsPage() {
+  const { formatMoney } = useMoney();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -142,7 +144,7 @@ export default function AdminInventoryAnalyticsPage() {
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Inventory Value</h3>
               <p className="text-3xl font-bold text-hos-text-secondary mt-2">
-                ${data?.totalValue ? Number(data.totalValue).toFixed(2) : '0.00'}
+                {formatMoney(data?.totalValue ? Number(data.totalValue) : '0.00')}
               </p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">

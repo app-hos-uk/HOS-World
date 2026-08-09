@@ -10,6 +10,7 @@ import { CreateBrandCampaignDto } from './dto/create-brand-campaign.dto';
 import { UpdateBrandCampaignDto } from './dto/update-brand-campaign.dto';
 import { pickBrandCampaignMultipliers } from './engines/brand-campaign.engine';
 import { randomBytes } from 'crypto';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 function slugifyBase(name: string): string {
   return name
@@ -59,7 +60,7 @@ export class BrandPartnershipsService {
         contractStart: start,
         contractEnd: end,
         totalBudget: new Decimal(dto.totalBudget ?? 0),
-        currency: dto.currency?.trim() || 'USD',
+        currency: dto.currency?.trim() || PLATFORM_DEFAULT_CURRENCY,
       },
     });
   }

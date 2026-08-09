@@ -29,11 +29,11 @@ Gift Cards are a separate system — digital or physical cards with a monetary b
 
 | Parameter | Value |
 |-----------|-------|
-| Default earn rate | **1 point per £1 spent** |
-| Point value | **£0.01 per point** (100 points = £1) |
+| Default earn rate | **1 point per $1 spent** |
+| Point value | **$0.01 per point** (100 points = $1) |
 | Minimum redemption | **100 points** |
 | Points expiry | **24 months** from date earned |
-| Gift card denominations | £25, £50, £100, £250, £500 |
+| Gift card denominations | $25, $50, $100, $250, $500 |
 
 ---
 
@@ -45,11 +45,11 @@ When a customer completes an order (web or POS), points are awarded automaticall
 
 | Scenario | Earn Rate |
 |----------|-----------|
-| Standard purchase | 1 point per £1 spent |
-| Vendor with custom earn rate | Vendor's configured rate per £1 |
+| Standard purchase | 1 point per $1 spent |
+| Vendor with custom earn rate | Vendor's configured rate per $1 |
 | Vendor with loyalty disabled | No points earned |
 
-**Tier multiplier** is applied on top of the base earn. For example, a Dragon Keeper tier member (2.0×) earning on a £50 order gets 100 points instead of 50.
+**Tier multiplier** is applied on top of the base earn. For example, a Dragon Keeper tier member (2.0×) earning on a $50 order gets 100 points instead of 50.
 
 **When points appear:** Points are credited when the order is marked as paid. For POS sales, points are credited when the sale is imported (typically within minutes).
 
@@ -97,13 +97,13 @@ If a POS sale is voided, earned points are automatically clawed back via an adju
 
 | Reward | Points Required | Value |
 |--------|----------------|-------|
-| £1 Discount | 100 | £1 off order |
-| £5 Discount | 500 | £5 off order |
-| £10 Discount | 1,000 | £10 off order |
+| $1 Discount | 100 | $1 off order |
+| $5 Discount | 500 | $5 off order |
+| $10 Discount | 1,000 | $10 off order |
 | Free Shipping Upgrade | 200 | Free shipping |
 | Raffle Entry | 50 | Entry to prize draw |
-| £5 Gift Card | 500 | £5 gift card code |
-| £1 Charity Donation | 100 | Donated on their behalf |
+| $5 Gift Card | 500 | $5 gift card code |
+| $1 Charity Donation | 100 | Donated on their behalf |
 | Early Access Pass | 300 | Early access to new releases |
 
 4. Points are deducted and the discount is applied to the order total.
@@ -118,7 +118,7 @@ If a POS sale is voided, earned points are automatically clawed back via an adju
 3. The gift card is loaded onto the Lightspeed POS system.
 4. Customer uses the gift card as payment for their in-store purchase.
 
-**Amount limits:** Minimum £1, maximum £500 per voucher.
+**Amount limits:** Minimum $1, maximum $500 per voucher.
 
 ### 3.3 Via Rewards Catalogue (Direct API)
 
@@ -167,7 +167,7 @@ Members progress through tiers based on **total lifetime points earned** (not cu
 2. System validates the code and applies the balance toward the order.
 3. If the gift card covers the full order amount, no additional payment is needed.
 4. If partial, customer pays the remainder via Stripe.
-5. Gift card balance is decremented; status changes to `REDEEMED` when balance reaches £0.
+5. Gift card balance is decremented; status changes to `REDEEMED` when balance reaches $0.
 
 ### 5.4 Statuses
 
@@ -210,7 +210,7 @@ A: Check if:
 If all checks pass, admin can verify in **Admin > Loyalty > Transactions** and manually adjust if needed.
 
 **Q: "How many points will I earn on this order?"**
-A: Base rate is 1 point per £1 spent, multiplied by their tier multiplier. Check their tier on **Admin > Loyalty > Members > [Member]**. Active bonus campaigns may add more.
+A: Base rate is 1 point per $1 spent, multiplied by their tier multiplier. Check their tier on **Admin > Loyalty > Members > [Member]**. Active bonus campaigns may add more.
 
 **Q: "My points expired, can they be restored?"**
 A: Points expire after 24 months of inactivity. Expired points cannot be automatically restored. Admin can issue a manual adjustment as a goodwill gesture via **Admin > Loyalty > Members > Adjust Points** with an appropriate reason.
@@ -224,7 +224,7 @@ A: Direct them to **My Account > The Enchanted Circle** on the website, or look 
 A: Check the order in **Admin > Orders** — look for `loyaltyPointsRedeemed` and `loyaltyDiscountAmount` fields. If points were burned but discount not applied, admin can issue a manual refund or credit.
 
 **Q: "Can I redeem points in-store?"**
-A: Yes — staff at the HOS outlet can convert loyalty points into a POS voucher (gift card) which is then used as payment. The minimum is £1 (100 points) and maximum is £500.
+A: Yes — staff at the HOS outlet can convert loyalty points into a POS voucher (gift card) which is then used as payment. The minimum is $1 (100 points) and maximum is $500.
 
 **Q: "I don't see the loyalty widget at checkout."**
 A: The widget only appears if:

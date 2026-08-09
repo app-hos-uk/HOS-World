@@ -6,6 +6,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Dialog, Transition } from '@headlessui/react';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface StockTransfer {
   id: string;
@@ -22,6 +23,7 @@ interface StockTransfer {
 }
 
 export default function AdminStockTransfersPage() {
+  const { formatDate: formatDateShared } = useDateTime();
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -246,13 +248,11 @@ export default function AdminStockTransfersPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
+    return formatDateShared(dateString, { year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit',
-    });
+      minute: '2-digit', });
   };
 
   return (

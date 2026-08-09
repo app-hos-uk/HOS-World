@@ -18,6 +18,7 @@ import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import type { Cart, Product } from '@hos-marketplace/shared-types';
 import { Decimal } from '@prisma/client/runtime/library';
 import { LoyaltyService } from '../loyalty/loyalty.service';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 // Valid product status values for the shared types Product interface
 type ValidProductStatus = 'draft' | 'active' | 'inactive' | 'out_of_stock';
@@ -851,7 +852,7 @@ export class CartService {
         discount,
         shipping,
         total,
-        currency: cart.items[0]?.product.currency || 'USD',
+        currency: cart.items[0]?.product.currency || PLATFORM_DEFAULT_CURRENCY,
         promotionFreeShipping,
         ...(cart.userId && options?.userMutated ? { abandonedEmailSentAt: null } : {}),
       },

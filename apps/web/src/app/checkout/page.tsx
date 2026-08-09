@@ -15,6 +15,10 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { trackBeginCheckout } from '@/lib/analytics';
 import { getInfluencerReferral } from '@/lib/referralAttribution';
 import { withShopPreview } from '@/lib/shopPreviewClient';
+import {
+  getAddressFieldLabels,
+  regionCountryToFormValue,
+} from '@/components/addressFieldLabels';
 
 interface StockIssue {
   productId: string;
@@ -26,7 +30,7 @@ interface StockIssue {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, country: regionCountry } = useCurrency();
   const { refreshCart } = useCart();
   const { isAuthenticated, loading: authLoading, refreshUser } = useAuth();
   const toast = useToast();
@@ -75,12 +79,16 @@ export default function CheckoutPage() {
       city: '',
       state: '',
       postalCode: '',
-      country: '',
+      country: regionCountryToFormValue(regionCountry) || 'United States',
       phone: '',
       inviteCode,
       gdprConsent: false,
     };
   });
+  const guestAddressLabels = useMemo(
+    () => getAddressFieldLabels(guestForm.country || regionCountry),
+    [guestForm.country, regionCountry],
+  );
   const checkoutSteps = useMemo(
     () => [
       { id: 1, label: 'Address' },
@@ -126,7 +134,7 @@ export default function CheckoutPage() {
           router.push(withShopPreview('/cart'));
         }
       } catch {
-        toast.error('Unable to load your basket');
+        toast.error('Unable to load your cart');
         router.push(withShopPreview('/cart'));
       } finally {
         setGuestCartLoading(false);
@@ -635,7 +643,7 @@ export default function CheckoutPage() {
             <div className="text-center mb-8">
               <h1 className="text-2xl sm:text-3xl font-bold mb-3 font-primary text-hos-gold">Checkout</h1>
               <p className="text-hos-text-secondary">
-                Sign in to your account or continue as a guest. Your basket is saved.
+                Sign in to your account or continue as a guest. Your cart is saved.
               </p>
             </div>
 
@@ -786,7 +794,7 @@ export default function CheckoutPage() {
                       </div>
                       <div>
                         <label htmlFor="guest-state" className="block text-sm font-medium text-hos-text-secondary mb-1">
-                          State / Province
+                          {guestAddressLabels.state}
                         </label>
                         <input
                           id="guest-state"
@@ -802,7 +810,7 @@ export default function CheckoutPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label htmlFor="guest-postal" className="block text-sm font-medium text-hos-text-secondary mb-1">
-                          Postal code *
+                          {guestAddressLabels.postalCode} *
                         </label>
                         <input
                           id="guest-postal"
@@ -851,7 +859,7 @@ export default function CheckoutPage() {
 
                     <div>
                       <label htmlFor="guest-phone" className="block text-sm font-medium text-hos-text-secondary mb-1">
-                        Phone (optional)
+                        {guestAddressLabels.phone} (optional)
                       </label>
                       <input
                         id="guest-phone"
@@ -886,7 +894,7 @@ export default function CheckoutPage() {
                   </form>
                 ) : (
                   <p className="text-sm text-hos-text-muted">
-                    This email is already registered. Use Sign In on the left to access your saved basket and addresses.
+                    This email is already registered. Use Sign In on the left to access your saved cart and addresses.
                   </p>
                 )}
               </div>
@@ -896,7 +904,7 @@ export default function CheckoutPage() {
               href="/cart"
               className="inline-block mt-8 text-sm text-hos-gold-hover hover:text-hos-gold"
             >
-              ← Back to Basket
+              ← Back to Cart
             </Link>
           </div>
         </main>
@@ -1221,7 +1229,7 @@ export default function CheckoutPage() {
                           type="tel"
                           value={giftDetails.recipientPhone}
                           onChange={(e) => setGiftDetails((prev) => ({ ...prev, recipientPhone: e.target.value }))}
-                          placeholder="+971 xxx xxx xxxx"
+                          placeholder="+1 555 123 4567"
                           className="w-full px-3 py-2 bg-hos-bg-tertiary border border-hos-border rounded-lg text-hos-text-primary placeholder-hos-text-muted focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
                         />
                       </div>

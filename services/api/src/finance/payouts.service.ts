@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../database/prisma.service';
 import { TransactionsService } from './transactions.service';
 import { VendorLedgerService } from '../vendor-ledger/vendor-ledger.service';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
 export class PayoutsService {
@@ -39,7 +40,7 @@ export class PayoutsService {
     const transaction = await this.transactionsService.createTransaction({
       type: 'PAYOUT',
       amount: data.amount,
-      currency: data.currency || 'USD',
+      currency: data.currency || PLATFORM_DEFAULT_CURRENCY,
       sellerId: data.sellerId,
       description: data.description || `Payout to ${seller.storeName}`,
       status: data.scheduledDate && data.scheduledDate > new Date() ? 'PENDING' : 'PENDING',
@@ -76,7 +77,7 @@ export class PayoutsService {
             sellerId: transaction.sellerId,
             amount: Number(transaction.amount),
             referenceId: transactionId,
-            currency: transaction.currency || 'USD',
+            currency: transaction.currency || PLATFORM_DEFAULT_CURRENCY,
           },
           { tx },
         );
@@ -140,7 +141,7 @@ export class PayoutsService {
     }
 
     const netAmount = Number(transaction.amount);
-    const currency = transaction.currency || 'USD';
+    const currency = transaction.currency || PLATFORM_DEFAULT_CURRENCY;
     const meta = (transaction.metadata || {}) as {
       paymentMethod?: string;
       scheduledDate?: string | Date;

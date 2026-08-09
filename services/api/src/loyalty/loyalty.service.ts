@@ -31,6 +31,7 @@ import { isProtectedAdminEmail } from '../config/protected-admin-emails';
 import { normalizePhoneToE164 } from '../common/utils/phone-normalize';
 import { isPosRuntimeEnabled } from '../pos/pos-enabled';
 import { LoyaltySettingsService } from './services/loyalty-settings.service';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
 export class LoyaltyService implements OnModuleInit {
@@ -159,7 +160,8 @@ export class LoyaltyService implements OnModuleInit {
         userId,
         tierId: tier.id,
         regionCode: dto?.regionCode || user.country || 'GB',
-        preferredCurrency: dto?.preferredCurrency || user.currencyPreference || 'USD',
+        preferredCurrency:
+          dto?.preferredCurrency || user.currencyPreference || PLATFORM_DEFAULT_CURRENCY,
         enrollmentChannel: dto?.enrollmentChannel || 'WEB',
         cardNumber,
         // Profile birthday is the source of truth for birthday jobs

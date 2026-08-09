@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface ChannelProduct {
   id: string;
@@ -51,7 +52,7 @@ export default function AdminChannelsPage() {
   const [assignPrice, setAssignPrice] = useState('');
   const [assignCostPrice, setAssignCostPrice] = useState('');
   const [assignCompareAt, setAssignCompareAt] = useState('');
-  const [assignCurrency, setAssignCurrency] = useState('USD');
+  const [assignCurrency, setAssignCurrency] = useState(DEFAULT_CURRENCY);
 
   // Inline edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -150,7 +151,7 @@ export default function AdminChannelsPage() {
     setAssignPrice('');
     setAssignCostPrice('');
     setAssignCompareAt('');
-    setAssignCurrency('USD');
+    setAssignCurrency(DEFAULT_CURRENCY);
   };
 
   const handleRemove = (id: string) => {

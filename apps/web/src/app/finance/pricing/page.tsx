@@ -7,6 +7,9 @@ import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { getFinanceMenu } from '@/lib/teamMenus';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 export default function FinancePricingPage() {
   return (
@@ -17,6 +20,8 @@ export default function FinancePricingPage() {
 }
 
 function FinancePricingContent() {
+  const { formatDateTime } = useDateTime();
+  const { formatMoney } = useMoney();
   const searchParams = useSearchParams();
   const viewParam = searchParams.get('view');
   const submissionParam = searchParams.get('submission');
@@ -116,7 +121,7 @@ function FinancePricingContent() {
         hosMargin,
         visibilityLevel: visibilityLevel,
       });
-      toast.success(`Pricing set: ${hosMargin * 100}% margin on $${basePrice.toFixed(2)}`);
+      toast.success(`Pricing set: ${hosMargin * 100}% margin on ${formatMoney(basePrice, productData.currency || DEFAULT_CURRENCY)}`);
       setActionType(null);
       setMargin('');
       setNotes('');
@@ -258,20 +263,17 @@ function FinancePricingContent() {
                         <div className="flex flex-wrap gap-4 mt-4 text-sm text-hos-text-secondary">
                           {productData.price && (
                             <span>
-                              <strong>Price:</strong> {productData.currency || 'USD'}{' '}
-                              {parseFloat(productData.price).toFixed(2)}
+                              <strong>Price:</strong> {formatMoney(parseFloat(productData.price), productData.currency)}
                             </span>
                           )}
                           {productData.tradePrice && (
                             <span>
-                              <strong>Trade Price:</strong> {productData.currency || 'USD'}{' '}
-                              {parseFloat(productData.tradePrice).toFixed(2)}
+                              <strong>Trade Price:</strong> {formatMoney(parseFloat(productData.tradePrice), productData.currency)}
                             </span>
                           )}
                           {productData.rrp && (
                             <span>
-                              <strong>RRP:</strong> {productData.currency || 'USD'}{' '}
-                              {parseFloat(productData.rrp).toFixed(2)}
+                              <strong>RRP:</strong> {formatMoney(parseFloat(productData.rrp), productData.currency)}
                             </span>
                           )}
                         </div>
@@ -314,10 +316,10 @@ function FinancePricingContent() {
                       </h3>
                       <div className="flex flex-wrap gap-4 mt-2 text-sm text-hos-text-secondary">
                         <span>
-                          <strong>Base Price:</strong> ${Number(item.basePrice || 0).toFixed(2)}
+                          <strong>Base Price:</strong> {formatMoney(Number(item.basePrice || 0), item.product?.currency || DEFAULT_CURRENCY)}
                         </span>
                         <span>
-                          <strong>Final Price:</strong> ${Number(item.finalPrice || 0).toFixed(2)}
+                          <strong>Final Price:</strong> {formatMoney(Number(item.finalPrice || 0), item.product?.currency || DEFAULT_CURRENCY)}
                         </span>
                         <span>
                           <strong>Margin:</strong> {((Number(item.hosMargin) || 0) * 100).toFixed(1)}%
@@ -327,7 +329,7 @@ function FinancePricingContent() {
                         </span>
                       </div>
                       <p className="text-xs text-hos-text-muted mt-2">
-                        Approved: {item.approvedAt ? new Date(item.approvedAt).toLocaleString() : 'N/A'}
+                        Approved: {item.approvedAt ? formatDateTime(item.approvedAt) : 'N/A'}
                       </p>
                     </div>
                     <div className="flex items-start">
@@ -389,8 +391,7 @@ function FinancePricingContent() {
                             <div>
                               <p className="text-sm font-medium text-hos-text-muted">Price</p>
                               <p className="text-hos-text-secondary">
-                                {selectedSubmission.productData.currency || 'USD'}{' '}
-                                {parseFloat(selectedSubmission.productData.price).toFixed(2)}
+                                {formatMoney(parseFloat(selectedSubmission.productData.price), selectedSubmission.productData.currency)}
                               </p>
                             </div>
                           )}
@@ -398,8 +399,7 @@ function FinancePricingContent() {
                             <div>
                               <p className="text-sm font-medium text-hos-text-muted">Trade Price</p>
                               <p className="text-hos-text-secondary">
-                                {selectedSubmission.productData.currency || 'USD'}{' '}
-                                {parseFloat(selectedSubmission.productData.tradePrice).toFixed(2)}
+                                {formatMoney(parseFloat(selectedSubmission.productData.tradePrice), selectedSubmission.productData.currency)}
                               </p>
                             </div>
                           )}

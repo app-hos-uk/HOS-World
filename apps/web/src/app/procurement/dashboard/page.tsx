@@ -6,8 +6,10 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import { getProcurementMenu } from '@/lib/teamMenus';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function ProcurementDashboardPage() {
+  const { formatDateTime } = useDateTime();
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -186,7 +188,7 @@ export default function ProcurementDashboardPage() {
                               {submission.seller?.storeName || 'Unknown Seller'}
                             </p>
                             <p className="text-xs text-hos-text-muted mt-1">
-                              {new Date(submission.createdAt).toLocaleString()}
+                              {formatDateTime(submission.createdAt)}
                             </p>
                           </div>
                           <span className="px-2 py-1 text-xs font-medium bg-hos-gold/20 text-hos-gold rounded">

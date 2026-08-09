@@ -13,6 +13,7 @@ import { CreateTaxRateDto } from './dto/create-tax-rate.dto';
 import { Decimal } from '@prisma/client/runtime/library';
 import { TaxFactoryService } from './tax-factory.service';
 import type { TaxCalculationRequest } from './interfaces/tax-provider.interface';
+import { PlatformRegionService } from '../config/platform-region.service';
 
 @Injectable()
 export class TaxService {
@@ -36,6 +37,7 @@ export class TaxService {
   constructor(
     private prisma: PrismaService,
     private cache: CacheService,
+    private readonly platformRegion: PlatformRegionService,
     @Optional() private readonly taxFactory?: TaxFactoryService,
   ) {}
 
@@ -385,49 +387,64 @@ export class TaxService {
 
     if (this.taxFactory?.hasActiveProvider()) {
       try {
-        const request: TaxCalculationRequest = {
-          transactionId: `est-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-          transactionType: 'ESTIMATE',
-          transactionDate: new Date(),
-          currencyCode: 'USD',
-          fromAddress: {
-            street1: 'Fulfillment',
-            city: 'London',
-            postalCode: 'E1 6AN',
-            country: 'GB',
-          },
-          toAddress: {
-            street1: 'Customer',
-            city: location.city || 'Unknown',
-            state: location.state,
-            postalCode: location.postalCode || '00000',
-            country: location.country || 'US',
-          },
-          lineItems: [
-            {
-              id: 'line-1',
-              description: 'Line item',
-              quantity: 1,
-              unitPrice: amount,
-              amount,
+        const [currencyCode, taxOrigin, defaultCountry] = await Promise.all([
+          this.platformRegion.getCurrency(),
+          this.platformRegion.getTaxOrigin(),
+          this.platformRegion.getCountry(),
+        ]);
+
+        // Non-prod: skip the external provider rather than invent an origin.
+        // Prod/staging already fail closed via TaxFactoryService.assertTaxOriginConfigured.
+        if (!taxOrigin) {
+          this.logger.warn(
+            'Tax origin incomplete; falling back to tax zones (set TAX_ORIGIN_* for provider estimates)',
+          );
+        } else {
+          const request: TaxCalculationRequest = {
+            transactionId: `est-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+            transactionType: 'ESTIMATE',
+            transactionDate: new Date(),
+            currencyCode,
+            fromAddress: {
+              street1: taxOrigin.street,
+              city: taxOrigin.city,
+              state: taxOrigin.state,
+              postalCode: taxOrigin.postalCode,
+              country: taxOrigin.country,
             },
-          ],
-          shippingAmount: shippingAmount > 0 ? shippingAmount : undefined,
-        };
-        const ext = await this.taxFactory.calculateTax(request);
-        const tax = ext.totalTaxAmount;
-        const total =
-          typeof ext.totalAmount === 'number' && !Number.isNaN(ext.totalAmount)
-            ? ext.totalAmount
-            : amount + tax + shippingAmount;
-        const rate = amount > 0 ? tax / amount : 0;
-        return {
-          amount,
-          tax: Number(tax.toFixed(2)),
-          total: Number(total.toFixed(2)),
-          rate,
-          isInclusive: false,
-        };
+            toAddress: {
+              street1: 'Customer',
+              city: location.city || 'Unknown',
+              state: location.state,
+              postalCode: location.postalCode || '00000',
+              country: location.country || defaultCountry,
+            },
+            lineItems: [
+              {
+                id: 'line-1',
+                description: 'Line item',
+                quantity: 1,
+                unitPrice: amount,
+                amount,
+              },
+            ],
+            shippingAmount: shippingAmount > 0 ? shippingAmount : undefined,
+          };
+          const ext = await this.taxFactory.calculateTax(request);
+          const tax = ext.totalTaxAmount;
+          const total =
+            typeof ext.totalAmount === 'number' && !Number.isNaN(ext.totalAmount)
+              ? ext.totalAmount
+              : amount + tax + shippingAmount;
+          const rate = amount > 0 ? tax / amount : 0;
+          return {
+            amount,
+            tax: Number(tax.toFixed(2)),
+            total: Number(total.toFixed(2)),
+            rate,
+            isInclusive: false,
+          };
+        }
       } catch (err: any) {
         this.logger.warn(
           `External tax provider failed, falling back to tax zones: ${err?.message || err}`,

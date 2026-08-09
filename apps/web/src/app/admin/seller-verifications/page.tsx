@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface VerificationDocument {
   id: string;
@@ -23,6 +24,7 @@ interface VerificationDocument {
 }
 
 export default function AdminSellerVerificationsPage() {
+  const { formatDateTime } = useDateTime();
   const toast = useToast();
   const [documents, setDocuments] = useState<VerificationDocument[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,7 +131,7 @@ export default function AdminSellerVerificationsPage() {
                       {doc.seller?.sellerType ? ` · ${doc.seller.sellerType}` : ''}
                     </p>
                     <p className="text-xs text-hos-text-muted mt-1">
-                      Submitted {new Date(doc.createdAt).toLocaleString()}
+                      Submitted {formatDateTime(doc.createdAt)}
                     </p>
                     {doc.fileName && (
                       <p className="text-xs text-hos-text-muted mt-1">File: {doc.fileName}</p>

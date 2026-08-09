@@ -17,6 +17,7 @@ import { ProcessRefundInput, RefundProcessResult } from './refund.types';
 import { RETURN_REFUND_ORDER_INCLUDE } from './refund-order.include';
 import { LoyaltyReversalService } from '../loyalty/services/loyalty-reversal.service';
 import { RETURN_FULFILMENT, ReturnFulfilment } from '../returns/return-fulfilment.token';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
 export class RefundsService {
@@ -236,6 +237,7 @@ export class RefundsService {
       const result = await provider.refundPayment({
         paymentId: stripePaymentId,
         amount: cardRefundAmount,
+        currency: data.currency || returnRequest.order.currency,
         metadata: {
           currency: data.currency || returnRequest.order.currency,
           returnId: data.returnId,
@@ -525,7 +527,7 @@ export class RefundsService {
     return this.transactionsService.createTransaction({
       type: 'REFUND',
       amount: recordedAmount,
-      currency: data.currency || 'USD',
+      currency: data.currency || PLATFORM_DEFAULT_CURRENCY,
       customerId: data.customerId,
       sellerId: data.sellerId,
       orderId: data.orderId,

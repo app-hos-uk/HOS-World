@@ -6,8 +6,12 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function ReconciliationPage() {
+  const { formatDate } = useDateTime();
+  const { formatMoney } = useMoney();
   const toast = useToast();
   const { open: openDialog, close: closeDialog, dialogProps } = useConfirmDialog();
   const [runs, setRuns] = useState<any[]>([]);
@@ -144,7 +148,7 @@ export default function ReconciliationPage() {
                   <div key={run.id} className="flex items-center justify-between p-4 bg-hos-bg-tertiary rounded-lg">
                     <div>
                       <p className="font-medium text-hos-text-secondary">
-                        {new Date(run.periodStart).toLocaleDateString()} — {new Date(run.periodEnd).toLocaleDateString()}
+                        {formatDate(run.periodStart)} — {formatDate(run.periodEnd)}
                       </p>
                       <p className="text-sm text-hos-text-muted">
                         Matched: {run.totalMatched} | Mismatched: {run.totalMismatched} | Missing: {run.totalMissing} | Extra: {run.totalExtra}
@@ -177,8 +181,11 @@ export default function ReconciliationPage() {
                         {item.type.replace('_', ' ')}
                       </span>
                       <span className="text-hos-text-muted">
-                        Internal: ${Number(item.internalAmount || 0).toFixed(2)} | Stripe: ${Number(item.stripeAmount || 0).toFixed(2)}
-                        {item.discrepancyAmount ? ` | Diff: $${Number(item.discrepancyAmount).toFixed(2)}` : ''}
+                        Internal: {formatMoney(Number(item.internalAmount || 0), item.currency)} |
+                        Stripe: {formatMoney(Number(item.stripeAmount || 0), item.currency)}
+                        {item.discrepancyAmount
+                          ? ` | Diff: ${formatMoney(Number(item.discrepancyAmount), item.currency)}`
+                          : ''}
                       </span>
                     </div>
                     {item.status === 'UNRESOLVED' && item.type !== 'MATCHED' && (

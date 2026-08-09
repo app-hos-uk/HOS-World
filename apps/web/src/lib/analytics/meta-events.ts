@@ -1,5 +1,6 @@
 import { hasMarketingConsent } from './consent';
 import { getFbq, isMetaPixelEnabled } from './meta-pixel';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 export interface MetaUserData {
   email?: string;
@@ -117,7 +118,7 @@ export function trackMetaViewContent(product: {
     contentCategory: product.fandom,
     contentType: 'product',
     value: product.price,
-    currency: product.currency || 'USD',
+    currency: product.currency || DEFAULT_CURRENCY,
   });
 }
 
@@ -140,7 +141,7 @@ export function trackMetaAddToCart(
     contentCategory: product.fandom,
     contentType: 'product',
     value: (product.price || 0) * quantity,
-    currency: product.currency || 'USD',
+    currency: product.currency || DEFAULT_CURRENCY,
     numItems: quantity,
   });
 }
@@ -155,7 +156,7 @@ export function trackMetaInitiateCheckout(cart: {
 
   trackMetaEvent('InitiateCheckout', {
     value: cart.total ?? cart.subtotal ?? 0,
-    currency: cart.currency || 'USD',
+    currency: cart.currency || DEFAULT_CURRENCY,
     numItems: cart.items.reduce((sum, item) => sum + (item.quantity ?? 1), 0),
     contentIds: cart.items.map((item) => item.productId || 'unknown'),
   });
@@ -183,7 +184,7 @@ export function trackMetaPurchase(
     {
       orderId: order.id,
       value: order.total ?? 0,
-      currency: order.currency || 'USD',
+      currency: order.currency || DEFAULT_CURRENCY,
       numItems: order.items?.reduce((sum, item) => sum + (item.quantity ?? 1), 0),
       contentIds: order.items?.map((item) => item.productId || 'unknown'),
     },

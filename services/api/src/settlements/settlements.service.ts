@@ -13,10 +13,11 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { resolvePlatformFeeRate } from '../common/platform-config';
 import { CurrencyService } from '../currency/currency.service';
 import { StripeConnectService } from '../payments/stripe-connect/stripe-connect.service';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
 export class SettlementsService {
-  private readonly BASE_CURRENCY = 'USD';
+  private readonly BASE_CURRENCY = PLATFORM_DEFAULT_CURRENCY;
   private readonly logger = new Logger(SettlementsService.name);
   private readonly defaultFeeRate: number;
 

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { formatDate } from '@/lib/datetime';
 
 interface BlogCardProps {
   post: {
@@ -17,11 +18,9 @@ interface BlogCardProps {
 
 export function BlogCard({ post }: BlogCardProps) {
   const date = post.publishedAt
-    ? new Date(post.publishedAt).toLocaleDateString('en-US', {
-        year: 'numeric',
+    ? formatDate(post.publishedAt, { year: 'numeric',
         month: 'long',
-        day: 'numeric',
-      })
+        day: 'numeric', })
     : null;
 
   return (

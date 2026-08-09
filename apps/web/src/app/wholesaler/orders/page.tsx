@@ -9,6 +9,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useToast } from '@/hooks/useToast';
 import { PortalMobileCard } from '@/components/ui/PortalMobileCard';
 import { PORTAL_INPUT_CLASS, PORTAL_SELECT_CLASS } from '@/lib/portalFieldClasses';
+import { useDateTime } from '@/hooks/useDateTime';
 
 /**
  * Wholesalers fulfil their own marketplace orders, so they get the same
@@ -30,6 +31,7 @@ function normalizeStatus(status: unknown): string {
 }
 
 export default function WholesalerOrdersPage() {
+  const { formatDate } = useDateTime();
   const { formatPrice } = useCurrency();
   const toast = useToast();
   const [orders, setOrders] = useState<any[]>([]);
@@ -243,7 +245,7 @@ export default function WholesalerOrdersPage() {
                           </span>
                         ),
                       },
-                      { label: 'Date', value: new Date(order.createdAt).toLocaleDateString() },
+                      { label: 'Date', value: formatDate(order.createdAt) },
                       {
                         label: 'Actions',
                         value: (
@@ -320,7 +322,7 @@ export default function WholesalerOrdersPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                          {new Date(order.createdAt).toLocaleDateString()}
+                          {formatDate(order.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           <button

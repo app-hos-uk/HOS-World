@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { PlatformRegionService } from '../config/platform-region.service';
 import { PrismaService } from '../database/prisma.service';
 import { EncryptionService } from '../integrations/encryption.service';
 import {
@@ -35,6 +36,7 @@ export class TaxFactoryService implements OnModuleInit {
   constructor(
     private prisma: PrismaService,
     private encryptionService: EncryptionService,
+    private platformRegion: PlatformRegionService,
   ) {}
 
   async onModuleInit() {
@@ -96,6 +98,9 @@ export class TaxFactoryService implements OnModuleInit {
     } catch (error: any) {
       this.logger.error(`Failed to load tax providers: ${error.message}`);
     }
+
+    // Fail closed: active tax providers need a complete ship-from origin in prod/staging.
+    await this.platformRegion.assertTaxOriginConfigured(this.hasActiveProvider());
   }
 
   /**
@@ -172,6 +177,8 @@ export class TaxFactoryService implements OnModuleInit {
     request: TaxCalculationRequest,
     fallbackCalculation?: () => Promise<TaxCalculationResponse>,
   ): Promise<TaxCalculationResponse> {
+    await this.platformRegion.assertTaxOriginConfigured(this.hasActiveProvider());
+
     // If we have an active provider, use it
     if (this.activeProvider) {
       try {

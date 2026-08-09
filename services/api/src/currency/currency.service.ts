@@ -1,17 +1,29 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
+import { PlatformRegionService } from '../config/platform-region.service';
 import { PrismaService } from '../database/prisma.service';
 import { CacheService } from '../cache/cache.service';
 
-const DEFAULT_SUPPORTED = ['USD', 'EUR', 'GBP', 'AED', 'JPY', 'AUD', 'CAD', 'SGD'];
+/** Full multi-currency catalog; launch restricts to the region currency unless overridden. */
+export const GLOBAL_CURRENCY_CODES = [
+  'USD',
+  'EUR',
+  'GBP',
+  'AED',
+  'JPY',
+  'AUD',
+  'CAD',
+  'SGD',
+] as const;
 
 @Injectable()
-export class CurrencyService {
+export class CurrencyService implements OnModuleInit {
   private readonly logger = new Logger(CurrencyService.name);
   private readonly apiKey: string;
-  private readonly baseUrl = 'https://api.exchangerate-api.com/v4/latest';
-  private readonly baseCurrency = 'USD';
-  private readonly supportedCurrencies: string[];
+  private readonly openBaseUrl = 'https://api.exchangerate-api.com/v4/latest';
+  private baseCurrency = 'USD';
+  private supportedCurrencies: string[] = ['USD'];
   private readonly cacheKeyPrefix = 'currency_rate:';
   private readonly cacheDuration = 3600; // 1 hour in seconds
 
@@ -19,25 +31,68 @@ export class CurrencyService {
     private prisma: PrismaService,
     private cache: CacheService,
     private configService: ConfigService,
+    private platformRegion: PlatformRegionService,
+    private featureFlags: FeatureFlagsService,
   ) {
     this.apiKey = this.configService.get<string>('EXCHANGE_RATE_API_KEY') || '';
+    const envBase = this.configService.get<string>('PLATFORM_CURRENCY')?.trim().toUpperCase();
+    if (envBase) this.baseCurrency = envBase;
+    this.rebuildSupportedCurrencies();
+  }
+
+  async onModuleInit() {
+    this.baseCurrency = await this.platformRegion.getCurrency();
+    this.rebuildSupportedCurrencies();
+  }
+
+  /**
+   * Launch: region currency only.
+   * Re-enable broader FX via FF_MULTI_CURRENCY=true or GLOBAL_SUPPORTED_CURRENCIES.
+   */
+  private rebuildSupportedCurrencies(): void {
     const raw = this.configService.get<string>('GLOBAL_SUPPORTED_CURRENCIES', '');
     const parsed = raw
       .split(',')
       .map((c) => c.trim().toUpperCase())
       .filter(Boolean);
-    const list = parsed.length ? parsed : [...DEFAULT_SUPPORTED];
+
+    let list: string[];
+    if (parsed.length) {
+      list = parsed;
+    } else if (this.featureFlags.isEnabled(FeatureFlag.MULTI_CURRENCY)) {
+      list = [...GLOBAL_CURRENCY_CODES];
+    } else {
+      list = [this.baseCurrency];
+    }
+
     this.supportedCurrencies = [...new Set([this.baseCurrency, ...list])];
   }
 
+  getBaseCurrency(): string {
+    return this.baseCurrency;
+  }
+
   getSupportedCurrencies(): string[] {
+    // Rebuild so late feature-flag changes (admin toggle) take effect without restart.
+    this.rebuildSupportedCurrencies();
     return [...this.supportedCurrencies];
+  }
+
+  isMultiCurrencyEnabled(): boolean {
+    const raw = this.configService.get<string>('GLOBAL_SUPPORTED_CURRENCIES', '');
+    const hasOverride = raw
+      .split(',')
+      .map((c) => c.trim())
+      .some(Boolean);
+    return hasOverride || this.featureFlags.isEnabled(FeatureFlag.MULTI_CURRENCY);
   }
 
   /**
    * Get exchange rate for a currency pair
    */
   async getExchangeRate(targetCurrency: string): Promise<number> {
+    this.rebuildSupportedCurrencies();
+
     if (targetCurrency === this.baseCurrency) {
       return 1;
     }
@@ -121,7 +176,7 @@ export class CurrencyService {
   async getAllRates(): Promise<Record<string, number>> {
     const rates: Record<string, number> = {};
 
-    for (const currency of this.supportedCurrencies) {
+    for (const currency of this.getSupportedCurrencies()) {
       rates[currency] = await this.getExchangeRate(currency);
     }
 
@@ -148,6 +203,12 @@ export class CurrencyService {
       return amount;
     }
 
+    if (!this.isMultiCurrencyEnabled()) {
+      throw new Error(
+        'Multi-currency conversion is disabled. Set FF_MULTI_CURRENCY=true or GLOBAL_SUPPORTED_CURRENCIES to enable.',
+      );
+    }
+
     // Convert to base currency first, then to target
     if (fromCurrency !== this.baseCurrency) {
       const fromRate = await this.getExchangeRate(fromCurrency);
@@ -163,11 +224,14 @@ export class CurrencyService {
   }
 
   /**
-   * Fetch rate from ExchangeRate-API
+   * Fetch rate from ExchangeRate-API.
+   * Uses authenticated v6 when EXCHANGE_RATE_API_KEY is set; otherwise open v4.
    */
   private async fetchRateFromAPI(targetCurrency: string): Promise<number> {
     try {
-      const url = `${this.baseUrl}/${this.baseCurrency}`;
+      const url = this.apiKey
+        ? `https://v6.exchangerate-api.com/v6/${this.apiKey}/latest/${this.baseCurrency}`
+        : `${this.openBaseUrl}/${this.baseCurrency}`;
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -175,12 +239,13 @@ export class CurrencyService {
       }
 
       const data = await response.json();
+      const rates = data.conversion_rates || data.rates;
 
-      if (!data.rates || !data.rates[targetCurrency]) {
+      if (!rates || rates[targetCurrency] == null) {
         throw new Error(`Rate not found for ${targetCurrency}`);
       }
 
-      return data.rates[targetCurrency];
+      return rates[targetCurrency];
     } catch (error) {
       this.logger.error(`Error fetching rate from API: ${error.message}`);
       throw error;
@@ -228,7 +293,7 @@ export class CurrencyService {
   async updateRates(): Promise<void> {
     this.logger.log('Updating exchange rates...');
 
-    for (const currency of this.supportedCurrencies) {
+    for (const currency of this.getSupportedCurrencies()) {
       if (currency !== this.baseCurrency) {
         try {
           await this.getExchangeRate(currency);

@@ -79,7 +79,7 @@ Set these new env vars (all optional, sensible defaults):
 | `XERO_TENANT_ID` | — | Xero organisation tenant ID |
 | `ACCOUNTING_LEDGER_DRAIN_CRON` | `*/10 * * * *` | Cron for outbox drain |
 | `ACCOUNTING_DAILY_JOURNALS_CRON` | `15 1 * * *` | Cron to enqueue prior UTC day's journals |
-| `LOYALTY_DEFAULT_REDEEM_VALUE` | `0.01` | £ per point for liability journals |
+| `LOYALTY_DEFAULT_REDEEM_VALUE` | `0.01` | $ per point for liability journals |
 
 ## 3. Feature Flag Rollout (in order)
 

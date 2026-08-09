@@ -1,20 +1,33 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useCurrency } from '@/contexts/CurrencyContext';
 
-const SUPPORTED_CURRENCIES = [
-  { code: 'USD', name: 'US Dollar', symbol: '$' },
-  { code: 'EUR', name: 'Euro', symbol: '€' },
-  { code: 'GBP', name: 'British Pound', symbol: '£' },
-  { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ' },
-  { code: 'JPY', name: 'Japanese Yen', symbol: '¥' },
-  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$' },
-  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$' },
-  { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$' },
-];
+const CURRENCY_META: Record<string, { name: string; symbol: string }> = {
+  USD: { name: 'US Dollar', symbol: '$' },
+  EUR: { name: 'Euro', symbol: '€' },
+  GBP: { name: 'British Pound', symbol: '£' },
+  AED: { name: 'UAE Dirham', symbol: 'د.إ' },
+  JPY: { name: 'Japanese Yen', symbol: '¥' },
+  AUD: { name: 'Australian Dollar', symbol: 'A$' },
+  CAD: { name: 'Canadian Dollar', symbol: 'C$' },
+  SGD: { name: 'Singapore Dollar', symbol: 'S$' },
+};
 
 export function CurrencySelector() {
-  const { currency, setCurrency, loading } = useCurrency();
+  const { currency, setCurrency, loading, rates, regionCurrency } = useCurrency();
+
+  // Backend /currency/rates only returns supported currencies (region-only when
+  // FF_MULTI_CURRENCY is off). One entry ⇒ nothing meaningful to select.
+  const available = useMemo(() => {
+    const codes = Object.keys(rates || {}).map((c) => c.toUpperCase());
+    const list = codes.length > 0 ? codes : [regionCurrency];
+    return [...new Set(list)].map((code) => ({
+      code,
+      symbol: CURRENCY_META[code]?.symbol || code,
+      name: CURRENCY_META[code]?.name || code,
+    }));
+  }, [rates, regionCurrency]);
 
   if (loading) {
     return (
@@ -24,15 +37,23 @@ export function CurrencySelector() {
     );
   }
 
+  if (available.length <= 1) {
+    return null;
+  }
+
+  const selectValue = available.some((c) => c.code === currency)
+    ? currency
+    : available[0]?.code || regionCurrency;
+
   return (
     <div className="relative">
       <select
-        value={currency}
+        value={selectValue}
         onChange={(e) => setCurrency(e.target.value)}
         className="appearance-none bg-hos-bg-secondary border border-hos-border rounded-lg px-3 py-2 pr-8 text-sm font-medium text-hos-text-secondary hover:border-hos-gold focus:outline-none focus:ring-1 focus:ring-hos-gold focus:border-hos-gold cursor-pointer transition-colors duration-200"
         aria-label="Select currency"
       >
-        {SUPPORTED_CURRENCIES.map((curr) => (
+        {available.map((curr) => (
           <option key={curr.code} value={curr.code} className="bg-hos-bg-secondary text-hos-text-primary">
             {curr.symbol} {curr.code}
           </option>

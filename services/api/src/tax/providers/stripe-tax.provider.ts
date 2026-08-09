@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import Stripe from 'stripe';
+import { fromMinorUnits, toMinorUnits } from '../../common/money';
 import {
   BaseTaxProvider,
   ITaxProvider,
@@ -13,6 +14,7 @@ import {
   AddressValidationResult,
   TestConnectionResult,
 } from '../interfaces/tax-provider.interface';
+import { PLATFORM_DEFAULT_CURRENCY } from '../../common/currency-defaults';
 
 /**
  * Stripe Tax Integration
@@ -72,7 +74,7 @@ export class StripeTaxProvider extends BaseTaxProvider implements ITaxProvider {
     try {
       const lineItems: Stripe.Tax.CalculationCreateParams.LineItem[] = request.lineItems.map(
         (item) => ({
-          amount: Math.round(item.amount * 100),
+          amount: toMinorUnits(item.amount, request.currencyCode),
           reference: item.id,
           tax_code: item.taxCode || 'txcd_99999999',
           quantity: item.quantity,
@@ -81,7 +83,7 @@ export class StripeTaxProvider extends BaseTaxProvider implements ITaxProvider {
 
       if (request.shippingAmount && request.shippingAmount > 0) {
         lineItems.push({
-          amount: Math.round(request.shippingAmount * 100),
+          amount: toMinorUnits(request.shippingAmount, request.currencyCode),
           reference: 'shipping',
           tax_code: request.shippingTaxCode || 'txcd_92010001',
           quantity: 1,
@@ -117,8 +119,8 @@ export class StripeTaxProvider extends BaseTaxProvider implements ITaxProvider {
             jurisdictionName: bd.jurisdiction?.display_name || bd.jurisdiction?.state || '',
             jurisdictionCode: bd.jurisdiction?.state || undefined,
             taxType: bd.tax_rate_details?.tax_type || 'sales_tax',
-            taxableAmount: (bd.taxable_amount || 0) / 100,
-            taxAmount: (bd.amount || 0) / 100,
+            taxableAmount: fromMinorUnits(bd.taxable_amount || 0, request.currencyCode),
+            taxAmount: fromMinorUnits(bd.amount || 0, request.currencyCode),
             taxRate: bd.tax_rate_details?.percentage_decimal
               ? parseFloat(bd.tax_rate_details.percentage_decimal) / 100
               : 0,
@@ -127,8 +129,8 @@ export class StripeTaxProvider extends BaseTaxProvider implements ITaxProvider {
 
         resultLineItems.push({
           lineItemId: li.reference || '',
-          taxableAmount: (li.amount || 0) / 100,
-          taxAmount: (li.amount_tax || 0) / 100,
+          taxableAmount: fromMinorUnits(li.amount || 0, request.currencyCode),
+          taxAmount: fromMinorUnits(li.amount_tax || 0, request.currencyCode),
           taxRate: li.amount > 0 ? (li.amount_tax || 0) / li.amount : 0,
           details,
         });
@@ -159,9 +161,9 @@ export class StripeTaxProvider extends BaseTaxProvider implements ITaxProvider {
         documentCode: calculation.id,
         status: 'TEMPORARY',
         transactionDate: request.transactionDate,
-        totalAmount: (calculation.amount_total || 0) / 100,
+        totalAmount: fromMinorUnits(calculation.amount_total || 0, request.currencyCode),
         totalTaxableAmount: resultLineItems.reduce((sum, li) => sum + li.taxableAmount, 0),
-        totalTaxAmount: (calculation.tax_amount_exclusive || 0) / 100,
+        totalTaxAmount: fromMinorUnits(calculation.tax_amount_exclusive || 0, request.currencyCode),
         totalExemptAmount: 0,
         currencyCode: request.currencyCode,
         lineItems: resultLineItems,
@@ -215,7 +217,7 @@ export class StripeTaxProvider extends BaseTaxProvider implements ITaxProvider {
       totalTaxableAmount: 0,
       totalTaxAmount: 0,
       totalExemptAmount: 0,
-      currencyCode: 'USD',
+      currencyCode: PLATFORM_DEFAULT_CURRENCY,
       lineItems: [],
       summary: [],
     };

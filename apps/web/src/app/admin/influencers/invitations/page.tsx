@@ -5,6 +5,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { useDateTime } from '@/hooks/useDateTime';
 
 const api = apiClient as any;
 
@@ -24,6 +25,7 @@ interface Invitation {
 }
 
 export default function AdminInfluencerInvitationsPage() {
+  const { formatDate: formatDateShared } = useDateTime();
   const toast = useToast();
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -118,11 +120,9 @@ export default function AdminInfluencerInvitationsPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      day: 'numeric',
+    return formatDateShared(dateString, { day: 'numeric',
       month: 'short',
-      year: 'numeric',
-    });
+      year: 'numeric', });
   };
 
   const getStatusBadge = (status: string) => {

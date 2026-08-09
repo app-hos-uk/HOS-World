@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function AdminMessagingStatsPage() {
+  const { formatDateTime } = useDateTime();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -36,7 +38,7 @@ export default function AdminMessagingStatsPage() {
           ) : (
             <>
               <p className="text-sm text-hos-text-secondary">
-                Since {data?.since ? new Date(data.since).toLocaleString() : '—'}
+                Since {data?.since ? formatDateTime(data.since) : '—'}
               </p>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {rows.map((r: any) => (

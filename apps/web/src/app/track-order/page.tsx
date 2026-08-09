@@ -10,6 +10,8 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import Link from 'next/link';
 import Image from 'next/image';
 import { navIcon } from '@/lib/navIcons';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface TrackingEvent {
   date: string;
@@ -67,6 +69,7 @@ const ORDER_STATUSES = [
 ];
 
 function TrackOrderContent() {
+  const { formatDate, formatDateTime } = useDateTime();
   const searchParams = useSearchParams();
   const toast = useToast();
   const { formatPrice } = useCurrency();
@@ -294,16 +297,14 @@ function TrackOrderContent() {
                     Order #{order.orderNumber || order.id.slice(0, 8)}
                   </h2>
                   <p className="text-sm text-hos-text-muted mt-1">
-                    Placed on {new Date(order.createdAt).toLocaleDateString('en-US', {
-                      day: 'numeric',
+                    Placed on {formatDate(order.createdAt, { day: 'numeric',
                       month: 'long',
-                      year: 'numeric',
-                    })}
+                      year: 'numeric', })}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-xl font-bold text-hos-gold">
-                    {formatPrice(order.total, order.currency || 'USD')}
+                    {formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}
                   </p>
                   <p className="mt-1">
                     <span className="inline-block px-3 py-1 text-sm font-medium rounded-full bg-hos-gold/20 text-hos-gold">
@@ -312,7 +313,7 @@ function TrackOrderContent() {
                   </p>
                   {order.estimatedDelivery && (
                     <p className="text-sm text-hos-text-muted mt-1">
-                      Est. Delivery: {new Date(order.estimatedDelivery).toLocaleDateString()}
+                      Est. Delivery: {formatDate(order.estimatedDelivery)}
                     </p>
                   )}
                 </div>
@@ -412,7 +413,7 @@ function TrackOrderContent() {
                 )}
                 {order.estimatedDelivery && (
                   <p className="text-sm text-hos-text-secondary">
-                    Est. Delivery: {new Date(order.estimatedDelivery).toLocaleDateString()}
+                    Est. Delivery: {formatDate(order.estimatedDelivery)}
                   </p>
                 )}
               </div>
@@ -439,7 +440,7 @@ function TrackOrderContent() {
                     <div className="pb-4">
                       <p className="font-medium text-hos-text-secondary">{event.description}</p>
                       <p className="text-sm text-hos-text-muted">
-                        {new Date(event.date).toLocaleString()}
+                        {formatDateTime(event.date)}
                         {event.location && ` • ${event.location}`}
                       </p>
                     </div>
@@ -470,7 +471,7 @@ function TrackOrderContent() {
                             )}
                           </p>
                           <p className="text-hos-text-muted text-xs">
-                            {new Date(event.date).toLocaleString()}
+                            {formatDateTime(event.date)}
                             {event.location && ` • ${event.location}`}
                           </p>
                         </div>
@@ -523,7 +524,7 @@ function TrackOrderContent() {
                         <p className="text-sm text-hos-text-muted">Qty: {item.quantity}</p>
                       </div>
                       <p className="font-medium text-hos-text-secondary">
-                        {formatPrice(item.price * item.quantity, order.currency || 'USD')}
+                        {formatPrice(item.price * item.quantity, order.currency || DEFAULT_CURRENCY)}
                       </p>
                     </div>
                   );

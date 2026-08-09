@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { Public } from '../common/decorators/public.decorator';
 import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
+import { PlatformRegionService } from '../config/platform-region.service';
 import { LoyaltyService } from '../loyalty/loyalty.service';
 
 /**
@@ -18,6 +19,7 @@ export class PublicConfigController {
     private readonly adminService: AdminService,
     private readonly featureFlagsService: FeatureFlagsService,
     private readonly loyaltyService: LoyaltyService,
+    private readonly platformRegion: PlatformRegionService,
   ) {}
 
   @Get('site')
@@ -48,5 +50,23 @@ export class PublicConfigController {
   @Header('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=120')
   getLoyaltyEnabled(): { enabled: boolean } {
     return { enabled: this.loyaltyService.isEnabled() };
+  }
+
+  @Get('region')
+  @ApiOperation({ summary: 'Public platform region defaults (currency, locale, timezone)' })
+  @Header('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
+  async getRegion(): Promise<{
+    currency: string;
+    country: string;
+    locale: string;
+    timezone: string;
+  }> {
+    const region = await this.platformRegion.getRegion();
+    return {
+      currency: region.currency,
+      country: region.country,
+      locale: region.locale,
+      timezone: region.timezone,
+    };
   }
 }

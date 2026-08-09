@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 type LastPosted = {
   id: string;
@@ -36,16 +38,10 @@ type ThreeWayReport = {
   notes: string[];
 };
 
-function money(amount: number, currency: string) {
-  try {
-    return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount);
-  } catch {
-    return `${currency} ${amount.toFixed(2)}`;
-  }
-}
-
 export default function ThreeWayReconPage() {
   const toast = useToast();
+  const { formatMoney, currency: regionCurrency } = useMoney();
+  const { formatDate, formatDateTime } = useDateTime();
   const [report, setReport] = useState<ThreeWayReport | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -65,7 +61,7 @@ export default function ThreeWayReconPage() {
     load();
   }, [load]);
 
-  const currency = report?.pointsLiability.currency || 'GBP';
+  const currency = report?.pointsLiability.currency || regionCurrency;
 
   return (
     <RouteGuard allowedRoles={['ADMIN', 'FINANCE']}>
@@ -78,7 +74,7 @@ export default function ThreeWayReconPage() {
             </p>
             {report?.asOf && (
               <p className="text-xs text-hos-text-muted mt-1">
-                As of {new Date(report.asOf).toLocaleString()}
+                As of {formatDateTime(report.asOf)}
               </p>
             )}
           </div>
@@ -119,13 +115,13 @@ export default function ThreeWayReconPage() {
                   <div className="flex justify-between gap-2">
                     <dt className="text-hos-text-muted">Redeem value / pt</dt>
                     <dd className="text-hos-text-secondary">
-                      {money(report.pointsLiability.redeemValuePerPoint, currency)}
+                      {formatMoney(report.pointsLiability.redeemValuePerPoint, currency)}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-2">
                     <dt className="text-hos-text-muted">Est. liability</dt>
                     <dd className="font-medium text-hos-text-secondary">
-                      {money(report.pointsLiability.estimatedCurrencyLiability, currency)}
+                      {formatMoney(report.pointsLiability.estimatedCurrencyLiability, currency)}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-2">
@@ -142,7 +138,7 @@ export default function ThreeWayReconPage() {
                   2 · LS gift cards (bridge)
                 </h2>
                 <p className="mt-3 text-3xl font-bold text-hos-text-secondary">
-                  {money(report.giftCards.issuedAmount, currency)}
+                  {formatMoney(report.giftCards.issuedAmount, currency)}
                 </p>
                 <p className="text-sm text-hos-text-muted">
                   {report.giftCards.issuedVoucherCount} issued vouchers outstanding
@@ -191,7 +187,7 @@ export default function ThreeWayReconPage() {
                         <p className="text-hos-text-muted text-xs mt-0.5">
                           Period {row.periodDate}
                           {row.xeroJournalId ? ` · ${row.xeroJournalId}` : ''}
-                          {row.postedAt ? ` · ${new Date(row.postedAt).toLocaleDateString()}` : ''}
+                          {row.postedAt ? ` · ${formatDate(row.postedAt)}` : ''}
                         </p>
                       ) : (
                         <p className="text-hos-text-muted text-xs mt-0.5">No POSTED entry yet</p>

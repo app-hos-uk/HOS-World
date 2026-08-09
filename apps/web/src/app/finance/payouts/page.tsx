@@ -6,6 +6,9 @@ import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { getFinanceMenu } from '@/lib/teamMenus';
+import { useDateTime } from '@/hooks/useDateTime';
+import { useMoney } from '@/hooks/useMoney';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 type PayoutStatus = 'ALL' | 'PENDING' | 'PROCESSING' | 'PAID' | 'FAILED';
 
@@ -17,6 +20,8 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function FinancePayoutsPage() {
+  const { formatMoney } = useMoney();
+  const { formatDate } = useDateTime();
   const [payouts, setPayouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -276,10 +281,7 @@ export default function FinancePayoutsPage() {
                       </td>
                       <td className="tabular-nums text-right px-6 py-4 whitespace-nowrap">
                         <p className="text-sm font-semibold text-hos-text-secondary">
-                          ${(payout.amount || 0).toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
+                          {formatMoney(payout.amount || 0, payout.currency || DEFAULT_CURRENCY)}
                         </p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -293,7 +295,7 @@ export default function FinancePayoutsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                        {new Date(payout.createdAt).toLocaleDateString()}
+                        {formatDate(payout.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         {payout.status === 'PENDING' && (

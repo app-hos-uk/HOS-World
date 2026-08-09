@@ -9,6 +9,8 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { RouteGuard } from '@/components/RouteGuard';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useDateTime } from '@/hooks/useDateTime';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface WishlistItem {
   id: string;
@@ -63,6 +65,7 @@ function normalizeWishlistProducts(products: unknown[]): WishlistItem[] {
 }
 
 export default function WishlistPage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const { formatPrice } = useCurrency();
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
@@ -242,7 +245,7 @@ export default function WishlistPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <h3 className="text-xs font-medium text-hos-text-muted uppercase">Total Value</h3>
-                <p className="text-xl font-bold text-hos-gold mt-1">{formatPrice(stats.totalValue, 'USD')}</p>
+                <p className="text-xl font-bold text-hos-gold mt-1">{formatPrice(stats.totalValue, DEFAULT_CURRENCY)}</p>
               </div>
               <div className="bg-hos-bg-secondary rounded-lg shadow p-4">
                 <h3 className="text-xs font-medium text-hos-text-muted uppercase">In Stock</h3>
@@ -341,11 +344,11 @@ export default function WishlistPage() {
                       </Link>
                       <div className="flex items-center gap-2 mb-4 min-h-[1.5rem]">
                         <p className="text-hos-gold font-bold">
-                          {formatPrice(item.product?.price ?? 0, item.product?.currency || 'USD')}
+                          {formatPrice(item.product?.price ?? 0, item.product?.currency || DEFAULT_CURRENCY)}
                         </p>
                         {item.product?.originalPrice && item.product.originalPrice > (item.product?.price || 0) && (
                           <p className="text-hos-text-muted line-through text-sm">
-                            {formatPrice(item.product.originalPrice, item.product?.currency || 'USD')}
+                            {formatPrice(item.product.originalPrice, item.product?.currency || DEFAULT_CURRENCY)}
                           </p>
                         )}
                       </div>
@@ -385,7 +388,7 @@ export default function WishlistPage() {
                           </button>
                         </div>
                         <p className="text-xs text-hos-text-muted mt-3 min-h-[1rem]">
-                          {item.addedAt ? `Added ${new Date(item.addedAt).toLocaleDateString()}` : '\u00A0'}
+                          {item.addedAt ? `Added ${formatDate(item.addedAt)}` : '\u00A0'}
                         </p>
                       </div>
                     </div>

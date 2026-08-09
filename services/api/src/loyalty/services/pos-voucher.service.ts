@@ -19,6 +19,7 @@ import { LoyaltyWalletService } from './wallet.service';
 import { LoyaltySettingsService } from './loyalty-settings.service';
 import { RedeemForVoucherDto } from '../dto/redeem-for-voucher.dto';
 import { FeatureFlagsService } from '../../config/feature-flags.service';
+import { PlatformRegionService } from '../../config/platform-region.service';
 import { MetricsService } from '../../monitoring/metrics.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 
@@ -39,6 +40,7 @@ export class PosVoucherService {
     private encryption: EncryptionService,
     private metrics: MetricsService,
     private loyaltySettings: LoyaltySettingsService,
+    private platformRegion: PlatformRegionService,
   ) {}
 
   async assertVoucherEnabled(): Promise<void> {
@@ -101,6 +103,7 @@ export class PosVoucherService {
     if (amount <= 0) {
       throw new BadRequestException('Redemption amount must be greater than zero');
     }
+    const currency = store.currency || (await this.platformRegion.getCurrency());
 
     // Check for a prior burn via the wallet key before validating limits or calling
     // the burn engine, so idempotent replays succeed regardless of config changes.
@@ -130,14 +133,14 @@ export class PosVoucherService {
           redemptionId: priorWalletTx.sourceId,
           storeId: dto.storeId,
           amount,
-          currency: store.currency || 'GBP',
+          currency,
           posConnection: store.posConnection!,
         });
       }
       // Redemption was reversed or missing — fall through to re-burn below.
     }
 
-    await this.assertGiftCardAmountLimits(amount, store.currency || 'GBP');
+    await this.assertGiftCardAmountLimits(amount, currency);
 
     const { redemptionId } = await this.burn.processRedemption({
       membershipId,
@@ -162,7 +165,7 @@ export class PosVoucherService {
       redemptionId,
       storeId: dto.storeId,
       amount,
-      currency: store.currency || 'GBP',
+      currency,
       posConnection: store.posConnection!,
       reverseBurnOnCreateFailure: { points: dto.points },
     });

@@ -27,6 +27,7 @@ import { FoundingMembersService } from '../founding-members/founding-members.ser
 import { LoyaltyService } from '../loyalty/loyalty.service';
 import { slugify } from '@hos-marketplace/utils';
 import type { User, AuthResponse } from '@hos-marketplace/shared-types';
+import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
 export class AuthService {
@@ -273,7 +274,8 @@ export class AuthService {
 
     // Determine currency preference based on country
     const countryCode = this.getCountryCode(registerDto.country);
-    const currencyPreference = this.geolocationService.getCurrencyForCountry(countryCode) || 'USD';
+    const currencyPreference =
+      this.geolocationService.getCurrencyForCountry(countryCode) || PLATFORM_DEFAULT_CURRENCY;
 
     // Create user with global platform fields
     const user = await this.prisma.user.create({
@@ -551,7 +553,8 @@ export class AuthService {
     await this.assertRegistrationAllowed(email, guestCheckoutDto.inviteCode);
 
     const countryCode = this.getCountryCode(guestCheckoutDto.country);
-    const currencyPreference = this.geolocationService.getCurrencyForCountry(countryCode) || 'USD';
+    const currencyPreference =
+      this.geolocationService.getCurrencyForCountry(countryCode) || PLATFORM_DEFAULT_CURRENCY;
 
     const user = await this.prisma.user.create({
       data: {
@@ -734,7 +737,8 @@ export class AuthService {
 
     // Determine currency preference based on country
     const countryCode = this.getCountryCode(registerDto.country);
-    const currencyPreference = this.geolocationService.getCurrencyForCountry(countryCode) || 'USD';
+    const currencyPreference =
+      this.geolocationService.getCurrencyForCountry(countryCode) || PLATFORM_DEFAULT_CURRENCY;
 
     // Create user
     const user = await this.prisma.user.create({

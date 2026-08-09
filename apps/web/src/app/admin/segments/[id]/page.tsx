@@ -7,10 +7,12 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 type Tab = 'overview' | 'members' | 'broadcast';
 
 export default function AdminSegmentDetailPage() {
+  const { formatDateTime } = useDateTime();
   const params = useParams();
   const id = String(params.id);
   const toast = useToast();
@@ -204,7 +206,7 @@ export default function AdminSegmentDetailPage() {
               <div className="rounded-lg border p-4 bg-hos-bg-secondary">
                 <p className="text-sm text-hos-text-muted">Last evaluated</p>
                 <p className="text-lg">
-                  {seg.lastEvaluatedAt ? new Date(seg.lastEvaluatedAt).toLocaleString() : '—'}
+                  {seg.lastEvaluatedAt ? formatDateTime(seg.lastEvaluatedAt) : '—'}
                 </p>
               </div>
               <div className="md:col-span-2 rounded-lg border p-4 bg-hos-bg-secondary">
@@ -257,7 +259,7 @@ export default function AdminSegmentDetailPage() {
                       <td className="px-3 py-2">{m.tierName}</td>
                       <td className="text-right px-3 py-2">{m.points}</td>
                       <td className="px-3 py-2">{m.country}</td>
-                      <td className="px-3 py-2">{new Date(m.joinedAt).toLocaleString()}</td>
+                      <td className="px-3 py-2">{formatDateTime(m.joinedAt)}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -8,8 +8,10 @@ import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { toSafeExternalHref } from '@/lib/httpUrlValidation';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function EventDetailPage() {
+  const { formatDateTime } = useDateTime();
   const params = useParams();
   const slug = params.slug as string;
   const toast = useToast();
@@ -67,7 +69,7 @@ export default function EventDetailPage() {
           <article className="space-y-4">
             <h1 className="font-primary text-3xl text-amber-100">{ev.title}</h1>
             <p className="text-stone-400 font-secondary text-sm">
-              {new Date(ev.startsAt).toLocaleString()} — {new Date(ev.endsAt).toLocaleString()}
+              {formatDateTime(ev.startsAt)} — {formatDateTime(ev.endsAt)}
             </p>
             {ev.shortDescription && <p className="text-stone-300 font-secondary">{ev.shortDescription}</p>}
             {ev.description && (

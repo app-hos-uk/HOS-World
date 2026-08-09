@@ -8,6 +8,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 import { sanitizeKbHtml } from '@/lib/sanitizeHtml';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface KBArticle {
   id: string;
@@ -28,6 +29,7 @@ interface KBArticle {
 }
 
 export default function KBArticlePage() {
+  const { formatDate } = useDateTime();
   const params = useParams();
   const slug = params.slug as string;
   const toast = useToast();
@@ -110,11 +112,9 @@ export default function KBArticlePage() {
                   )}
                   {article.updatedAt && (
                     <span className="text-xs text-hos-text-muted">
-                      Updated {new Date(article.updatedAt).toLocaleDateString('en-US', {
-                        day: 'numeric',
+                      Updated {formatDate(article.updatedAt, { day: 'numeric',
                         month: 'long',
-                        year: 'numeric',
-                      })}
+                        year: 'numeric', })}
                     </span>
                   )}
                 </div>

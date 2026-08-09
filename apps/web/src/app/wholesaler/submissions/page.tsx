@@ -9,6 +9,7 @@ import { getSellerMenuItems } from '@/lib/sellerMenu';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
 import { PORTAL_INPUT_CLASS, PORTAL_SELECT_CLASS } from '@/lib/portalFieldClasses';
+import { useDateTime } from '@/hooks/useDateTime';
 
 function canSellerEditSubmission(status: string): boolean {
   return ['SUBMITTED', 'UNDER_REVIEW', 'PROCUREMENT_REJECTED'].includes(status);
@@ -28,6 +29,7 @@ function formatSubmissionStatus(status?: string): string {
 }
 
 export default function WholesalerSubmissionsPage() {
+  const { formatDate } = useDateTime();
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -231,7 +233,7 @@ export default function WholesalerSubmissionsPage() {
                           </span>
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm text-hos-text-muted">
-                          {new Date(submission.createdAt).toLocaleDateString()}
+                          {formatDate(submission.createdAt)}
                         </td>
                         <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center gap-3">

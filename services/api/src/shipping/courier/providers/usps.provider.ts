@@ -12,6 +12,7 @@ import {
   Address,
   TestConnectionResult,
 } from '../interfaces/courier-provider.interface';
+import { PLATFORM_DEFAULT_CURRENCY } from '../../../common/currency-defaults';
 
 /**
  * USPS API Integration
@@ -204,7 +205,7 @@ export class USPSProvider extends BaseCourierProvider implements ICourierProvide
           serviceCode,
           serviceName: serviceInfo?.name || entry.description || serviceCode,
           rate: totalPrice,
-          currency: 'USD',
+          currency: PLATFORM_DEFAULT_CURRENCY,
           estimatedDays: serviceInfo?.days || parseInt(entry.deliveryDays || '5', 10),
           trackingIncluded: serviceCode !== 'FIRST_CLASS_MAIL',
           metadata: {
@@ -302,7 +303,7 @@ export class USPSProvider extends BaseCourierProvider implements ICourierProvide
           },
         ],
         rate: parseFloat(response.postage?.totalPrice || response.totalPrice || '0'),
-        currency: 'USD',
+        currency: PLATFORM_DEFAULT_CURRENCY,
         serviceCode: request.serviceCode,
         serviceName: serviceInfo?.name || request.serviceCode,
         estimatedDeliveryDate: response.deliveryDate ? new Date(response.deliveryDate) : undefined,

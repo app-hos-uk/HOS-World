@@ -12,6 +12,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Prisma, LoyaltyTxType } from '@prisma/client';
 import * as crypto from 'crypto';
+import { PlatformRegionService } from '../config/platform-region.service';
 import { PrismaService } from '../database/prisma.service';
 import { LoyaltyWalletService } from '../loyalty/services/wallet.service';
 import { LoyaltyTierEngine } from '../loyalty/engines/tier.engine';
@@ -46,6 +47,7 @@ export class EventsService {
     private templates: TemplatesService,
     private config: ConfigService,
     private segmentation: SegmentationService,
+    private region: PlatformRegionService,
     @Optional()
     @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
@@ -692,6 +694,7 @@ export class EventsService {
       if (!clash) break;
       slug = `${base}-${crypto.randomBytes(2).toString('hex')}`;
     }
+    const region = await this.region.getRegion();
     const data: Prisma.EventCreateInput = {
       title: dto.title,
       slug,
@@ -700,14 +703,14 @@ export class EventsService {
       type: dto.type ?? 'IN_STORE',
       startsAt: new Date(dto.startsAt),
       endsAt: new Date(dto.endsAt),
-      timezone: dto.timezone ?? 'Europe/London',
+      timezone: dto.timezone ?? region.timezone,
       doorsOpenAt: dto.doorsOpenAt ? new Date(dto.doorsOpenAt) : undefined,
       capacity: dto.capacity,
       isPublic: dto.isPublic ?? true,
       minTierLevel: dto.minTierLevel ?? 0,
       allowedTierIds: dto.allowedTierIds ?? [],
       requiresTicket: dto.requiresTicket ?? false,
-      ticketCurrency: dto.ticketCurrency ?? 'USD',
+      ticketCurrency: dto.ticketCurrency ?? region.currency,
       attendancePoints:
         dto.attendancePoints ?? this.config.get<number>('EVENT_DEFAULT_POINTS', 100),
       earnRuleAction: dto.earnRuleAction,

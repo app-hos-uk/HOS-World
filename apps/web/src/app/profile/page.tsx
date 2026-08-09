@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -11,6 +11,7 @@ import { apiClient } from '@/lib/api';
 import { getSafeReturnUrl } from '@/lib/authRedirect';
 import { useToast } from '@/hooks/useToast';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { formatDate } from '@/lib/datetime';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -19,6 +20,11 @@ import {
   sanitizeTelInput,
   sanitizePostalCode,
 } from '@/lib/profileFieldSanitize';
+import {
+  getAddressFieldLabels,
+  regionCountryToFormValue,
+} from '@/components/addressFieldLabels';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface GamificationStats {
   points: number;
@@ -68,7 +74,11 @@ function ProfilePageContent() {
   const toast = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { currency, setCurrency } = useCurrency();
+  const { currency, setCurrency, country: regionCountry, rates, regionCurrency } = useCurrency();
+  const supportedCurrencies = useMemo(() => {
+    const codes = Object.keys(rates || {}).map((c) => c.toUpperCase());
+    return codes.length > 0 ? [...new Set(codes)] : [regionCurrency];
+  }, [rates, regionCurrency]);
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState<GamificationStats | null>(null);
   const [badges, setBadges] = useState<Badge[]>([]);
@@ -91,7 +101,7 @@ function ProfilePageContent() {
     country: '',
     whatsappNumber: '',
     preferredCommunicationMethod: 'EMAIL' as 'EMAIL' | 'SMS' | 'WHATSAPP' | 'PHONE',
-    currencyPreference: 'USD',
+    currencyPreference: DEFAULT_CURRENCY,
     // Marketing dates (optional)
     birthday: '',
     anniversary: '',
@@ -128,13 +138,17 @@ function ProfilePageContent() {
     city: '',
     state: '',
     postalCode: '',
-    country: '',
+    country: regionCountryToFormValue(regionCountry) || 'United States',
     landmark: '',
     deliveryInstructions: '',
     isDefault: false,
     latitude: undefined as number | undefined,
     longitude: undefined as number | undefined,
   });
+  const addressLabels = useMemo(
+    () => getAddressFieldLabels(addressForm.country || regionCountry),
+    [addressForm.country, regionCountry],
+  );
 
   useEffect(() => {
     fetchProfileData();
@@ -173,7 +187,7 @@ function ProfilePageContent() {
           country: profileRes.data.country || '',
           whatsappNumber: sanitizeTelInput(profileRes.data.whatsappNumber || ''),
           preferredCommunicationMethod: profileRes.data.preferredCommunicationMethod || 'EMAIL',
-          currencyPreference: profileRes.data.currencyPreference || 'USD',
+          currencyPreference: profileRes.data.currencyPreference || DEFAULT_CURRENCY,
           birthday: profileRes.data.birthday ? new Date(profileRes.data.birthday).toISOString().split('T')[0] : '',
           anniversary: profileRes.data.anniversary ? new Date(profileRes.data.anniversary).toISOString().split('T')[0] : '',
         });
@@ -353,7 +367,7 @@ function ProfilePageContent() {
         city: '',
         state: '',
         postalCode: '',
-        country: '',
+        country: regionCountryToFormValue(regionCountry) || 'United States',
         landmark: '',
         deliveryInstructions: '',
         isDefault: false,
@@ -643,7 +657,7 @@ function ProfilePageContent() {
                             <span className="text-hos-text-muted">{badge.points} points</span>
                           </div>
                           <div className="text-xs text-hos-text-muted mt-3">
-                            Earned {new Date(badge.earnedAt).toLocaleDateString()}
+                            Earned {formatDate(badge.earnedAt)}
                           </div>
                         </div>
                       </div>
@@ -748,7 +762,7 @@ function ProfilePageContent() {
                         city: '',
                         state: '',
                         postalCode: '',
-                        country: '',
+                        country: regionCountryToFormValue(regionCountry) || 'United States',
                         landmark: '',
                         deliveryInstructions: '',
                         isDefault: false,
@@ -823,7 +837,7 @@ function ProfilePageContent() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Phone</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">{addressLabels.phone}</label>
                           <input
                             type="tel"
                             value={addressForm.phone}
@@ -845,7 +859,7 @@ function ProfilePageContent() {
                             value={addressForm.street}
                             onChange={(e) => setAddressForm({ ...addressForm, street: e.target.value })}
                             className="w-full px-4 py-2 border border-hos-border rounded-lg focus:outline-none focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
-                            placeholder="House number and street name"
+                            placeholder={addressLabels.streetPlaceholder}
                             required
                           />
                         </div>
@@ -885,7 +899,7 @@ function ProfilePageContent() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">State/Province/Region</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">{addressLabels.state}</label>
                           <input
                             type="text"
                             value={addressForm.state}
@@ -899,7 +913,7 @@ function ProfilePageContent() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">Postal Code *</label>
+                          <label className="block text-sm font-medium text-hos-text-secondary mb-1">{addressLabels.postalCode} *</label>
                           <input
                             type="text"
                             value={addressForm.postalCode}
@@ -1223,17 +1237,35 @@ function ProfilePageContent() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-hos-text-secondary mb-1">Currency Preference</label>
-                        <select
-                          value={editing ? formData.currencyPreference : (profile?.currencyPreference || 'USD')}
-                          onChange={(e) => setFormData({ ...formData, currencyPreference: e.target.value })}
-                          disabled={!editing}
-                          className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary disabled:bg-hos-bg-tertiary"
-                        >
-                          <option value="USD">$ USD (US Dollar)</option>
-                          <option value="EUR">€ EUR (Euro)</option>
-                          <option value="AED">د.إ AED (UAE Dirham)</option>
-                        </select>
-                        <p className="text-xs text-hos-text-muted mt-1">Prices will be displayed in this currency</p>
+                        {supportedCurrencies.length <= 1 ? (
+                          <>
+                            <input
+                              type="text"
+                              value={regionCurrency}
+                              disabled
+                              className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-tertiary text-hos-text-secondary"
+                            />
+                            <p className="text-xs text-hos-text-muted mt-1">
+                              Prices are shown in the platform currency ({regionCurrency}).
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <select
+                              value={editing ? formData.currencyPreference : (profile?.currencyPreference || regionCurrency)}
+                              onChange={(e) => setFormData({ ...formData, currencyPreference: e.target.value })}
+                              disabled={!editing}
+                              className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary disabled:bg-hos-bg-tertiary"
+                            >
+                              {supportedCurrencies.map((code) => (
+                                <option key={code} value={code}>
+                                  {code}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="text-xs text-hos-text-muted mt-1">Prices will be displayed in this currency</p>
+                          </>
+                        )}
                       </div>
 
                       {/* Special Dates - Optional for marketing */}
@@ -1285,7 +1317,7 @@ function ProfilePageContent() {
                                 country: profile?.country || '',
                                 whatsappNumber: sanitizeTelInput(profile?.whatsappNumber || ''),
                                 preferredCommunicationMethod: profile?.preferredCommunicationMethod || 'EMAIL',
-                                currencyPreference: profile?.currencyPreference || 'USD',
+                                currencyPreference: profile?.currencyPreference || DEFAULT_CURRENCY,
                                 birthday: profile?.birthday ? new Date(profile.birthday).toISOString().split('T')[0] : '',
                                 anniversary: profile?.anniversary ? new Date(profile.anniversary).toISOString().split('T')[0] : '',
                               });

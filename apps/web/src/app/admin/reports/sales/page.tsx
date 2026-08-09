@@ -18,8 +18,10 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { format, subMonths } from 'date-fns';
+import { useMoney } from '@/hooks/useMoney';
 
 export default function AdminSalesReportsPage() {
+  const { formatMoney, formatMoneyCompact } = useMoney();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,7 +154,7 @@ export default function AdminSalesReportsPage() {
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Revenue</h3>
               <p className="text-3xl font-bold text-hos-text-secondary mt-2">
-                ${Number(data?.totalRevenue || 0).toFixed(2)}
+                {formatMoney(Number(data?.totalRevenue || 0))}
               </p>
               {data?.growthRate && (
                 <p
@@ -198,7 +200,7 @@ export default function AdminSalesReportsPage() {
                 <div>
                   <h3 className="text-sm font-medium text-hos-text-muted">Current Period</h3>
                   <p className="text-2xl font-bold text-hos-text-secondary mt-1">
-                    ${Number(data.periodComparison.current.revenue).toFixed(2)}
+                    {formatMoney(Number(data.periodComparison.current.revenue))}
                   </p>
                   <p className="text-sm text-hos-text-muted mt-1">
                     {data.periodComparison.current.orders} orders
@@ -207,7 +209,7 @@ export default function AdminSalesReportsPage() {
                 <div>
                   <h3 className="text-sm font-medium text-hos-text-muted">Previous Period</h3>
                   <p className="text-2xl font-bold text-hos-text-secondary mt-1">
-                    ${Number(data.periodComparison.previous.revenue).toFixed(2)}
+                    {formatMoney(Number(data.periodComparison.previous.revenue))}
                   </p>
                   <p className="text-sm text-hos-text-muted mt-1">
                     {data.periodComparison.previous.orders} orders
@@ -241,7 +243,7 @@ export default function AdminSalesReportsPage() {
                     <YAxis
                       yAxisId="revenue"
                       label={{ value: 'Revenue ($)', angle: -90, position: 'insideLeft' }}
-                      tickFormatter={(value) => `$${Number(value).toFixed(0)}`}
+                      tickFormatter={(value) => formatMoneyCompact(Number(value))}
                     />
                     {compareWithPrevious && (
                       <YAxis
@@ -256,7 +258,7 @@ export default function AdminSalesReportsPage() {
                         if (name === 'Growth %') {
                           return `${Number(value).toFixed(2)}%`;
                         }
-                        return `$${Number(value).toFixed(2)}`;
+                        return formatMoney(Number(value));
                       }}
                       labelFormatter={(label) => `Period: ${label}`}
                     />
@@ -309,7 +311,7 @@ export default function AdminSalesReportsPage() {
                     <Tooltip
                       shared={false}
                       cursor={false}
-                      formatter={(value: any) => `$${Number(value).toFixed(2)}`}
+                      formatter={(value: any) => formatMoney(Number(value))}
                       labelFormatter={(label) => `Period: ${label}`}
                     />
                     <Legend />

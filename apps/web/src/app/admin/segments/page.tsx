@@ -6,8 +6,10 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function AdminSegmentsPage() {
+  const { formatDateTime } = useDateTime();
   const toast = useToast();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,7 +138,7 @@ export default function AdminSegmentsPage() {
                       <td className="px-4 py-2">{s.status}</td>
                       <td className="px-4 py-2">{s.memberCount ?? 0}</td>
                       <td className="px-4 py-2">
-                        {s.lastEvaluatedAt ? new Date(s.lastEvaluatedAt).toLocaleString() : '—'}
+                        {s.lastEvaluatedAt ? formatDateTime(s.lastEvaluatedAt) : '—'}
                       </td>
                       <td className="px-4 py-2 text-right space-x-2 whitespace-nowrap">
                         <Link href={`/admin/segments/${s.id}`} className="text-hos-gold hover:underline">

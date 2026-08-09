@@ -7,6 +7,7 @@ import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Link from 'next/link';
+import { useDateTime } from '@/hooks/useDateTime';
 
 interface Ticket {
   id: string;
@@ -38,6 +39,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default function SupportTicketsPage() {
+  const { formatDate } = useDateTime();
   const toast = useToast();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
@@ -200,11 +202,9 @@ export default function SupportTicketsPage() {
                           {CATEGORY_LABELS[ticket.category] || ticket.category}
                         </td>
                         <td className="px-6 py-4 text-sm text-hos-text-muted">
-                          {new Date(ticket.createdAt).toLocaleDateString('en-US', {
-                            day: 'numeric',
+                          {formatDate(ticket.createdAt, { day: 'numeric',
                             month: 'short',
-                            year: 'numeric',
-                          })}
+                            year: 'numeric', })}
                         </td>
                       </tr>
                     ))}
@@ -232,10 +232,8 @@ export default function SupportTicketsPage() {
                       <span>{CATEGORY_LABELS[ticket.category] || ticket.category}</span>
                       <span>&middot;</span>
                       <span>
-                        {new Date(ticket.createdAt).toLocaleDateString('en-US', {
-                          day: 'numeric',
-                          month: 'short',
-                        })}
+                        {formatDate(ticket.createdAt, { day: 'numeric',
+                          month: 'short', })}
                       </span>
                     </div>
                   </Link>

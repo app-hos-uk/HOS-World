@@ -117,6 +117,15 @@ describe('EventsService', () => {
       templates as any,
       config as unknown as ConfigService,
       segmentation as any,
+      {
+        getRegion: jest.fn().mockResolvedValue({
+          currency: 'USD',
+          country: 'US',
+          locale: 'en-US',
+          timezone: 'America/New_York',
+          taxOrigin: null,
+        }),
+      } as any,
       marketingBus as any,
     );
   });

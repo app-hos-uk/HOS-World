@@ -4,8 +4,12 @@ import { useEffect, useState, useCallback } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useMoney } from '@/hooks/useMoney';
+import { useDateTime } from '@/hooks/useDateTime';
 
 export default function PublishingDashboardPage() {
+  const { formatDate } = useDateTime();
+  const { formatMoney } = useMoney();
   const toast = useToast();
   const [readySubmissions, setReadySubmissions] = useState<any[]>([]);
   const [publishedProducts, setPublishedProducts] = useState<any[]>([]);
@@ -211,13 +215,13 @@ export default function PublishingDashboardPage() {
                         <p className="font-medium text-hos-text-secondary truncate">{name}</p>
                         <p className="text-sm text-hos-text-muted mt-0.5">{seller}</p>
                         <div className="flex flex-wrap gap-3 mt-2 text-xs text-hos-text-muted">
-                          {price && <span>Price: ${parseFloat(price).toFixed(2)}</span>}
+                          {price && <span>Price: {formatMoney(parseFloat(price))}</span>}
                           <span className="px-2 py-0.5 bg-green-500/15 text-green-300 rounded font-medium">
                             FINANCE APPROVED
                           </span>
                           {submission.financeApprovedAt && (
                             <span>
-                              Approved: {new Date(submission.financeApprovedAt).toLocaleDateString()}
+                              Approved: {formatDate(submission.financeApprovedAt)}
                             </span>
                           )}
                         </div>
@@ -265,11 +269,11 @@ export default function PublishingDashboardPage() {
                           <p className="font-medium text-hos-text-secondary truncate">{name}</p>
                           <div className="flex flex-wrap gap-3 mt-1 text-xs text-hos-text-muted">
                             {product.price && (
-                              <span>Price: ${parseFloat(product.price).toFixed(2)}</span>
+                              <span>Price: {formatMoney(parseFloat(product.price))}</span>
                             )}
                             {product.publishedAt && (
                               <span>
-                                Published: {new Date(product.publishedAt).toLocaleDateString()}
+                                Published: {formatDate(product.publishedAt)}
                               </span>
                             )}
                             {product.seller?.storeName && (

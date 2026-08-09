@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { withShopPreview } from '@/lib/shopPreviewClient';
+import { useMoney } from '@/hooks/useMoney';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 const RECENT_SEARCHES_KEY = 'recent_searches';
 const MAX_RECENT = 5;
@@ -52,6 +54,7 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ compact = false }: SearchBarProps) {
+  const { formatMoney } = useMoney();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const productsUrlQuery = pathname === '/products' ? (searchParams.get('q') ?? '') : '';
@@ -421,7 +424,7 @@ export function SearchBar({ compact = false }: SearchBarProps) {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-hos-text-primary truncate">{product.name}</p>
                     <p className="text-sm text-hos-gold font-semibold">
-                      {new Intl.NumberFormat('en-US', { style: 'currency', currency: product.currency || 'USD' }).format(Number(product.price))}
+                      {formatMoney(Number(product.price), product.currency || DEFAULT_CURRENCY)}
                     </p>
                   </div>
                   <svg className="w-4 h-4 text-hos-text-muted shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
