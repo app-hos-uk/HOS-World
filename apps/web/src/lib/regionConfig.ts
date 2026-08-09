@@ -61,6 +61,14 @@ export function persistRegion(region: RegionConfig): void {
   }
 }
 
+/** Map ISO 3166-1 alpha-2 country code to its primary ISO 4217 currency code. */
+export const COUNTRY_TO_CURRENCY: Record<string, string> = {
+  US: 'USD', GB: 'GBP', AE: 'AED', MY: 'MYR', AU: 'AUD', CA: 'CAD',
+  IN: 'INR', SG: 'SGD', NZ: 'NZD', IE: 'EUR', DE: 'EUR', FR: 'EUR',
+  JP: 'JPY', KR: 'KRW', CN: 'CNY', HK: 'HKD', CH: 'CHF', MX: 'MXN',
+  SA: 'SAR', KW: 'KWD', BH: 'BHD', OM: 'OMR', ZA: 'ZAR',
+};
+
 /** Prefer cached localStorage region on the client so first paint matches last known config. */
 export function getInitialRegion(): RegionConfig {
   const stored = readStoredRegion();

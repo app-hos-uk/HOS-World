@@ -6,14 +6,9 @@ import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
+import { DEFAULT_CURRENCY, COUNTRY_TO_CURRENCY } from '@/lib/regionConfig';
 import { CountrySelect } from '@/components/CountrySelect';
 import { COUNTRIES } from '@/lib/countries';
-
-const COUNTRY_CURRENCY: Record<string, string> = {
-  US: 'USD', GB: 'GBP', AE: 'AED', MY: 'MYR', AU: 'AUD', CA: 'CAD',
-  IN: 'INR', SG: 'SGD', NZ: 'NZD', IE: 'EUR', DE: 'EUR', FR: 'EUR',
-};
 
 export default function AdminStoreNewPage() {
   const router = useRouter();
@@ -42,7 +37,7 @@ export default function AdminStoreNewPage() {
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const cc = e.target.value;
     setCountryCode(cc);
-    const mapped = COUNTRY_CURRENCY[cc];
+    const mapped = COUNTRY_TO_CURRENCY[cc];
     if (mapped) setCurrency(mapped);
   };
 
