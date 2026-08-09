@@ -314,7 +314,7 @@ export default function AdminStoreDetailPage() {
                     {!s.completedAt && (
                       <button
                         type="button"
-                        className="text-xs text-hos-gold hover:text-hos-gold-hover"
+                        className="text-xs px-3 py-1 rounded bg-emerald-700 text-white hover:bg-emerald-600"
                         onClick={() => completeStep(s.key)}
                       >
                         Mark done
@@ -325,10 +325,10 @@ export default function AdminStoreDetailPage() {
               </ul>
               <button
                 type="button"
-                className="mt-3 text-sm px-3 py-1 rounded bg-hos-bg-tertiary text-hos-text-secondary hover:bg-hos-bg-secondary"
+                className="mt-3 text-sm px-4 py-2 rounded-md bg-violet-700 text-white hover:bg-violet-600 font-medium"
                 onClick={finishOnboarding}
               >
-                Complete onboarding (all steps must be done)
+                Complete onboarding
               </button>
             </div>
           </>
