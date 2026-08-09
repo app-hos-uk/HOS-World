@@ -4,6 +4,10 @@ import { Type } from 'class-transformer';
 export class UpdateStoreDto {
   @IsOptional()
   @IsString()
+  sellerId?: string;
+
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @IsOptional()

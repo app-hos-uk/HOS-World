@@ -137,6 +137,9 @@ export class StoreOnboardingService {
       }
     }
     const data: Prisma.StoreUpdateInput = {};
+    if (dto.sellerId !== undefined) {
+      data.seller = dto.sellerId ? { connect: { id: dto.sellerId } } : { disconnect: true };
+    }
     if (dto.name != null) data.name = dto.name;
     if (dto.address !== undefined) data.address = dto.address;
     if (dto.city !== undefined) data.city = dto.city;

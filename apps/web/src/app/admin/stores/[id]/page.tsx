@@ -60,6 +60,8 @@ export default function AdminStoreDetailPage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<EditForm>({ name: '', code: '', address: '', city: '', postcode: '', countryCode: '', defaultRegionCode: '' });
   const [saving, setSaving] = useState(false);
+  const [sellers, setSellers] = useState<{ id: string; storeName: string }[]>([]);
+  const [sellerId, setSellerId] = useState('');
 
   const load = useCallback(() => {
     if (!id) return;
@@ -68,13 +70,30 @@ export default function AdminStoreDetailPage() {
       .then((r) => {
         const data = (r.data as Record<string, unknown>) || null;
         setRow(data);
-        if (data) setForm(toEditForm(data));
+        if (data) {
+          setForm(toEditForm(data));
+          setSellerId(String(data.sellerId ?? ''));
+        }
       })
       .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Request failed'));
   }, [id, toast]);
 
   useEffect(() => {
     load();
+    apiClient
+      .getAdminSellers({ page: 1, limit: 200 })
+      .then((r) => {
+        const list = ((r.data as Record<string, unknown>)?.sellers ?? r.data) as Record<string, unknown>[];
+        if (Array.isArray(list)) {
+          setSellers(
+            list.map((s) => ({
+              id: String(s.id),
+              storeName: String(s.storeName || s.businessName || s.id),
+            })),
+          );
+        }
+      })
+      .catch(() => {});
   }, [load]);
 
   const checklist = row?.onboardingChecklist as Record<string, unknown> | undefined;
@@ -146,6 +165,7 @@ export default function AdminStoreDetailPage() {
         country: countryName || form.countryCode || undefined,
         countryCode: form.countryCode || undefined,
         defaultRegionCode: form.defaultRegionCode.trim() || undefined,
+        sellerId: sellerId || null,
       });
       toast.success('Store updated');
       setEditing(false);
@@ -187,6 +207,13 @@ export default function AdminStoreDetailPage() {
                   ) : (
                     <span className="text-red-400">inactive</span>
                   )}
+                  {row.sellerId ? (
+                    <span className="ml-2">
+                      &middot; Seller: {sellers.find((s) => s.id === row.sellerId)?.storeName || String(row.sellerId)}
+                    </span>
+                  ) : (
+                    <span className="ml-2 text-amber-400">&middot; No seller assigned</span>
+                  )}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -224,6 +251,24 @@ export default function AdminStoreDetailPage() {
               <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
                 <h2 className="text-lg font-semibold mb-4 text-hos-text-secondary">Edit store details</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Seller</label>
+                    <select
+                      className={INPUT_CLS}
+                      value={sellerId}
+                      onChange={(e) => setSellerId(e.target.value)}
+                    >
+                      <option value="">No seller assigned</option>
+                      {sellers.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.storeName}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-hos-text-muted mt-1">
+                      A seller must be assigned before the store can be used in POS connections.
+                    </p>
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-hos-text-secondary mb-1">Name *</label>
                     <input
