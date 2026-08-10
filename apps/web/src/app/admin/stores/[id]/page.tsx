@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { CountrySelect } from '@/components/CountrySelect';
@@ -49,6 +49,7 @@ function toEditForm(row: Record<string, unknown>): EditForm {
 
 export default function AdminStoreDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = String(params.id);
   const toast = useToast();
 
@@ -167,6 +168,14 @@ export default function AdminStoreDetailPage() {
   const passedCount = readiness.filter((c) => c.ok).length;
   const allPassed = readiness.length > 0 && passedCount === readiness.length;
 
+  const readinessActions: Record<string, { label: string; action: () => void }> = {
+    seller: { label: 'Assign seller', action: () => startEdit() },
+    pos_connection: { label: 'Set up POS', action: () => router.push('/admin/pos/connections') },
+    pos_active: { label: 'Configure POS', action: () => router.push('/admin/pos/connections') },
+    products: { label: 'Manage products', action: () => router.push('/admin/products') },
+    test_sale: { label: 'How to test', action: () => toast.info('Process a test sale through the POS terminal to complete this check.') },
+  };
+
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
       <div className="p-6 max-w-3xl mx-auto space-y-6">
@@ -265,16 +274,30 @@ export default function AdminStoreDetailPage() {
                   </span>
                 </h2>
                 <ul className="space-y-1.5 text-sm">
-                  {readiness.map((c) => (
-                    <li key={c.key} className="flex items-center gap-2 border border-hos-border rounded p-2 bg-hos-bg-secondary">
-                      <span className={`text-lg ${c.ok ? 'text-emerald-400' : 'text-hos-text-muted'}`}>
-                        {c.ok ? '●' : '○'}
-                      </span>
-                      <span className={c.ok ? 'text-hos-text-secondary' : 'text-hos-text-muted'}>
-                        {c.label}
-                      </span>
-                    </li>
-                  ))}
+                  {readiness.map((c) => {
+                    const action = !c.ok ? readinessActions[c.key] : undefined;
+                    return (
+                      <li key={c.key} className="flex items-center justify-between border border-hos-border rounded p-2.5 bg-hos-bg-secondary">
+                        <div className="flex items-center gap-2">
+                          <span className={`text-lg ${c.ok ? 'text-emerald-400' : 'text-hos-text-muted'}`}>
+                            {c.ok ? '●' : '○'}
+                          </span>
+                          <span className={c.ok ? 'text-hos-text-secondary' : 'text-hos-text-muted'}>
+                            {c.label}
+                          </span>
+                        </div>
+                        {action && (
+                          <button
+                            type="button"
+                            onClick={action.action}
+                            className="text-xs px-3 py-1 rounded bg-violet-700 text-white hover:bg-violet-600 whitespace-nowrap"
+                          >
+                            {action.label}
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
                 {!allPassed && !isActive && (
                   <p className="mt-2 text-xs text-hos-text-muted">
