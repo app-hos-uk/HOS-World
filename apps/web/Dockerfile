@@ -15,7 +15,6 @@ COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/api-client/package.json ./packages/api-client/
 COPY packages/theme-system/package.json ./packages/theme-system/
 COPY packages/utils/package.json ./packages/utils/
-COPY packages/cms-client/package.json ./packages/cms-client/
 COPY apps/web/package.json ./apps/web/
 
 # Frozen lockfile is faster and deterministic; fall back if it drifts.
@@ -30,7 +29,7 @@ RUN cd /app/packages/shared-types && pnpm build \
     && cd /app/packages/theme-system && pnpm build \
     && cd /app/packages/utils && pnpm build \
     && cd /app/packages/api-client && pnpm build \
-    && cd /app/packages/cms-client && (pnpm build || echo "cms-client build skipped")
+    && (test -d /app/packages/cms-client && cd /app/packages/cms-client && pnpm build || true)
 
 # Build-time public env vars for Next.js
 ARG NEXT_PUBLIC_API_URL

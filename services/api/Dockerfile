@@ -16,7 +16,7 @@ RUN (pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile) \
     && cd /app/packages/utils && pnpm build \
     && cd /app/packages/api-client && pnpm build \
     && cd /app/packages/theme-system && pnpm build \
-    && cd /app/packages/cms-client && (pnpm build || true) \
+    && (test -d /app/packages/cms-client && cd /app/packages/cms-client && pnpm build || true) \
     && cd /app/services/api && pnpm db:generate \
     && (pnpm build || true) \
     && test -f dist/main.js
