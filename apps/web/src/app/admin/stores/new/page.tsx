@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DEFAULT_CURRENCY, COUNTRY_TO_CURRENCY } from '@/lib/regionConfig';
 import { CountrySelect } from '@/components/CountrySelect';
 import { COUNTRIES } from '@/lib/countries';
+import { getDirectApiBaseUrl } from '@/lib/apiBaseUrl';
 
 type Option = { id: string; name: string };
 
@@ -16,7 +17,16 @@ const INPUT_CLS =
   'mt-1 w-full border rounded px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border';
 
 export default function AdminStoreNewPage() {
+  return (
+    <Suspense>
+      <AdminStoreNewContent />
+    </Suspense>
+  );
+}
+
+function AdminStoreNewContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
 
   const [tenants, setTenants] = useState<Option[]>([]);
@@ -38,8 +48,43 @@ export default function AdminStoreNewPage() {
   const [refreshToken, setRefreshToken] = useState('');
   const [webhookSecret, setWebhookSecret] = useState('');
   const [externalOutletId, setExternalOutletId] = useState('');
+  const [oauthConnected, setOauthConnected] = useState(false);
+  const [oauthConfig, setOauthConfig] = useState<{ clientId: string; redirectUri: string } | null>(null);
 
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const lsError = searchParams.get('ls_error');
+    if (lsError) {
+      toast.error(`Lightspeed: ${lsError}`);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
+    if (hash) {
+      const fp = new URLSearchParams(hash);
+      const lsDomain = fp.get('ls_domain');
+      const lsAccess = fp.get('ls_access_token');
+      const lsRefresh = fp.get('ls_refresh_token');
+      if (lsDomain && lsAccess) {
+        setDomainPrefix(lsDomain);
+        setAccessToken(lsAccess);
+        if (lsRefresh) setRefreshToken(lsRefresh);
+        const savedCreds = sessionStorage.getItem('ls_oauth_creds');
+        if (savedCreds) {
+          try {
+            const { cid, csec } = JSON.parse(savedCreds);
+            if (cid) setClientId(cid);
+            if (csec) setClientSecret(csec);
+          } catch { /* ignore */ }
+          sessionStorage.removeItem('ls_oauth_creds');
+        }
+        setOauthConnected(true);
+        toast.success('Lightspeed connected — tokens received');
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, [searchParams, toast]);
 
   useEffect(() => {
     apiClient
@@ -54,7 +99,42 @@ export default function AdminStoreNewPage() {
         if (tList.length === 1) setTenantId(tList[0].id);
         setLoaded(true);
       });
-  }, []);
+
+    const apiBase = getDirectApiBaseUrl();
+    fetch(`${apiBase}/pos/lightspeed/config`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((cfg) => {
+        if (cfg?.clientId) {
+          setOauthConfig(cfg);
+          if (!clientId) setClientId(cfg.clientId);
+        }
+      })
+      .catch(() => { /* OAuth config unavailable — manual entry only */ });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const startOAuth = () => {
+    if (!domainPrefix.trim()) {
+      toast.error('Enter your Lightspeed domain prefix first');
+      return;
+    }
+    const oauthClientId = oauthConfig?.clientId || clientId.trim();
+    if (!oauthClientId) {
+      toast.error('Client ID is required — enter it or configure LIGHTSPEED_CLIENT_ID on the server');
+      return;
+    }
+    sessionStorage.setItem(
+      'ls_oauth_creds',
+      JSON.stringify({ cid: oauthClientId, csec: clientSecret.trim() }),
+    );
+    const redirectUri = oauthConfig?.redirectUri || `${getDirectApiBaseUrl()}/pos/lightspeed/callback`;
+    const state = btoa(JSON.stringify({ domainPrefix: domainPrefix.trim() }));
+    window.location.href =
+      `https://secure.lightspeed.app/connect` +
+      `?response_type=code` +
+      `&client_id=${encodeURIComponent(oauthClientId)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&state=${encodeURIComponent(state)}`;
+  };
 
   const handleNameChange = (v: string) => {
     setName(v);
@@ -230,16 +310,37 @@ export default function AdminStoreNewPage() {
 
         <section className="space-y-4">
           <h2 className="text-lg font-medium text-hos-text-secondary">Lightspeed</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <label className="block text-sm sm:col-span-2">
-              <span className="text-hos-text-secondary">Domain prefix *</span>
+
+          <label className="block text-sm">
+            <span className="text-hos-text-secondary">Domain prefix *</span>
+            <div className="flex gap-2 mt-1">
               <input
-                className={INPUT_CLS}
+                className={INPUT_CLS + ' flex-1'}
                 value={domainPrefix}
                 onChange={(e) => setDomainPrefix(e.target.value)}
                 placeholder="yourstore"
               />
-            </label>
+              <button
+                type="button"
+                onClick={startOAuth}
+                disabled={!domainPrefix.trim() || oauthConnected}
+                className="px-4 py-2 rounded-md bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-500 disabled:opacity-50 whitespace-nowrap"
+              >
+                {oauthConnected ? 'Connected' : 'Connect with Lightspeed'}
+              </button>
+            </div>
+            <span className="text-xs text-hos-text-muted">
+              e.g. &quot;yourstore&quot; from yourstore.retail.lightspeed.app
+            </span>
+          </label>
+
+          {oauthConnected && (
+            <div className="rounded-md bg-emerald-900/30 border border-emerald-700 p-3 text-sm text-emerald-300">
+              Lightspeed OAuth tokens received. Access token and refresh token are set.
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="block text-sm">
               <span className="text-hos-text-secondary">Client ID *</span>
               <input
@@ -259,26 +360,31 @@ export default function AdminStoreNewPage() {
                 autoComplete="off"
               />
             </label>
-            <label className="block text-sm">
-              <span className="text-hos-text-secondary">Access token *</span>
-              <input
-                className={INPUT_CLS}
-                type="password"
-                value={accessToken}
-                onChange={(e) => setAccessToken(e.target.value)}
-                autoComplete="off"
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="text-hos-text-secondary">Refresh token *</span>
-              <input
-                className={INPUT_CLS}
-                type="password"
-                value={refreshToken}
-                onChange={(e) => setRefreshToken(e.target.value)}
-                autoComplete="off"
-              />
-            </label>
+            {!oauthConnected && (
+              <>
+                <label className="block text-sm">
+                  <span className="text-hos-text-secondary">Access token *</span>
+                  <input
+                    className={INPUT_CLS}
+                    type="password"
+                    value={accessToken}
+                    onChange={(e) => setAccessToken(e.target.value)}
+                    autoComplete="off"
+                  />
+                  <span className="text-xs text-hos-text-muted">Or use &quot;Connect with Lightspeed&quot; above</span>
+                </label>
+                <label className="block text-sm">
+                  <span className="text-hos-text-secondary">Refresh token *</span>
+                  <input
+                    className={INPUT_CLS}
+                    type="password"
+                    value={refreshToken}
+                    onChange={(e) => setRefreshToken(e.target.value)}
+                    autoComplete="off"
+                  />
+                </label>
+              </>
+            )}
             <label className="block text-sm">
               <span className="text-hos-text-secondary">Outlet ID (optional)</span>
               <input

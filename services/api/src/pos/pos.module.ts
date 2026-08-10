@@ -16,6 +16,7 @@ import { PosSalesImportService } from './sync/sales-import.service';
 import { PosGiftCardReconService } from './sync/gift-card-recon.service';
 import { PosWebhookController } from './webhooks/pos-webhook.controller';
 import { PosAdminController } from './pos-admin.controller';
+import { LightspeedOAuthController } from './lightspeed-oauth.controller';
 import { PosJobsService } from './jobs/pos.jobs';
 
 @Module({
@@ -29,7 +30,7 @@ import { PosJobsService } from './jobs/pos.jobs';
     forwardRef(() => LoyaltyModule),
     StoreAdminModule,
   ],
-  controllers: [PosWebhookController, PosAdminController],
+  controllers: [PosWebhookController, PosAdminController, LightspeedOAuthController],
   providers: [
     POSAdapterFactory,
     PosProductSyncService,
