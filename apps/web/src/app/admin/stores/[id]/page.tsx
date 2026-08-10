@@ -19,8 +19,6 @@ type EditForm = {
   countryCode: string;
 };
 
-type ReadinessCheck = { key: string; label: string; ok: boolean };
-
 const INPUT_CLS =
   'w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border';
 
@@ -45,7 +43,6 @@ export default function AdminStoreDetailPage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<EditForm>({ name: '', code: '', address: '', city: '', postcode: '', countryCode: '' });
   const [saving, setSaving] = useState(false);
-  const [readiness, setReadiness] = useState<ReadinessCheck[]>([]);
   const [deleting, setDeleting] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
@@ -58,7 +55,6 @@ export default function AdminStoreDetailPage() {
   const load = useCallback(() => {
     if (!id) return;
     setRow(null);
-    setReadiness([]);
     apiClient.adminGetStore(id)
       .then((r) => {
         const data = (r.data as Record<string, unknown>) || null;
@@ -68,13 +64,6 @@ export default function AdminStoreDetailPage() {
         }
       })
       .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Request failed'));
-
-    apiClient.adminGetStoreReadiness(id)
-      .then((r) => {
-        const data = r.data as { checks?: ReadinessCheck[] } | undefined;
-        setReadiness(data?.checks ?? []);
-      })
-      .catch(() => setReadiness([]));
   }, [id, toast]);
 
   useEffect(() => { load(); }, [load]);
@@ -136,36 +125,9 @@ export default function AdminStoreDetailPage() {
   const startEdit = () => { if (row) setForm(toEditForm(row)); setEditing(true); };
   const cancelEdit = () => { if (row) setForm(toEditForm(row)); setEditing(false); };
   const isActive = row?.isActive === true || row?.isActive === 'true';
-
-  const passedCount = readiness.filter((c) => c.ok).length;
-  const allPassed = readiness.length > 0 && passedCount === readiness.length;
-
-  const readinessActions: Record<string, { label: string; action: () => void }> = {
-    pos_runtime: {
-      label: 'Feature flags',
-      action: () => router.push('/admin/feature-flags'),
-    },
-    loyalty_runtime: {
-      label: 'Feature flags',
-      action: () => router.push('/admin/feature-flags'),
-    },
-    pos_connection: { label: 'Set up POS', action: () => router.push('/admin/pos/connections') },
-    pos_active: { label: 'Configure POS', action: () => router.push('/admin/pos/connections') },
-    credentials: {
-      label: 'Add credentials',
-      action: () => router.push('/admin/pos/connections'),
-    },
-    outlet_mapped: {
-      label: 'Map outlet',
-      action: () =>
-        toast.info('Set externalOutletId on the POS connection (Lightspeed outlet ID).'),
-    },
-    sales_flowing: {
-      label: 'How to verify',
-      action: () =>
-        toast.info('Process a sale on the Lightspeed till so it imports into HOS.'),
-    },
-  };
+  const posConnection = row?.posConnection as Record<string, unknown> | null | undefined;
+  const posConnected = !!posConnection?.id;
+  const posActive = posConnection?.isActive === true || posConnection?.isActive === 'true';
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
@@ -273,48 +235,26 @@ export default function AdminStoreDetailPage() {
               </div>
             )}
 
-            {/* Readiness dashboard — auto-derived, no manual ticking */}
-            {readiness.length > 0 && (
-              <div>
-                <h2 className="text-lg font-medium mb-2 text-hos-text-secondary">
-                  Readiness
-                  <span className={`ml-2 text-sm font-normal ${allPassed ? 'text-emerald-400' : 'text-amber-400'}`}>
-                    {passedCount}/{readiness.length} checks passed
-                  </span>
-                </h2>
-                <ul className="space-y-1.5 text-sm">
-                  {readiness.map((c) => {
-                    const action = !c.ok ? readinessActions[c.key] : undefined;
-                    return (
-                      <li key={c.key} className="flex items-center justify-between border border-hos-border rounded p-2.5 bg-hos-bg-secondary">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-lg ${c.ok ? 'text-emerald-400' : 'text-hos-text-muted'}`}>
-                            {c.ok ? '●' : '○'}
-                          </span>
-                          <span className={c.ok ? 'text-hos-text-secondary' : 'text-hos-text-muted'}>
-                            {c.label}
-                          </span>
-                        </div>
-                        {action && (
-                          <button
-                            type="button"
-                            onClick={action.action}
-                            className="text-xs px-3 py-1 rounded bg-violet-700 text-white hover:bg-violet-600 whitespace-nowrap"
-                          >
-                            {action.label}
-                          </button>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-                {!allPassed && !isActive && (
-                  <p className="mt-2 text-xs text-hos-text-muted">
-                    These checks are advisory. You can still activate the store.
-                  </p>
-                )}
-              </div>
-            )}
+            {/* POS connection summary */}
+            <div className="border border-hos-border rounded-lg p-4 bg-hos-bg-secondary">
+              <h2 className="text-sm font-medium text-hos-text-secondary mb-1">Lightspeed POS</h2>
+              {posConnected ? (
+                <p className="text-sm text-hos-text-muted">
+                  {posActive ? (
+                    <span className="text-emerald-400">Connected and active</span>
+                  ) : (
+                    <span className="text-amber-400">Connected but inactive</span>
+                  )}
+                  {posConnection?.provider ? (
+                    <> &middot; {String(posConnection.provider)}</>
+                  ) : null}
+                </p>
+              ) : (
+                <p className="text-sm text-hos-text-muted">
+                  <span className="text-amber-400">Not connected</span>
+                </p>
+              )}
+            </div>
 
             {/* Quick links */}
             <div className="flex flex-wrap gap-3 text-sm">
