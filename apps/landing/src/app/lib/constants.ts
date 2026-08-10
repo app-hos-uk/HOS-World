@@ -1,3 +1,9 @@
+/**
+ * Platform display locale. Keep in sync with the API's PLATFORM_LOCALE /
+ * PlatformRegionService and the storefront's DEFAULT_REGION.locale.
+ */
+export const LANDING_LOCALE = process.env.NEXT_PUBLIC_PLATFORM_LOCALE || 'en-US';
+
 /** Official transparent brand marks (shared with storefront) */
 export const LANDING_LOGO = '/assets/logo-emblem.png';
 export const LANDING_WORDMARK = '/assets/logo-wordmark.png';

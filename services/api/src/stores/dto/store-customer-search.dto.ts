@@ -23,7 +23,7 @@ export class StoreCustomerSearchDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(2)
+  @MinLength(3)
   name?: string;
 
   /** Admin-only: override store scope when acting without an assigned store. */
@@ -38,7 +38,14 @@ export type StoreCustomerSearchResult = {
   lastInitial: string | null;
   maskedEmail: string | null;
   maskedPhone: string | null;
+  /**
+   * Full card number, required to redeem. Only returned for exact-identifier
+   * lookups (card / email / phone) so a broad name search cannot harvest cards
+   * or redeem against a guessed match.
+   */
   cardNumber: string | null;
+  /** Always-safe display form, e.g. "****1F2A". */
+  maskedCardNumber: string | null;
   tierName: string | null;
   currentBalance: number;
 };

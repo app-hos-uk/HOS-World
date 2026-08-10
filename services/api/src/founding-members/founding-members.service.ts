@@ -434,7 +434,7 @@ export class FoundingMembersService {
     options?: { sendConfirmationEmail?: boolean; registeredAt?: Date },
   ) {
     // Normalize country code to ISO format, fallback to normalizing legacy country field
-    const normalizedCode = dto.countryCode 
+    const normalizedCode = dto.countryCode
       ? dto.countryCode.toUpperCase()
       : normalizeCountryCode(dto.country);
 

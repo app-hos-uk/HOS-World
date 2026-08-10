@@ -161,7 +161,7 @@ export class LoyaltyService implements OnModuleInit {
       data: {
         userId,
         tierId: tier.id,
-        regionCode: dto?.regionCode || user.country || 'GB',
+        regionCode: dto?.regionCode || user.country || (await this.region.getCountry()),
         preferredCurrency:
           dto?.preferredCurrency || user.currencyPreference || PLATFORM_DEFAULT_CURRENCY,
         enrollmentChannel: dto?.enrollmentChannel || 'WEB',

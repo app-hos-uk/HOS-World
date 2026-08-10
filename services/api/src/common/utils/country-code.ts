@@ -42,7 +42,7 @@ const ALIASES: Record<string, string> = {
   ITALY: 'IT',
   ITALIA: 'IT',
   SPAIN: 'ES',
-  'ESPAÑA': 'ES',
+  ESPAÑA: 'ES',
   ESPANA: 'ES',
   NETHERLANDS: 'NL',
   BELGIUM: 'BE',

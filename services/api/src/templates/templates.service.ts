@@ -1179,7 +1179,7 @@ export class TemplatesService {
       verifyLink: 'https://hos-marketplace.com/auth/verify-email?token=example',
       email: 'jane@example.com',
       campaignName: 'Double Points on Harry Potter Wands',
-      storeName: 'House of Spells — London',
+      storeName: 'House of Spells — New York',
       pickupCode: 'CC-482910',
       tierName: 'Apprentice',
       cartTotal: '$59.99',

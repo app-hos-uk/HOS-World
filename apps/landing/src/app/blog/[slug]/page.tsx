@@ -6,6 +6,7 @@ import sanitizeHtml from 'sanitize-html';
 import { LandingShell } from '../../components/LandingShell';
 import { LandingFooter } from '../../components/LandingFooter';
 import { getBlogPost, getStrapiMediaUrl } from '@/lib/strapi';
+import { LANDING_LOCALE } from '../../lib/constants';
 
 const BLOG_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: [
@@ -90,7 +91,7 @@ export default async function BlogPostPage({ params }: Props) {
               <span>By {post.attributes.author}</span>
               <span aria-hidden="true">•</span>
               <time dateTime={post.attributes.publishedAt}>
-                {new Date(post.attributes.publishedAt).toLocaleDateString('en-GB', {
+                {new Date(post.attributes.publishedAt).toLocaleDateString(LANDING_LOCALE, {
                   day: 'numeric',
                   month: 'long',
                   year: 'numeric',

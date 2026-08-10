@@ -274,10 +274,10 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(registerDto.password, BCRYPT_PASSWORD_ROUNDS);
 
     // Normalize country code to ISO format and determine currency preference
-    const normalizedIsoCode = registerDto.countryCode 
+    const normalizedIsoCode = registerDto.countryCode
       ? registerDto.countryCode.toUpperCase()
       : normalizeCountryCode(registerDto.country);
-    
+
     // Use normalized ISO code for currency lookup instead of legacy country name
     const countryCode = normalizedIsoCode || this.getCountryCode(registerDto.country);
     const currencyPreference =
@@ -749,10 +749,10 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(registerDto.password, BCRYPT_PASSWORD_ROUNDS);
 
     // Normalize country code to ISO format and determine currency preference
-    const normalizedIsoCode = registerDto.countryCode 
+    const normalizedIsoCode = registerDto.countryCode
       ? registerDto.countryCode.toUpperCase()
       : normalizeCountryCode(registerDto.country);
-    
+
     // Use normalized ISO code for currency lookup
     const countryCode = normalizedIsoCode || this.getCountryCode(registerDto.country);
     const currencyPreference =

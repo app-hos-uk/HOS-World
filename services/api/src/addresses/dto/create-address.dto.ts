@@ -76,7 +76,9 @@ export class CreateAddressDto {
   @IsOptional()
   @IsString()
   @Length(2, 2, { message: 'Country code must be exactly 2 characters (ISO 3166-1 alpha-2)' })
-  @Matches(/^[A-Z]{2}$/, { message: 'Country code must be uppercase ISO format (e.g., US, GB, AE, MY)' })
+  @Matches(/^[A-Z]{2}$/, {
+    message: 'Country code must be uppercase ISO format (e.g., US, GB, AE, MY)',
+  })
   countryCode?: string;
 
   @IsString()

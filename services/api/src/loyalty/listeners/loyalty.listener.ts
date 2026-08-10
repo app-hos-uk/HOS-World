@@ -10,6 +10,7 @@ import { AmbassadorService } from '../../ambassador/ambassador.service';
 import { FeatureFlagsService } from '../../config/feature-flags.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 import { PLATFORM_DEFAULT_CURRENCY } from '../../common/currency-defaults';
+import { PlatformRegionService } from '../../config/platform-region.service';
 
 const PHOTO_IN_REVIEW = /\bhttps?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?\b/i;
 
@@ -28,6 +29,7 @@ export class LoyaltyListener {
     private config: ConfigService,
     private featureFlags: FeatureFlagsService,
     private segmentation: SegmentationService,
+    private region: PlatformRegionService,
     @Optional()
     @Inject(forwardRef(() => AmbassadorService))
     private ambassador?: AmbassadorService,
@@ -224,7 +226,7 @@ export class LoyaltyListener {
           data: {
             userId,
             tierId: tier.id,
-            regionCode: user.country || 'GB',
+            regionCode: user.country || (await this.region.getCountry()),
             preferredCurrency: user.currencyPreference || PLATFORM_DEFAULT_CURRENCY,
             enrollmentChannel: 'AUTO_REVIEW',
             cardNumber: `${prefix}-${randomBytes(4).toString('hex').toUpperCase()}-${randomBytes(2).toString('hex').toUpperCase()}`,

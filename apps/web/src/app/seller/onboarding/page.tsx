@@ -411,7 +411,7 @@ export default function SellerOnboardingPage() {
                         type="text"
                         value={location.city}
                         onChange={(e) => setLocation({ ...location, city: e.target.value })}
-                        placeholder="London"
+                        placeholder="New York"
                         className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       />
                     </div>
@@ -421,7 +421,7 @@ export default function SellerOnboardingPage() {
                         type="text"
                         value={location.region}
                         onChange={(e) => setLocation({ ...location, region: e.target.value })}
-                        placeholder="England"
+                        placeholder="NY"
                         className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       />
                     </div>

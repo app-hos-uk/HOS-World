@@ -151,9 +151,7 @@ export class AdminService {
           department: data.department,
           employeeId: data.employeeId,
         }),
-        ...(data.role === UserRole.STORE_STAFF && data.storeId
-          ? { storeId: data.storeId }
-          : {}),
+        ...(data.role === UserRole.STORE_STAFF && data.storeId ? { storeId: data.storeId } : {}),
       },
       select: {
         id: true,

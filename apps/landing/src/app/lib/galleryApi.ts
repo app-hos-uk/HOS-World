@@ -1,3 +1,5 @@
+import { LANDING_LOCALE } from './constants';
+
 export type GalleryImage = {
   id: string;
   url: string;
@@ -66,7 +68,7 @@ export async function fetchGalleryAlbum(slug: string): Promise<GalleryAlbum | nu
 export function formatGalleryDate(value?: string | null): string {
   if (!value) return '';
   try {
-    return new Date(value).toLocaleDateString('en-GB', {
+    return new Date(value).toLocaleDateString(LANDING_LOCALE, {
       day: 'numeric',
       month: 'long',
       year: 'numeric',

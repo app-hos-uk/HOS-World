@@ -74,7 +74,8 @@ export class StoreOnboardingService {
       dto.loyaltyRedeemValue != null ? new Decimal(dto.loyaltyRedeemValue) : new Decimal(0.01);
 
     const region = await this.region.getRegion();
-    const isoCode = normalizeCountryCode(dto.countryCode) || normalizeCountryCode(dto.country) || null;
+    const isoCode =
+      normalizeCountryCode(dto.countryCode) || normalizeCountryCode(dto.country) || null;
 
     const sellerId =
       dto.sellerId?.trim() || (await this.platformSeller.resolvePlatformRetailSellerId());

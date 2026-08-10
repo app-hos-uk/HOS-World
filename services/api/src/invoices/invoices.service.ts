@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
+import { PlatformRegionService } from '../config/platform-region.service';
 import * as PDFDocument from 'pdfkit';
+
+/** Countries on US Letter rather than ISO A4. */
+const LETTER_COUNTRIES = new Set(['US', 'CA', 'MX', 'PH', 'CL', 'CO', 'CR', 'DO', 'GT', 'VE']);
 
 @Injectable()
 export class InvoicesService {
@@ -13,6 +17,10 @@ export class InvoicesService {
   private readonly companyPostal: string;
   private readonly companyVat: string;
   private readonly companyReg: string;
+  /** Companies-register jurisdiction, e.g. "England & Wales" or "Delaware". Blank omits the phrase. */
+  private readonly companyRegistry: string;
+  /** Tax-number label, e.g. "VAT No." (UK/EU) or "EIN" (US). */
+  private readonly companyTaxLabel: string;
   private readonly companyEmail: string;
   private readonly companyPhone: string;
   private readonly companyWebsite: string;
@@ -20,6 +28,7 @@ export class InvoicesService {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    private region: PlatformRegionService,
   ) {
     this.companyName = this.config.get<string>('INVOICE_COMPANY_NAME', 'House of Spells');
     this.companyLegal = this.config.get<string>('INVOICE_COMPANY_LEGAL', 'House of Spells Ltd.');
@@ -29,6 +38,8 @@ export class InvoicesService {
     this.companyPostal = this.config.get<string>('INVOICE_COMPANY_POSTAL', 'EC2A 4BX');
     this.companyVat = this.config.get<string>('INVOICE_COMPANY_VAT', 'GB123456789');
     this.companyReg = this.config.get<string>('INVOICE_COMPANY_REG', '12345678');
+    this.companyRegistry = this.config.get<string>('INVOICE_COMPANY_REGISTRY', '');
+    this.companyTaxLabel = this.config.get<string>('INVOICE_COMPANY_TAX_LABEL', 'Tax ID');
     this.companyEmail = this.config.get<string>(
       'INVOICE_COMPANY_EMAIL',
       'support@houseofspells.co.uk',
@@ -99,12 +110,18 @@ export class InvoicesService {
 
     if (!order) throw new NotFoundException('Order not found');
 
-    return await this.buildPdf(order);
+    const [locale, country] = await Promise.all([
+      this.region.getLocale(),
+      this.region.getCountry(),
+    ]);
+
+    return await this.buildPdf(order, locale, country);
   }
 
-  private buildPdf(order: any): Promise<Buffer> {
+  private buildPdf(order: any, locale: string, country: string): Promise<Buffer> {
     return new Promise((resolve, reject) => {
-      const doc = new PDFDocument({ size: 'A4', margin: 50 });
+      const size = LETTER_COUNTRIES.has(country.toUpperCase()) ? 'LETTER' : 'A4';
+      const doc = new PDFDocument({ size, margin: 50 });
       const chunks: Buffer[] = [];
 
       doc.on('data', (chunk: Buffer) => chunks.push(chunk));
@@ -123,7 +140,7 @@ export class InvoicesService {
 
       const invoiceNumber = `INV-${order.orderNumber}`;
       const invoiceDate = order.createdAt
-        ? new Date(order.createdAt).toLocaleDateString('en-GB', {
+        ? new Date(order.createdAt).toLocaleDateString(locale, {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -382,26 +399,31 @@ export class InvoicesService {
           .fontSize(8)
           .fillColor('#333333')
           .text(
-            `${order.seller.legalBusinessName || order.seller.storeName}${sellerTax ? ` (VAT: ${sellerTax})` : ''}`,
+            `${order.seller.legalBusinessName || order.seller.storeName}${sellerTax ? ` (${this.companyTaxLabel}: ${sellerTax})` : ''}`,
             60,
             yPos,
           );
       }
 
       // ─── Footer: Legal & contact ───
-      const footerY = 735;
+      const footerY = doc.page.height - 107;
       doc.moveTo(50, footerY).lineTo(545, footerY).strokeColor('#e0e0e0').lineWidth(0.5).stroke();
+
+      const registration = [
+        this.companyLegal,
+        this.companyRegistry
+          ? `Registered in ${this.companyRegistry} No. ${this.companyReg}`
+          : `Reg. No. ${this.companyReg}`,
+        this.companyVat ? `${this.companyTaxLabel} ${this.companyVat}` : null,
+      ]
+        .filter(Boolean)
+        .join('  •  ');
 
       doc
         .fontSize(7)
         .font('Helvetica')
         .fillColor('#888888')
-        .text(
-          `${this.companyLegal}  •  Registered in England & Wales No. ${this.companyReg}  •  VAT No. ${this.companyVat}`,
-          50,
-          footerY + 6,
-          { align: 'center', width: 495 },
-        )
+        .text(registration, 50, footerY + 6, { align: 'center', width: 495 })
         .text(
           `${this.companyAddress}, ${this.companyCity}, ${this.companyPostal}, ${this.companyCountry}`,
           50,

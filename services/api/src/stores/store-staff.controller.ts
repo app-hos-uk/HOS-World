@@ -1,11 +1,4 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -28,7 +21,8 @@ export class StoreStaffController {
   })
   async searchCustomers(
     @Body() dto: StoreCustomerSearchDto,
-    @Req() req: {
+    @Req()
+    req: {
       user: { id: string; role: string; storeId?: string | null };
       storeId?: string;
       ip?: string;

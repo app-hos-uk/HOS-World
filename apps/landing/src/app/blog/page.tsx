@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { LandingShell } from '../components/LandingShell';
 import { LandingFooter } from '../components/LandingFooter';
 import { landingPageMetadata } from '../lib/landingMetadata';
+import { LANDING_LOCALE } from '../lib/constants';
 import {
   getBlogPosts,
   getBlogCategories,
@@ -117,7 +118,7 @@ export default async function BlogPage({
                       <p className="blog-card-excerpt">{post.attributes.excerpt}</p>
                       <div className="blog-card-meta">
                         <time dateTime={post.attributes.publishedAt}>
-                          {new Date(post.attributes.publishedAt).toLocaleDateString('en-GB', {
+                          {new Date(post.attributes.publishedAt).toLocaleDateString(LANDING_LOCALE, {
                             day: 'numeric',
                             month: 'short',
                             year: 'numeric',

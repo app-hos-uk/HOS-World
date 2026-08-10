@@ -40,6 +40,7 @@ function makeMocks() {
     isEnabled: jest.fn().mockReturnValue(true),
   };
   const segmentation = { touchActivity: jest.fn().mockResolvedValue(undefined) };
+  const region: any = { getCountry: jest.fn().mockResolvedValue('US') };
   const ambassador = { onLoyaltyReferralConverted: jest.fn().mockResolvedValue(undefined) };
   const listener = new LoyaltyListener(
     prisma,
@@ -48,9 +49,20 @@ function makeMocks() {
     config,
     featureFlags,
     segmentation as any,
+    region,
     ambassador as any,
   );
-  return { listener, prisma, wallet, tiers, config, featureFlags, segmentation, ambassador };
+  return {
+    listener,
+    prisma,
+    wallet,
+    tiers,
+    config,
+    featureFlags,
+    segmentation,
+    region,
+    ambassador,
+  };
 }
 
 describe('LoyaltyListener', () => {

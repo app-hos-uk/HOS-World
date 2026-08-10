@@ -3,10 +3,7 @@ import { Prisma } from '@prisma/client';
 import { ActivityService } from '../activity/activity.service';
 import { normalizePhoneToE164 } from '../common/utils/phone-normalize';
 import { PrismaService } from '../database/prisma.service';
-import {
-  StoreCustomerSearchDto,
-  StoreCustomerSearchResult,
-} from './dto/store-customer-search.dto';
+import { StoreCustomerSearchDto, StoreCustomerSearchResult } from './dto/store-customer-search.dto';
 
 const MAX_RESULTS = 10;
 
@@ -23,6 +20,13 @@ function maskPhoneLast4(phone: string | null | undefined): string | null {
   const digits = phone.replace(/\D/g, '');
   if (digits.length < 4) return '****';
   return `***${digits.slice(-4)}`;
+}
+
+function maskCardNumber(card: string | null | undefined): string | null {
+  if (!card) return null;
+  const trimmed = card.trim();
+  if (trimmed.length <= 4) return '****';
+  return `****${trimmed.slice(-4)}`;
 }
 
 function lastInitial(lastName: string | null | undefined): string | null {
@@ -100,27 +104,37 @@ export class StoreStaffCustomerService {
     return null;
   }
 
-  private toResult(row: {
-    id: string;
-    firstName: string | null;
-    lastName: string | null;
-    email: string;
-    phone: string | null;
-    phoneNormalized: string | null;
-    loyaltyMembership: {
-      cardNumber: string | null;
-      currentBalance: number;
-      tier: { name: string } | null;
-    } | null;
-  }): StoreCustomerSearchResult | null {
+  /**
+   * @param exactMatch true when the caller supplied a unique identifier (card,
+   * email or full phone). Fuzzy searches get a masked card only, so staff must
+   * confirm identity before they can redeem.
+   */
+  private toResult(
+    row: {
+      id: string;
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+      phone: string | null;
+      phoneNormalized: string | null;
+      loyaltyMembership: {
+        cardNumber: string | null;
+        currentBalance: number;
+        tier: { name: string } | null;
+      } | null;
+    },
+    exactMatch: boolean,
+  ): StoreCustomerSearchResult | null {
     if (!row.loyaltyMembership) return null;
+    const card = row.loyaltyMembership.cardNumber;
     return {
       userId: row.id,
       firstName: row.firstName,
       lastInitial: lastInitial(row.lastName),
       maskedEmail: maskEmail(row.email),
       maskedPhone: maskPhoneLast4(row.phoneNormalized || row.phone),
-      cardNumber: row.loyaltyMembership.cardNumber,
+      cardNumber: exactMatch ? card : null,
+      maskedCardNumber: maskCardNumber(card),
       tierName: row.loyaltyMembership.tier?.name ?? null,
       currentBalance: row.loyaltyMembership.currentBalance,
     };
@@ -150,14 +164,17 @@ export class StoreStaffCustomerService {
       },
     });
     if (!membership?.user) return [];
-    const r = this.toResult({
-      ...membership.user,
-      loyaltyMembership: {
-        cardNumber: membership.cardNumber,
-        currentBalance: membership.currentBalance,
-        tier: membership.tier,
+    const r = this.toResult(
+      {
+        ...membership.user,
+        loyaltyMembership: {
+          cardNumber: membership.cardNumber,
+          currentBalance: membership.currentBalance,
+          tier: membership.tier,
+        },
       },
-    });
+      true,
+    );
     return r ? [r] : [];
   }
 
@@ -170,15 +187,16 @@ export class StoreStaffCustomerService {
       include: this.memberInclude,
       take: MAX_RESULTS,
     });
-    return users.map((u) => this.toResult(u as any)).filter(Boolean) as StoreCustomerSearchResult[];
+    return users
+      .map((u) => this.toResult(u as any, true))
+      .filter(Boolean) as StoreCustomerSearchResult[];
   }
 
   private async searchByPhone(
     phone: string,
     countryHint?: string,
   ): Promise<StoreCustomerSearchResult[]> {
-    const phoneNormalized =
-      normalizePhoneToE164(phone) ?? normalizePhoneToE164(phone, countryHint);
+    const phoneNormalized = normalizePhoneToE164(phone) ?? normalizePhoneToE164(phone, countryHint);
     if (!phoneNormalized) return [];
     const users = await this.prisma.user.findMany({
       where: {
@@ -188,22 +206,23 @@ export class StoreStaffCustomerService {
       include: this.memberInclude,
       take: MAX_RESULTS,
     });
-    return users.map((u) => this.toResult(u as any)).filter(Boolean) as StoreCustomerSearchResult[];
+    return users
+      .map((u) => this.toResult(u as any, true))
+      .filter(Boolean) as StoreCustomerSearchResult[];
   }
 
   private async searchByPhoneLastFour(lastFour: string): Promise<StoreCustomerSearchResult[]> {
     const users = await this.prisma.user.findMany({
       where: {
-        OR: [
-          { phoneNormalized: { endsWith: lastFour } },
-          { phone: { endsWith: lastFour } },
-        ],
+        OR: [{ phoneNormalized: { endsWith: lastFour } }, { phone: { endsWith: lastFour } }],
         loyaltyMembership: { isNot: null },
       },
       include: this.memberInclude,
       take: MAX_RESULTS,
     });
-    return users.map((u) => this.toResult(u as any)).filter(Boolean) as StoreCustomerSearchResult[];
+    return users
+      .map((u) => this.toResult(u as any, false))
+      .filter(Boolean) as StoreCustomerSearchResult[];
   }
 
   private async searchByName(name: string): Promise<StoreCustomerSearchResult[]> {
@@ -218,7 +237,9 @@ export class StoreStaffCustomerService {
               {
                 AND: [
                   { firstName: { contains: parts[0], mode: 'insensitive' as const } },
-                  { lastName: { contains: parts.slice(1).join(' '), mode: 'insensitive' as const } },
+                  {
+                    lastName: { contains: parts.slice(1).join(' '), mode: 'insensitive' as const },
+                  },
                 ],
               },
             ]
@@ -230,6 +251,8 @@ export class StoreStaffCustomerService {
       include: this.memberInclude,
       take: MAX_RESULTS,
     });
-    return users.map((u) => this.toResult(u as any)).filter(Boolean) as StoreCustomerSearchResult[];
+    return users
+      .map((u) => this.toResult(u as any, false))
+      .filter(Boolean) as StoreCustomerSearchResult[];
   }
 }

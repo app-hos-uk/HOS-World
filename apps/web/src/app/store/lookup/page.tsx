@@ -12,7 +12,9 @@ type SearchResult = {
   lastInitial: string | null;
   maskedEmail: string | null;
   maskedPhone: string | null;
+  /** Only returned for exact card / email / phone lookups; required to redeem. */
   cardNumber: string | null;
+  maskedCardNumber: string | null;
   tierName: string | null;
   currentBalance: number;
 };
@@ -211,35 +213,43 @@ export default function StoreLookupPage() {
                       {row.tierName || 'No tier'} · {row.currentBalance} pts
                     </p>
                   </div>
-                  {row.cardNumber && (
-                    <p className="text-xs text-hos-text-muted font-mono">{row.cardNumber}</p>
+                  {(row.cardNumber || row.maskedCardNumber) && (
+                    <p className="text-xs text-hos-text-muted font-mono">
+                      {row.cardNumber || row.maskedCardNumber}
+                    </p>
                   )}
                 </div>
                 <p className="text-sm text-hos-text-muted">
                   {row.maskedEmail || '—'} · {row.maskedPhone || '—'}
                 </p>
 
-                <div className="flex flex-wrap items-end gap-2 pt-2 border-t border-hos-border">
-                  <label className="block text-sm flex-1 min-w-[8rem]">
-                    <span className="text-hos-text-secondary">Redeem points</span>
-                    <input
-                      className={INPUT_CLS}
-                      type="number"
-                      min={1}
-                      value={redeemPoints}
-                      onChange={(e) => setRedeemPoints(e.target.value)}
-                      placeholder="e.g. 100"
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    disabled={redeemingId === row.userId || !row.cardNumber}
-                    onClick={() => void redeem(row)}
-                    className="rounded-md bg-emerald-700 px-3 py-2 text-sm text-white disabled:opacity-50"
-                  >
-                    {redeemingId === row.userId ? 'Redeeming…' : 'Redeem voucher'}
-                  </button>
-                </div>
+                {row.cardNumber ? (
+                  <div className="flex flex-wrap items-end gap-2 pt-2 border-t border-hos-border">
+                    <label className="block text-sm flex-1 min-w-[8rem]">
+                      <span className="text-hos-text-secondary">Redeem points</span>
+                      <input
+                        className={INPUT_CLS}
+                        type="number"
+                        min={1}
+                        value={redeemPoints}
+                        onChange={(e) => setRedeemPoints(e.target.value)}
+                        placeholder="e.g. 100"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      disabled={redeemingId === row.userId}
+                      onClick={() => void redeem(row)}
+                      className="rounded-md bg-emerald-700 px-3 py-2 text-sm text-white disabled:opacity-50"
+                    >
+                      {redeemingId === row.userId ? 'Redeeming…' : 'Redeem voucher'}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="pt-2 border-t border-hos-border text-xs text-hos-text-muted">
+                    Confirm the member by card, email or full phone number to redeem.
+                  </p>
+                )}
               </div>
             ))}
           </div>

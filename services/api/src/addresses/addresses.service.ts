@@ -26,7 +26,7 @@ export class AddressesService {
     }
 
     // Normalize country code to ISO format
-    const normalizedCode = createAddressDto.countryCode 
+    const normalizedCode = createAddressDto.countryCode
       ? createAddressDto.countryCode.toUpperCase()
       : normalizeCountryCode(createAddressDto.country);
 
@@ -124,7 +124,7 @@ export class AddressesService {
         : undefined;
 
     // Prepare update data
-    const updateData: any = { 
+    const updateData: any = {
       ...updateAddressDto,
       ...(normalizedCode !== undefined && { countryCode: normalizedCode }),
     };

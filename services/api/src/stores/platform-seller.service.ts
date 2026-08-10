@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma, SellerType, UserRole, VendorStatus } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../database/prisma.service';
+import { PlatformRegionService } from '../config/platform-region.service';
 
 const PLATFORM_RETAIL_EMAIL = 'platform-retail@houseofspells.internal';
 const PLATFORM_RETAIL_SLUG = 'house-of-spells-official';
@@ -18,6 +19,7 @@ export class PlatformSellerService {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    private region: PlatformRegionService,
   ) {}
 
   async resolvePlatformRetailSellerId(): Promise<string> {
@@ -42,6 +44,7 @@ export class PlatformSellerService {
   }
 
   private async createPlatformRetailSeller(): Promise<string> {
+    const region = await this.region.getRegion();
     let user = await this.prisma.user.findUnique({ where: { email: PLATFORM_RETAIL_EMAIL } });
     if (!user) {
       try {
@@ -52,8 +55,8 @@ export class PlatformSellerService {
             firstName: 'House',
             lastName: 'Platform',
             role: UserRole.B2C_SELLER,
-            country: 'US',
-            currencyPreference: 'USD',
+            country: region.country,
+            currencyPreference: region.currency,
           },
         });
       } catch (e) {
@@ -94,7 +97,7 @@ export class PlatformSellerService {
           userId: user.id,
           storeName: 'House of Spells Official',
           slug: PLATFORM_RETAIL_SLUG,
-          country: 'GB',
+          country: region.country,
           sellerType: SellerType.PLATFORM_RETAIL,
           verified: true,
           vendorStatus: VendorStatus.APPROVED,
