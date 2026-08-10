@@ -3458,6 +3458,8 @@ export class ApiClient {
     storeName?: string;
     description?: string;
     logo?: string;
+    /** ISO 3166-1 alpha-2. Preferred over the legacy free-text `country`. */
+    countryCode?: string;
     country?: string;
     city?: string;
     region?: string;

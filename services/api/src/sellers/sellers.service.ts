@@ -13,6 +13,7 @@ import { SellerType, LogisticsOption, Prisma } from '@prisma/client';
 import { slugify } from '@hos-marketplace/utils';
 import { ActivityService } from '../activity/activity.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { normalizeCountryCode } from '../common/utils/country-code';
 
 @Injectable()
 export class SellersService {
@@ -396,6 +397,14 @@ export class SellersService {
     }
     if (sortCode) {
       updateData.sortCodeEnc = this.encryptField(sortCode);
+    }
+
+    // Keep the ISO column populated even when a caller only sends legacy `country`.
+    const isoCode =
+      normalizeCountryCode(updateSellerDto.countryCode) ||
+      normalizeCountryCode(updateSellerDto.country);
+    if (isoCode) {
+      updateData.countryCode = isoCode;
     }
 
     // If updating slug (via storeName), ensure uniqueness

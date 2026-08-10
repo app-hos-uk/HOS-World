@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { CountrySelect } from '@/components/CountrySelect';
-import { COUNTRIES } from '@/lib/countries';
+import { COUNTRIES, resolveCountryCode } from '@/lib/countries';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -23,18 +23,6 @@ type ReadinessCheck = { key: string; label: string; ok: boolean };
 
 const INPUT_CLS =
   'w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border';
-
-const LEGACY_ALIASES: Record<string, string> = { UK: 'GB', USA: 'US' };
-
-function resolveCountryCode(row: Record<string, unknown>): string {
-  const cc = String(row.countryCode ?? '');
-  const country = String(row.country ?? '');
-  return cc
-    || COUNTRIES.find((c) => c.name.toLowerCase() === country.toLowerCase())?.code
-    || LEGACY_ALIASES[country.toUpperCase()]
-    || COUNTRIES.find((c) => c.code === country.toUpperCase())?.code
-    || 'US';
-}
 
 function toEditForm(row: Record<string, unknown>): EditForm {
   return {

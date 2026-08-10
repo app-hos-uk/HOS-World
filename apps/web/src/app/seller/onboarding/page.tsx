@@ -7,6 +7,8 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { CountrySelect } from '@/components/CountrySelect';
+import { countryNameFor, resolveCountryCode } from '@/lib/countries';
 
 type OnboardingStep = 'store-info' | 'location' | 'verification' | 'payment' | 'complete';
 
@@ -32,7 +34,7 @@ export default function SellerOnboardingPage() {
   });
 
   const [location, setLocation] = useState({
-    country: '',
+    countryCode: '',
     city: '',
     region: '',
     timezone: 'UTC',
@@ -96,9 +98,9 @@ export default function SellerOnboardingPage() {
           });
         }
 
-        if (seller.country) {
+        if (seller.country || seller.countryCode) {
           setLocation({
-            country: seller.country,
+            countryCode: resolveCountryCode(seller, ''),
             city: seller.city || '',
             region: seller.region || '',
             timezone: seller.timezone || 'UTC',
@@ -155,7 +157,7 @@ export default function SellerOnboardingPage() {
   };
 
   const handleLocationSubmit = async () => {
-    if (!location.country) {
+    if (!location.countryCode) {
       toast.error('Country is required');
       return;
     }
@@ -163,7 +165,8 @@ export default function SellerOnboardingPage() {
     try {
       setLoading(true);
       await apiClient.updateSellerProfile({
-        country: location.country,
+        countryCode: location.countryCode,
+        country: countryNameFor(location.countryCode),
         city: location.city,
         region: location.region,
       });
@@ -394,12 +397,10 @@ export default function SellerOnboardingPage() {
                     <label className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Country <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      value={location.country}
-                      onChange={(e) => setLocation({ ...location, country: e.target.value })}
-                      placeholder="United States"
-                      className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
+                    <CountrySelect
+                      value={location.countryCode}
+                      onChange={(e) => setLocation({ ...location, countryCode: e.target.value })}
+                      className="w-full px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold focus:outline-none"
                       required
                     />
                   </div>
@@ -436,7 +437,7 @@ export default function SellerOnboardingPage() {
                     </button>
                     <button
                       onClick={handleLocationSubmit}
-                      disabled={loading || !location.country}
+                      disabled={loading || !location.countryCode}
                       className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium disabled:opacity-50"
                     >
                       {loading ? 'Saving...' : 'Continue'}

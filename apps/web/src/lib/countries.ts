@@ -40,3 +40,33 @@ export const COUNTRIES = [
 ] as const;
 
 export type CountryCode = typeof COUNTRIES[number]['code'];
+
+/** Free-text country values seen in legacy records that aren't ISO alpha-2. */
+const LEGACY_ALIASES: Record<string, string> = { UK: 'GB', USA: 'US' };
+
+/**
+ * Best-effort ISO alpha-2 code for a record that may carry a modern
+ * `countryCode`, a legacy free-text `country` name, or neither.
+ */
+export function resolveCountryCode(
+  row: { countryCode?: unknown; country?: unknown },
+  fallback = 'US',
+): string {
+  const cc = String(row.countryCode ?? '').trim();
+  if (cc) return cc.toUpperCase();
+
+  const country = String(row.country ?? '').trim();
+  if (!country) return fallback;
+
+  return (
+    COUNTRIES.find((c) => c.name.toLowerCase() === country.toLowerCase())?.code ||
+    LEGACY_ALIASES[country.toUpperCase()] ||
+    COUNTRIES.find((c) => c.code === country.toUpperCase())?.code ||
+    fallback
+  );
+}
+
+/** Display name for an ISO alpha-2 code, falling back to the code itself. */
+export function countryNameFor(code: string): string {
+  return COUNTRIES.find((c) => c.code === code)?.name || code;
+}
