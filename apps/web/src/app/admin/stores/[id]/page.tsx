@@ -45,9 +45,8 @@ export default function AdminStoreDetailPage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<EditForm>({ name: '', code: '', address: '', city: '', postcode: '', countryCode: '' });
   const [saving, setSaving] = useState(false);
-  const [sellers, setSellers] = useState<{ id: string; storeName: string }[]>([]);
-  const [sellerId, setSellerId] = useState('');
   const [readiness, setReadiness] = useState<ReadinessCheck[]>([]);
+  const [deleting, setDeleting] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
     description?: string;
@@ -66,7 +65,6 @@ export default function AdminStoreDetailPage() {
         setRow(data);
         if (data) {
           setForm(toEditForm(data));
-          setSellerId(String(data.sellerId ?? ''));
         }
       })
       .catch((e: unknown) => toast.error(e instanceof Error ? e.message : 'Request failed'));
@@ -79,20 +77,7 @@ export default function AdminStoreDetailPage() {
       .catch(() => setReadiness([]));
   }, [id, toast]);
 
-  useEffect(() => {
-    load();
-    apiClient.getAdminSellers({ page: 1, limit: 200 })
-      .then((r) => {
-        const list = ((r.data as Record<string, unknown>)?.sellers ?? r.data) as Record<string, unknown>[];
-        if (Array.isArray(list)) {
-          setSellers(list.map((s) => ({
-            id: String(s.id),
-            storeName: String(s.storeName || s.businessName || s.id),
-          })));
-        }
-      })
-      .catch(() => {});
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
   const activate = async () => {
     try {
@@ -137,7 +122,6 @@ export default function AdminStoreDetailPage() {
         country: countryName || form.countryCode || undefined,
         countryCode: form.countryCode || undefined,
         defaultRegionCode: form.countryCode || undefined,
-        sellerId: sellerId || null,
       });
       toast.success('Store updated');
       setEditing(false);
@@ -199,9 +183,6 @@ export default function AdminStoreDetailPage() {
                   {isActive
                     ? <span className="text-emerald-400">active</span>
                     : <span className="text-red-400">inactive</span>}
-                  {row.sellerId
-                    ? <span className="ml-2">&middot; Seller: {sellers.find((s) => s.id === row.sellerId)?.storeName || String(row.sellerId)}</span>
-                    : <span className="ml-2 text-amber-400">&middot; No seller</span>}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -219,6 +200,35 @@ export default function AdminStoreDetailPage() {
                     Activate
                   </button>
                 )}
+                <button
+                  type="button"
+                  disabled={deleting}
+                  className="text-sm rounded-md border border-red-600 px-3 py-2 text-red-400 hover:bg-red-600 hover:text-white disabled:opacity-50"
+                  onClick={() =>
+                    setConfirmDialog({
+                      title: 'Delete this store permanently?',
+                      description:
+                        'This will remove the store, its POS connections, sales, configs, and onboarding data. This action cannot be undone.',
+                      tone: 'danger',
+                      confirmLabel: 'Delete store',
+                      onConfirm: async () => {
+                        setConfirmDialog(null);
+                        setDeleting(true);
+                        try {
+                          await apiClient.adminDeleteStore(id);
+                          toast.success('Store deleted');
+                          router.push('/admin/stores');
+                        } catch (e: unknown) {
+                          toast.error(e instanceof Error ? e.message : 'Delete failed');
+                        } finally {
+                          setDeleting(false);
+                        }
+                      },
+                    })
+                  }
+                >
+                  {deleting ? 'Deleting\u2026' : 'Delete'}
+                </button>
               </div>
             </div>
 
@@ -227,14 +237,6 @@ export default function AdminStoreDetailPage() {
               <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6">
                 <h2 className="text-lg font-semibold mb-4 text-hos-text-secondary">Edit store details</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Seller</label>
-                    <select className={INPUT_CLS} value={sellerId} onChange={(e) => setSellerId(e.target.value)}>
-                      <option value="">No seller assigned</option>
-                      {sellers.map((s) => <option key={s.id} value={s.id}>{s.storeName}</option>)}
-                    </select>
-                    <p className="text-xs text-hos-text-muted mt-1">Required for POS connections.</p>
-                  </div>
                   <div>
                     <label className="block text-sm font-medium text-hos-text-secondary mb-1">Name *</label>
                     <input className={INPUT_CLS} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -316,13 +318,10 @@ export default function AdminStoreDetailPage() {
 
             {/* Quick links */}
             <div className="flex flex-wrap gap-3 text-sm">
-              <Link href={`/admin/pos/connections`} className="text-hos-gold hover:text-hos-gold-hover underline">
+              <Link href="/admin/pos/connections" className="text-hos-gold hover:text-hos-gold-hover underline">
                 POS connections
               </Link>
-              <Link href={`/admin/sellers`} className="text-hos-gold hover:text-hos-gold-hover underline">
-                Manage sellers
-              </Link>
-              <Link href={`/admin/loyalty/settings`} className="text-hos-gold hover:text-hos-gold-hover underline">
+              <Link href="/admin/loyalty/settings" className="text-hos-gold hover:text-hos-gold-hover underline">
                 Loyalty settings
               </Link>
             </div>

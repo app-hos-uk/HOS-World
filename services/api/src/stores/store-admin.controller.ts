@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -76,6 +77,13 @@ export class StoreAdminController {
   async deactivate(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.stores.deactivateStore(id);
     return { data, message: 'OK' };
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete store and related records' })
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
+    const data = await this.stores.deleteStore(id);
+    return { data, message: 'Store deleted' };
   }
 
   @Post(':id/onboarding/step')

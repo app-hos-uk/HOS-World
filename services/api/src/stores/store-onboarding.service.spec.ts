@@ -23,12 +23,22 @@ describe('StoreOnboardingService', () => {
         create: jest.fn(),
         update: jest.fn(),
       },
-      pOSConnection: { create: jest.fn() },
+      pOSConnection: { create: jest.fn(), deleteMany: jest.fn() },
+      pOSSale: { deleteMany: jest.fn() },
+      productChannel: { deleteMany: jest.fn() },
+      config: { deleteMany: jest.fn() },
+      user: { updateMany: jest.fn() },
+      event: { updateMany: jest.fn() },
       $transaction: jest.fn(async (fn: (tx: any) => Promise<any>) =>
         fn({
-          store: prisma.store,
-          storeOnboardingChecklist: prisma.storeOnboardingChecklist,
-          pOSConnection: prisma.pOSConnection,
+          store: { ...prisma.store, delete: jest.fn() },
+          storeOnboardingChecklist: { ...prisma.storeOnboardingChecklist, deleteMany: jest.fn() },
+          pOSConnection: { ...prisma.pOSConnection, deleteMany: jest.fn() },
+          pOSSale: prisma.pOSSale,
+          productChannel: prisma.productChannel,
+          config: prisma.config,
+          user: prisma.user,
+          event: prisma.event,
         }),
       ),
     };
@@ -195,6 +205,50 @@ describe('StoreOnboardingService', () => {
       posConnection: null,
     });
     await expect(service.finishOnboarding('s1')).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('deleteStore removes store and related records', async () => {
+    const txStore = {
+      findUnique: jest.fn().mockResolvedValue({
+        id: 's1',
+        name: 'Test Store',
+        clickCollectOrders: [],
+        loyaltyPosVouchers: [],
+      }),
+      delete: jest.fn(),
+    };
+    prisma.$transaction.mockImplementation(async (fn: (tx: any) => Promise<any>) =>
+      fn({
+        store: txStore,
+        storeOnboardingChecklist: { deleteMany: jest.fn() },
+        pOSConnection: { deleteMany: jest.fn() },
+        pOSSale: { deleteMany: jest.fn() },
+        productChannel: { deleteMany: jest.fn() },
+        config: { deleteMany: jest.fn() },
+        user: { updateMany: jest.fn() },
+        event: { updateMany: jest.fn() },
+      }),
+    );
+    const result = await service.deleteStore('s1');
+    expect(result.deleted).toBe(true);
+    expect(result.name).toBe('Test Store');
+    expect(txStore.delete).toHaveBeenCalledWith({ where: { id: 's1' } });
+  });
+
+  it('deleteStore rejects when vouchers exist', async () => {
+    prisma.$transaction.mockImplementation(async (fn: (tx: any) => Promise<any>) =>
+      fn({
+        store: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 's1',
+            name: 'Test',
+            clickCollectOrders: [],
+            loyaltyPosVouchers: [{ id: 'v1' }],
+          }),
+        },
+      }),
+    );
+    await expect(service.deleteStore('s1')).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('completeOnboardingStep marks step', async () => {

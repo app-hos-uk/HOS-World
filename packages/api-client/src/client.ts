@@ -1493,6 +1493,10 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>(`/admin/stores/${id}/deactivate`, { method: 'POST' });
   }
 
+  async adminDeleteStore(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/stores/${id}`, { method: 'DELETE' });
+  }
+
   async adminCompleteOnboardingStep(
     storeId: string,
     step: string,

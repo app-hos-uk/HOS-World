@@ -285,6 +285,41 @@ export class StoreOnboardingService {
     return this.getStore(storeId);
   }
 
+  async deleteStore(storeId: string) {
+    const storeName = await this.prisma.$transaction(async (tx) => {
+      const store = await tx.store.findUnique({
+        where: { id: storeId },
+        include: {
+          clickCollectOrders: { select: { id: true }, take: 1 },
+          loyaltyPosVouchers: { select: { id: true }, take: 1 },
+        },
+      });
+      if (!store) throw new NotFoundException('Store not found');
+      if (store.clickCollectOrders.length > 0) {
+        throw new BadRequestException(
+          'Cannot delete store with click-and-collect orders. Remove or reassign them first.',
+        );
+      }
+      if (store.loyaltyPosVouchers.length > 0) {
+        throw new BadRequestException(
+          'Cannot delete store with loyalty voucher records. Archive them first.',
+        );
+      }
+
+      await tx.storeOnboardingChecklist.deleteMany({ where: { storeId } });
+      await tx.pOSSale.deleteMany({ where: { storeId } });
+      await tx.pOSConnection.deleteMany({ where: { storeId } });
+      await tx.productChannel.deleteMany({ where: { storeId } });
+      await tx.config.deleteMany({ where: { storeId } });
+      await tx.user.updateMany({ where: { storeId }, data: { storeId: null } });
+      await tx.event.updateMany({ where: { storeId }, data: { storeId: null } });
+      await tx.store.delete({ where: { id: storeId } });
+      return store.name;
+    });
+
+    return { deleted: true, id: storeId, name: storeName };
+  }
+
   async getReadiness(storeId: string) {
     const store = await this.prisma.store.findUnique({
       where: { id: storeId },

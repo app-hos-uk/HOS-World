@@ -11,6 +11,7 @@ describe('StoreAdminController', () => {
     updateStore: jest.fn().mockResolvedValue({ id: 's1' }),
     activateStore: jest.fn().mockResolvedValue({ id: 's1' }),
     deactivateStore: jest.fn().mockResolvedValue({ id: 's1' }),
+    deleteStore: jest.fn().mockResolvedValue({ deleted: true, id: 's1', name: 'Test' }),
     completeOnboardingStep: jest.fn().mockResolvedValue({ id: 's1' }),
     finishOnboarding: jest.fn().mockResolvedValue({ id: 's1' }),
   };
@@ -37,6 +38,12 @@ describe('StoreAdminController', () => {
   it('activate', async () => {
     await controller.activate('s1');
     expect(stores.activateStore).toHaveBeenCalledWith('s1');
+  });
+
+  it('delete', async () => {
+    const res = await controller.remove('s1');
+    expect(stores.deleteStore).toHaveBeenCalledWith('s1');
+    expect(res.message).toBe('Store deleted');
   });
 
   it('onboarding step', async () => {

@@ -101,11 +101,11 @@ export default function AdminPosConnectionsPage() {
     void loadStores();
   }, [load, loadStores]);
 
-  // A store needs a seller (inherited by the connection) and can hold only one
-  // connection — POSConnection.storeId is unique, so linked stores are excluded.
+  // Each store can hold only one POS connection (storeId is unique), so
+  // already-linked stores are excluded from the dropdown.
   const connectableStores = useMemo(() => {
     const linked = new Set(items.map((c) => c.storeId));
-    return stores.filter((s) => !!s.sellerId && !linked.has(s.id));
+    return stores.filter((s) => !linked.has(s.id));
   }, [stores, items]);
   const blockedStoreCount = stores.length - connectableStores.length;
 
