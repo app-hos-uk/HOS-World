@@ -128,11 +128,20 @@ function AdminStoreNewContent() {
     );
     const redirectUri = oauthConfig?.redirectUri || `${getDirectApiBaseUrl()}/pos/lightspeed/callback`;
     const state = btoa(JSON.stringify({ domainPrefix: domainPrefix.trim() }));
+    const scopes = [
+      'customers:read', 'customers:write',
+      'sales:read',
+      'products:read',
+      'outlets:read',
+      'retailer:read',
+      'inventory:read',
+    ].join(' ');
     window.location.href =
-      `https://secure.lightspeed.app/connect` +
+      `https://secure.retail.lightspeed.app/connect` +
       `?response_type=code` +
       `&client_id=${encodeURIComponent(oauthClientId)}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&scope=${encodeURIComponent(scopes)}` +
       `&state=${encodeURIComponent(state)}`;
   };
 
