@@ -2699,10 +2699,45 @@ export class ApiClient {
     // Team member specific
     department?: string;
     employeeId?: string;
+    // Store staff
+    storeId?: string;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/admin/users', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  async searchStoreCustomers(body: {
+    cardNumber?: string;
+    email?: string;
+    phone?: string;
+    phoneLastFour?: string;
+    name?: string;
+    storeId?: string;
+  }): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/store/customers/search', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async redeemLoyaltyPosVoucher(body: {
+    points: number;
+    storeId: string;
+    membershipId?: string;
+    email?: string;
+    phone?: string;
+    cardNumber?: string;
+    voucherId?: string;
+    idempotencyKey?: string;
+  }): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/pos/redeem-for-voucher', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: body.idempotencyKey
+        ? { 'Idempotency-Key': body.idempotencyKey }
+        : undefined,
     });
   }
 

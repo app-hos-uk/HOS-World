@@ -169,11 +169,30 @@ export default function AdminStoreDetailPage() {
   const allPassed = readiness.length > 0 && passedCount === readiness.length;
 
   const readinessActions: Record<string, { label: string; action: () => void }> = {
-    seller: { label: 'Assign seller', action: () => startEdit() },
+    pos_runtime: {
+      label: 'Feature flags',
+      action: () => router.push('/admin/feature-flags'),
+    },
+    loyalty_runtime: {
+      label: 'Feature flags',
+      action: () => router.push('/admin/feature-flags'),
+    },
     pos_connection: { label: 'Set up POS', action: () => router.push('/admin/pos/connections') },
     pos_active: { label: 'Configure POS', action: () => router.push('/admin/pos/connections') },
-    products: { label: 'Manage products', action: () => router.push('/admin/products') },
-    test_sale: { label: 'How to test', action: () => toast.info('Process a test sale through the POS terminal to complete this check.') },
+    credentials: {
+      label: 'Add credentials',
+      action: () => router.push('/admin/pos/connections'),
+    },
+    outlet_mapped: {
+      label: 'Map outlet',
+      action: () =>
+        toast.info('Set externalOutletId on the POS connection (Lightspeed outlet ID).'),
+    },
+    sales_flowing: {
+      label: 'How to verify',
+      action: () =>
+        toast.info('Process a sale on the Lightspeed till so it imports into HOS.'),
+    },
   };
 
   return (

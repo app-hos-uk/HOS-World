@@ -52,6 +52,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           createdAt: true,
           updatedAt: true,
           defaultTenantId: true,
+          storeId: true,
           tenantMemberships: {
             where: { isActive: true },
             select: {

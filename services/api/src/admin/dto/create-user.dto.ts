@@ -1,4 +1,14 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength, Matches, IsIn } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MinLength,
+  Matches,
+  IsIn,
+  ValidateIf,
+} from 'class-validator';
 import { UserRole } from '@prisma/client';
 
 export class CreateAdminUserDto {
@@ -59,4 +69,9 @@ export class CreateAdminUserDto {
   @IsOptional()
   @IsString()
   employeeId?: string;
+
+  /** Required when role is STORE_STAFF — assigns the staff user to a store. */
+  @ValidateIf((o) => o.role === UserRole.STORE_STAFF)
+  @IsUUID()
+  storeId?: string;
 }

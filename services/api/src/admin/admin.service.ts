@@ -77,6 +77,8 @@ export class AdminService {
     // Team member specific
     department?: string;
     employeeId?: string;
+    // Store staff
+    storeId?: string;
   }) {
     const normalizedEmail = data.email.trim().toLowerCase();
 
@@ -92,6 +94,19 @@ export class AdminService {
     const isSellerRole = sellerRoles.includes(data.role);
     if (isSellerRole && !data.storeName) {
       throw new BadRequestException('storeName is required for seller roles');
+    }
+
+    if (data.role === UserRole.STORE_STAFF) {
+      if (!data.storeId) {
+        throw new BadRequestException('storeId is required for STORE_STAFF');
+      }
+      const store = await this.prisma.store.findUnique({
+        where: { id: data.storeId },
+        select: { id: true },
+      });
+      if (!store) {
+        throw new BadRequestException('Store not found');
+      }
     }
 
     const hashedPassword = await bcrypt.hash(data.password, BCRYPT_PASSWORD_ROUNDS);
@@ -117,6 +132,7 @@ export class AdminService {
       UserRole.MARKETING,
       UserRole.FINANCE,
       UserRole.CMS_EDITOR,
+      UserRole.STORE_STAFF,
     ];
     const isTeamRole = teamRoles.includes(data.role);
 
@@ -135,6 +151,9 @@ export class AdminService {
           department: data.department,
           employeeId: data.employeeId,
         }),
+        ...(data.role === UserRole.STORE_STAFF && data.storeId
+          ? { storeId: data.storeId }
+          : {}),
       },
       select: {
         id: true,
@@ -146,6 +165,7 @@ export class AdminService {
         permissionRoleId: true,
         department: true,
         employeeId: true,
+        storeId: true,
         avatar: true,
         createdAt: true,
         updatedAt: true,

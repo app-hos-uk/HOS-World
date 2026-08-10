@@ -6,6 +6,7 @@ import { CacheModule } from '../cache/cache.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { DiscrepanciesModule } from '../discrepancies/discrepancies.module';
 import { LoyaltyModule } from '../loyalty/loyalty.module';
+import { StoreAdminModule } from '../stores/store-admin.module';
 import { POSAdapterFactory } from './pos-adapter.factory';
 import { PosProductSyncService } from './sync/product-sync.service';
 import { PosInventorySyncService } from './sync/inventory-sync.service';
@@ -26,6 +27,7 @@ import { PosJobsService } from './jobs/pos.jobs';
     InventoryModule,
     DiscrepanciesModule,
     forwardRef(() => LoyaltyModule),
+    StoreAdminModule,
   ],
   controllers: [PosWebhookController, PosAdminController],
   providers: [

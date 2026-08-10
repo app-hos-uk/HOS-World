@@ -90,7 +90,7 @@ export class AdminUsersController {
         );
       } else if (r === 'TEAM') {
         whereParts.push(
-          Prisma.sql`u.role IN ('PROCUREMENT'::"UserRole", 'FULFILLMENT'::"UserRole", 'CATALOG'::"UserRole", 'MARKETING'::"UserRole", 'FINANCE'::"UserRole", 'CMS_EDITOR'::"UserRole")`,
+          Prisma.sql`u.role IN ('PROCUREMENT'::"UserRole", 'FULFILLMENT'::"UserRole", 'CATALOG'::"UserRole", 'MARKETING'::"UserRole", 'FINANCE'::"UserRole", 'CMS_EDITOR'::"UserRole", 'STORE_STAFF'::"UserRole")`,
         );
       } else {
         whereParts.push(Prisma.sql`u.role = ${r}::"UserRole"`);

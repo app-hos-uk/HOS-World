@@ -357,6 +357,246 @@ describe('LoyaltyEarnEngine', () => {
         }),
       );
     });
+
+    it('falls back to total-based earn when products are unmapped', async () => {
+      const mockConfig = {
+        get: jest.fn().mockImplementation((key: string, defaultVal?: any) => {
+          if (key === 'LOYALTY_ENABLED') return 'true';
+          if (key === 'LOYALTY_DEFAULT_EARN_RATE') return 1;
+          if (key === 'HOS_SELLER_ID') return '';
+          return defaultVal;
+        }),
+      };
+      const membership = {
+        id: 'm1',
+        userId: 'u1',
+        tier: { multiplier: { toNumber: () => 1 }, level: 1 },
+        regionCode: null,
+      };
+      const mockWallet = { applyDelta: jest.fn().mockResolvedValue({ applied: true }) };
+      const mockPrisma = {
+        pOSSale: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'sale-fallback',
+            customerId: 'u1',
+            storeId: 'store-1',
+            externalSaleId: 'ext-fb',
+            loyaltyPointsEarned: 0,
+            totalAmount: 100,
+            taxAmount: 20,
+            items: [
+              {
+                product: null,
+                productId: null,
+                unitPrice: 80,
+                quantity: 1,
+              },
+            ],
+            store: {},
+          }),
+          update: jest.fn(),
+        },
+        loyaltyMembership: {
+          findUnique: jest.fn().mockResolvedValue(membership),
+          update: jest.fn(),
+        },
+        loyaltyEarnRule: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'rule-purchase',
+            action: 'PURCHASE',
+            isActive: true,
+            pointsType: 'PER_CURRENCY_UNIT',
+            pointsAmount: 1,
+            multiplierStack: true,
+          }),
+        },
+        vendorProduct: { findFirst: jest.fn().mockResolvedValue(null) },
+        user: { findUnique: jest.fn().mockResolvedValue({ id: 'u1', country: null }) },
+        $transaction: jest.fn(async (fn: (tx: any) => Promise<any>) =>
+          fn({
+            loyaltyMembership: { update: jest.fn() },
+            pOSSale: { update: jest.fn() },
+          }),
+        ),
+      };
+      const mockCampaigns = {
+        getActiveForContext: jest.fn().mockResolvedValue([]),
+        applyCampaignsToBasePoints: jest.fn().mockReturnValue({
+          points: 80,
+          campaignId: undefined,
+          mult: 1,
+          bonus: 0,
+        }),
+      };
+      const mockTiers = { recalculateTier: jest.fn() };
+
+      const engine = new LoyaltyEarnEngine(
+        mockPrisma as any,
+        mockConfig as any,
+        mockFeatureFlags as any,
+        mockWallet as any,
+        mockCampaigns as any,
+        mockTiers as any,
+        mockBrandPartnerships as any,
+        mockProductCampaigns as any,
+        mockRegion as any,
+      );
+      await engine.processPosSale('sale-fallback');
+
+      expect(mockCampaigns.applyCampaignsToBasePoints).toHaveBeenCalledWith([], 80);
+      expect(mockBrandPartnerships.applyBrandOrderBoostInTx).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ lines: [] }),
+      );
+      expect(mockWallet.applyDelta).toHaveBeenCalledWith(
+        expect.anything(),
+        'm1',
+        80,
+        'EARN',
+        expect.objectContaining({ source: 'POS_PURCHASE' }),
+      );
+      expect(mockCampaigns.getActiveForContext).toHaveBeenCalledWith('US', 'HOS_OUTLET_POS');
+    });
+
+    it('does not fall back when seller opted out of loyalty', async () => {
+      const mockConfig = {
+        get: jest.fn().mockImplementation((key: string, defaultVal?: any) => {
+          if (key === 'LOYALTY_ENABLED') return 'true';
+          if (key === 'LOYALTY_DEFAULT_EARN_RATE') return 0;
+          if (key === 'HOS_SELLER_ID') return '';
+          return defaultVal;
+        }),
+      };
+      const membership = {
+        id: 'm1',
+        userId: 'u1',
+        tier: { multiplier: { toNumber: () => 1 }, level: 1 },
+        regionCode: 'US',
+      };
+      const mockWallet = { applyDelta: jest.fn() };
+      const mockPrisma = {
+        pOSSale: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'sale-skip',
+            customerId: 'u1',
+            storeId: 'store-1',
+            externalSaleId: 'ext-skip',
+            loyaltyPointsEarned: 0,
+            totalAmount: 100,
+            taxAmount: 20,
+            items: [
+              {
+                product: {
+                  id: 'p1',
+                  sellerId: 's1',
+                  isPlatformOwned: false,
+                  seller: { id: 's1', loyaltyEnabled: false, loyaltyEarnRate: null },
+                  fandom: null,
+                  brand: null,
+                  categoryId: null,
+                },
+                unitPrice: 50,
+                quantity: 2,
+              },
+            ],
+            store: {},
+          }),
+          update: jest.fn(),
+        },
+        loyaltyMembership: {
+          findUnique: jest.fn().mockResolvedValue(membership),
+        },
+        loyaltyEarnRule: {
+          findUnique: jest.fn().mockResolvedValue(null),
+        },
+        vendorProduct: { findFirst: jest.fn().mockResolvedValue(null) },
+      };
+
+      const engine = new LoyaltyEarnEngine(
+        mockPrisma as any,
+        mockConfig as any,
+        mockFeatureFlags as any,
+        mockWallet as any,
+        null as any,
+        null as any,
+        mockBrandPartnerships as any,
+        mockProductCampaigns as any,
+        mockRegion as any,
+      );
+      await engine.processPosSale('sale-skip');
+
+      expect(mockPrisma.pOSSale.update).toHaveBeenCalledWith({
+        where: { id: 'sale-skip' },
+        data: { loyaltyPointsEarned: 0 },
+      });
+      expect(mockWallet.applyDelta).not.toHaveBeenCalled();
+    });
+
+    it('awards zero points when sale total equals tax (zero net)', async () => {
+      const mockConfig = {
+        get: jest.fn().mockImplementation((key: string, defaultVal?: any) => {
+          if (key === 'LOYALTY_ENABLED') return 'true';
+          if (key === 'LOYALTY_DEFAULT_EARN_RATE') return 1;
+          if (key === 'HOS_SELLER_ID') return '';
+          return defaultVal;
+        }),
+      };
+      const membership = {
+        id: 'm1',
+        userId: 'u1',
+        tier: { multiplier: { toNumber: () => 1 }, level: 1 },
+        regionCode: 'US',
+      };
+      const mockWallet = { applyDelta: jest.fn() };
+      const mockPrisma = {
+        pOSSale: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'sale-zero',
+            customerId: 'u1',
+            storeId: 'store-1',
+            externalSaleId: 'ext-zero',
+            loyaltyPointsEarned: 0,
+            totalAmount: 50,
+            taxAmount: 50,
+            items: [
+              {
+                product: null,
+                unitPrice: 50,
+                quantity: 1,
+              },
+            ],
+            store: {},
+          }),
+          update: jest.fn(),
+        },
+        loyaltyMembership: {
+          findUnique: jest.fn().mockResolvedValue(membership),
+        },
+        loyaltyEarnRule: {
+          findUnique: jest.fn().mockResolvedValue(null),
+        },
+        vendorProduct: { findFirst: jest.fn().mockResolvedValue(null) },
+      };
+
+      const engine = new LoyaltyEarnEngine(
+        mockPrisma as any,
+        mockConfig as any,
+        mockFeatureFlags as any,
+        mockWallet as any,
+        null as any,
+        null as any,
+        mockBrandPartnerships as any,
+        mockProductCampaigns as any,
+        mockRegion as any,
+      );
+      await engine.processPosSale('sale-zero');
+
+      expect(mockPrisma.pOSSale.update).toHaveBeenCalledWith({
+        where: { id: 'sale-zero' },
+        data: { loyaltyPointsEarned: 0 },
+      });
+      expect(mockWallet.applyDelta).not.toHaveBeenCalled();
+    });
   });
 
   describe('reversePosSaleEarn', () => {

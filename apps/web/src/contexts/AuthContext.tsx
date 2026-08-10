@@ -24,6 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const VALID_USER_ROLES: UserRole[] = [
   'CUSTOMER', 'WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN', 'INFLUENCER',
   'PROCUREMENT', 'FULFILLMENT', 'CATALOG', 'MARKETING', 'FINANCE', 'CMS_EDITOR',
+  'STORE_STAFF',
 ];
 
 function isValidUserRole(value: string): value is UserRole {

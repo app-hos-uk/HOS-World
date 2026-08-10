@@ -2,9 +2,12 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../database/prisma.service';
+import { AUTH_COOKIE_NAME } from '../../auth/cookie.utils';
 
 /**
- * Valid X-API-Key (from API_KEYS) OR JWT for an ADMIN user.
+ * Valid X-API-Key (from API_KEYS) OR JWT for an ADMIN / STORE_STAFF user.
+ * Accepts Bearer header OR HttpOnly access_token cookie (web sessions).
+ * STORE_STAFF must have a storeId assignment.
  */
 @Injectable()
 export class LoyaltyStaffAuthGuard implements CanActivate {
@@ -26,13 +29,15 @@ export class LoyaltyStaffAuthGuard implements CanActivate {
     }
 
     const auth = req.headers.authorization as string | undefined;
-    if (!auth?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('API key or admin token required');
+    const cookieToken = req.cookies?.[AUTH_COOKIE_NAME] as string | undefined;
+    const token = auth?.startsWith('Bearer ') ? auth.slice(7) : cookieToken;
+    if (!token) {
+      throw new UnauthorizedException('API key or staff token required');
     }
     try {
       const secret = this.config.get<string>('JWT_SECRET');
       if (!secret) throw new UnauthorizedException('JWT not configured');
-      const payload = await this.jwt.verifyAsync(auth.slice(7), {
+      const payload = await this.jwt.verifyAsync(token, {
         secret,
         algorithms: ['HS256'],
       });
@@ -41,14 +46,23 @@ export class LoyaltyStaffAuthGuard implements CanActivate {
       }
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
-        select: { id: true, role: true, isActive: true },
+        select: { id: true, role: true, isActive: true, storeId: true },
       });
-      if (!user?.isActive || user.role !== 'ADMIN') {
-        throw new UnauthorizedException('Admin access required');
+      if (!user?.isActive) {
+        throw new UnauthorizedException('Staff access required');
       }
-      req.user = user;
-      return true;
-    } catch {
+      if (user.role === 'ADMIN') {
+        req.user = user;
+        return true;
+      }
+      if (user.role === 'STORE_STAFF' && user.storeId) {
+        req.user = user;
+        req.storeId = user.storeId;
+        return true;
+      }
+      throw new UnauthorizedException('Admin or store staff access required');
+    } catch (e) {
+      if (e instanceof UnauthorizedException) throw e;
       throw new UnauthorizedException('Invalid token');
     }
   }

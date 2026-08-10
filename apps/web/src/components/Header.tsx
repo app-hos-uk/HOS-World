@@ -145,6 +145,7 @@ export function Header() {
       MARKETING: '/marketing/dashboard',
       FINANCE: '/finance/dashboard',
       CMS_EDITOR: '/cms/dashboard',
+      STORE_STAFF: '/store/lookup',
     } as Record<UserRole, string>;
     return roleDashboardMap[currentRole as UserRole] || '/';
   };
@@ -162,6 +163,7 @@ export function Header() {
     MARKETING: 'Marketing',
     FINANCE: 'Finance',
     CMS_EDITOR: 'CMS Editor',
+    STORE_STAFF: 'Store Staff',
   } as Record<UserRole, string>;
 
   const handleLogoutClick = () => setLogoutOpen(true);

@@ -29,10 +29,16 @@ export default function AdminStoresPage() {
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-semibold text-hos-text-secondary">Stores</h1>
             <Link
+              href="/admin/store-staff"
+              className="text-sm rounded-md border border-hos-border px-3 py-2 text-hos-text-secondary hover:bg-hos-bg-secondary"
+            >
+              Store staff
+            </Link>
+            <Link
               href="/admin/stores/new"
               className="text-sm rounded-md bg-violet-700 px-3 py-2 text-white"
             >
-              New store
+              Connect a store
             </Link>
           </div>
           {loading ? (

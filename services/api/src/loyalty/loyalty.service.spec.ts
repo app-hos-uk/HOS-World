@@ -13,12 +13,24 @@ import { LoyaltyEventService } from './services/loyalty-event.service';
 import { QueueService } from '../queue/queue.service';
 import { LoyaltyListener } from './listeners/loyalty.listener';
 import { LoyaltySettingsService } from './services/loyalty-settings.service';
+import { PlatformRegionService } from '../config/platform-region.service';
 
 describe('LoyaltyService', () => {
   let service: LoyaltyService;
 
   const mockFeatureFlags = {
     isEnabled: jest.fn().mockReturnValue(true),
+  };
+
+  const mockRegion = {
+    getRegion: jest.fn().mockResolvedValue({
+      currency: 'USD',
+      country: 'US',
+      locale: 'en-US',
+      timezone: 'America/New_York',
+      taxOrigin: null,
+    }),
+    getCountry: jest.fn().mockResolvedValue('US'),
   };
 
   const mockConfig = {
@@ -150,6 +162,7 @@ describe('LoyaltyService', () => {
         { provide: QueueService, useValue: mockQueue },
         { provide: LoyaltyListener, useValue: mockLoyaltyListener },
         { provide: LoyaltySettingsService, useValue: mockLoyaltySettings },
+        { provide: PlatformRegionService, useValue: mockRegion },
       ],
     }).compile();
 

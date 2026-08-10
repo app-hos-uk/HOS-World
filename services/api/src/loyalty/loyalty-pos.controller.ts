@@ -1,4 +1,13 @@
-import { Body, Controller, Headers, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  ForbiddenException,
+  Headers,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
 import { LoyaltyService } from './loyalty.service';
@@ -20,7 +29,7 @@ export class LoyaltyPosController {
   @Public()
   @Post('lookup')
   @UseGuards(LoyaltyStaffAuthGuard)
-  @ApiOperation({ summary: 'Lookup member by email, phone, or card (API key or admin JWT)' })
+  @ApiOperation({ summary: 'Lookup member by email, phone, or card (API key or admin/staff JWT)' })
   @ApiHeader({ name: 'x-api-key', required: false })
   @ApiBearerAuth('JWT-auth')
   async lookup(@Body() body: LookupMemberDto): Promise<ApiResponse<unknown>> {
@@ -33,7 +42,7 @@ export class LoyaltyPosController {
   @UseGuards(LoyaltyStaffAuthGuard)
   @ApiOperation({
     summary:
-      'In-store staff enrolment (requires email; API key or admin JWT). Path is pos/enroll to avoid colliding with customer POST /loyalty/enroll.',
+      'In-store staff enrolment (requires email; API key or admin/staff JWT). Path is pos/enroll to avoid colliding with customer POST /loyalty/enroll.',
   })
   @ApiHeader({ name: 'x-api-key', required: false })
   @ApiBearerAuth('JWT-auth')
@@ -59,7 +68,23 @@ export class LoyaltyPosController {
   async redeemForVoucher(
     @Body() body: RedeemForVoucherDto,
     @Headers('idempotency-key') idempotencyKeyHeader?: string,
+    @Req()
+    req?: {
+      user?: { role?: string; storeId?: string | null };
+      storeId?: string;
+    },
   ): Promise<ApiResponse<unknown>> {
+    const staffStoreId = req?.storeId || req?.user?.storeId || null;
+    if (req?.user?.role === 'STORE_STAFF') {
+      if (!staffStoreId) {
+        throw new BadRequestException('Store staff must be assigned to a store');
+      }
+      if (body.storeId && body.storeId !== staffStoreId) {
+        throw new ForbiddenException('Cannot redeem for a different store');
+      }
+      body = { ...body, storeId: staffStoreId };
+    }
+
     const data = await this.posVouchers.redeemForVoucher({
       ...body,
       idempotencyKey: body.idempotencyKey?.trim() || idempotencyKeyHeader?.trim() || undefined,

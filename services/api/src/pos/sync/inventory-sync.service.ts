@@ -159,6 +159,7 @@ export class PosInventorySyncService {
       const outletId = conn.externalOutletId || conn.store.externalStoreId || '';
       if (!outletId) continue;
 
+      // Skip auth/API work when there are no synced product mappings (e.g. loyalty-only stores).
       const mappings = await this.prisma.externalEntityMapping.findMany({
         where: {
           provider: conn.provider,
@@ -167,6 +168,7 @@ export class PosInventorySyncService {
           syncStatus: 'SYNCED',
         },
       });
+      if (mappings.length === 0) continue;
 
       const creds = this.encryption.decryptJson<Record<string, unknown>>(conn.credentials);
       const adapter = this.factory.create(conn.provider, conn.credentials);

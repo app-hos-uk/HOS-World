@@ -129,6 +129,10 @@ model User {
   manager       User?   @relation("ManagerReports", fields: [managerId], references: [id], onDelete: SetNull)
   directReports User[]  @relation("ManagerReports")
 
+  // Store staff assignment (STORE_STAFF role)
+  storeId String?
+  store   Store?  @relation("StoreStaff", fields: [storeId], references: [id], onDelete: SetNull)
+
   // Influencer Relations
   influencerProfile     Influencer?
   influencerInvitations InfluencerInvitation[] @relation("InfluencerInvitedBy")
@@ -179,6 +183,7 @@ model User {
 
   @@index([deletedAt])
   @@index([phoneNormalized])
+  @@index([storeId])
   @@map("users")
 }
 
@@ -279,6 +284,7 @@ model Store {
   clickCollectOrders   ClickCollectOrder[]
   onboardingChecklist  StoreOnboardingChecklist?
   loyaltyPosVouchers   LoyaltyPosVoucher[]
+  storeStaff           User[]              @relation("StoreStaff")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -330,6 +336,7 @@ enum UserRole {
   FINANCE
   CMS_EDITOR
   SALES
+  STORE_STAFF
 }
 
 // Note: Communication method values are validated in DTOs (see `src/auth/dto/register.dto.ts`).

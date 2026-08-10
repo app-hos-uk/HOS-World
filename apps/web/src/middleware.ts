@@ -36,6 +36,7 @@ const PROTECTED_PREFIXES = [
   '/finance',
   '/cms',
   '/customer',
+  '/store',
   '/profile',
   '/orders',
   '/wishlist',

@@ -32,6 +32,7 @@ import { normalizePhoneToE164 } from '../common/utils/phone-normalize';
 import { isPosRuntimeEnabled } from '../pos/pos-enabled';
 import { LoyaltySettingsService } from './services/loyalty-settings.service';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
+import { PlatformRegionService } from '../config/platform-region.service';
 
 @Injectable()
 export class LoyaltyService implements OnModuleInit {
@@ -50,6 +51,7 @@ export class LoyaltyService implements OnModuleInit {
     private queue: QueueService,
     private loyaltyListener: LoyaltyListener,
     private loyaltySettings: LoyaltySettingsService,
+    private region: PlatformRegionService,
     @Optional()
     @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
@@ -741,7 +743,9 @@ export class LoyaltyService implements OnModuleInit {
 
     if (phone) {
       // Lookup accepts E.164 or national with no inventing — try raw E.164 path only (+/00).
-      const phoneNormalized = normalizePhoneToE164(phone) ?? normalizePhoneToE164(phone, 'GB');
+      const countryHint = await this.region.getCountry();
+      const phoneNormalized =
+        normalizePhoneToE164(phone) ?? normalizePhoneToE164(phone, countryHint);
       if (phoneNormalized) {
         const matches = await this.prisma.user.findMany({
           where: { phoneNormalized },
@@ -776,7 +780,7 @@ export class LoyaltyService implements OnModuleInit {
     }
 
     const phone = dto.phone?.trim() || null;
-    const countryHint = dto.country?.trim() || 'GB';
+    const countryHint = dto.country?.trim() || (await this.region.getCountry());
     const phoneNormalized = phone ? normalizePhoneToE164(phone, countryHint) : null;
 
     let user = await this.prisma.user.findFirst({

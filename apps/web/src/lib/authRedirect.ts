@@ -11,6 +11,7 @@ const ROLE_DASHBOARD_MAP: Record<string, string> = {
   MARKETING: '/marketing/dashboard',
   FINANCE: '/finance/dashboard',
   CMS_EDITOR: '/cms/dashboard',
+  STORE_STAFF: '/store/lookup',
 };
 
 /** Accept only same-origin relative paths to prevent open redirects. */

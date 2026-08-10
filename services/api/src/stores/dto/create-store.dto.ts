@@ -1,5 +1,44 @@
-import { IsBoolean, IsNumber, IsOptional, IsString, Length, Matches, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
+
+export class LightspeedCredentialsDto {
+  @IsString()
+  @MinLength(1)
+  domainPrefix!: string;
+
+  @IsString()
+  @MinLength(1)
+  clientId!: string;
+
+  @IsString()
+  @MinLength(1)
+  clientSecret!: string;
+
+  @IsString()
+  @MinLength(1)
+  accessToken!: string;
+
+  @IsString()
+  @MinLength(1)
+  refreshToken!: string;
+
+  @IsOptional()
+  @IsString()
+  externalOutletId?: string;
+
+  @IsOptional()
+  @IsString()
+  webhookSecret?: string;
+}
 
 export class CreateStoreDto {
   @IsString()
@@ -86,4 +125,10 @@ export class CreateStoreDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  /** When present, creates an encrypted Lightspeed POS connection in the same transaction. */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => LightspeedCredentialsDto)
+  lightspeed?: LightspeedCredentialsDto;
 }

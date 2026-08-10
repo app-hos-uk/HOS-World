@@ -512,7 +512,8 @@ export class LoyaltyEarnEngine {
       return;
     }
 
-    const region = membership.regionCode || order.user?.country || 'GB';
+    const platformRegion = await this.region.getRegion();
+    const region = membership.regionCode || order.user?.country || platformRegion.country;
     const activeCampaigns = await this.campaigns.getActiveForContext(region, 'WEB');
     const {
       points: campPoints,
@@ -768,6 +769,22 @@ export class LoyaltyEarnEngine {
       });
     }
 
+    // Total-based fallback when no line points could be earned (e.g. unmapped products)
+    // and no seller opted out. Leave `lines` empty so brand/product campaign boosts skip.
+    if (basePoints.lte(0) && skippedDisabledSeller === 0) {
+      const netTotal = new Decimal(sale.totalAmount).sub(sale.taxAmount);
+      if (netTotal.gt(0)) {
+        const platformRule = purchaseRule && purchaseRule.isActive !== false ? purchaseRule : null;
+        if (platformRule?.pointsType === 'PER_CURRENCY_UNIT') {
+          basePoints = netTotal.mul(platformRule.pointsAmount);
+        } else if (platformRule) {
+          basePoints = new Decimal(platformRule.pointsAmount);
+        } else if (platformDefaultRate > 0) {
+          basePoints = netTotal.mul(platformDefaultRate);
+        }
+      }
+    }
+
     if (basePoints.lte(0)) {
       if (skippedDisabledSeller > 0) {
         this.logger.warn(
@@ -782,7 +799,8 @@ export class LoyaltyEarnEngine {
     }
 
     const user = await this.prisma.user.findUnique({ where: { id: sale.customerId } });
-    const region = membership.regionCode || user?.country || 'GB';
+    const platformRegion = await this.region.getRegion();
+    const region = membership.regionCode || user?.country || platformRegion.country;
     const activeCampaigns = await this.campaigns.getActiveForContext(region, 'HOS_OUTLET_POS');
     const {
       points: campPoints,

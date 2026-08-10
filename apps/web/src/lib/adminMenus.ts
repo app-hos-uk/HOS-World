@@ -176,6 +176,7 @@ export const menuItems: ShellMenuItem[] = [
       { title: 'Gallery', href: '/admin/gallery', icon: navIcon('camera') },
       { title: 'Blog', href: '/cms/blog', icon: navIcon('fileText') },
       { title: 'Stores', href: '/admin/stores', icon: navIcon('warehouse') },
+      { title: 'Store Staff', href: '/admin/store-staff', icon: navIcon('users') },
       { title: 'Themes', href: '/admin/themes', icon: navIcon('palette') },
       { title: 'Media Library', href: '/admin/media', icon: navIcon('image') },
       { title: 'Notification Templates', href: '/admin/templates', icon: navIcon('clipboard') },

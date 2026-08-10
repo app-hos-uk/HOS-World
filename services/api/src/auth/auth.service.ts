@@ -879,6 +879,7 @@ export class AuthService {
           role: true,
           isActive: true,
           avatar: true,
+          storeId: true,
           createdAt: true,
           updatedAt: true,
           failedLoginAttempts: true,

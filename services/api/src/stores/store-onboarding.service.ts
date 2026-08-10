@@ -1,11 +1,17 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { normalizeCountryCode } from '../common/utils/country-code';
+import { FeatureFlagsService } from '../config/feature-flags.service';
 import { PlatformRegionService } from '../config/platform-region.service';
 import { PrismaService } from '../database/prisma.service';
+import { EncryptionService } from '../integrations/encryption.service';
+import { isLoyaltyRuntimeEnabled } from '../loyalty/loyalty-enabled';
+import { isPosRuntimeEnabled } from '../pos/pos-enabled';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
+import { PlatformSellerService } from './platform-seller.service';
 
 export const DEFAULT_ONBOARDING_STEP_DEFS: { key: string; label: string }[] = [
   { key: 'store_created', label: 'Store record created with address, timezone, currency' },
@@ -49,6 +55,10 @@ export class StoreOnboardingService {
   constructor(
     private prisma: PrismaService,
     private region: PlatformRegionService,
+    private platformSeller: PlatformSellerService,
+    private encryption: EncryptionService,
+    private config: ConfigService,
+    private featureFlags: FeatureFlagsService,
   ) {}
 
   async createStore(dto: CreateStoreDto) {
@@ -64,43 +74,80 @@ export class StoreOnboardingService {
       dto.loyaltyRedeemValue != null ? new Decimal(dto.loyaltyRedeemValue) : new Decimal(0.01);
 
     const region = await this.region.getRegion();
-
     const isoCode = normalizeCountryCode(dto.countryCode) || normalizeCountryCode(dto.country) || null;
 
-    const store = await this.prisma.store.create({
-      data: {
-        tenantId: dto.tenantId,
-        sellerId: dto.sellerId ?? null,
-        name: dto.name,
-        code: dto.code.trim().toUpperCase(),
-        address: dto.address ?? null,
-        city: dto.city ?? null,
-        state: dto.state ?? null,
-        country: dto.country ?? region.country,
-        countryCode: isoCode ?? region.country,
-        postalCode: dto.postalCode ?? null,
-        latitude: dto.latitude ?? null,
-        longitude: dto.longitude ?? null,
-        timezone: dto.timezone ?? region.timezone,
-        currency: dto.currency ?? region.currency,
-        contactEmail: dto.contactEmail ?? null,
-        contactPhone: dto.contactPhone ?? null,
-        managerName: dto.managerName ?? null,
-        defaultRegionCode: dto.defaultRegionCode ?? region.country,
-        loyaltyRedeemValue: redeem,
-        isActive: false,
-      },
+    const sellerId =
+      dto.sellerId?.trim() || (await this.platformSeller.resolvePlatformRetailSellerId());
+
+    const hasLightspeed = !!dto.lightspeed;
+    // One-step loyalty connect: activate when Lightspeed credentials are provided.
+    const isActive = hasLightspeed ? true : false;
+
+    const storeId = await this.prisma.$transaction(async (tx) => {
+      const store = await tx.store.create({
+        data: {
+          tenantId: dto.tenantId,
+          sellerId,
+          name: dto.name,
+          code: dto.code.trim().toUpperCase(),
+          address: dto.address ?? null,
+          city: dto.city ?? null,
+          state: dto.state ?? null,
+          country: dto.country ?? region.country,
+          countryCode: isoCode ?? region.country,
+          postalCode: dto.postalCode ?? null,
+          latitude: dto.latitude ?? null,
+          longitude: dto.longitude ?? null,
+          timezone: dto.timezone ?? region.timezone,
+          currency: dto.currency ?? region.currency,
+          contactEmail: dto.contactEmail ?? null,
+          contactPhone: dto.contactPhone ?? null,
+          managerName: dto.managerName ?? null,
+          defaultRegionCode: dto.defaultRegionCode ?? region.country,
+          loyaltyRedeemValue: redeem,
+          isActive,
+        },
+      });
+
+      await tx.storeOnboardingChecklist.create({
+        data: {
+          storeId: store.id,
+          steps: initialStepsJson(),
+          status: hasLightspeed ? 'COMPLETED' : 'IN_PROGRESS',
+          ...(hasLightspeed ? { completedAt: new Date() } : {}),
+        },
+      });
+
+      if (dto.lightspeed) {
+        const ls = dto.lightspeed;
+        const credentials = this.encryption.encrypt(
+          JSON.stringify({
+            domainPrefix: ls.domainPrefix,
+            clientId: ls.clientId,
+            clientSecret: ls.clientSecret,
+            accessToken: ls.accessToken,
+            refreshToken: ls.refreshToken,
+          }),
+        );
+        await tx.pOSConnection.create({
+          data: {
+            sellerId,
+            storeId: store.id,
+            provider: 'lightspeed',
+            credentials,
+            externalOutletId: ls.externalOutletId ?? null,
+            webhookSecret: ls.webhookSecret ?? null,
+            autoSyncProducts: false,
+            autoSyncInventory: false,
+            isActive: true,
+          },
+        });
+      }
+
+      return store.id;
     });
 
-    await this.prisma.storeOnboardingChecklist.create({
-      data: {
-        storeId: store.id,
-        steps: initialStepsJson(),
-        status: 'IN_PROGRESS',
-      },
-    });
-
-    return this.getStore(store.id);
+    return this.getStore(storeId);
   }
 
   async listStores() {
@@ -119,7 +166,16 @@ export class StoreOnboardingService {
       include: {
         onboardingChecklist: true,
         tenant: { select: { id: true, name: true } },
-        posConnection: { select: { id: true, provider: true, isActive: true } },
+        posConnection: {
+          select: {
+            id: true,
+            provider: true,
+            isActive: true,
+            externalOutletId: true,
+            lastSaleImportedAt: true,
+            syncStatus: true,
+          },
+        },
       },
     });
     if (!store) throw new NotFoundException('Store not found');
@@ -138,7 +194,8 @@ export class StoreOnboardingService {
     if (dto.state !== undefined) data.state = dto.state;
     if (dto.country !== undefined) data.country = dto.country;
     if (dto.countryCode !== undefined || dto.country !== undefined) {
-      data.countryCode = normalizeCountryCode(dto.countryCode) || normalizeCountryCode(dto.country) || undefined;
+      data.countryCode =
+        normalizeCountryCode(dto.countryCode) || normalizeCountryCode(dto.country) || undefined;
     }
     if (dto.postalCode !== undefined) data.postalCode = dto.postalCode;
     if (dto.latitude !== undefined) data.latitude = dto.latitude;
@@ -231,25 +288,37 @@ export class StoreOnboardingService {
     const store = await this.prisma.store.findUnique({
       where: { id: storeId },
       include: {
-        posConnection: { select: { id: true, isActive: true, syncStatus: true } },
-        productChannels: { select: { id: true } },
+        posConnection: {
+          select: {
+            id: true,
+            isActive: true,
+            credentials: true,
+            externalOutletId: true,
+            lastSaleImportedAt: true,
+          },
+        },
         posSales: { select: { id: true }, take: 1 },
       },
     });
     if (!store) throw new NotFoundException('Store not found');
 
-    const hasSeller = !!store.sellerId;
-    const hasPosConnection = !!store.posConnection;
-    const posActive = store.posConnection?.isActive === true;
-    const hasProducts = store.productChannels.length > 0;
-    const hasSales = store.posSales.length > 0;
+    const posRuntime = isPosRuntimeEnabled(this.config, this.featureFlags);
+    const loyaltyRuntime = isLoyaltyRuntimeEnabled(this.config, this.featureFlags);
+    const conn = store.posConnection;
+    const hasPosConnection = !!conn;
+    const posActive = conn?.isActive === true;
+    const hasCredentials = !!conn?.credentials;
+    const outletMapped = !!(conn?.externalOutletId || store.externalStoreId);
+    const salesFlowing = store.posSales.length > 0 || !!conn?.lastSaleImportedAt;
 
     const checks = [
-      { key: 'seller', label: 'Seller assigned', ok: hasSeller },
+      { key: 'pos_runtime', label: 'POS runtime enabled', ok: posRuntime },
+      { key: 'loyalty_runtime', label: 'Loyalty runtime enabled', ok: loyaltyRuntime },
       { key: 'pos_connection', label: 'POS connection created', ok: hasPosConnection },
       { key: 'pos_active', label: 'POS connection active', ok: posActive },
-      { key: 'products', label: 'Products assigned to store', ok: hasProducts },
-      { key: 'test_sale', label: 'Test transaction recorded', ok: hasSales },
+      { key: 'credentials', label: 'POS credentials present', ok: hasCredentials },
+      { key: 'outlet_mapped', label: 'Outlet mapped (externalOutletId)', ok: outletMapped },
+      { key: 'sales_flowing', label: 'Sales flowing from POS', ok: salesFlowing },
     ];
 
     return { checks, allPassed: checks.every((c) => c.ok) };

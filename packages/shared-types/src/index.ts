@@ -81,7 +81,8 @@ export type UserRole =
   | 'CATALOG'
   | 'MARKETING'
   | 'FINANCE'
-  | 'CMS_EDITOR';
+  | 'CMS_EDITOR'
+  | 'STORE_STAFF';
 
 // User Types
 export interface User {
@@ -93,6 +94,7 @@ export interface User {
   role: UserRole;
   avatar?: string;
   characterAvatar?: string; // Selected character ID for fandom experience
+  storeId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

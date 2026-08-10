@@ -49,6 +49,7 @@ describe('PosAdminController — credential updates', () => {
       {} as any,
       {} as any,
       {} as any,
+      { resolvePlatformRetailSellerId: jest.fn() } as any,
     );
   });
 

@@ -18,6 +18,7 @@ const AVAILABLE_ROLES: UserRole[] = [
   'MARKETING',
   'FINANCE',
   'CMS_EDITOR',
+  'STORE_STAFF',
 ];
 
 const ROLE_LABELS = {
@@ -33,6 +34,7 @@ const ROLE_LABELS = {
   MARKETING: 'Marketing',
   FINANCE: 'Finance',
   CMS_EDITOR: 'CMS Editor',
+  STORE_STAFF: 'Store Staff',
 } as Record<UserRole, string>;
 
 const ROLE_DASHBOARD_MAP = {
@@ -48,6 +50,7 @@ const ROLE_DASHBOARD_MAP = {
   MARKETING: '/marketing/dashboard',
   FINANCE: '/finance/dashboard',
   CMS_EDITOR: '/cms/dashboard',
+  STORE_STAFF: '/store/lookup',
 } as Record<UserRole, string>;
 
 export function RoleSwitcher() {

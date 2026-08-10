@@ -29,6 +29,7 @@ import { PosCustomerIdentityBackfillService } from './sync/customer-identity-bac
 import { PosSalesImportService } from './sync/sales-import.service';
 import { QueueService, JobType } from '../queue/queue.service';
 import { DiscrepanciesService } from '../discrepancies/discrepancies.service';
+import { PlatformSellerService } from '../stores/platform-seller.service';
 
 @ApiTags('admin-pos')
 @ApiBearerAuth('JWT-auth')
@@ -47,6 +48,7 @@ export class PosAdminController {
     private salesImport: PosSalesImportService,
     private queue: QueueService,
     private discrepancies: DiscrepanciesService,
+    private platformSeller: PlatformSellerService,
   ) {}
 
   /**
@@ -78,13 +80,21 @@ export class PosAdminController {
       where: { id: dto.storeId },
       include: { seller: true },
     });
-    if (!store?.sellerId) {
-      throw new BadRequestException('Store must have sellerId set for POS connection');
+    if (!store) {
+      throw new BadRequestException('Store not found');
+    }
+    let sellerId = store.sellerId;
+    if (!sellerId) {
+      sellerId = await this.platformSeller.resolvePlatformRetailSellerId();
+      await this.prisma.store.update({
+        where: { id: store.id },
+        data: { sellerId },
+      });
     }
     const enc = this.encryption.encrypt(JSON.stringify(dto.credentials));
     const data = await this.prisma.pOSConnection.create({
       data: {
-        sellerId: store.sellerId,
+        sellerId,
         storeId: dto.storeId,
         provider: dto.provider.toLowerCase(),
         credentials: enc,
