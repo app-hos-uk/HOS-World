@@ -162,11 +162,6 @@ export function getNavPrimary(): NavLink[] { return _navPrimary; }
 export const STOREFRONT_NAV_MORE: NavLink[] = _FALLBACK_MORE;
 export function getNavMore(): NavLink[] { return _navMore; }
 
-/** @deprecated Use getNavPrimary() + getNavMore() */
-export const STOREFRONT_NAV_LINKS: NavLink[] = [..._FALLBACK_PRIMARY, ..._FALLBACK_MORE.filter(
-  (link) => !_FALLBACK_PRIMARY.some((p) => p.href === link.href),
-)];
-
 /** Footer column: main shop / navigation links */
 export const FOOTER_SHOP_LINKS: NavLink[] = _FALLBACK_FOOTER_SHOP;
 export function getFooterShopLinks(): NavLink[] { return _footerShop; }
@@ -174,9 +169,6 @@ export function getFooterShopLinks(): NavLink[] { return _footerShop; }
 /** Footer column: help & policy links */
 export const FOOTER_POLICY_LINKS: NavLink[] = _FALLBACK_FOOTER_POLICY;
 export function getFooterPolicyLinks(): NavLink[] { return _footerPolicy; }
-
-/** @deprecated Contact details come from admin site settings / GET /config/site — see siteSettingsDefaults.ts */
-export const FOOTER_CONTACT_EMAIL = 'info@houseofspells.com';
 
 export type SocialPlatform = 'facebook' | 'instagram' | 'x';
 

@@ -6,7 +6,6 @@ import { AuthController } from './auth.controller';
 import { AuthOAuthController } from './auth.controller.oauth';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { LocalStrategy } from './strategies/local.strategy';
 import { AdminModule } from '../admin/admin.module';
 import { GeolocationModule } from '../geolocation/geolocation.module';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -49,7 +48,7 @@ const logger = new Logger('AuthModule');
     forwardRef(() => LoyaltyModule),
   ],
   controllers: [AuthController, AuthOAuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy],
+  providers: [AuthService, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule implements OnModuleInit {

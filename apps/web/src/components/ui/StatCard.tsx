@@ -74,38 +74,3 @@ export function StatCard({
   );
 }
 
-// Mini stat card for smaller spaces
-interface MiniStatCardProps {
-  label: string;
-  value: string | number;
-  valueColor?: string;
-  onClick?: () => void;
-  isActive?: boolean;
-}
-
-export function MiniStatCard({
-  label,
-  value,
-  valueColor = 'text-white',
-  onClick,
-  isActive = false,
-}: MiniStatCardProps) {
-  const Component = onClick ? 'button' : 'div';
-  
-  return (
-    <Component
-      onClick={onClick}
-      className={`
-        bg-hos-bg-secondary rounded-lg border p-3 text-left w-full
-        transition-all duration-200
-        ${onClick ? 'cursor-pointer hover:shadow-md' : ''}
-        ${isActive ? 'ring-2 ring-hos-gold/50 border-hos-border-accent' : 'border-hos-border shadow-sm'}
-      `}
-    >
-      <p className="text-xs text-hos-text-muted">{label}</p>
-      <p className={`text-xl font-semibold mt-1 tabular-nums ${valueColor}`}>
-        {typeof value === 'number' ? value.toLocaleString() : value}
-      </p>
-    </Component>
-  );
-}

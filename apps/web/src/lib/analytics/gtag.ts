@@ -38,18 +38,6 @@ export function gtag(...args: unknown[]): void {
   window.gtag?.(...args);
 }
 
-export function initConsentDefaults(): void {
-  gtag('consent', 'default', {
-    analytics_storage: 'denied',
-    ad_storage: 'denied',
-    ad_user_data: 'denied',
-    ad_personalization: 'denied',
-    functionality_storage: 'granted',
-    security_storage: 'granted',
-    wait_for_update: 500,
-  });
-}
-
 export function updateGoogleConsent(preferences: ConsentPreferences): void {
   gtag('consent', 'update', {
     analytics_storage: preferences.analytics ? 'granted' : 'denied',

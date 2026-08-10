@@ -11,7 +11,7 @@ import {
   Request,
   UploadedFile,
   UseInterceptors,
-  ForbiddenException,
+
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -28,7 +28,7 @@ import { ThemesService } from './themes.service';
 import { ThemeUploadService } from './theme-upload.service';
 import { CreateThemeDto } from './dto/create-theme.dto';
 import { UpdateThemeDto } from './dto/update-theme.dto';
-import { UpdateSellerThemeDto } from './dto/update-seller-theme.dto';
+
 import { UpdateCustomerThemePreferenceDto } from './dto/customer-theme-preference.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -192,26 +192,6 @@ export class ThemesController {
     };
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
-  @Put('seller/my-theme')
-  @ApiBearerAuth('JWT-auth')
-  @ApiOperation({
-    summary: 'Update my seller theme (DEPRECATED)',
-    description: 'This endpoint has been deprecated. Theme customization is no longer available.',
-  })
-  @ApiBody({ type: UpdateSellerThemeDto })
-  @SwaggerApiResponse({ status: 403, description: 'Theme customization has been disabled' })
-  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  async updateMySellerTheme(
-    @Request() _req: any,
-    @Body() _updateDto: UpdateSellerThemeDto,
-  ): Promise<ApiResponse<any>> {
-    throw new ForbiddenException(
-      'Theme customization has been disabled. All stores now use the default HOS theme.',
-    );
-  }
-
   @Public()
   @Get(':id')
   @ApiOperation({
@@ -286,35 +266,6 @@ export class ThemesController {
       data: templates,
       message: 'Theme templates retrieved successfully',
     };
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
-  @Post('templates/:templateId/apply')
-  @ApiBearerAuth('JWT-auth')
-  @ApiOperation({
-    summary: 'Apply theme template (DEPRECATED)',
-    description: 'This endpoint has been deprecated. Theme customization is no longer available.',
-  })
-  @ApiParam({ name: 'templateId', description: 'Template UUID', type: String })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        name: { type: 'string', description: 'Optional custom theme name' },
-      },
-    },
-  })
-  @SwaggerApiResponse({ status: 403, description: 'Theme customization has been disabled' })
-  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  async createFromTemplate(
-    @Request() _req: any,
-    @Param('templateId') _templateId: string,
-    @Body() _body: { name?: string },
-  ): Promise<ApiResponse<any>> {
-    throw new ForbiddenException(
-      'Theme customization has been disabled. All stores now use the default HOS theme.',
-    );
   }
 
   // Theme Upload

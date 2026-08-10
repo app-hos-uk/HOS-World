@@ -57,10 +57,8 @@ jobs:
       - name: Build shared packages
         run: |
           pnpm --filter @hos-marketplace/shared-types build || true
-          pnpm --filter @hos-marketplace/events build || true
           pnpm --filter @hos-marketplace/utils build || true
           pnpm --filter @hos-marketplace/theme-system build || true
-          pnpm --filter @hos-marketplace/cms-client build || true
           pnpm --filter @hos-marketplace/api-client build
 
       - name: Type check API & Web (parallel)

@@ -94,14 +94,6 @@ export function trackMetaPageView(url?: string): void {
   });
 }
 
-export function trackMetaLead(userData?: MetaUserData): void {
-  trackMetaEvent('Lead', undefined, userData);
-}
-
-export function trackMetaContact(userData?: MetaUserData): void {
-  trackMetaEvent('Contact', undefined, userData);
-}
-
 export function trackMetaViewContent(product: {
   id?: string;
   slug?: string;
