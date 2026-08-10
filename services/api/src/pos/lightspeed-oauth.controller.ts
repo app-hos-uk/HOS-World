@@ -91,7 +91,7 @@ export class LightspeedOAuthController {
     let domainPrefix = '';
     try {
       const parsed = JSON.parse(
-        Buffer.from(state || '', 'base64url').toString(),
+        Buffer.from(state || '', 'base64').toString(),
       );
       domainPrefix = parsed.domainPrefix || '';
     } catch {
