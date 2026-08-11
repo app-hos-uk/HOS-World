@@ -210,24 +210,25 @@ export default function AdminProductAnalyticsPage() {
 
               <div className="bg-hos-bg-secondary rounded-lg shadow p-6 min-w-0 overflow-hidden">
                 <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Top Products by Orders</h2>
-                <ResponsiveContainer width="100%" height={420}>
-                  <BarChart data={chartData} margin={{ top: 8, right: 16, bottom: 72, left: 0 }}>
+                {/* Product names sit on the Y axis so long names never overflow the plot. */}
+                <ResponsiveContainer width="100%" height={Math.max(320, chartData.length * 40)}>
+                  <BarChart
+                    data={chartData}
+                    layout="vertical"
+                    margin={{ top: 8, right: 24, bottom: 8, left: 8 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
+                    <XAxis type="number" allowDecimals={false} />
+                    <YAxis
                       dataKey="name"
-                      angle={-45}
-                      textAnchor="end"
-                      height={110}
+                      type="category"
+                      width={150}
                       interval={0}
-                      tick={{ fontSize: 11 }}
-                      tickFormatter={(value: string) =>
-                        value.length > 16 ? `${value.slice(0, 16)}…` : value
-                      }
+                      tick={{ fontSize: 12 }}
                     />
-                    <YAxis allowDecimals={false} />
                     <Tooltip />
                     <Legend verticalAlign="top" height={28} />
-                    <Bar dataKey="orders" fill="#10b981" name="Orders" maxBarSize={48} />
+                    <Bar dataKey="orders" fill="#10b981" name="Orders" maxBarSize={28} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

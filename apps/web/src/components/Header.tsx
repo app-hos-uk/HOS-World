@@ -454,6 +454,7 @@ export function Header() {
                   <NavDivider />
                   <NavLink href="/profile" icon={navIcon('settings')} label="Manage Profile" currentPath={pathname} />
                   <NavLink href="/orders" icon={navIcon('package')} label="My Orders" currentPath={pathname} />
+                  <NavLink href="/support/tickets" icon={navIcon('ticket')} label="Support" currentPath={pathname} />
                   {loyaltyEnabled && (
                     <NavLink href="/loyalty" icon={navIcon('sparkles')} label="Rewards" currentPath={pathname} />
                   )}
@@ -502,6 +503,7 @@ export function Header() {
                 <MobileNavLink href="/profile" icon={navIcon('settings')} label="Manage Profile" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href={withShopPreview(resolveShopNavHref('/wishlist', shopEnabled))} icon={navIcon('heart')} label="Wishlist" onClick={() => setIsMobileMenuOpen(false)} />
                 <MobileNavLink href="/orders" icon={navIcon('package')} label="My Orders" onClick={() => setIsMobileMenuOpen(false)} />
+                <MobileNavLink href="/support/tickets" icon={navIcon('ticket')} label="Support" onClick={() => setIsMobileMenuOpen(false)} />
                 {loyaltyEnabled && (
                   <MobileNavLink href="/loyalty" icon={navIcon('sparkles')} label="Rewards" onClick={() => setIsMobileMenuOpen(false)} />
                 )}

@@ -470,19 +470,28 @@ function ProfilePageContent() {
                 </div>
               </div>
               {stats && (
-                <div className="grid grid-cols-3 gap-3 w-full lg:w-auto lg:min-w-[22rem]">
-                  <div className="rounded-lg border border-hos-border bg-hos-bg px-3 py-3 text-center">
-                    <div className="text-xl sm:text-2xl font-bold text-hos-gold">Level {stats.level}</div>
-                    <div className="text-xs text-hos-text-secondary mt-1">Current Level</div>
-                  </div>
-                  <div className="rounded-lg border border-hos-border bg-hos-bg px-3 py-3 text-center">
-                    <div className="text-xl sm:text-2xl font-bold">{stats.points.toLocaleString()}</div>
-                    <div className="text-xs text-hos-text-secondary mt-1">Points</div>
-                  </div>
-                  <div className="rounded-lg border border-hos-border bg-hos-bg px-3 py-3 text-center">
-                    <div className="text-xl sm:text-2xl font-bold">{stats.badgeCount}</div>
-                    <div className="text-xs text-hos-text-secondary mt-1">Badges</div>
-                  </div>
+                <div className="grid grid-cols-3 gap-4 w-full lg:w-auto lg:min-w-[26rem]">
+                  {[
+                    { value: stats.level, label: 'Current Level', accent: true },
+                    { value: stats.points.toLocaleString(), label: 'Points', accent: false },
+                    { value: stats.badgeCount, label: 'Badges', accent: false },
+                  ].map((stat) => (
+                    <div
+                      key={stat.label}
+                      className="flex flex-col items-center justify-center rounded-lg border border-hos-border bg-hos-bg px-4 py-5 text-center"
+                    >
+                      <div
+                        className={`text-2xl sm:text-3xl font-bold tabular-nums leading-none ${
+                          stat.accent ? 'text-hos-gold' : 'text-hos-text-primary'
+                        }`}
+                      >
+                        {stat.value}
+                      </div>
+                      <div className="mt-2 text-xs font-medium uppercase tracking-wide text-hos-text-secondary">
+                        {stat.label}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -520,21 +529,30 @@ function ProfilePageContent() {
                 {/* Level Progress */}
                 {stats && (
                   <div>
-                    <div className="flex items-end justify-between gap-3 mb-2">
+                    <div className="flex items-baseline justify-between gap-3 mb-2">
                       <h3 className="text-lg font-semibold">Progress to Level {stats.progress.nextLevel}</h3>
-                      <span className="text-sm font-medium text-hos-gold tabular-nums">
-                        {stats.progress.current} / {stats.progress.current + stats.progress.needed} points
+                      <span className="text-sm font-semibold text-hos-gold tabular-nums">
+                        {Math.round(stats.progress.percentage)}%
                       </span>
                     </div>
-                    <div className="w-full bg-hos-border/60 rounded-full h-3 overflow-hidden">
+                    {/* An explicit track colour and a minimum fill width keep the bar
+                        visible against the card even at 0% progress. */}
+                    <div className="w-full rounded-full border border-hos-border bg-hos-bg h-3 overflow-hidden">
                       <div
-                        className="bg-hos-gold h-3 rounded-full transition-all duration-300"
-                        style={{ width: `${Math.min(100, Math.max(0, stats.progress.percentage))}%` }}
+                        className="bg-hos-gold h-full rounded-full transition-all duration-300"
+                        style={{
+                          width: `${Math.min(100, Math.max(2, stats.progress.percentage))}%`,
+                        }}
                       />
                     </div>
-                    <p className="text-sm text-hos-text-secondary mt-2">
-                      {stats.progress.needed} more points to reach Level {stats.progress.nextLevel}
-                    </p>
+                    <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                      <span className="text-sm font-medium text-hos-text-primary tabular-nums">
+                        {stats.progress.current} / {stats.progress.current + stats.progress.needed} points
+                      </span>
+                      <span className="text-sm text-hos-text-secondary">
+                        {stats.progress.needed} more to reach Level {stats.progress.nextLevel}
+                      </span>
+                    </div>
                   </div>
                 )}
 
@@ -582,14 +600,22 @@ function ProfilePageContent() {
                 {/* Quest Stats */}
                 {stats && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="bg-hos-gold/10 rounded-lg p-4">
-                      <div className="text-2xl font-bold text-hos-gold">{stats.activeQuests}</div>
-                      <div className="text-sm text-hos-text-secondary">Active Quests</div>
-                    </div>
-                    <div className="bg-green-500/10 rounded-lg p-4">
-                      <div className="text-2xl font-bold text-green-400">{stats.completedQuests}</div>
-                      <div className="text-sm text-hos-text-secondary">Completed Quests</div>
-                    </div>
+                    {[
+                      { label: 'Active Quests', value: stats.activeQuests, valueClass: 'text-hos-gold' },
+                      { label: 'Completed Quests', value: stats.completedQuests, valueClass: 'text-green-400' },
+                    ].map((quest) => (
+                      <div
+                        key={quest.label}
+                        className="flex min-h-[6rem] flex-col justify-center rounded-lg border border-hos-border bg-hos-bg p-5"
+                      >
+                        <div className={`text-3xl font-bold tabular-nums leading-none ${quest.valueClass}`}>
+                          {quest.value}
+                        </div>
+                        <div className="mt-2 text-sm font-medium text-hos-text-secondary">
+                          {quest.label}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -703,7 +729,7 @@ function ProfilePageContent() {
                           <div className="text-2xl shrink-0 leading-none pt-0.5">📚</div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-start justify-between gap-2 mb-1">
-                              <h3 className="text-base font-semibold text-hos-text-secondary truncate">
+                              <h3 className="text-base font-semibold text-hos-text-primary truncate">
                                 {collection.name}
                               </h3>
                               <span
@@ -722,7 +748,7 @@ function ProfilePageContent() {
                               </p>
                             )}
                             <p className="text-xs text-hos-text-secondary">
-                              {collection.itemCount} items
+                              {collection.itemCount} item{collection.itemCount === 1 ? '' : 's'}
                             </p>
                           </div>
                         </div>

@@ -45,6 +45,7 @@ export default function WholesalerOrdersPage() {
   const [cancelReason, setCancelReason] = useState('');
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [sellerId, setSellerId] = useState<string | null>(null);
 
   const menuItems = getSellerMenuItems(true);
 
@@ -52,6 +53,25 @@ export default function WholesalerOrdersPage() {
     fetchOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
+
+  useEffect(() => {
+    apiClient
+      .getSellerProfile()
+      .then((response) => setSellerId(response?.data?.id || null))
+      .catch(() => setSellerId(null));
+  }, []);
+
+  /**
+   * Marketplace checkouts are split into per-seller sub-orders. The wholesaler must
+   * fulfil their own sub-order, not the shared parent, otherwise no action applies.
+   */
+  const resolveManageableOrder = (order: any) => {
+    if (!order) return order;
+    const child = (order.childOrders || []).find(
+      (candidate: any) => sellerId && candidate.sellerId === sellerId,
+    );
+    return child ? { ...order, ...child, parentOrderNumber: order.orderNumber } : order;
+  };
 
   const fetchOrders = async () => {
     try {
@@ -69,7 +89,8 @@ export default function WholesalerOrdersPage() {
     }
   };
 
-  const openManageModal = (order: any) => {
+  const openManageModal = (rawOrder: any) => {
+    const order = resolveManageableOrder(rawOrder);
     setSelectedOrder(order);
     setTrackingNumber(order.trackingCode || order.trackingNumber || '');
     setCarrier(order.carrier || '');
@@ -354,6 +375,11 @@ export default function WholesalerOrdersPage() {
                   <p className="mt-1 text-sm text-hos-text-muted">
                     Current status: {normalizeStatus(selectedOrder.status)}
                   </p>
+                  {selectedOrder.parentOrderNumber && (
+                    <p className="mt-1 text-xs text-hos-text-muted">
+                      Your part of customer order #{selectedOrder.parentOrderNumber}
+                    </p>
+                  )}
                 </div>
                 <button
                   type="button"

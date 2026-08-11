@@ -24,6 +24,7 @@ interface Message {
 
 interface Ticket {
   id: string;
+  ticketNumber?: string;
   subject: string;
   status: string;
   category: string;
@@ -156,8 +157,10 @@ export default function TicketDetailPage() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
                   <div>
-                    <span className="text-hos-text-muted block">Ticket ID</span>
-                    <span className="font-mono font-medium text-hos-text-secondary">{ticket.id.slice(0, 8)}...</span>
+                    <span className="text-hos-text-muted block">Ticket Number</span>
+                    <span className="font-mono font-medium text-hos-text-secondary break-all">
+                      {ticket.ticketNumber ? `#${ticket.ticketNumber}` : `${ticket.id.slice(0, 8)}...`}
+                    </span>
                   </div>
                   <div>
                     <span className="text-hos-text-muted block">Category</span>

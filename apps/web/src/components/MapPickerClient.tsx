@@ -85,10 +85,36 @@ function MapResizeFix() {
 }
 
 /**
- * A handful of tiles can fail transiently while panning. Only surface the error
- * state once enough failures accumulate without any tile loading successfully.
+ * Tile sources tried in order. OpenStreetMap's `{s}` subdomains are deprecated and
+ * rate limited, so the canonical host is used first with mirrors as backups —
+ * a single blocked provider must not leave the customer with a blank map.
  */
-function TileErrorWatcher({ onError }: { onError: (message: string) => void }) {
+const TILE_SOURCES = [
+  {
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  },
+  {
+    url: 'https://tile.openstreetmap.de/{z}/{x}/{y}.png',
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  },
+];
+
+/**
+ * A handful of tiles can fail transiently while panning. Only fall back to the next
+ * provider once enough failures accumulate without any tile loading successfully.
+ */
+function TileErrorWatcher({
+  onExhausted,
+  onFallback,
+  hasFallback,
+}: {
+  onExhausted: (message: string) => void;
+  onFallback: () => void;
+  hasFallback: boolean;
+}) {
   const map = useMap();
   useEffect(() => {
     const FAILURE_THRESHOLD = 4;
@@ -96,8 +122,12 @@ function TileErrorWatcher({ onError }: { onError: (message: string) => void }) {
 
     const onTileError = () => {
       failures += 1;
-      if (failures >= FAILURE_THRESHOLD) {
-        onError('Map tiles could not be loaded. Check your network connection and try again.');
+      if (failures < FAILURE_THRESHOLD) return;
+      failures = 0;
+      if (hasFallback) {
+        onFallback();
+      } else {
+        onExhausted('Map tiles could not be loaded. Check your network connection and try again.');
       }
     };
     const onTileLoad = () => {
@@ -110,7 +140,7 @@ function TileErrorWatcher({ onError }: { onError: (message: string) => void }) {
       map.off('tileerror', onTileError);
       map.off('tileload', onTileLoad);
     };
-  }, [map, onError]);
+  }, [map, onExhausted, onFallback, hasFallback]);
   return null;
 }
 
@@ -125,6 +155,7 @@ export default function MapPickerClient({
   const [currentPosition, setCurrentPosition] = useState<[number, number] | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
   const [geoHint, setGeoHint] = useState<string | null>(null);
+  const [tileSourceIndex, setTileSourceIndex] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -196,7 +227,10 @@ export default function MapPickerClient({
               <p className="text-xs text-hos-text-muted mb-3">{mapError}</p>
               <button
                 type="button"
-                onClick={() => setMapError(null)}
+                onClick={() => {
+                  setTileSourceIndex(0);
+                  setMapError(null);
+                }}
                 className="text-xs px-3 py-1.5 rounded-lg bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover"
               >
                 Retry map
@@ -211,10 +245,15 @@ export default function MapPickerClient({
           scrollWheelZoom={true}
         >
           <MapResizeFix />
-          <TileErrorWatcher onError={setMapError} />
+          <TileErrorWatcher
+            onExhausted={setMapError}
+            onFallback={() => setTileSourceIndex((index) => index + 1)}
+            hasFallback={tileSourceIndex < TILE_SOURCES.length - 1}
+          />
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            key={tileSourceIndex}
+            attribution={TILE_SOURCES[tileSourceIndex].attribution}
+            url={TILE_SOURCES[tileSourceIndex].url}
           />
           <LocationMarker
             onLocationChange={handleLocationChange}

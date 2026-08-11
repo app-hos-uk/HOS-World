@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -42,6 +42,15 @@ export default function SubmitTicketPage() {
     orderId: '',
   });
   const [fieldErrors, setFieldErrors] = useState<{ subject?: string; description?: string }>({});
+
+  // Read from the URL directly so the page keeps rendering statically without a
+  // Suspense boundary around useSearchParams.
+  useEffect(() => {
+    const orderId = new URLSearchParams(window.location.search).get('orderId');
+    if (orderId) {
+      setFormData((prev) => ({ ...prev, orderId }));
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,13 +112,19 @@ export default function SubmitTicketPage() {
               </p>
             )}
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href={ticketId ? `/support/tickets/${ticketId}` : '/support/tickets'}
+                className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover font-medium text-center"
+              >
+                View My Tickets
+              </Link>
               <button
                 onClick={() => {
                   setSubmitted(false);
                   setTicketId(null);
                   setFormData({ subject: '', category: 'ORDER_INQUIRY', priority: 'MEDIUM', description: '', orderId: '' });
                 }}
-                className="px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover font-medium"
+                className="px-6 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary font-medium"
               >
                 Submit Another Ticket
               </button>

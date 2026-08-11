@@ -8,10 +8,12 @@ import { useDateTime } from '@/hooks/useDateTime';
 
 interface SearchStats {
   totalDocuments?: number;
-  indexSize?: string;
-  lastUpdate?: string;
+  numberOfDocuments?: number;
+  indexSize?: string | null;
+  lastUpdate?: string | null;
   indexes?: any[];
   health?: boolean;
+  available?: boolean;
 }
 
 interface SearchResult {
@@ -49,8 +51,9 @@ export default function AdminSearchPage() {
       setError(null);
       const response = await apiClient.getSearchStats();
       if (response?.data) {
-        setStats(response.data);
-        setHealthy(true);
+        const data = response.data as SearchStats;
+        setStats(data);
+        setHealthy(data.available !== false);
       }
     } catch (err: any) {
       console.error('Error fetching search stats:', err);
@@ -187,7 +190,7 @@ export default function AdminSearchPage() {
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">
               <h3 className="text-sm font-medium text-hos-text-muted">Total Documents</h3>
               <p className="text-3xl font-bold text-hos-text-secondary mt-2">
-                {stats?.totalDocuments?.toLocaleString() ?? '—'}
+                {(stats?.totalDocuments ?? stats?.numberOfDocuments)?.toLocaleString() ?? '—'}
               </p>
             </div>
             <div className="bg-hos-bg-secondary rounded-lg shadow p-6">

@@ -110,6 +110,7 @@ const _FALLBACK_FOOTER_SHOP: NavLink[] = [
   { label: 'Loyalty Program', href: '/loyalty' },
   { label: 'About Us', href: '/the-experience' },
   { label: 'Contact Us', href: '/support/new' },
+  { label: 'My Support Tickets', href: '/support/tickets' },
 ];
 const _FALLBACK_FOOTER_POLICY: NavLink[] = [
   { label: 'Help Center', href: '/help' },

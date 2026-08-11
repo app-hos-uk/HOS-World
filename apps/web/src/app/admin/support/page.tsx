@@ -407,14 +407,19 @@ export default function AdminSupportPage() {
                   ) : (
                     filteredTickets.map((ticket) => (
                       <tr key={ticket.id} className="hover:bg-hos-bg-tertiary">
-                        <td className="px-6 py-4">
+                        <td className="w-[22rem] min-w-[16rem] max-w-[22rem] px-6 py-4">
+                          {/* Bounded width + nowrap keeps the ticket number on one line
+                              and falls back to an ellipsis with the full value on hover. */}
                           <div
-                            className="text-sm font-medium text-hos-text-secondary whitespace-nowrap overflow-hidden text-ellipsis"
+                            className="max-w-full truncate text-sm font-medium text-hos-text-secondary"
                             title={`#${ticket.ticketNumber}`}
                           >
                             #{ticket.ticketNumber}
                           </div>
-                          <div className="text-sm text-hos-text-muted truncate" title={ticket.subject}>
+                          <div
+                            className="max-w-full truncate text-sm text-hos-text-muted"
+                            title={ticket.subject}
+                          >
                             {ticket.subject}
                           </div>
                         </td>

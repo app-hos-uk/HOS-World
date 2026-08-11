@@ -15,6 +15,7 @@ import {
   ForbiddenException,
   BadRequestException,
   Request,
+  Logger,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -146,6 +147,8 @@ function createStorage() {
 @ApiTags('uploads')
 @Controller('uploads')
 export class UploadsController {
+  private readonly logger = new Logger(UploadsController.name);
+
   constructor(
     private readonly uploadsService: UploadsService,
     private readonly storageService: StorageService,
@@ -435,6 +438,52 @@ export class UploadsController {
       }
       throw new NotFoundException('File not found');
     }
+  }
+
+  @Delete('asset/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Delete a media library asset (Admin only)',
+    description:
+      'Removes the media record from the library and deletes the underlying file from storage.',
+  })
+  @ApiParam({ name: 'id', description: 'Media asset id', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Media asset deleted successfully' })
+  @SwaggerApiResponse({ status: 404, description: 'Media asset not found' })
+  async deleteMediaAsset(@Param('id') id: string): Promise<ApiResponse<{ message: string }>> {
+    const asset = await this.prisma.productImage.findUnique({
+      where: { id },
+      select: { id: true, url: true },
+    });
+
+    if (!asset) {
+      throw new NotFoundException('Media asset not found');
+    }
+
+    // The library row is the source of truth for what the admin sees, so remove it
+    // first. A missing/already-removed binary must not leave the record behind.
+    await this.prisma.productImage.delete({ where: { id: asset.id } });
+
+    const stillReferenced = await this.prisma.productImage.count({
+      where: { url: asset.url },
+    });
+
+    if (stillReferenced === 0) {
+      try {
+        await this.uploadsService.deleteFile(asset.url);
+      } catch (error) {
+        this.logger.warn(
+          `Media record ${asset.id} removed but its file could not be deleted: ${(error as Error)?.message}`,
+        );
+      }
+    }
+
+    return {
+      data: { message: 'Media asset deleted successfully' },
+      message: 'Media asset deleted successfully',
+    };
   }
 
   @Delete(':url')

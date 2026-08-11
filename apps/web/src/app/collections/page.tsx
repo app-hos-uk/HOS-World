@@ -135,30 +135,42 @@ export default function CollectionsPage() {
                 <Link
                   key={collection.id}
                   href={`/collections/${collection.id}`}
-                  className="bg-hos-bg-secondary rounded-lg p-6 hover:shadow-lg transition-shadow block"
+                  className="block rounded-lg border border-hos-border bg-hos-bg-secondary p-4 transition-colors hover:border-hos-gold/40"
                 >
-                  <div className="text-4xl mb-3">📚</div>
-                  <h3 className="text-lg font-semibold mb-2">{collection.name}</h3>
-                  {collection.description && (
-                    <p className="text-sm text-hos-text-secondary mb-3 line-clamp-2">{collection.description}</p>
-                  )}
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-hos-text-secondary">{collection.itemCount} items</span>
-                    <span
-                      className={`px-2 py-1 rounded text-xs ${
-                        collection.isPublic
-                          ? 'bg-green-500/15 text-green-300'
-                          : 'bg-hos-bg-tertiary text-hos-text-secondary'
-                      }`}
-                    >
-                      {collection.isPublic ? 'Public' : 'Private'}
+                  <div className="flex items-start gap-3">
+                    <span aria-hidden="true" className="shrink-0 text-2xl leading-none pt-0.5">
+                      📚
                     </span>
+                    <div className="min-w-0 flex-1">
+                      {/* Badge sits next to the name so it reads as collection metadata
+                          rather than floating in its own row. */}
+                      <div className="mb-1 flex items-start justify-between gap-2">
+                        <h3 className="truncate text-base font-semibold text-hos-text-primary">
+                          {collection.name}
+                        </h3>
+                        <span
+                          className={`shrink-0 rounded px-2 py-0.5 text-xs ${
+                            collection.isPublic
+                              ? 'bg-green-500/15 text-green-300'
+                              : 'bg-hos-bg-tertiary text-hos-text-secondary'
+                          }`}
+                        >
+                          {collection.isPublic ? 'Public' : 'Private'}
+                        </span>
+                      </div>
+                      {collection.description && (
+                        <p className="mb-2 line-clamp-2 text-sm text-hos-text-muted">
+                          {collection.description}
+                        </p>
+                      )}
+                      <p className="text-xs text-hos-text-secondary">
+                        {collection.itemCount} item{collection.itemCount === 1 ? '' : 's'}
+                        {collection.user
+                          ? ` · by ${collection.user.firstName || collection.user.email}`
+                          : ''}
+                      </p>
+                    </div>
                   </div>
-                  {collection.user && (
-                    <p className="text-xs text-hos-text-muted mt-2">
-                      by {collection.user.firstName || collection.user.email}
-                    </p>
-                  )}
                 </Link>
               ))}
             </div>

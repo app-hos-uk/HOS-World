@@ -90,6 +90,22 @@ interface Order {
   notes?: OrderNote[];
 }
 
+/**
+ * Statuses where tracking is meaningful even before a tracking code is attached —
+ * wholesale marketplace orders are fulfilled without one. Mirrors the orders list.
+ */
+const TRACKABLE_STATUSES = ['processing', 'fulfilled', 'shipped', 'delivered', 'completed'];
+
+function canTrackOrder(order: { status?: string; paymentStatus?: string; trackingNumber?: string; trackingCode?: string } | null): boolean {
+  if (!order) return false;
+  if (order.trackingNumber || order.trackingCode) return true;
+
+  const status = (order.status || '').toLowerCase();
+  const payment = (order.paymentStatus || '').toLowerCase();
+  if (['returned', 'refunded'].includes(status) || payment === 'refunded') return false;
+  return TRACKABLE_STATUSES.includes(status);
+}
+
 export default function OrderDetailPage() {
   const { formatDate, formatDateTime } = useDateTime();
   const params = useParams();
@@ -484,7 +500,7 @@ export default function OrderDetailPage() {
               </div>
 
               {/* Tracking Information */}
-              {(order.trackingNumber || order.trackingCode) && (
+              {canTrackOrder(order) && (
                 <div className="bg-hos-bg-secondary rounded-lg shadow border border-hos-border p-4 sm:p-6">
                   <h2 className="text-lg font-semibold text-hos-text-secondary mb-4">Tracking Information</h2>
                   <div className="bg-hos-gold/10 rounded-lg p-4 space-y-3">
@@ -496,7 +512,15 @@ export default function OrderDetailPage() {
                     )}
                     <div>
                       <p className="text-sm text-hos-text-secondary mb-1">Tracking Number</p>
-                      <p className="font-mono text-lg font-semibold text-hos-gold">{order.trackingNumber || order.trackingCode}</p>
+                      {order.trackingNumber || order.trackingCode ? (
+                        <p className="font-mono text-lg font-semibold text-hos-gold">
+                          {order.trackingNumber || order.trackingCode}
+                        </p>
+                      ) : (
+                        <p className="text-hos-text-secondary">
+                          Not issued yet — follow progress using your order number.
+                        </p>
+                      )}
                     </div>
                     {order.trackingUrl && (
                       <a
@@ -732,7 +756,7 @@ export default function OrderDetailPage() {
                 )}
 
                 <div className="space-y-3">
-                  {(order.trackingNumber || order.trackingCode) && (
+                  {canTrackOrder(order) && (
                     <Link
                       href={`/track-order?orderNumber=${order.orderNumber || order.id}`}
                       className="block w-full px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-center font-medium transition-colors"
@@ -774,7 +798,9 @@ export default function OrderDetailPage() {
                       Request Return
                     </Link>
                   )}
-                  {['DELIVERED', 'COMPLETED'].includes(order.status.toUpperCase()) && (
+                  {['DELIVERED', 'COMPLETED'].includes(
+                    order.status.toUpperCase(),
+                  ) && (
                     <>
                       <button
                         onClick={async () => {
@@ -838,6 +864,12 @@ export default function OrderDetailPage() {
                       </button>
                     </>
                   )}
+                  <Link
+                    href={`/support/new?orderId=${order.id}`}
+                    className="block w-full px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-center font-medium transition-colors"
+                  >
+                    Get Help With This Order
+                  </Link>
                 </div>
               </div>
             </div>

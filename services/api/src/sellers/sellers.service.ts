@@ -864,22 +864,57 @@ export class SellersService {
     return doc;
   }
 
+  /**
+   * `reviewedBy` is stored as a bare user id with no relation, so resolve it into a
+   * readable reviewer instead of surfacing a UUID in the portal.
+   */
+  private async attachReviewers<T extends { reviewedBy: string | null }>(
+    documents: T[],
+  ): Promise<Array<T & { reviewedBy: any; reviewedByName: string | null }>> {
+    const reviewerIds = [
+      ...new Set(documents.map((doc) => doc.reviewedBy).filter((id): id is string => Boolean(id))),
+    ];
+
+    const reviewers = reviewerIds.length
+      ? await this.prisma.user.findMany({
+          where: { id: { in: reviewerIds } },
+          select: { id: true, firstName: true, lastName: true, email: true },
+        })
+      : [];
+    const byId = new Map(reviewers.map((reviewer) => [reviewer.id, reviewer]));
+
+    return documents.map((doc) => {
+      const reviewer = doc.reviewedBy ? byId.get(doc.reviewedBy) : undefined;
+      const name = reviewer
+        ? [reviewer.firstName, reviewer.lastName].filter(Boolean).join(' ').trim() ||
+          reviewer.email
+        : null;
+      return {
+        ...doc,
+        reviewedBy: reviewer ?? (doc.reviewedBy ? { id: doc.reviewedBy } : null),
+        reviewedByName: name,
+      };
+    });
+  }
+
   async listVerificationDocuments(userId: string, role: string) {
     if (role === 'ADMIN' || role === 'FINANCE') {
-      return this.prisma.sellerVerificationDocument.findMany({
+      const documents = await this.prisma.sellerVerificationDocument.findMany({
         include: {
           seller: { select: { id: true, storeName: true, vendorStatus: true, sellerType: true } },
         },
         orderBy: { createdAt: 'desc' },
         take: 200,
       });
+      return this.attachReviewers(documents);
     }
     const seller = await this.prisma.seller.findUnique({ where: { userId } });
     if (!seller) throw new NotFoundException('Seller profile not found');
-    return this.prisma.sellerVerificationDocument.findMany({
+    const documents = await this.prisma.sellerVerificationDocument.findMany({
       where: { sellerId: seller.id },
       orderBy: { createdAt: 'desc' },
     });
+    return this.attachReviewers(documents);
   }
 
   async reviewVerificationDocument(
@@ -892,6 +927,12 @@ export class SellersService {
       include: { seller: true },
     });
     if (!doc) throw new NotFoundException('Document not found');
+
+    // A rejected document is useless to the seller without a reason to act on.
+    // But don't block the admin outright — default to a generic message if not provided.
+    if (data.status === 'REJECTED' && !data.reviewNotes?.trim()) {
+      data.reviewNotes = 'Document rejected. Please review requirements and resubmit.';
+    }
 
     const updated = await this.prisma.sellerVerificationDocument.update({
       where: { id: documentId },

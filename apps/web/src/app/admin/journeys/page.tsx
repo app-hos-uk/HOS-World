@@ -96,7 +96,7 @@ export default function AdminJourneysPage() {
                     <th className="px-4 py-2">Trigger</th>
                     <th className="px-4 py-2">Active</th>
                     <th className="px-4 py-2">Enrollments</th>
-                    <th className="px-4 py-2 text-right">Actions</th>
+                    <th className="w-[20rem] px-4 py-2 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -107,36 +107,38 @@ export default function AdminJourneysPage() {
                       <td className="px-4 py-2">{j.triggerEvent}</td>
                       <td className="px-4 py-2">{j.isActive ? 'Yes' : 'No'}</td>
                       <td className="px-4 py-2">{j._count?.enrollments ?? '—'}</td>
-                      <td className="px-4 py-2">
-                        {/* Fixed-width slots keep every row's actions in the same columns,
-                            even when Delete is only available for inactive journeys. */}
-                        <div className="ml-auto grid w-fit grid-cols-[4.5rem_5.5rem_4.5rem] items-center gap-2 text-center">
+                      <td className="w-[20rem] px-4 py-2 align-middle">
+                        {/* Every row renders the same three fixed-width slots so the
+                            buttons line up even when Delete is unavailable. */}
+                        <div className="ml-auto grid w-fit grid-cols-3 items-center gap-2">
                           <Link
                             href={`/admin/journeys/${j.id}`}
-                            className="text-hos-gold hover:underline"
+                            className="inline-flex h-8 w-[5.5rem] items-center justify-center rounded-md border border-hos-border text-hos-gold hover:bg-hos-gold/10"
                           >
                             View
                           </Link>
                           <button
                             type="button"
-                            className={`hover:underline ${
+                            className={`inline-flex h-8 w-[5.5rem] items-center justify-center rounded-md border border-hos-border hover:bg-white/5 ${
                               j.isActive ? 'text-amber-400' : 'text-green-400'
                             }`}
                             onClick={() => toggleActive(j.id, !j.isActive)}
                           >
                             {j.isActive ? 'Deactivate' : 'Activate'}
                           </button>
-                          {j.isActive ? (
-                            <span aria-hidden="true" />
-                          ) : (
-                            <button
-                              type="button"
-                              className="text-red-400 hover:underline"
-                              onClick={() => handleDelete(j.id, j.name)}
-                            >
-                              Delete
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            disabled={j.isActive}
+                            title={
+                              j.isActive
+                                ? 'Deactivate this journey before deleting it'
+                                : undefined
+                            }
+                            className="inline-flex h-8 w-[5.5rem] items-center justify-center rounded-md border border-hos-border text-red-400 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                            onClick={() => handleDelete(j.id, j.name)}
+                          >
+                            Delete
+                          </button>
                         </div>
                       </td>
                     </tr>

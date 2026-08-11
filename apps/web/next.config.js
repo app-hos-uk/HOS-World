@@ -81,9 +81,9 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               // Leaflet renders OpenStreetMap raster tiles and loads its default marker
               // icons from cdnjs; both must be allowed or the address-book map stays blank.
-              "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://images.unsplash.com https://images.pexels.com https://lh3.googleusercontent.com https://hos-world-web.vercel.app https://*.up.railway.app https://cdn.shopify.com https://www.facebook.com https://picsum.photos https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://cdnjs.cloudflare.com",
+              "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://images.unsplash.com https://images.pexels.com https://lh3.googleusercontent.com https://hos-world-web.vercel.app https://*.up.railway.app https://cdn.shopify.com https://www.facebook.com https://picsum.photos https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.openstreetmap.de https://cdnjs.cloudflare.com",
               "font-src 'self' https://fonts.gstatic.com data:",
-              "connect-src 'self' https://*.houseofspells.com https://*.up.railway.app https://api.stripe.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://graph.facebook.com wss://*.houseofspells.com https://*.tile.openstreetmap.org https://nominatim.openstreetmap.org",
+              "connect-src 'self' https://*.houseofspells.com https://*.up.railway.app https://api.stripe.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://graph.facebook.com wss://*.houseofspells.com https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.openstreetmap.de https://nominatim.openstreetmap.org",
               "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
               "object-src 'none'",
               "base-uri 'self'",

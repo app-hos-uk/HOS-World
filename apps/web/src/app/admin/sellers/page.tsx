@@ -116,7 +116,7 @@ export default function AdminSellersPage() {
   const [sellersTotal, setSellersTotal] = useState(0);
   const [sellersHasMore, setSellersHasMore] = useState(false);
   const [sellersTotalExact, setSellersTotalExact] = useState(false);
-  const sellersLimit = 50;
+  const [sellersLimit, setSellersLimit] = useState(25);
 
   // Invite form
   const [inviteForm, setInviteForm] = useState({
@@ -205,7 +205,7 @@ export default function AdminSellersPage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sellersPage]);
+  }, [sellersPage, sellersLimit]);
 
   const fetchInvitations = useCallback(async () => {
     try {
@@ -770,34 +770,59 @@ export default function AdminSellersPage() {
                       </tbody>
                     </table>
                   </div>
-                  {(sellersHasMore || sellersPage > 1 || sellersTotal > sellersLimit) && (
-                    <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-t border-hos-border bg-hos-bg-secondary">
+                  <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-t border-hos-border bg-hos-bg-secondary">
+                    <div className="flex items-center gap-2">
+                      <label htmlFor="sellers-rows-per-page" className="text-sm text-hos-text-muted">
+                        Rows per page
+                      </label>
+                      <select
+                        id="sellers-rows-per-page"
+                        value={sellersLimit}
+                        onChange={(e) => {
+                          setSellersLimit(Number(e.target.value));
+                          setSellersPage(1);
+                        }}
+                        className="px-2 py-1.5 text-sm rounded-lg border border-hos-border bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:border-hos-gold"
+                      >
+                        {[10, 25, 50, 100].map((size) => (
+                          <option key={size} value={size}>
+                            {size}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <span className="text-sm text-hos-text-secondary">
+                      {sellers.length > 0
+                        ? `Showing ${(sellersPage - 1) * sellersLimit + 1}–${(sellersPage - 1) * sellersLimit + sellers.length}${
+                            sellersTotalExact ? ` of ${sellersTotal}` : ''
+                          } sellers`
+                        : 'No sellers to display'}
+                    </span>
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
                         disabled={sellersPage <= 1 || loading}
                         onClick={() => setSellersPage((p) => Math.max(1, p - 1))}
-                        className="px-3 py-1.5 text-sm rounded-lg border border-hos-border bg-hos-bg-secondary text-hos-text-secondary disabled:opacity-50"
+                        className="px-3 py-1.5 text-sm rounded-lg border border-hos-border bg-hos-bg-secondary text-hos-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Previous
                       </button>
                       <span className="text-sm text-hos-text-secondary">
                         Page {sellersPage}
                         {sellersTotalExact && sellersTotal > 0
-                          ? ` of ${Math.max(1, Math.ceil(sellersTotal / sellersLimit))} · ${sellersTotal} total`
-                          : sellersTotal > 0
-                            ? ` · ${sellersTotal}${sellersHasMore ? '+' : ''} shown`
-                            : ''}
+                          ? ` of ${Math.max(1, Math.ceil(sellersTotal / sellersLimit))}`
+                          : ''}
                       </span>
                       <button
                         type="button"
                         disabled={loading || !sellersHasMore}
                         onClick={() => setSellersPage((p) => p + 1)}
-                        className="px-3 py-1.5 text-sm rounded-lg border border-hos-border bg-hos-bg-secondary text-hos-text-secondary disabled:opacity-50"
+                        className="px-3 py-1.5 text-sm rounded-lg border border-hos-border bg-hos-bg-secondary text-hos-text-secondary disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Next
                       </button>
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
             </>

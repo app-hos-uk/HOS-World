@@ -11,6 +11,7 @@ import { useDateTime } from '@/hooks/useDateTime';
 
 interface Ticket {
   id: string;
+  ticketNumber?: string;
   subject: string;
   status: string;
   category: string;
@@ -173,7 +174,7 @@ export default function SupportTicketsPage() {
                 <table className="w-full">
                   <thead className="bg-hos-bg-secondary border-b border-hos-border">
                     <tr>
-                      <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Ticket ID</th>
+                      <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Ticket</th>
                       <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Subject</th>
                       <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Status</th>
                       <th className="text-left px-6 py-3 text-xs font-medium text-hos-text-muted uppercase tracking-wider">Category</th>
@@ -185,7 +186,7 @@ export default function SupportTicketsPage() {
                       <tr key={ticket.id} className="hover:bg-hos-bg-tertiary transition-colors">
                         <td className="px-6 py-4">
                           <Link href={`/support/tickets/${ticket.id}`} className="font-mono text-sm text-hos-gold hover:text-hos-gold-hover">
-                            {ticket.id.slice(0, 8)}...
+                            {ticket.ticketNumber ? `#${ticket.ticketNumber}` : `${ticket.id.slice(0, 8)}...`}
                           </Link>
                         </td>
                         <td className="px-6 py-4">

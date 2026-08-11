@@ -420,13 +420,17 @@ export default function WholesalerProfilePage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`px-4 sm:px-6 py-3 font-medium text-sm transition-colors ${
+                  // A transparent bottom border on inactive tabs keeps every label on
+                  // the same baseline as the active one.
+                  className={`inline-flex items-center gap-2 border-b-2 px-4 sm:px-6 py-3 font-medium text-sm transition-colors ${
                     activeTab === tab.id
-                      ? 'border-b-2 border-hos-gold text-hos-gold'
-                      : 'text-hos-text-secondary hover:text-hos-gold'
+                      ? 'border-hos-gold text-hos-gold'
+                      : 'border-transparent text-hos-text-secondary hover:text-hos-gold'
                   }`}
                 >
-                  <span className="mr-2">{tab.icon}</span>
+                  <span className="flex shrink-0 items-center" aria-hidden="true">
+                    {tab.icon}
+                  </span>
                   {tab.label}
                 </button>
               ))}
@@ -924,14 +928,19 @@ export default function WholesalerProfilePage() {
                           });
                           return verificationDocs.map((doc) => {
                             const attempt = attemptMap.get(doc.id) || 1;
-                            const reviewedByName =
-                              typeof doc.reviewedBy === 'string'
+                            // Never fall back to the raw reviewer id — an unresolved
+                            // reviewer reads as "the review team", not a UUID.
+                            const reviewer =
+                              typeof doc.reviewedBy === 'object' && doc.reviewedBy
                                 ? doc.reviewedBy
-                                : doc.reviewedBy
-                                  ? [doc.reviewedBy.firstName, doc.reviewedBy.lastName]
-                                      .filter(Boolean)
-                                      .join(' ') || doc.reviewedBy.email
-                                  : null;
+                                : null;
+                            const reviewedByName =
+                              (doc as any).reviewedByName ||
+                              (reviewer
+                                ? [reviewer.firstName, reviewer.lastName].filter(Boolean).join(' ') ||
+                                  reviewer.email
+                                : null) ||
+                              (doc.reviewedAt ? 'the verification team' : null);
                             return (
                           <div
                             key={doc.id}
@@ -989,7 +998,7 @@ export default function WholesalerProfilePage() {
                                     Approved {formatDate(doc.reviewedAt)}
                                   </p>
                                 )}
-                                {doc.reviewNotes && (
+                                {doc.reviewNotes ? (
                                   <div
                                     className={`mt-2 text-sm rounded-md p-2.5 ${
                                       doc.status === 'REJECTED'
@@ -1002,6 +1011,14 @@ export default function WholesalerProfilePage() {
                                     </span>{' '}
                                     {doc.reviewNotes}
                                   </div>
+                                ) : (
+                                  doc.status === 'REJECTED' && (
+                                    <div className="mt-2 rounded-md border border-red-500/20 bg-red-500/10 p-2.5 text-sm text-red-300">
+                                      <span className="font-medium">Rejection Reason:</span> No reason
+                                      was recorded. Contact support before resubmitting so the
+                                      document is not rejected again.
+                                    </div>
+                                  )
                                 )}
                               </div>
                               <div className="flex flex-col gap-2 w-full sm:w-28 shrink-0">

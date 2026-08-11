@@ -31,6 +31,9 @@ export default function AdminSalesReportsPage() {
   });
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('monthly');
   const [compareWithPrevious, setCompareWithPrevious] = useState(false);
+  // Recharts shows a line tooltip anywhere along the x axis, so visibility is driven
+  // by hovering an actual data point instead of the whole plotting area.
+  const [aovPointHovered, setAovPointHovered] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -306,9 +309,8 @@ export default function AdminSalesReportsPage() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="period" />
                     <YAxis />
-                    {/* shared={false} makes the tooltip item-triggered, so it only appears
-                        over an actual point rather than anywhere along the x axis. */}
                     <Tooltip
+                      active={aovPointHovered}
                       shared={false}
                       cursor={false}
                       formatter={(value: any) => formatMoney(Number(value))}
@@ -322,6 +324,21 @@ export default function AdminSalesReportsPage() {
                       strokeWidth={2}
                       name="Average Order Value"
                       activeDot={{ r: 5 }}
+                      dot={(dotProps: any) => {
+                        const { cx, cy, key } = dotProps;
+                        if (cx == null || cy == null) return <g key={key} />;
+                        return (
+                          <g
+                            key={key}
+                            onMouseEnter={() => setAovPointHovered(true)}
+                            onMouseLeave={() => setAovPointHovered(false)}
+                          >
+                            {/* Transparent hit area so the point is easy to target. */}
+                            <circle cx={cx} cy={cy} r={12} fill="transparent" />
+                            <circle cx={cx} cy={cy} r={3.5} fill="#8b5cf6" />
+                          </g>
+                        );
+                      }}
                     />
                   </LineChart>
                 </ResponsiveContainer>

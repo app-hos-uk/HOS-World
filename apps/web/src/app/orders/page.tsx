@@ -178,16 +178,30 @@ export default function OrdersPage() {
   }, [orders, statusFilter]);
 
   const filteredOrders = useMemo(() => {
-    const query = searchTerm.trim().toLowerCase();
-    const matched = !query
-      ? statusFilteredOrders
-      : statusFilteredOrders.filter(order => {
-          const orderRef = `${order.orderNumber || ''} ${order.id}`.toLowerCase();
-          if (orderRef.includes(query)) return true;
-          return (order.items || []).some(item =>
-            (item.product?.name || '').toLowerCase().includes(query),
-          );
-        });
+    const tokens = searchTerm.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    // Every token must appear somewhere in the order, so "crown ring" still matches
+    // "Golden Crown Ring" and word order does not matter.
+    const matched =
+      tokens.length === 0
+        ? statusFilteredOrders
+        : statusFilteredOrders.filter(order => {
+            const haystack = [
+              order.orderNumber || '',
+              order.id,
+              order.status || '',
+              order.paymentStatus || '',
+              ...(order.items || []).flatMap(item => [
+                item.product?.name || '',
+                (item as any).productName || '',
+              ]),
+              ...(order.items || []).map(
+                item => (item.product as any)?.seller?.storeName || '',
+              ),
+            ]
+              .join(' ')
+              .toLowerCase();
+            return tokens.every(token => haystack.includes(token));
+          });
 
     const sorted = [...matched];
     sorted.sort((a, b) => {
@@ -281,13 +295,29 @@ export default function OrdersPage() {
     return TRACKABLE_STATUSES.includes(status);
   };
 
+  /**
+   * The most meaningful date for the order's current stage: when it was delivered,
+   * when it was cancelled/refunded, or otherwise the delivery estimate.
+   */
   const getDeliveryEstimate = (order: Order) => {
-    const raw = order.deliveredAt || order.estimatedDeliveryAt || order.estimatedDelivery;
+    const status = normalizeStatus(order.status);
+    const isClosed = ['cancelled', 'refunded'].includes(status);
+    const raw = isClosed
+      ? (order as any).cancelledAt || order.updatedAt
+      : order.deliveredAt || order.estimatedDeliveryAt || order.estimatedDelivery;
     if (!raw) return null;
     const date = new Date(raw);
     if (Number.isNaN(date.getTime())) return null;
+
+    let label = 'Estimated delivery';
+    if (isClosed) {
+      label = status === 'refunded' ? 'Refunded on' : 'Cancelled on';
+    } else if (order.deliveredAt) {
+      label = 'Delivered';
+    }
+
     return {
-      label: order.deliveredAt ? 'Delivered' : 'Estimated delivery',
+      label,
       value: formatDate(date, { day: 'numeric', month: 'short', year: 'numeric' }),
     };
   };

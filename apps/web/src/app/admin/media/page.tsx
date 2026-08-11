@@ -142,14 +142,19 @@ export default function AdminMediaLibraryPage() {
         setConfirmDialog(null);
         try {
           await toast.promise(
-            apiClient.deleteMediaAsset(encodeURIComponent(asset.url)),
+            apiClient.deleteMediaAsset(asset.id),
             {
               loading: 'Deleting file...',
               success: 'File deleted successfully',
               error: (err: any) => err.message || 'Failed to delete file',
             }
           );
-          await fetchAssets();
+          setPreviewAsset((current) => (current?.id === asset.id ? null : current));
+          if (assets.length === 1 && page > 1) {
+            setPage((prev) => prev - 1);
+          } else {
+            await fetchAssets();
+          }
         } catch (err: any) {
           console.error('Delete error:', err);
         }

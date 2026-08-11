@@ -24,6 +24,7 @@ interface SettlementRecord {
   id: string;
   netAmount: number | string;
   totalSales?: number | string;
+  totalOrders?: number;
   platformFee?: number | string;
   currency: string;
   status: string;
@@ -206,17 +207,19 @@ export default function SellerEarningsPage() {
                 </div>
               ) : (
                 <div className="overflow-x-auto border border-hos-border rounded-xl">
-                  <table className="w-full min-w-[720px] text-sm table-fixed">
+                  <table className="w-full min-w-[760px] text-sm table-fixed">
                     <colgroup>
-                      <col className="w-[32%]" />
-                      <col className="w-[18%]" />
+                      <col className="w-[24%]" />
+                      <col className="w-[12%]" />
                       <col className="w-[16%]" />
-                      <col className="w-[18%]" />
+                      <col className="w-[16%]" />
+                      <col className="w-[16%]" />
                       <col className="w-[16%]" />
                     </colgroup>
                     <thead>
                       <tr className="border-b border-hos-border text-hos-text-muted text-left bg-hos-bg-secondary">
                         <th className="py-3 px-4 font-medium">Period</th>
+                        <th className="tabular-nums text-right py-3 px-4 font-medium">Orders</th>
                         <th className="tabular-nums text-right py-3 px-4 font-medium">Net Amount</th>
                         <th className="py-3 px-4 font-medium">Status</th>
                         <th className="py-3 px-4 font-medium">Paid Date</th>
@@ -236,11 +239,14 @@ export default function SellerEarningsPage() {
                               ? `${formatDate(settlement.periodStart)} – ${formatDate(settlement.periodEnd)}`
                               : formatDate(settlement.createdAt)}
                           </td>
+                          <td className="tabular-nums text-right py-3 px-4 text-hos-text-muted">
+                            {settlement.totalOrders ?? '—'}
+                          </td>
                           <td className="tabular-nums text-right py-3 px-4 text-hos-text-secondary font-medium">
                             {formatPrice(toNumber(settlement.netAmount), settlement.currency || DEFAULT_CURRENCY)}
                           </td>
                           <td className="py-3 px-4">{statusBadge(settlement.status)}</td>
-                          <td className="py-3 px-4 text-hos-text-muted text-xs">
+                          <td className="py-3 px-4 text-hos-text-muted text-sm">
                             {settlement.paidAt ? formatDate(settlement.paidAt) : '—'}
                           </td>
                           <td className="py-3 px-4 text-right">
@@ -295,15 +301,33 @@ export default function SellerEarningsPage() {
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4 text-sm">
                 <div className="rounded-lg border border-hos-border p-3">
-                  <p className="text-hos-text-muted">Net Amount</p>
-                  <p className="font-semibold text-hos-text-secondary">
-                    {formatPrice(toNumber(detailSettlement.netAmount), detailSettlement.currency || DEFAULT_CURRENCY)}
+                  <p className="text-hos-text-muted">Gross Sales</p>
+                  <p className="font-semibold text-hos-text-secondary tabular-nums">
+                    {formatPrice(toNumber(detailSettlement.totalSales), detailSettlement.currency || DEFAULT_CURRENCY)}
                   </p>
                 </div>
                 <div className="rounded-lg border border-hos-border p-3">
                   <p className="text-hos-text-muted">Platform Fee</p>
+                  <p className="font-semibold text-hos-text-secondary tabular-nums">
+                    −{formatPrice(toNumber(detailSettlement.platformFee), detailSettlement.currency || DEFAULT_CURRENCY)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-hos-border p-3">
+                  <p className="text-hos-text-muted">Net Payout</p>
+                  <p className="font-semibold text-hos-gold tabular-nums">
+                    {formatPrice(toNumber(detailSettlement.netAmount), detailSettlement.currency || DEFAULT_CURRENCY)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-hos-border p-3">
+                  <p className="text-hos-text-muted">Orders</p>
+                  <p className="font-semibold text-hos-text-secondary tabular-nums">
+                    {detailSettlement.totalOrders ?? (detailSettlement.orderSettlements || []).length}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-hos-border p-3">
+                  <p className="text-hos-text-muted">Paid Date</p>
                   <p className="font-semibold text-hos-text-secondary">
-                    {formatPrice(toNumber(detailSettlement.platformFee), detailSettlement.currency || DEFAULT_CURRENCY)}
+                    {detailSettlement.paidAt ? formatDate(detailSettlement.paidAt) : 'Not paid yet'}
                   </p>
                 </div>
                 <div className="rounded-lg border border-hos-border p-3">
@@ -311,6 +335,11 @@ export default function SellerEarningsPage() {
                   <div className="mt-1">{statusBadge(detailSettlement.status)}</div>
                 </div>
               </div>
+              {detailSettlement.notes && (
+                <div className="mb-4 rounded-lg border border-hos-border bg-hos-bg p-3 text-sm text-hos-text-secondary">
+                  <span className="font-medium">Notes:</span> {detailSettlement.notes}
+                </div>
+              )}
 
               {detailLoading ? (
                 <div className="flex justify-center py-8">

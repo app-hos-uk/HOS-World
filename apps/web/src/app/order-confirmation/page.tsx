@@ -119,7 +119,7 @@ function OrderConfirmationContent() {
             orderNumber: data.orderNumber || data.id?.slice(0, 8).toUpperCase(),
             status: data.status,
             paymentStatus: data.paymentStatus,
-            paymentMethod: data.paymentMethod || data.payment?.method || data.cardBrand,
+            paymentMethod: data.cardBrand || data.paymentMethod || data.payment?.method,
             cardLast4: data.cardLast4 || data.payment?.last4 || data.last4,
             total: Number(data.total) || 0,
             subtotal: data.subtotal != null ? Number(data.subtotal) : undefined,
@@ -142,11 +142,16 @@ function OrderConfirmationContent() {
                 item.productImage ||
                 product.images?.[0]?.url ||
                 (typeof product.images?.[0] === 'string' ? product.images[0] : undefined);
+              const variationSource =
+                item.variationOptions || item.selectedVariations || item.variations;
               const variant =
                 item.variantName ||
                 item.variationLabel ||
-                (item.selectedVariations
-                  ? Object.values(item.selectedVariations).filter(Boolean).join(' / ')
+                (variationSource && typeof variationSource === 'object'
+                  ? Object.entries(variationSource)
+                      .filter(([, value]) => Boolean(value))
+                      .map(([name, value]) => `${name}: ${value}`)
+                      .join(' · ')
                   : undefined);
               return {
                 name: item.productName || product.name || item.name || 'Product',
@@ -154,7 +159,11 @@ function OrderConfirmationContent() {
                 price: Number(item.price ?? item.unitPrice ?? product.price ?? 0),
                 image,
                 variant: variant || undefined,
-                sellerName: item.seller?.storeName || product.seller?.storeName || item.sellerName,
+                sellerName:
+                  item.seller?.storeName ||
+                  product.seller?.storeName ||
+                  item.sellerName ||
+                  data.seller?.storeName,
               };
             }),
             shippingAddress: {
@@ -320,6 +329,27 @@ function OrderConfirmationContent() {
                       <span className="text-hos-text-secondary">−{formatPrice(order.discountAmount, order.currency || DEFAULT_CURRENCY)}</span>
                     </div>
                   )}
+                  {(() => {
+                    // Surface any residual amount so the total never looks unexplained.
+                    const breakdown =
+                      (order.subtotal ?? 0) +
+                      (order.shippingCost ?? 0) +
+                      (order.taxAmount ?? 0) -
+                      (order.discountAmount ?? 0);
+                    const residual = Number((order.total - breakdown).toFixed(2));
+                    if (order.subtotal == null || Math.abs(residual) < 0.01) return null;
+                    return (
+                      <div className="flex justify-between">
+                        <span className="text-hos-text-secondary">
+                          {residual > 0 ? 'Other charges' : 'Other adjustments'}
+                        </span>
+                        <span className="text-hos-text-secondary">
+                          {residual < 0 ? '−' : ''}
+                          {formatPrice(Math.abs(residual), order.currency || DEFAULT_CURRENCY)}
+                        </span>
+                      </div>
+                    );
+                  })()}
                   <div className="flex justify-between pt-1 font-semibold">
                     <span className="text-hos-text-secondary">Total</span>
                     <span className="text-hos-gold">{formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}</span>

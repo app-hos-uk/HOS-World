@@ -42,6 +42,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
   private isConfigured = false;
   private indexingQueue: any[] = [];
   private indexingTimeout: NodeJS.Timeout | null = null;
+  private lastIndexUpdate: Date | null = null;
   private readonly BATCH_SIZE = 100;
   private readonly BATCH_DELAY_MS = 500;
   // Guards for the self-healing auto re-index triggered when the index is found empty/stale.
@@ -759,6 +760,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       }
 
       const totalElapsed = ((Date.now() - syncStart) / 1000).toFixed(1);
+      this.lastIndexUpdate = new Date();
       this.logger.log(
         `Product sync complete in ${totalElapsed}s! Indexed: ${indexed}, Failed: ${failed}`,
       );
@@ -901,6 +903,15 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  private formatBytes(bytes?: number | null): string | null {
+    if (bytes == null || !Number.isFinite(bytes) || bytes < 0) return null;
+    if (bytes === 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    const value = bytes / Math.pow(1024, exponent);
+    return `${value.toFixed(exponent === 0 ? 0 : 1)} ${units[exponent]}`;
+  }
+
   /**
    * Get index stats
    */
@@ -911,9 +922,39 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
 
     try {
       const stats = await this.productsIndex!.getStats();
+
+      // Index-level stats carry no size/last-update information, so pull those from
+      // the instance-level stats and expose the field names the admin UI renders.
+      let databaseSize: number | undefined;
+      let lastUpdate: string | undefined;
+      let indexes: Array<Record<string, any>> = [];
+
+      try {
+        const clientStats: any = await this.client!.getStats();
+        databaseSize = clientStats?.databaseSize;
+        lastUpdate = clientStats?.lastUpdate;
+        indexes = Object.entries(clientStats?.indexes || {}).map(
+          ([uid, value]: [string, any]) => ({
+            uid,
+            numberOfDocuments: value?.numberOfDocuments ?? 0,
+            isIndexing: value?.isIndexing ?? false,
+            size: this.formatBytes(value?.rawDocumentDbSize ?? value?.databaseSize),
+          }),
+        );
+        if (lastUpdate === undefined) {
+          lastUpdate = (clientStats?.indexes?.[this.indexName] as any)?.lastUpdate;
+        }
+      } catch {
+        // Instance stats are optional; index stats alone are still useful.
+      }
+
       return {
         available: true,
         numberOfDocuments: stats.numberOfDocuments,
+        totalDocuments: stats.numberOfDocuments,
+        indexSize: this.formatBytes(databaseSize),
+        lastUpdate: lastUpdate ?? this.lastIndexUpdate?.toISOString() ?? null,
+        indexes,
         isIndexing: stats.isIndexing,
         fieldDistribution: stats.fieldDistribution,
       };

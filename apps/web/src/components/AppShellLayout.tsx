@@ -69,6 +69,11 @@ export function AppShellLayout({
   const { logout, user, impersonatedRole } = useAuth();
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navScrollRef = useRef<HTMLElement | null>(null);
+  // Tracks the last position the user scrolled to. The browser clamps scrollTop to 0
+  // while the nav re-renders with collapsed submenus, and that clamp fires a scroll
+  // event — persisting it would wipe the position we are trying to restore.
+  const lastUserScrollTopRef = useRef(0);
+  const restoringScrollRef = useRef(false);
 
   const accountRole = String(user?.role ?? '').toUpperCase();
   const adminBackHref =
@@ -106,12 +111,14 @@ export function AppShellLayout({
 
     let cancelled = false;
     let raf2 = 0;
-    let savedTop = 0;
+    let storedTop = 0;
     try {
-      savedTop = Number(sessionStorage.getItem(SIDEBAR_SCROLL_KEY)) || 0;
+      storedTop = Number(sessionStorage.getItem(SIDEBAR_SCROLL_KEY)) || 0;
     } catch {
       // ignore storage errors
     }
+    const savedTop = lastUserScrollTopRef.current || storedTop;
+    restoringScrollRef.current = true;
 
     const restoreScroll = () => {
       if (cancelled) return;
@@ -137,7 +144,10 @@ export function AppShellLayout({
     // Keep correcting while the nav is still growing, then stop so the user can scroll freely.
     const observer =
       typeof ResizeObserver !== 'undefined' ? new ResizeObserver(restoreScroll) : null;
-    const stopObserving = setTimeout(() => observer?.disconnect(), 600);
+    const stopObserving = setTimeout(() => {
+      observer?.disconnect();
+      restoringScrollRef.current = false;
+    }, 600);
 
     const raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
@@ -156,13 +166,17 @@ export function AppShellLayout({
       cancelAnimationFrame(raf2);
       clearTimeout(stopObserving);
       observer?.disconnect();
+      // Do NOT clear restoringScrollRef here — the next effect will set it true
+      // immediately and clearing it in the gap lets scroll events persist scrollTop=0.
     };
   }, [pathname, persistSidebarScroll]);
 
   const handleNavScroll = useCallback(() => {
     if (!persistSidebarScroll) return;
+    if (restoringScrollRef.current) return;
     const nav = navScrollRef.current;
     if (!nav) return;
+    lastUserScrollTopRef.current = nav.scrollTop;
     try {
       sessionStorage.setItem(SIDEBAR_SCROLL_KEY, String(nav.scrollTop));
     } catch {

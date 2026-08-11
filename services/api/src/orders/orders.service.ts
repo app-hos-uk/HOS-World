@@ -1534,6 +1534,18 @@ export class OrdersService {
           notes: {
             orderBy: { createdAt: 'desc' },
           },
+          childOrders: {
+            select: {
+              id: true,
+              orderNumber: true,
+              sellerId: true,
+              status: true,
+              total: true,
+              trackingCode: true,
+              carrier: true,
+              seller: { select: { id: true, storeName: true, slug: true } },
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -1637,6 +1649,9 @@ export class OrdersService {
           },
         },
         notes: {
+          orderBy: { createdAt: 'desc' },
+        },
+        payments: {
           orderBy: { createdAt: 'desc' },
         },
         childOrders: {
@@ -2610,7 +2625,32 @@ export class OrdersService {
     return { itemsAdded, itemsUpdated };
   }
 
+  /**
+   * Stripe stores the card brand and last four digits inside the payment metadata,
+   * with the exact key depending on which flow recorded the charge.
+   */
+  private extractPaymentCard(payment: any): { brand?: string; last4?: string } {
+    const metadata = (payment?.metadata ?? {}) as Record<string, any>;
+    const card = metadata.card ?? metadata.paymentMethodDetails?.card ?? {};
+    const last4 = card.last4 ?? metadata.last4 ?? metadata.cardLast4;
+    const brand = card.brand ?? metadata.brand ?? metadata.cardBrand;
+    return {
+      brand: brand ? String(brand) : undefined,
+      last4: last4 ? String(last4) : undefined,
+    };
+  }
+
   private mapToOrderType(order: any, includeSeller: boolean = false, role?: string): Order {
+    const latestPayment = Array.isArray(order.payments)
+      ? [...order.payments]
+          .sort(
+            (a: any, b: any) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          )
+          .find((payment: any) => payment.status === 'PAID') || order.payments[0]
+      : undefined;
+    const paymentCard = this.extractPaymentCard(latestPayment);
+
     const mapped: any = {
       id: order.id,
       userId: order.userId,
@@ -2683,12 +2723,19 @@ export class OrdersService {
             isDefault: order.billingAddress.isDefault,
           }
         : undefined,
-      paymentMethod: order.paymentMethod || undefined,
+      paymentMethod: order.paymentMethod || latestPayment?.paymentMethod || undefined,
       paymentStatus: order.paymentStatus.toLowerCase() as PaymentStatus,
+      cardBrand: paymentCard.brand,
+      cardLast4: paymentCard.last4,
       trackingCode: order.trackingCode || undefined,
       carrier: order.carrier || undefined,
       trackingUrl: order.trackingUrl || undefined,
       estimatedDelivery: order.estimatedDeliveryAt || undefined,
+      deliveredAt: order.deliveredAt || undefined,
+      // The schema has no cancelledAt column; for cancelled orders the last status
+      // change is the cancellation, so updatedAt is the closest accurate timestamp.
+      cancelledAt: order.status === 'CANCELLED' ? order.updatedAt : undefined,
+      loyaltyPointsEarned: order.loyaltyPointsEarned ?? 0,
       notes: (order.notes || [])
         .filter((note: any) => role !== 'CUSTOMER' || !note.internal)
         .map((note: any) => ({

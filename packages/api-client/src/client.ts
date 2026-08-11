@@ -3444,11 +3444,28 @@ export class ApiClient {
   }
 
   async getWholesalerOrders(status?: string): Promise<ApiResponse<any[]>> {
-    const response = await this.getOrders({ limit: 500 });
-    let orders = Array.isArray(response.data) ? response.data : [];
+    // The orders endpoint caps `limit` at 50, so walk the pages instead of asking
+    // for one oversized page and silently losing everything past the first 50.
+    const orders: any[] = [];
+    const limit = 50;
+    let page = 1;
+    let hasMore = true;
+
+    while (hasMore && page <= 20) {
+      const response = await this.getOrders({ page, limit });
+      const pageData = Array.isArray(response.data) ? response.data : [];
+      orders.push(...pageData);
+      const pagination = (response as any).pagination;
+      hasMore = pagination ? page < pagination.totalPages : pageData.length === limit;
+      page += 1;
+    }
+
     if (status) {
       const want = status.toLowerCase();
-      orders = orders.filter((order: any) => (order.status || '').toLowerCase() === want);
+      return {
+        data: orders.filter((order: any) => (order.status || '').toLowerCase() === want),
+        message: 'Orders retrieved successfully',
+      };
     }
     return { data: orders, message: 'Orders retrieved successfully' };
   }
@@ -7262,7 +7279,9 @@ export class ApiClient {
   }
 
   async deleteMediaAsset(id: string): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>(`/uploads/${id}`, { method: 'DELETE' });
+    return this.request<ApiResponse<any>>(`/uploads/asset/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
   }
 
   // ===== Background Jobs =====

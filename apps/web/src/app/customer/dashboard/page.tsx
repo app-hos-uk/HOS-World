@@ -287,24 +287,32 @@ export default function CustomerDashboardPage() {
       statusCounts[status] = (statusCounts[status] || 0) + 1;
     });
 
+    // Each status gets a distinct hue so neighbouring slices and their legend
+    // swatches can never be confused with one another.
     const colors: Record<string, string> = {
-      COMPLETED: '#10B981',
-      DELIVERED: '#06b6d4',
-      FULFILLED: '#14B8A6',
-      PENDING: '#F59E0B',
-      PROCESSING: '#3B82F6',
-      SHIPPED: '#8B5CF6',
-      CANCELLED: '#EF4444',
-      REFUNDED: '#F97316',
-      RETURNED: '#EC4899',
+      COMPLETED: '#22c55e',
+      DELIVERED: '#3b82f6',
+      FULFILLED: '#a855f7',
+      PENDING: '#eab308',
+      PROCESSING: '#06b6d4',
+      SHIPPED: '#f97316',
+      CANCELLED: '#ef4444',
+      REFUNDED: '#f472b6',
+      RETURNED: '#94a3b8',
       PAID: '#c9a227',
     };
 
-    const categoryBreakdown = Object.entries(statusCounts).map(([status, count]) => ({
-      name: status,
-      value: count,
-      color: colors[status as keyof typeof colors] || '#6B7280',
-    }));
+    const categoryBreakdown = Object.entries(statusCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([status, count]) => ({
+        name: status
+          .toLowerCase()
+          .split('_')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' '),
+        value: count,
+        color: colors[status as keyof typeof colors] || '#6B7280',
+      }));
 
     const yearlyTotal = completedOrders
       .filter((o) => new Date(o.createdAt).getFullYear() === now.getFullYear())
@@ -478,13 +486,13 @@ export default function CustomerDashboardPage() {
                     ) : (
                       <p
                         className={`text-2xl font-bold ${
-                          card.accent ? 'text-hos-gold' : 'text-hos-text-secondary'
+                          card.accent ? 'text-hos-gold' : 'text-hos-text-primary'
                         }`}
                       >
                         {card.value}
                       </p>
                     )}
-                    <p className="text-xs font-medium text-hos-text-secondary mt-1">{card.label}</p>
+                    <p className="text-sm font-semibold text-hos-text-primary mt-1">{card.label}</p>
                   </div>
                 ))}
               </div>
@@ -494,14 +502,14 @@ export default function CustomerDashboardPage() {
                 <div className="bg-gradient-to-br from-hos-bg-secondary to-hos-gold/30 rounded-xl p-6 text-hos-text-secondary shadow-lg">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">Your Profile</h2>
-                    <Link href="/profile" className="text-hos-gold/30 hover:text-hos-gold text-sm">
+                    <Link href="/profile" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
                       View →
                     </Link>
                   </div>
                   {profileStats ? (
                     <div className="space-y-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 rounded-full bg-hos-bg-secondary/20 flex items-center justify-center text-2xl">
+                        <div className="w-14 h-14 rounded-full bg-black/30 flex items-center justify-center text-2xl">
                           {profileStats.character?.avatar ? (
                             <Image
                               src={profileStats.character.avatar}
@@ -515,40 +523,67 @@ export default function CustomerDashboardPage() {
                           )}
                         </div>
                         <div>
-                          <p className="font-bold text-lg">
+                          <p className="font-bold text-lg text-hos-text-primary">
                             {profileStats.character?.name || user?.firstName || 'Adventurer'}
                           </p>
-                          <p className="text-hos-gold/30">Level {profileStats.level || 1}</p>
+                          <p className="text-sm text-hos-gold font-medium">Level {profileStats.level || 1}</p>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/20">
-                        <div className="text-center">
-                          <p className="text-2xl font-bold">{(profileStats.points || 0).toLocaleString()}</p>
-                          <p className="text-xs text-hos-gold/30">Points</p>
+                      <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/20">
+                        <div className="rounded-lg bg-black/25 px-3 py-2.5 text-center">
+                          <p className="text-2xl font-bold text-hos-text-primary tabular-nums">
+                            {(profileStats.points || 0).toLocaleString()}
+                          </p>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-hos-gold mt-0.5">
+                            Points
+                          </p>
                         </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold">{profileStats.badgeCount || 0}</p>
-                          <p className="text-xs text-hos-gold/30">Badges</p>
+                        <div className="rounded-lg bg-black/25 px-3 py-2.5 text-center">
+                          <p className="text-2xl font-bold text-hos-text-primary tabular-nums">
+                            {profileStats.badgeCount || 0}
+                          </p>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-hos-gold mt-0.5">
+                            Badges
+                          </p>
+                        </div>
+                        <div className="rounded-lg bg-black/25 px-3 py-2.5 text-center">
+                          <p className="text-2xl font-bold text-hos-text-primary tabular-nums">
+                            {profileStats.level || 1}
+                          </p>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-hos-gold mt-0.5">
+                            Level
+                          </p>
                         </div>
                       </div>
                       {profileStats.progress && (
-                        <div>
-                          <div className="flex justify-between text-xs mb-1">
-                            <span>Next Level</span>
-                            <span>{profileStats.progress.percentage}%</span>
+                        <div className="rounded-lg bg-black/25 px-3 py-3">
+                          <div className="flex items-baseline justify-between gap-2 mb-2">
+                            <span className="text-sm font-medium text-hos-text-primary">
+                              Progress to level {profileStats.progress.nextLevel ?? (profileStats.level || 1) + 1}
+                            </span>
+                            <span className="text-sm font-semibold text-hos-gold tabular-nums">
+                              {Math.round(profileStats.progress.percentage || 0)}%
+                            </span>
                           </div>
-                          <div className="w-full bg-hos-bg-secondary/20 rounded-full h-2">
+                          <div className="w-full bg-black/50 rounded-full h-2.5 overflow-hidden">
                             <div
-                              className="bg-hos-bg-secondary h-2 rounded-full"
-                              style={{ width: `${profileStats.progress.percentage}%` }}
+                              className="bg-hos-gold h-2.5 rounded-full transition-all"
+                              style={{
+                                width: `${Math.max(Math.round(profileStats.progress.percentage || 0), 2)}%`,
+                              }}
                             ></div>
                           </div>
+                          {profileStats.progress.needed != null && (
+                            <p className="text-xs text-hos-text-secondary mt-2">
+                              {profileStats.progress.needed} points to the next level
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="text-center py-6">
-                      <p className="text-hos-gold/30 mb-3">Start your adventure!</p>
+                      <p className="text-hos-text-primary mb-3">Start your adventure!</p>
                       <Link
                         href="/profile"
                         className="inline-block px-4 py-2 bg-hos-bg-secondary/20 hover:bg-hos-bg-secondary/30 rounded-lg text-sm font-medium"
@@ -579,31 +614,57 @@ export default function CustomerDashboardPage() {
                           <p className="text-amber-200 text-sm">Loyalty Tier</p>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/20">
-                        <div className="text-center">
-                          <p className="text-2xl font-bold">{(loyaltyMembership.currentBalance || 0).toLocaleString()}</p>
-                          <p className="text-xs text-amber-200">Points Balance</p>
+                      <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/20">
+                        <div className="rounded-lg bg-black/25 px-3 py-2.5 text-center">
+                          <p className="text-2xl font-bold tabular-nums">
+                            {(loyaltyMembership.currentBalance || 0).toLocaleString()}
+                          </p>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-amber-100 mt-0.5">
+                            Points Balance
+                          </p>
                         </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold">{(loyaltyMembership.totalPointsEarned || 0).toLocaleString()}</p>
-                          <p className="text-xs text-amber-200">Lifetime Earned</p>
+                        <div className="rounded-lg bg-black/25 px-3 py-2.5 text-center">
+                          <p className="text-2xl font-bold tabular-nums">
+                            {(loyaltyMembership.totalPointsEarned || 0).toLocaleString()}
+                          </p>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-amber-100 mt-0.5">
+                            Lifetime Earned
+                          </p>
                         </div>
                       </div>
-                      {loyaltyProgress?.nextTier && (
-                        <div>
-                          <div className="flex justify-between text-xs mb-1">
-                            <span>Progress to {loyaltyProgress.nextTier.name}</span>
-                            <span>{loyaltyProgress.progressPercent ?? 0}%</span>
+                      {loyaltyProgress?.nextTier ? (
+                        <div className="rounded-lg bg-black/25 px-3 py-3">
+                          <div className="flex items-baseline justify-between gap-2 mb-2">
+                            <span className="text-sm font-medium">
+                              Progress to {loyaltyProgress.nextTier.name}
+                            </span>
+                            <span className="text-sm font-semibold text-amber-100 tabular-nums">
+                              {Math.round(loyaltyProgress.progressPercent ?? 0)}%
+                            </span>
                           </div>
-                          <div className="w-full bg-hos-bg-secondary/20 rounded-full h-2">
+                          <div className="w-full bg-black/50 rounded-full h-2.5 overflow-hidden">
                             <div
-                              className="bg-hos-bg-secondary h-2 rounded-full transition-all"
-                              style={{ width: `${loyaltyProgress.progressPercent ?? 0}%` }}
+                              className="bg-amber-200 h-2.5 rounded-full transition-all"
+                              style={{
+                                width: `${Math.max(Math.round(loyaltyProgress.progressPercent ?? 0), 2)}%`,
+                              }}
                             />
                           </div>
-                          <p className="text-xs text-amber-200 mt-1">{loyaltyProgress.pointsToNext ?? 0} points to go</p>
+                          <p className="text-xs text-amber-100 mt-2">
+                            {loyaltyProgress.pointsToNext ?? 0} points to go
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="rounded-lg bg-black/25 px-3 py-3 text-sm text-amber-100">
+                          You have reached the highest tier. Keep earning points to redeem rewards.
                         </div>
                       )}
+                      <Link
+                        href="/loyalty/rewards"
+                        className="block rounded-lg bg-black/25 px-3 py-2.5 text-center text-sm font-medium hover:bg-black/40"
+                      >
+                        Browse rewards you can redeem →
+                      </Link>
                     </div>
                   ) : (
                     <div className="text-center py-6">
@@ -885,25 +946,42 @@ export default function CustomerDashboardPage() {
           {activeTab === 'analytics' && (
             <div className="space-y-6">
               {/* Summary Cards */}
+              {/* One shared card treatment; only the accent bar differs per metric. */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-gradient-to-br from-hos-bg-secondary to-hos-gold/30 rounded-xl p-6 text-white">
-                  <p className="text-hos-gold/30 text-sm mb-1">This Year&apos;s Spending</p>
-                  <p className="text-3xl font-bold">{formatPrice(spendingAnalytics.yearlyTotal)}</p>
-                </div>
-                <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white">
-                  <p className="text-green-200 text-sm mb-1">Average Order Value</p>
-                  <p className="text-3xl font-bold">
-                    {formatPrice(
+                {[
+                  {
+                    label: "This Year's Spending",
+                    value: formatPrice(spendingAnalytics.yearlyTotal),
+                    accent: 'bg-hos-gold',
+                  },
+                  {
+                    label: 'Average Order Value',
+                    value: formatPrice(
                       allOrders.length && stats?.completedOrders && stats.completedOrders > 0
                         ? stats.totalSpent! / stats.completedOrders
                         : 0
-                    )}
-                  </p>
-                </div>
-                <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-6 text-white">
-                  <p className="text-amber-200 text-sm mb-1">Total Orders</p>
-                  <p className="text-3xl font-bold">{stats?.totalOrders || 0}</p>
-                </div>
+                    ),
+                    accent: 'bg-emerald-500',
+                  },
+                  {
+                    label: 'Total Orders',
+                    value: String(stats?.totalOrders || 0),
+                    accent: 'bg-amber-500',
+                  },
+                ].map((card) => (
+                  <div
+                    key={card.label}
+                    className="flex min-h-[120px] flex-col justify-center overflow-hidden rounded-xl border border-hos-border bg-hos-bg-secondary shadow-sm"
+                  >
+                    <div className={`h-1 w-full ${card.accent}`} />
+                    <div className="p-6">
+                      <p className="mb-1 text-sm font-medium text-hos-text-primary">{card.label}</p>
+                      <p className="text-3xl font-bold text-hos-text-primary tabular-nums">
+                        {card.value}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* Spending Chart */}
@@ -937,30 +1015,33 @@ export default function CustomerDashboardPage() {
                 <div className="flex min-h-[320px] flex-col rounded-xl border border-hos-border bg-hos-bg-secondary p-6 shadow-sm">
                   <h3 className="mb-2 text-lg font-semibold text-hos-text-secondary">Order Status Breakdown</h3>
                   {spendingAnalytics.categoryBreakdown.length > 0 ? (
-                    <div className="flex min-h-0 flex-1 flex-col justify-center">
-                      <div className="relative mx-auto h-[280px] w-full max-w-md">
-                        {/* Total count in donut center */}
-                        <div className="pointer-events-none absolute inset-0 flex items-center justify-center" style={{ paddingBottom: 48 }}>
-                          <div className="text-center">
-                            <p className="text-2xl font-bold text-hos-text-secondary">{stats?.totalOrders ?? 0}</p>
-                            <p className="text-[10px] text-hos-text-muted uppercase tracking-wide">Total Orders</p>
-                          </div>
+                    <div className="flex min-h-0 flex-1 flex-col">
+                      <div className="relative mx-auto h-[220px] w-full max-w-sm">
+                        {/* Centred inside the donut hole; leading-none stops the count and
+                            its caption from colliding. */}
+                        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                          <p className="text-3xl font-bold leading-none text-hos-text-primary tabular-nums">
+                            {stats?.totalOrders ?? 0}
+                          </p>
+                          <p className="mt-1.5 text-[11px] uppercase leading-none tracking-wide text-hos-text-muted">
+                            Total Orders
+                          </p>
                         </div>
                         <ResponsiveContainer width="100%" height="100%">
-                          <PieChart margin={{ top: 16, right: 8, left: 8, bottom: 8 }}>
+                          <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                             <Pie
                               data={spendingAnalytics.categoryBreakdown}
                               cx="50%"
-                              cy="44%"
-                              innerRadius="38%"
-                              outerRadius="70%"
-                              paddingAngle={spendingAnalytics.categoryBreakdown.length > 1 ? 3 : 0}
+                              cy="50%"
+                              innerRadius="58%"
+                              outerRadius="88%"
+                              paddingAngle={spendingAnalytics.categoryBreakdown.length > 1 ? 2 : 0}
                               dataKey="value"
                               nameKey="name"
                               labelLine={false}
                             >
                               {spendingAnalytics.categoryBreakdown.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                               ))}
                             </Pie>
                             <Tooltip
@@ -978,25 +1059,28 @@ export default function CustomerDashboardPage() {
                               labelStyle={{ color: '#c9a227', fontSize: 11 }}
                               formatter={(value: number, name: string) => [`${value} order${value !== 1 ? 's' : ''}`, name]}
                             />
-                            <Legend
-                              verticalAlign="bottom"
-                              align="center"
-                              layout="horizontal"
-                              iconSize={10}
-                              wrapperStyle={{ paddingTop: 12, lineHeight: '24px' }}
-                              formatter={(value, entry) => {
-                                const v = (entry?.payload as { value?: number })?.value;
-                                return (
-                                  <span className="text-xs text-hos-text-secondary" style={{ marginRight: 8 }}>
-                                    {value}
-                                    {typeof v === 'number' ? ` (${v})` : ''}
-                                  </span>
-                                );
-                              }}
-                            />
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
+                      {/* A CSS grid legend keeps every entry on an even baseline instead of
+                          the ragged rows Recharts produces when labels differ in length. */}
+                      <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-hos-border pt-4">
+                        {spendingAnalytics.categoryBreakdown.map((entry) => (
+                          <li key={entry.name} className="flex items-center gap-2 min-w-0">
+                            <span
+                              aria-hidden="true"
+                              className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                              style={{ backgroundColor: entry.color }}
+                            />
+                            <span className="min-w-0 flex-1 truncate text-xs text-hos-text-primary">
+                              {entry.name}
+                            </span>
+                            <span className="shrink-0 text-xs font-semibold text-hos-text-primary tabular-nums">
+                              {entry.value}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   ) : (
                     <div className="flex flex-1 items-center justify-center py-12 text-hos-text-muted">

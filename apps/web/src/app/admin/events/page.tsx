@@ -111,7 +111,7 @@ export default function AdminEventsPage() {
                     <th className="px-4 py-2">Status</th>
                     <th className="px-4 py-2">Starts</th>
                     <th className="px-4 py-2">Store</th>
-                    <th className="px-4 py-2 text-right">Actions</th>
+                    <th className="w-[24rem] px-4 py-2 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -121,47 +121,54 @@ export default function AdminEventsPage() {
                       <td className="px-4 py-2">{e.status}</td>
                       <td className="px-4 py-2">{formatDateTime(e.startsAt)}</td>
                       <td className="px-4 py-2">{e.store?.name ?? '—'}</td>
-                      <td className="px-4 py-2">
-                        <div className="flex justify-end items-center gap-2">
+                      <td className="w-[24rem] px-4 py-2 align-middle">
+                        {/* Fixed slot per action keeps the columns aligned regardless of
+                            which actions a given status makes available. */}
+                        <div className="ml-auto grid w-fit grid-cols-4 items-center gap-2">
                           <Link
                             href={`/admin/events/${e.id}`}
-                            className="inline-flex min-w-[4.5rem] justify-center text-hos-gold hover:underline"
+                            className="inline-flex h-8 w-[5rem] items-center justify-center rounded-md border border-hos-border text-hos-gold hover:bg-hos-gold/10"
                           >
                             View
                           </Link>
                           <Link
                             href={`/admin/events/${e.id}/edit`}
-                            className="inline-flex min-w-[4.5rem] justify-center text-hos-gold hover:underline"
+                            className="inline-flex h-8 w-[5rem] items-center justify-center rounded-md border border-hos-border text-hos-gold hover:bg-hos-gold/10"
                           >
                             Edit
                           </Link>
-                          {e.status === 'DRAFT' && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => publish(e.id)}
-                                className="inline-flex min-w-[4.5rem] justify-center text-green-400 hover:underline"
-                              >
-                                Publish
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => remove(e.id)}
-                                className="inline-flex min-w-[4.5rem] justify-center text-red-400 hover:underline"
-                              >
-                                Delete
-                              </button>
-                            </>
-                          )}
-                          {canCancel(e.status) && (
+                          {e.status === 'DRAFT' ? (
+                            <button
+                              type="button"
+                              onClick={() => publish(e.id)}
+                              className="inline-flex h-8 w-[5rem] items-center justify-center rounded-md border border-hos-border text-green-400 hover:bg-green-500/10"
+                            >
+                              Publish
+                            </button>
+                          ) : canCancel(e.status) ? (
                             <button
                               type="button"
                               onClick={() => cancel(e.id)}
-                              className="inline-flex min-w-[4.5rem] justify-center text-amber-400 hover:underline"
+                              className="inline-flex h-8 w-[5rem] items-center justify-center rounded-md border border-hos-border text-amber-400 hover:bg-amber-500/10"
                             >
                               Cancel
                             </button>
+                          ) : (
+                            <span aria-hidden="true" className="inline-block h-8 w-[5rem]" />
                           )}
+                          <button
+                            type="button"
+                            onClick={() => remove(e.id)}
+                            disabled={e.status !== 'DRAFT'}
+                            title={
+                              e.status !== 'DRAFT'
+                                ? 'Only draft events can be deleted'
+                                : undefined
+                            }
+                            className="inline-flex h-8 w-[5rem] items-center justify-center rounded-md border border-hos-border text-red-400 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                          >
+                            Delete
+                          </button>
                         </div>
                       </td>
                     </tr>
