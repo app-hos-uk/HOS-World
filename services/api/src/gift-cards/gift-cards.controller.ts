@@ -140,7 +140,12 @@ export class GiftCardsController {
   ): Promise<ApiResponse<any>> {
     const pageNum = Math.max(1, parseInt(page, 10) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
-    const result = await this.giftCardsService.getMyGiftCards(req.user.id, pageNum, limitNum);
+    const result = await this.giftCardsService.getMyGiftCards(
+      req.user.id,
+      pageNum,
+      limitNum,
+      req.user.email,
+    );
     return {
       data: result,
       message: 'Gift cards retrieved successfully',

@@ -320,14 +320,20 @@ export class GiftCardsService {
   }
 
   /**
-   * Get user's gift cards
+   * Get user's gift cards — owned directly OR issued to their email.
    */
-  async getMyGiftCards(userId: string, page = 1, limit = 20) {
+  async getMyGiftCards(userId: string, page = 1, limit = 20, email?: string) {
     const skip = (page - 1) * limit;
+
+    const conditions: any[] = [{ userId }];
+    if (email) {
+      conditions.push({ issuedToEmail: { equals: email, mode: 'insensitive' } });
+    }
+    const where = conditions.length === 1 ? conditions[0] : { OR: conditions };
 
     const [giftCards, total] = await Promise.all([
       (this.prisma as any).giftCard.findMany({
-        where: { userId },
+        where,
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
@@ -338,7 +344,7 @@ export class GiftCardsService {
           },
         },
       }),
-      (this.prisma as any).giftCard.count({ where: { userId } }),
+      (this.prisma as any).giftCard.count({ where }),
     ]);
 
     return {

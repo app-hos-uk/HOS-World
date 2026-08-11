@@ -28,7 +28,8 @@ export default function GiftCardDetailPage() {
       try {
         setLoading(true);
         const response = await apiClient.getMyGiftCards();
-        const cards = Array.isArray(response?.data) ? response.data : [];
+        const raw = response?.data;
+        const cards = Array.isArray(raw) ? raw : Array.isArray(raw?.items) ? raw.items : [];
         const found = cards.find((c: any) => c.id === id);
         if (found) {
           setGiftCard(found);
