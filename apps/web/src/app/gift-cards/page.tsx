@@ -166,9 +166,9 @@ export default function GiftCardsPage() {
 
                         <div className="mt-auto space-y-2 text-sm">
                           {card.code && (
-                            <div className="flex justify-between items-center">
+                            <div className="flex justify-between items-center gap-2">
                               <span className="text-hos-gold/30">Code</span>
-                              <span className="font-mono font-medium tracking-wider">{maskCode(card.code)}</span>
+                              <span className="font-mono font-medium tracking-wider text-xs break-all">{card.code}</span>
                             </div>
                           )}
                           {card.expiresAt && (
