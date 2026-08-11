@@ -197,9 +197,11 @@ export function LoyaltyRedemptionWidget({ cart, onCartUpdate }: LoyaltyRedemptio
                   </p>
                   <p className="text-sm text-hos-text-secondary mt-0.5">
                     {cart.pendingLoyaltyPoints?.toLocaleString()} pts
-                    {loyaltyDiscount > 0 && (
+                    {loyaltyDiscount > 0 ? (
                       <span className="text-green-400"> · −{formatPrice(loyaltyDiscount)}</span>
-                    )}
+                    ) : appliedOption?.type === 'FREE_SHIPPING' ? (
+                      <span className="text-green-400"> · Shipping waived</span>
+                    ) : null}
                   </p>
                 </div>
                 <button

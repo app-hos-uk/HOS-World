@@ -1595,6 +1595,16 @@ export class ApiClient {
     });
   }
 
+  /** Re-places every member against the current tier thresholds. */
+  async adminReviewLoyaltyTiers(): Promise<
+    ApiResponse<{ reviewed: number; changed: number; failed: number }>
+  > {
+    return this.request<ApiResponse<{ reviewed: number; changed: number; failed: number }>>(
+      '/admin/loyalty/tiers/review',
+      { method: 'POST' },
+    );
+  }
+
   async adminGetLoyaltyEarnRules(): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>('/admin/loyalty/earn-rules');
   }

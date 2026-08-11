@@ -31,6 +31,8 @@ import {
 } from './dto/loyalty-admin.dto';
 import { FandomProfileService } from './services/fandom-profile.service';
 import { PosVoucherService } from './services/pos-voucher.service';
+import { LoyaltyTierEngine } from './engines/tier.engine';
+import { QueueService, JobType } from '../queue/queue.service';
 import {
   LoyaltyProgrammeSettings,
   LoyaltySettingsService,
@@ -48,6 +50,8 @@ export class LoyaltyAdminController {
     private fandomProfiles: FandomProfileService,
     private settings: LoyaltySettingsService,
     private posVouchers: PosVoucherService,
+    private tierEngine: LoyaltyTierEngine,
+    private queue: QueueService,
   ) {}
 
   @Get('dashboard')
@@ -72,6 +76,20 @@ export class LoyaltyAdminController {
       include: { _count: { select: { members: true } } },
     });
     return { data, message: 'OK' };
+  }
+
+  @Post('tiers/review')
+  @ApiOperation({
+    summary: 'Re-run tier placement for every member',
+    description:
+      'Applies the current thresholds to the existing member base. Run this after editing a tier threshold — placement is otherwise only recomputed when a member earns points or by the weekly cron.',
+  })
+  async reviewTiers(): Promise<ApiResponse<unknown>> {
+    const jobId = await this.queue.addJob(JobType.LOYALTY_TIER_REVIEW, {});
+    return {
+      data: { jobId, status: 'queued' },
+      message: 'Tier review queued — results will be processed in the background',
+    };
   }
 
   @Put('tiers/:id')

@@ -1351,10 +1351,11 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {loyaltyDiscount > 0 && (
+                {(loyaltyDiscount > 0 || loyaltyRewardApplied) && (
                   <div className="flex justify-between text-sm text-purple-300">
                     <span>Loyalty reward{loyaltyRewardApplied ? ` (${cart.pendingLoyaltyPoints?.toLocaleString()} pts)` : ''}</span>
-                    <span>-{formatPrice(loyaltyDiscount)}</span>
+                    {/* A free-shipping reward has no cash discount — its benefit shows on the Shipping row. */}
+                    <span>{loyaltyDiscount > 0 ? `-${formatPrice(loyaltyDiscount)}` : 'Applied'}</span>
                   </div>
                 )}
 

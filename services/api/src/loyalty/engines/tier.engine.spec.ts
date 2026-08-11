@@ -157,4 +157,63 @@ describe('LoyaltyTierEngine', () => {
       expect(result.tierId).toBe('adept');
     });
   });
+
+  describe('reviewAllMemberships', () => {
+    // Lowering a threshold only reaches existing members through this batch pass.
+    it('re-places every member and reports how many moved tier', async () => {
+      const baseWeights = {
+        spendWeight: new Decimal(0.4),
+        frequencyWeight: new Decimal(0.35),
+        engagementWeight: new Decimal(0.25),
+      };
+      const initiateTier = {
+        id: 'initiate',
+        name: 'Initiate',
+        slug: 'initiate',
+        level: 1,
+        isActive: true,
+        inviteOnly: false,
+        pointsThreshold: 0,
+        ...baseWeights,
+      };
+      const spellcasterTier = {
+        id: 'spellcaster',
+        name: 'Spellcaster',
+        slug: 'spellcaster',
+        level: 2,
+        isActive: true,
+        inviteOnly: false,
+        // Threshold just lowered from 1000 to 800 by an admin.
+        pointsThreshold: 800,
+        ...baseWeights,
+      };
+
+      const members: Record<string, number> = { m1: 850, m2: 120 };
+      const mockPrisma = {
+        loyaltyMembership: {
+          findMany: jest.fn().mockResolvedValue([{ id: 'm1' }, { id: 'm2' }]),
+          findUnique: jest.fn().mockImplementation(async ({ where }: any) => ({
+            id: where.id,
+            userId: `u-${where.id}`,
+            tierId: 'initiate',
+            totalPointsEarned: members[where.id],
+            totalSpend: new Decimal(0),
+            purchaseCount: 0,
+            engagementCount: 0,
+            tier: initiateTier,
+          })),
+          update: jest.fn().mockResolvedValue({}),
+        },
+        loyaltyTier: {
+          findMany: jest.fn().mockResolvedValue([spellcasterTier, initiateTier]),
+        },
+      };
+      const mockEvents = { onTierChange: jest.fn().mockResolvedValue(undefined) };
+
+      const engine = new LoyaltyTierEngine(mockPrisma as any, mockEvents as any);
+      const result = await engine.reviewAllMemberships();
+
+      expect(result).toEqual({ reviewed: 2, changed: 1, failed: 0 });
+    });
+  });
 });

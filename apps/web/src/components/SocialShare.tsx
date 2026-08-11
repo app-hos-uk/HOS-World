@@ -2,7 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
+import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
+
+type SharePlatform = 'copy' | 'facebook' | 'twitter' | 'whatsapp';
 
 interface SocialShareProps {
   type: 'PRODUCT' | 'COLLECTION' | 'WISHLIST' | 'ACHIEVEMENT' | 'QUEST';
@@ -14,6 +17,7 @@ interface SocialShareProps {
 export function SocialShare({ type, itemId, itemName, itemImage: _itemImage }: SocialShareProps) {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
+  const toast = useToast();
   const btnRef = useRef<HTMLButtonElement>(null);
   const [portalPosition, setPortalPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
@@ -46,14 +50,33 @@ export function SocialShare({ type, itemId, itemName, itemImage: _itemImage }: S
     };
   }, [showShareMenu, updateMenuPosition]);
 
-  const handleShare = async (platform?: string) => {
+  const buildPlatformUrl = (platform: SharePlatform, shareUrl: string, shareText: string) => {
+    switch (platform) {
+      case 'facebook':
+        return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+      case 'twitter':
+        return `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+      case 'whatsapp':
+        return `https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`;
+      default:
+        return null;
+    }
+  };
+
+  const handleShare = async (platform: SharePlatform) => {
+    // Opened up-front: popup blockers reject window.open once an await has
+    // broken the chain back to the click.
+    const popup = platform === 'copy' ? null : window.open('', '_blank');
+    setShowShareMenu(false);
+
     try {
-      const apiUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
-      const urlResponse = await fetch(`${apiUrl}/social-sharing/share-url?type=${type}&itemId=${itemId}`, {
-        credentials: 'include',
-      });
-      const urlData = await urlResponse.json();
-      const shareUrl = urlData.data.url;
+      let shareUrl = window.location.href;
+      try {
+        const urlResponse = await apiClient.getShareUrl(type, itemId);
+        if (urlResponse?.data?.url) shareUrl = urlResponse.data.url;
+      } catch {
+        // Signed-out visitors cannot mint a tracked link; the page URL still shares.
+      }
 
       const shareText = `Check out ${itemName || 'this'} on House of Spells Marketplace!`;
 
@@ -61,51 +84,36 @@ export function SocialShare({ type, itemId, itemName, itemImage: _itemImage }: S
         await navigator.clipboard.writeText(shareUrl);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-
-        const recordUrl = getPublicApiBaseUrl() || 'http://localhost:3001/api';
-        await fetch(`${recordUrl}/social-sharing/share`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ type, itemId, platform: 'copy_link' }),
-        });
-      } else if (platform === 'facebook') {
-        window.open(
-          `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-          '_blank',
-        );
-
-        await fetch(`${apiUrl}/social-sharing/share`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ type, itemId, platform: 'facebook' }),
-        });
-      } else if (platform === 'twitter') {
-        window.open(
-          `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
-          '_blank',
-        );
-
-        await fetch(`${apiUrl}/social-sharing/share`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ type, itemId, platform: 'twitter' }),
-        });
-      } else if (platform === 'whatsapp') {
-        window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`, '_blank');
-
-        await fetch(`${apiUrl}/social-sharing/share`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ type, itemId, platform: 'whatsapp' }),
-        });
+      } else {
+        const target = buildPlatformUrl(platform, shareUrl, shareText);
+        if (!target) return;
+        if (popup) {
+          popup.location.href = target;
+        } else {
+          window.open(target, '_blank', 'noopener,noreferrer');
+        }
       }
 
-      setShowShareMenu(false);
+      // Goes through apiClient so the Bearer token is attached — a bare fetch is
+      // rejected by the JWT guard, which is why shares never earned any points.
+      // Recording is best-effort: the share itself has already happened.
+      try {
+        const record = await apiClient.shareItem({
+          type,
+          itemId,
+          platform: platform === 'copy' ? 'copy_link' : platform,
+        });
+        const points = Number(
+          (record?.data as { loyaltyPointsAwarded?: number })?.loyaltyPointsAwarded ?? 0,
+        );
+        if (points > 0) {
+          toast.success(`+${points} loyalty points for sharing`);
+        }
+      } catch (recordError) {
+        console.warn('Share was not recorded for loyalty:', recordError);
+      }
     } catch (error) {
+      popup?.close();
       console.error('Error sharing:', error);
     }
   };

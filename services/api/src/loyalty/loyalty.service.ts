@@ -920,6 +920,19 @@ export class LoyaltyService implements OnModuleInit {
     return { points: opt.pointsCost, discount };
   }
 
+  /**
+   * A FREE_SHIPPING reward carries no monetary discount — its benefit is the
+   * waived delivery charge, which the cart and order totals resolve separately.
+   */
+  async isFreeShippingOption(optionId: string | null | undefined): Promise<boolean> {
+    if (!optionId) return false;
+    const opt = await this.prisma.loyaltyRedemptionOption.findFirst({
+      where: { id: optionId, isActive: true },
+      select: { type: true },
+    });
+    return opt?.type === 'FREE_SHIPPING';
+  }
+
   async clearCartLoyaltyState(cartId: string): Promise<void> {
     await this.prisma.cart.update({
       where: { id: cartId },

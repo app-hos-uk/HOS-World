@@ -226,6 +226,100 @@ describe('LoyaltyListener', () => {
     );
   });
 
+  it('onReviewSubmitted awards nothing while the earn rule is inactive', async () => {
+    const { listener, prisma, wallet } = makeMocks();
+    prisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'm1' });
+    prisma.productReview.findUnique.mockResolvedValue({
+      id: 'r1',
+      status: 'PENDING',
+      comment: 'Great product',
+      title: null,
+      images: [],
+    });
+    prisma.loyaltyTransaction.findFirst.mockResolvedValue(null);
+    prisma.loyaltyEarnRule.findFirst.mockResolvedValue({
+      id: 'rule1',
+      action: 'REVIEW',
+      pointsAmount: 25,
+      isActive: false,
+      maxPerDay: null,
+      maxPerMonth: 3,
+    });
+
+    const n = await listener.onReviewSubmitted('u1', 'r1');
+
+    expect(n).toBe(0);
+    expect(wallet.applyDelta).not.toHaveBeenCalled();
+  });
+
+  it('onReviewSubmitted counts the monthly cap across REVIEW and PHOTO_REVIEW', async () => {
+    const { listener, prisma, wallet } = makeMocks();
+    prisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'm1' });
+    prisma.productReview.findUnique.mockResolvedValue({
+      id: 'r4',
+      status: 'PENDING',
+      comment: 'See https://cdn.example.com/pic.png',
+      title: null,
+    });
+    prisma.loyaltyTransaction.findFirst.mockResolvedValue(null);
+    prisma.loyaltyEarnRule.findFirst.mockResolvedValue({
+      id: 'rule-photo',
+      action: 'PHOTO_REVIEW',
+      pointsAmount: 50,
+      isActive: true,
+      maxPerDay: null,
+      maxPerMonth: 3,
+    });
+    // Three plain reviews already rewarded this month.
+    prisma.loyaltyTransaction.count.mockResolvedValue(3);
+
+    const n = await listener.onReviewSubmitted('u1', 'r4');
+
+    expect(n).toBe(0);
+    expect(wallet.applyDelta).not.toHaveBeenCalled();
+    expect(prisma.loyaltyTransaction.count).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          source: { in: ['REVIEW', 'PHOTO_REVIEW'] },
+        }),
+      }),
+    );
+  });
+
+  it('onSocialShare awards nothing while the earn rule is inactive', async () => {
+    const { listener, prisma, wallet } = makeMocks();
+    prisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'm1' });
+    prisma.loyaltyEarnRule.findFirst.mockResolvedValue({
+      id: 'rule-share',
+      pointsAmount: 10,
+      isActive: false,
+      maxPerDay: 5,
+      maxPerMonth: null,
+    });
+
+    const n = await listener.onSocialShare('u1', 'whatsapp');
+
+    expect(n).toBe(0);
+    expect(wallet.applyDelta).not.toHaveBeenCalled();
+  });
+
+  it('onSocialShare still awards when no rule row was ever seeded', async () => {
+    const { listener, prisma, wallet } = makeMocks();
+    prisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'm1' });
+    prisma.loyaltyEarnRule.findFirst.mockResolvedValue(null);
+
+    const n = await listener.onSocialShare('u1', 'whatsapp');
+
+    expect(n).toBe(10);
+    expect(wallet.applyDelta).toHaveBeenCalledWith(
+      expect.anything(),
+      'm1',
+      10,
+      LoyaltyTxType.EARN,
+      expect.objectContaining({ source: 'SOCIAL_SHARE' }),
+    );
+  });
+
   it('onSocialShare respects maxPerDay', async () => {
     const { listener, prisma } = makeMocks();
     prisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'm1' });

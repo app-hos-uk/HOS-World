@@ -111,6 +111,7 @@ describe('CartService', () => {
     validateCartRedemption: jest.fn(),
     clearCartLoyaltyState: jest.fn(),
     isEnabled: jest.fn().mockReturnValue(false),
+    isFreeShippingOption: jest.fn().mockResolvedValue(false),
   };
 
   beforeEach(async () => {
@@ -851,6 +852,44 @@ describe('CartService', () => {
       const result = await service.recalculateCart('cart-1', { userMutated: true });
       expect(mockPromotionsService.applyPromotionsToCart).toHaveBeenCalled();
       expect(result.promotionFreeShipping).toBe(true);
+    });
+
+    it('waives shipping when a FREE_SHIPPING loyalty reward is pending', async () => {
+      mockPrisma.cart.findUnique.mockResolvedValueOnce({
+        ...mockCart,
+        pendingLoyaltyPoints: 200,
+        pendingLoyaltyOptionId: 'option-free-shipping',
+      });
+      mockLoyaltyService.isFreeShippingOption.mockResolvedValue(true);
+      mockPrisma.cart.update.mockResolvedValue({ ...mockCart, promotionFreeShipping: true });
+
+      const result = await service.recalculateCart('cart-1');
+
+      expect(mockLoyaltyService.isFreeShippingOption).toHaveBeenCalledWith('option-free-shipping');
+      expect(mockPrisma.cart.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ promotionFreeShipping: true }),
+        }),
+      );
+      expect(result.promotionFreeShipping).toBe(true);
+    });
+
+    it('leaves shipping payable for a loyalty reward that is not free shipping', async () => {
+      mockPrisma.cart.findUnique.mockResolvedValueOnce({
+        ...mockCart,
+        pendingLoyaltyPoints: 500,
+        pendingLoyaltyOptionId: 'option-discount',
+      });
+      mockLoyaltyService.isFreeShippingOption.mockResolvedValue(false);
+      mockPrisma.cart.update.mockResolvedValue(mockCart);
+
+      await service.recalculateCart('cart-1');
+
+      expect(mockPrisma.cart.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ promotionFreeShipping: false }),
+        }),
+      );
     });
 
     it('caps discount to not exceed subtotal + tax + shipping', async () => {

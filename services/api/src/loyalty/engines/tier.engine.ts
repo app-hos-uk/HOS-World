@@ -28,7 +28,34 @@ export class LoyaltyTierEngine {
       .add(new Decimal(membership.engagementCount).mul(ew).mul(50));
   }
 
-  async recalculateTier(membershipId: string): Promise<{ upgraded: boolean; tierId: string }> {
+  /**
+   * Re-place every member against the current tier configuration.
+   *
+   * Tier placement is otherwise only recomputed when a member earns points, so
+   * an admin who edits a threshold has to be able to apply it to the existing
+   * base without waiting for the weekly cron or for each member to transact.
+   */
+  async reviewAllMemberships(): Promise<{ reviewed: number; changed: number; failed: number }> {
+    const members = await this.prisma.loyaltyMembership.findMany({ select: { id: true } });
+    let changed = 0;
+    let failed = 0;
+
+    for (const member of members) {
+      try {
+        const result = await this.recalculateTier(member.id);
+        if (result.changed) changed++;
+      } catch (e) {
+        failed++;
+        this.logger.warn(`Tier review failed for ${member.id}: ${(e as Error).message}`);
+      }
+    }
+
+    return { reviewed: members.length, changed, failed };
+  }
+
+  async recalculateTier(
+    membershipId: string,
+  ): Promise<{ upgraded: boolean; changed: boolean; tierId: string }> {
     const membership = await this.prisma.loyaltyMembership.findUnique({
       where: { id: membershipId },
       include: { tier: true },
@@ -59,12 +86,12 @@ export class LoyaltyTierEngine {
     }
     if (!chosen) {
       this.logger.warn('No loyalty tiers configured');
-      return { upgraded: false, tierId: membership.tierId };
+      return { upgraded: false, changed: false, tierId: membership.tierId };
     }
 
     const oldTierId = membership.tierId;
     if (chosen.id === oldTierId) {
-      return { upgraded: false, tierId: oldTierId };
+      return { upgraded: false, changed: false, tierId: oldTierId };
     }
 
     await this.prisma.loyaltyMembership.update({
@@ -85,6 +112,6 @@ export class LoyaltyTierEngine {
       })
       .catch((e) => this.logger.warn(`Tier event failed: ${(e as Error).message}`));
 
-    return { upgraded, tierId: chosen.id };
+    return { upgraded, changed: true, tierId: chosen.id };
   }
 }

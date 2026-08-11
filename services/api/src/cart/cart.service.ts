@@ -831,6 +831,19 @@ export class CartService {
       }
     }
 
+    // A redeemed FREE_SHIPPING reward waives delivery exactly like a promotion
+    // does, so it rides the same flag that checkout and order creation already
+    // read. Without this the points are burned and the charge still stands.
+    if (!promotionFreeShipping && cart.pendingLoyaltyOptionId && this.loyaltyService) {
+      try {
+        promotionFreeShipping = await this.loyaltyService.isFreeShippingOption(
+          cart.pendingLoyaltyOptionId,
+        );
+      } catch (error: any) {
+        this.logger.warn(`Error resolving loyalty free shipping: ${error?.message ?? error}`);
+      }
+    }
+
     // Clamp discount so it cannot exceed subtotal
     discount = Decimal.min(discount, subtotal);
 

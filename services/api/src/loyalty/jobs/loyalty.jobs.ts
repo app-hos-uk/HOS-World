@@ -64,17 +64,8 @@ export class LoyaltyJobsService implements OnModuleInit {
 
     this.queue.registerProcessor(JobType.LOYALTY_TIER_REVIEW, async (_job: Job) => {
       this.logger.log('Starting batch tier review…');
-      const members = await this.prisma.loyaltyMembership.findMany({ select: { id: true } });
-      let updated = 0;
-      for (const m of members) {
-        try {
-          const result = await this.tiers.recalculateTier(m.id);
-          if (result.upgraded) updated++;
-        } catch (e) {
-          this.logger.warn(`Tier review failed for ${m.id}: ${(e as Error).message}`);
-        }
-      }
-      this.logger.log(`Tier review complete: ${updated}/${members.length} changed`);
+      const { reviewed, changed } = await this.tiers.reviewAllMemberships();
+      this.logger.log(`Tier review complete: ${changed}/${reviewed} changed`);
     });
 
     this.queue.registerProcessor(JobType.LOYALTY_POINTS_EXPIRY, async () => {

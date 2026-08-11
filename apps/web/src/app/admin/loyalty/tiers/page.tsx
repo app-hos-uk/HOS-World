@@ -11,6 +11,7 @@ export default function AdminLoyaltyTiersPage() {
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const toast = useToast();
 
   const load = useCallback(async () => {
@@ -54,11 +55,38 @@ export default function AdminLoyaltyTiersPage() {
     }
   };
 
+  const handleReviewTiers = async () => {
+    setReviewing(true);
+    try {
+      await apiClient.adminReviewLoyaltyTiers();
+      toast.success('Tier review queued — members will be recalculated in the background');
+      await load();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to run tier review');
+    } finally {
+      setReviewing(false);
+    }
+  };
+
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
-              <div className="mb-6">
-          <h1 className="text-2xl font-bold text-hos-text-secondary">Loyalty Tiers</h1>
-          <p className="text-hos-text-secondary mt-1">Configure tier thresholds, multipliers, and branding</p>
+              <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-hos-text-secondary">Loyalty Tiers</h1>
+            <p className="text-hos-text-secondary mt-1">Configure tier thresholds, multipliers, and branding</p>
+          </div>
+          <div className="text-right">
+            <button
+              onClick={handleReviewTiers}
+              disabled={reviewing}
+              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm font-medium"
+            >
+              {reviewing ? 'Reviewing…' : 'Run Tier Review'}
+            </button>
+            <p className="text-xs text-hos-text-muted mt-1 max-w-xs">
+              Applies the saved thresholds to existing members
+            </p>
+          </div>
         </div>
 
         {loading ? (

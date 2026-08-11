@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
+import { useToast } from '@/hooks/useToast';
 
 type ReferralInfo = {
   referralCode?: string;
@@ -23,6 +24,8 @@ export default function LoyaltyReferralPage() {
   const [info, setInfo] = useState<ReferralInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState<'code' | 'link' | null>(null);
+  const toast = useToast();
 
   useEffect(() => {
     apiClient
@@ -31,6 +34,41 @@ export default function LoyaltyReferralPage() {
       .catch((e: any) => setError(e?.message || 'Failed to load referral info'))
       .finally(() => setLoading(false));
   }, []);
+
+  const referralCode = info?.code || info?.referralCode || '';
+  // The API always returns shareUrl, but a stale cached response should still
+  // leave the customer with a working link.
+  const shareUrl =
+    info?.shareUrl ||
+    (referralCode && typeof window !== 'undefined'
+      ? `${window.location.origin}/ref/${encodeURIComponent(referralCode)}`
+      : '');
+  const shareMessage = `Join me on House of Spells with my referral code ${referralCode} — we both earn loyalty points. ${shareUrl}`;
+
+  const copy = useCallback(
+    async (value: string, kind: 'code' | 'link') => {
+      try {
+        await navigator.clipboard.writeText(value);
+        setCopied(kind);
+        setTimeout(() => setCopied(null), 2000);
+      } catch {
+        toast.error('Could not copy — please copy it manually');
+      }
+    },
+    [toast],
+  );
+
+  const nativeShare = useCallback(async () => {
+    if (typeof navigator === 'undefined' || !navigator.share) {
+      await copy(shareUrl, 'link');
+      return;
+    }
+    try {
+      await navigator.share({ title: 'House of Spells referral', text: shareMessage, url: shareUrl });
+    } catch {
+      // Dismissing the OS share sheet is a normal outcome, not an error.
+    }
+  }, [copy, shareMessage, shareUrl]);
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER']}>
@@ -45,20 +83,61 @@ export default function LoyaltyReferralPage() {
             <p className="font-secondary text-stone-500">Loading…</p>
           ) : error ? (
             <p className="font-secondary text-red-400">{error}</p>
-          ) : !info?.code && !info?.referralCode ? (
+          ) : !referralCode ? (
             <p className="font-secondary text-stone-500">No referral code yet. Enroll in The Enchanted Circle first.</p>
           ) : (
-            <div className="rounded-lg border border-stone-800 bg-stone-900/50 p-6 font-secondary space-y-3">
+            <div className="rounded-lg border border-stone-800 bg-stone-900/50 p-6 font-secondary space-y-4">
               <div>
                 <p className="text-stone-500 text-sm mb-1">Your code</p>
-                <p className="font-primary text-xl text-amber-200">{info!.code || info!.referralCode}</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="font-primary text-xl text-amber-200 tracking-wide">{referralCode}</p>
+                  <button
+                    type="button"
+                    onClick={() => copy(referralCode, 'code')}
+                    className="px-3 py-1.5 text-xs rounded-lg border border-amber-500/40 text-amber-200 hover:bg-amber-500/10 transition-colors"
+                  >
+                    {copied === 'code' ? '✓ Copied' : 'Copy code'}
+                  </button>
+                </div>
               </div>
-              {info!.shareUrl && (
+
+              {shareUrl && (
                 <div>
                   <p className="text-stone-500 text-sm mb-1">Share link</p>
-                  <p className="text-amber-100/90 text-sm break-all">{info!.shareUrl}</p>
+                  <p className="text-amber-100/90 text-sm break-all mb-2">{shareUrl}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => copy(shareUrl, 'link')}
+                      className="px-3 py-1.5 text-xs rounded-lg border border-amber-500/40 text-amber-200 hover:bg-amber-500/10 transition-colors"
+                    >
+                      {copied === 'link' ? '✓ Copied' : 'Copy link'}
+                    </button>
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(shareMessage)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 text-xs rounded-lg border border-stone-700 text-stone-200 hover:bg-stone-800 transition-colors"
+                    >
+                      WhatsApp
+                    </a>
+                    <a
+                      href={`mailto:?subject=${encodeURIComponent('Join me on House of Spells')}&body=${encodeURIComponent(shareMessage)}`}
+                      className="px-3 py-1.5 text-xs rounded-lg border border-stone-700 text-stone-200 hover:bg-stone-800 transition-colors"
+                    >
+                      Email
+                    </a>
+                    <button
+                      type="button"
+                      onClick={nativeShare}
+                      className="px-3 py-1.5 text-xs rounded-lg border border-stone-700 text-stone-200 hover:bg-stone-800 transition-colors"
+                    >
+                      Share…
+                    </button>
+                  </div>
                 </div>
               )}
+
               <div className="grid grid-cols-2 gap-3 text-sm pt-2 border-t border-stone-800">
                 <p>
                   Converted:{' '}

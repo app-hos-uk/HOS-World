@@ -14,6 +14,9 @@ import { PlatformRegionService } from '../../config/platform-region.service';
 
 const PHOTO_IN_REVIEW = /\bhttps?:\/\/\S+\.(jpg|jpeg|png|gif|webp)(\?\S*)?\b/i;
 
+/** Both wallet sources a rewarded review can land on. They share one cap. */
+const REVIEW_SOURCES = ['REVIEW', 'PHOTO_REVIEW'];
+
 /**
  * Cross-cutting loyalty side-effects. Methods are called imperatively from
  * services (auth, reviews, social, quests, quiz) — not via an event bus.
@@ -42,21 +45,24 @@ export class LoyaltyListener {
   /**
    * @param db Pass the transaction client (after `wallet.lockMembership`) so the
    * cap check cannot be overtaken by a concurrent award for the same member.
+   * @param sources Every wallet source the cap covers. Review caps span both
+   * REVIEW and PHOTO_REVIEW so a photo review cannot restart the monthly count.
    */
   private async isWithinLimits(
     db: Prisma.TransactionClient,
     membershipId: string,
-    source: string,
+    sources: string | string[],
     rule: { maxPerDay?: number | null; maxPerMonth?: number | null } | null,
   ): Promise<boolean> {
     if (!rule) return true;
+    const sourceFilter = { in: Array.isArray(sources) ? sources : [sources] };
     if (rule.maxPerDay != null && rule.maxPerDay > 0) {
       const dayStart = new Date();
       dayStart.setHours(0, 0, 0, 0);
       const dayCount = await db.loyaltyTransaction.count({
         where: {
           membershipId,
-          source,
+          source: sourceFilter,
           type: LoyaltyTxType.EARN,
           createdAt: { gte: dayStart },
         },
@@ -70,7 +76,7 @@ export class LoyaltyListener {
       const monthCount = await db.loyaltyTransaction.count({
         where: {
           membershipId,
-          source,
+          source: sourceFilter,
           type: LoyaltyTxType.EARN,
           createdAt: { gte: monthStart },
         },
@@ -78,6 +84,27 @@ export class LoyaltyListener {
       if (monthCount >= rule.maxPerMonth) return false;
     }
     return true;
+  }
+
+  /**
+   * Resolve the configured reward for an earn action.
+   *
+   * A rule row that exists but is switched off means the admin disabled that
+   * reward, so nothing may be awarded — returning `null` here is what stops the
+   * hard-coded fallback from paying out behind the admin's back. The fallback
+   * only covers deployments where the rule was never seeded at all, and it
+   * carries no caps because there is no configuration to read them from.
+   */
+  private async resolveEarnRule(
+    action: string,
+    fallbackPoints: number,
+  ): Promise<{
+    rule: { id: string; maxPerDay?: number | null; maxPerMonth?: number | null } | null;
+    points: number;
+  } | null> {
+    const rule = await this.prisma.loyaltyEarnRule.findFirst({ where: { action } });
+    if (rule && rule.isActive === false) return null;
+    return { rule: rule ?? null, points: rule?.pointsAmount ?? fallbackPoints };
   }
 
   /**
@@ -249,12 +276,9 @@ export class LoyaltyListener {
       PHOTO_IN_REVIEW.test(text);
     const action = isPhoto ? 'PHOTO_REVIEW' : 'REVIEW';
 
-    const rule = await this.prisma.loyaltyEarnRule.findFirst({
-      where: { action, isActive: true },
-    });
-    // Prefer configured active rule; fall back so reviews still earn without admin seed
-    const fallback = isPhoto ? 50 : 25;
-    const pts = rule?.pointsAmount ?? fallback;
+    const resolved = await this.resolveEarnRule(action, isPhoto ? 50 : 25);
+    if (!resolved) return 0;
+    const { rule, points: pts } = resolved;
     if (pts <= 0) return 0;
 
     try {
@@ -268,11 +292,11 @@ export class LoyaltyListener {
             membershipId: membership!.id,
             sourceId: reviewId,
             type: LoyaltyTxType.EARN,
-            source: { in: ['REVIEW', 'PHOTO_REVIEW'] },
+            source: { in: REVIEW_SOURCES },
           },
         });
         if (dup) return;
-        if (!(await this.isWithinLimits(tx, membership!.id, action, rule))) return;
+        if (!(await this.isWithinLimits(tx, membership!.id, REVIEW_SOURCES, rule))) return;
 
         await this.wallet.applyDelta(tx, membership!.id, pts, LoyaltyTxType.EARN, {
           source: action,
@@ -310,10 +334,9 @@ export class LoyaltyListener {
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) return 0;
 
-    const rule = await this.prisma.loyaltyEarnRule.findFirst({
-      where: { action: 'SOCIAL_SHARE', isActive: true },
-    });
-    const pts = rule?.pointsAmount ?? 10;
+    const resolved = await this.resolveEarnRule('SOCIAL_SHARE', 10);
+    if (!resolved) return 0;
+    const { rule, points: pts } = resolved;
     if (pts <= 0) return 0;
 
     try {
@@ -356,10 +379,9 @@ export class LoyaltyListener {
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) return 0;
 
-    const rule = await this.prisma.loyaltyEarnRule.findFirst({
-      where: { action: 'QUEST', isActive: true },
-    });
-    const pts = questPoints > 0 ? questPoints : (rule?.pointsAmount ?? 0);
+    const resolved = await this.resolveEarnRule('QUEST', 0);
+    const rule = resolved?.rule ?? null;
+    const pts = questPoints > 0 ? questPoints : (resolved?.points ?? 0);
     if (pts <= 0) return 0;
 
     try {
@@ -411,9 +433,8 @@ export class LoyaltyListener {
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) return 0;
 
-    const rule = await this.prisma.loyaltyEarnRule.findFirst({
-      where: { action: 'QUIZ', isActive: true },
-    });
+    const resolved = await this.resolveEarnRule('QUIZ', 0);
+    const rule = resolved?.rule ?? null;
 
     try {
       let awarded = false;
