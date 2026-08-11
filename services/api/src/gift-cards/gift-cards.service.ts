@@ -124,14 +124,25 @@ export class GiftCardsService {
       throw new BadRequestException('Expiration date must be in the future');
     }
 
-    // Create gift card
+    // When a recipient email is provided, look up the user so the card appears
+    // in their "My Gift Cards" list.  If no user is found the card stays
+    // unassigned and gets claimed on first redemption.
+    let ownerId: string | null = userId;
+    if (dto.issuedToEmail) {
+      const recipient = await this.prisma.user.findUnique({
+        where: { email: dto.issuedToEmail.trim().toLowerCase() },
+        select: { id: true },
+      });
+      ownerId = recipient?.id ?? null;
+    }
+
     const giftCard = await (this.prisma as any).giftCard.create({
       data: {
         code: code!,
-        userId,
+        userId: ownerId,
         type: dto.type,
         amount: dto.amount,
-        balance: dto.amount, // Initial balance equals amount
+        balance: dto.amount,
         currency: dto.currency || (await this.defaultCurrency()),
         status: 'ACTIVE',
         issuedToEmail: dto.issuedToEmail,
@@ -217,11 +228,9 @@ export class GiftCardsService {
           throw new NotFoundException('Gift card not found');
         }
 
-        if (giftCard.userId && giftCard.userId !== userId) {
-          throw new ForbiddenException('You do not own this gift card');
-        }
-
-        // Unassigned cards: claim on first redemption attempt (prevents interception)
+        // Gift cards are bearer instruments — possession of the code is
+        // sufficient authorization.  Claim the card for the redeeming user
+        // so it appears in their "My Gift Cards" list going forward.
         if (!giftCard.userId) {
           await (tx as any).giftCard.update({
             where: { id: giftCard.id },

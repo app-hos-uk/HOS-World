@@ -50,7 +50,8 @@ export default function GiftCardsPage() {
       setLoading(true);
       setError(null);
       const response = await apiClient.getMyGiftCards();
-      const cards = Array.isArray(response?.data) ? response.data : [];
+      const raw = response?.data;
+      const cards = Array.isArray(raw) ? raw : Array.isArray(raw?.items) ? raw.items : [];
       setGiftCards(cards);
     } catch (err: any) {
       const message = err?.message || 'Failed to load gift cards';
