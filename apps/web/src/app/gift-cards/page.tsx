@@ -50,7 +50,7 @@ export default function GiftCardsPage() {
       setLoading(true);
       setError(null);
       const response = await apiClient.getMyGiftCards();
-      const raw = response?.data;
+      const raw = response?.data as any;
       const cards = Array.isArray(raw) ? raw : Array.isArray(raw?.items) ? raw.items : [];
       setGiftCards(cards);
     } catch (err: any) {
