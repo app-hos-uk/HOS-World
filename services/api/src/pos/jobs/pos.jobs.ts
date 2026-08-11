@@ -95,8 +95,13 @@ export class PosJobsService implements OnModuleInit {
       },
     );
 
-    this.queue.registerProcessor(JobType.POS_SALES_POLL, async () => {
-      const conns = await this.prisma.pOSConnection.findMany({ where: { isActive: true } });
+    this.queue.registerProcessor(
+      JobType.POS_SALES_POLL,
+      async (job: Job<{ storeId?: string }>) => {
+      const where = job.data?.storeId
+        ? { storeId: job.data.storeId, isActive: true }
+        : { isActive: true };
+      const conns = await this.prisma.pOSConnection.findMany({ where });
       for (const c of conns) {
         try {
           // Cold-start sinceHours default lives in sales-import; durable cursor is source of truth.
@@ -106,7 +111,8 @@ export class PosJobsService implements OnModuleInit {
           this.logger.warn(`POS poll failed ${c.storeId}: ${(e as Error).message}`);
         }
       }
-    });
+    },
+    );
 
     this.queue.registerProcessor(JobType.POS_GIFT_CARD_RECON, async () => {
       const summary = await this.giftCardRecon.reconcile();

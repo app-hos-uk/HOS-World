@@ -26,7 +26,6 @@ import { PosProductSyncService } from './sync/product-sync.service';
 import { PosInventorySyncService } from './sync/inventory-sync.service';
 import { PosCustomerSyncService } from './sync/customer-sync.service';
 import { PosCustomerIdentityBackfillService } from './sync/customer-identity-backfill.service';
-import { PosSalesImportService } from './sync/sales-import.service';
 import { QueueService, JobType } from '../queue/queue.service';
 import { DiscrepanciesService } from '../discrepancies/discrepancies.service';
 import { PlatformSellerService } from '../stores/platform-seller.service';
@@ -45,7 +44,6 @@ export class PosAdminController {
     private inventorySync: PosInventorySyncService,
     private customerSync: PosCustomerSyncService,
     private customerIdentityBackfill: PosCustomerIdentityBackfillService,
-    private salesImport: PosSalesImportService,
     private queue: QueueService,
     private discrepancies: DiscrepanciesService,
     private platformSeller: PlatformSellerService,
@@ -200,6 +198,17 @@ export class PosAdminController {
     if (!conn) return { data: null, message: 'Not found' };
     const jobId = await this.queue.addJob(JobType.POS_INVENTORY_SYNC, { connectionId: id });
     return { data: { jobId }, message: 'Queued' };
+  }
+
+  @Post('connections/:id/sync/sales')
+  async syncSales(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
+    const conn = await this.prisma.pOSConnection.findUnique({ where: { id } });
+    if (!conn) return { data: null, message: 'Not found' };
+    if (!conn.isActive) {
+      throw new BadRequestException('POS connection is inactive');
+    }
+    const jobId = await this.queue.addJob(JobType.POS_SALES_POLL, { storeId: conn.storeId });
+    return { data: { jobId, storeId: conn.storeId }, message: 'Queued' };
   }
 
   @Post('connections/:id/sync/customers')
