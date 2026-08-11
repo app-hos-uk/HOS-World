@@ -251,7 +251,7 @@ export default function AdminGiftCardsPage() {
     }
     try {
       setIssuing(true);
-      await apiClient.createGiftCard({
+      const res = await apiClient.createGiftCard({
         type: form.type,
         amount,
         currency: form.currency || undefined,
@@ -260,7 +260,8 @@ export default function AdminGiftCardsPage() {
         message: form.message || undefined,
         expiresAt: form.expiresAt || undefined,
       });
-      toast.success('Gift card issued successfully');
+      const newCode = res?.data?.code;
+      toast.success(newCode ? `Gift card issued — code: ${newCode}` : 'Gift card issued successfully');
       setForm({ type: 'digital', amount: '', currency: regionCurrency, issuedToEmail: '', issuedToName: '', message: '', expiresAt: '' });
       setShowForm(false);
       setPage(1);
@@ -452,7 +453,23 @@ export default function AdminGiftCardsPage() {
                       className={`border-b border-hos-border hover:bg-hos-bg-tertiary/50 cursor-pointer transition-colors ${expandedId === gc.id ? 'bg-hos-bg-tertiary/30' : ''}`}
                       onClick={() => handleToggleRow(gc.id)}
                     >
-                      <td className="px-4 py-3 font-mono text-xs text-hos-text-primary">{maskCode(gc.code)}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-hos-text-primary">
+                        <span className="mr-2">{gc.code}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(gc.code).then(
+                              () => toast.success('Code copied'),
+                              () => toast.error('Copy failed'),
+                            );
+                          }}
+                          className="inline-flex items-center px-1.5 py-0.5 text-[10px] rounded bg-hos-bg-tertiary hover:bg-hos-gold/20 text-hos-text-muted hover:text-hos-gold transition-colors"
+                          title="Copy code"
+                        >
+                          Copy
+                        </button>
+                      </td>
                       <td className="px-4 py-3 capitalize text-hos-text-secondary">{gc.type}</td>
                       <td className="px-4 py-3 text-right text-hos-text-secondary">{formatMoney(Number(gc.amount), gc.currency)}</td>
                       <td className="px-4 py-3 text-right text-hos-text-primary font-medium">{formatMoney(Number(gc.balance), gc.currency)}</td>
