@@ -199,9 +199,9 @@ export class GiftCardsService {
       throw new BadRequestException('Gift card is not active');
     }
 
-    // Public validation must not reveal balance or the full code (enumeration aid).
     return {
       valid: true,
+      balance: Number(giftCard.balance),
       currency: giftCard.currency,
       expiresAt: giftCard.expiresAt,
     };
