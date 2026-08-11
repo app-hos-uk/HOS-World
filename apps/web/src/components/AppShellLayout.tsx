@@ -72,7 +72,7 @@ export function AppShellLayout({
   // Tracks the last position the user scrolled to. The browser clamps scrollTop to 0
   // while the nav re-renders with collapsed submenus, and that clamp fires a scroll
   // event — persisting it would wipe the position we are trying to restore.
-  const lastUserScrollTopRef = useRef(0);
+  const lastUserScrollTopRef = useRef<number | null>(null);
   const restoringScrollRef = useRef(false);
 
   const accountRole = String(user?.role ?? '').toUpperCase();
@@ -117,7 +117,7 @@ export function AppShellLayout({
     } catch {
       // ignore storage errors
     }
-    const savedTop = lastUserScrollTopRef.current || storedTop;
+    const savedTop = lastUserScrollTopRef.current ?? storedTop;
     restoringScrollRef.current = true;
 
     const restoreScroll = () => {
