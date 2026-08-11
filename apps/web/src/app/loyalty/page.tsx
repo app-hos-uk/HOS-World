@@ -116,7 +116,21 @@ export default function LoyaltyDashboardPage() {
           ) : (
             <div className="space-y-6">
               <div className="rounded-lg border border-stone-800 bg-stone-900/50 p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {membership.cardNumber && (
+                <div className="rounded-lg border border-amber-700/30 bg-stone-950/40 p-4 mb-4 flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs text-stone-500 font-secondary tracking-wider">LOYALTY CARD NUMBER</p>
+                    <p className="font-mono text-amber-100 mt-1 text-sm break-all">{membership.cardNumber}</p>
+                  </div>
+                  <Link
+                    href="/loyalty/card"
+                    className="shrink-0 text-xs text-amber-500 hover:text-amber-400 font-secondary"
+                  >
+                    View card →
+                  </Link>
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="rounded-lg border border-stone-800 bg-stone-950/40 p-4">
                     <p className="text-sm text-stone-400 font-secondary">Tier</p>
                     <p className="font-primary text-2xl font-semibold text-amber-200 mt-1">

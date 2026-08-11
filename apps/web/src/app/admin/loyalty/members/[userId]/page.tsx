@@ -103,7 +103,11 @@ export default function AdminLoyaltyMemberLedgerPage() {
         <p className="text-hos-text-secondary">Loading…</p>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+            <div className="p-3 border border-hos-border rounded bg-hos-bg-secondary">
+              <p className="text-xs text-hos-text-secondary font-ui">Card Number</p>
+              <p className="text-sm text-hos-text-primary font-mono break-all">{m?.cardNumber || '—'}</p>
+            </div>
             <div className="p-3 border border-hos-border rounded bg-hos-bg-secondary">
               <p className="text-xs text-hos-text-secondary font-ui">Balance</p>
               <p className="text-lg text-hos-text-primary font-ui">{m?.currentBalance ?? 0} pts</p>
