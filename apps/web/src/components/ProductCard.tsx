@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/useToast';
 import { useState } from 'react';
 import { trackAddToCart } from '@/lib/analytics';
 import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
+import { withShopPreview } from '@/lib/shopPreviewClient';
 
 interface ProductCardProps {
   id: string;
@@ -42,7 +43,8 @@ export function ProductCard({
   const imageUrl = imageUrlProp || images?.[0]?.url;
   const hasDiscount = rrp && rrp > price;
   const displayBadge = badge || (hasDiscount ? 'sale' : null);
-  const productHref = demo ? undefined : `/products/${id}`;
+  // Soft-launch: keep ?preview= on PDP links when cookies are blocked.
+  const productHref = demo ? undefined : withShopPreview(`/products/${id}`);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();

@@ -857,7 +857,9 @@ export default function ProductDetailClient() {
                 {relatedProducts.map((related) => {
                   const img = related.images?.[0];
                   const imgUrl = typeof img === 'string' ? img : img?.url || '';
-                  const href = related.slug ? `/products/${related.slug}` : `/products/${related.id}`;
+                  const href = withShopPreview(
+                    related.slug ? `/products/${related.slug}` : `/products/${related.id}`,
+                  );
                   return (
                     <Link
                       key={related.id}

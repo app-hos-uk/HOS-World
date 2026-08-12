@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { REFERENCE_ASSETS } from '@/lib/referenceAssets';
+import { withShopPreview } from '@/lib/shopPreviewClient';
 
 type FranchiseCard = {
   name: string;
@@ -84,7 +85,7 @@ export default function FeaturedFranchises() {
         {franchises.map((franchise) => (
           <Link
             key={franchise.slug}
-            href={`/fandoms/${franchise.slug}`}
+            href={withShopPreview(`/fandoms/${franchise.slug}`)}
             className="group relative overflow-hidden rounded-[10px] border border-hos-border h-64 flex items-end hover:border-hos-border-accent transition-all duration-200"
           >
             <Image

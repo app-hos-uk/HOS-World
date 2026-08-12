@@ -166,12 +166,22 @@ export async function middleware(request: NextRequest) {
 
   // Valid ?preview= on a non-shop URL → send testers to /shop (keep query).
   // On shop/gated URLs, fall through so auth + gate still run; cookie is attached below.
+  // Never redirect API/assets — /api/shop-status?preview=… must return JSON, not HTML.
+  const isPreviewRedirectExempt =
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon') ||
+    pathname.startsWith('/ref') ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register') ||
+    pathname.includes('.');
   if (
     previewSecret &&
     previewParam &&
     previewParam === previewSecret &&
     !isShopGatedPath(pathname) &&
-    pathname !== '/shop'
+    pathname !== '/shop' &&
+    !isPreviewRedirectExempt
   ) {
     const shopUrl = request.nextUrl.clone();
     shopUrl.pathname = '/shop';
