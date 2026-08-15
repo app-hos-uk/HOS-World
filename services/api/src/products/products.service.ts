@@ -1093,6 +1093,12 @@ export class ProductsService {
       fandom: product.fandom || undefined,
       category: product.category || undefined, // Backward compatibility
       tags: product.tags || [], // Backward compatibility
+      // Physical attributes power the storefront specifications table.
+      brand: product.brand || undefined,
+      weight: product.weight != null ? Number(product.weight) : undefined,
+      length: product.length != null ? Number(product.length) : undefined,
+      width: product.width != null ? Number(product.width) : undefined,
+      height: product.height != null ? Number(product.height) : undefined,
       status: product.status as ProductStatus,
       averageRating: product.averageRating ?? 0,
       reviewCount: product.reviewCount ?? 0,

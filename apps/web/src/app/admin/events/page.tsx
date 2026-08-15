@@ -154,7 +154,14 @@ export default function AdminEventsPage() {
                               Cancel
                             </button>
                           ) : (
-                            <span aria-hidden="true" className="inline-block h-8 w-[5rem]" />
+                            <button
+                              type="button"
+                              disabled
+                              title={`A ${e.status.toLowerCase()} event cannot be published or cancelled`}
+                              className="inline-flex h-8 w-[5rem] items-center justify-center rounded-md border border-hos-border text-amber-400 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+                            >
+                              Cancel
+                            </button>
                           )}
                           <button
                             type="button"

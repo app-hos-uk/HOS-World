@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,6 +40,9 @@ function pathnameMatchesAny(pathname: string | null, paths: string[]): boolean {
 }
 
 const SIDEBAR_SCROLL_KEY = 'app-shell-sidebar-scroll';
+
+// useLayoutEffect warns during SSR; the scroll restore is browser-only anyway.
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 export function AppShellLayout({
   children,
@@ -105,8 +108,9 @@ export function AppShellLayout({
     };
   }, []);
 
-  // Restore sidebar scroll after navigation once menu expand has settled
-  useEffect(() => {
+  // Restore sidebar scroll after navigation once menu expand has settled.
+  // Runs before paint so the nav never shows at the top and then jumps.
+  useIsomorphicLayoutEffect(() => {
     if (!persistSidebarScroll) return;
 
     let cancelled = false;
@@ -148,6 +152,8 @@ export function AppShellLayout({
       observer?.disconnect();
       restoringScrollRef.current = false;
     }, 600);
+
+    restoreScroll();
 
     const raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
@@ -258,7 +264,18 @@ export function AppShellLayout({
         activeMenus.add(item.title);
       }
     });
-    setExpandedMenus(activeMenus);
+    // Callers often rebuild menuItems inline, so this effect can run on every paint.
+    // Only commit when the expansion actually differs, otherwise the new Set identity
+    // schedules another render and the sidebar flickers in a loop.
+    setExpandedMenus((prev) => {
+      if (
+        prev.size === activeMenus.size &&
+        Array.from(activeMenus).every((title) => prev.has(title))
+      ) {
+        return prev;
+      }
+      return activeMenus;
+    });
   }, [pathname, menuItems, isParentActive]);
 
   const toggleMenu = (menuTitle: string) => {

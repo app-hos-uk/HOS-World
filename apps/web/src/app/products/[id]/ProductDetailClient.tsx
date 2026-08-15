@@ -630,12 +630,12 @@ export default function ProductDetailClient() {
                   : '—';
             return { key: String(attr.id || attr.attributeId || label), label, value };
           });
-          const dimensions =
-            product.length != null || product.width != null || product.height != null
-              ? [product.length, product.width, product.height]
-                  .filter((v) => v != null && v !== '')
-                  .join(' × ')
-              : null;
+          // Weight is captured in kg and dimensions in cm across the seller/admin
+          // product forms, so label them here rather than showing bare numbers.
+          const dimensionParts = [product.length, product.width, product.height].filter(
+            (v) => v != null && v !== '',
+          );
+          const dimensions = dimensionParts.length > 0 ? `${dimensionParts.join(' × ')} cm` : null;
           const baseRows = [
             { key: 'brand', label: 'Brand', value: product.brand },
             { key: 'sku', label: 'SKU', value: product.sku },
@@ -644,12 +644,12 @@ export default function ProductDetailClient() {
               label: 'Category',
               value: product.category
                 ? displayCategory(product.category)
-                : product.categoryRelation?.name,
+                : product.categoryData?.name,
             },
             {
               key: 'weight',
               label: 'Weight',
-              value: product.weight != null ? String(product.weight) : null,
+              value: product.weight != null ? `${product.weight} kg` : null,
             },
             { key: 'dimensions', label: 'Dimensions', value: dimensions },
           ].filter((row) => row.value != null && String(row.value).trim() !== '');

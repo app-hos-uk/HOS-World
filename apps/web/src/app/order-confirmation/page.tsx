@@ -32,6 +32,8 @@ interface OrderSummary {
   shippingCost?: number;
   taxAmount?: number;
   discountAmount?: number;
+  loyaltyDiscountAmount?: number;
+  loyaltyPointsRedeemed?: number;
   currency?: string;
   items: OrderItemSummary[];
   shippingAddress?: {
@@ -133,6 +135,14 @@ function OrderConfirmationContent() {
             discountAmount:
               data.discountAmount != null || data.discount != null
                 ? Number(data.discountAmount ?? data.discount)
+                : undefined,
+            loyaltyDiscountAmount:
+              data.loyaltyDiscountAmount != null
+                ? Number(data.loyaltyDiscountAmount)
+                : undefined,
+            loyaltyPointsRedeemed:
+              data.loyaltyPointsRedeemed != null
+                ? Number(data.loyaltyPointsRedeemed)
                 : undefined,
             currency: data.currency || DEFAULT_CURRENCY,
             items: (data.items || data.orderItems || []).map((item: any) => {
@@ -323,12 +333,37 @@ function OrderConfirmationContent() {
                       <span className="text-hos-text-secondary">{formatPrice(order.taxAmount, order.currency || DEFAULT_CURRENCY)}</span>
                     </div>
                   )}
-                  {order.discountAmount != null && order.discountAmount > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-hos-text-secondary">Discount</span>
-                      <span className="text-hos-text-secondary">−{formatPrice(order.discountAmount, order.currency || DEFAULT_CURRENCY)}</span>
-                    </div>
-                  )}
+                  {(() => {
+                    // discountAmount already includes any loyalty credit, so split it
+                    // rather than adding a second deduction row.
+                    const loyalty = order.loyaltyDiscountAmount ?? 0;
+                    const promo = Math.max((order.discountAmount ?? 0) - loyalty, 0);
+                    return (
+                      <>
+                        {promo > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-hos-text-secondary">Discount</span>
+                            <span className="text-hos-text-secondary">
+                              −{formatPrice(promo, order.currency || DEFAULT_CURRENCY)}
+                            </span>
+                          </div>
+                        )}
+                        {loyalty > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-hos-text-secondary">
+                              Loyalty points
+                              {order.loyaltyPointsRedeemed
+                                ? ` (${order.loyaltyPointsRedeemed} redeemed)`
+                                : ''}
+                            </span>
+                            <span className="text-hos-text-secondary">
+                              −{formatPrice(loyalty, order.currency || DEFAULT_CURRENCY)}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                   {(() => {
                     // Surface any residual amount so the total never looks unexplained.
                     const breakdown =

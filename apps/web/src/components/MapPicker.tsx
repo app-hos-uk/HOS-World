@@ -18,6 +18,7 @@ interface MapPickerProps {
   onLocationChange: (lat: number, lng: number) => void;
   height?: string;
   className?: string;
+  addressQuery?: string;
 }
 
 export function MapPicker(props: MapPickerProps) {

@@ -87,6 +87,11 @@ export interface PaymentResult {
   status: PaymentStatus;
   metadata?: Record<string, any>;
   error?: string;
+  /** Masked instrument details surfaced to the customer on order confirmation. */
+  card?: {
+    brand?: string;
+    last4?: string;
+  };
 }
 
 export interface RefundPaymentParams {

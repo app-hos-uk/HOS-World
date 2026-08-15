@@ -276,9 +276,12 @@ export default function OrdersPage() {
     );
   };
 
-  /** An invoice only exists once money has actually been taken. */
+  /**
+   * An invoice exists once money has been taken — including after a refund, where the
+   * customer still needs the original document for their records.
+   */
   const hasInvoice = (order: Order) =>
-    (order.paymentStatus || '').toUpperCase() === 'PAID' &&
+    ['PAID', 'REFUNDED'].includes((order.paymentStatus || '').toUpperCase()) &&
     !['pending', 'cancelled'].includes(normalizeStatus(order.status));
 
   const canTrackOrder = (order: Order) => {

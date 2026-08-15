@@ -154,6 +154,14 @@ export interface Product {
   fandom?: string;
   category?: string;
   tags?: string[];
+  /** Physical attributes shown in the storefront specifications table. */
+  brand?: string;
+  /** Kilograms. */
+  weight?: number;
+  /** Centimetres. */
+  length?: number;
+  width?: number;
+  height?: number;
   status: 'draft' | 'active' | 'inactive' | 'out_of_stock';
   averageRating?: number;
   reviewCount?: number;

@@ -17,7 +17,13 @@ const ROLE_DASHBOARD: Record<string, string> = {
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
   const { user, effectiveRole } = useAuth();
   const role = String(effectiveRole ?? user?.role ?? '');
-  const menuItems = getAdminMenuItems(String(user?.role ?? ''), role);
+  const accountRole = String(user?.role ?? '');
+  // Must stay referentially stable: AppShellLayout keys its auto-expand effect off
+  // this array, and a fresh array each render re-triggers it on every paint.
+  const menuItems = useMemo(
+    () => getAdminMenuItems(accountRole, role),
+    [accountRole, role],
+  );
 
   const dashboardHref = useMemo(
     () => ROLE_DASHBOARD[role.toUpperCase()] ?? '/admin/dashboard',

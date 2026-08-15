@@ -66,6 +66,99 @@ export class OrdersService {
     REFUNDED: [],
   };
 
+  /**
+   * Fulfilment progression used to roll per-seller sub-order statuses up to the
+   * customer-facing parent order. Terminal states are handled separately.
+   */
+  private readonly FULFILLMENT_PROGRESSION = [
+    'PENDING',
+    'ACCEPTED',
+    'CONFIRMED',
+    'PROCESSING',
+    'FULFILLED',
+    'SHIPPED',
+    'DELIVERED',
+  ];
+
+  /**
+   * A multi-vendor order is only as far along as its least-advanced sub-order, so the
+   * customer sees accurate progress (and a Track action) once every seller has shipped.
+   */
+  private async rollUpParentFulfillmentStatus(
+    parentOrderId: string,
+    userId: string,
+  ): Promise<void> {
+    try {
+      const [parent, children] = await Promise.all([
+        this.prisma.order.findUnique({
+          where: { id: parentOrderId },
+          select: { id: true, status: true },
+        }),
+        this.prisma.order.findMany({
+          where: { parentOrderId },
+          select: { status: true, trackingCode: true, carrier: true, trackingUrl: true },
+        }),
+      ]);
+      if (!parent || children.length === 0) return;
+
+      // Ignore sub-orders that ended early; they must not hold the parent at PENDING.
+      const active = children.filter(
+        (child) => !['CANCELLED', 'REJECTED', 'REFUNDED'].includes(child.status),
+      );
+      if (active.length === 0) return;
+
+      const rankOf = (status: string) => this.FULFILLMENT_PROGRESSION.indexOf(status);
+      const ranks = active.map((child) => rankOf(child.status));
+      if (ranks.some((rank) => rank === -1)) return;
+
+      const targetRank = Math.min(...ranks);
+      const rolledUp = this.FULFILLMENT_PROGRESSION[targetRank];
+      const parentRank = rankOf(parent.status);
+      // Only ever move the parent forward; never rewind a customer-facing status.
+      if (parentRank === -1 || targetRank <= parentRank) return;
+
+      // Sub-orders can jump several stages between polls (e.g. CONFIRMED → SHIPPED),
+      // and each hop must be individually legal, so walk the progression rather than
+      // attempting one transition the state machine would reject.
+      let current: string = parent.status;
+      for (let rank = parentRank + 1; rank <= targetRank; rank++) {
+        const next = this.FULFILLMENT_PROGRESSION[rank];
+        if (!(this.ALLOWED_TRANSITIONS[current] || []).includes(next)) return;
+        current = next;
+      }
+
+      // Surface a tracking code on the parent so the customer keeps a Track action.
+      const shipped = active.find((child) => child.trackingCode);
+
+      await this.prisma.order.update({
+        where: { id: parent.id },
+        data: {
+          status: rolledUp as PrismaOrderStatus,
+          ...(rolledUp === 'DELIVERED' ? { deliveredAt: new Date() } : {}),
+          ...(shipped
+            ? {
+                trackingCode: shipped.trackingCode,
+                carrier: shipped.carrier,
+                trackingUrl: shipped.trackingUrl,
+              }
+            : {}),
+        },
+      });
+      await this.prisma.orderNote.create({
+        data: {
+          orderId: parent.id,
+          content: `Status rolled up from seller sub-orders: ${parent.status} → ${rolledUp}`,
+          internal: true,
+          createdBy: userId,
+        },
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Could not roll up status to parent order ${parentOrderId}: ${(err as Error).message}`,
+      );
+    }
+  }
+
   private validateStatusTransition(currentStatus: string, newStatus: string): void {
     const allowed = this.ALLOWED_TRANSITIONS[currentStatus];
     if (!allowed || !allowed.includes(newStatus)) {
@@ -1903,6 +1996,12 @@ export class OrdersService {
           }
         }
       }
+
+      // A seller advancing their own sub-order must move the customer-facing parent
+      // too, otherwise the customer's order appears stuck and untrackable.
+      if (order.parentOrderId) {
+        await this.rollUpParentFulfillmentStatus(order.parentOrderId, userId);
+      }
     }
 
     return this.mapToOrderType(updated, false, role);
@@ -2518,11 +2617,12 @@ export class OrdersService {
       throw new ForbiddenException('You do not have permission to reorder this order');
     }
 
-    // Only allow reordering of completed/delivered orders
-    const reorderableStatuses = ['DELIVERED'];
+    // Orders that reached the customer can be reordered — including ones later
+    // returned or refunded, where buying again is the customer's natural next step.
+    const reorderableStatuses = ['DELIVERED', 'REFUNDED'];
     if (!reorderableStatuses.includes(order.status)) {
       throw new BadRequestException(
-        `Only delivered orders can be reordered. Current status: ${order.status}`,
+        `Only delivered or refunded orders can be reordered. Current status: ${order.status}`,
       );
     }
 
@@ -2684,7 +2784,19 @@ export class OrdersService {
       tax: Number(order.tax),
       total: Number(order.total),
       shippingAmount: order.shippingAmount ? Number(order.shippingAmount) : 0,
+      // Actual charged shipping once the parcel is booked; falls back to the quote.
+      shippingCost:
+        order.shippingCost != null
+          ? Number(order.shippingCost)
+          : order.shippingAmount
+            ? Number(order.shippingAmount)
+            : 0,
       discountAmount: order.discountAmount ? Number(order.discountAmount) : 0,
+      // Without this the loyalty credit shows up as an unexplained gap between the
+      // line items and the order total.
+      loyaltyDiscountAmount:
+        order.loyaltyDiscountAmount != null ? Number(order.loyaltyDiscountAmount) : 0,
+      loyaltyPointsRedeemed: order.loyaltyPointsRedeemed ?? 0,
       platformFeeAmount:
         role === 'ADMIN' || role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER'
           ? order.platformFeeAmount

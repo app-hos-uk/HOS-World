@@ -220,17 +220,26 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
 
     return this.circuitBreaker.execute(async () => {
       try {
-        const paymentIntent = await this.stripe!.paymentIntents.retrieve(params.paymentIntentId);
+        // Expanding the charge gives us the masked card details the order
+        // confirmation page shows ("Visa •••• 4242").
+        const paymentIntent = await this.stripe!.paymentIntents.retrieve(params.paymentIntentId, {
+          expand: ['latest_charge.payment_method_details'],
+        });
 
         if (paymentIntent.status === 'succeeded') {
+          const charge = paymentIntent.latest_charge as any;
+          const cardDetails = charge?.payment_method_details?.card;
           return {
             success: true,
             paymentId: paymentIntent.id,
-            transactionId: paymentIntent.latest_charge as string,
+            transactionId: typeof charge === 'string' ? charge : charge?.id,
             amount: fromMinorUnits(paymentIntent.amount, paymentIntent.currency),
             currency: paymentIntent.currency,
             status: PaymentStatus.SUCCEEDED,
             metadata: paymentIntent.metadata,
+            card: cardDetails
+              ? { brand: cardDetails.brand, last4: cardDetails.last4 }
+              : undefined,
           };
         }
 

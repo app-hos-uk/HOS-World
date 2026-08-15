@@ -764,8 +764,8 @@ export default function OrderDetailPage() {
                       Track Order
                     </Link>
                   )}
-                  {(order.paymentStatus?.toUpperCase() === 'PAID' ||
-                    ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED'].includes(order.status?.toUpperCase())
+                  {(['PAID', 'REFUNDED'].includes(order.paymentStatus?.toUpperCase() || '') ||
+                    ['CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'RETURNED', 'REFUNDED'].includes(order.status?.toUpperCase())
                   ) && (
                     <button
                       type="button"
@@ -798,7 +798,9 @@ export default function OrderDetailPage() {
                       Request Return
                     </Link>
                   )}
-                  {['DELIVERED', 'COMPLETED'].includes(
+                  {/* Returned/refunded orders keep Reorder — the customer may still
+                      want the item, and it is their only path back to purchase. */}
+                  {['DELIVERED', 'COMPLETED', 'RETURNED', 'REFUNDED'].includes(
                     order.status.toUpperCase(),
                   ) && (
                     <>

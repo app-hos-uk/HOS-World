@@ -46,6 +46,7 @@ export default function WholesalerOrdersPage() {
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [sellerId, setSellerId] = useState<string | null>(null);
+  const [sellerLoading, setSellerLoading] = useState(true);
 
   const menuItems = getSellerMenuItems(true);
 
@@ -58,19 +59,26 @@ export default function WholesalerOrdersPage() {
     apiClient
       .getSellerProfile()
       .then((response) => setSellerId(response?.data?.id || null))
-      .catch(() => setSellerId(null));
+      .catch(() => setSellerId(null))
+      .finally(() => setSellerLoading(false));
   }, []);
 
   /**
    * Marketplace checkouts are split into per-seller sub-orders. The wholesaler must
-   * fulfil their own sub-order, not the shared parent, otherwise no action applies.
+   * fulfil their own sub-order, not the shared parent — updating the parent would move
+   * every other vendor's items too. Returns null when their sub-order can't be
+   * identified, so the caller can refuse rather than act on the wrong record.
    */
   const resolveManageableOrder = (order: any) => {
-    if (!order) return order;
-    const child = (order.childOrders || []).find(
-      (candidate: any) => sellerId && candidate.sellerId === sellerId,
-    );
-    return child ? { ...order, ...child, parentOrderNumber: order.orderNumber } : order;
+    if (!order) return null;
+    const childOrders = order.childOrders || [];
+    if (childOrders.length === 0) {
+      return order;
+    }
+    if (!sellerId) return null;
+    const child = childOrders.find((candidate: any) => candidate.sellerId === sellerId);
+    if (!child) return null;
+    return { ...order, ...child, parentOrderNumber: order.orderNumber };
   };
 
   const fetchOrders = async () => {
@@ -91,6 +99,14 @@ export default function WholesalerOrdersPage() {
 
   const openManageModal = (rawOrder: any) => {
     const order = resolveManageableOrder(rawOrder);
+    if (!order) {
+      toast.error(
+        sellerLoading
+          ? 'Still loading your store details — try again in a moment.'
+          : 'Could not find your part of this order. Refresh and try again.',
+      );
+      return;
+    }
     setSelectedOrder(order);
     setTrackingNumber(order.trackingCode || order.trackingNumber || '');
     setCarrier(order.carrier || '');
@@ -273,7 +289,8 @@ export default function WholesalerOrdersPage() {
                           <button
                             type="button"
                             onClick={() => openManageModal(order)}
-                            className="text-hos-gold hover:text-hos-gold-hover font-medium"
+                            disabled={sellerLoading}
+                            className="text-hos-gold hover:text-hos-gold-hover font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Manage
                           </button>
@@ -349,7 +366,8 @@ export default function WholesalerOrdersPage() {
                           <button
                             type="button"
                             onClick={() => openManageModal(order)}
-                            className="text-hos-gold hover:text-hos-gold-hover font-medium"
+                            disabled={sellerLoading}
+                            className="text-hos-gold hover:text-hos-gold-hover font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Manage
                           </button>

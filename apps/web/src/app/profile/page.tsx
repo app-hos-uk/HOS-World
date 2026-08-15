@@ -1019,7 +1019,8 @@ function ProfilePageContent() {
                           Location on Map (Optional)
                         </label>
                         <p className="text-xs text-hos-text-muted mb-2">
-                          Click on the map to set your exact location. This helps with accurate delivery routing.
+                          Search, use your current location, click the map, or drag the pin to set your
+                          exact location. This helps with accurate delivery routing.
                         </p>
                         <MapPicker
                           latitude={addressForm.latitude}
@@ -1027,7 +1028,16 @@ function ProfilePageContent() {
                           onLocationChange={(lat, lng) => {
                             setAddressForm({ ...addressForm, latitude: lat, longitude: lng });
                           }}
-                          height="350px"
+                          addressQuery={[
+                            addressForm.street,
+                            addressForm.city,
+                            addressForm.state,
+                            addressForm.postalCode,
+                            addressForm.country,
+                          ]
+                            .filter((part) => part && String(part).trim())
+                            .join(', ')}
+                          height="420px"
                           className="w-full"
                         />
                       </div>

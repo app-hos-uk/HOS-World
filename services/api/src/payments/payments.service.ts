@@ -306,7 +306,7 @@ export class PaymentsService {
       }
 
       // Process payment (webhook may have already done this, but idempotent)
-      await this.markPaymentAsPaid(order, result.paymentId, result.amount);
+      await this.markPaymentAsPaid(order, result.paymentId, result.amount, result.card);
     } catch (error) {
       if (error instanceof BadRequestException) {
         throw error;
@@ -323,6 +323,7 @@ export class PaymentsService {
     order: any,
     stripePaymentId: string,
     amount: number,
+    card?: { brand?: string; last4?: string },
   ): Promise<void> {
     // Use the actual card amount (passed in), not order.total which includes gift-card coverage
     const cardAmount = amount > 0 ? amount : Number(order.total);
@@ -369,6 +370,9 @@ export class PaymentsService {
           metadata: {
             originalCurrency: order.currency,
             originalAmount: Number(order.total).toFixed(2),
+            ...(card?.brand || card?.last4
+              ? { card: { brand: card.brand, last4: card.last4 } }
+              : {}),
           } as any,
         },
       });
@@ -686,7 +690,18 @@ export class PaymentsService {
         const paidCents = Number(
           event.data?.object?.amount_received ?? event.data?.object?.amount ?? 0,
         );
-        await this.handlePaymentSuccess(order, result.paymentId || '', paidCents);
+        // Depending on the Stripe API version the charge arrives either inline under
+        // `charges.data` or expanded on `latest_charge`; tolerate both.
+        const intentObject: any = event.data?.object;
+        const webhookCard =
+          intentObject?.charges?.data?.[0]?.payment_method_details?.card ??
+          intentObject?.latest_charge?.payment_method_details?.card;
+        await this.handlePaymentSuccess(
+          order,
+          result.paymentId || '',
+          paidCents,
+          webhookCard ? { brand: webhookCard.brand, last4: webhookCard.last4 } : undefined,
+        );
       } else if (isFailure) {
         await this.handlePaymentFailure(order, result.paymentId || '');
       }
@@ -701,6 +716,7 @@ export class PaymentsService {
     order: any,
     paymentId: string,
     paidCents: number,
+    card?: { brand?: string; last4?: string },
   ): Promise<void> {
     const expectedAmount = await this.computePayableAmount(order.id, Number(order.total));
     const expectedAmountBase =
@@ -720,7 +736,7 @@ export class PaymentsService {
       throw new BadRequestException('Webhook payment amount does not match order total');
     }
 
-    await this.markPaymentAsPaid(order, paymentId, expectedAmountBase);
+    await this.markPaymentAsPaid(order, paymentId, expectedAmountBase, card);
     this.logger.log(`Payment succeeded for order ${order.id} via webhook`);
   }
 

@@ -1062,9 +1062,14 @@ export default function CustomerDashboardPage() {
                           </PieChart>
                         </ResponsiveContainer>
                       </div>
-                      {/* A CSS grid legend keeps every entry on an even baseline instead of
-                          the ragged rows Recharts produces when labels differ in length. */}
-                      <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-hos-border pt-4">
+                      {/* auto-fit columns keep every row completely filled, so the legend
+                          sits on one even row when it fits and wraps evenly when it does not. */}
+                      <ul
+                        className="mt-5 grid gap-x-4 gap-y-2 border-t border-hos-border pt-4"
+                        style={{
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(7.5rem, 1fr))',
+                        }}
+                      >
                         {spendingAnalytics.categoryBreakdown.map((entry) => (
                           <li key={entry.name} className="flex items-center gap-2 min-w-0">
                             <span

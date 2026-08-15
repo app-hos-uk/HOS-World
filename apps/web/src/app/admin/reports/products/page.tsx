@@ -215,10 +215,20 @@ export default function AdminProductAnalyticsPage() {
                   <BarChart
                     data={chartData}
                     layout="vertical"
-                    margin={{ top: 8, right: 24, bottom: 8, left: 8 }}
+                    margin={{ top: 8, right: 24, bottom: 28, left: 8 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" allowDecimals={false} />
+                    <XAxis
+                      type="number"
+                      allowDecimals={false}
+                      label={{
+                        value: 'Orders',
+                        position: 'insideBottom',
+                        offset: -16,
+                        fontSize: 12,
+                        fill: 'currentColor',
+                      }}
+                    />
                     <YAxis
                       dataKey="name"
                       type="category"
@@ -227,7 +237,6 @@ export default function AdminProductAnalyticsPage() {
                       tick={{ fontSize: 12 }}
                     />
                     <Tooltip />
-                    <Legend verticalAlign="top" height={28} />
                     <Bar dataKey="orders" fill="#10b981" name="Orders" maxBarSize={28} />
                   </BarChart>
                 </ResponsiveContainer>
