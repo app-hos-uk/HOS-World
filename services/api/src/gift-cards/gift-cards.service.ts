@@ -208,10 +208,12 @@ export class GiftCardsService {
       throw new BadRequestException('Expiration date must be in the future');
     }
 
-    // When a recipient email is provided, look up the user so the card appears
-    // in their "My Gift Cards" list.  If no user is found the card stays
-    // unassigned and gets claimed on first redemption.
-    let ownerId: string | null = userId;
+    // userId identifies the holder the card is assigned to, never the admin who
+    // issued it — stamping the issuer would make every card without a named
+    // recipient redeemable only by that admin. When a recipient email is given,
+    // resolve it so the card appears in their "My Gift Cards" list; otherwise
+    // the card is a bearer instrument and gets claimed on first redemption.
+    let ownerId: string | null = null;
     if (dto.issuedToEmail) {
       const recipient = await this.prisma.user.findUnique({
         where: { email: dto.issuedToEmail.trim().toLowerCase() },
@@ -236,14 +238,15 @@ export class GiftCardsService {
       },
     });
 
-    // Create initial transaction record
+    // Create initial transaction record. The issuer is recorded here rather
+    // than on the card, whose userId now means "assigned holder".
     await (this.prisma as any).giftCardTransaction.create({
       data: {
         giftCardId: giftCard.id,
         type: 'PURCHASE',
         amount: dto.amount,
         balanceAfter: dto.amount,
-        notes: 'Gift card purchased',
+        notes: `Gift card purchased (issued by ${userId})`,
       },
     });
 

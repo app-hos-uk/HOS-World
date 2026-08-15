@@ -9,6 +9,7 @@ function makeMocks() {
       findUnique: jest.fn(),
       findMany: jest.fn().mockResolvedValue([]),
       count: jest.fn().mockResolvedValue(0),
+      create: jest.fn(),
       update: jest.fn(),
       updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
@@ -87,6 +88,56 @@ describe('GiftCardsService', () => {
         where: { id: 'gc1', status: 'ACTIVE' },
         data: { status: 'EXPIRED' },
       });
+    });
+  });
+
+  describe('ownership on issue', () => {
+    it('leaves a card with no recipient unassigned so it stays a bearer instrument', async () => {
+      const { service, prisma } = makeMocks();
+      prisma.giftCard.findUnique.mockResolvedValue(null);
+      prisma.giftCard.create.mockResolvedValue({ id: 'gc1' });
+
+      await service.create('admin-1', { type: 'digital', amount: 50 } as any);
+
+      expect(prisma.giftCard.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ userId: null }) }),
+      );
+    });
+
+    it('assigns the card to the recipient account when one matches the email', async () => {
+      const { service, prisma } = makeMocks();
+      prisma.giftCard.findUnique.mockResolvedValue(null);
+      prisma.giftCard.create.mockResolvedValue({ id: 'gc1' });
+      prisma.user.findUnique.mockResolvedValue({ id: 'user-a' });
+
+      await service.create('admin-1', {
+        type: 'digital',
+        amount: 50,
+        issuedToEmail: 'a@example.com',
+      } as any);
+
+      expect(prisma.giftCard.create).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ userId: 'user-a' }) }),
+      );
+    });
+
+    it('an admin-issued bearer card is redeemable by the customer holding the code', async () => {
+      const { service, prisma } = makeMocks();
+      prisma.giftCard.findUnique.mockResolvedValue({
+        id: 'gc1',
+        userId: null,
+        issuedToEmail: null,
+        status: 'ACTIVE',
+        balance: 50,
+        expiresAt: null,
+      });
+      prisma.giftCard.update.mockResolvedValue({ id: 'gc1', balance: 40 });
+
+      await service.redeem('customer-1', { code: VALID_CODE, amount: 10 });
+
+      expect(prisma.giftCard.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ userId: 'customer-1' }) }),
+      );
     });
   });
 
