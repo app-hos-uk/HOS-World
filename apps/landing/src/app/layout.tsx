@@ -1,33 +1,11 @@
 import type { Metadata, Viewport } from 'next';
-import { Cinzel, Cinzel_Decorative, Cormorant_Garamond } from 'next/font/google';
 import { Suspense } from 'react';
 import { landingPageMetadata } from './lib/landingMetadata';
 import { getSiteUrl } from '../lib/siteUrls';
+import { cinzel, cinzelDecorative, cormorant } from '../lib/fonts';
 import { LandingAnalytics } from './components/LandingAnalytics';
 import { LandingStructuredData } from './components/LandingStructuredData';
 import './landing.css';
-
-const cinzelDecorative = Cinzel_Decorative({
-  subsets: ['latin'],
-  weight: ['400', '700', '900'],
-  variable: '--font-cinzel-decorative',
-  display: 'swap',
-});
-
-const cinzel = Cinzel({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-cinzel',
-  display: 'swap',
-});
-
-const cormorant = Cormorant_Garamond({
-  subsets: ['latin'],
-  weight: ['300', '400', '600'],
-  style: ['normal', 'italic'],
-  variable: '--font-cormorant-landing',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),

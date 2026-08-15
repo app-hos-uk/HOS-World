@@ -1,29 +1,7 @@
 import type { Metadata, Viewport } from 'next';
-import { Cinzel, Cinzel_Decorative, Cormorant_Garamond } from 'next/font/google';
+import { cinzel, cinzelDecorative, cormorantLanding } from '@/lib/fonts';
 import { landingPageMetadata } from './lib/landingMetadata';
 import './landing.css';
-
-const cinzelDecorative = Cinzel_Decorative({
-  subsets: ['latin'],
-  weight: ['400', '700', '900'],
-  variable: '--font-cinzel-decorative',
-  display: 'swap',
-});
-
-const cinzel = Cinzel({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-cinzel',
-  display: 'swap',
-});
-
-const cormorant = Cormorant_Garamond({
-  subsets: ['latin'],
-  weight: ['300', '400', '600'],
-  style: ['normal', 'italic'],
-  variable: '--font-cormorant-landing',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   ...landingPageMetadata({
@@ -51,7 +29,7 @@ export const viewport: Viewport = {
 export default function LandingLayout({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className={`landing-site ${cinzelDecorative.variable} ${cinzel.variable} ${cormorant.variable}`}
+      className={`landing-site ${cinzelDecorative.variable} ${cinzel.variable} ${cormorantLanding.variable}`}
       style={{
         fontFamily: "'Cormorant Garamond', Georgia, serif",
       }}

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Cormorant_Garamond, Inter } from 'next/font/google';
+import { cormorant, inter } from '@/lib/fonts';
 import { ThemeProviderWrapper } from '@/components/ThemeProviderWrapper';
 import { AuthProviderWrapper } from '@/components/AuthProviderWrapper';
 import { QueryProvider } from '@/components/QueryProvider';
@@ -19,23 +19,6 @@ import { getSiteUrl } from '@/lib/siteUrls';
 import { fetchServerSiteSettings } from '@/lib/fetchServerSiteSettings';
 import { brandDisplayName } from '@/lib/siteSettingsDefaults';
 import './globals.css';
-
-// Cormorant Garamond — storefront display headings & marketing body only
-const cormorant = Cormorant_Garamond({
-  subsets: ['latin'],
-  variable: '--font-cormorant',
-  weight: ['400', '500', '600', '700'],
-  style: ['normal', 'italic'],
-  display: 'swap',
-});
-
-// Inter — dashboards, forms, tables, and storefront UI chrome (nav/buttons)
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  weight: ['400', '500', '600', '700'],
-  display: 'swap',
-});
 
 export async function generateMetadata(): Promise<Metadata> {
   const site = await fetchServerSiteSettings();
