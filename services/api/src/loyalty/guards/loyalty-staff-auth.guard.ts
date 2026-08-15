@@ -1,8 +1,27 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { timingSafeEqual } from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { AUTH_COOKIE_NAME } from '../../auth/cookie.utils';
+
+/**
+ * Constant-time API key check. Comparing a secret with `Array.includes` leaks a
+ * byte-by-byte timing signal; lengths are compared first because timingSafeEqual
+ * throws on mismatched buffer lengths. Every candidate is always visited so the
+ * work does not depend on which key matched.
+ */
+function matchesAnyKey(presented: string, validKeys: string[]): boolean {
+  const presentedBuf = Buffer.from(presented);
+  let matched = false;
+  for (const key of validKeys) {
+    const keyBuf = Buffer.from(key);
+    if (keyBuf.length === presentedBuf.length && timingSafeEqual(keyBuf, presentedBuf)) {
+      matched = true;
+    }
+  }
+  return matched;
+}
 
 /**
  * Valid X-API-Key (from API_KEYS) OR JWT for an ADMIN / STORE_STAFF user.
@@ -24,7 +43,7 @@ export class LoyaltyStaffAuthGuard implements CanActivate {
       .split(',')
       .map((k) => k.trim())
       .filter(Boolean);
-    if (apiKey && validKeys.includes(apiKey)) {
+    if (apiKey && matchesAnyKey(apiKey, validKeys)) {
       return true;
     }
 

@@ -28,6 +28,7 @@ import { BrandPartnershipsModule } from '../brand-partnerships/brand-partnership
 import { ProductCampaignsModule } from '../product-campaigns/product-campaigns.module';
 import { FeatureFlagsModule } from '../config/feature-flags.module';
 import { PosModule } from '../pos/pos.module';
+import { ActivityModule } from '../activity/activity.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { PosModule } from '../pos/pos.module';
     QueueModule,
     ConfigModule,
     FeatureFlagsModule,
+    ActivityModule,
     forwardRef(() => PosModule),
     forwardRef(() => JourneyModule),
     forwardRef(() => AmbassadorModule),
