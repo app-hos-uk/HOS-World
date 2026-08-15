@@ -22,7 +22,8 @@ const currencyCodeLiteralRule = {
 module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: 'tsconfig.json',
+    // Not tsconfig.json: that excludes test/, which the lint script still globs.
+    project: 'tsconfig.eslint.json',
     tsconfigRootDir: __dirname,
     sourceType: 'module',
   },
@@ -55,8 +56,9 @@ module.exports = {
   },
   overrides: [
     {
-      // Tests may fixture any currency.
-      files: ['**/*.{spec,test}.ts'],
+      // Tests may fixture any currency. `test/**` also covers *.e2e-spec.ts and helpers,
+      // which the *.spec.ts glob misses.
+      files: ['**/*.{spec,test}.ts', 'test/**/*.ts'],
       rules: {
         'no-restricted-syntax': ['error', intlCurrencyLiteralRule],
       },

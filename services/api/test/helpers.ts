@@ -56,7 +56,7 @@ export function extractToken(res: any): string | undefined {
  */
 export async function seedAdmin(app: INestApplication): Promise<string> {
   const payload = makeRegPayload('customer', { firstName: 'Admin', lastName: 'User' });
-  const res = await request(app.getHttpServer()).post('/api/auth/register').send(payload);
+  await request(app.getHttpServer()).post('/api/auth/register').send(payload);
 
   const prisma = app.get(PrismaService);
   await prisma.user.update({ where: { email: payload.email }, data: { role: 'ADMIN' } });

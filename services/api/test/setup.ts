@@ -14,5 +14,3 @@ process.env.CLOUDINARY_API_KEY = 'test';
 process.env.CLOUDINARY_API_SECRET = 'test';
 process.env.FRONTEND_URL = 'http://localhost:3000';
 process.env.PORT = '3001';
-
-

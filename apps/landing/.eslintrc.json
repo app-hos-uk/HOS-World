@@ -1,0 +1,37 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "@next/next/no-img-element": "warn",
+    "react-hooks/exhaustive-deps": "warn",
+    "react/no-unescaped-entities": "error",
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "CallExpression[callee.object.name='Intl'][callee.property.name='NumberFormat'] Property[key.name='currency'][value.type='Literal']",
+        "message": "Do not pass a literal currency code to Intl.NumberFormat. Use formatMoney / CurrencyContext."
+      },
+      {
+        "selector": "Literal[value=/^(?:AED|AUD|BHD|CAD|CHF|CNY|EUR|GBP|HKD|INR|JPY|KRW|KWD|MXN|NZD|OMR|SAR|SGD|USD|ZAR)$/]",
+        "message": "Do not hardcode currency codes ('USD', 'GBP', …). Import DEFAULT_CURRENCY from regionConfig, use getRegionConfig()/CurrencyContext, or add to an allowlisted currency metadata module."
+      },
+      {
+        "selector": "TemplateLiteral[quasis.length>=1][quasis.0.value.raw=/^[$£€¥]/]",
+        "message": "Do not hardcode currency-symbol prefixes in template literals (e.g. dollar/pound/euro + expression). Use formatMoney / formatPrice."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/app/components/LandingStructuredData.tsx"],
+      "rules": {
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "CallExpression[callee.object.name='Intl'][callee.property.name='NumberFormat'] Property[key.name='currency'][value.type='Literal']",
+            "message": "Do not pass a literal currency code to Intl.NumberFormat. Use formatMoney / CurrencyContext."
+          }
+        ]
+      }
+    }
+  ]
+}

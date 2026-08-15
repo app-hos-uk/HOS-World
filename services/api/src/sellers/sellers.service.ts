@@ -886,8 +886,7 @@ export class SellersService {
     return documents.map((doc) => {
       const reviewer = doc.reviewedBy ? byId.get(doc.reviewedBy) : undefined;
       const name = reviewer
-        ? [reviewer.firstName, reviewer.lastName].filter(Boolean).join(' ').trim() ||
-          reviewer.email
+        ? [reviewer.firstName, reviewer.lastName].filter(Boolean).join(' ').trim() || reviewer.email
         : null;
       return {
         ...doc,

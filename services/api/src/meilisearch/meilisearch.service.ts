@@ -933,14 +933,12 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         const clientStats: any = await this.client!.getStats();
         databaseSize = clientStats?.databaseSize;
         lastUpdate = clientStats?.lastUpdate;
-        indexes = Object.entries(clientStats?.indexes || {}).map(
-          ([uid, value]: [string, any]) => ({
-            uid,
-            numberOfDocuments: value?.numberOfDocuments ?? 0,
-            isIndexing: value?.isIndexing ?? false,
-            size: this.formatBytes(value?.rawDocumentDbSize ?? value?.databaseSize),
-          }),
-        );
+        indexes = Object.entries(clientStats?.indexes || {}).map(([uid, value]: [string, any]) => ({
+          uid,
+          numberOfDocuments: value?.numberOfDocuments ?? 0,
+          isIndexing: value?.isIndexing ?? false,
+          size: this.formatBytes(value?.rawDocumentDbSize ?? value?.databaseSize),
+        }));
         if (lastUpdate === undefined) {
           lastUpdate = (clientStats?.indexes?.[this.indexName] as any)?.lastUpdate;
         }

@@ -11,8 +11,6 @@ function makeCustomerPayload(overrides: Record<string, any> = {}) {
 
 describe('Authentication E2E Tests', () => {
   let app: INestApplication;
-  let accessToken: string;
-  let userId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -118,9 +116,7 @@ describe('Authentication E2E Tests', () => {
   describe('GET /api/users/profile (Protected)', () => {
     it('should access profile with valid token', async () => {
       const regPayload = makeCustomerPayload();
-      await request(app.getHttpServer())
-        .post('/api/auth/register')
-        .send(regPayload);
+      await request(app.getHttpServer()).post('/api/auth/register').send(regPayload);
 
       const loginResponse = await request(app.getHttpServer())
         .post('/api/auth/login')
@@ -140,9 +136,7 @@ describe('Authentication E2E Tests', () => {
     });
 
     it('should reject request without token', () => {
-      return request(app.getHttpServer())
-        .get('/api/users/profile')
-        .expect(401);
+      return request(app.getHttpServer()).get('/api/users/profile').expect(401);
     });
 
     it('should reject request with invalid token', () => {
@@ -153,5 +147,3 @@ describe('Authentication E2E Tests', () => {
     });
   });
 });
-
-

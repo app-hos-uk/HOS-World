@@ -237,9 +237,7 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
             currency: paymentIntent.currency,
             status: PaymentStatus.SUCCEEDED,
             metadata: paymentIntent.metadata,
-            card: cardDetails
-              ? { brand: cardDetails.brand, last4: cardDetails.last4 }
-              : undefined,
+            card: cardDetails ? { brand: cardDetails.brand, last4: cardDetails.last4 } : undefined,
           };
         }
 
