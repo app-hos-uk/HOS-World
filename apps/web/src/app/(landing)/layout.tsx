@@ -31,7 +31,7 @@ export default function LandingLayout({ children }: { children: React.ReactNode 
     <div
       className={`landing-site ${cinzelDecorative.variable} ${cinzel.variable} ${cormorantLanding.variable}`}
       style={{
-        fontFamily: "'Cormorant Garamond', Georgia, serif",
+        fontFamily: 'var(--font-cormorant-landing), Georgia, serif',
       }}
     >
       {children}

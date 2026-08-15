@@ -40,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`landing-site ${cinzelDecorative.variable} ${cinzel.variable} ${cormorant.variable}`}
         style={{
-          fontFamily: "'Cormorant Garamond', Georgia, serif",
+          fontFamily: 'var(--font-cormorant-landing), Georgia, serif',
         }}
       >
         <Suspense fallback={null}>

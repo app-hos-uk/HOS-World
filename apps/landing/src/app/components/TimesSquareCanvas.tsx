@@ -1,7 +1,12 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { cinzelDecorative } from '../../lib/fonts';
 import { LANDING_LOGO, LANDING_WORDMARK } from '../lib/constants';
+
+// Canvas cannot resolve the `--font-cinzel-decorative` custom property, so it needs the
+// family name next/font generated.
+const DISPLAY_FONT = cinzelDecorative.style.fontFamily;
 
 export function TimesSquareCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -128,7 +133,7 @@ export function TimesSquareCanvas() {
           tc.drawImage(im, dx, dy, dw, dh);
         } else {
           tc.fillStyle = bb.col;
-          tc.font = `bold ${bb.bh * tsH * 0.33}px Cinzel Decorative,serif`;
+          tc.font = `bold ${bb.bh * tsH * 0.33}px ${DISPLAY_FONT}`;
           tc.textAlign = 'center';
           tc.textBaseline = 'middle';
           tc.fillText(bb.alt || '', ix + iw / 2, iy + ih / 2);
@@ -168,7 +173,7 @@ export function TimesSquareCanvas() {
         tc.imageSmoothingQuality = 'high';
         tc.drawImage(logo, cx - signW * 0.5, cy - signH * 0.5, signW, signH);
       } else {
-        tc.font = `bold ${Math.max(18, tsH * 0.045)}px Cinzel Decorative,serif`;
+        tc.font = `bold ${Math.max(18, tsH * 0.045)}px ${DISPLAY_FONT}`;
         tc.textAlign = 'center';
         tc.fillStyle = 'rgba(201,168,76,.9)';
         tc.fillText('HOUSE OF SPELLS', cx, cy + 4);

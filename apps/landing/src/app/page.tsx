@@ -119,7 +119,7 @@ export default async function LandingHomePage() {
             />
             <div
               style={{
-                fontFamily: "'Cinzel Decorative',serif",
+                fontFamily: 'var(--font-cinzel-decorative),serif',
                 fontSize: 'clamp(3rem,7vw,6rem)',
                 color: 'rgba(201,168,76,.22)',
               }}

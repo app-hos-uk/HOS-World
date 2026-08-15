@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ShopPreviewSessionSync from '@/components/ShopPreviewSessionSync';
+import { cinzel, cinzelDecorative, cormorantLanding } from '@/lib/fonts';
 import '../(landing)/landing.css';
 
 const LOGO = '/assets/logo-emblem.png';
@@ -37,7 +38,9 @@ export default async function ComingSoonPage({ searchParams }: ComingSoonPagePro
       );
 
   return (
-    <div className="landing-site coming-soon-shell">
+    <div
+      className={`landing-site coming-soon-shell ${cinzelDecorative.variable} ${cinzel.variable} ${cormorantLanding.variable}`}
+    >
       <ShopPreviewSessionSync />
       <div className="grain" aria-hidden="true" />
       <div className="vignette" aria-hidden="true" />
