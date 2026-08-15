@@ -16,16 +16,9 @@ import { SellerReviewCancellationDto } from './dto/seller-review-cancellation.dt
 import { EscalateCancellationDto } from './dto/escalate-cancellation.dto';
 import { CancellationStatus, OrderStatus, Prisma } from '@prisma/client';
 import { canAccessAllOrders } from '../common/constants/order-access.constants';
+import { ACTIVE_CANCELLATION_STATUSES } from '../common/constants/cancellation.constants';
 
 const DEFAULT_AUTO_APPROVAL_WINDOW_MINUTES = 30;
-
-const ACTIVE_CANCELLATION_STATUSES: CancellationStatus[] = [
-  'PENDING_SELLER',
-  'SELLER_APPROVED',
-  'PENDING_FINANCE',
-  'FINANCE_APPROVED',
-  'ESCALATED',
-];
 
 const CUSTOMER_REQUESTABLE_STATUSES: OrderStatus[] = [
   'PENDING',

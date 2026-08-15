@@ -38,17 +38,19 @@ describe('PosAdminController — credential updates', () => {
       decryptJson: jest.fn().mockImplementation((blob: string) => JSON.parse(blob.slice(4))),
     };
 
+    // Only prisma, encryption and platformSeller are exercised here; the sync/queue
+    // dependencies in between are unused by the credential-update path.
+    const unused = () => ({}) as any;
     controller = new PosAdminController(
       prisma,
       encryption,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
+      unused(), // factory
+      unused(), // productSync
+      unused(), // inventorySync
+      unused(), // customerSync
+      unused(), // customerIdentityBackfill
+      unused(), // queue
+      unused(), // discrepancies
       { resolvePlatformRetailSellerId: jest.fn() } as any,
     );
   });

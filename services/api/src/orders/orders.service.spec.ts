@@ -47,6 +47,9 @@ describe('OrdersService - Phase 1 Tests', () => {
     orderNote: {
       create: jest.fn().mockResolvedValue({}),
     },
+    cancellationRequest: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
     vendorProduct: {
       findFirst: jest.fn().mockResolvedValue(null),
       findMany: jest.fn().mockResolvedValue([]),
@@ -1606,6 +1609,65 @@ describe('OrdersService - Phase 1 Tests', () => {
         where: { id: 'c1' },
         data: { status: 'CANCELLED' },
       });
+    });
+  });
+
+  describe('parent status roll-up', () => {
+    const rollUp = (parentStatus: string, children: any[]) => {
+      mockPrismaService.order.findUnique.mockResolvedValue({
+        id: 'parent-1',
+        status: parentStatus,
+      });
+      mockPrismaService.order.findMany.mockResolvedValue(children);
+      return (service as any).rollUpParentFulfillmentStatus('parent-1', 'user-1');
+    };
+
+    const updatedData = () => mockPrismaService.order.update.mock.calls[0][0].data;
+
+    it('ranks a sub-order awaiting cancellation by the status it would revert to', async () => {
+      // Regression: CANCELLATION_REQUESTED is not a fulfilment stage, so ranking it
+      // directly stalled the roll-up and the parent stayed behind while others shipped.
+      mockPrismaService.cancellationRequest.findMany.mockResolvedValue([
+        { orderId: 'child-2', previousStatus: 'PROCESSING' },
+      ]);
+
+      await rollUp('CONFIRMED', [
+        { id: 'child-1', status: 'SHIPPED', trackingCode: 'TRACK-1', carrier: 'DHL' },
+        { id: 'child-2', status: 'CANCELLATION_REQUESTED', trackingCode: null },
+      ]);
+
+      expect(updatedData().status).toBe('PROCESSING');
+    });
+
+    it('holds the parent when a pending cancellation has no open request to rank it by', async () => {
+      mockPrismaService.cancellationRequest.findMany.mockResolvedValue([]);
+
+      await rollUp('CONFIRMED', [
+        { id: 'child-1', status: 'SHIPPED', trackingCode: 'TRACK-1' },
+        { id: 'child-2', status: 'CANCELLATION_REQUESTED', trackingCode: null },
+      ]);
+
+      expect(mockPrismaService.order.update).not.toHaveBeenCalled();
+    });
+
+    it('withholds tracking while any sub-order is still short of shipped', async () => {
+      await rollUp('PROCESSING', [
+        { id: 'child-1', status: 'SHIPPED', trackingCode: 'TRACK-1', carrier: 'DHL' },
+        { id: 'child-2', status: 'FULFILLED', trackingCode: null },
+      ]);
+
+      expect(updatedData().status).toBe('FULFILLED');
+      expect(updatedData().trackingCode).toBeUndefined();
+    });
+
+    it('publishes tracking once every sub-order has shipped', async () => {
+      await rollUp('FULFILLED', [
+        { id: 'child-1', status: 'SHIPPED', trackingCode: 'TRACK-1', carrier: 'DHL' },
+        { id: 'child-2', status: 'SHIPPED', trackingCode: null },
+      ]);
+
+      expect(updatedData().status).toBe('SHIPPED');
+      expect(updatedData().trackingCode).toBe('TRACK-1');
     });
   });
 });

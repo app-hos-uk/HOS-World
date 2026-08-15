@@ -13,6 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import { resolvePlatformFeeRate } from '../common/platform-config';
 import { PrismaService } from '../database/prisma.service';
 import { canAccessAllOrders } from '../common/constants/order-access.constants';
+import { ACTIVE_CANCELLATION_STATUSES } from '../common/constants/cancellation.constants';
 import { TaxService } from '../tax/tax.service';
 import { WarehouseRoutingService } from '../inventory/warehouse-routing.service';
 import { GeocodingService } from '../inventory/geocoding.service';
@@ -81,6 +82,35 @@ export class OrdersService {
   ];
 
   /**
+   * Maps sub-order id → the fulfilment status it is really at, for orders parked in
+   * CANCELLATION_REQUESTED. Orders with any other status are absent from the map.
+   *
+   * Cancellation can only be requested up to PROCESSING, so a resolved status is always
+   * below SHIPPED and correctly holds the parent back from tracking.
+   */
+  private async resolveStatusesBehindCancellations(
+    orders: Array<{ id: string; status: string }>,
+  ): Promise<Map<string, string>> {
+    const resolved = new Map<string, string>();
+    const pending = orders.filter((order) => order.status === 'CANCELLATION_REQUESTED');
+    if (pending.length === 0) return resolved;
+
+    const requests = await this.prisma.cancellationRequest.findMany({
+      where: {
+        orderId: { in: pending.map((order) => order.id) },
+        status: { in: ACTIVE_CANCELLATION_STATUSES },
+      },
+      select: { orderId: true, previousStatus: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    for (const request of requests) {
+      // Newest request wins; older rows for the same order are superseded.
+      if (!resolved.has(request.orderId)) resolved.set(request.orderId, request.previousStatus);
+    }
+    return resolved;
+  }
+
+  /**
    * A multi-vendor order is only as far along as its least-advanced sub-order, so the
    * customer sees accurate progress (and a Track action) once every seller has shipped.
    */
@@ -96,7 +126,13 @@ export class OrdersService {
         }),
         this.prisma.order.findMany({
           where: { parentOrderId },
-          select: { status: true, trackingCode: true, carrier: true, trackingUrl: true },
+          select: {
+            id: true,
+            status: true,
+            trackingCode: true,
+            carrier: true,
+            trackingUrl: true,
+          },
         }),
       ]);
       if (!parent || children.length === 0) return;
@@ -107,8 +143,16 @@ export class OrdersService {
       );
       if (active.length === 0) return;
 
+      // CANCELLATION_REQUESTED masks how far a sub-order actually got, and it is not a
+      // fulfilment stage, so ranking it directly would stall the whole roll-up while one
+      // seller awaits a decision. The open request records the status the order reverts
+      // to if the request is refused, which is precisely its current progress.
+      const fulfillmentStatus = await this.resolveStatusesBehindCancellations(active);
+
       const rankOf = (status: string) => this.FULFILLMENT_PROGRESSION.indexOf(status);
-      const ranks = active.map((child) => rankOf(child.status));
+      const ranks = active.map((child) => rankOf(fulfillmentStatus.get(child.id) ?? child.status));
+      // An unrecognised status means we cannot say how far along the order is; holding
+      // the parent where it is beats advertising progress that may not exist.
       if (ranks.some((rank) => rank === -1)) return;
 
       const targetRank = Math.min(...ranks);
@@ -127,8 +171,13 @@ export class OrdersService {
         current = next;
       }
 
-      // Surface a tracking code on the parent so the customer keeps a Track action.
-      const shipped = active.find((child) => child.trackingCode);
+      // Surface a tracking code on the parent so the customer keeps a Track action — but
+      // only once every sub-order has shipped. Publishing one seller's code while others
+      // are still packing offers a Track action that covers part of the order.
+      const shipped =
+        targetRank >= this.FULFILLMENT_PROGRESSION.indexOf('SHIPPED')
+          ? active.find((child) => child.trackingCode)
+          : undefined;
 
       await this.prisma.order.update({
         where: { id: parent.id },
