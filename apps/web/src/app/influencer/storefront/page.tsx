@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import { GoogleFontLink } from '@/components/GoogleFontLink';
+import { THEME_FONT_FAMILIES } from '@/lib/themeFonts';
 
 interface Storefront {
   id: string;
@@ -182,10 +182,7 @@ export default function InfluencerStorefrontPage() {
     return products.filter((p) => p.name.toLowerCase().includes(q));
   }, [products, productSearch]);
 
-  const fonts = [
-    'Inter', 'Roboto', 'Open Sans', 'Lato', 'Poppins', 
-    'Montserrat', 'Playfair Display', 'Raleway'
-  ];
+  const fonts = THEME_FONT_FAMILIES;
 
   if (loading) {
     return (
@@ -197,7 +194,6 @@ export default function InfluencerStorefrontPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <GoogleFontLink family={storefront.fontFamily} />
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>

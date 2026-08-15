@@ -17,7 +17,7 @@ import type {
   InfluencerStorefront,
   PublicStorefrontProduct,
 } from '@hos-marketplace/api-client';
-import { GoogleFontLink } from '@/components/GoogleFontLink';
+import '@/lib/themeFonts';
 import { useMoney } from '@/hooks/useMoney';
 
 interface ContentBlock {
@@ -228,7 +228,6 @@ export default function InfluencerStorefrontPage() {
 
   return (
     <div className="min-h-screen" style={styles}>
-      <GoogleFontLink family={storefront?.fontFamily} />
       {/* Banner */}
       {storefront?.showBanner !== false && (
         <div 

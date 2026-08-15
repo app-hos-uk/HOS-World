@@ -34,7 +34,8 @@ const nextConfig = {
               "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://connect.facebook.net",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
-              "font-src 'self' https://fonts.gstatic.com",
+              // Fonts are self-hosted via next/font/local; no Google origins needed.
+              "font-src 'self'",
               "connect-src 'self' https://www.google-analytics.com https://*.railway.app https://*.houseofspells.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",

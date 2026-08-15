@@ -78,11 +78,12 @@ const nextConfig = {
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "style-src 'self' 'unsafe-inline'",
               // Leaflet renders OpenStreetMap raster tiles and loads its default marker
               // icons from cdnjs; both must be allowed or the address-book map stays blank.
               "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://images.unsplash.com https://images.pexels.com https://lh3.googleusercontent.com https://hos-world-web.vercel.app https://*.up.railway.app https://cdn.shopify.com https://www.facebook.com https://picsum.photos https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.openstreetmap.de https://cdnjs.cloudflare.com",
-              "font-src 'self' https://fonts.gstatic.com data:",
+              // All fonts are self-hosted (next/font/local + @fontsource); no Google origins.
+              "font-src 'self' data:",
               "connect-src 'self' https://*.houseofspells.com https://*.up.railway.app https://api.stripe.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://graph.facebook.com wss://*.houseofspells.com https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.openstreetmap.de https://nominatim.openstreetmap.org",
               "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
               "object-src 'none'",

@@ -8,7 +8,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { GoogleFontLink } from '@/components/GoogleFontLink';
+import '@/lib/themeFonts';
 import { useDateTime } from '@/hooks/useDateTime';
 import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
@@ -206,7 +206,6 @@ export default function SellerStorefrontClient() {
 
   return (
     <div className="min-h-screen bg-hos-bg-secondary" style={{ ...themeColors, fontFamily: themeFontFamily || undefined } as React.CSSProperties}>
-      {themeFontFamily && <GoogleFontLink family={themeFontFamily} />}
       <Header />
       <main>
         {/* Store Banner */}
