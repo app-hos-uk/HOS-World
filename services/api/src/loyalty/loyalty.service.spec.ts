@@ -578,6 +578,84 @@ describe('LoyaltyService', () => {
       expect(result.userId).toBe('user-1');
     });
 
+    /**
+     * Store staff can call this endpoint directly with the same JWT the search UI uses, so
+     * masking has to hold server-side. Regression guard: it used to return the raw email,
+     * full surname, and the entire membership row (including birthday and fandomProfile).
+     */
+    describe('PII masking', () => {
+      const FULL_MEMBER = {
+        id: 'user-1',
+        email: 'firstname.surname@example.com',
+        firstName: 'Firstname',
+        lastName: 'Surname',
+        phone: '+447700900123',
+        phoneNormalized: '+447700900123',
+        loyaltyMembership: {
+          id: 'mem-1',
+          cardNumber: 'HOSABCD1234',
+          currentBalance: 500,
+          totalPointsEarned: 900,
+          totalPointsRedeemed: 400,
+          preferredCurrency: 'GBP',
+          tierId: 'tier-1',
+          tier: { id: 'tier-1', name: 'Initiate' },
+          // Must not be disclosed:
+          birthday: new Date('1990-05-04'),
+          fandomProfile: { houses: ['Gryffindor'] },
+          totalSpend: 1234.56,
+          compositeScore: 87.5,
+          optInEmail: true,
+          optInSms: false,
+        },
+      };
+
+      beforeEach(() => {
+        mockPrisma.user.findFirst.mockResolvedValue(FULL_MEMBER);
+      });
+
+      it('masks email and reduces surname to an initial', async () => {
+        const result: any = await service.lookupMember({ cardNumber: 'HOSABCD1234' });
+
+        expect(result.maskedEmail).toBe('fi***@example.com');
+        expect(result.lastInitial).toBe('S');
+        expect(result.firstName).toBe('Firstname');
+        expect(result.email).toBeUndefined();
+        expect(result.lastName).toBeUndefined();
+      });
+
+      it('masks the phone to its last four digits', async () => {
+        const result: any = await service.lookupMember({ cardNumber: 'HOSABCD1234' });
+        expect(result.maskedPhone).toBe('***0123');
+      });
+
+      it('still returns the card number so an exact match can be redeemed', async () => {
+        const result: any = await service.lookupMember({ cardNumber: 'HOSABCD1234' });
+        expect(result.membership.cardNumber).toBe('HOSABCD1234');
+        expect(result.membership.maskedCardNumber).toBe('****1234');
+        expect(result.membership.currentBalance).toBe(500);
+        expect(result.membership.tier).toEqual({ id: 'tier-1', name: 'Initiate' });
+      });
+
+      it('does not leak membership fields a till has no need for', async () => {
+        const result: any = await service.lookupMember({ cardNumber: 'HOSABCD1234' });
+
+        for (const field of [
+          'birthday',
+          'fandomProfile',
+          'totalSpend',
+          'compositeScore',
+          'optInEmail',
+          'optInSms',
+        ]) {
+          expect(result.membership[field]).toBeUndefined();
+        }
+        // Nothing anywhere in the payload should carry the raw values either.
+        expect(JSON.stringify(result)).not.toContain('Gryffindor');
+        expect(JSON.stringify(result)).not.toContain('firstname.surname@example.com');
+      });
+    });
+
     it('throws NotFoundException when no match found', async () => {
       mockPrisma.user.findFirst.mockResolvedValue(null);
       mockPrisma.user.findMany.mockResolvedValue([]);

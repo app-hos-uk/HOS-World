@@ -2,37 +2,11 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Prisma } from '@prisma/client';
 import { ActivityService } from '../activity/activity.service';
 import { normalizePhoneToE164 } from '../common/utils/phone-normalize';
+import { lastInitial, maskCardNumber, maskEmail, maskPhoneLast4 } from '../common/utils/pii-mask';
 import { PrismaService } from '../database/prisma.service';
 import { StoreCustomerSearchDto, StoreCustomerSearchResult } from './dto/store-customer-search.dto';
 
 const MAX_RESULTS = 10;
-
-function maskEmail(email: string | null | undefined): string | null {
-  if (!email) return null;
-  const [local, domain] = email.split('@');
-  if (!domain) return '***';
-  const visible = local.slice(0, Math.min(2, local.length));
-  return `${visible}***@${domain}`;
-}
-
-function maskPhoneLast4(phone: string | null | undefined): string | null {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length < 4) return '****';
-  return `***${digits.slice(-4)}`;
-}
-
-function maskCardNumber(card: string | null | undefined): string | null {
-  if (!card) return null;
-  const trimmed = card.trim();
-  if (trimmed.length <= 4) return '****';
-  return `****${trimmed.slice(-4)}`;
-}
-
-function lastInitial(lastName: string | null | undefined): string | null {
-  if (!lastName?.trim()) return null;
-  return lastName.trim().charAt(0).toUpperCase();
-}
 
 @Injectable()
 export class StoreStaffCustomerService {

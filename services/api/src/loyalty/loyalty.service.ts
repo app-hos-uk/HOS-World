@@ -12,6 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma, UserRole, LoyaltyTxType } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { randomBytes } from 'crypto';
+import { lastInitial, maskCardNumber, maskEmail, maskPhoneLast4 } from '../common/utils/pii-mask';
 import { PrismaService } from '../database/prisma.service';
 import { LoyaltyBurnEngine } from './engines/burn.engine';
 import { LoyaltyEarnEngine } from './engines/earn.engine';
@@ -693,7 +694,48 @@ export class LoyaltyService implements OnModuleInit {
    * 1. cardNumber exact (case-insensitive)
    * 2. email case-insensitive
    * 3. phoneNormalized — only when exactly one user matches
+   *
+   * Responses are masked to match POST /store/customers/search, which staff UIs use. Both
+   * routes accept the same staff JWT, so masking only in the search path would leave this
+   * one as a trivial way to read full PII. Every branch here is an exact-identifier hit, so
+   * the caller already holds the identifier they searched by and the card number is returned
+   * (same rule as `exactMatch` in the search service) to allow redemption.
    */
+  private toLookupResult(user: {
+    id: string;
+    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    phone: string | null;
+    phoneNormalized: string | null;
+    loyaltyMembership: NonNullable<Record<string, any>>;
+  }) {
+    const m = user.loyaltyMembership;
+    return {
+      userId: user.id,
+      firstName: user.firstName,
+      lastInitial: lastInitial(user.lastName),
+      maskedEmail: maskEmail(user.email),
+      maskedPhone: maskPhoneLast4(user.phoneNormalized || user.phone),
+      // Deliberately narrower than the membership row: birthday, fandomProfile, totalSpend,
+      // compositeScore and the opt-in flags are not needed at a till and must not be
+      // disclosed to every staff member who can call this endpoint.
+      membership: {
+        id: m.id,
+        cardNumber: m.cardNumber,
+        maskedCardNumber: maskCardNumber(m.cardNumber),
+        currentBalance: m.currentBalance,
+        totalPointsEarned: m.totalPointsEarned,
+        totalPointsRedeemed: m.totalPointsRedeemed,
+        preferredCurrency: m.preferredCurrency,
+        enrolledAt: m.enrolledAt,
+        tierExpiresAt: m.tierExpiresAt,
+        tierId: m.tierId,
+        tier: m.tier ? { id: m.tier.id, name: m.tier.name } : null,
+      },
+    };
+  }
+
   async lookupMember(query: { email?: string; phone?: string; cardNumber?: string }) {
     this.assertEnabled();
     const email = query.email?.trim();
@@ -715,13 +757,7 @@ export class LoyaltyService implements OnModuleInit {
         include: memberInclude,
       });
       if (byCard?.loyaltyMembership) {
-        return {
-          userId: byCard.id,
-          email: byCard.email,
-          firstName: byCard.firstName,
-          lastName: byCard.lastName,
-          membership: byCard.loyaltyMembership,
-        };
+        return this.toLookupResult(byCard);
       }
     }
 
@@ -731,13 +767,7 @@ export class LoyaltyService implements OnModuleInit {
         include: memberInclude,
       });
       if (byEmail?.loyaltyMembership) {
-        return {
-          userId: byEmail.id,
-          email: byEmail.email,
-          firstName: byEmail.firstName,
-          lastName: byEmail.lastName,
-          membership: byEmail.loyaltyMembership,
-        };
+        return this.toLookupResult(byEmail);
       }
     }
 
@@ -753,14 +783,7 @@ export class LoyaltyService implements OnModuleInit {
           take: 5,
         });
         if (matches.length === 1 && matches[0].loyaltyMembership) {
-          const u = matches[0];
-          return {
-            userId: u.id,
-            email: u.email,
-            firstName: u.firstName,
-            lastName: u.lastName,
-            membership: u.loyaltyMembership,
-          };
+          return this.toLookupResult(matches[0]);
         }
         // 0 or >1 → do not match (shared phones must not return the wrong member)
       }
