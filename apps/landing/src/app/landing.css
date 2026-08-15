@@ -1926,7 +1926,7 @@
   max-width:1100px;
   margin:0 auto 20px;
   padding:0 var(--hos-pad-inline);
-  font-family:var(--font-display);
+  font-family:var(--font-cinzel-decorative),serif;
   font-size:clamp(1.25rem,2.5vw,1.6rem);
   color:var(--gold);
   letter-spacing:.04em;

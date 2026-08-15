@@ -16,9 +16,6 @@
   --font-ui: var(--font-inter), system-ui, sans-serif;
   /* Sticky storefront header — utility bar (lg) + main row + nav row */
   --header-height: 3.75rem;
-  /* Legacy aliases */
-  --font-cinzel: var(--font-display);
-  --font-lora: var(--font-body);
   
   /* Primary Purple Palette - Softer for Admin UI */
   --primary-50: #faf5ff;
