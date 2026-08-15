@@ -22,7 +22,19 @@
     "@fontsource/cinzel": "5.3.0",
     "@fontsource/cinzel-decorative": "5.3.0",
     "@fontsource/cormorant-garamond": "5.3.0",
+    "@fontsource/figtree": "^5.3.0",
     "@fontsource/inter": "5.3.0",
+    "@fontsource/lato": "^5.3.0",
+    "@fontsource/merriweather": "^5.3.0",
+    "@fontsource/montserrat": "^5.3.0",
+    "@fontsource/nunito": "^5.3.0",
+    "@fontsource/open-sans": "^5.3.0",
+    "@fontsource/oswald": "^5.3.0",
+    "@fontsource/playfair-display": "^5.3.0",
+    "@fontsource/poppins": "^5.3.0",
+    "@fontsource/raleway": "^5.3.0",
+    "@fontsource/roboto": "^5.3.0",
+    "@fontsource/source-sans-3": "^5.3.0",
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.2.0",
     "@hos-marketplace/api-client": "workspace:*",
@@ -54,7 +66,7 @@
     "react-leaflet": "^4.2.1",
     "recharts": "^2.10.3",
     "sanitize-html": "^2.17.4",
-    "sharp": "^0.33.5",
+    "sharp": "^0.35.0",
     "xlsx": "npm:@stackline/xlsx@^1.0.4"
   },
   "devDependencies": {
@@ -73,7 +85,7 @@
     "eslint-config-next": "^15.5.18",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
-    "postcss": "^8.4.32",
+    "postcss": "^8.5.18",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.3"
   }
