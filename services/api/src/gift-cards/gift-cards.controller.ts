@@ -22,6 +22,7 @@ import { GiftCardsService } from './gift-cards.service';
 import { CreateGiftCardDto } from './dto/create-gift-card.dto';
 import { RedeemGiftCardDto } from './dto/redeem-gift-card.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../common/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
@@ -73,18 +74,22 @@ export class GiftCardsController {
   }
 
   @Public()
+  @UseGuards(OptionalJwtAuthGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Get('validate/:code')
   @ApiOperation({
     summary: 'Validate gift card',
     description:
-      'Validates a gift card code and returns its balance and status. Public endpoint, no authentication required.',
+      'Validates a gift card code and returns its balance and status. Authentication is optional: ' +
+      'guests may validate, and a signed-in caller is additionally checked against the card owner ' +
+      'so a card assigned to someone else is rejected here rather than at payment.',
   })
   @ApiParam({ name: 'code', description: 'Gift card code', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Gift card validated successfully' })
+  @SwaggerApiResponse({ status: 403, description: 'Gift card is assigned to another customer' })
   @SwaggerApiResponse({ status: 404, description: 'Gift card not found or invalid' })
-  async validate(@Param('code') code: string): Promise<ApiResponse<any>> {
-    const result = await this.giftCardsService.validate(code);
+  async validate(@Request() req: any, @Param('code') code: string): Promise<ApiResponse<any>> {
+    const result = await this.giftCardsService.validate(code, req.user?.id);
     return {
       data: result,
       message: 'Gift card validated successfully',

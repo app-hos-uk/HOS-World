@@ -33,7 +33,7 @@ interface GiftCardTransaction {
   order?: { id: string; orderNumber?: string; total: number; status: string };
 }
 
-const STATUS_OPTIONS = ['', 'ACTIVE', 'REDEEMED', 'CANCELLED', 'PENDING'] as const;
+const STATUS_OPTIONS = ['', 'ACTIVE', 'REDEEMED', 'EXPIRED', 'CANCELLED', 'PENDING'] as const;
 const TYPE_OPTIONS = ['', 'digital', 'physical'] as const;
 
 function maskCode(code: string): string {
@@ -48,6 +48,8 @@ function statusBadge(status: string) {
       return 'bg-green-500/15 text-green-300';
     case 'REDEEMED':
       return 'bg-blue-500/15 text-blue-300';
+    case 'EXPIRED':
+      return 'bg-orange-500/15 text-orange-300';
     case 'CANCELLED':
       return 'bg-red-500/15 text-red-300';
     case 'PENDING':

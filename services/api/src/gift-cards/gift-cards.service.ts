@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   BadRequestException,
   ForbiddenException,
@@ -17,11 +18,94 @@ const GIFT_CARD_CODE_REGEX =
 
 @Injectable()
 export class GiftCardsService {
+  private readonly logger = new Logger(GiftCardsService.name);
+
   constructor(
     private prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly platformRegion: PlatformRegionService,
   ) {}
+
+  private isExpired(card: { expiresAt?: Date | null }): boolean {
+    return !!card.expiresAt && card.expiresAt < new Date();
+  }
+
+  /**
+   * Stored status lags behind the clock: a card is only flipped to EXPIRED by
+   * the sweep job. Reads project the expiry so an admin never sees a card the
+   * checkout already rejects still labelled ACTIVE.
+   */
+  private withEffectiveStatus<T extends { status: string; expiresAt?: Date | null }>(card: T): T {
+    if (card.status === 'ACTIVE' && this.isExpired(card)) {
+      return { ...card, status: 'EXPIRED' };
+    }
+    return card;
+  }
+
+  /**
+   * Flip live cards whose expiry has passed. Run on a schedule so the stored
+   * status, admin filters, and accounting reports agree with what redemption
+   * enforces.
+   */
+  async expireOverdueGiftCards(): Promise<number> {
+    const result = await this.prisma.giftCard.updateMany({
+      where: { status: 'ACTIVE', expiresAt: { not: null, lt: new Date() } },
+      data: { status: 'EXPIRED' },
+    });
+    if (result.count > 0) {
+      this.logger.log(`Marked ${result.count} gift card(s) as EXPIRED`);
+    }
+    return result.count;
+  }
+
+  /**
+   * Reject redemption by anyone other than the card's intended holder.
+   *
+   * `userId` is authoritative once set. Before that, a card issued to an email
+   * is still reserved for that address — the recipient may simply have signed
+   * up after the card was created, so match on email and let them claim it.
+   * Cards with neither an owner nor a recipient email remain bearer
+   * instruments and any authenticated holder of the code may redeem them.
+   */
+  private async assertRedeemerOwnsCard(
+    db: Pick<Prisma.TransactionClient, 'user'>,
+    card: { userId?: string | null; issuedToEmail?: string | null },
+    userId: string,
+  ): Promise<void> {
+    if (card.userId) {
+      if (card.userId !== userId) {
+        throw new ForbiddenException(
+          'This gift card is assigned to another customer and cannot be redeemed by you',
+        );
+      }
+      return;
+    }
+    if (!card.issuedToEmail) return;
+
+    const redeemer = await db.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    const issuedTo = card.issuedToEmail.trim().toLowerCase();
+    if ((redeemer?.email ?? '').trim().toLowerCase() !== issuedTo) {
+      throw new ForbiddenException(
+        'This gift card is assigned to another customer and cannot be redeemed by you',
+      );
+    }
+  }
+
+  /** Persist EXPIRED for a single card found stale during validate/redeem. */
+  private async settleExpiredStatus(card: { id: string; status: string }): Promise<void> {
+    if (card.status !== 'ACTIVE') return;
+    try {
+      await this.prisma.giftCard.updateMany({
+        where: { id: card.id, status: 'ACTIVE' },
+        data: { status: 'EXPIRED' },
+      });
+    } catch (err) {
+      this.logger.warn(`Could not mark gift card ${card.id} expired: ${(err as Error).message}`);
+    }
+  }
 
   private parseGiftCardCode(raw: string): string {
     let decoded = (raw ?? '').trim();
@@ -167,9 +251,15 @@ export class GiftCardsService {
   }
 
   /**
-   * Validate gift card code
+   * Validate gift card code.
+   *
+   * @param userId Caller, when the request carried a session. Checkout applies
+   * a card here and only redeems it at payment, so the assignment check runs at
+   * both points — otherwise the customer is told the card is fine and only
+   * discovers it is not theirs after entering payment details. Guests skip the
+   * check because there is no identity to compare against; redeem still enforces it.
    */
-  async validate(code: string): Promise<any> {
+  async validate(code: string, userId?: string): Promise<any> {
     const normalized = this.parseGiftCardCode(code);
     const giftCard = await (this.prisma as any).giftCard.findUnique({
       where: { code: normalized },
@@ -179,8 +269,14 @@ export class GiftCardsService {
       throw new BadRequestException('Invalid or inactive gift card');
     }
 
-    // Check if expired
-    if (giftCard.expiresAt && giftCard.expiresAt < new Date()) {
+    if (userId) {
+      await this.assertRedeemerOwnsCard(this.prisma, giftCard, userId);
+    }
+
+    // Check if expired — settle the stored status here too, so a card the
+    // customer was just told is expired stops showing as ACTIVE to the admin.
+    if (giftCard.status === 'EXPIRED' || this.isExpired(giftCard)) {
+      await this.settleExpiredStatus(giftCard);
       throw new BadRequestException('Gift card has expired');
     }
 
@@ -228,17 +324,11 @@ export class GiftCardsService {
           throw new NotFoundException('Gift card not found');
         }
 
-        // Gift cards are bearer instruments — possession of the code is
-        // sufficient authorization.  Claim the card for the redeeming user
-        // so it appears in their "My Gift Cards" list going forward.
-        if (!giftCard.userId) {
-          await (tx as any).giftCard.update({
-            where: { id: giftCard.id },
-            data: { userId },
-          });
-        }
+        // A card issued to a named recipient belongs to that person; knowing the
+        // code is not authorization to spend someone else's balance.
+        await this.assertRedeemerOwnsCard(tx, giftCard, userId);
 
-        if (giftCard.expiresAt && giftCard.expiresAt < new Date()) {
+        if (giftCard.status === 'EXPIRED' || this.isExpired(giftCard)) {
           throw new BadRequestException('Gift card has expired');
         }
 
@@ -348,19 +438,21 @@ export class GiftCardsService {
     ]);
 
     return {
-      items: giftCards.map((gc) => ({
-        id: gc.id,
-        code: gc.code,
-        type: gc.type,
-        amount: gc.amount,
-        balance: gc.balance,
-        currency: gc.currency,
-        status: gc.status,
-        expiresAt: gc.expiresAt,
-        purchasedAt: gc.purchasedAt,
-        redeemedAt: gc.redeemedAt,
-        recentTransactions: gc.transactions,
-      })),
+      items: giftCards.map((gc) =>
+        this.withEffectiveStatus({
+          id: gc.id,
+          code: gc.code,
+          type: gc.type,
+          amount: gc.amount,
+          balance: gc.balance,
+          currency: gc.currency,
+          status: gc.status,
+          expiresAt: gc.expiresAt,
+          purchasedAt: gc.purchasedAt,
+          redeemedAt: gc.redeemedAt,
+          recentTransactions: gc.transactions,
+        }),
+      ),
       pagination: {
         page,
         limit,
@@ -374,6 +466,10 @@ export class GiftCardsService {
    * List all gift cards (admin)
    */
   async listAll(page = 1, limit = 20, status?: string, type?: string) {
+    // Settle any overdue cards first so the filter and the badges below agree
+    // with the stored status instead of drifting until the next sweep.
+    await this.expireOverdueGiftCards().catch(() => undefined);
+
     const skip = (page - 1) * limit;
     const where: any = {};
     if (status) where.status = status;
@@ -393,11 +489,13 @@ export class GiftCardsService {
     ]);
 
     return {
-      items: items.map((gc: any) => ({
-        ...gc,
-        transactionCount: gc._count?.transactions ?? 0,
-        _count: undefined,
-      })),
+      items: items.map((gc: any) =>
+        this.withEffectiveStatus({
+          ...gc,
+          transactionCount: gc._count?.transactions ?? 0,
+          _count: undefined,
+        }),
+      ),
       pagination: { page, limit, total },
     };
   }
@@ -487,11 +585,20 @@ export class GiftCardsService {
         const originalAmount = Number(giftCard.amount);
         const newBalance = Math.min(currentBalance + amount, originalAmount);
 
+        // Returning funds must not resurrect a card the clock has already
+        // retired, or a cancelled one.
+        const restoredStatus =
+          giftCard.status === 'CANCELLED' || this.isExpired(giftCard)
+            ? giftCard.status === 'CANCELLED'
+              ? 'CANCELLED'
+              : 'EXPIRED'
+            : 'ACTIVE';
+
         const updatedGiftCard = await tx.giftCard.update({
           where: { id: giftCardId },
           data: {
             balance: newBalance,
-            status: 'ACTIVE',
+            status: restoredStatus,
             redeemedAt: null,
           },
         });

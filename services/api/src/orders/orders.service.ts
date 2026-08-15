@@ -289,6 +289,62 @@ export class OrdersService {
     return expired;
   }
 
+  /**
+   * Credit every gift-card redemption on a cancelled order back to its card.
+   *
+   * Idempotent via the presence of any REFUND row for the order, so a re-cancel
+   * or a later admin refund cannot double-credit. A card that was drained to
+   * zero is reopened, unless it expired or was cancelled in the meantime.
+   */
+  private async reverseGiftCardRedemptions(orderId: string, orderNumber: string): Promise<void> {
+    const existingReversals = await this.prisma.giftCardTransaction.count({
+      where: { orderId, type: 'REFUND' },
+    });
+    if (existingReversals > 0) {
+      this.logger.log(`Gift-card reversals already exist for order ${orderNumber}, skipping`);
+      return;
+    }
+
+    const redemptions = await this.prisma.giftCardTransaction.findMany({
+      where: { orderId, type: 'REDEMPTION' },
+      include: { giftCard: true },
+    });
+
+    for (const redemption of redemptions) {
+      try {
+        const card = redemption.giftCard;
+        const amount = Number(redemption.amount);
+        const newBalance = Number(card.balance) + amount;
+        const expired = !!card.expiresAt && card.expiresAt < new Date();
+        const reopen = card.status === 'REDEEMED' && !expired;
+
+        await this.prisma.$transaction([
+          this.prisma.giftCard.update({
+            where: { id: redemption.giftCardId },
+            data: {
+              balance: { increment: amount },
+              ...(reopen ? { status: 'ACTIVE', redeemedAt: null } : {}),
+            },
+          }),
+          this.prisma.giftCardTransaction.create({
+            data: {
+              giftCard: { connect: { id: redemption.giftCardId } },
+              order: { connect: { id: orderId } },
+              type: 'REFUND',
+              amount,
+              balanceAfter: newBalance,
+              notes: `Auto-reversed on order cancel (${orderNumber})`,
+            },
+          }),
+        ]);
+      } catch (err) {
+        this.logger.error(
+          `Failed to reverse gift-card redemption for order ${orderNumber}: ${err}`,
+        );
+      }
+    }
+  }
+
   private async triggerOrderStatusNotification(
     orderId: string,
     orderUserId: string,
@@ -2443,20 +2499,21 @@ export class OrdersService {
       });
     });
 
+    const giftCardRedemptions = await this.prisma.giftCardTransaction.findMany({
+      where: { orderId: order.id, type: 'REDEMPTION' },
+      select: { amount: true },
+    });
+    const giftCardTotal = giftCardRedemptions.reduce(
+      (sum: number, tx: any) => sum + Number(tx.amount),
+      0,
+    );
+
     // Issue actual Stripe refund for paid orders — only refund the card portion (not gift-card covered amount).
     // Two-phase: attempt Stripe refund first; roll back paymentStatus if it fails.
     let stripeRefundSucceeded = order.paymentStatus !== 'PAID';
     let stripeRefundId: string | undefined;
     let cardRefundAmount = 0;
     if (order.paymentStatus === 'PAID' && order.stripePaymentIntentId) {
-      const giftCardRedemptions = await this.prisma.giftCardTransaction.findMany({
-        where: { orderId: order.id, type: 'REDEMPTION' },
-        select: { amount: true },
-      });
-      const giftCardTotal = giftCardRedemptions.reduce(
-        (sum: number, tx: any) => sum + Number(tx.amount),
-        0,
-      );
       cardRefundAmount = Math.max(0, Number(order.total) - giftCardTotal);
 
       stripeRefundSucceeded = false;
@@ -2514,51 +2571,15 @@ export class OrdersService {
           `Order ${order.orderNumber} cancelled but Stripe refund failed — paymentStatus remains PAID. Manual refund required.`,
         );
       }
-
-      // Reverse gift-card redemptions back to their respective cards (idempotent)
-      if (giftCardTotal > 0) {
-        // Check if reversals already exist to avoid double-reversal
-        const existingReversals = await this.prisma.giftCardTransaction.count({
-          where: { orderId: order.id, type: 'REFUND' },
-        });
-        if (existingReversals === 0) {
-          const allRedemptions = await this.prisma.giftCardTransaction.findMany({
-            where: { orderId: order.id, type: 'REDEMPTION' },
-            include: { giftCard: true },
-          });
-          for (const redemption of allRedemptions) {
-            try {
-              const newBalance = Number(redemption.giftCard.balance) + Number(redemption.amount);
-              await this.prisma.$transaction([
-                this.prisma.giftCard.update({
-                  where: { id: redemption.giftCardId },
-                  data: { balance: { increment: Number(redemption.amount) } },
-                }),
-                this.prisma.giftCardTransaction.create({
-                  data: {
-                    giftCard: { connect: { id: redemption.giftCardId } },
-                    order: { connect: { id: order.id } },
-                    type: 'REFUND',
-                    amount: Number(redemption.amount),
-                    balanceAfter: newBalance,
-                    notes: `Auto-reversed on order cancel (${order.orderNumber})`,
-                  },
-                }),
-              ]);
-            } catch (err) {
-              this.logger.error(
-                `Failed to reverse gift-card redemption for order ${order.orderNumber}: ${err}`,
-              );
-            }
-          }
-        } else {
-          this.logger.log(
-            `Gift-card reversals already exist for order ${order.orderNumber}, skipping`,
-          );
-        }
-      }
     } else if (order.paymentStatus === 'PAID' && !order.stripePaymentIntentId) {
       stripeRefundSucceeded = true;
+    }
+
+    // Gift-card balances go back for every cancellation, not just refunded card
+    // payments: an abandoned checkout swept by expireUnpaidOrders never reached
+    // Stripe at all, and the customer's card would otherwise stay debited.
+    if (giftCardTotal > 0) {
+      await this.reverseGiftCardRedemptions(order.id, order.orderNumber);
     }
 
     // Record finance audit trail for all paid order cancellations
@@ -2793,8 +2814,7 @@ export class OrdersService {
     const latestPayment = Array.isArray(order.payments)
       ? [...order.payments]
           .sort(
-            (a: any, b: any) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+            (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
           )
           .find((payment: any) => payment.status === 'PAID') || order.payments[0]
       : undefined;
