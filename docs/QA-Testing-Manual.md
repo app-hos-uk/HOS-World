@@ -36,16 +36,53 @@
 
 ## 1. Test Environment Setup
 
-### Test Accounts Required
+### Test Accounts
 
-| Role | How to Create |
-|------|---------------|
-| **Customer** | Register via `/login` with role = customer |
-| **B2C Seller** | Register via `/login` with role = b2c_seller, then complete `/seller/onboarding` |
-| **Wholesaler** | Register via `/login` with role = wholesaler, then complete `/seller/onboarding` |
-| **Influencer** | Created via admin invitation at `/admin/influencers/invitations` |
-| **Admin** | Use existing admin account (app@houseofspells.co.uk or mail@jsabu.com) |
-| **Staff roles** | Admin creates users via `/admin/users` and assigns roles |
+Fastest path is the seed script, which provisions one account per role and is safe to
+re-run (it updates existing rows rather than duplicating them):
+
+```bash
+cd services/api && pnpm db:seed-all-roles
+```
+
+All seeded accounts share the password in the `TEST_SEED_PASSWORD` environment variable,
+and the script prints the full list when it finishes.
+
+| Role | Seeded account | Notes |
+|------|----------------|-------|
+| **CUSTOMER** | `customer@hos.test` | Has a customer profile |
+| **WHOLESALER** | `wholesaler@hos.test` | Seller profile: Wholesale Magic Supplies |
+| **B2C_SELLER** | `seller@hos.test` | Seller profile: B2C Magic Store |
+| **ADMIN** | `admin@hos.test` | Full access |
+| **PROCUREMENT** | `procurement@hos.test` | |
+| **FULFILLMENT** | `fulfillment@hos.test` | |
+| **CATALOG** | `catalog@hos.test` | |
+| **MARKETING** | `marketing@hos.test` | |
+| **FINANCE** | `finance@hos.test` | |
+| **CMS_EDITOR** | `cms@hos.test` | |
+| **STORE_STAFF** | `storestaff@hos.test` | Assigned to store `HOS-TEST-01`, which the seed creates |
+| **INFLUENCER** | `influencer@hos.test` | Includes the Influencer profile the dashboard needs |
+
+Two roles are not covered by the seed:
+
+- **SELLER** is deprecated in favour of `B2C_SELLER`; see `pnpm db:migrate-seller-role`.
+- **SALES** has no UI in the web app, so there is nothing to exercise.
+
+To create accounts by hand instead: register customers and sellers at `/login`, invite
+influencers at `/admin/influencers/invitations`, and create staff at `/admin/users`.
+Store staff specifically must be created at `/admin/store-staff`, which assigns the
+required store — a `STORE_STAFF` user without one is rejected by the API guards.
+
+### The admin role switcher does not change server-side permissions
+
+An admin can switch roles from the UI to preview another role's screens, but this is
+client-side only: it writes `admin_impersonated_role` to `localStorage`, and the session
+token still says `ADMIN`. Every API call therefore executes with admin privileges.
+
+This matters when testing anything role-specific. Store staff redemption, for example,
+pins the request to the staff member's own store and refuses another store's data — logic
+that never runs for an impersonating admin, who is allowed to act across stores. **Verify
+role-specific permissions by logging in as that role, not by switching.**
 
 ### Browser Requirements
 - Latest Chrome, Firefox, or Safari

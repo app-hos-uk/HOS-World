@@ -105,7 +105,12 @@ GATEWAY_URL=https://hos-marketplaceapi-production.up.railway.app GATEWAY_FULL=0 
 API_URL=https://hos-marketplaceapi-production.up.railway.app/api node test-api-endpoints.js
 ```
 
-When you deploy the **gateway** as the public entrypoint, use the gateway URL and full smoke test. Current production gateway:
+When you deploy the **gateway** as the public entrypoint, use the gateway URL and full smoke test.
+
+> **Not currently deployed.** As of 16 Aug 2026 every path on the URL below returns 404 —
+> the Railway edge answers but no service is behind it. Testers should use the API URL
+> directly (see `docs/QA-Testing-Manual.md`). The commands here still apply once the
+> gateway is redeployed; confirm the hostname first, as it changes between deployments.
 
 **Gateway URL:** `https://gateway-service-production-df92.up.railway.app`
 
