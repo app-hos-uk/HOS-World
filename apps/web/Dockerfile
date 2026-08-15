@@ -1,5 +1,7 @@
 # Web Service Dockerfile — Next.js standalone output
-FROM node:18-slim AS base
+# Node 20 is required, not optional: sharp >=0.35 (needed for the libvips security fixes)
+# declares engines.node ">=20.9.0", and xlsx requires ">=20". Node 18 is also EOL.
+FROM node:20-slim AS base
 
 RUN npm install -g pnpm
 
@@ -47,7 +49,9 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN pnpm build
 
 # ── Production image: standalone bundle, no install needed ──
-FROM node:18-slim
+# Must match the build stage: sharp's native binary is loaded here at runtime for
+# Next.js image optimization.
+FROM node:20-slim
 
 WORKDIR /app
 

@@ -1,5 +1,7 @@
 # Landing Service Dockerfile — lightweight Next.js standalone
-FROM node:18-slim AS base
+# Node 20: this stage installs the whole workspace, so sharp's install script (engines
+# ">=20.9.0") runs here even though landing has no direct sharp dependency.
+FROM node:20-slim AS base
 
 RUN npm install -g pnpm
 
@@ -36,7 +38,7 @@ WORKDIR /app/apps/landing
 RUN pnpm build
 
 # Production image
-FROM node:18-slim
+FROM node:20-slim
 
 WORKDIR /app
 
