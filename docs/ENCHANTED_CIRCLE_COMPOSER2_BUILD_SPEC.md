@@ -28,7 +28,6 @@
 ### Existing Tech Stack
 - **Backend:** NestJS 10 at `services/api/` — PostgreSQL via Prisma 6, Redis, BullMQ, Stripe, Meilisearch
 - **Frontend:** Next.js 14 (App Router) at `apps/web/` — Tailwind CSS, Headless UI, TanStack Query
-- **Mobile:** Expo at `apps/mobile/`
 - **Monorepo:** pnpm + Turborepo, shared packages at `packages/`
 - **Database schema:** `services/api/prisma/schema.prisma`
 - **API client:** `packages/api-client/src/client.ts`

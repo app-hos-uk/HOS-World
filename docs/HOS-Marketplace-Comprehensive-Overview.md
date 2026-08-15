@@ -64,14 +64,11 @@ HOS Marketplace is a **multi-vendor, multi-tenant e-commerce platform** built ar
 | Auth (client) | Custom `AuthContext` (JWT + cookies) | — |
 | E2E testing | **Playwright** | ^1.57.0 |
 
-### 2.3 Frontend — Mobile (`apps/mobile`)
+### 2.3 Frontend — Mobile
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Framework | **Expo** | ~50.0.0 |
-| Routing | **expo-router** | ~3.4.0 |
-| Runtime | **React Native** | 0.73.0 |
-| Navigation | **React Navigation** | ^6.1.9 |
+No mobile app currently. An unused Expo 50 scaffold previously lived at `apps/mobile`; it was
+removed because it was never built or deployed and accounted for most of the workspace's
+dependency vulnerabilities.
 
 ### 2.4 Backend API (`services/api`)
 
