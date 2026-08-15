@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  Controller,
-  Get,
-  Query,
-  Res,
-} from '@nestjs/common';
+import { Controller, Get, Query, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -20,6 +14,16 @@ import { Public } from '../common/decorators/public.decorator';
  *  3. This controller exchanges the code for tokens and redirects the admin back to
  *     the store creation form with tokens in the URL fragment.
  */
+
+/**
+ * A Lightspeed tenant prefix is a single DNS label. This must stay strict: the callback is
+ * @Public() and the token-exchange body carries LIGHTSPEED_CLIENT_SECRET, so any character
+ * that can terminate the host (`/`, `?`, `#`, `@`, `:`) would let a crafted `state` redirect
+ * that secret to an attacker-controlled server.
+ */
+const DOMAIN_PREFIX_RE = /^[a-z0-9][a-z0-9-]{0,62}$/i;
+const LIGHTSPEED_TOKEN_HOST_SUFFIX = '.retail.lightspeed.app';
+
 @ApiTags('lightspeed-oauth')
 @Controller('pos/lightspeed')
 export class LightspeedOAuthController {
@@ -90,17 +94,28 @@ export class LightspeedOAuthController {
 
     let domainPrefix = '';
     try {
-      const parsed = JSON.parse(
-        Buffer.from(state || '', 'base64').toString(),
-      );
+      const parsed = JSON.parse(Buffer.from(state || '', 'base64').toString());
       domainPrefix = parsed.domainPrefix || '';
     } catch {
       res.redirect(`${frontendCallback}?ls_error=invalid_state`);
       return;
     }
 
+    if (!DOMAIN_PREFIX_RE.test(domainPrefix)) {
+      res.redirect(`${frontendCallback}?ls_error=invalid_state`);
+      return;
+    }
+
     try {
-      const tokenUrl = `https://${domainPrefix}.retail.lightspeed.app/api/1.0/token`;
+      const tokenUrl = new URL(
+        `https://${domainPrefix}${LIGHTSPEED_TOKEN_HOST_SUFFIX}/api/1.0/token`,
+      );
+      // Belt-and-braces: the regex above already forbids host-terminating characters, but
+      // never send the client secret anywhere outside Lightspeed's domain.
+      if (tokenUrl.hostname !== `${domainPrefix.toLowerCase()}${LIGHTSPEED_TOKEN_HOST_SUFFIX}`) {
+        res.redirect(`${frontendCallback}?ls_error=invalid_state`);
+        return;
+      }
       const body = new URLSearchParams({
         code,
         client_id: this.clientId,
@@ -140,9 +155,7 @@ export class LightspeedOAuthController {
       res.redirect(`${frontendCallback}#${fragment.toString()}`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Token exchange failed';
-      res.redirect(
-        `${frontendCallback}?ls_error=${encodeURIComponent(msg)}`,
-      );
+      res.redirect(`${frontendCallback}?ls_error=${encodeURIComponent(msg)}`);
     }
   }
 }
