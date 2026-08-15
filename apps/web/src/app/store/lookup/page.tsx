@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
@@ -125,136 +124,132 @@ export default function StoreLookupPage() {
   };
 
   return (
-    <RouteGuard allowedRoles={['STORE_STAFF', 'ADMIN']} showAccessDenied>
-      <div className="min-h-screen bg-hos-bg p-6">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <div>
-            <h1 className="text-2xl font-semibold text-hos-text-secondary">Customer lookup</h1>
-            <p className="text-sm text-hos-text-muted mt-1">
-              Find loyalty members by card, email, phone, or name. Results are masked for privacy.
-            </p>
-          </div>
-
-          <div className="space-y-3 rounded-lg border border-hos-border bg-hos-bg-secondary p-4">
-            <div className="flex flex-wrap gap-2">
-              {(
-                [
-                  ['cardNumber', 'Card'],
-                  ['email', 'Email'],
-                  ['phone', 'Phone'],
-                  ['phoneLastFour', 'Last 4'],
-                  ['name', 'Name'],
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setMode(value)}
-                  className={`rounded-md px-3 py-1.5 text-sm ${
-                    mode === value
-                      ? 'bg-violet-700 text-white'
-                      : 'bg-hos-bg text-hos-text-secondary border border-hos-border'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {needsAdminStore && (
-              <label className="block text-sm">
-                <span className="text-hos-text-secondary">Store ID (admin)</span>
-                <input
-                  className={INPUT_CLS}
-                  value={adminStoreId}
-                  onChange={(e) => setAdminStoreId(e.target.value)}
-                  placeholder="UUID of the store"
-                />
-              </label>
-            )}
-
-            <label className="block text-sm">
-              <span className="text-hos-text-secondary">Search</span>
-              <input
-                className={INPUT_CLS}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={placeholder}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') void search();
-                }}
-              />
-            </label>
-
-            <button
-              type="button"
-              disabled={searching}
-              onClick={() => void search()}
-              className="rounded-md bg-violet-700 px-4 py-2 text-white text-sm font-medium disabled:opacity-50"
-            >
-              {searching ? 'Searching…' : 'Search'}
-            </button>
-          </div>
-
-          <div className="space-y-3">
-            {results.map((row) => (
-              <div
-                key={row.userId}
-                className="rounded-lg border border-hos-border bg-hos-bg-secondary p-4 space-y-2"
-              >
-                <div className="flex justify-between gap-3">
-                  <div>
-                    <p className="font-medium text-hos-text-secondary">
-                      {[row.firstName, row.lastInitial ? `${row.lastInitial}.` : null]
-                        .filter(Boolean)
-                        .join(' ') || 'Member'}
-                    </p>
-                    <p className="text-sm text-hos-text-muted">
-                      {row.tierName || 'No tier'} · {row.currentBalance} pts
-                    </p>
-                  </div>
-                  {(row.cardNumber || row.maskedCardNumber) && (
-                    <p className="text-xs text-hos-text-muted font-mono">
-                      {row.cardNumber || row.maskedCardNumber}
-                    </p>
-                  )}
-                </div>
-                <p className="text-sm text-hos-text-muted">
-                  {row.maskedEmail || '—'} · {row.maskedPhone || '—'}
-                </p>
-
-                {row.cardNumber ? (
-                  <div className="flex flex-wrap items-end gap-2 pt-2 border-t border-hos-border">
-                    <label className="block text-sm flex-1 min-w-[8rem]">
-                      <span className="text-hos-text-secondary">Redeem points</span>
-                      <input
-                        className={INPUT_CLS}
-                        type="number"
-                        min={1}
-                        value={redeemPoints}
-                        onChange={(e) => setRedeemPoints(e.target.value)}
-                        placeholder="e.g. 100"
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      disabled={redeemingId === row.userId}
-                      onClick={() => void redeem(row)}
-                      className="rounded-md bg-emerald-700 px-3 py-2 text-sm text-white disabled:opacity-50"
-                    >
-                      {redeemingId === row.userId ? 'Redeeming…' : 'Redeem voucher'}
-                    </button>
-                  </div>
-                ) : (
-                  <p className="pt-2 border-t border-hos-border text-xs text-hos-text-muted">
-                    Confirm the member by card, email or full phone number to redeem.
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold text-hos-text-secondary">Customer lookup</h1>
+        <p className="text-sm text-hos-text-muted mt-1">
+          Find loyalty members by card, email, phone, or name. Results are masked for privacy.
+        </p>
       </div>
-    </RouteGuard>
+
+      <div className="space-y-3 rounded-lg border border-hos-border bg-hos-bg-secondary p-4">
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              ['cardNumber', 'Card'],
+              ['email', 'Email'],
+              ['phone', 'Phone'],
+              ['phoneLastFour', 'Last 4'],
+              ['name', 'Name'],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setMode(value)}
+              className={`rounded-md px-3 py-1.5 text-sm ${
+                mode === value
+                  ? 'bg-violet-700 text-white'
+                  : 'bg-hos-bg text-hos-text-secondary border border-hos-border'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {needsAdminStore && (
+          <label className="block text-sm">
+            <span className="text-hos-text-secondary">Store ID (admin)</span>
+            <input
+              className={INPUT_CLS}
+              value={adminStoreId}
+              onChange={(e) => setAdminStoreId(e.target.value)}
+              placeholder="UUID of the store"
+            />
+          </label>
+        )}
+
+        <label className="block text-sm">
+          <span className="text-hos-text-secondary">Search</span>
+          <input
+            className={INPUT_CLS}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={placeholder}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') void search();
+            }}
+          />
+        </label>
+
+        <button
+          type="button"
+          disabled={searching}
+          onClick={() => void search()}
+          className="rounded-md bg-violet-700 px-4 py-2 text-white text-sm font-medium disabled:opacity-50"
+        >
+          {searching ? 'Searching…' : 'Search'}
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {results.map((row) => (
+          <div
+            key={row.userId}
+            className="rounded-lg border border-hos-border bg-hos-bg-secondary p-4 space-y-2"
+          >
+            <div className="flex justify-between gap-3">
+              <div>
+                <p className="font-medium text-hos-text-secondary">
+                  {[row.firstName, row.lastInitial ? `${row.lastInitial}.` : null]
+                    .filter(Boolean)
+                    .join(' ') || 'Member'}
+                </p>
+                <p className="text-sm text-hos-text-muted">
+                  {row.tierName || 'No tier'} · {row.currentBalance} pts
+                </p>
+              </div>
+              {(row.cardNumber || row.maskedCardNumber) && (
+                <p className="text-xs text-hos-text-muted font-mono">
+                  {row.cardNumber || row.maskedCardNumber}
+                </p>
+              )}
+            </div>
+            <p className="text-sm text-hos-text-muted">
+              {row.maskedEmail || '—'} · {row.maskedPhone || '—'}
+            </p>
+
+            {row.cardNumber ? (
+              <div className="flex flex-wrap items-end gap-2 pt-2 border-t border-hos-border">
+                <label className="block text-sm flex-1 min-w-[8rem]">
+                  <span className="text-hos-text-secondary">Redeem points</span>
+                  <input
+                    className={INPUT_CLS}
+                    type="number"
+                    min={1}
+                    value={redeemPoints}
+                    onChange={(e) => setRedeemPoints(e.target.value)}
+                    placeholder="e.g. 100"
+                  />
+                </label>
+                <button
+                  type="button"
+                  disabled={redeemingId === row.userId}
+                  onClick={() => void redeem(row)}
+                  className="rounded-md bg-emerald-700 px-3 py-2 text-sm text-white disabled:opacity-50"
+                >
+                  {redeemingId === row.userId ? 'Redeeming…' : 'Redeem voucher'}
+                </button>
+              </div>
+            ) : (
+              <p className="pt-2 border-t border-hos-border text-xs text-hos-text-muted">
+                Confirm the member by card, email or full phone number to redeem.
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
