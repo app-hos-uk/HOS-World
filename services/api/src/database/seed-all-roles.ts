@@ -16,8 +16,52 @@ try {
 
 const prisma = new PrismaClient();
 
+/**
+ * STORE_STAFF needs a store to be assigned to, so the seed provisions one. Reuses the
+ * well-known `platform` tenant the app itself upserts (see TenantContextService) rather
+ * than inventing a second tenant.
+ */
+const TEST_STORE_CODE = 'HOS-TEST-01';
+
+async function ensureTestStore(): Promise<string> {
+  const tenant = await prisma.tenant.upsert({
+    where: { id: 'platform' },
+    update: {},
+    create: { id: 'platform', name: 'Platform', subdomain: 'platform', isActive: true },
+  });
+
+  const store = await prisma.store.upsert({
+    where: { code: TEST_STORE_CODE },
+    update: { isActive: true },
+    create: {
+      tenantId: tenant.id,
+      code: TEST_STORE_CODE,
+      name: 'HOS Test Store',
+      storeType: 'STANDARD',
+      isActive: true,
+    },
+  });
+
+  console.log(`🏬 Test store ready: ${store.name} (${store.code})`);
+  return store.id;
+}
+
+type MockUser = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  needsProfile?: boolean;
+  needsSellerProfile?: boolean;
+  storeName?: string;
+  sellerType?: SellerType;
+  /** Assign to the seeded test store — required for STORE_STAFF to pass its guards. */
+  needsStoreAssignment?: boolean;
+  needsInfluencerProfile?: boolean;
+};
+
 // Mock users for all roles (password from TEST_SEED_PASSWORD env)
-const mockUsers = [
+const mockUsers: MockUser[] = [
   {
     email: 'customer@hos.test',
     firstName: 'John',
@@ -85,13 +129,45 @@ const mockUsers = [
     lastName: 'Editor',
     role: UserRole.CMS_EDITOR,
   },
+  {
+    email: 'storestaff@hos.test',
+    firstName: 'Store',
+    lastName: 'Staff',
+    role: UserRole.STORE_STAFF,
+    needsStoreAssignment: true,
+  },
+  {
+    email: 'influencer@hos.test',
+    firstName: 'Ivy',
+    lastName: 'Influencer',
+    role: UserRole.INFLUENCER,
+    needsInfluencerProfile: true,
+  },
 ];
+
+/** Idempotent: slug and referralCode are unique, so reuse the row if it already exists. */
+async function ensureInfluencerProfile(userId: string, firstName: string) {
+  const existing = await prisma.influencer.findUnique({ where: { userId } });
+  if (existing) return;
+
+  await prisma.influencer.create({
+    data: {
+      userId,
+      displayName: `${firstName} the Influencer`,
+      slug: 'ivy-influencer-test',
+      referralCode: 'HOS-TEST-INF',
+    },
+  });
+}
 
 async function seedAllRoles() {
   const defaultPassword = getSeedTestPassword();
   const hashedPassword = await bcrypt.hash(defaultPassword, BCRYPT_PASSWORD_ROUNDS);
 
   console.log('🌱 Starting to seed mock users for all roles...\n');
+
+  const needsStore = mockUsers.some((u) => u.needsStoreAssignment);
+  const testStoreId = needsStore ? await ensureTestStore() : null;
 
   for (const userData of mockUsers) {
     try {
@@ -113,8 +189,13 @@ async function seedAllRoles() {
             role: userData.role,
             firstName: userData.firstName,
             lastName: userData.lastName,
+            ...(userData.needsStoreAssignment ? { storeId: testStoreId } : {}),
           },
         });
+
+        if (userData.needsInfluencerProfile) {
+          await ensureInfluencerProfile(existingUser.id, userData.firstName);
+        }
 
         // Handle profiles
         if (userData.needsProfile && !existingUser.customerProfile) {
@@ -157,6 +238,7 @@ async function seedAllRoles() {
             firstName: userData.firstName,
             lastName: userData.lastName,
             role: userData.role,
+            ...(userData.needsStoreAssignment ? { storeId: testStoreId } : {}),
           },
         });
 
@@ -165,6 +247,10 @@ async function seedAllRoles() {
           await prisma.customer.create({
             data: { userId: user.id },
           });
+        }
+
+        if (userData.needsInfluencerProfile) {
+          await ensureInfluencerProfile(user.id, userData.firstName);
         }
 
         // Create seller profile if needed
@@ -202,8 +288,9 @@ async function seedAllRoles() {
   console.log('\n📋 Test Users Created:');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   mockUsers.forEach((user) => {
+    const extra = user.needsStoreAssignment ? ` | Store: ${TEST_STORE_CODE}` : '';
     console.log(
-      `  Email: ${user.email.padEnd(30)} | Password: ${defaultPassword} | Role: ${user.role}`,
+      `  Email: ${user.email.padEnd(30)} | Password: ${defaultPassword} | Role: ${user.role}${extra}`,
     );
   });
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
