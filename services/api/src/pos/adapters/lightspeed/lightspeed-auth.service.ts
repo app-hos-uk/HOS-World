@@ -129,11 +129,24 @@ export class LightspeedAuthService {
         client_secret: clientSecret,
       });
 
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString(),
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10_000);
+      let res: Response;
+      try {
+        res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: body.toString(),
+          signal: controller.signal,
+        });
+      } catch (e) {
+        clearTimeout(timeoutId);
+        if ((e as Error)?.name === 'AbortError') {
+          throw new Error('Lightspeed token refresh timed out after 10s');
+        }
+        throw e;
+      }
+      clearTimeout(timeoutId);
 
       if (!res.ok) {
         const t = await res.text();

@@ -3,6 +3,7 @@ import type { LightspeedCredentials } from '../../interfaces/pos-types';
 
 const MIN_INTERVAL_MS = 1500;
 const MAX_RETRIES = 3;
+const REQUEST_TIMEOUT_MS = 15_000;
 
 export type LightspeedRedisThrottle = {
   get: (key: string) => Promise<string | null>;
@@ -78,12 +79,20 @@ export class LightspeedApiClient {
         'Content-Type': 'application/json',
       };
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
       try {
         const res = await fetch(url, {
           method,
           headers,
           body: body !== undefined ? JSON.stringify(body) : undefined,
+          signal: controller.signal,
         });
+
+        // Headers received — network round-trip succeeded; disarm the timeout
+        // so body reads are not aborted mid-stream.
+        clearTimeout(timeoutId);
 
         const retryAfter = res.headers.get('retry-after');
         if (res.status === 429 && retryAfter && attempt < MAX_RETRIES) {
@@ -110,7 +119,11 @@ export class LightspeedApiClient {
         const data = (await res.json()) as T;
         return { data, status: res.status };
       } catch (e) {
-        lastErr = e as Error;
+        clearTimeout(timeoutId);
+        lastErr =
+          controller.signal.aborted && (e as Error)?.name === 'AbortError'
+            ? new Error(`Lightspeed API request timed out after ${REQUEST_TIMEOUT_MS}ms: ${method} ${path}`)
+            : (e as Error);
         if (attempt < MAX_RETRIES) {
           await new Promise((r) =>
             setTimeout(r, 1000 * Math.pow(2, attempt) + Math.random() * 200),
