@@ -624,4 +624,102 @@ describe('PosVoucherService', () => {
     expect(result.status).toBe('ISSUED');
     expect(result.cardNumber).toBe('ABCD2345EFGH');
   });
+
+  /**
+   * The controller pins storeId for STORE_STAFF, but the retry and idempotent-replay paths
+   * used to look a voucher up by id alone and return it — including its cardNumber, which is
+   * bearer value spendable at any till. Idempotency keys are client-supplied and predictable
+   * (`terminalId:tillSaleRef`), so replay was reachable without knowing a voucher id.
+   */
+  describe('store scoping on retry and replay', () => {
+    const OTHER_STORE = 'store-2';
+
+    /** A voucher that belongs to store-1 and has already been issued. */
+    const issuedElsewhere = {
+      id: 'voucher-1',
+      membershipId,
+      redemptionId,
+      storeId,
+      cardNumber: 'ABCD2345EFGH',
+      amount: new Decimal('5.00'),
+      currency: 'GBP',
+      clientId: redemptionId,
+      status: 'ISSUED',
+      redemption: { pointsSpent: 500, status: 'COMPLETED' },
+      store: { posConnection: { isActive: true, provider: 'lightspeed', credentials: 'enc' } },
+    };
+
+    const findIssuedElsewhere = () =>
+      jest
+        .fn()
+        .mockImplementation(({ where }: any) =>
+          Promise.resolve(where?.redemptionId ? null : issuedElsewhere),
+        );
+
+    it('refuses a direct retry of another store\u2019s voucher', async () => {
+      const { svc } = build({ voucherFindUnique: findIssuedElsewhere() });
+
+      await expect(svc.retryFailedVoucher('voucher-1', OTHER_STORE)).rejects.toThrow(
+        // Same error as a missing voucher, so existence cannot be probed.
+        'Voucher not found',
+      );
+    });
+
+    it('allows an admin retry with no store scope', async () => {
+      const { svc } = build({ voucherFindUnique: findIssuedElsewhere() });
+
+      const result = await svc.retryFailedVoucher('voucher-1');
+      expect(result.cardNumber).toBe('ABCD2345EFGH');
+    });
+
+    it('refuses redeem-for-voucher retry across stores without leaking the card number', async () => {
+      const { svc } = build({ voucherFindUnique: findIssuedElsewhere() });
+
+      const attempt = svc.redeemForVoucher({
+        points: 500,
+        storeId: OTHER_STORE,
+        membershipId,
+        voucherId: 'voucher-1',
+      });
+
+      await expect(attempt).rejects.toThrow('Voucher not found');
+      await expect(attempt).rejects.not.toThrow('ABCD2345EFGH');
+    });
+
+    it('refuses an idempotency-key replay that resolves to another store\u2019s voucher', async () => {
+      const { svc, prisma } = build({ voucherFindUnique: findIssuedElsewhere() });
+      // A prior burn exists for this membership + guessed key, pointing at store-1's voucher.
+      prisma.loyaltyTransaction.findUnique.mockResolvedValue({ sourceId: redemptionId });
+      prisma.loyaltyPosVoucher.findUnique.mockImplementation(({ where }: any) =>
+        Promise.resolve(where?.redemptionId ? { id: 'voucher-1' } : issuedElsewhere),
+      );
+
+      await expect(
+        svc.redeemForVoucher({
+          points: 500,
+          storeId: OTHER_STORE,
+          membershipId,
+          idempotencyKey,
+        }),
+      ).rejects.toThrow('Voucher not found');
+    });
+
+    it('still serves a replay for the voucher\u2019s own store', async () => {
+      const { svc, prisma } = build({ voucherFindUnique: findIssuedElsewhere() });
+      prisma.loyaltyTransaction.findUnique.mockResolvedValue({ sourceId: redemptionId });
+      prisma.loyaltyPosVoucher.findUnique.mockImplementation(({ where }: any) =>
+        Promise.resolve(where?.redemptionId ? { id: 'voucher-1' } : issuedElsewhere),
+      );
+
+      const result = await svc.redeemForVoucher({
+        points: 500,
+        storeId,
+        membershipId,
+        idempotencyKey,
+      });
+
+      expect(result.status).toBe('ISSUED');
+      expect(result.cardNumber).toBe('ABCD2345EFGH');
+    });
+  });
 });

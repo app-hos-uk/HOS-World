@@ -89,7 +89,7 @@ export class PosVoucherService {
     await this.assertVoucherEnabled();
 
     if (dto.voucherId) {
-      return this.retryFailedVoucher(dto.voucherId);
+      return this.retryFailedVoucher(dto.voucherId, dto.storeId);
     }
 
     const idempotencyKey = dto.idempotencyKey?.trim();
@@ -131,7 +131,10 @@ export class PosVoucherService {
         select: { id: true },
       });
       if (priorVoucher) {
-        return this.retryFailedVoucher(priorVoucher.id);
+        // Scoped by store: idempotency keys are client-supplied and predictable
+        // (`terminalId:tillSaleRef`), so an unscoped replay would hand one store's
+        // gift card number to staff at another.
+        return this.retryFailedVoucher(priorVoucher.id, dto.storeId);
       }
       // Burn exists but voucher row is missing (crash between burn and voucher create).
       // Only recover if the redemption is still COMPLETED — if it was REVERSED,
@@ -170,7 +173,7 @@ export class PosVoucherService {
       select: { id: true },
     });
     if (existingVoucher) {
-      return this.retryFailedVoucher(existingVoucher.id);
+      return this.retryFailedVoucher(existingVoucher.id, dto.storeId);
     }
 
     return this.createAndIssueVoucher({
@@ -230,7 +233,7 @@ export class PosVoucherService {
           select: { id: true },
         });
         if (existing) {
-          return this.retryFailedVoucher(existing.id);
+          return this.retryFailedVoucher(existing.id, params.storeId);
         }
       }
       if (params.reverseBurnOnCreateFailure) {
@@ -249,8 +252,15 @@ export class PosVoucherService {
 
   /**
    * Retry a FAILED/PENDING voucher: same clientId + cardNumber; re-debit points if burn was reversed.
+   *
+   * `expectedStoreId` scopes the lookup to one store. Callers acting on behalf of store staff
+   * must pass it: the result carries the gift card number, which is bearer value spendable at
+   * any till. Admin callers omit it deliberately to retry across stores.
    */
-  async retryFailedVoucher(voucherId: string): Promise<{
+  async retryFailedVoucher(
+    voucherId: string,
+    expectedStoreId?: string,
+  ): Promise<{
     voucherId: string;
     redemptionId: string;
     cardNumber: string;
@@ -269,6 +279,11 @@ export class PosVoucherService {
       },
     });
     if (!voucher) throw new NotFoundException('Voucher not found');
+    // Identical error to a missing voucher on purpose: a distinguishable response would let
+    // staff probe whether a voucher id (or a guessed idempotency key) exists at another store.
+    if (expectedStoreId && voucher.storeId !== expectedStoreId) {
+      throw new NotFoundException('Voucher not found');
+    }
     if (voucher.status === 'ISSUED') {
       return this.toResult(voucher, voucher.redemption.pointsSpent);
     }
