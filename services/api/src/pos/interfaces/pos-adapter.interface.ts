@@ -17,6 +17,15 @@ export interface POSAdapter {
   authenticate(credentials: Record<string, unknown>): Promise<void>;
   refreshAuth(): Promise<void>;
 
+  /**
+   * Bound the total wall-clock time this adapter may spend on provider calls,
+   * as an absolute epoch-ms deadline (`undefined` clears it). Interactive callers set
+   * this so a slow provider surfaces an error while the caller is still listening,
+   * rather than completing after the HTTP client has given up. Optional: providers
+   * without budget support ignore it.
+   */
+  setRequestDeadline?(deadlineAt: number | undefined): void;
+
   getOutlets(): Promise<POSOutlet[]>;
 
   syncProduct(product: POSProductPayload, outletId: string): Promise<string>;

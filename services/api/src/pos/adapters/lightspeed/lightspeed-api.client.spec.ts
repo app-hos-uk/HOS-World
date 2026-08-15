@@ -251,4 +251,93 @@ describe('LightspeedApiClient', () => {
     expect(r.error).toBeDefined();
     expect(refreshSpy).toHaveBeenCalledTimes(1);
   });
+
+  it('does not retry a 404 (getGiftCardByNumber reads it as "no such card")', async () => {
+    const { client } = createClient();
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      headers: new Map(),
+      text: async () => 'not found',
+    });
+    globalThis.fetch = fetchMock;
+
+    const r = await drainAndCollect(client.request('GET', '/gift_cards/by_number/ABC'));
+    expect(r.error!.message).toContain('Lightspeed API 404');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry other 4xx responses', async () => {
+    const { client } = createClient();
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 422,
+      headers: new Map(),
+      text: async () => 'invalid amount',
+    });
+    globalThis.fetch = fetchMock;
+
+    const r = await drainAndCollect(client.request('POST', '/gift_cards', { amount: -1 }));
+    expect(r.error!.message).toContain('Lightspeed API 422');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops retrying once the deadline budget is spent', async () => {
+    const { client } = createClient();
+    const fetchMock = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      headers: new Map(),
+      text: async () => 'Internal',
+    });
+    globalThis.fetch = fetchMock;
+
+    // Budget smaller than the first retry backoff (2s), so no retry can fit.
+    client.setDeadline(Date.now() + 1_500);
+
+    const r = await drainAndCollect(client.request('GET', '/fail'));
+    expect(r.error).toBeDefined();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('caps the per-attempt timeout to the remaining budget', async () => {
+    const { client } = createClient();
+    // Never settles, so only an abort can end the attempt.
+    globalThis.fetch = jest.fn().mockImplementation(
+      (_url, opts) =>
+        new Promise((_resolve, reject) => {
+          opts.signal.addEventListener('abort', () => {
+            const err = new Error('aborted');
+            err.name = 'AbortError';
+            reject(err);
+          });
+        }),
+    );
+
+    // Well below the 15s default per-request timeout.
+    client.setDeadline(Date.now() + 3_000);
+
+    const r = await drainAndCollect(client.request('GET', '/slow'));
+    expect(r.error).toBeDefined();
+    expect(r.error!.message).toMatch(/timed out after 3000ms|deadline exceeded/);
+  });
+
+  it('clearing the deadline restores unbounded retries', async () => {
+    const { client } = createClient();
+    let call = 0;
+    globalThis.fetch = jest.fn().mockImplementation(async () => {
+      call++;
+      if (call <= 2) {
+        return { ok: false, status: 503, headers: new Map(), text: async () => 'unavailable' };
+      }
+      return { ok: true, status: 200, headers: new Map(), json: async () => ({ ok: true }) };
+    });
+
+    client.setDeadline(Date.now() + 1_000);
+    client.setDeadline(undefined);
+
+    const r = await drainAndCollect(client.request('GET', '/test'));
+    expect(r.error).toBeUndefined();
+    expect(call).toBe(3);
+  });
 });

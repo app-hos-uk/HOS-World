@@ -489,6 +489,39 @@ describe('PosVoucherService', () => {
     );
   });
 
+  it('keeps the burn and flags review when funding cannot be verified after a failure', async () => {
+    const createGiftCard = jest.fn().mockRejectedValue(new Error('Lightspeed API 500: boom'));
+    // Card absent on the pre-create probe, then Lightspeed unreachable for the
+    // post-failure funding check.
+    const getGiftCardByNumber = jest
+      .fn()
+      .mockResolvedValueOnce(null)
+      .mockRejectedValue(new Error('Lightspeed API deadline exceeded'));
+    const applyDelta = jest.fn().mockResolvedValue({});
+    const { svc, wallet, adapter, prisma, voucherRow } = build({
+      createGiftCard,
+      getGiftCardByNumber,
+      applyDelta,
+    });
+
+    await expect(
+      svc.redeemForVoucher({ points: 500, storeId, membershipId, idempotencyKey }),
+    ).rejects.toThrow(/points were NOT restored/);
+
+    expect(prisma.loyaltyPosVoucher.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: voucherRow.id },
+        data: expect.objectContaining({
+          status: 'FAILED',
+          metadata: expect.objectContaining({ needsManualReview: true }),
+        }),
+      }),
+    );
+    // Points stay burned and the card is left intact — a retry resolves either outcome.
+    expect(wallet.applyDelta).not.toHaveBeenCalled();
+    expect(adapter.voidGiftCard).not.toHaveBeenCalled();
+  });
+
   it('rejects when computed amount is below POS_GIFT_CARD_MIN_AMOUNT', async () => {
     const { svc, burn } = build({
       configGet: (key, def) => {

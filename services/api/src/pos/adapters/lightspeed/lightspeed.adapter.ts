@@ -44,6 +44,12 @@ export class LightspeedAdapter implements POSAdapter {
     this.client.setRedisThrottle(redis);
   }
 
+  /** Bound total time spent on Lightspeed calls; see POSAdapter.setRequestDeadline. */
+  setRequestDeadline(deadlineAt: number | undefined): void {
+    this.client.setDeadline(deadlineAt);
+    this.auth.setDeadline(deadlineAt);
+  }
+
   async authenticate(credentials: Record<string, unknown>): Promise<void> {
     await this.auth.authenticate(credentials as LightspeedCredentials & Record<string, unknown>);
     this.client.updateCredentials(this.auth.getCredentials());

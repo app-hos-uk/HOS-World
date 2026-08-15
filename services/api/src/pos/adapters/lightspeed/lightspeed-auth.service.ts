@@ -14,15 +14,35 @@ export type LightspeedRedisLock = {
  * Uses in-process single-flight plus optional Redis lock so multi-replica
  * deploys do not race refresh-token rotation.
  */
+const REFRESH_TIMEOUT_MS = 10_000;
+/** Skip peer-lock waiting when the caller has less budget than this to spare. */
+const LOCK_WAIT_MIN_BUDGET_MS = 4_000;
+
 export class LightspeedAuthService {
   private readonly logger = new Logger(LightspeedAuthService.name);
   private refreshInFlight: Promise<void> | null = null;
   private redisLock?: LightspeedRedisLock;
+  private deadlineAt?: number;
 
   constructor(private creds: LightspeedCredentials) {}
 
   setRedisLock(redis: LightspeedRedisLock): void {
     this.redisLock = redis;
+  }
+
+  /** Absolute epoch-ms budget shared with the API client; `undefined` clears it. */
+  setDeadline(deadlineAt: number | undefined): void {
+    this.deadlineAt = deadlineAt;
+  }
+
+  private remainingMs(): number | null {
+    return this.deadlineAt == null ? null : this.deadlineAt - Date.now();
+  }
+
+  /** Refresh timeout, never longer than the remaining overall budget. */
+  private refreshTimeoutMs(): number {
+    const remaining = this.remainingMs();
+    return remaining == null ? REFRESH_TIMEOUT_MS : Math.min(REFRESH_TIMEOUT_MS, remaining);
   }
 
   getCredentials(): LightspeedCredentials {
@@ -104,13 +124,17 @@ export class LightspeedAuthService {
 
       if (!heldLock) {
         // Another replica is refreshing. Wait, then refresh ourselves as fallback
-        // (in-memory tokens are not shared across replicas).
-        await new Promise((r) => setTimeout(r, 750));
-        await new Promise((r) => setTimeout(r, 750));
-        try {
-          heldLock = await this.redisLock.setNX(lockKey, '1', 30);
-        } catch {
-          heldLock = false;
+        // (in-memory tokens are not shared across replicas). Interactive callers with
+        // little budget left skip the wait and refresh straight away.
+        const remaining = this.remainingMs();
+        if (remaining == null || remaining > LOCK_WAIT_MIN_BUDGET_MS) {
+          await new Promise((r) => setTimeout(r, 750));
+          await new Promise((r) => setTimeout(r, 750));
+          try {
+            heldLock = await this.redisLock.setNX(lockKey, '1', 30);
+          } catch {
+            heldLock = false;
+          }
         }
         if (!heldLock) {
           this.logger.debug(
@@ -129,8 +153,9 @@ export class LightspeedAuthService {
         client_secret: clientSecret,
       });
 
+      const timeoutMs = this.refreshTimeoutMs();
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10_000);
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       let res: Response;
       try {
         res = await fetch(url, {
@@ -140,13 +165,13 @@ export class LightspeedAuthService {
           signal: controller.signal,
         });
       } catch (e) {
-        clearTimeout(timeoutId);
-        if ((e as Error)?.name === 'AbortError') {
-          throw new Error('Lightspeed token refresh timed out after 10s');
+        if (controller.signal.aborted && (e as Error)?.name === 'AbortError') {
+          throw new Error(`Lightspeed token refresh timed out after ${timeoutMs}ms`);
         }
         throw e;
+      } finally {
+        clearTimeout(timeoutId);
       }
-      clearTimeout(timeoutId);
 
       if (!res.ok) {
         const t = await res.text();

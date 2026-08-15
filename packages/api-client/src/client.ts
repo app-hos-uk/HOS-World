@@ -24,6 +24,16 @@ import type {
   PaginatedDataResponse,
 } from './influencer-types';
 
+/** Default client-side request timeout; override per call via `timeoutMs`. */
+const DEFAULT_REQUEST_TIMEOUT_MS = 15000;
+
+/**
+ * Issuing a POS voucher burns points and creates a gift card in Lightspeed over several
+ * sequential provider calls, so it needs longer than the default. The server bounds its
+ * own work below this, so a timeout here means the server really did stop.
+ */
+const POS_VOUCHER_TIMEOUT_MS = 45000;
+
 export class ApiClient {
   private baseUrl: string;
   private getToken: () => string | null;
@@ -120,8 +130,10 @@ export class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit & { timeoutMs?: number; noRetryStatuses?: number[] } = {}
   ): Promise<T> {
+    const { timeoutMs: timeoutOverrideMs, noRetryStatuses, ...fetchOptions } = options;
+    const timeoutMs = timeoutOverrideMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
     // Validate baseUrl at runtime (when API call is made)
     if (!this.baseUrl) {
       const errorMessage = 'API base URL is not configured. Please set NEXT_PUBLIC_API_URL environment variable.';
@@ -158,10 +170,10 @@ export class ApiClient {
           nextHeaders['Authorization'] = `Bearer ${token}`;
         }
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
         try {
           const res = await fetch(url, {
-            ...options,
+            ...fetchOptions,
             headers: nextHeaders,
             signal: controller.signal,
             credentials: 'include',
@@ -188,7 +200,11 @@ export class ApiClient {
       }
 
       // Retry once on 5xx server errors (transient failures)
-      if (response.status >= 500 && !isAuthEndpoint) {
+      if (
+        response.status >= 500 &&
+        !isAuthEndpoint &&
+        !noRetryStatuses?.includes(response.status)
+      ) {
         await new Promise(resolve => setTimeout(resolve, 1000));
         response = await doFetch();
       }
@@ -2752,6 +2768,11 @@ export class ApiClient {
       headers: body.idempotencyKey
         ? { 'Idempotency-Key': body.idempotencyKey }
         : undefined,
+      timeoutMs: POS_VOUCHER_TIMEOUT_MS,
+      // A 503 from this endpoint is a decided answer ("issuance failed, retry with
+      // voucherId"), so re-sending only delays showing staff that outcome. Gateway
+      // errors like 502/504 still get the usual single retry.
+      noRetryStatuses: [503],
     });
   }
 

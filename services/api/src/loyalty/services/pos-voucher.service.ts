@@ -26,6 +26,19 @@ import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 const CARD_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CARD_LENGTH = 12;
 
+/**
+ * Time budgets for the Lightspeed calls in a redemption. Staff are at the till with a
+ * customer, so the endpoint must answer while the caller is still listening — an
+ * unbounded flow completes after the HTTP client has timed out, leaving staff with an
+ * error for a voucher that was in fact issued.
+ *
+ * Each phase gets its own budget: the recovery phase must still run after issuance has
+ * spent its own, since it decides whether points may be safely restored.
+ */
+const ISSUE_BUDGET_MS = 20_000;
+const FUNDED_CHECK_BUDGET_MS = 8_000;
+const VOID_BUDGET_MS = 6_000;
+
 @Injectable()
 export class PosVoucherService {
   private readonly logger = new Logger(PosVoucherService.name);
@@ -354,7 +367,7 @@ export class PosVoucherService {
     }
 
     const amount = Number(voucher.amount);
-    const adapter = await this.buildAdapter(connection);
+    const adapter = await this.buildAdapter(connection, ISSUE_BUDGET_MS);
 
     try {
       const { externalTransactionId, expiresAt } = await this.createOrReloadGiftCard(
@@ -383,20 +396,24 @@ export class PosVoucherService {
         `POS voucher ${voucher.id} gift card issue failed (clientId=${voucher.clientId}): ${msg}`,
       );
 
-      // Confirm Lightspeed does not hold funded value before restoring points.
-      const funded = await this.isGiftCardFunded(
+      // Establish what Lightspeed holds before deciding whether points may go back.
+      // Fresh budget: issuance may have exhausted its own, and skipping this check
+      // would risk restoring points for a card that is actually funded.
+      this.setBudget(adapter, FUNDED_CHECK_BUDGET_MS);
+      const funding = await this.getGiftCardFundingState(
         adapter,
         voucher.cardNumber,
         amount,
         voucher.clientId,
       );
-      if (funded.funded) {
+
+      if (funding.state === 'FUNDED') {
         // Partial success: mark ISSUED, keep burn — do not reverse points.
         const updated = await this.prisma.loyaltyPosVoucher.update({
           where: { id: voucher.id },
           data: {
             status: 'ISSUED',
-            externalTransactionId: funded.externalTransactionId,
+            externalTransactionId: funding.externalTransactionId,
             issuedAt: new Date(),
             metadata: {
               recoveredAfterError: msg.slice(0, 500),
@@ -411,8 +428,34 @@ export class PosVoucherService {
         return this.toResult(updated, updated.redemption.pointsSpent);
       }
 
-      // Best-effort void if a zero/empty card was created without our client funding.
+      // Funding could not be established. Leave the card alone and keep the burn: a
+      // retry re-uses the same clientId, so it resolves to the original card whether or
+      // not it was funded. Restoring points here could pair them with a funded card.
+      if (funding.state === 'UNKNOWN') {
+        await this.prisma.loyaltyPosVoucher.update({
+          where: { id: voucher.id },
+          data: {
+            status: 'FAILED',
+            metadata: {
+              lastError: msg.slice(0, 500),
+              fundingUnverified: funding.reason?.slice(0, 500) ?? true,
+              needsManualReview: true,
+            } as Prisma.InputJsonValue,
+          },
+        });
+        this.metrics.incrementCounter('loyalty_pos_voucher_failed_total');
+        this.metrics.incrementCounter('loyalty_pos_voucher_funding_unverified_total');
+        this.logger.error(
+          `POS voucher ${voucher.id}: could not verify Lightspeed funding (${funding.reason}) — points kept, flagged for review`,
+        );
+        throw new ServiceUnavailableException(
+          `Failed to issue POS gift card: ${msg}. Lightspeed could not be reached to confirm the card, so points were NOT restored — retry with voucherId=${voucher.id}`,
+        );
+      }
+
+      // Confirmed unfunded: void the empty card, then it is safe to restore points.
       try {
+        this.setBudget(adapter, VOID_BUDGET_MS);
         await adapter.voidGiftCard(voucher.cardNumber);
       } catch (voidErr) {
         this.logger.warn(
@@ -495,19 +538,29 @@ export class PosVoucherService {
     };
   }
 
-  /** True when Lightspeed already holds our funded value for this clientId. */
-  private async isGiftCardFunded(
+  /**
+   * Whether Lightspeed already holds our funded value for this clientId.
+   *
+   * UNKNOWN is deliberately distinct from NOT_FUNDED: if we cannot reach Lightspeed we
+   * must not assume the card is empty, because voiding is best-effort and restoring the
+   * points on top of a card that is in fact funded hands out the value twice.
+   */
+  private async getGiftCardFundingState(
     adapter: POSAdapter,
     cardNumber: string,
     amount: number,
     clientId: string,
-  ): Promise<{ funded: boolean; externalTransactionId?: string }> {
+  ): Promise<{
+    state: 'FUNDED' | 'NOT_FUNDED' | 'UNKNOWN';
+    externalTransactionId?: string;
+    reason?: string;
+  }> {
     try {
       const existing = await adapter.getGiftCardByNumber(cardNumber);
-      if (!existing) return { funded: false };
+      if (!existing) return { state: 'NOT_FUNDED' };
       const prior = existing.transactions?.find((t) => t.clientId === clientId);
       if (prior?.id) {
-        return { funded: true, externalTransactionId: prior.id };
+        return { state: 'FUNDED', externalTransactionId: prior.id };
       }
       // Fresh create often funds via ACTIVATION without clientId — accept only when
       // balance matches and there are no other client-tagged txs (our card number).
@@ -517,24 +570,38 @@ export class PosVoucherService {
       if (!hasOtherClient && Number(existing.balance) >= amount - 0.001) {
         const activation = existing.transactions?.find((t) => t.type === 'ACTIVATION');
         return {
-          funded: true,
+          state: 'FUNDED',
           externalTransactionId: activation?.id || existing.id,
         };
       }
-      return { funded: false };
-    } catch {
-      return { funded: false };
+      return { state: 'NOT_FUNDED' };
+    } catch (e) {
+      return {
+        state: 'UNKNOWN',
+        reason: e instanceof Error ? e.message : 'gift card lookup failed',
+      };
     }
   }
 
-  private async buildAdapter(connection: {
-    provider: string;
-    credentials: string;
-  }): Promise<POSAdapter> {
+  private async buildAdapter(
+    connection: {
+      provider: string;
+      credentials: string;
+    },
+    budgetMs?: number,
+  ): Promise<POSAdapter> {
     const creds = this.encryption.decryptJson<Record<string, unknown>>(connection.credentials);
     const adapter = this.factory.create(connection.provider, connection.credentials);
+    if (budgetMs != null) {
+      this.setBudget(adapter, budgetMs);
+    }
     await adapter.authenticate(creds);
     return adapter;
+  }
+
+  /** Give the adapter a fresh budget for the next phase of work. */
+  private setBudget(adapter: POSAdapter, budgetMs: number): void {
+    adapter.setRequestDeadline?.(Date.now() + budgetMs);
   }
 
   private async resolveRedeemValue(
