@@ -1,6 +1,9 @@
-import { IsBoolean, IsInt, IsObject, IsOptional, IsString, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsObject, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 
 export class UpdatePosConnectionDto {
+  @IsOptional()
+  @IsUUID()
+  storeId?: string;
   @IsOptional()
   @IsObject()
   credentials?: Record<string, unknown>;

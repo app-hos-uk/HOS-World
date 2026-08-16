@@ -20,6 +20,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { PrismaService } from '../database/prisma.service';
 import { LoyaltyService } from './loyalty.service';
 import { AdminLoyaltyAdjustDto } from './dto/admin-adjust.dto';
+import { ReassignVoucherDto } from './dto/reassign-voucher.dto';
 import {
   UpdateLoyaltyTierDto,
   CreateEarnRuleDto,
@@ -509,6 +510,37 @@ export class LoyaltyAdminController {
   async retryPosVoucher(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.posVouchers.retryFailedVoucher(id);
     return { data, message: 'Voucher issuance retried' };
+  }
+
+  @Post('pos-vouchers/:id/reassign')
+  @ApiOperation({ summary: 'Reassign a POS voucher to a different store (admin only)' })
+  async reassignPosVoucher(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: ReassignVoucherDto,
+  ): Promise<ApiResponse<unknown>> {
+    const voucher = await this.prisma.loyaltyPosVoucher.findUnique({ where: { id } });
+    if (!voucher) throw new BadRequestException('Voucher not found');
+    if (voucher.status === 'ISSUED') throw new BadRequestException('Cannot reassign an ISSUED voucher');
+    const store = await this.prisma.store.findUnique({
+      where: { id: body.storeId },
+      include: { posConnection: true },
+    });
+    if (!store?.isActive) throw new BadRequestException('Target store not found or inactive');
+    if (!store.posConnection?.isActive) throw new BadRequestException('Target store has no active POS connection');
+
+    const metadata = (voucher.metadata as Record<string, unknown>) ?? {};
+    delete metadata.lightspeedPermission;
+    delete metadata.failedAt;
+
+    const data = await this.prisma.loyaltyPosVoucher.update({
+      where: { id },
+      data: {
+        storeId: body.storeId,
+        currency: store.currency || voucher.currency,
+        metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+      },
+    });
+    return { data, message: 'Voucher reassigned' };
   }
 
   @Get('identity-reviews')

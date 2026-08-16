@@ -133,6 +133,25 @@ export class PosAdminController {
         JSON.stringify({ ...current, ...dto.credentials }),
       );
     }
+    if (dto.storeId !== undefined) {
+      const targetStore = await this.prisma.store.findUnique({
+        where: { id: dto.storeId },
+        include: { seller: true },
+      });
+      if (!targetStore) throw new BadRequestException('Target store not found');
+      const existingConn = await this.prisma.pOSConnection.findFirst({
+        where: { storeId: dto.storeId, id: { not: id } },
+      });
+      if (existingConn) {
+        throw new BadRequestException('Target store already has a POS connection');
+      }
+      update.storeId = dto.storeId;
+      let sellerId = targetStore.sellerId;
+      if (!sellerId) {
+        sellerId = await this.platformSeller.resolvePlatformRetailSellerId();
+      }
+      update.sellerId = sellerId;
+    }
     if (dto.externalOutletId !== undefined) update.externalOutletId = dto.externalOutletId;
     if (dto.externalRegisterId !== undefined) update.externalRegisterId = dto.externalRegisterId;
     if (dto.webhookSecret !== undefined) update.webhookSecret = dto.webhookSecret;
