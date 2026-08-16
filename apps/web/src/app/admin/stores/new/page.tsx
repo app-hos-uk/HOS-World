@@ -135,6 +135,7 @@ function AdminStoreNewContent() {
       'outlets:read',
       'retailer:read',
       'inventory:read',
+      'gift_cards:read', 'gift_cards:write:issue', 'gift_cards:write:redeem',
     ].join(' ');
     window.location.href =
       `https://secure.retail.lightspeed.app/connect` +

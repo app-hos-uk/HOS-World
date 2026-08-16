@@ -117,7 +117,15 @@ export default function StoreLookupPage() {
       toast.success('Voucher redemption submitted');
       setRedeemPoints('');
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Redeem failed');
+      const msg = e instanceof Error ? e.message : 'Redeem failed';
+      const isPermission = /permission|not authorized|403/i.test(msg);
+      if (isPermission) {
+        toast.error(
+          'The Lightspeed POS user does not have gift card permissions. Please contact your admin to update the Lightspeed user role.',
+        );
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setRedeemingId(null);
     }

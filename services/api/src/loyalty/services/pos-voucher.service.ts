@@ -1,9 +1,11 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
   ServiceUnavailableException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { LoyaltyTxType, Prisma } from '@prisma/client';
@@ -294,6 +296,25 @@ export class PosVoucherService {
       throw new BadRequestException('Store has no active POS connection');
     }
 
+    // The prior attempt failed with a Lightspeed 403 — only block retries if the POS
+    // connection has not been updated since the failure (i.e. admin has not reconnected).
+    const meta = voucher.metadata as Record<string, unknown> | null;
+    if (meta?.lightspeedPermission === true) {
+      const failedAt = typeof meta.failedAt === 'string' ? new Date(meta.failedAt) : null;
+      const connUpdated = voucher.store.posConnection?.updatedAt;
+      const reconnectedSinceFailure =
+        failedAt && connUpdated && connUpdated.getTime() > failedAt.getTime();
+      if (!reconnectedSinceFailure) {
+        throw new ForbiddenException(
+          'The previous attempt failed because the Lightspeed POS user does not have gift card management permissions. ' +
+            'An admin must fix the Lightspeed user role or reconnect the POS before retrying.',
+        );
+      }
+      this.logger.log(
+        `POS voucher ${voucher.id}: POS connection updated after permission failure — allowing retry`,
+      );
+    }
+
     const points = voucher.redemption.pointsSpent;
 
     if (voucher.redemption.status === 'REVERSED') {
@@ -411,6 +432,88 @@ export class PosVoucherService {
         `POS voucher ${voucher.id} gift card issue failed (clientId=${voucher.clientId}): ${msg}`,
       );
 
+      // Lightspeed 403 = the OAuth user/token lacks gift card management permissions.
+      // The card may have been created (ACTIVATION) before a subsequent giftCardTransaction
+      // failed, so we must check Lightspeed before deciding on point reversal.
+      if (this.isLightspeedPermissionError(msg)) {
+        this.setBudget(adapter, FUNDED_CHECK_BUDGET_MS);
+        const funding = await this.getGiftCardFundingState(
+          adapter,
+          voucher.cardNumber,
+          amount,
+          voucher.clientId,
+        );
+
+        if (funding.state === 'FUNDED') {
+          const updated = await this.prisma.loyaltyPosVoucher.update({
+            where: { id: voucher.id },
+            data: {
+              status: 'ISSUED',
+              externalTransactionId: funding.externalTransactionId,
+              issuedAt: new Date(),
+              metadata: {
+                recoveredAfterError: msg.slice(0, 500),
+                lightspeedPermission: true,
+              } as Prisma.InputJsonValue,
+            },
+            include: { redemption: true },
+          });
+          this.metrics.incrementCounter('loyalty_pos_voucher_issued_total');
+          this.logger.warn(
+            `POS voucher ${voucher.id}: Lightspeed card funded despite 403 — marked ISSUED, burn kept`,
+          );
+          return this.toResult(updated, updated.redemption.pointsSpent);
+        }
+
+        let pointsRestored = false;
+        await this.prisma.loyaltyPosVoucher.update({
+          where: { id: voucher.id },
+          data: {
+            status: 'FAILED',
+            metadata: {
+              lastError: msg.slice(0, 500),
+              lightspeedPermission: true,
+              failedAt: new Date().toISOString(),
+            } as Prisma.InputJsonValue,
+          },
+        });
+        this.metrics.incrementCounter('loyalty_pos_voucher_failed_total');
+
+        if (funding.state === 'NOT_FUNDED') {
+          try {
+            await this.reverseBurn(
+              voucher.membershipId,
+              voucher.redemption.pointsSpent,
+              voucher.redemptionId,
+              voucher.storeId,
+            );
+            pointsRestored = true;
+          } catch (revErr) {
+            this.logger.error(
+              `Failed to reverse burn for voucher ${voucher.id}: ${
+                revErr instanceof Error ? revErr.message : 'unknown'
+              }`,
+            );
+          }
+        } else {
+          this.logger.warn(
+            `POS voucher ${voucher.id}: funding state UNKNOWN after 403 — keeping burn to avoid double-spend`,
+          );
+        }
+
+        const pointsMsg = pointsRestored
+          ? 'Points have been restored.'
+          : funding.state === 'UNKNOWN'
+            ? 'Points were NOT restored because we could not confirm the gift card is empty — contact support.'
+            : 'Points could not be restored automatically — contact support.';
+
+        throw new ForbiddenException(
+          'The Lightspeed POS user connected to this store does not have permission to manage gift cards. ' +
+            'An admin must update the Lightspeed user role to include gift card management, or reconnect the POS with a user that has this permission. ' +
+            pointsMsg,
+        );
+      }
+
       // Establish what Lightspeed holds before deciding whether points may go back.
       // Fresh budget: issuance may have exhausted its own, and skipping this check
       // would risk restoring points for a card that is actually funded.
@@ -489,6 +592,7 @@ export class PosVoucherService {
       });
       this.metrics.incrementCounter('loyalty_pos_voucher_failed_total');
 
+      let generalPointsRestored = false;
       try {
         await this.reverseBurn(
           voucher.membershipId,
@@ -496,6 +600,7 @@ export class PosVoucherService {
           voucher.redemptionId,
           voucher.storeId,
         );
+        generalPointsRestored = true;
       } catch (revErr) {
         this.logger.error(
           `Failed to reverse burn for voucher ${voucher.id}: ${
@@ -504,8 +609,21 @@ export class PosVoucherService {
         );
       }
 
+      const restoredSuffix = generalPointsRestored
+        ? 'Points have been restored.'
+        : 'Points could not be restored automatically — contact support.';
+
+      // Upstream auth (403) or validation (400–422) errors are permanent — surface as
+      // 422 so the client does not auto-retry a non-transient failure.
+      const upstreamStatus = this.extractLightspeedStatus(msg);
+      if (upstreamStatus !== null && upstreamStatus >= 400 && upstreamStatus < 500) {
+        throw new UnprocessableEntityException(
+          `Lightspeed rejected the gift card request (${upstreamStatus}): ${msg}. ${restoredSuffix} Retry with voucherId=${voucher.id}`,
+        );
+      }
+
       throw new ServiceUnavailableException(
-        `Failed to issue POS gift card: ${msg}. Points have been restored where possible; retry with voucherId=${voucher.id}`,
+        `Failed to issue POS gift card: ${msg}. ${restoredSuffix} Retry with voucherId=${voucher.id}`,
       );
     }
   }
@@ -728,6 +846,17 @@ export class PosVoucherService {
     }
 
     throw new NotFoundException('Member not found');
+  }
+
+  /** Lightspeed 403 "not authorized to perform action" — permanent permissions gap. */
+  private isLightspeedPermissionError(msg: string): boolean {
+    return /Lightspeed API 403/i.test(msg) && /not authorized/i.test(msg);
+  }
+
+  /** Extract the HTTP status code from a "Lightspeed API NNN: …" error message. */
+  private extractLightspeedStatus(msg: string): number | null {
+    const m = msg.match(/Lightspeed API (\d{3})/i);
+    return m ? Number(m[1]) : null;
   }
 
   private toResult(
