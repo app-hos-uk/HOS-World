@@ -105,7 +105,7 @@ export class PaymentsService {
     // If gift-card redemptions fully cover the order total, complete the order without
     // creating a Stripe payment intent. This prevents orders from getting stuck in PENDING.
     if (paymentAmount <= 0) {
-      await this.markPaymentAsPaid(order, 'gift_card_full_coverage', 0);
+      await this.markPaymentAsPaid(order, `gift_card_full_coverage_${order.id}`, 0);
       this.logger.log(`Order ${order.id} fully covered by gift cards — marked PAID`);
       return {
         paid: true,
