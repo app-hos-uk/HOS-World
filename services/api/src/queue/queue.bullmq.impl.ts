@@ -43,6 +43,7 @@ export enum JobType {
   BRAND_CAMPAIGN_REPORT = 'brand:campaign-report',
   LOYALTY_ANALYTICS_SNAPSHOT = 'loyalty:analytics-snapshot',
   LOYALTY_CLV_RECOMPUTE = 'loyalty:clv-recompute',
+  LOYALTY_VOUCHER_TTL = 'loyalty:voucher-ttl',
   CAMPAIGN_ATTRIBUTION_COMPUTE = 'loyalty:campaign-attribution',
   CLICK_COLLECT_EXPIRY = 'cc:expiry',
   CLICK_COLLECT_REMINDER = 'cc:reminder',

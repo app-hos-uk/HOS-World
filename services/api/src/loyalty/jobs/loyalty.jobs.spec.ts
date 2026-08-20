@@ -30,6 +30,9 @@ describe('LoyaltyJobsService points expiry', () => {
   const wallet = { applyDelta: jest.fn().mockResolvedValue({ applied: true }) };
   const settings = { getResolved: jest.fn() };
 
+  const posVouchers = { expireUnusedVouchers: jest.fn().mockResolvedValue(0) };
+  const posOtp = { purgeExpired: jest.fn().mockResolvedValue(0) };
+
   async function runExpiry(opts: {
     expirable: Array<{ id: string; membershipId: string; points: number; createdAt: Date }>;
     agedCredits: number;
@@ -61,6 +64,8 @@ describe('LoyaltyJobsService points expiry', () => {
       { isEnabled: () => true } as any,
       { recomputeAll: jest.fn() } as any,
       settings as any,
+      posVouchers as any,
+      posOtp as any,
     );
 
     await service.onModuleInit();
@@ -209,6 +214,8 @@ describe('LoyaltyJobsService birthday bonus', () => {
       { isEnabled: () => true } as any,
       { recomputeAll: jest.fn() } as any,
       { getResolved: jest.fn().mockResolvedValue({ settings: { pointsExpiryMonths: 0 } }) } as any,
+      { expireUnusedVouchers: jest.fn().mockResolvedValue(0) } as any,
+      { purgeExpired: jest.fn().mockResolvedValue(0) } as any,
     );
 
     await service.onModuleInit();

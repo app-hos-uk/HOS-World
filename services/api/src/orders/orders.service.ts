@@ -40,6 +40,7 @@ import {
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
+import { GiftCardsService } from '../gift-cards/gift-cards.service';
 
 @Injectable()
 export class OrdersService {
@@ -312,31 +313,39 @@ export class OrdersService {
 
     for (const redemption of redemptions) {
       try {
-        const card = redemption.giftCard;
-        const amount = Number(redemption.amount);
-        const newBalance = Number(card.balance) + amount;
-        const expired = !!card.expiresAt && card.expiresAt < new Date();
-        const reopen = card.status === 'REDEEMED' && !expired;
+        if (this.giftCardsService) {
+          await this.giftCardsService.reverseRedemptionOnOrderCancel(
+            redemption,
+            orderId,
+            orderNumber,
+          );
+        } else {
+          const card = redemption.giftCard;
+          const amount = Number(redemption.amount);
+          const newBalance = Number(card.balance) + amount;
+          const expired = !!card.expiresAt && card.expiresAt < new Date();
+          const reopen = card.status === 'REDEEMED' && !expired;
 
-        await this.prisma.$transaction([
-          this.prisma.giftCard.update({
-            where: { id: redemption.giftCardId },
-            data: {
-              balance: { increment: amount },
-              ...(reopen ? { status: 'ACTIVE', redeemedAt: null } : {}),
-            },
-          }),
-          this.prisma.giftCardTransaction.create({
-            data: {
-              giftCard: { connect: { id: redemption.giftCardId } },
-              order: { connect: { id: orderId } },
-              type: 'REFUND',
-              amount,
-              balanceAfter: newBalance,
-              notes: `Auto-reversed on order cancel (${orderNumber})`,
-            },
-          }),
-        ]);
+          await this.prisma.$transaction([
+            this.prisma.giftCard.update({
+              where: { id: redemption.giftCardId },
+              data: {
+                balance: { increment: amount },
+                ...(reopen ? { status: 'ACTIVE', redeemedAt: null } : {}),
+              },
+            }),
+            this.prisma.giftCardTransaction.create({
+              data: {
+                giftCard: { connect: { id: redemption.giftCardId } },
+                order: { connect: { id: orderId } },
+                type: 'REFUND',
+                amount,
+                balanceAfter: newBalance,
+                notes: `Auto-reversed on order cancel (${orderNumber})`,
+              },
+            }),
+          ]);
+        }
       } catch (err) {
         this.logger.error(
           `Failed to reverse gift-card redemption for order ${orderNumber}: ${err}`,
@@ -471,6 +480,7 @@ export class OrdersService {
     @Inject(forwardRef(() => VendorLedgerService))
     private vendorLedgerService?: VendorLedgerService,
     @Optional() private refundsService?: RefundsService,
+    @Optional() private giftCardsService?: GiftCardsService,
   ) {
     this.defaultCommissionRate = this.configService.get<number>(
       'DEFAULT_COMMISSION_RATE',

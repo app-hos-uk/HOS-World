@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/useToast';
 
 type SearchResult = {
   userId: string;
+  membershipId: string;
   firstName: string | null;
   lastInitial: string | null;
   maskedEmail: string | null;
@@ -33,6 +34,15 @@ export default function StoreLookupPage() {
   const [searching, setSearching] = useState(false);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [redeemPoints, setRedeemPoints] = useState('');
+  const [terminalId, setTerminalId] = useState('');
+  const [otpSentFor, setOtpSentFor] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState('');
+  const [lastVoucher, setLastVoucher] = useState<{
+    cardNumber: string;
+    amount: number;
+    currency: string;
+    qrPayload?: string;
+  } | null>(null);
 
   const needsAdminStore = user?.role === 'ADMIN' && !user.storeId;
 
@@ -89,6 +99,21 @@ export default function StoreLookupPage() {
     }
   };
 
+  const sendOtp = async (row: SearchResult) => {
+    const storeId = user?.storeId || adminStoreId.trim();
+    if (!storeId) {
+      toast.error('Store ID required');
+      return;
+    }
+    try {
+      await apiClient.sendLoyaltyRedeemOtp({ membershipId: row.membershipId, storeId });
+      setOtpSentFor(row.userId);
+      toast.success('Verification code sent to customer email');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Could not send OTP');
+    }
+  };
+
   const redeem = async (row: SearchResult) => {
     const points = Number(redeemPoints);
     if (!Number.isInteger(points) || points < 1) {
@@ -104,18 +129,44 @@ export default function StoreLookupPage() {
       toast.error('Store ID required for redemption');
       return;
     }
+    if (!terminalId.trim()) {
+      toast.error('Enter till terminal ID');
+      return;
+    }
+    if (otpSentFor !== row.userId && !otpCode.trim()) {
+      toast.error('Send and enter customer OTP first');
+      return;
+    }
 
     setRedeemingId(row.userId);
     try {
-      const idempotencyKey = `web:${storeId}:${row.userId}:${points}:${Date.now()}`;
-      await apiClient.redeemLoyaltyPosVoucher({
+      const idempotencyKey = `${terminalId.trim()}:${storeId}:${row.userId}:${points}:${Math.floor(Date.now() / 300000)}`;
+      const r = await apiClient.redeemLoyaltyPosVoucher({
         points,
         storeId,
+        membershipId: row.membershipId,
         cardNumber: row.cardNumber,
         idempotencyKey,
+        terminalId: terminalId.trim(),
+        otpCode: otpCode.trim() || undefined,
       });
-      toast.success('Voucher redemption submitted');
+      const data = r.data as {
+        cardNumber?: string;
+        amount?: number;
+        currency?: string;
+        qrPayload?: string;
+      };
+      if (data?.cardNumber) {
+        setLastVoucher({
+          cardNumber: data.cardNumber,
+          amount: data.amount ?? 0,
+          currency: data.currency ?? 'USD',
+          qrPayload: data.qrPayload,
+        });
+      }
+      toast.success('Voucher issued — show customer the card number');
       setRedeemPoints('');
+      setOtpCode('');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Redeem failed';
       const isPermission = /permission|not authorized|403/i.test(msg);
@@ -177,6 +228,16 @@ export default function StoreLookupPage() {
             />
           </label>
         )}
+
+        <label className="block text-sm">
+          <span className="text-hos-text-secondary">Till terminal ID</span>
+          <input
+            className={INPUT_CLS}
+            value={terminalId}
+            onChange={(e) => setTerminalId(e.target.value)}
+            placeholder="e.g. TILL-01"
+          />
+        </label>
 
         <label className="block text-sm">
           <span className="text-hos-text-secondary">Search</span>
@@ -243,6 +304,23 @@ export default function StoreLookupPage() {
                 </label>
                 <button
                   type="button"
+                  onClick={() => void sendOtp(row)}
+                  className="rounded-md border border-hos-border px-3 py-2 text-sm"
+                >
+                  Send OTP
+                </button>
+                <label className="block text-sm flex-1 min-w-[6rem]">
+                  <span className="text-hos-text-secondary">Customer OTP</span>
+                  <input
+                    className={INPUT_CLS}
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value)}
+                    placeholder="6 digits"
+                    maxLength={6}
+                  />
+                </label>
+                <button
+                  type="button"
                   disabled={redeemingId === row.userId}
                   onClick={() => void redeem(row)}
                   className="rounded-md bg-emerald-700 px-3 py-2 text-sm text-white disabled:opacity-50"
@@ -258,6 +336,19 @@ export default function StoreLookupPage() {
           </div>
         ))}
       </div>
+
+      {lastVoucher && (
+        <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4 space-y-2">
+          <p className="text-sm font-medium text-emerald-300">Voucher ready for till</p>
+          <p className="font-mono text-xl tracking-widest">{lastVoucher.cardNumber}</p>
+          <p className="text-sm text-hos-text-secondary">
+            {lastVoucher.currency} {lastVoucher.amount.toFixed(2)}
+          </p>
+          {lastVoucher.qrPayload && (
+            <p className="text-xs text-hos-text-muted break-all">{lastVoucher.qrPayload}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

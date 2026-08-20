@@ -17,6 +17,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { ActivityModule } from '../activity/activity.module';
 import { VendorLedgerModule } from '../vendor-ledger/vendor-ledger.module';
 import { CancellationsModule } from '../cancellations/cancellations.module';
+import { GiftCardsModule } from '../gift-cards/gift-cards.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { CancellationsModule } from '../cancellations/cancellations.module';
     VendorLedgerModule,
     FinanceModule,
     forwardRef(() => CancellationsModule),
+    forwardRef(() => GiftCardsModule),
   ],
   controllers: [OrdersController],
   providers: [OrdersService, OrdersSchedulerService, OrderShippingService],

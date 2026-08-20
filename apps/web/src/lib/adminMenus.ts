@@ -51,6 +51,8 @@ export const menuItems: ShellMenuItem[] = [
       { title: 'Shipments', href: '/admin/shipments', icon: navIcon('truck') },
       { title: 'Shipping Methods', href: '/admin/shipping', icon: navIcon('package') },
       { title: 'Manual Carriers', href: '/admin/shipping/carriers', icon: navIcon('tag') },
+      { title: 'Store Shipments', href: '/admin/store-shipments', icon: navIcon('truck') },
+      { title: 'SKU Customs', href: '/admin/sku-customs', icon: navIcon('tag') },
       { title: 'Click & Collect', href: '/admin/click-collect', icon: navIcon('store') },
       { title: 'Fulfillment Centers', href: '/admin/fulfillment-centers', icon: navIcon('factory') },
       { title: 'Warehouses', href: '/admin/warehouses', icon: navIcon('warehouse') },

@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { DatabaseModule } from '../database/database.module';
 import { QueueModule } from '../queue/queue.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { LoyaltyController } from './loyalty.controller';
 import { LoyaltyAdminController } from './loyalty-admin.controller';
 import { LoyaltyPosController } from './loyalty-pos.controller';
@@ -12,6 +13,8 @@ import { LoyaltyCampaignService } from './services/campaign.service';
 import { LoyaltyReferralService } from './services/referral.service';
 import { LoyaltyEventService } from './services/loyalty-event.service';
 import { PosVoucherService } from './services/pos-voucher.service';
+import { PosVoucherOtpService } from './services/pos-voucher-otp.service';
+import { PosExternalGiftCardService } from './services/pos-external-gift-card.service';
 import { LoyaltySettingsService } from './services/loyalty-settings.service';
 import { LoyaltyReversalService } from './services/loyalty-reversal.service';
 import { LoyaltyBurnEngine } from './engines/burn.engine';
@@ -37,6 +40,7 @@ import { ActivityModule } from '../activity/activity.module';
     ConfigModule,
     FeatureFlagsModule,
     ActivityModule,
+    NotificationsModule,
     forwardRef(() => PosModule),
     forwardRef(() => JourneyModule),
     forwardRef(() => AmbassadorModule),
@@ -68,6 +72,8 @@ import { ActivityModule } from '../activity/activity.module';
     LoyaltyEarnEngine,
     LoyaltyService,
     PosVoucherService,
+    PosVoucherOtpService,
+    PosExternalGiftCardService,
     LoyaltyJobsService,
     LoyaltyListener,
     LoyaltyStaffAuthGuard,
@@ -83,6 +89,7 @@ import { ActivityModule } from '../activity/activity.module';
     PosVoucherService,
     LoyaltySettingsService,
     LoyaltyReversalService,
+    PosExternalGiftCardService,
   ],
 })
 export class LoyaltyModule {}

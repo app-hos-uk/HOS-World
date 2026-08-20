@@ -14,9 +14,12 @@ import { ActivityService } from '../activity/activity.service';
 import { Public } from '../common/decorators/public.decorator';
 import { LoyaltyService } from './loyalty.service';
 import { PosVoucherService } from './services/pos-voucher.service';
+import { PosVoucherOtpService } from './services/pos-voucher-otp.service';
 import { LookupMemberDto } from './dto/lookup-member.dto';
 import { StaffEnrollDto } from './dto/staff-enroll.dto';
 import { RedeemForVoucherDto } from './dto/redeem-for-voucher.dto';
+import { SendRedeemOtpDto } from './dto/send-redeem-otp.dto';
+import { VerifyRedeemOtpDto } from './dto/verify-redeem-otp.dto';
 import { LoyaltyStaffAuthGuard } from './guards/loyalty-staff-auth.guard';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
@@ -26,6 +29,7 @@ export class LoyaltyPosController {
   constructor(
     private loyalty: LoyaltyService,
     private posVouchers: PosVoucherService,
+    private otp: PosVoucherOtpService,
     private activity: ActivityService,
   ) {}
 
@@ -98,10 +102,18 @@ export class LoyaltyPosController {
       body = { ...body, storeId: staffStoreId };
     }
 
-    const data = await this.posVouchers.redeemForVoucher({
-      ...body,
-      idempotencyKey: body.idempotencyKey?.trim() || idempotencyKeyHeader?.trim() || undefined,
-    });
+    const data = await this.posVouchers.redeemForVoucher(
+      {
+        ...body,
+        idempotencyKey: body.idempotencyKey?.trim() || idempotencyKeyHeader?.trim() || undefined,
+      },
+      {
+        staffUserId: req?.user?.id,
+        issuedByUserId: req?.user?.id,
+        staffAssisted: true,
+        otpCode: body.otpCode,
+      },
+    );
 
     // Points are money, so every redemption needs an actor trail — the staff search endpoint
     // already logs mere lookups. Fire-and-forget: an audit write must never fail a redemption
@@ -131,5 +143,44 @@ export class LoyaltyPosController {
       .catch(() => undefined);
 
     return { data, message: 'Voucher issued' };
+  }
+
+  @Public()
+  @Post('pos/redeem-otp/send')
+  @UseGuards(LoyaltyStaffAuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Send OTP to customer for staff-assisted voucher redemption' })
+  @ApiBearerAuth('JWT-auth')
+  async sendRedeemOtp(
+    @Body() body: SendRedeemOtpDto,
+    @Req() req: { user?: { id?: string } },
+  ): Promise<ApiResponse<unknown>> {
+    if (!req.user?.id) throw new BadRequestException('Staff authentication required');
+    const data = await this.otp.sendOtp({
+      membershipId: body.membershipId,
+      storeId: body.storeId,
+      staffUserId: req.user.id,
+    });
+    return { data, message: 'OTP sent' };
+  }
+
+  @Public()
+  @Post('pos/redeem-otp/verify')
+  @UseGuards(LoyaltyStaffAuthGuard)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Verify customer OTP at till' })
+  @ApiBearerAuth('JWT-auth')
+  async verifyRedeemOtp(
+    @Body() body: VerifyRedeemOtpDto,
+    @Req() req: { user?: { id?: string } },
+  ): Promise<ApiResponse<unknown>> {
+    if (!req.user?.id) throw new BadRequestException('Staff authentication required');
+    await this.otp.verifyOtp({
+      membershipId: body.membershipId,
+      storeId: body.storeId,
+      staffUserId: req.user.id,
+      code: body.code,
+    });
+    return { data: { verified: true }, message: 'OTP verified' };
   }
 }

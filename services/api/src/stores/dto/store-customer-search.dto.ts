@@ -34,6 +34,7 @@ export class StoreCustomerSearchDto {
 
 export type StoreCustomerSearchResult = {
   userId: string;
+  membershipId: string;
   firstName: string | null;
   lastInitial: string | null;
   maskedEmail: string | null;

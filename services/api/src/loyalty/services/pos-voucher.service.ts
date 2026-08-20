@@ -24,9 +24,13 @@ import { FeatureFlagsService } from '../../config/feature-flags.service';
 import { PlatformRegionService } from '../../config/platform-region.service';
 import { MetricsService } from '../../monitoring/metrics.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
+import { PosExternalGiftCardService } from './pos-external-gift-card.service';
+import { PosVoucherOtpService } from './pos-voucher-otp.service';
 
 const CARD_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CARD_LENGTH = 12;
+/** Unused in-store vouchers auto-reverse after this TTL (plan default: 4 hours). */
+const VOUCHER_TTL_HOURS = 4;
 
 /**
  * Time budgets for the Lightspeed calls in a redemption. Staff are at the till with a
@@ -40,6 +44,15 @@ const CARD_LENGTH = 12;
 const ISSUE_BUDGET_MS = 20_000;
 const FUNDED_CHECK_BUDGET_MS = 8_000;
 const VOID_BUDGET_MS = 6_000;
+
+export type RedeemVoucherContext = {
+  staffUserId?: string;
+  issuedByUserId?: string;
+  terminalId?: string;
+  /** When true, staff must have verified OTP before burn. */
+  staffAssisted?: boolean;
+  otpCode?: string;
+};
 
 @Injectable()
 export class PosVoucherService {
@@ -56,6 +69,8 @@ export class PosVoucherService {
     private metrics: MetricsService,
     private loyaltySettings: LoyaltySettingsService,
     private platformRegion: PlatformRegionService,
+    private externalGiftCards: PosExternalGiftCardService,
+    private otp: PosVoucherOtpService,
   ) {}
 
   async assertVoucherEnabled(): Promise<void> {
@@ -79,7 +94,10 @@ export class PosVoucherService {
     return out;
   }
 
-  async redeemForVoucher(dto: RedeemForVoucherDto): Promise<{
+  async redeemForVoucher(
+    dto: RedeemForVoucherDto,
+    ctx: RedeemVoucherContext = {},
+  ): Promise<{
     voucherId: string;
     redemptionId: string;
     cardNumber: string;
@@ -87,6 +105,8 @@ export class PosVoucherService {
     currency: string;
     status: string;
     points: number;
+    ttlExpiresAt?: Date | null;
+    qrPayload?: string;
   }> {
     await this.assertVoucherEnabled();
 
@@ -102,6 +122,29 @@ export class PosVoucherService {
     }
 
     const membershipId = await this.resolveMembershipId(dto);
+
+    if (ctx.staffAssisted) {
+      if (!ctx.staffUserId) {
+        throw new BadRequestException('staffUserId is required for staff-assisted redemption');
+      }
+      if (!dto.terminalId?.trim()) {
+        throw new BadRequestException('terminalId is required for staff-assisted redemption');
+      }
+      if (dto.otpCode) {
+        await this.otp.verifyOtp({
+          membershipId,
+          storeId: dto.storeId,
+          staffUserId: ctx.staffUserId,
+          code: dto.otpCode,
+        });
+      } else {
+        await this.otp.assertStaffOtpVerified({
+          membershipId,
+          storeId: dto.storeId,
+          staffUserId: ctx.staffUserId,
+        });
+      }
+    }
     const store = await this.prisma.store.findUnique({
       where: { id: dto.storeId },
       include: { posConnection: true },
@@ -153,6 +196,7 @@ export class PosVoucherService {
           amount,
           currency,
           posConnection: store.posConnection!,
+          audit: this.auditFromContext(ctx, dto.terminalId),
         });
       }
       // Redemption was reversed or missing — fall through to re-burn below.
@@ -186,7 +230,49 @@ export class PosVoucherService {
       currency,
       posConnection: store.posConnection!,
       reverseBurnOnCreateFailure: { points: dto.points },
+      audit: this.auditFromContext(ctx, dto.terminalId),
     });
+  }
+
+  /** Flow A1 — customer-initiated in-store redeem (JWT member). */
+  async redeemInStoreForCustomer(
+    userId: string,
+    dto: { points: number; storeId: string; idempotencyKey?: string },
+  ) {
+    const membership = await this.prisma.loyaltyMembership.findUnique({
+      where: { userId },
+    });
+    if (!membership) throw new NotFoundException('Loyalty membership not found');
+
+    const idempotencyKey = dto.idempotencyKey?.trim();
+    if (!idempotencyKey) {
+      throw new BadRequestException('idempotencyKey is required');
+    }
+
+    return this.redeemForVoucher(
+      {
+        points: dto.points,
+        storeId: dto.storeId,
+        membershipId: membership.id,
+        idempotencyKey,
+      },
+      { issuedByUserId: userId, staffAssisted: false },
+    );
+  }
+
+  private auditFromContext(
+    ctx: RedeemVoucherContext,
+    terminalId?: string,
+  ): {
+    staffUserId?: string;
+    issuedByUserId?: string;
+    terminalId?: string;
+  } {
+    return {
+      staffUserId: ctx.staffUserId,
+      issuedByUserId: ctx.issuedByUserId ?? ctx.staffUserId,
+      terminalId: terminalId?.trim() || ctx.terminalId,
+    };
   }
 
   /**
@@ -200,8 +286,8 @@ export class PosVoucherService {
     amount: number;
     currency: string;
     posConnection: { provider: string; credentials: string };
-    /** Only reverse burn when create fails for a non-unique reason (not race). */
     reverseBurnOnCreateFailure?: { points: number };
+    audit?: { staffUserId?: string; issuedByUserId?: string; terminalId?: string };
   }): Promise<{
     voucherId: string;
     redemptionId: string;
@@ -210,8 +296,11 @@ export class PosVoucherService {
     currency: string;
     status: string;
     points: number;
+    ttlExpiresAt?: Date | null;
+    qrPayload?: string;
   }> {
     const cardNumber = this.generateCardNumber();
+    const ttlExpiresAt = new Date(Date.now() + VOUCHER_TTL_HOURS * 60 * 60 * 1000);
 
     let voucher;
     try {
@@ -225,6 +314,10 @@ export class PosVoucherService {
           currency: params.currency,
           clientId: params.redemptionId,
           status: 'PENDING',
+          ttlExpiresAt,
+          staffUserId: params.audit?.staffUserId,
+          issuedByUserId: params.audit?.issuedByUserId,
+          terminalId: params.audit?.terminalId,
         },
       });
     } catch (e) {
@@ -420,10 +513,14 @@ export class PosVoucherService {
           externalTransactionId,
           issuedAt: new Date(),
           expiresAt: expiresAt ?? undefined,
+          ttlExpiresAt: voucher.ttlExpiresAt ?? new Date(Date.now() + VOUCHER_TTL_HOURS * 60 * 60 * 1000),
         },
         include: { redemption: true },
       });
       this.metrics.incrementCounter('loyalty_pos_voucher_issued_total');
+      await this.externalGiftCards.ensurePointerForVoucher(updated.id).catch((err) => {
+        this.logger.warn(`External gift card pointer failed for ${updated.id}: ${(err as Error).message}`);
+      });
 
       return this.toResult(updated, updated.redemption.pointsSpent);
     } catch (e) {
@@ -867,9 +964,11 @@ export class PosVoucherService {
       amount: Decimal | number;
       currency: string;
       status: string;
+      ttlExpiresAt?: Date | null;
     },
     points: number,
   ) {
+    const qrPayload = `hos-voucher:${voucher.cardNumber}:${voucher.id}`;
     return {
       voucherId: voucher.id,
       redemptionId: voucher.redemptionId,
@@ -878,6 +977,218 @@ export class PosVoucherService {
       currency: voucher.currency,
       status: voucher.status,
       points,
+      ttlExpiresAt: voucher.ttlExpiresAt ?? null,
+      qrPayload,
     };
+  }
+
+  /**
+   * Flow A5 — cancel an ISSUED voucher and restore points (customer or manager).
+   * Issuer cannot cancel their own staff-issued voucher (separation of duties).
+   */
+  async cancelVoucher(params: {
+    voucherId: string;
+    actorUserId: string;
+    actorRole: string;
+    reason?: string;
+  }): Promise<{ status: string; pointsRestored: boolean }> {
+    await this.assertVoucherEnabled();
+
+    const voucher = await this.prisma.loyaltyPosVoucher.findUnique({
+      where: { id: params.voucherId },
+      include: {
+        redemption: true,
+        store: { include: { posConnection: true } },
+        membership: { select: { userId: true } },
+      },
+    });
+    if (!voucher) throw new NotFoundException('Voucher not found');
+    if (voucher.status !== 'ISSUED') {
+      throw new BadRequestException(`Cannot cancel voucher in status ${voucher.status}`);
+    }
+
+    const isOwner = voucher.membership.userId === params.actorUserId;
+    const isAdmin = params.actorRole === 'ADMIN';
+    const isStoreStaff = params.actorRole === 'STORE_STAFF';
+
+    if (isStoreStaff && !isOwner) {
+      const staffUser = await this.prisma.user.findUnique({
+        where: { id: params.actorUserId },
+        select: { storeId: true },
+      });
+      if (!staffUser?.storeId || staffUser.storeId !== voucher.storeId) {
+        throw new ForbiddenException('You can only cancel vouchers from your own store');
+      }
+    }
+
+    if (!isOwner && !isAdmin && !isStoreStaff) {
+      throw new ForbiddenException('You are not allowed to cancel this voucher');
+    }
+    if (
+      voucher.staffUserId &&
+      voucher.staffUserId === params.actorUserId &&
+      isStoreStaff
+    ) {
+      throw new ForbiddenException('Staff who issued a voucher cannot void it — ask a manager');
+    }
+
+    const conn = voucher.store.posConnection;
+    if (!conn?.isActive || !conn.credentials) {
+      throw new BadRequestException('Store has no active POS connection');
+    }
+
+    const adapter = await this.buildAdapter(conn, FUNDED_CHECK_BUDGET_MS);
+    const funding = await this.getGiftCardFundingState(
+      adapter,
+      voucher.cardNumber,
+      Number(voucher.amount),
+      voucher.clientId,
+    );
+
+    if (funding.state === 'FUNDED') {
+      const lsCard = await adapter.getGiftCardByNumber(voucher.cardNumber);
+      const balance = lsCard ? Number(lsCard.balance) : Number(voucher.amount);
+      const original = Number(voucher.amount);
+      if (balance < original - 0.01) {
+        throw new BadRequestException(
+          'Voucher has been partially spent and cannot be cancelled. Remaining balance may be used online.',
+        );
+      }
+    }
+
+    this.setBudget(adapter, VOID_BUDGET_MS);
+    try {
+      await adapter.voidGiftCard(voucher.cardNumber);
+    } catch (e) {
+      this.logger.warn(`voidGiftCard on cancel failed for ${voucher.id}: ${(e as Error).message}`);
+      throw new BadRequestException('Could not void gift card in Lightspeed — voucher not cancelled');
+    }
+
+    let pointsRestored = false;
+    try {
+      await this.reverseBurn(
+        voucher.membershipId,
+        voucher.redemption.pointsSpent,
+        voucher.redemptionId,
+        voucher.storeId,
+      );
+      pointsRestored = true;
+    } catch (burnErr) {
+      this.logger.error(
+        `Points restore failed after void for ${voucher.id}: ${(burnErr as Error).message}. ` +
+          'Gift card is voided — flagging for manual reconciliation.',
+      );
+    }
+
+    await this.prisma.loyaltyPosVoucher.update({
+      where: { id: voucher.id },
+      data: {
+        status: 'REVERSED',
+        reversedAt: new Date(),
+        metadata: {
+          ...(voucher.metadata as object),
+          cancelReason: params.reason?.slice(0, 200) ?? 'user_cancelled',
+          cancelledBy: params.actorUserId,
+          ...(pointsRestored ? {} : { pointsRestoreFailed: true }),
+        } as Prisma.InputJsonValue,
+      },
+    });
+
+    await this.externalGiftCards.markPointerCancelled(voucher.id);
+
+    return { status: 'REVERSED', pointsRestored };
+  }
+
+  /** Sweeper: auto-reverse unused ISSUED vouchers past ttlExpiresAt. */
+  async expireUnusedVouchers(): Promise<number> {
+    const now = new Date();
+    const expired = await this.prisma.loyaltyPosVoucher.findMany({
+      where: {
+        status: 'ISSUED',
+        ttlExpiresAt: { lte: now },
+      },
+      include: {
+        redemption: true,
+        store: { include: { posConnection: true } },
+      },
+      take: 50,
+    });
+
+    let count = 0;
+    for (const voucher of expired) {
+      try {
+        const conn = voucher.store.posConnection;
+        if (conn?.isActive && conn.credentials) {
+          const adapter = await this.buildAdapter(conn, VOID_BUDGET_MS);
+          const funding = await this.getGiftCardFundingState(
+            adapter,
+            voucher.cardNumber,
+            Number(voucher.amount),
+            voucher.clientId,
+          );
+          if (funding.state === 'FUNDED') {
+            const lsCard = await adapter.getGiftCardByNumber(voucher.cardNumber);
+            const balance = lsCard ? Number(lsCard.balance) : 0;
+            if (balance < Number(voucher.amount) - 0.01) {
+              await this.prisma.loyaltyPosVoucher.update({
+                where: { id: voucher.id },
+                data: { status: 'RECONCILED' },
+              });
+              continue;
+            }
+            try {
+              await adapter.voidGiftCard(voucher.cardNumber);
+            } catch (voidErr) {
+              this.logger.warn(
+                `TTL void failed for ${voucher.id}: ${(voidErr as Error).message} — skipping points restore`,
+              );
+              continue;
+            }
+          }
+        } else {
+          this.logger.warn(
+            `TTL expire skipped for ${voucher.id}: POS connection inactive — cannot confirm card is voided, points NOT restored`,
+          );
+          continue;
+        }
+        await this.reverseBurn(
+          voucher.membershipId,
+          voucher.redemption.pointsSpent,
+          voucher.redemptionId,
+          voucher.storeId,
+        );
+        await this.prisma.loyaltyPosVoucher.update({
+          where: { id: voucher.id },
+          data: { status: 'REVERSED', reversedAt: now, metadata: { autoExpired: true } as Prisma.InputJsonValue },
+        });
+        await this.externalGiftCards.markPointerCancelled(voucher.id);
+        count++;
+      } catch (e) {
+        this.logger.warn(`TTL expire failed for ${voucher.id}: ${(e as Error).message}`);
+      }
+    }
+    return count;
+  }
+
+  async listActiveVouchersForUser(userId: string) {
+    const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
+    if (!membership) return [];
+    const rows = await this.prisma.loyaltyPosVoucher.findMany({
+      where: {
+        membershipId: membership.id,
+        status: { in: ['ISSUED', 'PENDING'] },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+    return rows.map((v) => ({
+      id: v.id,
+      cardNumber: v.cardNumber,
+      amount: Number(v.amount),
+      currency: v.currency,
+      status: v.status,
+      ttlExpiresAt: v.ttlExpiresAt,
+      qrPayload: `hos-voucher:${v.cardNumber}:${v.id}`,
+    }));
   }
 }

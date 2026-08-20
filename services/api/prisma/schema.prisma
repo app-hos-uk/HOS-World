@@ -139,6 +139,9 @@ model User {
 
   // Enchanted Circle loyalty
   loyaltyMembership LoyaltyMembership?
+  posVouchersStaff  LoyaltyPosVoucher[] @relation("PosVoucherStaff")
+  posVouchersIssued LoyaltyPosVoucher[] @relation("PosVoucherIssuedBy")
+  storeShipmentRequests StoreShipmentRequest[]
 
   // Account Lockout
   failedLoginAttempts Int       @default(0)
@@ -284,7 +287,8 @@ model Store {
   clickCollectOrders   ClickCollectOrder[]
   onboardingChecklist  StoreOnboardingChecklist?
   loyaltyPosVouchers   LoyaltyPosVoucher[]
-  storeStaff           User[]              @relation("StoreStaff")
+  storeStaff             User[]                  @relation("StoreStaff")
+  storeShipmentRequests  StoreShipmentRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -595,6 +599,7 @@ model Product {
   influencerCommissionRules InfluencerCommissionRule[]
   channels                  ProductChannel[]
   posSaleItems              POSSaleItem[]
+  skuCustomsAttributes      SkuCustomsAttribute[]
   ugcSubmissions            UGCSubmission[]
   views                     ProductView[]
   viewCount                 Int                     @default(0)
@@ -903,6 +908,7 @@ model Address {
   // Relations for orders
   shippingOrders Order[] @relation("ShippingAddress")
   billingOrders  Order[] @relation("BillingAddress")
+  storeShipments StoreShipmentRequest[]
 
   @@index([userId])
   @@index([country])
@@ -1885,9 +1891,19 @@ model GiftCard {
   user          User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
   type          String                @default("digital") // 'digital' or 'physical'
   amount        Decimal               @db.Decimal(10, 2)
-  balance       Decimal               @db.Decimal(10, 2) // Remaining balance
+  balance       Decimal               @db.Decimal(10, 2) // Remaining balance (display cache for EXTERNAL)
   currency      String                @default("USD")
   status        String                @default("ACTIVE") // 'ACTIVE', 'REDEEMED', 'EXPIRED', 'CANCELLED'
+  /// HOS = native ledger; POS_VOUCHER = pointer to Lightspeed gift card
+  source        String                @default("HOS")
+  /// INTERNAL = HOS balance; EXTERNAL = Lightspeed is authoritative
+  balanceSource String                @default("INTERNAL")
+  posVoucherId  String?               @unique
+  posVoucher    LoyaltyPosVoucher?    @relation(fields: [posVoucherId], references: [id], onDelete: SetNull)
+  /// Lightspeed gift card transaction client_id for online REDEEMING idempotency
+  externalClientId        String?
+  externalTransactionId   String?
+  metadata      Json?
   issuedToEmail String?
   issuedToName  String?
   expiresAt     DateTime?
@@ -1901,6 +1917,7 @@ model GiftCard {
   @@index([code])
   @@index([userId])
   @@index([status])
+  @@index([source])
   @@map("gift_cards")
 }
 
@@ -1924,16 +1941,21 @@ model GiftCardTransaction {
 
 // GDPR Consent Log model
 model GDPRConsentLog {
-  id          String    @id @default(uuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  consentType String // "MARKETING", "ANALYTICS", "ESSENTIAL", etc.
-  granted     Boolean
-  grantedAt   DateTime
-  revokedAt   DateTime?
-  ipAddress   String?
-  userAgent   String?
+  id            String    @id @default(uuid())
+  userId        String?
+  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Email captured at till before account exists
+  email         String?
+  consentType   String // "MARKETING", "ANALYTICS", "ESSENTIAL", "SHIPPING", etc.
+  consentSource String? // POS_TILL | WEB
+  granted       Boolean
+  grantedAt     DateTime
+  revokedAt     DateTime?
+  ipAddress     String?
+  userAgent     String?
 
+  @@index([email])
+  @@index([userId])
   @@map("gdpr_consent_logs")
 }
 
@@ -3685,8 +3707,18 @@ model LoyaltyPosVoucher {
   status                String            @default("PENDING") // PENDING | ISSUED | FAILED | REVERSED | RECONCILED
   issuedAt              DateTime?
   expiresAt             DateTime?
+  /// HOS-side TTL for unused in-store vouchers (auto-reverse)
+  ttlExpiresAt          DateTime?
   reversedAt            DateTime?
+  /// Staff who assisted (A2); null for customer-initiated (A1)
+  staffUserId           String?
+  staffUser             User?             @relation("PosVoucherStaff", fields: [staffUserId], references: [id], onDelete: SetNull)
+  /// User who initiated redemption (customer self-service or staff acting on behalf)
+  issuedByUserId        String?
+  issuedByUser          User?             @relation("PosVoucherIssuedBy", fields: [issuedByUserId], references: [id], onDelete: SetNull)
+  terminalId            String?
   metadata              Json?
+  giftCard              GiftCard?
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
 
@@ -3694,8 +3726,26 @@ model LoyaltyPosVoucher {
   @@index([storeId])
   @@index([cardNumber])
   @@index([status])
+  @@index([ttlExpiresAt])
   @@index([externalTransactionId])
   @@map("loyalty_pos_vouchers")
+}
+
+/// Short-lived OTP challenge for staff-assisted POS voucher redemption (A2).
+model LoyaltyPosRedeemOtp {
+  id           String   @id @default(uuid())
+  membershipId String
+  storeId      String
+  staffUserId  String
+  codeHash     String
+  attempts     Int      @default(0)
+  expiresAt    DateTime
+  verifiedAt   DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([membershipId, storeId])
+  @@index([expiresAt])
+  @@map("loyalty_pos_redeem_otps")
 }
 
 model LoyaltyReferral {
@@ -4039,12 +4089,75 @@ model POSSale {
   rawPayload            Json?
   importedAt            DateTime      @default(now())
   processedAt           DateTime?
+  storeShipmentRequests StoreShipmentRequest[]
 
   @@unique([provider, externalSaleId])
   @@index([storeId])
   @@index([customerId])
+  @@index([customerEmail])
+  @@index([externalInvoice])
   @@index([saleDate])
   @@map("pos_sales")
+}
+
+/// Post-purchase ship-from-store (B1). Shipping-only billing; goods sale stays in Lightspeed.
+model StoreShipmentRequest {
+  id                    String    @id @default(uuid())
+  status                String    @default("DRAFT") // DRAFT | PENDING_ENRICHMENT | QUOTED | PAID | LABEL_PURCHASED | IN_TRANSIT | DELIVERED | BLOCKED | CANCELLED
+  storeId               String
+  store                 Store     @relation(fields: [storeId], references: [id], onDelete: Restrict)
+  userId                String?
+  user                  User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  posSaleId             String?
+  posSale               POSSale?  @relation(fields: [posSaleId], references: [id], onDelete: SetNull)
+  posExternalSaleId     String?
+  invoiceNumber         String?
+  claimEmail            String?
+  claimTokenHash        String?   @unique
+  claimTokenExpiresAt   DateTime?
+  destinationAddressId  String?
+  destinationAddress    Address?  @relation(fields: [destinationAddressId], references: [id], onDelete: SetNull)
+  shippingAmount        Decimal?  @db.Decimal(10, 2)
+  currency              String    @default("USD")
+  stripePaymentIntentId String?
+  selectedCarrier       String?
+  selectedService       String?
+  trackingCode          String?
+  labelUrl              String?
+  shippingCost          Decimal?  @db.Decimal(10, 2)
+  customsSnapshot       Json?
+  metadata              Json?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([storeId])
+  @@index([userId])
+  @@index([status])
+  @@index([invoiceNumber])
+  @@index([claimEmail])
+  @@map("store_shipment_requests")
+}
+
+/// Customs / shipping attributes keyed by SKU for international labels.
+model SkuCustomsAttribute {
+  id              String   @id @default(uuid())
+  sku             String   @unique
+  productId       String?
+  product         Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  hsCode          String?
+  countryOfOrigin String?
+  weightKg        Decimal? @db.Decimal(10, 3)
+  lengthCm        Decimal? @db.Decimal(10, 2)
+  widthCm         Decimal? @db.Decimal(10, 2)
+  heightCm        Decimal? @db.Decimal(10, 2)
+  status          String   @default("PENDING") // PENDING | READY | BLOCKED
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@index([productId])
+  @@map("sku_customs_attributes")
 }
 
 model POSSaleItem {

@@ -43,6 +43,12 @@ export interface POSAdapter {
    */
   getSales(params: { afterVersion?: number; outletId?: string }): Promise<POSSalesPage>;
 
+  /** Single-sale lookup by invoice/receipt number (ship-from-store claim flow). */
+  getSaleByInvoice?(params: {
+    invoiceNumber: string;
+    outletId?: string;
+  }): Promise<POSSale | null>;
+
   validateWebhook(payload: unknown, signature: string, secret: string): boolean;
   parseWebhookSale(payload: unknown): POSSale;
 

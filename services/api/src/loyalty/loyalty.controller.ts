@@ -7,6 +7,7 @@ import {
   Query,
   Request,
   Req,
+  Param,
   UseGuards,
   DefaultValuePipe,
   ParseIntPipe,
@@ -27,13 +28,18 @@ import { EnrollLoyaltyDto } from './dto/enroll.dto';
 import { RedeemPointsDto } from './dto/redeem-points.dto';
 import { LoyaltyCheckInDto } from './dto/check-in.dto';
 import { LoyaltyPreferencesDto } from './dto/loyalty-preferences.dto';
+import { RedeemInStoreDto } from './dto/redeem-in-store.dto';
+import { PosVoucherService } from './services/pos-voucher.service';
 
 @ApiTags('loyalty')
 @ApiBearerAuth('JWT-auth')
 @Controller('loyalty')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class LoyaltyController {
-  constructor(private loyalty: LoyaltyService) {}
+  constructor(
+    private loyalty: LoyaltyService,
+    private posVouchers: PosVoucherService,
+  ) {}
 
   @Post('enroll')
   @Roles('CUSTOMER')
@@ -165,5 +171,41 @@ export class LoyaltyController {
   ): Promise<ApiResponse<unknown>> {
     const data = await this.loyalty.checkIn(req.user.id, body.storeId);
     return { data, message: 'Checked in' };
+  }
+
+  @Post('redeem-in-store')
+  @Roles('CUSTOMER')
+  @ApiOperation({ summary: 'Burn points and issue an in-store gift card voucher (Flow A1)' })
+  async redeemInStore(
+    @Request() req: { user: { id: string } },
+    @Body() body: RedeemInStoreDto,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.posVouchers.redeemInStoreForCustomer(req.user.id, body);
+    return { data, message: 'Voucher issued' };
+  }
+
+  @Get('pos-vouchers/active')
+  @Roles('CUSTOMER')
+  @ApiOperation({ summary: 'Active in-store vouchers for the logged-in member' })
+  async activeVouchers(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
+    const data = await this.posVouchers.listActiveVouchersForUser(req.user.id);
+    return { data, message: 'OK' };
+  }
+
+  @Post('pos-vouchers/:id/cancel')
+  @Roles('CUSTOMER', 'ADMIN', 'STORE_STAFF')
+  @ApiOperation({ summary: 'Cancel an unused ISSUED voucher and restore points (Flow A5)' })
+  async cancelVoucher(
+    @Request() req: { user: { id: string; role: string } },
+    @Param('id') id: string,
+    @Body() body: { reason?: string },
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.posVouchers.cancelVoucher({
+      voucherId: id,
+      actorUserId: req.user.id,
+      actorRole: req.user.role,
+      reason: body?.reason,
+    });
+    return { data, message: 'Voucher cancelled' };
   }
 }

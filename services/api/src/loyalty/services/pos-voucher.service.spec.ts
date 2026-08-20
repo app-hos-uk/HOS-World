@@ -167,6 +167,15 @@ describe('PosVoucherService', () => {
       getCurrency: jest.fn().mockResolvedValue('USD'),
     };
 
+    const externalGiftCards: any = {
+      ensurePointerForVoucher: jest.fn().mockResolvedValue(undefined),
+      markPointerCancelled: jest.fn().mockResolvedValue(undefined),
+    };
+    const otp: any = {
+      verifyOtp: jest.fn(),
+      assertStaffOtpVerified: jest.fn(),
+    };
+
     const svc = new PosVoucherService(
       prisma,
       config,
@@ -178,6 +187,8 @@ describe('PosVoucherService', () => {
       metrics,
       loyaltySettings,
       platformRegion,
+      externalGiftCards,
+      otp,
     );
 
     return { svc, adapter, prisma, burn, wallet, voucherRow, metrics, loyaltySettings };

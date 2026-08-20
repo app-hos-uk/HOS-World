@@ -11,6 +11,7 @@ const ALLOWED_ROLES: UserRole[] = ['STORE_STAFF', 'ADMIN'];
 
 const menuItems = [
   { title: 'Customer Lookup', href: '/store/lookup', icon: navIcon('search') },
+  { title: 'Ship purchase', href: '/store/shipping', icon: navIcon('truck') },
 ];
 
 export default function StoreLayout({ children }: { children: React.ReactNode }) {

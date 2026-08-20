@@ -23,7 +23,11 @@ function makeMocks() {
   };
   const config: any = { get: jest.fn().mockReturnValue(undefined) };
   const platformRegion: any = { getCurrency: jest.fn().mockResolvedValue('USD') };
-  const service = new GiftCardsService(prisma, config, platformRegion);
+  const externalGiftCards: any = {
+    syncExternalBalance: jest.fn(),
+    buildAdapterForStore: jest.fn(),
+  };
+  const service = new GiftCardsService(prisma, config, platformRegion, externalGiftCards);
   return { service, prisma };
 }
 

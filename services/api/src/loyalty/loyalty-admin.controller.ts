@@ -9,10 +9,12 @@ import {
   Post,
   Put,
   Query,
+  Request,
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Prisma } from '@prisma/client';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -501,6 +503,26 @@ export class LoyaltyAdminController {
     return { data, message: 'OK' };
   }
 
+  @Post('pos-vouchers/:id/cancel')
+  @ApiOperation({
+    summary: 'Manager cancel an unused ISSUED voucher (Flow A5)',
+    description:
+      'Voids the Lightspeed gift card, reverses the points burn, and marks the voucher REVERSED.',
+  })
+  async cancelPosVoucher(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: { user: { id: string } },
+    @Body() body: { reason?: string },
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.posVouchers.cancelVoucher({
+      voucherId: id,
+      actorUserId: req.user.id,
+      actorRole: 'ADMIN',
+      reason: body?.reason,
+    });
+    return { data, message: 'Voucher cancelled' };
+  }
+
   @Post('pos-vouchers/:id/retry')
   @ApiOperation({
     summary: 'Retry issuing the POS gift card for a FAILED/PENDING voucher',
@@ -537,7 +559,10 @@ export class LoyaltyAdminController {
       data: {
         storeId: body.storeId,
         currency: store.currency || voucher.currency,
-        metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+        metadata:
+          Object.keys(metadata).length > 0
+            ? (metadata as Prisma.InputJsonValue)
+            : undefined,
       },
     });
     return { data, message: 'Voucher reassigned' };

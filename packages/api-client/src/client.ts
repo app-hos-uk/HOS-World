@@ -1794,6 +1794,13 @@ export class ApiClient {
     });
   }
 
+  async adminCancelLoyaltyPosVoucher(id: string, reason?: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/pos-vouchers/${id}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
   async adminGetIdentityMatchReviews(params?: {
     status?: string;
     page?: number;
@@ -2761,6 +2768,8 @@ export class ApiClient {
     cardNumber?: string;
     voucherId?: string;
     idempotencyKey?: string;
+    terminalId?: string;
+    otpCode?: string;
   }): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>('/loyalty/pos/redeem-for-voucher', {
       method: 'POST',
@@ -2769,10 +2778,132 @@ export class ApiClient {
         ? { 'Idempotency-Key': body.idempotencyKey }
         : undefined,
       timeoutMs: POS_VOUCHER_TIMEOUT_MS,
-      // A 503 from this endpoint is a decided answer ("issuance failed, retry with
-      // voucherId"), so re-sending only delays showing staff that outcome. Gateway
-      // errors like 502/504 still get the usual single retry.
       noRetryStatuses: [503],
+    });
+  }
+
+  async sendLoyaltyRedeemOtp(body: { membershipId: string; storeId: string }) {
+    return this.request<ApiResponse<unknown>>('/loyalty/pos/redeem-otp/send', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async verifyLoyaltyRedeemOtp(body: { membershipId: string; storeId: string; code: string }) {
+    return this.request<ApiResponse<unknown>>('/loyalty/pos/redeem-otp/verify', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async redeemLoyaltyInStore(body: {
+    points: number;
+    storeId: string;
+    idempotencyKey?: string;
+  }) {
+    return this.request<ApiResponse<unknown>>('/loyalty/redeem-in-store', {
+      method: 'POST',
+      body: JSON.stringify(body),
+      timeoutMs: POS_VOUCHER_TIMEOUT_MS,
+      noRetryStatuses: [503],
+    });
+  }
+
+  async getActivePosVouchers() {
+    return this.request<ApiResponse<unknown>>('/loyalty/pos-vouchers/active');
+  }
+
+  async cancelPosVoucher(voucherId: string, reason?: string) {
+    return this.request<ApiResponse<unknown>>(`/loyalty/pos-vouchers/${voucherId}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  async createStoreShipmentClaim(body: {
+    storeId: string;
+    invoiceNumber: string;
+    email: string;
+    shippingConsent: boolean;
+  }) {
+    return this.request<ApiResponse<unknown>>('/store-shipment/staff/create-claim', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async getStoreShipmentClaim(token: string) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/claim/${token}`);
+  }
+
+  async attachStoreShipmentClaim(token: string) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/claim/${token}/attach`, {
+      method: 'POST',
+    });
+  }
+
+  async resolveStoreShipmentSale(shipmentId: string) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/${shipmentId}/resolve-sale`, {
+      method: 'POST',
+    });
+  }
+
+  async getStoreShipmentRates(shipmentId: string) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/${shipmentId}/rates`);
+  }
+
+  async setShipmentAddress(shipmentId: string, addressId: string) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/${shipmentId}/address`, {
+      method: 'POST',
+      body: JSON.stringify({ addressId }),
+    });
+  }
+
+  async authorizeShipment(
+    shipmentId: string,
+    body: { carrier: string; service: string; amount: number; currency?: string },
+  ) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/${shipmentId}/authorize`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async purchaseShipmentLabel(shipmentId: string) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/${shipmentId}/purchase-label`, {
+      method: 'POST',
+    });
+  }
+
+  async listAdminStoreShipments(params?: { status?: string; page?: number; limit?: number }) {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const q = qs.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/store-shipments${q ? `?${q}` : ''}`);
+  }
+
+  async listPendingSkuCustoms() {
+    return this.request<ApiResponse<unknown>>('/admin/store-shipments/sku-customs/pending');
+  }
+
+  async updateSkuCustoms(
+    id: string,
+    body: {
+      hsCode?: string;
+      countryOfOrigin?: string;
+      weightKg?: number;
+      lengthCm?: number;
+      widthCm?: number;
+      heightCm?: number;
+      status?: string;
+      restrictedCountries?: string[];
+    },
+  ) {
+    return this.request<ApiResponse<unknown>>(`/admin/store-shipments/sku-customs/${id}`, {
+      method: 'POST',
+      body: JSON.stringify(body),
     });
   }
 

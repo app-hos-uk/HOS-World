@@ -55,6 +55,7 @@ export default function AdminLoyaltyPosVouchersPage() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -93,6 +94,23 @@ export default function AdminLoyaltyPosVouchersPage() {
         toast.error(e?.message || 'Retry failed');
       } finally {
         setRetryingId(null);
+      }
+    },
+    [load, toast],
+  );
+
+  const cancelVoucher = useCallback(
+    async (voucher: Voucher) => {
+      if (!window.confirm('Void this voucher in Lightspeed and restore member points?')) return;
+      setCancellingId(voucher.id);
+      try {
+        await apiClient.adminCancelLoyaltyPosVoucher(voucher.id, 'admin_void');
+        toast.success('Voucher cancelled and points restored');
+        await load();
+      } catch (e: any) {
+        toast.error(e?.message || 'Cancel failed');
+      } finally {
+        setCancellingId(null);
       }
     },
     [load, toast],
@@ -221,7 +239,7 @@ export default function AdminLoyaltyPosVouchersPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-right">
+                  <td className="px-3 py-2 text-right space-x-2">
                     {RETRYABLE.includes(v.status) ? (
                       <button
                         type="button"
@@ -230,6 +248,15 @@ export default function AdminLoyaltyPosVouchersPage() {
                         className="px-3 py-1 border border-hos-border rounded text-xs font-ui hover:bg-hos-bg-secondary disabled:opacity-40"
                       >
                         {retryingId === v.id ? 'Retrying…' : 'Retry issuance'}
+                      </button>
+                    ) : v.status === 'ISSUED' ? (
+                      <button
+                        type="button"
+                        onClick={() => cancelVoucher(v)}
+                        disabled={cancellingId === v.id}
+                        className="px-3 py-1 border border-red-500/50 text-red-400 rounded text-xs font-ui hover:bg-red-500/10 disabled:opacity-40"
+                      >
+                        {cancellingId === v.id ? 'Cancelling…' : 'Void voucher'}
                       </button>
                     ) : (
                       <span className="text-hos-text-secondary text-xs">—</span>

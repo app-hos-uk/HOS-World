@@ -45,4 +45,18 @@ export class RedeemForVoucherDto {
   @MinLength(8)
   @MaxLength(200)
   idempotencyKey?: string;
+
+  /** Till terminal identifier (required for staff-assisted redemption). */
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  terminalId?: string;
+
+  /** OTP code from customer (required for staff-assisted redemption). */
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  @MaxLength(6)
+  otpCode?: string;
 }

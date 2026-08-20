@@ -156,6 +156,14 @@ export class PosGiftCardReconService {
             matchedVoucherIds.add(voucher.id);
             const drift = await this.recordVoucherDrift(voucher, card, conn.store.code);
             if (drift) discrepancies++;
+
+            const balance = Number(card.balance);
+            if (balance <= 0.001 && voucher.status === 'ISSUED') {
+              await this.prisma.loyaltyPosVoucher.update({
+                where: { id: voucher.id },
+                data: { status: 'RECONCILED' },
+              });
+            }
             continue;
           }
 

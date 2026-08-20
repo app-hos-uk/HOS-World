@@ -11,6 +11,8 @@ import { LoyaltySettingsService } from '../services/loyalty-settings.service';
 import { MarketingEventBus } from '../../journeys/marketing-event.bus';
 import { FeatureFlagsService } from '../../config/feature-flags.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
+import { PosVoucherService } from '../services/pos-voucher.service';
+import { PosVoucherOtpService } from '../services/pos-voucher-otp.service';
 
 @Injectable()
 export class LoyaltyJobsService implements OnModuleInit {
@@ -25,6 +27,8 @@ export class LoyaltyJobsService implements OnModuleInit {
     private featureFlags: FeatureFlagsService,
     private fandomProfiles: FandomProfileService,
     private settings: LoyaltySettingsService,
+    private posVouchers: PosVoucherService,
+    private posOtp: PosVoucherOtpService,
     @Optional()
     @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
@@ -309,6 +313,12 @@ export class LoyaltyJobsService implements OnModuleInit {
       this.logger.log(`Fandom profile recompute: ${n} members`);
     });
 
+    this.queue.registerProcessor(JobType.LOYALTY_VOUCHER_TTL, async () => {
+      const n = await this.posVouchers.expireUnusedVouchers();
+      const otpPurged = await this.posOtp.purgeExpired();
+      this.logger.log(`Voucher TTL sweep: ${n} reversed, ${otpPurged} OTP rows purged`);
+    });
+
     try {
       await this.queue.addRepeatable(
         JobType.LOYALTY_TIER_REVIEW,
@@ -334,6 +344,11 @@ export class LoyaltyJobsService implements OnModuleInit {
         JobType.FANDOM_PROFILE_RECOMPUTE,
         {},
         this.config.get<string>('FANDOM_PROFILE_RECOMPUTE_CRON', '0 5 * * 0'),
+      );
+      await this.queue.addRepeatable(
+        JobType.LOYALTY_VOUCHER_TTL,
+        {},
+        this.config.get<string>('LOYALTY_VOUCHER_TTL_CRON', '0 * * * *'),
       );
       this.logger.log('Loyalty cron jobs scheduled');
     } catch (e) {

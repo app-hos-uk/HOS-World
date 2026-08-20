@@ -339,6 +339,31 @@ export class LightspeedAdapter implements POSAdapter {
     return { sales, maxVersion };
   }
 
+  async getSaleByInvoice(params: {
+    invoiceNumber: string;
+    outletId?: string;
+  }): Promise<POSSale | null> {
+    const target = params.invoiceNumber.trim().toLowerCase();
+    if (!target) return null;
+
+    let after: number | undefined = undefined;
+    for (let page = 0; page < 8; page++) {
+      const { sales, maxVersion } = await this.getSales({
+        afterVersion: after,
+        outletId: params.outletId,
+      });
+      for (const sale of sales) {
+        const inv = (sale.invoiceNumber ?? '').trim().toLowerCase();
+        if (inv === target || sale.externalId === params.invoiceNumber.trim()) {
+          return sale;
+        }
+      }
+      if (!sales.length || maxVersion == null || maxVersion === after) break;
+      after = maxVersion;
+    }
+    return null;
+  }
+
   validateWebhook(payload: unknown, signature: string, secret: string): boolean {
     if (!secret || !signature) return false;
 

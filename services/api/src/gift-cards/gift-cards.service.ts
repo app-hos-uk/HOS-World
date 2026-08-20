@@ -11,10 +11,13 @@ import { Prisma } from '@prisma/client';
 import { CreateGiftCardDto } from './dto/create-gift-card.dto';
 import { RedeemGiftCardDto } from './dto/redeem-gift-card.dto';
 import { PlatformRegionService } from '../config/platform-region.service';
+import { PosExternalGiftCardService } from '../loyalty/services/pos-external-gift-card.service';
 
 /** Matches codes from generateCode(): XXXX-XXXX-XXXX-XXXX, charset without I,O,0,1 */
 const GIFT_CARD_CODE_REGEX =
   /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
+/** POS voucher codes: 8–19 alphanumeric (Lightspeed loyalty GC) */
+const POS_VOUCHER_CODE_REGEX = /^[A-HJ-NP-Z2-9]{8,19}$/;
 
 @Injectable()
 export class GiftCardsService {
@@ -24,6 +27,7 @@ export class GiftCardsService {
     private prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly platformRegion: PlatformRegionService,
+    private readonly externalGiftCards: PosExternalGiftCardService,
   ) {}
 
   private isExpired(card: { expiresAt?: Date | null }): boolean {
@@ -115,10 +119,37 @@ export class GiftCardsService {
       throw new BadRequestException('Invalid gift card code format');
     }
     const code = decoded.trim().toUpperCase();
-    if (code.length !== 19 || !GIFT_CARD_CODE_REGEX.test(code)) {
-      throw new BadRequestException('Invalid gift card code format');
-    }
-    return code;
+    if (GIFT_CARD_CODE_REGEX.test(code)) return code;
+    const compact = code.replace(/-/g, '');
+    if (POS_VOUCHER_CODE_REGEX.test(compact)) return compact;
+    throw new BadRequestException('Invalid gift card code format');
+  }
+
+  private isExternalCard(card: { balanceSource?: string | null }): boolean {
+    return card.balanceSource === 'EXTERNAL';
+  }
+
+  private async resolveExternalBalance(giftCard: {
+    code: string;
+    posVoucherId?: string | null;
+    balance: unknown;
+  }): Promise<number> {
+    const voucher = giftCard.posVoucherId
+      ? await this.prisma.loyaltyPosVoucher.findUnique({
+          where: { id: giftCard.posVoucherId },
+          select: { storeId: true },
+        })
+      : null;
+    if (!voucher) return Number(giftCard.balance);
+    const adapter = await this.externalGiftCards.buildAdapterForStore(voucher.storeId);
+    if (!adapter) return Number(giftCard.balance);
+    const live = await this.externalGiftCards.syncExternalBalance(giftCard.code, adapter);
+    if (live == null) return Number(giftCard.balance);
+    await this.prisma.giftCard.updateMany({
+      where: { code: giftCard.code },
+      data: { balance: live },
+    });
+    return live;
   }
 
   /**
@@ -298,12 +329,152 @@ export class GiftCardsService {
       throw new BadRequestException('Gift card is not active');
     }
 
+    const balance = this.isExternalCard(giftCard)
+      ? await this.resolveExternalBalance(giftCard)
+      : Number(giftCard.balance);
+
     return {
       valid: true,
-      balance: Number(giftCard.balance),
+      balance,
       currency: giftCard.currency,
       expiresAt: giftCard.expiresAt,
+      source: giftCard.source ?? 'HOS',
+      balanceSource: giftCard.balanceSource ?? 'INTERNAL',
     };
+  }
+
+  private assertCardRedeemable(card: {
+    status: string;
+    balance: unknown;
+    expiresAt?: Date | null;
+  }): void {
+    if (card.status === 'EXPIRED' || this.isExpired(card)) {
+      throw new BadRequestException('Gift card has expired');
+    }
+    if (card.status === 'REDEEMED' || Number(card.balance) <= 0) {
+      throw new BadRequestException('Gift card has no remaining balance');
+    }
+    if (card.status === 'CANCELLED') {
+      throw new BadRequestException('Gift card has been cancelled');
+    }
+    if (card.status !== 'ACTIVE') {
+      throw new BadRequestException('Gift card is not active');
+    }
+  }
+
+  /**
+   * EXTERNAL (Lightspeed) gift card redemption.
+   * Lightspeed is called OUTSIDE the DB transaction so a DB rollback cannot
+   * leave captured funds orphaned. Order-cap checks run BEFORE the Lightspeed call.
+   */
+  private async redeemExternalCard(
+    userId: string,
+    dto: RedeemGiftCardDto,
+    giftCard: any,
+  ): Promise<any> {
+    await this.assertRedeemerOwnsCard(this.prisma, giftCard, userId);
+    this.assertCardRedeemable(giftCard);
+
+    const redeemAmount = dto.amount;
+    const currentBalance = await this.resolveExternalBalance(giftCard);
+    if (redeemAmount > currentBalance) {
+      throw new BadRequestException(
+        `Insufficient balance. Available: ${currentBalance}. The card may have been spent in store.`,
+      );
+    }
+
+    if (dto.orderId) {
+      await this.assertOrderRedemptionCap(this.prisma, dto.orderId, userId, redeemAmount);
+    }
+
+    const voucher = giftCard.posVoucherId
+      ? await this.prisma.loyaltyPosVoucher.findUnique({
+          where: { id: giftCard.posVoucherId },
+          select: { storeId: true, clientId: true },
+        })
+      : null;
+    if (!voucher) {
+      throw new BadRequestException('POS voucher link missing for external gift card');
+    }
+
+    const adapter = await this.externalGiftCards.buildAdapterForStore(voucher.storeId);
+    if (!adapter) {
+      throw new BadRequestException('Payment provider unavailable for this gift card');
+    }
+
+    const clientId = `online:${dto.orderId ?? userId}:${giftCard.id}:${redeemAmount}`;
+    let lsTx;
+    try {
+      lsTx = await adapter.giftCardTransaction(giftCard.code, {
+        amount: redeemAmount,
+        type: 'REDEEMING',
+        clientId,
+      });
+    } catch (e) {
+      throw new BadRequestException(
+        `Gift card could not be redeemed: ${(e as Error).message}. Try another payment method.`,
+      );
+    }
+
+    const newBalance = Math.max(0, currentBalance - redeemAmount);
+    const updatedGiftCard = await this.prisma.giftCard.update({
+      where: { id: giftCard.id },
+      data: {
+        balance: newBalance,
+        status: newBalance <= 0 ? 'REDEEMED' : 'ACTIVE',
+        redeemedAt: newBalance <= 0 ? new Date() : giftCard.redeemedAt,
+        userId: giftCard.userId || userId,
+        externalTransactionId: lsTx.id,
+      },
+    });
+
+    await (this.prisma as any).giftCardTransaction.create({
+      data: {
+        giftCardId: giftCard.id,
+        orderId: dto.orderId,
+        type: 'REDEMPTION',
+        amount: redeemAmount,
+        balanceAfter: newBalance,
+        notes: `Redeemed via Lightspeed (tx ${lsTx.id})`,
+      },
+    });
+
+    return updatedGiftCard;
+  }
+
+  /**
+   * Validate order ownership, payment status and cumulative redemption cap.
+   * Shared by INTERNAL and EXTERNAL paths to ensure the cap is always enforced.
+   */
+  private async assertOrderRedemptionCap(
+    tx: any,
+    orderId: string,
+    userId: string,
+    redeemAmount: number,
+  ): Promise<void> {
+    const order = await tx.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, userId: true, total: true, paymentStatus: true },
+    });
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+    if (order.userId && order.userId !== userId) {
+      throw new ForbiddenException('You do not own this order');
+    }
+    if (order.paymentStatus && order.paymentStatus !== 'PENDING') {
+      throw new BadRequestException('Order is not awaiting payment');
+    }
+    const priorRedemptions = await tx.giftCardTransaction.aggregate({
+      where: { orderId, type: 'REDEMPTION' },
+      _sum: { amount: true },
+    });
+    const alreadyRedeemed = Number(priorRedemptions?._sum?.amount ?? 0);
+    if (alreadyRedeemed + redeemAmount > Number(order.total)) {
+      throw new BadRequestException(
+        'Redemption exceeds the order total already covered by gift cards',
+      );
+    }
   }
 
   /**
@@ -316,71 +487,37 @@ export class GiftCardsService {
 
     const normalizedCode = this.parseGiftCardCode(dto.code);
 
-    // Use transaction with Serializable isolation to prevent race conditions on balance
+    const giftCard = await this.prisma.giftCard.findUnique({
+      where: { code: normalizedCode },
+    });
+    if (!giftCard) {
+      throw new NotFoundException('Gift card not found');
+    }
+
+    if (this.isExternalCard(giftCard)) {
+      return this.redeemExternalCard(userId, dto, giftCard);
+    }
+
+    // INTERNAL card — use serializable transaction for balance safety
     return this.prisma.$transaction(
       async (tx) => {
-        const giftCard = await (tx as any).giftCard.findUnique({
+        const lockedCard = await (tx as any).giftCard.findUnique({
           where: { code: normalizedCode },
         });
+        if (!lockedCard) throw new NotFoundException('Gift card not found');
 
-        if (!giftCard) {
-          throw new NotFoundException('Gift card not found');
-        }
+        await this.assertRedeemerOwnsCard(tx, lockedCard, userId);
+        this.assertCardRedeemable(lockedCard);
 
-        // A card issued to a named recipient belongs to that person; knowing the
-        // code is not authorization to spend someone else's balance.
-        await this.assertRedeemerOwnsCard(tx, giftCard, userId);
-
-        if (giftCard.status === 'EXPIRED' || this.isExpired(giftCard)) {
-          throw new BadRequestException('Gift card has expired');
-        }
-
-        if (giftCard.status === 'REDEEMED' || Number(giftCard.balance) <= 0) {
-          throw new BadRequestException('Gift card has no remaining balance');
-        }
-
-        if (giftCard.status === 'CANCELLED') {
-          throw new BadRequestException('Gift card has been cancelled');
-        }
-
-        // Only fully-activated (paid) cards are redeemable.
-        if (giftCard.status !== 'ACTIVE') {
-          throw new BadRequestException('Gift card is not active');
-        }
-
-        const currentBalance = Number(giftCard.balance);
+        const currentBalance = Number(lockedCard.balance);
         const redeemAmount = dto.amount;
 
         if (redeemAmount > currentBalance) {
           throw new BadRequestException(`Insufficient balance. Available: ${currentBalance}`);
         }
 
-        // Cap total redemptions for an order to that order's outstanding total, and verify
-        // the order belongs to the redeeming user.
         if (dto.orderId) {
-          const order = await (tx as any).order.findUnique({
-            where: { id: dto.orderId },
-            select: { id: true, userId: true, total: true, paymentStatus: true },
-          });
-          if (!order) {
-            throw new NotFoundException('Order not found');
-          }
-          if (order.userId && order.userId !== userId) {
-            throw new ForbiddenException('You do not own this order');
-          }
-          if (order.paymentStatus && order.paymentStatus !== 'PENDING') {
-            throw new BadRequestException('Order is not awaiting payment');
-          }
-          const priorRedemptions = await (tx as any).giftCardTransaction.aggregate({
-            where: { orderId: dto.orderId, type: 'REDEMPTION' },
-            _sum: { amount: true },
-          });
-          const alreadyRedeemed = Number(priorRedemptions?._sum?.amount ?? 0);
-          if (alreadyRedeemed + redeemAmount > Number(order.total)) {
-            throw new BadRequestException(
-              'Redemption exceeds the order total already covered by gift cards',
-            );
-          }
+          await this.assertOrderRedemptionCap(tx, dto.orderId, userId, redeemAmount);
         }
 
         const newBalance = currentBalance - redeemAmount;
@@ -450,6 +587,8 @@ export class GiftCardsService {
           balance: gc.balance,
           currency: gc.currency,
           status: gc.status,
+          source: gc.source ?? 'HOS',
+          balanceSource: gc.balanceSource ?? 'INTERNAL',
           expiresAt: gc.expiresAt,
           purchasedAt: gc.purchasedAt,
           redeemedAt: gc.redeemedAt,
@@ -621,5 +760,110 @@ export class GiftCardsService {
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
+  }
+
+  /**
+   * Reverse a gift-card redemption when an order is cancelled.
+   * EXTERNAL (Lightspeed) cards call reverseGiftCardTransaction; INTERNAL cards restore HOS balance.
+   */
+  async reverseRedemptionOnOrderCancel(
+    redemption: {
+      id: string;
+      giftCardId: string;
+      amount: unknown;
+      notes?: string | null;
+      giftCard: {
+        id: string;
+        balance: unknown;
+        amount: unknown;
+        status: string;
+        expiresAt?: Date | null;
+        balanceSource?: string | null;
+        code: string;
+        posVoucherId?: string | null;
+        externalTransactionId?: string | null;
+      };
+    },
+    orderId: string,
+    orderNumber: string,
+  ): Promise<void> {
+    const card = redemption.giftCard;
+    const amount = Number(redemption.amount);
+
+    if (this.isExternalCard(card)) {
+      const txMatch = redemption.notes?.match(/tx ([^)]+)/);
+      const lightspeedTxId = txMatch?.[1] || card.externalTransactionId;
+      if (!lightspeedTxId) {
+        throw new Error(`No Lightspeed transaction id for external redemption ${redemption.id}`);
+      }
+
+      const voucher = card.posVoucherId
+        ? await this.prisma.loyaltyPosVoucher.findUnique({
+            where: { id: card.posVoucherId },
+            select: { storeId: true },
+          })
+        : null;
+      if (!voucher) {
+        throw new Error(`POS voucher link missing for external gift card ${card.id}`);
+      }
+
+      const adapter = await this.externalGiftCards.buildAdapterForStore(voucher.storeId);
+      if (!adapter) {
+        throw new Error('Payment provider unavailable for external gift card reversal');
+      }
+
+      await adapter.reverseGiftCardTransaction(lightspeedTxId);
+
+      const liveBalance = await this.externalGiftCards.syncExternalBalance(card.code, adapter);
+      const newBalance =
+        liveBalance != null ? liveBalance : Math.min(Number(card.amount), Number(card.balance) + amount);
+      const expired = !!card.expiresAt && card.expiresAt < new Date();
+      const reopen = card.status === 'REDEEMED' && !expired;
+
+      await this.prisma.$transaction([
+        this.prisma.giftCard.update({
+          where: { id: card.id },
+          data: {
+            balance: newBalance,
+            ...(reopen ? { status: 'ACTIVE', redeemedAt: null } : {}),
+          },
+        }),
+        (this.prisma as any).giftCardTransaction.create({
+          data: {
+            giftCardId: card.id,
+            orderId,
+            type: 'REFUND',
+            amount,
+            balanceAfter: newBalance,
+            notes: `Auto-reversed Lightspeed tx ${lightspeedTxId} on order cancel (${orderNumber})`,
+          },
+        }),
+      ]);
+      return;
+    }
+
+    const newBalance = Number(card.balance) + amount;
+    const expired = !!card.expiresAt && card.expiresAt < new Date();
+    const reopen = card.status === 'REDEEMED' && !expired;
+
+    await this.prisma.$transaction([
+      this.prisma.giftCard.update({
+        where: { id: card.id },
+        data: {
+          balance: { increment: amount },
+          ...(reopen ? { status: 'ACTIVE', redeemedAt: null } : {}),
+        },
+      }),
+      (this.prisma as any).giftCardTransaction.create({
+        data: {
+          giftCardId: card.id,
+          orderId,
+          type: 'REFUND',
+          amount,
+          balanceAfter: newBalance,
+          notes: `Auto-reversed on order cancel (${orderNumber})`,
+        },
+      }),
+    ]);
   }
 }

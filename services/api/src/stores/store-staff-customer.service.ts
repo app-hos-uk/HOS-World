@@ -93,6 +93,7 @@ export class StoreStaffCustomerService {
       phoneNormalized: string | null;
       loyaltyMembership: {
         cardNumber: string | null;
+        id: string;
         currentBalance: number;
         tier: { name: string } | null;
       } | null;
@@ -103,6 +104,7 @@ export class StoreStaffCustomerService {
     const card = row.loyaltyMembership.cardNumber;
     return {
       userId: row.id,
+      membershipId: row.loyaltyMembership.id,
       firstName: row.firstName,
       lastInitial: lastInitial(row.lastName),
       maskedEmail: maskEmail(row.email),
@@ -116,7 +118,12 @@ export class StoreStaffCustomerService {
 
   private memberInclude = {
     loyaltyMembership: {
-      include: { tier: { select: { name: true } } },
+      select: {
+        id: true,
+        cardNumber: true,
+        currentBalance: true,
+        tier: { select: { name: true } },
+      },
     },
   } satisfies Prisma.UserInclude;
 
@@ -142,6 +149,7 @@ export class StoreStaffCustomerService {
       {
         ...membership.user,
         loyaltyMembership: {
+          id: membership.id,
           cardNumber: membership.cardNumber,
           currentBalance: membership.currentBalance,
           tier: membership.tier,
