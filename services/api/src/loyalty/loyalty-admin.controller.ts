@@ -554,15 +554,17 @@ export class LoyaltyAdminController {
     delete metadata.lightspeedPermission;
     delete metadata.failedAt;
 
+    const cleanedMetadata: Prisma.InputJsonValue | undefined =
+      Object.keys(metadata).length > 0
+        ? (metadata as Prisma.InputJsonValue)
+        : undefined;
+
     const data = await this.prisma.loyaltyPosVoucher.update({
       where: { id },
       data: {
         storeId: body.storeId,
         currency: store.currency || voucher.currency,
-        metadata:
-          Object.keys(metadata).length > 0
-            ? (metadata as Prisma.InputJsonValue)
-            : undefined,
+        metadata: cleanedMetadata,
       },
     });
     return { data, message: 'Voucher reassigned' };
