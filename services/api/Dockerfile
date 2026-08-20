@@ -10,7 +10,6 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY scripts/setup-git-hooks.mjs ./scripts/setup-git-hooks.mjs
 COPY packages ./packages
 COPY services/api ./services/api
-# cache-bust: ce34b874
 
 RUN (pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile) \
     && cd /app/packages/shared-types && pnpm build \

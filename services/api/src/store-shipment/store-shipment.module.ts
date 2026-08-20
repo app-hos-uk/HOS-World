@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
 import { DatabaseModule } from '../database/database.module';
 import { PosModule } from '../pos/pos.module';
 import { CourierModule } from '../shipping/courier/courier.module';
@@ -14,6 +15,13 @@ import { StoreShipmentController, StoreShipmentAdminController } from './store-s
   imports: [
     ConfigModule,
     DatabaseModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<string>('JWT_SECRET'),
+      }),
+      inject: [ConfigService],
+    }),
     forwardRef(() => PosModule),
     CourierModule,
     PaymentProviderModule,
