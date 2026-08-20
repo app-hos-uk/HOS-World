@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { apiClient } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 type SearchResult = {
   userId: string;
@@ -160,7 +161,7 @@ export default function StoreLookupPage() {
         setLastVoucher({
           cardNumber: data.cardNumber,
           amount: data.amount ?? 0,
-          currency: data.currency ?? 'USD',
+          currency: data.currency ?? DEFAULT_CURRENCY,
           qrPayload: data.qrPayload,
         });
       }
