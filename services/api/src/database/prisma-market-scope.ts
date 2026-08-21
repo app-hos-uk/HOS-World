@@ -65,8 +65,25 @@ function currentScope(): ScopeDecision | null {
   return { marketId: store.marketId, enforce: store.dataScopeMode === 'enforce' };
 }
 
+/** Filter form for operations that accept an arbitrary `where`. */
 function withMarketFilter(where: unknown, marketId: string) {
   return where ? { AND: [where, { marketId }] } : { marketId };
+}
+
+/**
+ * Filter form for operations taking a `WhereUniqueInput`.
+ *
+ * These must keep a unique field at the **top level** — Prisma rejects
+ * `{ AND: [{ id }, { marketId }] }` with "needs at least one of `id` … "
+ * because the unique field is then nested. Merging as a sibling
+ * (`{ id, marketId }`) satisfies the unique requirement while still narrowing
+ * by market via extendedWhereUnique.
+ */
+function withMarketUniqueFilter(where: unknown, marketId: string) {
+  if (!where || typeof where !== 'object' || Array.isArray(where)) {
+    return { marketId };
+  }
+  return { ...(where as Record<string, unknown>), marketId };
 }
 
 /**
@@ -176,7 +193,7 @@ export async function applyMarketScope(params: {
     // in this market and inserts the (market-stamped) `create` branch instead.
     return run({
       ...typedArgs,
-      where: withMarketFilter(typedArgs.where, marketId),
+      where: withMarketUniqueFilter(typedArgs.where, marketId),
       create: withMarketData(typedArgs.create, marketId),
       update: withoutMarketReassignment(typedArgs.update, marketId, `${model}.upsert`),
     });
@@ -192,7 +209,7 @@ export async function applyMarketScope(params: {
     }
     const scoped: Record<string, unknown> = {
       ...typedArgs,
-      where: withMarketFilter(typedArgs.where, marketId),
+      where: withMarketUniqueFilter(typedArgs.where, marketId),
     };
     if ('data' in typedArgs) {
       scoped.data = withoutMarketReassignment(typedArgs.data, marketId, `${model}.${operation}`);

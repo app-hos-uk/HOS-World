@@ -57,7 +57,9 @@ export function RouteGuard({
           MARKETING: '/marketing/dashboard',
           FINANCE: '/finance/dashboard',
           CMS_EDITOR: '/cms/dashboard',
-          SALES: '/admin/dashboard',
+          // SALES has no dedicated console yet, and /admin/dashboard is
+          // ADMIN-only, so routing there would bounce straight to access-denied.
+          SALES: '/',
           STORE_STAFF: '/store/lookup',
         } as Record<UserRole, string>;
 

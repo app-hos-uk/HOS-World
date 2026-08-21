@@ -54,15 +54,32 @@ describe('marketScopeExtension', () => {
 
   it('scopes unique reads without discarding the unique field', async () => {
     const args = await call('Order', 'findUnique', { where: { id: 'o1' } });
-    expect(args.where).toEqual({ AND: [{ id: 'o1' }, { marketId: 'm-us' }] });
+    expect(args.where).toEqual({ id: 'o1', marketId: 'm-us' });
   });
+
+  // Prisma rejects a WhereUniqueInput whose unique field is nested inside AND
+  // ("needs at least one of `id` ... "), so the unique key must stay top level.
+  it.each(['findUnique', 'findUniqueOrThrow', 'update', 'delete', 'upsert'])(
+    'keeps the unique field at the top level of where for %s',
+    async (operation) => {
+      const args = await call('Order', operation, {
+        where: { id: 'o1' },
+        data: {},
+        create: {},
+        update: {},
+      });
+      expect(args.where).not.toHaveProperty('AND');
+      expect(args.where.id).toBe('o1');
+      expect(args.where.marketId).toBe('m-us');
+    },
+  );
 
   it('scopes update and delete so they cannot cross markets', async () => {
     const updated = await call('Order', 'update', { where: { id: 'o1' }, data: { total: 1 } });
-    expect(updated.where).toEqual({ AND: [{ id: 'o1' }, { marketId: 'm-us' }] });
+    expect(updated.where).toEqual({ id: 'o1', marketId: 'm-us' });
 
     const deleted = await call('Order', 'delete', { where: { id: 'o1' } });
-    expect(deleted.where).toEqual({ AND: [{ id: 'o1' }, { marketId: 'm-us' }] });
+    expect(deleted.where).toEqual({ id: 'o1', marketId: 'm-us' });
   });
 
   it('stamps the market onto creates', async () => {
@@ -90,7 +107,7 @@ describe('marketScopeExtension', () => {
       data: { total: 5, marketId: 'm-gb' },
     });
     expect(args.data).toEqual({ total: 5 });
-    expect(args.where).toEqual({ AND: [{ id: 'o1' }, { marketId: 'm-us' }] });
+    expect(args.where).toEqual({ id: 'o1', marketId: 'm-us' });
   });
 
   it('strips a re-homing attempt using the nested set form', async () => {
@@ -115,7 +132,7 @@ describe('marketScopeExtension', () => {
       create: { total: 1 },
       update: { total: 2, marketId: 'm-gb' },
     });
-    expect(args.where).toEqual({ AND: [{ id: 'o1' }, { marketId: 'm-us' }] });
+    expect(args.where).toEqual({ id: 'o1', marketId: 'm-us' });
     expect(args.create).toEqual({ total: 1, marketId: 'm-us' });
     expect(args.update).toEqual({ total: 2 });
   });

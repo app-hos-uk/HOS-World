@@ -6,6 +6,10 @@ import {
   PLATFORM_TIMEZONE_CONFIG_KEY,
   PlatformRegionService,
 } from './platform-region.service';
+import {
+  emptyAccessControlStore,
+  runWithAccessControl,
+} from '../access-control/access-control.als';
 
 /** Stand-in for the Redis-backed CacheService shared by every API instance. */
 function createSharedCache() {
@@ -22,10 +26,13 @@ function createSharedCache() {
   };
 }
 
-function createPrisma(rows: Array<{ key: string; value: unknown }> = []) {
+function createPrisma(rows: Array<{ key: string; value: unknown }> = [], marketRow?: unknown) {
   return {
     config: {
       findMany: jest.fn().mockResolvedValue(rows),
+    },
+    market: {
+      findUnique: jest.fn().mockResolvedValue(marketRow ?? null),
     },
   };
 }
@@ -118,6 +125,53 @@ describe('PlatformRegionService', () => {
         }),
       }),
     );
+  });
+
+  describe('active market context', () => {
+    const usMarket = {
+      currency: 'USD',
+      country: 'United States',
+      countryCode: 'US',
+      locale: 'en-US',
+      timezone: 'America/New_York',
+      taxOrigin: null,
+      isActive: true,
+    };
+
+    function withStore(dataScopeMode: string, fn: () => Promise<void>) {
+      return runWithAccessControl(
+        {
+          ...emptyAccessControlStore(),
+          marketId: 'm-us',
+          dataScopeMode: dataScopeMode as never,
+        },
+        fn,
+      );
+    }
+
+    // AccessGuard resolves a market (falling back to the seeded US default) on
+    // every request. While scoping is off, region must still come from env/DB
+    // or a GBP deploy would silently serve USD.
+    it('ignores the active market while data scope is legacy', async () => {
+      const prisma = createPrisma([], usMarket);
+      const service = createService(prisma, undefined, { PLATFORM_CURRENCY: 'GBP' }, 0);
+
+      await withStore('legacy', async () => {
+        expect((await service.getRegion()).currency).toBe('GBP');
+      });
+      expect(prisma.market.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('follows the active market once data scope is enforced', async () => {
+      const prisma = createPrisma([], usMarket);
+      const service = createService(prisma, undefined, { PLATFORM_CURRENCY: 'GBP' }, 0);
+
+      await withStore('enforce', async () => {
+        const region = await service.getRegion();
+        expect(region.currency).toBe('USD');
+        expect(region.country).toBe('US');
+      });
+    });
   });
 
   it('serves repeat reads from the local cache within the TTL', async () => {

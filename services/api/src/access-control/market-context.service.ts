@@ -7,6 +7,17 @@ import { AccessModeService } from './access-mode.service';
 
 export const MARKET_HEADER = 'x-market-code';
 
+/**
+ * True when the actor's assignments tie them to a single tenant or store, and
+ * therefore to that entity's market. Market-scoped assignments are handled
+ * separately via the allowed-market list.
+ */
+export function isPinnedToSingleMarket(assignments: AssignmentSnapshot[]): boolean {
+  return assignments.some(
+    (a) => a.isActive && (a.scopeType === 'TENANT' || a.scopeType === 'STORE') && a.scopeId,
+  );
+}
+
 export interface RequestUserLike {
   id?: string;
   role?: string;
@@ -72,7 +83,7 @@ export class MarketContextService {
     if (hint.code) {
       const requested = await this.markets.findByCode(hint.code);
       if (requested) {
-        if (this.canUseMarket(requested, user, isGlobalAdmin, allowedMarketIds)) {
+        if (this.canUseMarket(requested, user, isGlobalAdmin, allowedMarketIds, assignments)) {
           market = requested;
         } else {
           this.logger.warn(
@@ -139,16 +150,21 @@ export class MarketContextService {
     user: RequestUserLike | null | undefined,
     isGlobalAdmin: boolean,
     allowedMarketIds: string[],
+    assignments: AssignmentSnapshot[],
   ): boolean {
     if (isGlobalAdmin) return true;
     if (!requested.isActive) return false;
     if (allowedMarketIds.length > 0) {
       return allowedMarketIds.includes(requested.id);
     }
-    // Pinned to a home market by their user record — no switching.
-    if (user?.homeMarketId) {
+    // Staff attached to a specific tenant or store operate inside one market
+    // and may not switch away from it.
+    if (isPinnedToSingleMarket(assignments) && user?.homeMarketId) {
       return user.homeMarketId === requested.id;
     }
+    // `homeMarketId` is only a default. The migration sets it for every user,
+    // so treating it as a lock would stop ordinary shoppers and unnarrowed
+    // staff from using the market selector at all.
     return true;
   }
 

@@ -52,7 +52,8 @@ const ROLE_DASHBOARD_MAP = {
   MARKETING: '/marketing/dashboard',
   FINANCE: '/finance/dashboard',
   CMS_EDITOR: '/cms/dashboard',
-  SALES: '/admin/dashboard',
+  // No dedicated sales console yet; /admin/dashboard is ADMIN-only.
+  SALES: '/',
   STORE_STAFF: '/store/lookup',
 } as Record<UserRole, string>;
 

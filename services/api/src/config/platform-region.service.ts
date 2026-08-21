@@ -232,6 +232,12 @@ export class PlatformRegionService {
     const store = getAccessControlStore();
     const marketId = store?.marketId;
     if (!marketId) return null;
+    // AccessGuard resolves a market on every request, falling back to the
+    // default (US) row. Honouring it while market scoping is off would make a
+    // single-region deploy silently take its currency/country/locale from the
+    // markets table instead of PLATFORM_* env config. Region follows the market
+    // only once the operator has opted into market-scoped data.
+    if (store?.dataScopeMode === 'legacy') return null;
 
     const hit = this.localCache.get(marketId);
     if (hit && Date.now() - hit.at < this.cacheTtlMs) {

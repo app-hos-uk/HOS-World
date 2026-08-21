@@ -5,6 +5,7 @@ import {
   PERMISSION_CATALOG,
 } from '@hos-marketplace/shared-types';
 import { PrismaService } from '../database/prisma.service';
+import { isPinnedToSingleMarket } from './market-context.service';
 import { MarketService } from './market.service';
 import { PolicyService } from './policy.service';
 import type { MarketRow } from './market.service';
@@ -70,12 +71,12 @@ export class AccessControlService {
       allMarkets.map((m) => m.id),
     );
     // Must mirror MarketContextService.canUseMarket, otherwise the switcher
-    // would offer markets the API then rejects.
+    // would offer markets the API then rejects — or hide ones it would accept.
     const visible = isGlobalAdmin
       ? allMarkets
       : allowedIds.length > 0
         ? allMarkets.filter((m) => allowedIds.includes(m.id))
-        : user.homeMarketId
+        : isPinnedToSingleMarket(assignments) && user.homeMarketId
           ? allMarkets.filter((m) => m.id === user.homeMarketId)
           : allMarkets;
 
