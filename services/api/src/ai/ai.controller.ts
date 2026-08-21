@@ -25,7 +25,6 @@ export class AIController {
     private readonly personalizationService: PersonalizationService,
   ) {}
 
-  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Post('chat/:characterId')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @ApiOperation({
@@ -51,7 +50,6 @@ export class AIController {
     };
   }
 
-  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get('chat/history')
   @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiOperation({
@@ -78,7 +76,6 @@ export class AIController {
     };
   }
 
-  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get('recommendations')
   @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @ApiOperation({

@@ -26,7 +26,6 @@ import { ReviewUgcDto } from './dto/review-ugc.dto';
 export class AmbassadorAdminController {
   constructor(private ambassador: AmbassadorService) {}
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('dashboard')
   @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Ambassador programme KPIs' })
@@ -35,7 +34,6 @@ export class AmbassadorAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('leaderboard')
   @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Leaderboard (admin)' })
@@ -51,7 +49,6 @@ export class AmbassadorAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('ugc')
   @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'All UGC submissions' })
@@ -70,7 +67,6 @@ export class AmbassadorAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post('ugc/:id/review')
   @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Review UGC submission' })
@@ -83,7 +79,6 @@ export class AmbassadorAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get()
   @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List ambassadors' })
@@ -104,7 +99,6 @@ export class AmbassadorAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id')
   @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Ambassador detail' })
@@ -113,7 +107,6 @@ export class AmbassadorAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/suspend')
   @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Suspend ambassador' })
@@ -122,7 +115,6 @@ export class AmbassadorAdminController {
     return { data, message: 'Suspended' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/reactivate')
   @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Reactivate ambassador' })

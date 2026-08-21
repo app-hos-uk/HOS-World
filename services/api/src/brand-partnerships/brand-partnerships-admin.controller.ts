@@ -29,7 +29,6 @@ import { UpdateBrandCampaignDto } from './dto/update-brand-campaign.dto';
 export class BrandPartnershipsAdminController {
   constructor(private brand: BrandPartnershipsService) {}
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('dashboard')
   @RequireAccess({ permission: 'promotions.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Brand partnership programme KPIs' })
@@ -38,7 +37,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('campaigns')
   @RequireAccess({ permission: 'promotions.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List brand campaigns' })
@@ -59,7 +57,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('campaigns/:campaignId')
   @RequireAccess({ permission: 'promotions.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Campaign detail' })
@@ -70,7 +67,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Patch('campaigns/:campaignId')
   @RequireAccess({ permission: 'promotions.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update campaign' })
@@ -82,7 +78,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post('campaigns/:campaignId/activate')
   @RequireAccess({ permission: 'promotions.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Activate campaign' })
@@ -93,7 +88,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post('campaigns/:campaignId/pause')
   @RequireAccess({ permission: 'promotions.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Pause campaign' })
@@ -104,7 +98,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post('campaigns/:campaignId/complete')
   @RequireAccess({ permission: 'promotions.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Complete campaign' })
@@ -115,7 +108,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post('campaigns/:campaignId/cancel')
   @RequireAccess({ permission: 'promotions.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Cancel campaign' })
@@ -126,7 +118,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('campaigns/:campaignId/report')
   @RequireAccess({ permission: 'promotions.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Campaign report' })
@@ -137,7 +128,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get()
   @RequireAccess({ permission: 'promotions.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List partnerships' })
@@ -156,7 +146,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post()
   @RequireAccess({ permission: 'promotions.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Create partnership' })
@@ -165,7 +154,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':partnershipId/campaigns')
   @RequireAccess({ permission: 'promotions.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Create campaign under partnership' })
@@ -177,7 +165,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id/report')
   @RequireAccess({ permission: 'promotions.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Partnership report' })
@@ -186,7 +173,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/archive')
   @RequireAccess({ permission: 'promotions.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Archive partnership' })
@@ -195,7 +181,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/restore')
   @RequireAccess({ permission: 'promotions.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Restore archived partnership back to active' })
@@ -204,7 +189,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'Partnership restored successfully' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id')
   @RequireAccess({ permission: 'promotions.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Partnership detail' })
@@ -213,7 +197,6 @@ export class BrandPartnershipsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Patch(':id')
   @RequireAccess({ permission: 'promotions.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update partnership' })

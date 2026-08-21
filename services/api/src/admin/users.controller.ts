@@ -23,7 +23,7 @@ export class AdminUsersController {
   constructor(private prisma: PrismaService) {}
 
   @Get('users')
-  @RequireAccess({ permission: 'users.view', scope: 'GLOBAL' })
+  @RequireAccess({ permission: 'users.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get all users (Admin only)',
     description:

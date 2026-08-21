@@ -15,7 +15,6 @@ import { RequireAccess } from '../access-control/decorators/require-access.decor
 export class ClickCollectAdminController {
   constructor(private cc: ClickCollectService) {}
 
-  @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @Get()
   @RequireAccess({ permission: 'orders.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List click & collect orders' })
@@ -27,7 +26,6 @@ export class ClickCollectAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @Get(':id')
   @RequireAccess({ permission: 'orders.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Click & collect detail' })
@@ -36,7 +34,6 @@ export class ClickCollectAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/preparing')
   @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Mark preparing' })
@@ -45,7 +42,6 @@ export class ClickCollectAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/ready')
   @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Mark ready for pickup' })
@@ -54,7 +50,6 @@ export class ClickCollectAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/collected')
   @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Mark collected' })
@@ -66,7 +61,6 @@ export class ClickCollectAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/cancel')
   @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Cancel click & collect' })

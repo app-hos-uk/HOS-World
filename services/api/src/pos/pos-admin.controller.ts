@@ -64,7 +64,6 @@ export class PosAdminController {
     };
   }
 
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Get('connections')
   @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   async listConnections(): Promise<ApiResponse<unknown>> {
@@ -75,7 +74,6 @@ export class PosAdminController {
     return { data: data.map((c) => this.sanitizeConnection(c)), message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Post('connections')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   async create(@Body() dto: CreatePosConnectionDto): Promise<ApiResponse<unknown>> {
@@ -113,7 +111,6 @@ export class PosAdminController {
     return { data: this.sanitizeConnection(data), message: 'Created' };
   }
 
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Put('connections/:id')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   async update(
@@ -175,7 +172,6 @@ export class PosAdminController {
     return { data: this.sanitizeConnection(data), message: 'Updated' };
   }
 
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Delete('connections/:id')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
@@ -183,7 +179,6 @@ export class PosAdminController {
     return { data: null, message: 'Deleted' };
   }
 
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Post('connections/:id/test')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   async test(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
@@ -203,7 +198,6 @@ export class PosAdminController {
     }
   }
 
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Get('connections/:id/outlets')
   @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   async outlets(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
@@ -216,7 +210,6 @@ export class PosAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Post('connections/:id/sync/products')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   async syncProducts(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
@@ -226,7 +219,6 @@ export class PosAdminController {
     return { data: { jobId }, message: 'Queued' };
   }
 
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Post('connections/:id/sync/inventory')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   async syncInventory(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
@@ -236,7 +228,6 @@ export class PosAdminController {
     return { data: { jobId }, message: 'Queued' };
   }
 
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Post('connections/:id/sync/sales')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   async syncSales(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
@@ -249,7 +240,6 @@ export class PosAdminController {
     return { data: { jobId, storeId: conn.storeId }, message: 'Queued' };
   }
 
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Post('connections/:id/sync/customers')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   async syncCustomers(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
@@ -270,7 +260,6 @@ export class PosAdminController {
    * Body: `{ "dryRun": true }` logs/counts only; `{ "dryRun": false }` applies stamps + mappings.
    * Pass `?sync=true` to run inline instead of queueing.
    */
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Post('connections/:id/backfill/customer-identity')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   async backfillCustomerIdentity(
@@ -298,7 +287,6 @@ export class PosAdminController {
     return { data: { jobId, dryRun }, message: 'Queued' };
   }
 
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Get('sales')
   @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   async sales(@Query() q: PosSalesFilterDto): Promise<ApiResponse<unknown>> {
@@ -325,7 +313,6 @@ export class PosAdminController {
     return { data: { items, total, page, limit }, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Get('sales/:id')
   @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   async sale(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
@@ -336,7 +323,6 @@ export class PosAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Get('sync-log')
   @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   async syncLog(): Promise<ApiResponse<unknown>> {
@@ -347,7 +333,6 @@ export class PosAdminController {
     return { data: { mappings }, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @Get('discrepancies')
   @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   async posDiscrepancies(): Promise<ApiResponse<unknown>> {

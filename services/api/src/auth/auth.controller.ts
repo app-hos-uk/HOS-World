@@ -35,7 +35,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
-import { RequireAccess } from '../access-control/decorators/require-access.decorator';
+
 import { AdminSellersService } from '../admin/sellers.service';
 import { ConfigService } from '@nestjs/config';
 import { setAuthCookies, clearAuthCookies } from './cookie.utils';
@@ -245,7 +245,6 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
-  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Logout user',
@@ -267,7 +266,6 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get current user profile',
@@ -284,7 +282,6 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Post('select-character')
-  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -343,7 +340,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('change-password')
-  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -366,7 +362,6 @@ export class AuthController {
   }
 
   @Post('fandom-quiz')
-  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

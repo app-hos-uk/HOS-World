@@ -35,6 +35,7 @@ export const PERMISSION_CATALOG = [
   { id: 'users.create', name: 'Create Users', description: 'Create user accounts', category: 'Users' },
   { id: 'users.edit', name: 'Edit Users', description: 'Edit user accounts', category: 'Users' },
   { id: 'users.delete', name: 'Delete Users', description: 'Delete user accounts', category: 'Users' },
+  { id: 'users.manage', name: 'Manage All Users', description: 'Admin-level access to list and manage all user accounts', category: 'Users' },
   { id: 'users.roles', name: 'Manage User Roles', description: 'Assign roles and permission sets', category: 'Users' },
   // Sellers
   { id: 'sellers.view', name: 'View Sellers', description: 'View seller accounts', category: 'Sellers' },
@@ -131,6 +132,8 @@ export type BuiltInPermissionRole = (typeof BUILT_IN_PERMISSION_ROLES)[number];
 export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
   ADMIN: ['*'],
   PROCUREMENT: [
+    'users.view',
+    'users.edit',
     'submissions.review',
     'submissions.approve',
     'submissions.reject',
@@ -140,6 +143,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     'procurement.manage',
   ],
   FULFILLMENT: [
+    'users.view',
+    'users.edit',
     'shipments.verify',
     'orders.view',
     'orders.manage',
@@ -150,6 +155,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     'shipping.view',
   ],
   CATALOG: [
+    'users.view',
+    'users.edit',
     'catalog.create',
     'catalog.manage',
     'products.view',
@@ -160,6 +167,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     'submissions.reject',
   ],
   MARKETING: [
+    'users.view',
+    'users.edit',
     'marketing.create',
     'marketing.manage',
     'promotions.view',
@@ -168,6 +177,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     'cms.edit',
   ],
   FINANCE: [
+    'users.view',
+    'users.edit',
     'pricing.approve',
     'orders.view',
     'orders.refund',
@@ -185,8 +196,11 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     'gift-cards.view',
     'tax.view',
   ],
-  SALES: ['orders.view', 'sellers.view', 'products.view', 'users.view'],
+  SALES: ['users.view', 'users.edit', 'orders.view', 'sellers.view', 'products.view'],
   SELLER: [
+    'users.view',
+    'users.edit',
+    'system.analytics',
     'products.create',
     'products.edit',
     'products.view',
@@ -201,6 +215,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     'invoices.view',
   ],
   B2C_SELLER: [
+    'users.view',
+    'users.edit',
+    'system.analytics',
     'products.create',
     'products.edit',
     'products.view',
@@ -215,6 +232,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     'invoices.view',
   ],
   WHOLESALER: [
+    'users.view',
+    'users.edit',
+    'system.analytics',
     'products.create',
     'products.edit',
     'products.view',
@@ -226,20 +246,31 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     'inventory.manage',
   ],
   CUSTOMER: [
+    'users.view',
+    'users.edit',
     'products.view',
     'orders.view',
     'orders.manage',
     'orders.cancel',
     'invoices.view',
     'loyalty.view',
-    'users.view',
-    'users.edit',
+    'loyalty.manage',
     'promotions.view',
     'promotions.manage',
+    'influencers.view',
+    'influencers.manage',
   ],
-  CMS_EDITOR: ['products.view', 'products.edit', 'catalog.create', 'cms.edit', 'marketing.create'],
-  INFLUENCER: ['influencers.view', 'products.view'],
-  STORE_STAFF: ['stores.operate', 'loyalty.view', 'loyalty.manage', 'orders.view'],
+  CMS_EDITOR: [
+    'users.view',
+    'users.edit',
+    'products.view',
+    'products.edit',
+    'catalog.create',
+    'cms.edit',
+    'marketing.create',
+  ],
+  INFLUENCER: ['users.view', 'users.edit', 'influencers.view', 'products.view'],
+  STORE_STAFF: ['users.view', 'users.edit', 'stores.operate', 'loyalty.view', 'loyalty.manage', 'orders.view'],
 };
 
 export interface MarketSummary {

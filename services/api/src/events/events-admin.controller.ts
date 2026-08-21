@@ -33,7 +33,6 @@ import { RequireAccess } from '../access-control/decorators/require-access.decor
 export class EventsAdminController {
   constructor(private events: EventsService) {}
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get()
   @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List events (all statuses)' })
@@ -47,7 +46,6 @@ export class EventsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post()
   @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Create draft event' })
@@ -59,7 +57,6 @@ export class EventsAdminController {
     return { data, message: 'Created' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id/rsvps')
   @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List RSVPs' })
@@ -68,7 +65,6 @@ export class EventsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id/attendances')
   @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List attendances' })
@@ -77,7 +73,6 @@ export class EventsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id/stats')
   @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Event statistics' })
@@ -86,7 +81,6 @@ export class EventsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/publish')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Publish event' })
@@ -95,7 +89,6 @@ export class EventsAdminController {
     return { data, message: 'Published' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/cancel')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Cancel event' })
@@ -107,7 +100,6 @@ export class EventsAdminController {
     return { data, message: 'Cancelled' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/complete')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Mark event completed' })
@@ -116,7 +108,6 @@ export class EventsAdminController {
     return { data, message: 'Completed' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/check-in')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Staff check-in by userId or ticketCode' })
@@ -136,7 +127,6 @@ export class EventsAdminController {
     throw new BadRequestException('Provide userId or ticketCode');
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/invite')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Bulk invite members' })
@@ -148,7 +138,6 @@ export class EventsAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id')
   @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Event detail + stats' })
@@ -158,7 +147,6 @@ export class EventsAdminController {
     return { data: { event, stats }, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Patch(':id')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update event' })
@@ -170,7 +158,6 @@ export class EventsAdminController {
     return { data, message: 'Updated' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Delete(':id')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Delete draft event' })

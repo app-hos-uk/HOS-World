@@ -23,7 +23,6 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 export class ReturnPoliciesController {
   constructor(private readonly returnPoliciesService: ReturnPoliciesService) {}
 
-  @RequireAccess({ permission: 'returns.manage', scope: 'MARKET' })
   @Post()
   @RequireAccess({ permission: 'returns.manage', scope: 'MARKET' })
   @ApiOperation({
@@ -40,7 +39,6 @@ export class ReturnPoliciesController {
     };
   }
 
-  @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @Get()
   @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @ApiOperation({
@@ -63,7 +61,6 @@ export class ReturnPoliciesController {
     };
   }
 
-  @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @Get(':id')
   @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @ApiOperation({
@@ -81,7 +78,6 @@ export class ReturnPoliciesController {
     };
   }
 
-  @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @Get('applicable/:productId')
   @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @ApiOperation({
@@ -111,7 +107,6 @@ export class ReturnPoliciesController {
     };
   }
 
-  @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @Get('eligibility/:orderId')
   @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @ApiOperation({
@@ -132,7 +127,6 @@ export class ReturnPoliciesController {
     };
   }
 
-  @RequireAccess({ permission: 'returns.manage', scope: 'MARKET' })
   @Put(':id')
   @RequireAccess({ permission: 'returns.manage', scope: 'MARKET' })
   @ApiOperation({
@@ -152,7 +146,6 @@ export class ReturnPoliciesController {
     };
   }
 
-  @RequireAccess({ permission: 'returns.manage', scope: 'MARKET' })
   @Delete(':id')
   @RequireAccess({ permission: 'returns.manage', scope: 'MARKET' })
   @ApiOperation({

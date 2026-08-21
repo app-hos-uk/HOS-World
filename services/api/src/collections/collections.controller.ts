@@ -32,7 +32,7 @@ import { RequireAccess } from '../access-control/decorators/require-access.decor
 export class CollectionsController {
   constructor(private readonly collectionsService: CollectionsService) {}
 
-  @RequireAccess({ permission: 'catalog.manage', scope: 'MARKET' })
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Get()
   @ApiOperation({
     summary: 'Get user collections',
@@ -61,7 +61,7 @@ export class CollectionsController {
     };
   }
 
-  @RequireAccess({ permission: 'catalog.manage', scope: 'MARKET' })
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Get(':id')
   @ApiOperation({
     summary: 'Get collection by ID',
@@ -84,7 +84,7 @@ export class CollectionsController {
     };
   }
 
-  @RequireAccess({ permission: 'catalog.manage', scope: 'MARKET' })
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Post()
   @ApiOperation({
     summary: 'Create collection',
@@ -114,7 +114,7 @@ export class CollectionsController {
     };
   }
 
-  @RequireAccess({ permission: 'catalog.manage', scope: 'MARKET' })
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Put(':id')
   @ApiOperation({
     summary: 'Update collection',
@@ -147,7 +147,7 @@ export class CollectionsController {
     };
   }
 
-  @RequireAccess({ permission: 'catalog.manage', scope: 'MARKET' })
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Delete(':id')
   @ApiOperation({
     summary: 'Delete collection',
@@ -169,7 +169,7 @@ export class CollectionsController {
     };
   }
 
-  @RequireAccess({ permission: 'catalog.manage', scope: 'MARKET' })
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Post(':id/products/:productId')
   @ApiOperation({
     summary: 'Add product to collection',
@@ -196,7 +196,7 @@ export class CollectionsController {
     };
   }
 
-  @RequireAccess({ permission: 'catalog.manage', scope: 'MARKET' })
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Delete(':id/products/:productId')
   @ApiOperation({
     summary: 'Remove product from collection',

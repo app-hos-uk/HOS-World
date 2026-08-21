@@ -34,7 +34,7 @@ import { RequireAccess } from '../access-control/decorators/require-access.decor
 export class CustomerGroupsController {
   constructor(private readonly customerGroupsService: CustomerGroupsService) {}
 
-  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post()
   @ApiOperation({
     summary: 'Create customer group',
@@ -50,7 +50,7 @@ export class CustomerGroupsController {
     };
   }
 
-  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get()
   @ApiOperation({
     summary: 'Get all customer groups',
@@ -66,7 +66,7 @@ export class CustomerGroupsController {
     };
   }
 
-  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id')
   @ApiOperation({
     summary: 'Get customer group by ID',
@@ -83,7 +83,7 @@ export class CustomerGroupsController {
     };
   }
 
-  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Put(':id')
   @ApiOperation({
     summary: 'Update customer group',
@@ -102,7 +102,7 @@ export class CustomerGroupsController {
     };
   }
 
-  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Delete(':id')
   @ApiOperation({
     summary: 'Delete customer group',
@@ -120,7 +120,7 @@ export class CustomerGroupsController {
     };
   }
 
-  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/customers/:userId')
   @ApiOperation({
     summary: 'Add customer to group',
@@ -140,7 +140,7 @@ export class CustomerGroupsController {
     };
   }
 
-  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Delete('customers/:userId')
   @ApiOperation({
     summary: 'Remove customer from group',
@@ -156,7 +156,7 @@ export class CustomerGroupsController {
     };
   }
 
-  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('my/group')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({

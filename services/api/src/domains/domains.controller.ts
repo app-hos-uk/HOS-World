@@ -32,7 +32,7 @@ export class DomainsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
-  @RequireAccess({ permission: 'system.settings', scope: 'SELF' })
+  @RequireAccess({ permission: 'sellers.operate', scope: 'SELF' })
   @Get('sellers/:sellerId')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -57,7 +57,7 @@ export class DomainsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
-  @RequireAccess({ permission: 'system.settings', scope: 'SELF' })
+  @RequireAccess({ permission: 'sellers.operate', scope: 'SELF' })
   @Get('me')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -105,7 +105,7 @@ export class DomainsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
-  @RequireAccess({ permission: 'system.settings', scope: 'SELF' })
+  @RequireAccess({ permission: 'sellers.operate', scope: 'SELF' })
   @Post('sellers/:sellerId/subdomain')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -156,7 +156,7 @@ export class DomainsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
-  @RequireAccess({ permission: 'system.settings', scope: 'SELF' })
+  @RequireAccess({ permission: 'sellers.operate', scope: 'SELF' })
   @Delete('sellers/:sellerId/subdomain')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -180,7 +180,7 @@ export class DomainsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
-  @RequireAccess({ permission: 'system.settings', scope: 'SELF' })
+  @RequireAccess({ permission: 'sellers.operate', scope: 'SELF' })
   @Get('packages')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -200,7 +200,7 @@ export class DomainsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
-  @RequireAccess({ permission: 'system.settings', scope: 'SELF' })
+  @RequireAccess({ permission: 'sellers.operate', scope: 'SELF' })
   @Get('sellers/:sellerId/dns-config')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

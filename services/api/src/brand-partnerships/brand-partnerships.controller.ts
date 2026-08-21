@@ -19,7 +19,6 @@ export class BrandPartnershipsController {
     private prisma: PrismaService,
   ) {}
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get()
   @RequireAccess({ permission: 'promotions.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Active brand-funded campaigns for the current member' })
@@ -35,7 +34,6 @@ export class BrandPartnershipsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get(':id/products')
   @RequireAccess({ permission: 'promotions.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Products qualifying for a brand campaign' })

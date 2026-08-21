@@ -82,7 +82,7 @@ export class DigitalProductsController {
     };
   }
 
-  @RequireAccess({ permission: 'products.edit', scope: 'MARKET' })
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Post(':id/download')
   @ApiOperation({
     summary: 'Download digital product',

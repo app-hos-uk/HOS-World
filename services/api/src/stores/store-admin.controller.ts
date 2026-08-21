@@ -28,7 +28,6 @@ import { RequireAccess } from '../access-control/decorators/require-access.decor
 export class StoreAdminController {
   constructor(private stores: StoreOnboardingService) {}
 
-  @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @Get()
   @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List stores with onboarding status' })
@@ -37,7 +36,6 @@ export class StoreAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post()
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Create store' })
@@ -46,7 +44,6 @@ export class StoreAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @Get(':id')
   @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Store detail and checklist' })
@@ -55,7 +52,6 @@ export class StoreAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Patch(':id')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update store' })
@@ -67,7 +63,6 @@ export class StoreAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @Get(':id/readiness')
   @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Auto-derived readiness checks for a store' })
@@ -76,7 +71,6 @@ export class StoreAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/activate')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Activate store' })
@@ -85,7 +79,6 @@ export class StoreAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/deactivate')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Deactivate store' })
@@ -94,7 +87,6 @@ export class StoreAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Delete(':id')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Delete store and related records' })
@@ -103,7 +95,6 @@ export class StoreAdminController {
     return { data, message: 'Store deleted' };
   }
 
-  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/onboarding/step')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Mark onboarding step complete' })
@@ -115,7 +106,6 @@ export class StoreAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/onboarding/complete')
   @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Mark full onboarding complete' })

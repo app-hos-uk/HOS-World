@@ -15,7 +15,6 @@ import { RequireAccess } from '../access-control/decorators/require-access.decor
 export class StoreStaffController {
   constructor(private customers: StoreStaffCustomerService) {}
 
-  @RequireAccess({ permission: 'stores.manage', scope: 'STORE' })
   @Post('customers/search')
   @RequireAccess({ permission: 'stores.operate', scope: 'STORE' })
   @Throttle({ default: { limit: 20, ttl: 60000 } })

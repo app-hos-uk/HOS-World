@@ -15,7 +15,6 @@ import { RequireAccess } from '../access-control/decorators/require-access.decor
 export class LoyaltyAnalyticsController {
   constructor(private analytics: LoyaltyAnalyticsService) {}
 
-  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('health')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Programme health KPIs' })
@@ -24,7 +23,6 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('snapshots')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Snapshot timeline' })
@@ -38,7 +36,6 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('clv/distribution')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'CLV bucket distribution' })
@@ -47,7 +44,6 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('clv/top')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Top members by CLV' })
@@ -56,7 +52,6 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('clv/churn')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Churn risk report' })
@@ -65,7 +60,6 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('attribution')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Campaign attribution report' })
@@ -84,7 +78,6 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('attribution/:campaignId')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Campaign ROI timeline' })
@@ -99,7 +92,6 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('fandom-trends')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Fandom trend analysis' })
@@ -108,7 +100,6 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('tiers')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Tier analysis with CLV and revenue' })
@@ -117,7 +108,6 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('channels')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Web vs POS performance' })
@@ -126,7 +116,6 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('cohorts')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Cohort retention matrix' })
@@ -135,7 +124,6 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Post('snapshots/compute')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Manually trigger snapshot' })
@@ -144,7 +132,6 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Post('clv/recompute')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Trigger CLV recompute for all members' })
@@ -153,7 +140,6 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('export/:type')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Export report' })

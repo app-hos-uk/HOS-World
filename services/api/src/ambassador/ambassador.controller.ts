@@ -29,7 +29,6 @@ import { SubmitUgcDto } from './dto/submit-ugc.dto';
 export class AmbassadorController {
   constructor(private ambassador: AmbassadorService) {}
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('eligibility')
   @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Ambassador programme eligibility' })
@@ -38,7 +37,6 @@ export class AmbassadorController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Post('enroll')
   @RequireAccess({ permission: 'influencers.manage', scope: 'SELF' })
   @ApiOperation({ summary: 'Enroll as ambassador' })
@@ -50,7 +48,6 @@ export class AmbassadorController {
     return { data, message: 'Welcome, ambassador' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('profile')
   @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Ambassador profile' })
@@ -59,7 +56,6 @@ export class AmbassadorController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Patch('profile')
   @RequireAccess({ permission: 'influencers.manage', scope: 'SELF' })
   @ApiOperation({ summary: 'Update ambassador profile' })
@@ -71,7 +67,6 @@ export class AmbassadorController {
     return { data, message: 'Updated' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Post('ugc')
   @RequireAccess({ permission: 'influencers.manage', scope: 'SELF' })
   @ApiOperation({ summary: 'Submit UGC' })
@@ -83,7 +78,6 @@ export class AmbassadorController {
     return { data, message: 'Submitted' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('ugc')
   @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @ApiOperation({ summary: 'List my UGC submissions' })
@@ -101,7 +95,6 @@ export class AmbassadorController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('dashboard')
   @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Unified referral dashboard' })
@@ -110,7 +103,6 @@ export class AmbassadorController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('leaderboard')
   @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Ambassador leaderboard' })
@@ -126,7 +118,6 @@ export class AmbassadorController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('achievements')
   @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @ApiOperation({ summary: 'My ambassador achievements' })
@@ -135,7 +126,6 @@ export class AmbassadorController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Post('convert-commission/:commissionId')
   @RequireAccess({ permission: 'influencers.manage', scope: 'SELF' })
   @ApiOperation({ summary: 'Convert approved influencer commission to loyalty points' })

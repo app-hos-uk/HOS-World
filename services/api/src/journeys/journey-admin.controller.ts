@@ -33,7 +33,6 @@ export class JourneyAdminController {
     private journeys: JourneyService,
   ) {}
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get()
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List marketing journeys' })
@@ -47,7 +46,6 @@ export class JourneyAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Journey detail' })
@@ -60,7 +58,6 @@ export class JourneyAdminController {
     return { data: { journey, stats }, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post()
   @RequireAccess({ permission: 'marketing.create', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Create journey' })
@@ -96,7 +93,6 @@ export class JourneyAdminController {
     return { data, message: 'Created' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Patch(':id')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update journey' })
@@ -136,7 +132,6 @@ export class JourneyAdminController {
     return { data, message: 'Updated' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Delete(':id')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Delete inactive journey (cascades enrollments)' })
@@ -154,7 +149,6 @@ export class JourneyAdminController {
     return { data: { id }, message: 'Deleted' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id/enrollments')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List enrollments' })
@@ -171,7 +165,6 @@ export class JourneyAdminController {
     return { data: items, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/trigger')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Manually enroll a user' })
@@ -198,7 +191,6 @@ export class MessagingAdminController {
     private messaging: MessagingService,
   ) {}
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('logs')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Message logs' })
@@ -225,7 +217,6 @@ export class MessagingAdminController {
     return { data: { items, total, page: p, limit: take }, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('stats')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Messaging stats (30d)' })
@@ -239,7 +230,6 @@ export class MessagingAdminController {
     return { data: { since, breakdown: rows }, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post('broadcast')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Send template to segment (basic)' })

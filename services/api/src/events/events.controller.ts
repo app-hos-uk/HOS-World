@@ -70,7 +70,6 @@ export class EventsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('my/rsvps')
   @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
@@ -81,7 +80,6 @@ export class EventsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('my/attendances')
   @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
@@ -92,7 +90,6 @@ export class EventsController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Post(':id/rsvp')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
@@ -107,7 +104,6 @@ export class EventsController {
     return { data, message: 'RSVP recorded' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Delete(':id/rsvp')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
@@ -121,7 +117,6 @@ export class EventsController {
     return { data: null, message: 'Cancelled' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Post(':id/check-in')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')

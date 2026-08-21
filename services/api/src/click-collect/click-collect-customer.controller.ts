@@ -13,7 +13,6 @@ import { RequireAccess } from '../access-control/decorators/require-access.decor
 export class ClickCollectCustomerController {
   constructor(private cc: ClickCollectService) {}
 
-  @RequireAccess({ permission: 'stores.manage', scope: 'SELF' })
   @Post()
   @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Create click & collect for an order' })
@@ -25,7 +24,6 @@ export class ClickCollectCustomerController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.view', scope: 'SELF' })
   @Get('my-orders')
   @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @ApiOperation({ summary: 'My active click & collect orders' })
@@ -34,7 +32,6 @@ export class ClickCollectCustomerController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'stores.view', scope: 'SELF' })
   @Get('stores')
   @RequireAccess({ permission: 'stores.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Eligible stores for products' })

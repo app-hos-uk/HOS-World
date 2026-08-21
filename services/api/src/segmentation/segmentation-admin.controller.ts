@@ -39,7 +39,6 @@ export class SegmentationAdminController {
     private config: ConfigService,
   ) {}
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('templates')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List template segments' })
@@ -48,7 +47,6 @@ export class SegmentationAdminController {
     return { data: { items, total: items.length }, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('dimensions')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List segment dimensions' })
@@ -57,7 +55,6 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post('refresh-all')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Queue refresh for all active dynamic segments' })
@@ -66,7 +63,6 @@ export class SegmentationAdminController {
     return { data: { jobId }, message: 'Queued' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post('preview')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Preview segment rules' })
@@ -76,7 +72,6 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get()
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List segments' })
@@ -95,7 +90,6 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post()
   @RequireAccess({ permission: 'marketing.create', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Create segment' })
@@ -107,7 +101,6 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id/members')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List segment members' })
@@ -126,7 +119,6 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/broadcast')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Broadcast to segment members' })
@@ -159,7 +151,6 @@ export class SegmentationAdminController {
     return { data: { targeted: userIds.length, sent }, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/refresh')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Refresh segment membership' })
@@ -168,7 +159,6 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/archive')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Archive segment' })
@@ -177,7 +167,6 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/restore')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Restore archived segment' })
@@ -186,7 +175,6 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Get segment' })
@@ -195,7 +183,6 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Patch(':id')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update segment' })
@@ -207,7 +194,6 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
-  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Delete(':id')
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Delete archived segment' })
