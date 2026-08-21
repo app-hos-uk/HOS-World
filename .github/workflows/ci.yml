@@ -29,6 +29,7 @@ jobs:
       JWT_SECRET: 'test-secret-minimum-32-chars-long-for-ci'
       JWT_REFRESH_SECRET: 'test-refresh-secret-minimum-32-chars-for-ci'
       NEXT_PUBLIC_API_URL: 'http://localhost:3001/api'
+      ACCESS_CONTROL_STRICT_COVERAGE: 'true'
     steps:
       - uses: actions/checkout@v4
 

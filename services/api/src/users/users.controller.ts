@@ -19,6 +19,7 @@ import {
 import { UsersService } from './users.service';
 import { UpdateProfileDto, ChangePasswordDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse, User } from '@hos-marketplace/shared-types';
 
 @ApiTags('users')
@@ -29,6 +30,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('profile')
+  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get user profile',
     description: "Retrieves the authenticated user's profile information",
@@ -44,6 +46,7 @@ export class UsersController {
   }
 
   @Get('profile/gamification')
+  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get gamification stats',
     description:
@@ -60,6 +63,7 @@ export class UsersController {
   }
 
   @Get('profile/badges')
+  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get user badges',
     description: 'Retrieves all badges earned by the user',
@@ -75,6 +79,7 @@ export class UsersController {
   }
 
   @Get('profile/collections')
+  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get user collections',
     description: 'Retrieves all product collections created by the user',
@@ -90,6 +95,7 @@ export class UsersController {
   }
 
   @Put('profile')
+  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @ApiOperation({
     summary: 'Update user profile',
     description: "Updates the authenticated user's profile information",
@@ -110,6 +116,7 @@ export class UsersController {
   }
 
   @Put('password')
+  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Change password',
@@ -132,6 +139,7 @@ export class UsersController {
   }
 
   @Delete('account')
+  @RequireAccess({ permission: 'users.delete', scope: 'SELF' })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Delete account',

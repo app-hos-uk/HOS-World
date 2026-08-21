@@ -24,6 +24,7 @@ import { MarkPaidPayoutDto } from './dto/mark-paid-payout.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('influencer-payouts')
@@ -37,6 +38,7 @@ export class InfluencerPayoutsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @Get('influencers/me/payouts')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get my payouts' })
@@ -65,6 +67,7 @@ export class InfluencerPayoutsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FINANCE')
+  @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @Get('admin/influencer-payouts')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'List all payouts' })
@@ -94,6 +97,7 @@ export class InfluencerPayoutsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FINANCE')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @Post('admin/influencer-payouts')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create payout record' })
@@ -108,6 +112,7 @@ export class InfluencerPayoutsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FINANCE')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @Put('admin/influencer-payouts/:id/mark-paid')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Mark payout as paid' })
@@ -127,6 +132,7 @@ export class InfluencerPayoutsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @Put('admin/influencer-payouts/:id/cancel')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Cancel payout' })

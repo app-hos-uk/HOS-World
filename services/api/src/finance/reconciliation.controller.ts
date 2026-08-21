@@ -14,6 +14,7 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { ReconciliationService } from './reconciliation.service';
 
 @Controller('finance/reconciliation')
@@ -23,6 +24,7 @@ export class ReconciliationController {
   constructor(private reconciliationService: ReconciliationService) {}
 
   @Post('run')
+  @RequireAccess({ permission: 'finance.reconciliation', scope: 'GLOBAL' })
   async startRun(@Body() body: { periodStart: string; periodEnd: string }, @Request() req: any) {
     // Validate required fields
     if (!body.periodStart || !body.periodEnd) {
@@ -52,6 +54,7 @@ export class ReconciliationController {
   }
 
   @Get('runs')
+  @RequireAccess({ permission: 'finance.reconciliation', scope: 'GLOBAL' })
   async getRuns(@Query() query: { status?: string; page?: string; limit?: string }) {
     const result = await this.reconciliationService.getRuns({
       status: query.status,
@@ -62,12 +65,14 @@ export class ReconciliationController {
   }
 
   @Get('runs/:id')
+  @RequireAccess({ permission: 'finance.reconciliation', scope: 'GLOBAL' })
   async getRunDetails(@Param('id', ParseUUIDPipe) id: string) {
     const result = await this.reconciliationService.getRunDetails(id);
     return { data: result };
   }
 
   @Put('items/:id/resolve')
+  @RequireAccess({ permission: 'finance.reconciliation', scope: 'GLOBAL' })
   async resolveItem(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: { resolution: string },
@@ -78,6 +83,7 @@ export class ReconciliationController {
   }
 
   @Put('items/:id/ignore')
+  @RequireAccess({ permission: 'finance.reconciliation', scope: 'GLOBAL' })
   async ignoreItem(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: { reason: string },

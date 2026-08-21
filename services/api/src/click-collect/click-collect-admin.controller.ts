@@ -5,6 +5,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { ClickCollectService } from './click-collect.service';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 
 @ApiTags('admin-click-collect')
 @ApiBearerAuth('JWT-auth')
@@ -14,7 +15,9 @@ import { ClickCollectService } from './click-collect.service';
 export class ClickCollectAdminController {
   constructor(private cc: ClickCollectService) {}
 
+  @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @Get()
+  @RequireAccess({ permission: 'orders.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List click & collect orders' })
   async list(
     @Query('storeId') storeId?: string,
@@ -24,28 +27,36 @@ export class ClickCollectAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @Get(':id')
+  @RequireAccess({ permission: 'orders.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Click & collect detail' })
   async get(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.cc.adminGet(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/preparing')
+  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Mark preparing' })
   async preparing(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.cc.markPreparing(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/ready')
+  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Mark ready for pickup' })
   async ready(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.cc.markReady(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/collected')
+  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Mark collected' })
   async collected(
     @Param('id', ParseUUIDPipe) id: string,
@@ -55,7 +66,9 @@ export class ClickCollectAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/cancel')
+  @RequireAccess({ permission: 'stores.operate', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Cancel click & collect' })
   async cancel(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.cc.cancelClickCollect(id);

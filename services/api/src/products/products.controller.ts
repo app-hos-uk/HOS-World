@@ -35,6 +35,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { AUTH_COOKIE_NAME } from '../auth/cookie.utils';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse, PaginatedResponse, Product } from '@hos-marketplace/shared-types';
 
 @ApiTags('products')
@@ -136,6 +137,7 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'CATALOG')
+  @RequireAccess({ permission: 'products.create', scope: 'GLOBAL' })
   @Post()
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -162,6 +164,7 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'CATALOG', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'products.edit', scope: 'MARKET' })
   @Put(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -189,6 +192,7 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'products.delete', scope: 'MARKET' })
   @Delete(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete product', description: 'Delete a product (Seller only)' })
@@ -210,6 +214,7 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'products.edit', scope: 'MARKET' })
   @Post('bulk-update')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -234,6 +239,7 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'products.create', scope: 'MARKET' })
   @Post('import/validate')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -253,6 +259,7 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'products.view', scope: 'MARKET' })
   @Get('export/csv')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -272,6 +279,7 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'products.create', scope: 'MARKET' })
   @Post('import')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

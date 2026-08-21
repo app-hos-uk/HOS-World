@@ -14,6 +14,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -27,9 +28,11 @@ export class MessagingApiController {
     private jwt: JwtService,
   ) {}
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Post('push/subscribe')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Register web push subscription' })
   async subscribePush(
@@ -61,9 +64,11 @@ export class MessagingApiController {
     return { data: { id: row.id }, message: 'Subscribed' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Delete('push/unsubscribe')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Remove push subscription(s)' })
   async unsubscribePush(
@@ -83,9 +88,11 @@ export class MessagingApiController {
     return { data: null, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('history')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Outbound message log for current user' })
   async history(
@@ -108,6 +115,7 @@ export class MessagingApiController {
   }
 
   @Public()
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('unsubscribe')
   @ApiOperation({ summary: 'One-click unsubscribe via signed token' })
   async unsubscribe(

@@ -11,12 +11,14 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('currency')
 @Controller('currency')
 export class CurrencyController {
   constructor(private readonly currencyService: CurrencyService) {}
 
   @Public()
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get('rates')
   @ApiOperation({
     summary: 'Get exchange rates',
@@ -33,6 +35,7 @@ export class CurrencyController {
   }
 
   @Public()
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get('convert')
   @ApiOperation({
     summary: 'Convert currency',
@@ -74,6 +77,7 @@ export class CurrencyController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get('user-currency')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

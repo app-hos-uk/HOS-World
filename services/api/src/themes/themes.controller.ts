@@ -33,6 +33,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('themes')
@@ -46,6 +47,7 @@ export class ThemesController {
   // Theme CRUD (Admin only)
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.themes', scope: 'GLOBAL' })
   @Post()
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -87,6 +89,7 @@ export class ThemesController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.themes', scope: 'GLOBAL' })
   @Put(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -113,6 +116,7 @@ export class ThemesController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.themes', scope: 'GLOBAL' })
   @Delete(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -134,6 +138,7 @@ export class ThemesController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.themes', scope: 'GLOBAL' })
   @Post(':id/duplicate')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -156,6 +161,7 @@ export class ThemesController {
   // Seller Theme Customization
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'system.themes', scope: 'SELF' })
   @Get('seller/my-theme')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -210,6 +216,7 @@ export class ThemesController {
 
   // Customer Theme Preferences
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'system.themes', scope: 'SELF' })
   @Get('customer/preference')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -228,6 +235,7 @@ export class ThemesController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'system.themes', scope: 'SELF' })
   @Put('customer/preference')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -270,6 +278,7 @@ export class ThemesController {
   // Theme Upload
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.themes', scope: 'GLOBAL' })
   @Post('upload')
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 50 * 1024 * 1024 } })) // 50MB limit
   @ApiBearerAuth('JWT-auth')
@@ -310,6 +319,7 @@ export class ThemesController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.themes', scope: 'GLOBAL' })
   @Post(':id/generate-preview')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

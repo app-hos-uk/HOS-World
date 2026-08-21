@@ -24,6 +24,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { isUuid } from '../common/utils/uuid';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('wishlist')
 @ApiBearerAuth('JWT-auth')
 @Controller('wishlist')
@@ -40,6 +41,7 @@ export class WishlistController {
     return product.id;
   }
 
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Post('products/:productId')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -62,6 +64,7 @@ export class WishlistController {
     };
   }
 
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Delete('products/:productId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -84,6 +87,7 @@ export class WishlistController {
     };
   }
 
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Get()
   @ApiOperation({
     summary: 'Get wishlist',
@@ -117,6 +121,7 @@ export class WishlistController {
     };
   }
 
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Get('products/:productId/check')
   @ApiOperation({
     summary: 'Check if product is in wishlist',

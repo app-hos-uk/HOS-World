@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { AccountingService } from './accounting.service';
 import { LedgerOutboxService } from './ledger-outbox.service';
@@ -41,11 +42,13 @@ export class AccountingAdminController {
   ) {}
 
   @Get('status')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   async status(): Promise<ApiResponse<unknown>> {
     return { data: await this.accounting.getStatus(), message: 'OK' };
   }
 
   @Get('outbox')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   async listOutbox(
     @Query('status') status?: string,
     @Query('entryType') entryType?: string,
@@ -62,6 +65,7 @@ export class AccountingAdminController {
   }
 
   @Post('outbox/:id/retry')
+  @RequireAccess({ permission: 'finance.manage', scope: 'GLOBAL' })
   async retryFailed(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     this.accounting.assertEnabled();
     const data = await this.outbox.retryFailed(id);
@@ -69,6 +73,7 @@ export class AccountingAdminController {
   }
 
   @Post('outbox/drain')
+  @RequireAccess({ permission: 'finance.manage', scope: 'GLOBAL' })
   async drainNow(): Promise<ApiResponse<unknown>> {
     this.accounting.assertEnabled();
     const data = await this.outbox.drainPending();
@@ -81,6 +86,7 @@ export class AccountingAdminController {
    * re-run backfills a missed day without double-posting.
    */
   @Post('daily-journals/run')
+  @RequireAccess({ permission: 'finance.manage', scope: 'GLOBAL' })
   async runDailyJournals(@Body() body: { periodDate?: string }): Promise<ApiResponse<unknown>> {
     this.accounting.assertEnabled();
     const periodDate = body?.periodDate?.trim();
@@ -105,11 +111,13 @@ export class AccountingAdminController {
 
   /** CoA mapping stub — JSON config stored on Xero integration settings. */
   @Get('coa-mapping')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   async getCoaMapping(): Promise<ApiResponse<ChartOfAccountsMapping>> {
     return { data: await this.accounting.getCoaMapping(), message: 'OK' };
   }
 
   @Put('coa-mapping')
+  @RequireAccess({ permission: 'finance.manage', scope: 'GLOBAL' })
   async updateCoaMapping(
     @Body() body: Partial<ChartOfAccountsMapping>,
   ): Promise<ApiResponse<ChartOfAccountsMapping>> {
@@ -118,12 +126,14 @@ export class AccountingAdminController {
   }
 
   @Get('coa/remote-accounts')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   async remoteAccounts(): Promise<ApiResponse<unknown>> {
     const data = await this.accounting.fetchRemoteAccounts();
     return { data, message: 'OK' };
   }
 
   @Get('three-way-recon')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   async threeWayReconReport(): Promise<ApiResponse<unknown>> {
     const data = await this.threeWayRecon.getReport();
     return { data, message: 'OK' };
@@ -134,6 +144,7 @@ export class AccountingAdminController {
    * and returns the Xero authorize URL.
    */
   @Get('oauth/connect-url')
+  @RequireAccess({ permission: 'finance.manage', scope: 'GLOBAL' })
   async connectUrl(): Promise<ApiResponse<unknown>> {
     const { url, scopes, state } = await this.xeroAuth.createConnectUrl();
     return {

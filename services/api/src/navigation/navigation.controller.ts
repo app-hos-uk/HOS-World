@@ -6,11 +6,13 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('navigation')
 @Controller('navigation')
 export class NavigationController {
   constructor(private readonly service: NavigationService) {}
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'MARKET' })
   @Get()
   @Public()
   @ApiOperation({ summary: 'Get active navigation items for a group' })
@@ -21,6 +23,7 @@ export class NavigationController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'MARKET' })
   @Get('all')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -30,6 +33,7 @@ export class NavigationController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'MARKET' })
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -39,6 +43,7 @@ export class NavigationController {
     return { data, message: 'Navigation item created' };
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'MARKET' })
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -48,6 +53,7 @@ export class NavigationController {
     return { data, message: 'Navigation item updated' };
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'MARKET' })
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')

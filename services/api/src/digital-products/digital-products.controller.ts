@@ -11,6 +11,7 @@ import { DigitalProductsService, DigitalProduct, DownloadResult } from './digita
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('digital-products')
 @ApiBearerAuth('JWT-auth')
 @Controller('digital-products')
@@ -18,6 +19,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 export class DigitalProductsController {
   constructor(private readonly digitalProductsService: DigitalProductsService) {}
 
+  @RequireAccess({ permission: 'products.view', scope: 'MARKET' })
   @Get('my-purchases')
   @ApiOperation({
     summary: 'Get user digital product purchases',
@@ -33,6 +35,7 @@ export class DigitalProductsController {
     };
   }
 
+  @RequireAccess({ permission: 'products.view', scope: 'MARKET' })
   @Get(':id/file')
   @ApiOperation({
     summary: 'Download digital product file',
@@ -57,6 +60,7 @@ export class DigitalProductsController {
     res.redirect(302, url);
   }
 
+  @RequireAccess({ permission: 'products.view', scope: 'MARKET' })
   @Get(':id')
   @ApiOperation({
     summary: 'Get digital product details',
@@ -78,6 +82,7 @@ export class DigitalProductsController {
     };
   }
 
+  @RequireAccess({ permission: 'products.edit', scope: 'MARKET' })
   @Post(':id/download')
   @ApiOperation({
     summary: 'Download digital product',

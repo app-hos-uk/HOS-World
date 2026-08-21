@@ -20,6 +20,7 @@ import { Response } from 'express';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { InvoicesService } from './invoices.service';
 import { PrismaService } from '../database/prisma.service';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 
 @ApiTags('invoices')
 @ApiBearerAuth('JWT-auth')
@@ -32,6 +33,7 @@ export class InvoicesController {
   ) {}
 
   @Get('order/:orderId')
+  @RequireAccess({ permission: 'invoices.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Download invoice PDF for an order',
     description:

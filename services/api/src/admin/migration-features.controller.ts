@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -40,6 +41,7 @@ export class MigrationFeaturesController {
   }
 
   @Post('run-sql')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Run features migration',
     description:
@@ -146,6 +148,7 @@ export class MigrationFeaturesController {
   }
 
   @Get('verify')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Verify features migration',
     description: 'Verifies that features migration was successful. Admin access required.',

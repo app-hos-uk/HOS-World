@@ -25,6 +25,7 @@ import { UpdateCampaignDto } from './dto/update-campaign.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('influencer-campaigns')
@@ -38,6 +39,7 @@ export class InfluencerCampaignsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @Get('influencers/me/campaigns')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get my campaigns' })
@@ -69,6 +71,7 @@ export class InfluencerCampaignsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('admin/influencer-campaigns')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'List all campaigns' })
@@ -98,6 +101,7 @@ export class InfluencerCampaignsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('admin/influencer-campaigns/:id/analytics')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Campaign performance analytics' })
@@ -113,6 +117,7 @@ export class InfluencerCampaignsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('admin/influencer-campaigns/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get campaign by ID' })
@@ -128,6 +133,7 @@ export class InfluencerCampaignsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'marketing.create', scope: 'GLOBAL' })
   @Post('admin/influencer-campaigns')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create campaign' })
@@ -142,6 +148,7 @@ export class InfluencerCampaignsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Put('admin/influencer-campaigns/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update campaign' })
@@ -160,6 +167,7 @@ export class InfluencerCampaignsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Delete('admin/influencer-campaigns/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete campaign' })

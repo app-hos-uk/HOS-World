@@ -26,6 +26,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('payments')
 @Controller('payments')
 export class PaymentsController {
@@ -33,6 +34,7 @@ export class PaymentsController {
 
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @RequireAccess({ permission: 'finance.manage', scope: 'MARKET' })
   @Post('intent')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth('JWT-auth')
@@ -59,6 +61,7 @@ export class PaymentsController {
 
   @UseGuards(JwtAuthGuard)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @RequireAccess({ permission: 'finance.manage', scope: 'MARKET' })
   @Post('confirm')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
@@ -88,6 +91,7 @@ export class PaymentsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'finance.view', scope: 'MARKET' })
   @Get('providers')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -104,6 +108,7 @@ export class PaymentsController {
   }
 
   @Public()
+  @RequireAccess({ permission: 'finance.view', scope: 'MARKET' })
   @Get('config')
   @ApiOperation({
     summary: 'Get payment configuration for frontend',
@@ -121,6 +126,7 @@ export class PaymentsController {
 
   @Public()
   @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @RequireAccess({ permission: 'finance.manage', scope: 'MARKET' })
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

@@ -23,6 +23,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { parseQueryDate } from '../common/utils/parse-query-date';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto';
@@ -36,6 +37,7 @@ export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Post()
+  @RequireAccess({ permission: 'finance.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Create transaction',
     description: 'Creates a new financial transaction. Finance/Admin access required.',
@@ -78,6 +80,7 @@ export class TransactionsController {
   }
 
   @Get()
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get all transactions',
     description:
@@ -160,6 +163,7 @@ export class TransactionsController {
   }
 
   @Get('export')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Export transactions',
     description:
@@ -235,6 +239,7 @@ export class TransactionsController {
 
   @Post('backfill')
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'finance.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Backfill transactions from paid orders',
     description:
@@ -252,6 +257,7 @@ export class TransactionsController {
   }
 
   @Get(':id')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get transaction by ID',
     description: 'Retrieves a specific transaction by ID. Finance/Admin access required.',
@@ -270,6 +276,7 @@ export class TransactionsController {
   }
 
   @Put(':id/status')
+  @RequireAccess({ permission: 'finance.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Update transaction status',
     description: 'Updates the status of a financial transaction. Finance/Admin access required.',

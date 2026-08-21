@@ -36,6 +36,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { diskStorage, memoryStorage } from 'multer';
 import { extname, join } from 'path';
@@ -156,6 +157,7 @@ export class UploadsController {
     private readonly prisma: PrismaService,
   ) {}
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'GLOBAL' })
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -248,6 +250,7 @@ export class UploadsController {
     };
   }
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'SELF' })
   @Post('single')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CMS_EDITOR', 'CUSTOMER')
@@ -314,6 +317,7 @@ export class UploadsController {
     };
   }
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'SELF' })
   @Post('multiple')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CMS_EDITOR')
@@ -376,6 +380,7 @@ export class UploadsController {
     };
   }
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'SELF' })
   @Get('cloudinary/signature')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -440,6 +445,7 @@ export class UploadsController {
     }
   }
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'GLOBAL' })
   @Delete('asset/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -486,6 +492,7 @@ export class UploadsController {
     };
   }
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'SELF' })
   @Delete(':url')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')

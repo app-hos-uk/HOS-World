@@ -25,6 +25,7 @@ import { UpdateReturnStatusDto } from './dto/update-return-status.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('returns')
@@ -35,6 +36,7 @@ export class ReturnsController {
   constructor(private readonly returnsService: ReturnsService) {}
 
   @Post()
+  @RequireAccess({ permission: 'returns.manage', scope: 'SELF' })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Create return request',
@@ -58,6 +60,7 @@ export class ReturnsController {
   }
 
   @Get()
+  @RequireAccess({ permission: 'returns.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get all return requests',
     description:
@@ -74,6 +77,7 @@ export class ReturnsController {
   }
 
   @Get(':id')
+  @RequireAccess({ permission: 'returns.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get return request by ID',
     description:
@@ -96,6 +100,7 @@ export class ReturnsController {
   }
 
   @Put(':id/cancel')
+  @RequireAccess({ permission: 'returns.manage', scope: 'SELF' })
   @ApiOperation({
     summary: 'Cancel return request',
     description:
@@ -120,6 +125,7 @@ export class ReturnsController {
   @UseGuards(RolesGuard)
   @Roles('ADMIN', 'FINANCE')
   @Put(':id/retry-refund')
+  @RequireAccess({ permission: 'returns.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Retry failed return refund (Admin/Finance)',
     description: 'Re-attempts Stripe refund for an approved return whose prior refund failed.',
@@ -143,6 +149,7 @@ export class ReturnsController {
   @UseGuards(RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
   @Put(':id/status')
+  @RequireAccess({ permission: 'returns.manage', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Update return request status (Seller/Admin only)',
     description:

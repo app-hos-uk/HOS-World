@@ -26,6 +26,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 /** Collect repeated query keys (?fandom=a&fandom=b) correctly with Express typings */
 function repeatedQueryValues(query: Request['query'], key: string): string[] {
   const raw = query[key];
@@ -46,6 +47,7 @@ export class MeilisearchController {
 
   @Public()
   @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get('search')
   @ApiOperation({
     summary: 'Search products with Meilisearch',
@@ -170,6 +172,7 @@ export class MeilisearchController {
 
   @Public()
   @Throttle({ default: { limit: 120, ttl: 60000 } })
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get('instant')
   @ApiOperation({
     summary: 'Instant search (lightweight)',
@@ -221,6 +224,7 @@ export class MeilisearchController {
 
   @Public()
   @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get('suggestions')
   @ApiOperation({
     summary: 'Get search suggestions (autocomplete)',
@@ -256,6 +260,7 @@ export class MeilisearchController {
 
   @Public()
   @Throttle({ default: { limit: 30, ttl: 60000 } })
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get('trending')
   @ApiOperation({
     summary: 'Get trending/popular search terms',
@@ -281,6 +286,7 @@ export class MeilisearchController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get('stats')
   @ApiOperation({
     summary: 'Get search index statistics',
@@ -298,6 +304,7 @@ export class MeilisearchController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Post('sync')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()
@@ -319,6 +326,7 @@ export class MeilisearchController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Post('rebuild')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth()

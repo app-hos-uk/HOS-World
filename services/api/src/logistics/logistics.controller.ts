@@ -29,6 +29,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('logistics')
 @ApiBearerAuth('JWT-auth')
 @Controller('logistics')
@@ -37,6 +38,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 export class LogisticsController {
   constructor(private readonly logisticsService: LogisticsService) {}
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'GLOBAL' })
   @Post('partners')
   @ApiOperation({
     summary: 'Create logistics partner (Admin only)',
@@ -55,6 +57,7 @@ export class LogisticsController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.view', scope: 'GLOBAL' })
   @Get('partners')
   @ApiOperation({
     summary: 'Get all logistics partners (Admin only)',
@@ -77,6 +80,7 @@ export class LogisticsController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.view', scope: 'GLOBAL' })
   @Get('partners/:id')
   @ApiOperation({
     summary: 'Get logistics partner by ID (Admin only)',
@@ -95,6 +99,7 @@ export class LogisticsController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'GLOBAL' })
   @Put('partners/:id')
   @ApiOperation({
     summary: 'Update logistics partner (Admin only)',
@@ -118,6 +123,7 @@ export class LogisticsController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'GLOBAL' })
   @Delete('partners/:id')
   @ApiOperation({
     summary: 'Delete logistics partner (Admin only)',
@@ -138,6 +144,7 @@ export class LogisticsController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'GLOBAL' })
   @Post('shipments/:shipmentId/assign-partner/:partnerId')
   @ApiOperation({
     summary: 'Assign partner to shipment (Admin only)',

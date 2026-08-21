@@ -23,6 +23,7 @@ import { TicketsService } from './tickets.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('support')
@@ -31,6 +32,7 @@ export class TicketsController {
   constructor(private readonly ticketsService: TicketsService) {}
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'support.manage', scope: 'SELF' })
   @Post()
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -105,6 +107,7 @@ export class TicketsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'support.view', scope: 'GLOBAL' })
   @Get()
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -173,6 +176,7 @@ export class TicketsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'support.view', scope: 'SELF' })
   @Get('my')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -197,6 +201,7 @@ export class TicketsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'support.view', scope: 'SELF' })
   @Get(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -222,6 +227,7 @@ export class TicketsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'support.manage', scope: 'GLOBAL' })
   @Put(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -263,6 +269,7 @@ export class TicketsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'support.manage', scope: 'SELF' })
   @Post(':id/messages')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -314,6 +321,7 @@ export class TicketsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'support.manage', scope: 'GLOBAL' })
   @Put(':id/assign')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -347,6 +355,7 @@ export class TicketsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'support.manage', scope: 'GLOBAL' })
   @Put(':id/status')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

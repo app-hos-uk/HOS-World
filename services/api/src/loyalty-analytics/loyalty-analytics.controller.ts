@@ -5,6 +5,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { LoyaltyAnalyticsService } from './loyalty-analytics.service';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 
 @ApiTags('admin-loyalty-analytics')
 @ApiBearerAuth('JWT-auth')
@@ -14,14 +15,18 @@ import { LoyaltyAnalyticsService } from './loyalty-analytics.service';
 export class LoyaltyAnalyticsController {
   constructor(private analytics: LoyaltyAnalyticsService) {}
 
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('health')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Programme health KPIs' })
   async health(): Promise<ApiResponse<unknown>> {
     const data = await this.analytics.getProgrammeHealth();
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('snapshots')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Snapshot timeline' })
   async snapshots(
     @Query('startDate') startDate?: string,
@@ -33,28 +38,36 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('clv/distribution')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'CLV bucket distribution' })
   async clvDistribution(): Promise<ApiResponse<unknown>> {
     const data = await this.analytics.getClvDistribution();
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('clv/top')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Top members by CLV' })
   async clvTop(@Query('limit') limit?: string): Promise<ApiResponse<unknown>> {
     const data = await this.analytics.getTopMembersByClv(limit ? parseInt(limit, 10) : undefined);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('clv/churn')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Churn risk report' })
   async churn(): Promise<ApiResponse<unknown>> {
     const data = await this.analytics.getChurnRiskReport();
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('attribution')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Campaign attribution report' })
   async attribution(
     @Query('startDate') startDate?: string,
@@ -71,7 +84,9 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('attribution/:campaignId')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Campaign ROI timeline' })
   async attributionTimeline(
     @Param('campaignId') campaignId: string,
@@ -84,49 +99,63 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('fandom-trends')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Fandom trend analysis' })
   async fandomTrends(@Query('days') days?: string): Promise<ApiResponse<unknown>> {
     const data = await this.analytics.getFandomTrends(days ? parseInt(days, 10) : undefined);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('tiers')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Tier analysis with CLV and revenue' })
   async tiers(): Promise<ApiResponse<unknown>> {
     const data = await this.analytics.getTierAnalysis();
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('channels')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Web vs POS performance' })
   async channels(@Query('days') days?: string): Promise<ApiResponse<unknown>> {
     const data = await this.analytics.getChannelPerformance(days ? parseInt(days, 10) : undefined);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('cohorts')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Cohort retention matrix' })
   async cohorts(@Query('months') months?: string): Promise<ApiResponse<unknown>> {
     const data = await this.analytics.getCohortRetention(months ? parseInt(months, 10) : undefined);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Post('snapshots/compute')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Manually trigger snapshot' })
   async computeSnapshot(@Query('date') date?: string): Promise<ApiResponse<unknown>> {
     const data = await this.analytics.computeDailySnapshot(date ? new Date(date) : undefined);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Post('clv/recompute')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Trigger CLV recompute for all members' })
   async recomputeClv(): Promise<ApiResponse<unknown>> {
     const data = await this.analytics.recomputeAllClv();
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Get('export/:type')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Export report' })
   async exportReport(
     @Param('type') type: string,

@@ -26,6 +26,7 @@ import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse, Cart } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('cart')
 @Controller('cart/guest')
 @Public()
@@ -42,6 +43,7 @@ export class GuestCartController {
     return { data: cart, message: 'Cart retrieved successfully' };
   }
 
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Post('items')
   @HttpCode(HttpStatus.CREATED)
   @ApiHeader({ name: 'X-Guest-Session', required: true })
@@ -55,6 +57,7 @@ export class GuestCartController {
     return { data: cart, message: 'Item added to cart successfully' };
   }
 
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Patch('items/:id')
   @ApiHeader({ name: 'X-Guest-Session', required: true })
   @ApiParam({ name: 'id', description: 'Cart item UUID' })
@@ -69,6 +72,7 @@ export class GuestCartController {
     return { data: cart, message: 'Cart item updated successfully' };
   }
 
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Delete('items/:id')
   @HttpCode(HttpStatus.OK)
   @ApiHeader({ name: 'X-Guest-Session', required: true })
@@ -81,6 +85,7 @@ export class GuestCartController {
     return { data: cart, message: 'Item removed from cart successfully' };
   }
 
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Delete('clear')
   @HttpCode(HttpStatus.OK)
   @ApiHeader({ name: 'X-Guest-Session', required: true })

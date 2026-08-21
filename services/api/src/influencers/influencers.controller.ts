@@ -33,6 +33,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('influencers')
@@ -49,6 +50,7 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @Get('influencers/me')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -66,6 +68,7 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'SELF' })
   @Put('influencers/me')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -87,6 +90,7 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @Get('influencers/me/analytics')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -104,6 +108,7 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @Get('influencers/me/product-links')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -131,6 +136,7 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'SELF' })
   @Post('influencers/me/product-links')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -152,6 +158,7 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'SELF' })
   @Delete('influencers/me/product-links/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -177,6 +184,7 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @Get('admin/influencers')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -212,6 +220,7 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @Get('admin/influencers/:id/commission-rules')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'List commission rules for an influencer' })
@@ -224,6 +233,7 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @Post('admin/influencers/:id/commission-rules')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Create a commission rule (product, category, or brand scope)' })
@@ -239,6 +249,7 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @Put('admin/influencers/:id/commission-rules/:ruleId')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update a commission rule' })
@@ -256,6 +267,7 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @Delete('admin/influencers/:id/commission-rules/:ruleId')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete a commission rule' })
@@ -272,6 +284,7 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @Get('admin/influencers/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -290,6 +303,7 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @Put('admin/influencers/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -311,6 +325,7 @@ export class InfluencersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @Put('admin/influencers/:id/commission')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

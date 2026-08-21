@@ -11,6 +11,7 @@ import { DuplicatesService } from './duplicates.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('duplicates')
@@ -21,6 +22,7 @@ export class DuplicatesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('PROCUREMENT', 'ADMIN')
   @Get('alerts')
+  @RequireAccess({ permission: 'procurement.view', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get duplicate alerts (Procurement/Admin only)',
@@ -41,6 +43,7 @@ export class DuplicatesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('PROCUREMENT', 'CATALOG', 'ADMIN')
   @Get('cross-seller-groups')
+  @RequireAccess({ permission: 'submissions.review', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get cross-seller duplicate groups',
@@ -61,6 +64,7 @@ export class DuplicatesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Post('cross-seller-groups/assign')
+  @RequireAccess({ permission: 'procurement.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Assign persisted cross-seller group ids (Admin only)',
@@ -83,6 +87,7 @@ export class DuplicatesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('PROCUREMENT', 'CATALOG', 'ADMIN')
   @Post('cross-seller-groups/reject-others')
+  @RequireAccess({ permission: 'submissions.reject', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Reject all others in a cross-seller duplicate group',
@@ -127,6 +132,7 @@ export class DuplicatesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'PROCUREMENT', 'ADMIN')
   @Get('submission/:submissionId')
+  @RequireAccess({ permission: 'submissions.review', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get duplicates for submission',
@@ -151,6 +157,7 @@ export class DuplicatesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('PROCUREMENT', 'ADMIN')
   @Get('detect/:submissionId')
+  @RequireAccess({ permission: 'procurement.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Detect duplicates for submission (Procurement/Admin only)',

@@ -1,4 +1,5 @@
 import { Controller, Post, UseGuards, Logger, ForbiddenException } from '@nestjs/common';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import {
   ApiTags,
   ApiOperation,
@@ -42,6 +43,7 @@ export class MigrationController {
   }
 
   @Post('run-global-features')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Run global features migration',
     description:
@@ -184,6 +186,7 @@ export class MigrationController {
   }
 
   @Post('run-sql-direct')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Run SQL migration directly',
     description:
@@ -367,6 +370,7 @@ export class MigrationController {
   }
 
   @Post('verify')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Verify migration',
     description:

@@ -22,6 +22,7 @@ import { AssignCustomDomainDto, CreateSubDomainDto } from './dto/assign-domain.d
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('domains')
@@ -31,6 +32,7 @@ export class DomainsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'SELF' })
   @Get('sellers/:sellerId')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -55,6 +57,7 @@ export class DomainsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'SELF' })
   @Get('me')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -75,6 +78,7 @@ export class DomainsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Post('sellers/:sellerId/custom-domain')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -101,6 +105,7 @@ export class DomainsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'SELF' })
   @Post('sellers/:sellerId/subdomain')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -127,6 +132,7 @@ export class DomainsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Delete('sellers/:sellerId/custom-domain')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -150,6 +156,7 @@ export class DomainsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'SELF' })
   @Delete('sellers/:sellerId/subdomain')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -173,6 +180,7 @@ export class DomainsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'SELF' })
   @Get('packages')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -192,6 +200,7 @@ export class DomainsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'SELF' })
   @Get('sellers/:sellerId/dns-config')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

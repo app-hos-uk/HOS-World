@@ -25,6 +25,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('customer-groups')
 @Controller('customer-groups')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -33,6 +34,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 export class CustomerGroupsController {
   constructor(private readonly customerGroupsService: CustomerGroupsService) {}
 
+  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @Post()
   @ApiOperation({
     summary: 'Create customer group',
@@ -48,6 +50,7 @@ export class CustomerGroupsController {
     };
   }
 
+  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
   @Get()
   @ApiOperation({
     summary: 'Get all customer groups',
@@ -63,6 +66,7 @@ export class CustomerGroupsController {
     };
   }
 
+  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
   @Get(':id')
   @ApiOperation({
     summary: 'Get customer group by ID',
@@ -79,6 +83,7 @@ export class CustomerGroupsController {
     };
   }
 
+  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @Put(':id')
   @ApiOperation({
     summary: 'Update customer group',
@@ -97,6 +102,7 @@ export class CustomerGroupsController {
     };
   }
 
+  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @Delete(':id')
   @ApiOperation({
     summary: 'Delete customer group',
@@ -114,6 +120,7 @@ export class CustomerGroupsController {
     };
   }
 
+  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @Post(':id/customers/:userId')
   @ApiOperation({
     summary: 'Add customer to group',
@@ -133,6 +140,7 @@ export class CustomerGroupsController {
     };
   }
 
+  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @Delete('customers/:userId')
   @ApiOperation({
     summary: 'Remove customer from group',
@@ -148,6 +156,7 @@ export class CustomerGroupsController {
     };
   }
 
+  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
   @Get('my/group')
   @UseGuards(JwtAuthGuard)
   @ApiOperation({

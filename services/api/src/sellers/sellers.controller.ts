@@ -26,6 +26,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { VendorApplicationDto } from './dto/vendor-application.dto';
 
@@ -84,6 +85,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
+  @RequireAccess({ permission: 'sellers.view', scope: 'SELF' })
   @Get('me')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -103,6 +105,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Get('me/products')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -123,6 +126,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
+  @RequireAccess({ permission: 'sellers.operate', scope: 'SELF' })
   @Put('me')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -147,6 +151,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'sellers.view', scope: 'GLOBAL' })
   @Get(':userId')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -170,6 +175,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'sellers.operate', scope: 'GLOBAL' })
   @Put(':userId')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -198,6 +204,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'PROCUREMENT', 'MARKETING', 'SALES')
+  @RequireAccess({ permission: 'sellers.view', scope: 'GLOBAL' })
   @Get('admin/vendors')
   async listVendors(
     @Query('status') status?: string,
@@ -216,6 +223,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING', 'SALES')
+  @RequireAccess({ permission: 'sellers.approve', scope: 'GLOBAL' })
   @Post('admin/vendors/:id/approve')
   @HttpCode(HttpStatus.OK)
   async approveVendor(
@@ -229,6 +237,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING', 'SALES')
+  @RequireAccess({ permission: 'sellers.approve', scope: 'GLOBAL' })
   @Post('admin/vendors/:id/reject')
   @HttpCode(HttpStatus.OK)
   async rejectVendor(
@@ -241,6 +250,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'sellers.suspend', scope: 'GLOBAL' })
   @Post('admin/vendors/:id/suspend')
   @HttpCode(HttpStatus.OK)
   async suspendVendor(
@@ -253,6 +263,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'sellers.approve', scope: 'GLOBAL' })
   @Post('admin/vendors/:id/activate')
   @HttpCode(HttpStatus.OK)
   async activateVendor(@Param('id') id: string): Promise<ApiResponse<any>> {
@@ -262,6 +273,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FINANCE')
+  @RequireAccess({ permission: 'sellers.operate', scope: 'GLOBAL' })
   @Put('admin/vendors/:id/commission')
   async updateCommission(
     @Param('id') id: string,
@@ -273,6 +285,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FINANCE')
+  @RequireAccess({ permission: 'sellers.operate', scope: 'GLOBAL' })
   @Put('admin/vendors/:id/subscription')
   async updateSubscription(
     @Param('id') id: string,
@@ -291,6 +304,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'sellers.view', scope: 'SELF' })
   @Get('me/dashboard')
   async getMyDashboard(@Request() req): Promise<ApiResponse<any>> {
     const result = await this.sellersService.getVendorDashboardStats(req.user.id);
@@ -299,6 +313,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
+  @RequireAccess({ permission: 'sellers.operate', scope: 'SELF' })
   @Post('verification/documents')
   async submitVerificationDocument(
     @Request() req: any,
@@ -310,6 +325,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'FINANCE')
+  @RequireAccess({ permission: 'sellers.view', scope: 'SELF' })
   @Get('verification/documents')
   async listVerificationDocuments(@Request() req: any): Promise<ApiResponse<any[]>> {
     const docs = await this.sellersService.listVerificationDocuments(req.user.id, req.user.role);
@@ -318,6 +334,7 @@ export class SellersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FINANCE')
+  @RequireAccess({ permission: 'sellers.approve', scope: 'GLOBAL' })
   @Put('verification/documents/:id/review')
   async reviewVerificationDocument(
     @Request() req: any,

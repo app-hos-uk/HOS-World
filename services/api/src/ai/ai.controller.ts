@@ -12,6 +12,7 @@ import { AIChatService } from './ai-chat.service';
 import { PersonalizationService } from './personalization.service';
 import { SendChatMessageDto } from './dto/send-chat-message.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('ai')
@@ -24,7 +25,9 @@ export class AIController {
     private readonly personalizationService: PersonalizationService,
   ) {}
 
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Post('chat/:characterId')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @ApiOperation({
     summary: 'Send AI chat message',
     description:
@@ -48,7 +51,9 @@ export class AIController {
     };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get('chat/history')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get chat history',
     description:
@@ -73,7 +78,9 @@ export class AIController {
     };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get('recommendations')
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get personalized recommendations',
     description:

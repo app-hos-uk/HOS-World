@@ -10,6 +10,7 @@ import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('dashboard')
@@ -21,6 +22,7 @@ export class DashboardController {
 
   @Get('stats')
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
+  @RequireAccess({ permission: 'system.analytics', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Get dashboard statistics',
     description:
@@ -82,6 +84,7 @@ export class DashboardController {
 
   @Get('procurement')
   @Roles('PROCUREMENT', 'ADMIN')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get procurement dashboard (Procurement/Admin only)',
     description:
@@ -100,6 +103,7 @@ export class DashboardController {
 
   @Get('fulfillment')
   @Roles('FULFILLMENT', 'ADMIN')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get fulfillment dashboard (Fulfillment/Admin only)',
     description:
@@ -118,6 +122,7 @@ export class DashboardController {
 
   @Get('catalog')
   @Roles('CATALOG', 'ADMIN')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get catalog dashboard (Catalog/Admin only)',
     description: 'Retrieves catalog dashboard statistics. Catalog or Admin access required.',
@@ -135,6 +140,7 @@ export class DashboardController {
 
   @Get('marketing')
   @Roles('MARKETING', 'ADMIN')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get marketing dashboard (Marketing/Admin only)',
     description: 'Retrieves marketing dashboard statistics. Marketing or Admin access required.',
@@ -152,6 +158,7 @@ export class DashboardController {
 
   @Get('finance')
   @Roles('FINANCE', 'ADMIN')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get finance dashboard (Finance/Admin only)',
     description: 'Retrieves finance dashboard statistics. Finance or Admin access required.',
@@ -169,6 +176,7 @@ export class DashboardController {
 
   @Get('admin')
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get admin dashboard (Admin only)',
     description: 'Retrieves admin dashboard statistics. Admin access required.',

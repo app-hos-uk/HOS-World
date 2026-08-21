@@ -24,6 +24,7 @@ import { CollectionsService } from './collections.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('collections')
 @ApiBearerAuth('JWT-auth')
 @Controller('collections')
@@ -31,6 +32,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 export class CollectionsController {
   constructor(private readonly collectionsService: CollectionsService) {}
 
+  @RequireAccess({ permission: 'catalog.manage', scope: 'MARKET' })
   @Get()
   @ApiOperation({
     summary: 'Get user collections',
@@ -59,6 +61,7 @@ export class CollectionsController {
     };
   }
 
+  @RequireAccess({ permission: 'catalog.manage', scope: 'MARKET' })
   @Get(':id')
   @ApiOperation({
     summary: 'Get collection by ID',
@@ -81,6 +84,7 @@ export class CollectionsController {
     };
   }
 
+  @RequireAccess({ permission: 'catalog.manage', scope: 'MARKET' })
   @Post()
   @ApiOperation({
     summary: 'Create collection',
@@ -110,6 +114,7 @@ export class CollectionsController {
     };
   }
 
+  @RequireAccess({ permission: 'catalog.manage', scope: 'MARKET' })
   @Put(':id')
   @ApiOperation({
     summary: 'Update collection',
@@ -142,6 +147,7 @@ export class CollectionsController {
     };
   }
 
+  @RequireAccess({ permission: 'catalog.manage', scope: 'MARKET' })
   @Delete(':id')
   @ApiOperation({
     summary: 'Delete collection',
@@ -163,6 +169,7 @@ export class CollectionsController {
     };
   }
 
+  @RequireAccess({ permission: 'catalog.manage', scope: 'MARKET' })
   @Post(':id/products/:productId')
   @ApiOperation({
     summary: 'Add product to collection',
@@ -189,6 +196,7 @@ export class CollectionsController {
     };
   }
 
+  @RequireAccess({ permission: 'catalog.manage', scope: 'MARKET' })
   @Delete(':id/products/:productId')
   @ApiOperation({
     summary: 'Remove product from collection',

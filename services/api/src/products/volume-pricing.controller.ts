@@ -21,6 +21,7 @@ import { CreateVolumePricingDto } from './dto/create-volume-pricing.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('products')
@@ -32,6 +33,7 @@ export class VolumePricingController {
   constructor(private readonly volumePricingService: VolumePricingService) {}
 
   @Post(':productId/volume-pricing')
+  @RequireAccess({ permission: 'products.edit', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Create volume pricing tier',
     description: 'Creates a new volume pricing tier for a product based on quantity.',
@@ -58,6 +60,7 @@ export class VolumePricingController {
   }
 
   @Get(':productId/volume-pricing')
+  @RequireAccess({ permission: 'products.view', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Get volume pricing tiers',
     description: 'Retrieves all volume pricing tiers for a product.',
@@ -74,6 +77,7 @@ export class VolumePricingController {
 
   @Post(':productId/volume-pricing/calculate')
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'CUSTOMER', 'WHOLESALER')
+  @RequireAccess({ permission: 'products.view', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Calculate price with volume pricing',
     description:
@@ -93,6 +97,7 @@ export class VolumePricingController {
   }
 
   @Put('volume-pricing/:id')
+  @RequireAccess({ permission: 'products.edit', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Update volume pricing tier',
     description: 'Updates an existing volume pricing tier.',
@@ -117,6 +122,7 @@ export class VolumePricingController {
   }
 
   @Delete('volume-pricing/:id')
+  @RequireAccess({ permission: 'products.delete', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Delete volume pricing tier',
     description: 'Deletes a volume pricing tier.',

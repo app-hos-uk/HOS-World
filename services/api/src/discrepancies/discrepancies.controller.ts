@@ -23,6 +23,7 @@ import { DiscrepanciesService } from './discrepancies.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('discrepancies')
@@ -34,6 +35,7 @@ export class DiscrepanciesController {
   constructor(private readonly discrepanciesService: DiscrepanciesService) {}
 
   @Post()
+  @RequireAccess({ permission: 'pricing.approve', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Create discrepancy (Admin only)',
     description: 'Creates a new discrepancy record for tracking issues. Admin access required.',
@@ -84,6 +86,7 @@ export class DiscrepanciesController {
   }
 
   @Get()
+  @RequireAccess({ permission: 'pricing.approve', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get all discrepancies (Admin only)',
     description: 'Retrieves all discrepancies with filtering options. Admin access required.',
@@ -141,6 +144,7 @@ export class DiscrepanciesController {
   }
 
   @Get(':id')
+  @RequireAccess({ permission: 'pricing.approve', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get discrepancy by ID (Admin only)',
     description: 'Retrieves a specific discrepancy by ID. Admin access required.',
@@ -159,6 +163,7 @@ export class DiscrepanciesController {
   }
 
   @Put(':id/resolve')
+  @RequireAccess({ permission: 'pricing.approve', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Resolve discrepancy (Admin only)',
     description: 'Marks a discrepancy as resolved with a resolution note. Admin access required.',
@@ -195,6 +200,7 @@ export class DiscrepanciesController {
   }
 
   @Get('seller/:sellerId')
+  @RequireAccess({ permission: 'pricing.approve', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get seller discrepancies (Admin only)',
     description:

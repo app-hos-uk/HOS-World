@@ -12,12 +12,14 @@ import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('geolocation')
 @Controller('geolocation')
 export class GeolocationController {
   constructor(private readonly geolocationService: GeolocationService) {}
 
   @Public()
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get('detect')
   @ApiOperation({
     summary: 'Detect country from IP',
@@ -34,6 +36,7 @@ export class GeolocationController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Post('confirm')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

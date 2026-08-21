@@ -23,6 +23,7 @@ import { SetPricingDto, ApprovePricingDto } from './dto/set-pricing.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('finance')
@@ -34,6 +35,7 @@ export class FinanceController {
   constructor(private readonly financeService: FinanceService) {}
 
   @Get('pending')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get pending finance approvals',
     description:
@@ -54,6 +56,7 @@ export class FinanceController {
   }
 
   @Post('pricing/:submissionId')
+  @RequireAccess({ permission: 'finance.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Set pricing for submission',
     description: 'Sets pricing for a product submission. Finance/Admin access required.',
@@ -78,6 +81,7 @@ export class FinanceController {
   }
 
   @Put('pricing/:submissionId')
+  @RequireAccess({ permission: 'finance.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Update pricing for submission',
     description: 'Updates pricing for a finance-pending submission. Finance/Admin access required.',
@@ -106,6 +110,7 @@ export class FinanceController {
   }
 
   @Post('approve/:submissionId')
+  @RequireAccess({ permission: 'finance.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Approve submission for publishing',
     description:
@@ -131,6 +136,7 @@ export class FinanceController {
   }
 
   @Post('reject/:submissionId')
+  @RequireAccess({ permission: 'finance.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Reject submission',
     description: 'Rejects a product submission with a reason. Finance/Admin access required.',
@@ -163,6 +169,7 @@ export class FinanceController {
   }
 
   @Get('pricing-history')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get all pricing history',
     description: 'Retrieves all approved pricing records. Finance/Admin access required.',
@@ -179,6 +186,7 @@ export class FinanceController {
   }
 
   @Get('pricing-history/:submissionId')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get pricing history for submission',
     description:
@@ -200,6 +208,7 @@ export class FinanceController {
   }
 
   @Get('dashboard/stats')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get finance dashboard statistics',
     description:

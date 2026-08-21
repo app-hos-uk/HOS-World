@@ -106,6 +106,21 @@ function scopeCovers(
   return false;
 }
 
+/**
+ * Platform staff roles operate across all markets and receive GLOBAL implicit
+ * scope. Market-bound roles (SELLER, CUSTOMER, STORE_STAFF, etc.) stay MARKET.
+ */
+const PLATFORM_WIDE_ROLES = new Set([
+  'ADMIN',
+  'FINANCE',
+  'MARKETING',
+  'CATALOG',
+  'FULFILLMENT',
+  'PROCUREMENT',
+  'CMS_EDITOR',
+  'SALES',
+]);
+
 const ASSIGNMENT_TTL_MS = Number(process.env.ACCESS_CONTROL_ASSIGNMENT_TTL_MS || 15_000);
 const ASSIGNMENT_CACHE_MAX = Number(process.env.ACCESS_CONTROL_ASSIGNMENT_CACHE_MAX || 5_000);
 
@@ -248,7 +263,7 @@ export class PolicyService {
           id: `implicit:platform-role:${platformRole}`,
           permissionRoleName: platformRole,
           permissions: [...permissions],
-          scopeType: platformRole === 'ADMIN' ? 'GLOBAL' : 'MARKET',
+          scopeType: PLATFORM_WIDE_ROLES.has(platformRole) ? 'GLOBAL' : 'MARKET',
           scopeId: null,
           isActive: true,
           isImplicit: true,

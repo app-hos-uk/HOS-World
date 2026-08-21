@@ -4,6 +4,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { BrandPartnershipsService } from './brand-partnerships.service';
 import { PrismaService } from '../database/prisma.service';
 
@@ -18,7 +19,9 @@ export class BrandPartnershipsController {
     private prisma: PrismaService,
   ) {}
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get()
+  @RequireAccess({ permission: 'promotions.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Active brand-funded campaigns for the current member' })
   async list(@Request() req: { user?: { id: string } }): Promise<ApiResponse<unknown>> {
     const userId = req.user?.id;
@@ -32,7 +35,9 @@ export class BrandPartnershipsController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get(':id/products')
+  @RequireAccess({ permission: 'promotions.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Products qualifying for a brand campaign' })
   async products(
     @Param('id', ParseUUIDPipe) id: string,

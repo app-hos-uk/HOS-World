@@ -5,6 +5,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { BlogStatus } from '@prisma/client';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
@@ -79,6 +80,7 @@ export class BlogController {
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CMS_EDITOR', 'ADMIN')
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Get('admin/posts')
   @ApiOperation({ summary: 'List all blog posts (admin)' })
   async getAllPosts(@Query('limit') limit?: string): Promise<ApiResponse<any[]>> {
@@ -89,6 +91,7 @@ export class BlogController {
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CMS_EDITOR', 'ADMIN')
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Get('admin/posts/:id')
   @ApiOperation({ summary: 'Get blog post by ID (admin)' })
   @ApiParam({ name: 'id', type: String })
@@ -100,6 +103,7 @@ export class BlogController {
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CMS_EDITOR', 'ADMIN')
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Post('admin/posts')
   @ApiOperation({ summary: 'Create blog post' })
   async createPost(
@@ -128,6 +132,7 @@ export class BlogController {
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CMS_EDITOR', 'ADMIN')
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Put('admin/posts/:id')
   @ApiOperation({ summary: 'Update blog post' })
   @ApiParam({ name: 'id', type: String })
@@ -158,6 +163,7 @@ export class BlogController {
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CMS_EDITOR', 'ADMIN')
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Delete('admin/posts/:id')
   @ApiOperation({ summary: 'Delete blog post' })
   @ApiParam({ name: 'id', type: String })
@@ -169,6 +175,7 @@ export class BlogController {
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CMS_EDITOR', 'ADMIN')
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Post('admin/posts/:id/publish')
   @ApiOperation({ summary: 'Publish blog post' })
   @ApiParam({ name: 'id', type: String })
@@ -180,6 +187,7 @@ export class BlogController {
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CMS_EDITOR', 'ADMIN')
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Post('admin/posts/:id/unpublish')
   @ApiOperation({ summary: 'Unpublish blog post' })
   @ApiParam({ name: 'id', type: String })
@@ -191,6 +199,7 @@ export class BlogController {
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CMS_EDITOR', 'ADMIN')
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Get('admin/categories')
   @ApiOperation({ summary: 'List all blog categories (admin)' })
   async getAllCategories(): Promise<ApiResponse<any[]>> {
@@ -201,6 +210,7 @@ export class BlogController {
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CMS_EDITOR', 'ADMIN')
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Post('admin/categories')
   @ApiOperation({ summary: 'Create blog category' })
   async createCategory(
@@ -213,6 +223,7 @@ export class BlogController {
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CMS_EDITOR', 'ADMIN')
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Put('admin/categories/:id')
   @ApiOperation({ summary: 'Update blog category' })
   @ApiParam({ name: 'id', type: String })
@@ -227,6 +238,7 @@ export class BlogController {
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CMS_EDITOR', 'ADMIN')
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Delete('admin/categories/:id')
   @ApiOperation({ summary: 'Delete blog category' })
   @ApiParam({ name: 'id', type: String })

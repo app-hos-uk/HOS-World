@@ -11,6 +11,7 @@ import { ActivityService } from './activity.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('activity')
@@ -21,6 +22,7 @@ export class ActivityController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Get('logs')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get activity logs (Admin only)',
@@ -84,6 +86,7 @@ export class ActivityController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'WHOLESALER', 'B2C_SELLER')
   @Get('logs/:sellerId')
+  @RequireAccess({ permission: 'system.analytics', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get seller activity logs',
@@ -154,6 +157,7 @@ export class ActivityController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Get('logs/export')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Export activity logs (Admin only)',

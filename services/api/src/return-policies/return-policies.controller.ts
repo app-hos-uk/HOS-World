@@ -12,6 +12,7 @@ import { CreateReturnPolicyDto } from './dto/create-return-policy.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('return-policies')
@@ -22,7 +23,9 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 export class ReturnPoliciesController {
   constructor(private readonly returnPoliciesService: ReturnPoliciesService) {}
 
+  @RequireAccess({ permission: 'returns.manage', scope: 'MARKET' })
   @Post()
+  @RequireAccess({ permission: 'returns.manage', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Create return policy',
     description: 'Creates a new return policy. Requires ADMIN, SELLER, or B2C_SELLER role.',
@@ -37,7 +40,9 @@ export class ReturnPoliciesController {
     };
   }
 
+  @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @Get()
+  @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Get all return policies',
     description: 'Retrieves all active return policies.',
@@ -58,7 +63,9 @@ export class ReturnPoliciesController {
     };
   }
 
+  @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @Get(':id')
+  @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Get return policy by ID',
     description: 'Retrieves a specific return policy by ID.',
@@ -74,7 +81,9 @@ export class ReturnPoliciesController {
     };
   }
 
+  @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @Get('applicable/:productId')
+  @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Get applicable return policy',
     description: 'Retrieves the applicable return policy for a product.',
@@ -102,7 +111,9 @@ export class ReturnPoliciesController {
     };
   }
 
+  @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @Get('eligibility/:orderId')
+  @RequireAccess({ permission: 'returns.view', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Check return eligibility',
     description: 'Checks if a return is allowed for an order.',
@@ -121,7 +132,9 @@ export class ReturnPoliciesController {
     };
   }
 
+  @RequireAccess({ permission: 'returns.manage', scope: 'MARKET' })
   @Put(':id')
+  @RequireAccess({ permission: 'returns.manage', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Update return policy',
     description: 'Updates an existing return policy.',
@@ -139,7 +152,9 @@ export class ReturnPoliciesController {
     };
   }
 
+  @RequireAccess({ permission: 'returns.manage', scope: 'MARKET' })
   @Delete(':id')
+  @RequireAccess({ permission: 'returns.manage', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Delete return policy',
     description: 'Deletes a return policy.',

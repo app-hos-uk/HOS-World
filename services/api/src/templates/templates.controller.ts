@@ -22,6 +22,7 @@ import { TemplatesService, TemplateChannel } from './templates.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('templates')
@@ -32,6 +33,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 export class TemplatesController {
   constructor(private readonly templatesService: TemplatesService) {}
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Get()
   @ApiOperation({ summary: 'List all notification templates' })
   @ApiQuery({ name: 'channel', required: false, enum: ['EMAIL', 'WHATSAPP', 'SMS', 'IN_APP'] })
@@ -41,6 +43,7 @@ export class TemplatesController {
     return { data: templates, message: 'Templates retrieved' };
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Get(':slug/preview')
   @ApiOperation({ summary: 'Preview a template rendered with sample data' })
   @ApiParam({ name: 'slug', description: 'Template slug' })
@@ -50,6 +53,7 @@ export class TemplatesController {
     return { data: preview, message: 'Template preview rendered' };
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Post(':slug/render')
   @ApiOperation({ summary: 'Render a template with provided variables' })
   @ApiParam({ name: 'slug', description: 'Template slug' })
@@ -62,6 +66,7 @@ export class TemplatesController {
     return { data: rendered, message: 'Template rendered' };
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Get(':slug')
   @ApiOperation({ summary: 'Get a single template definition by slug' })
   @ApiParam({ name: 'slug', description: 'Template slug, e.g. order_confirmation' })
@@ -73,6 +78,7 @@ export class TemplatesController {
     return { data: { ...template, isCustomized }, message: 'Template retrieved' };
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Post()
   @ApiOperation({ summary: 'Create a custom template override (stored in DB)' })
   @SwaggerApiResponse({ status: 201, description: 'Template created' })
@@ -96,6 +102,7 @@ export class TemplatesController {
     return { data: template, message: 'Template created' };
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Put(':slug')
   @ApiOperation({ summary: 'Update a custom template override' })
   @ApiParam({ name: 'slug', description: 'Template slug / name' })
@@ -120,6 +127,7 @@ export class TemplatesController {
     return { data: template, message: 'Template updated' };
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Delete(':slug/override')
   @ApiOperation({ summary: 'Reset an email template to its built-in default' })
   @ApiParam({ name: 'slug', description: 'Template slug' })
@@ -130,6 +138,7 @@ export class TemplatesController {
     return { data: template, message: 'Template reset to built-in default' };
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Put(':slug/activate')
   @ApiOperation({ summary: 'Activate a template' })
   @SwaggerApiResponse({ status: 200, description: 'Template activated' })
@@ -138,6 +147,7 @@ export class TemplatesController {
     return { data: template, message: 'Template activated' };
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Put(':slug/deactivate')
   @ApiOperation({ summary: 'Deactivate a template' })
   @SwaggerApiResponse({ status: 200, description: 'Template deactivated' })

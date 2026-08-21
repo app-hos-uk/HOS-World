@@ -27,6 +27,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { MaterialType } from '@prisma/client';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 
 @ApiTags('marketing')
 @ApiBearerAuth('JWT-auth')
@@ -37,6 +38,7 @@ export class MarketingController {
   constructor(private readonly marketingService: MarketingService) {}
 
   @Get('pending')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get pending marketing submissions',
     description:
@@ -54,6 +56,7 @@ export class MarketingController {
   }
 
   @Get('materials')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get all marketing materials',
     description:
@@ -86,6 +89,7 @@ export class MarketingController {
   }
 
   @Get('materials/:id')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get marketing material by ID',
     description: 'Retrieves a specific marketing material by ID. Marketing/Admin access required.',
@@ -104,6 +108,7 @@ export class MarketingController {
   }
 
   @Post('materials')
+  @RequireAccess({ permission: 'marketing.create', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Create marketing material',
     description: 'Creates a new marketing material. Marketing/Admin access required.',
@@ -125,6 +130,7 @@ export class MarketingController {
   }
 
   @Put('materials/:id')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Update marketing material',
     description: 'Updates an existing marketing material. Marketing/Admin access required.',
@@ -148,6 +154,7 @@ export class MarketingController {
   }
 
   @Delete('materials/:id')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Delete marketing material',
     description: 'Deletes a marketing material. Marketing/Admin access required.',
@@ -168,6 +175,7 @@ export class MarketingController {
   }
 
   @Post('submissions/:submissionId/complete')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Mark submission as complete',
     description:
@@ -189,6 +197,7 @@ export class MarketingController {
   }
 
   @Post('submissions/:submissionId/reopen')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Reopen marketing for a submission',
     description:
@@ -211,6 +220,7 @@ export class MarketingController {
   }
 
   @Get('dashboard/stats')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get marketing dashboard statistics',
     description:

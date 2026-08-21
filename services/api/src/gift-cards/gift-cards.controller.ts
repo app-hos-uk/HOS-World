@@ -26,6 +26,7 @@ import { OptionalJwtAuthGuard } from '../common/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { Throttle } from '@nestjs/throttler';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
@@ -52,6 +53,7 @@ export class GiftCardsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Post()
+  @RequireAccess({ permission: 'gift-cards.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Issue gift card (admin only)',
@@ -98,6 +100,7 @@ export class GiftCardsController {
 
   @UseGuards(JwtAuthGuard)
   @Post('redeem')
+  @RequireAccess({ permission: 'gift-cards.manage', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Redeem gift card',
@@ -119,6 +122,7 @@ export class GiftCardsController {
 
   @UseGuards(JwtAuthGuard)
   @Get('my-gift-cards')
+  @RequireAccess({ permission: 'gift-cards.view', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get my gift cards',
@@ -160,6 +164,7 @@ export class GiftCardsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Get('admin/all')
+  @RequireAccess({ permission: 'gift-cards.view', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'List all gift cards (admin)',
@@ -214,6 +219,7 @@ export class GiftCardsController {
 
   @UseGuards(JwtAuthGuard)
   @Get(':id/transactions')
+  @RequireAccess({ permission: 'gift-cards.view', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get gift card transactions',
@@ -241,6 +247,7 @@ export class GiftCardsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   @Post(':id/refund')
+  @RequireAccess({ permission: 'gift-cards.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Refund gift card',

@@ -25,6 +25,7 @@ import { AdminProductsService } from './products.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('admin')
@@ -36,6 +37,7 @@ export class AdminProductsController {
   constructor(private readonly productsService: AdminProductsService) {}
 
   @Post()
+  @RequireAccess({ permission: 'products.create', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Create product (Admin only)',
     description:
@@ -132,6 +134,7 @@ export class AdminProductsController {
   }
 
   @Put(':id')
+  @RequireAccess({ permission: 'products.edit', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Update product (Admin only)',
     description: 'Updates an existing product. Admin can update any product regardless of seller.',
@@ -226,6 +229,7 @@ export class AdminProductsController {
   }
 
   @Get()
+  @RequireAccess({ permission: 'products.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get all products (Admin only)',
     description:
@@ -288,6 +292,7 @@ export class AdminProductsController {
   }
 
   @Get('duplicates')
+  @RequireAccess({ permission: 'products.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Find duplicate products (Admin only)',
     description:
@@ -304,6 +309,7 @@ export class AdminProductsController {
   }
 
   @Get(':id/publish-readiness')
+  @RequireAccess({ permission: 'products.publish', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Check product publish readiness',
     description:
@@ -321,6 +327,7 @@ export class AdminProductsController {
   }
 
   @Post('merge')
+  @RequireAccess({ permission: 'products.edit', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Merge duplicate products (Admin only)',
     description:
@@ -357,6 +364,7 @@ export class AdminProductsController {
   }
 
   @Delete(':id')
+  @RequireAccess({ permission: 'products.delete', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Delete product (Admin only)',
     description:

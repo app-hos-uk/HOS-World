@@ -22,6 +22,7 @@ import { AdminSellersService } from './sellers.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('admin')
@@ -33,6 +34,7 @@ export class AdminSellersController {
   constructor(private readonly sellersService: AdminSellersService) {}
 
   @Post('invite')
+  @RequireAccess({ permission: 'sellers.approve', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Invite seller (Admin only)',
     description:
@@ -71,6 +73,7 @@ export class AdminSellersController {
   }
 
   @Get('invitations')
+  @RequireAccess({ permission: 'sellers.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get seller invitations (Admin only)',
     description:
@@ -88,6 +91,7 @@ export class AdminSellersController {
   }
 
   @Put('invitations/:id/resend')
+  @RequireAccess({ permission: 'sellers.approve', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Resend seller invitation (Admin only)',
     description:
@@ -107,6 +111,7 @@ export class AdminSellersController {
   }
 
   @Delete('invitations/:id')
+  @RequireAccess({ permission: 'sellers.approve', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Cancel seller invitation (Admin only)',
     description:

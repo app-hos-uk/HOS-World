@@ -26,12 +26,14 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('departments')
 @Controller('departments')
 export class DepartmentsController {
   constructor(private readonly departmentsService: DepartmentsService) {}
 
   @Public()
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get()
   @ApiOperation({ summary: 'Get active departments for storefront display' })
   @SwaggerApiResponse({ status: 200, description: 'Active departments retrieved' })
@@ -40,6 +42,7 @@ export class DepartmentsController {
     return { data: departments, message: 'Departments retrieved successfully' };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get('all')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -51,6 +54,7 @@ export class DepartmentsController {
     return { data: departments, message: 'All departments retrieved successfully' };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -61,6 +65,7 @@ export class DepartmentsController {
     return { data: department, message: 'Department retrieved successfully' };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -72,6 +77,7 @@ export class DepartmentsController {
     return { data: department, message: 'Department created successfully' };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -85,6 +91,7 @@ export class DepartmentsController {
     return { data: department, message: 'Department updated successfully' };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -95,6 +102,7 @@ export class DepartmentsController {
     return { data: null, message: 'Department deleted successfully' };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'MARKET' })
   @Put('reorder/batch')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')

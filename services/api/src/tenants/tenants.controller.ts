@@ -25,6 +25,7 @@ import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('tenants')
@@ -36,6 +37,7 @@ export class TenantsController {
 
   @Post()
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tenants.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Create a new tenant' })
   @ApiBody({ type: CreateTenantDto })
   @SwaggerApiResponse({ status: 201, description: 'Tenant created successfully' })
@@ -54,6 +56,7 @@ export class TenantsController {
 
   @Get()
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tenants.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Get all tenants' })
   @SwaggerApiResponse({ status: 200, description: 'Tenants retrieved successfully' })
   async findAll(): Promise<ApiResponse<any[]>> {
@@ -65,6 +68,7 @@ export class TenantsController {
   }
 
   @Get('my-tenants')
+  @RequireAccess({ permission: 'tenants.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Get current user tenants' })
   @SwaggerApiResponse({ status: 200, description: 'User tenants retrieved successfully' })
   async getMyTenants(@Request() req: any): Promise<ApiResponse<any[]>> {
@@ -76,6 +80,7 @@ export class TenantsController {
   }
 
   @Get(':id')
+  @RequireAccess({ permission: 'tenants.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Get tenant by ID' })
   @SwaggerApiResponse({ status: 200, description: 'Tenant retrieved successfully' })
   @SwaggerApiResponse({ status: 404, description: 'Tenant not found' })
@@ -92,6 +97,7 @@ export class TenantsController {
 
   @Put(':id')
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tenants.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update tenant' })
   @ApiBody({ type: UpdateTenantDto })
   @SwaggerApiResponse({ status: 200, description: 'Tenant updated successfully' })
@@ -109,6 +115,7 @@ export class TenantsController {
 
   @Post(':id/users/:userId')
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tenants.manage', scope: 'GLOBAL' })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Add user to tenant' })
   @ApiBody({ schema: { type: 'object', properties: { role: { type: 'string' } } } })
@@ -129,6 +136,7 @@ export class TenantsController {
 
   @Put(':id/users/:userId/role')
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tenants.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update user role in tenant' })
   @ApiBody({ schema: { type: 'object', properties: { role: { type: 'string' } } } })
   @SwaggerApiResponse({ status: 200, description: 'User role updated successfully' })
@@ -147,6 +155,7 @@ export class TenantsController {
 
   @Delete(':id/users/:userId')
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tenants.manage', scope: 'GLOBAL' })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Remove user from tenant' })
   @SwaggerApiResponse({ status: 200, description: 'User removed from tenant successfully' })

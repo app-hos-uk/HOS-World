@@ -23,6 +23,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { parseQueryDate } from '../common/utils/parse-query-date';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { CreateRefundDto } from './dto/create-refund.dto';
 import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto';
@@ -36,6 +37,7 @@ export class RefundsController {
   constructor(private readonly refundsService: RefundsService) {}
 
   @Post()
+  @RequireAccess({ permission: 'orders.refund', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Process refund (Admin only)',
     description: 'Processes a refund for a return. Admin access required.',
@@ -68,6 +70,7 @@ export class RefundsController {
   }
 
   @Get()
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get all refunds (Admin only)',
     description: 'Retrieves all refunds with filtering options. Admin access required.',
@@ -130,6 +133,7 @@ export class RefundsController {
   }
 
   @Put(':id/status')
+  @RequireAccess({ permission: 'orders.refund', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Update refund status (Admin only)',
     description: 'Updates the status of a refund. Admin access required.',

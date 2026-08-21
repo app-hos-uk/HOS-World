@@ -22,6 +22,7 @@ import { UpdateCommissionStatusDto } from './dto/update-commission-status.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('influencer-commissions')
@@ -35,6 +36,7 @@ export class InfluencerCommissionsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @Get('influencers/me/commissions')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get my commissions' })
@@ -62,6 +64,7 @@ export class InfluencerCommissionsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @Get('influencers/me/earnings')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get my earnings summary' })
@@ -80,6 +83,7 @@ export class InfluencerCommissionsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FINANCE')
+  @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @Get('admin/influencer-commissions')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'List all commissions' })
@@ -109,6 +113,7 @@ export class InfluencerCommissionsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FINANCE')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @Put('admin/influencer-commissions/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update commission' })
@@ -127,6 +132,7 @@ export class InfluencerCommissionsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FINANCE')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @Put('admin/influencer-commissions/:id/approve')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Approve commission' })

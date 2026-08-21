@@ -11,6 +11,7 @@ import { UpdateContentBlocksDto } from './dto/update-content-blocks.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('influencer-storefronts')
@@ -20,6 +21,7 @@ export class InfluencerStorefrontsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @Get('influencers/me/storefront')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get my storefront settings' })
@@ -34,6 +36,7 @@ export class InfluencerStorefrontsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'SELF' })
   @Put('influencers/me/storefront')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update my storefront settings' })
@@ -51,6 +54,7 @@ export class InfluencerStorefrontsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'SELF' })
   @Put('influencers/me/storefront/content-blocks')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update storefront content blocks' })
@@ -71,6 +75,7 @@ export class InfluencerStorefrontsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'SELF' })
   @Put('influencers/me/storefront/featured-products')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Update featured products' })

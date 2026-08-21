@@ -4,6 +4,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { QuizService } from './quiz.service';
 import { SubmitQuizDto } from './dto/submit-quiz.dto';
 
@@ -16,6 +17,7 @@ export class QuizController {
 
   @Get()
   @Roles('CUSTOMER')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiOperation({ summary: 'List active fandom quizzes' })
   async list(@Query('fandomId') fandomId?: string): Promise<ApiResponse<unknown>> {
     const data = await this.quiz.listQuizzes(fandomId);
@@ -24,6 +26,7 @@ export class QuizController {
 
   @Get('history')
   @Roles('CUSTOMER')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiOperation({ summary: 'My quiz attempts' })
   async history(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
     const data = await this.quiz.myHistory(req.user.id);
@@ -32,6 +35,7 @@ export class QuizController {
 
   @Get(':id')
   @Roles('CUSTOMER')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Get quiz questions (no answers)' })
   async one(@Param('id') id: string): Promise<ApiResponse<unknown>> {
     const data = await this.quiz.getQuizForPlayer(id);
@@ -40,6 +44,7 @@ export class QuizController {
 
   @Post(':id/submit')
   @Roles('CUSTOMER')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @ApiOperation({ summary: 'Submit quiz answers' })
   async submit(
     @Request() req: { user: { id: string } },

@@ -24,6 +24,7 @@ import { CreateWebhookDto } from './dto/create-webhook.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('webhooks')
@@ -34,6 +35,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 export class WebhooksController {
   constructor(private readonly webhooksService: WebhooksService) {}
 
+  @RequireAccess({ permission: 'webhooks.manage', scope: 'SELF' })
   @Post()
   @ApiOperation({
     summary: 'Create webhook',
@@ -68,6 +70,7 @@ export class WebhooksController {
     };
   }
 
+  @RequireAccess({ permission: 'webhooks.manage', scope: 'SELF' })
   @Get()
   @ApiOperation({
     summary: 'Get all webhooks',
@@ -100,6 +103,7 @@ export class WebhooksController {
 
   // ==================== Dead Letter Queue (must be before :id routes) ====================
 
+  @RequireAccess({ permission: 'webhooks.manage', scope: 'GLOBAL' })
   @Get('dlq/deliveries')
   @Roles('ADMIN')
   @ApiOperation({
@@ -126,6 +130,7 @@ export class WebhooksController {
     };
   }
 
+  @RequireAccess({ permission: 'webhooks.manage', scope: 'GLOBAL' })
   @Post('dlq/deliveries/:id/retry')
   @Roles('ADMIN')
   @ApiOperation({
@@ -144,6 +149,7 @@ export class WebhooksController {
 
   // ==================== Parameterized routes ====================
 
+  @RequireAccess({ permission: 'webhooks.manage', scope: 'SELF' })
   @Get(':id')
   @ApiOperation({
     summary: 'Get webhook by ID',
@@ -160,6 +166,7 @@ export class WebhooksController {
     };
   }
 
+  @RequireAccess({ permission: 'webhooks.manage', scope: 'SELF' })
   @Put(':id')
   @ApiOperation({
     summary: 'Update webhook',
@@ -179,6 +186,7 @@ export class WebhooksController {
     };
   }
 
+  @RequireAccess({ permission: 'webhooks.manage', scope: 'SELF' })
   @Delete(':id')
   @ApiOperation({
     summary: 'Delete webhook',
@@ -194,6 +202,7 @@ export class WebhooksController {
     };
   }
 
+  @RequireAccess({ permission: 'webhooks.manage', scope: 'SELF' })
   @Post('deliveries/:id/retry')
   @ApiOperation({
     summary: 'Retry webhook delivery',
@@ -209,6 +218,7 @@ export class WebhooksController {
     };
   }
 
+  @RequireAccess({ permission: 'webhooks.manage', scope: 'SELF' })
   @Get(':id/deliveries')
   @ApiOperation({
     summary: 'Get webhook delivery history',

@@ -19,6 +19,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { RequireAccess } from '../../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('shipping')
@@ -48,6 +49,7 @@ export class CourierController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.view', scope: 'MARKET' })
   @Post('rate/:provider')
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CUSTOMER')
   @ApiOperation({
@@ -97,6 +99,7 @@ export class CourierController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'MARKET' })
   @Post('label/:provider')
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @ApiOperation({
@@ -166,6 +169,7 @@ export class CourierController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.view', scope: 'MARKET' })
   @Post('validate-address/:provider')
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CUSTOMER')
   @ApiOperation({

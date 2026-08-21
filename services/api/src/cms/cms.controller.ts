@@ -12,6 +12,7 @@ import { CMSService } from './cms.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('cms')
@@ -23,6 +24,7 @@ export class CMSController {
   constructor(private readonly cmsService: CMSService) {}
 
   // Pages
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Get('pages')
   @ApiOperation({
     summary: 'Get all pages',
@@ -35,6 +37,7 @@ export class CMSController {
     return this.cmsService.getPages();
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Get('pages/:id')
   @ApiOperation({
     summary: 'Get page by ID',
@@ -49,6 +52,7 @@ export class CMSController {
     return this.cmsService.getPage(id);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Post('pages')
   @ApiOperation({
     summary: 'Create page',
@@ -86,6 +90,7 @@ export class CMSController {
     return this.cmsService.createPage(body);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Put('pages/:id')
   @ApiOperation({
     summary: 'Update page',
@@ -124,6 +129,7 @@ export class CMSController {
     return this.cmsService.updatePage(id, body);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Delete('pages/:id')
   @ApiOperation({
     summary: 'Delete page',
@@ -138,6 +144,7 @@ export class CMSController {
     return this.cmsService.deletePage(id);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Post('pages/:id/publish')
   @ApiOperation({
     summary: 'Publish page',
@@ -152,6 +159,7 @@ export class CMSController {
     return this.cmsService.publishPage(id);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Post('pages/:id/unpublish')
   @ApiOperation({
     summary: 'Unpublish page',
@@ -167,6 +175,7 @@ export class CMSController {
   }
 
   // Banners
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Get('banners')
   @ApiOperation({
     summary: 'Get all banners',
@@ -188,6 +197,7 @@ export class CMSController {
     return this.cmsService.getBanners(type);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Get('banners/:id')
   @ApiOperation({
     summary: 'Get banner by ID',
@@ -202,6 +212,7 @@ export class CMSController {
     return this.cmsService.getBanner(id);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Post('banners')
   @ApiOperation({
     summary: 'Create banner',
@@ -243,6 +254,7 @@ export class CMSController {
     return this.cmsService.createBanner(body);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Put('banners/:id')
   @ApiOperation({
     summary: 'Update banner',
@@ -285,6 +297,7 @@ export class CMSController {
     return this.cmsService.updateBanner(id, body);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Delete('banners/:id')
   @ApiOperation({
     summary: 'Delete banner',
@@ -300,6 +313,7 @@ export class CMSController {
   }
 
   // Blog Posts
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Get('blog')
   @ApiOperation({
     summary: 'Get blog posts',
@@ -318,6 +332,7 @@ export class CMSController {
     return this.cmsService.getBlogPosts(limit ? parseInt(limit.toString(), 10) : undefined);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Get('blog/:id')
   @ApiOperation({
     summary: 'Get blog post by ID',
@@ -332,6 +347,7 @@ export class CMSController {
     return this.cmsService.getBlogPost(id);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Post('blog')
   @ApiOperation({
     summary: 'Create blog post',
@@ -369,6 +385,7 @@ export class CMSController {
     return this.cmsService.createBlogPost(body);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Put('blog/:id')
   @ApiOperation({
     summary: 'Update blog post',
@@ -413,6 +430,7 @@ export class CMSController {
     return this.cmsService.updateBlogPost(id, body);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Delete('blog/:id')
   @ApiOperation({
     summary: 'Delete blog post',
@@ -427,6 +445,7 @@ export class CMSController {
     return this.cmsService.deleteBlogPost(id);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Post('blog/:id/publish')
   @ApiOperation({
     summary: 'Publish blog post',
@@ -441,6 +460,7 @@ export class CMSController {
     return this.cmsService.publishBlogPost(id);
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Get('media')
   @ApiOperation({
     summary: 'List CMS media (Strapi upload library)',
@@ -451,6 +471,7 @@ export class CMSController {
     return this.cmsService.getMedia();
   }
 
+  @RequireAccess({ permission: 'cms.edit', scope: 'GLOBAL' })
   @Delete('media/:id')
   @ApiOperation({
     summary: 'Delete CMS media file',

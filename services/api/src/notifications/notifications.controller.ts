@@ -22,6 +22,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('notifications')
@@ -44,6 +45,7 @@ export class NotificationsController {
   @Post('admin/test-email')
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Send test email (admin)',
     description:
@@ -63,6 +65,7 @@ export class NotificationsController {
   @Get('admin/failed-jobs')
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get failed notification jobs (admin)',
     description: 'Retrieves paginated list of notifications with status FAILED.',
@@ -87,6 +90,7 @@ export class NotificationsController {
   @Post('admin/failed-jobs/:id/retry')
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Retry failed notification (admin)',
     description: 'Re-queues a failed notification and resets its status to PENDING.',
@@ -104,6 +108,7 @@ export class NotificationsController {
   }
 
   @Get()
+  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get user notifications',
     description: 'Retrieves all notifications for the authenticated user.',
@@ -125,6 +130,7 @@ export class NotificationsController {
   }
 
   @Put('read-all')
+  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @ApiOperation({
     summary: 'Mark all notifications as read',
     description: 'Marks all unread notifications as read for the authenticated user.',
@@ -140,6 +146,7 @@ export class NotificationsController {
   }
 
   @Put(':id/read')
+  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @ApiOperation({
     summary: 'Mark notification as read',
     description: 'Marks a specific notification as read.',
@@ -155,6 +162,7 @@ export class NotificationsController {
   }
 
   @Delete(':id')
+  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @ApiOperation({
     summary: 'Delete notification',
     description: 'Deletes a specific notification for the authenticated user.',

@@ -21,6 +21,7 @@ import { CreateFoundingMemberDto } from './dto/create-founding-member.dto';
 import { ImportFoundingMembersDto } from './dto/import-founding-members.dto';
 import { AdminCreateFoundingMemberDto } from './dto/admin-create-founding-member.dto';
 import { FOUNDING_MEMBER_ADMIN_ROLES } from './founding-members.roles';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
 
 @ApiTags('Founding Members')
@@ -34,6 +35,7 @@ export class FoundingMembersController {
 
   @Public()
   @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @RequireAccess({ permission: 'users.edit', scope: 'MARKET' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register as a founding member' })
@@ -62,15 +64,19 @@ export class FoundingMembersController {
     };
   }
 
+  @RequireAccess({ permission: 'users.view', scope: 'MARKET' })
   @Get('stats')
   @Roles(...FOUNDING_MEMBER_ADMIN_ROLES)
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Get founding member statistics (Admin / Marketing)' })
   async stats() {
     return { data: await this.foundingMembersService.getStats() };
   }
 
+  @RequireAccess({ permission: 'users.edit', scope: 'MARKET' })
   @Post('import/preview')
   @Roles(...FOUNDING_MEMBER_ADMIN_ROLES)
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Dry-run preview of a founding member import (Admin / Marketing)' })
@@ -85,8 +91,10 @@ export class FoundingMembersController {
     };
   }
 
+  @RequireAccess({ permission: 'users.edit', scope: 'MARKET' })
   @Post('import')
   @Roles(...FOUNDING_MEMBER_ADMIN_ROLES)
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Bulk import founding members from external data (Admin / Marketing)' })
@@ -104,8 +112,10 @@ export class FoundingMembersController {
     };
   }
 
+  @RequireAccess({ permission: 'users.edit', scope: 'MARKET' })
   @Post('admin')
   @Roles(...FOUNDING_MEMBER_ADMIN_ROLES)
+  @RequireAccess({ permission: 'marketing.create', scope: 'GLOBAL' })
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Manually add a single founding member (Admin / Marketing)' })
@@ -122,8 +132,10 @@ export class FoundingMembersController {
     };
   }
 
+  @RequireAccess({ permission: 'users.edit', scope: 'MARKET' })
   @Post('send-confirmations')
   @Roles(...FOUNDING_MEMBER_ADMIN_ROLES)
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -140,8 +152,10 @@ export class FoundingMembersController {
     };
   }
 
+  @RequireAccess({ permission: 'users.edit', scope: 'MARKET' })
   @Post('send-account-invitations')
   @Roles(...FOUNDING_MEMBER_ADMIN_ROLES)
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -160,8 +174,10 @@ export class FoundingMembersController {
     };
   }
 
+  @RequireAccess({ permission: 'users.view', scope: 'MARKET' })
   @Get()
   @Roles(...FOUNDING_MEMBER_ADMIN_ROLES)
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List all founding members (Admin / Marketing)' })
   async findAll(
     @Query('page') page?: string,

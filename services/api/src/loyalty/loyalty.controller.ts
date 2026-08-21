@@ -30,6 +30,7 @@ import { LoyaltyCheckInDto } from './dto/check-in.dto';
 import { LoyaltyPreferencesDto } from './dto/loyalty-preferences.dto';
 import { RedeemInStoreDto } from './dto/redeem-in-store.dto';
 import { PosVoucherService } from './services/pos-voucher.service';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 
 @ApiTags('loyalty')
 @ApiBearerAuth('JWT-auth')
@@ -42,6 +43,7 @@ export class LoyaltyController {
   ) {}
 
   @Post('enroll')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Join The Enchanted Circle' })
   @SwaggerApiResponse({ status: 201, description: 'Enrolled' })
@@ -54,6 +56,7 @@ export class LoyaltyController {
   }
 
   @Get('membership')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Current membership' })
   async membership(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
@@ -62,6 +65,7 @@ export class LoyaltyController {
   }
 
   @Get('preferences')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Marketing channel opt-ins' })
   async preferences(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
@@ -70,6 +74,7 @@ export class LoyaltyController {
   }
 
   @Patch('preferences')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Update marketing channel opt-ins' })
   async patchPreferences(
@@ -84,6 +89,7 @@ export class LoyaltyController {
   }
 
   @Get('transactions')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Points history' })
   async transactions(
@@ -96,6 +102,7 @@ export class LoyaltyController {
   }
 
   @Get('tier-progress')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Progress to next tier' })
   async tierProgress(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
@@ -104,6 +111,7 @@ export class LoyaltyController {
   }
 
   @Get('redemption-options')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Reward catalogue' })
   async redemptionOptions(
@@ -116,6 +124,7 @@ export class LoyaltyController {
   }
 
   @Post('redeem')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({
     summary: 'Redeem points for a reward',
@@ -131,6 +140,7 @@ export class LoyaltyController {
   }
 
   @Get('referral')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Referral code and stats' })
   async referral(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
@@ -139,6 +149,7 @@ export class LoyaltyController {
   }
 
   @Get('fandom-profile')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Fandom affinity scores' })
   async fandomProfile(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
@@ -147,6 +158,7 @@ export class LoyaltyController {
   }
 
   @Post('referral/generate')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Ensure referral code exists' })
   async referralGenerate(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
@@ -155,6 +167,7 @@ export class LoyaltyController {
   }
 
   @Get('card')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Digital card / QR payload' })
   async card(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
@@ -163,6 +176,7 @@ export class LoyaltyController {
   }
 
   @Post('check-in')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Store QR check-in' })
   async checkIn(
@@ -174,6 +188,7 @@ export class LoyaltyController {
   }
 
   @Post('redeem-in-store')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Burn points and issue an in-store gift card voucher (Flow A1)' })
   async redeemInStore(
@@ -185,6 +200,7 @@ export class LoyaltyController {
   }
 
   @Get('pos-vouchers/active')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Active in-store vouchers for the logged-in member' })
   async activeVouchers(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
@@ -193,6 +209,7 @@ export class LoyaltyController {
   }
 
   @Post('pos-vouchers/:id/cancel')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @Roles('CUSTOMER', 'ADMIN', 'STORE_STAFF')
   @ApiOperation({ summary: 'Cancel an unused ISSUED voucher and restore points (Flow A5)' })
   async cancelVoucher(

@@ -23,6 +23,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { parseQueryDate } from '../common/utils/parse-query-date';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { SchedulePayoutDto } from './dto/schedule-payout.dto';
 
@@ -35,6 +36,7 @@ export class PayoutsController {
   constructor(private readonly payoutsService: PayoutsService) {}
 
   @Post('schedule')
+  @RequireAccess({ permission: 'finance.payouts', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Schedule payout (Admin only)',
     description: 'Schedules a payout to a seller. Admin access required.',
@@ -74,6 +76,7 @@ export class PayoutsController {
   }
 
   @Put(':id/process')
+  @RequireAccess({ permission: 'finance.payouts', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Process payout (Admin only)',
     description: 'Processes a scheduled payout. Admin access required.',
@@ -93,6 +96,7 @@ export class PayoutsController {
   }
 
   @Get()
+  @RequireAccess({ permission: 'finance.payouts', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get all payouts (Admin only)',
     description: 'Retrieves all payouts with filtering options. Admin access required.',
@@ -144,6 +148,7 @@ export class PayoutsController {
   }
 
   @Get(':sellerId/history')
+  @RequireAccess({ permission: 'finance.payouts', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get seller payout history (Admin only)',
     description: 'Retrieves payout history for a specific seller. Admin access required.',

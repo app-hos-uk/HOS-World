@@ -29,12 +29,14 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('newsletter')
 @Controller('newsletter')
 export class NewsletterController {
   constructor(private readonly newsletterService: NewsletterService) {}
 
   @Public()
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Post('subscribe')
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @ApiOperation({
@@ -58,6 +60,7 @@ export class NewsletterController {
   }
 
   @Public()
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Post('unsubscribe')
   @ApiOperation({
     summary: 'Unsubscribe from newsletter',
@@ -87,6 +90,7 @@ export class NewsletterController {
   }
 
   @Public()
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('status')
   @ApiOperation({
     summary: 'Get subscription status',
@@ -108,6 +112,7 @@ export class NewsletterController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING', 'CMS_EDITOR')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('subscriptions')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -153,6 +158,7 @@ export class NewsletterController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Post('campaigns/send')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

@@ -16,6 +16,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { ConfigService } from '@nestjs/config';
 import { SegmentationService } from './segmentation.service';
 import { CreateSegmentDto } from './dto/create-segment.dto';
@@ -38,28 +39,36 @@ export class SegmentationAdminController {
     private config: ConfigService,
   ) {}
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('templates')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List template segments' })
   async templates(): Promise<ApiResponse<unknown>> {
     const items = await this.segmentation.findTemplates();
     return { data: { items, total: items.length }, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('dimensions')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List segment dimensions' })
   async dimensions(): Promise<ApiResponse<unknown>> {
     const data = this.segmentation.dimensionsCatalog();
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post('refresh-all')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Queue refresh for all active dynamic segments' })
   async refreshAll(): Promise<ApiResponse<unknown>> {
     const jobId = await this.queue.addJob(JobType.SEGMENT_REFRESH_ALL, {});
     return { data: { jobId }, message: 'Queued' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post('preview')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Preview segment rules' })
   async preview(@Body() body: PreviewSegmentDto): Promise<ApiResponse<unknown>> {
     const rules = body.rules as unknown as SegmentRuleGroup;
@@ -67,7 +76,9 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get()
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List segments' })
   async list(
     @Query('status') status?: string,
@@ -84,7 +95,9 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post()
+  @RequireAccess({ permission: 'marketing.create', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Create segment' })
   async create(
     @Body() body: CreateSegmentDto,
@@ -94,7 +107,9 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id/members')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List segment members' })
   async members(
     @Param('id', ParseUUIDPipe) id: string,
@@ -111,7 +126,9 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/broadcast')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Broadcast to segment members' })
   async broadcast(
     @Param('id', ParseUUIDPipe) id: string,
@@ -142,35 +159,45 @@ export class SegmentationAdminController {
     return { data: { targeted: userIds.length, sent }, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/refresh')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Refresh segment membership' })
   async refresh(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.segmentation.evaluateSegment(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/archive')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Archive segment' })
   async archive(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.segmentation.archive(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/restore')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Restore archived segment' })
   async restore(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.segmentation.restore(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Get segment' })
   async get(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.segmentation.findById(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Patch(':id')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update segment' })
   async patch(
     @Param('id', ParseUUIDPipe) id: string,
@@ -180,7 +207,9 @@ export class SegmentationAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Delete(':id')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Delete archived segment' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     await this.segmentation.delete(id);

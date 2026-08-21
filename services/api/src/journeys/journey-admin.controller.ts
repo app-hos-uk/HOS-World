@@ -16,6 +16,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { PrismaService } from '../database/prisma.service';
 import { JourneyService } from './journey.service';
@@ -32,7 +33,9 @@ export class JourneyAdminController {
     private journeys: JourneyService,
   ) {}
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get()
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List marketing journeys' })
   async list(): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.marketingJourney.findMany({
@@ -44,7 +47,9 @@ export class JourneyAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Journey detail' })
   async get(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const journey = await this.prisma.marketingJourney.findUnique({
@@ -55,7 +60,9 @@ export class JourneyAdminController {
     return { data: { journey, stats }, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post()
+  @RequireAccess({ permission: 'marketing.create', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Create journey' })
   async create(
     @Body()
@@ -89,7 +96,9 @@ export class JourneyAdminController {
     return { data, message: 'Created' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Patch(':id')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update journey' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -127,7 +136,9 @@ export class JourneyAdminController {
     return { data, message: 'Updated' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Delete(':id')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Delete inactive journey (cascades enrollments)' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const journey = await this.prisma.marketingJourney.findUnique({ where: { id } });
@@ -143,7 +154,9 @@ export class JourneyAdminController {
     return { data: { id }, message: 'Deleted' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id/enrollments')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List enrollments' })
   async enrollments(
     @Param('id', ParseUUIDPipe) id: string,
@@ -158,7 +171,9 @@ export class JourneyAdminController {
     return { data: items, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/trigger')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Manually enroll a user' })
   async trigger(
     @Param('id', ParseUUIDPipe) id: string,
@@ -183,7 +198,9 @@ export class MessagingAdminController {
     private messaging: MessagingService,
   ) {}
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('logs')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Message logs' })
   async logs(
     @Query('page') page?: string,
@@ -208,7 +225,9 @@ export class MessagingAdminController {
     return { data: { items, total, page: p, limit: take }, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('stats')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Messaging stats (30d)' })
   async stats(): Promise<ApiResponse<unknown>> {
     const since = new Date(Date.now() - 30 * 86400000);
@@ -220,7 +239,9 @@ export class MessagingAdminController {
     return { data: { since, breakdown: rows }, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post('broadcast')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Send template to segment (basic)' })
   async broadcast(
     @Body()

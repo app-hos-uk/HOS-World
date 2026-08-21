@@ -4,6 +4,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { QuizService } from './quiz.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 
@@ -16,6 +17,7 @@ export class QuizAdminController {
   constructor(private quiz: QuizService) {}
 
   @Get()
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List all quizzes' })
   async list(): Promise<ApiResponse<unknown>> {
     const data = await this.quiz.adminList();
@@ -23,6 +25,7 @@ export class QuizAdminController {
   }
 
   @Get(':id/attempts')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Quiz attempts' })
   async attempts(@Param('id') id: string): Promise<ApiResponse<unknown>> {
     const data = await this.quiz.adminAttempts(id);
@@ -30,6 +33,7 @@ export class QuizAdminController {
   }
 
   @Post()
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Create quiz' })
   async create(@Body() dto: CreateQuizDto): Promise<ApiResponse<unknown>> {
     const data = await this.quiz.adminCreate(dto);
@@ -37,6 +41,7 @@ export class QuizAdminController {
   }
 
   @Put(':id')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update quiz' })
   async update(
     @Param('id') id: string,
@@ -47,6 +52,7 @@ export class QuizAdminController {
   }
 
   @Delete(':id')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Deactivate quiz' })
   async remove(@Param('id') id: string): Promise<ApiResponse<unknown>> {
     await this.quiz.adminDeactivate(id);

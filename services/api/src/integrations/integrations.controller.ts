@@ -33,6 +33,7 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { PaymentProviderService } from '../payments/payment-provider.service';
 import { CourierFactoryService } from '../shipping/courier/courier-factory.service';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -67,6 +68,7 @@ export class IntegrationsController {
     }
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Post()
   @ApiOperation({
     summary: 'Create integration configuration',
@@ -86,6 +88,7 @@ export class IntegrationsController {
     };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Get()
   @ApiOperation({
     summary: 'Get all integrations',
@@ -103,6 +106,7 @@ export class IntegrationsController {
     };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Get('providers')
   @ApiOperation({
     summary: 'Get available providers',
@@ -123,6 +127,7 @@ export class IntegrationsController {
     };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Get('providers/:provider')
   @ApiOperation({
     summary: 'Get provider metadata',
@@ -145,6 +150,7 @@ export class IntegrationsController {
     };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Get('category/:category')
   @ApiOperation({
     summary: 'Get integrations by category',
@@ -162,6 +168,7 @@ export class IntegrationsController {
     };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Get('category/:category/active')
   @ApiOperation({
     summary: 'Get active integration for category',
@@ -181,6 +188,7 @@ export class IntegrationsController {
     };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Get(':id')
   @ApiOperation({
     summary: 'Get integration by ID',
@@ -199,6 +207,7 @@ export class IntegrationsController {
     };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Put(':id')
   @ApiOperation({
     summary: 'Update integration',
@@ -219,6 +228,7 @@ export class IntegrationsController {
     };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Delete(':id')
   @ApiOperation({
     summary: 'Delete integration',
@@ -242,6 +252,7 @@ export class IntegrationsController {
     };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Post(':id/test')
   @ApiOperation({
     summary: 'Test integration connection',
@@ -262,6 +273,7 @@ export class IntegrationsController {
     };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Get(':id/logs')
   @ApiOperation({
     summary: 'Get integration logs',
@@ -289,6 +301,7 @@ export class IntegrationsController {
     };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Put(':id/activate')
   @ApiOperation({
     summary: 'Activate integration',
@@ -307,6 +320,7 @@ export class IntegrationsController {
     };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Put(':id/deactivate')
   @ApiOperation({
     summary: 'Deactivate integration',

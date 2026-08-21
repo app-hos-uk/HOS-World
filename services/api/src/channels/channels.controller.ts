@@ -18,6 +18,7 @@ import { ChannelsService } from './channels.service';
 import { AssignChannelDto } from './dto/assign-channel.dto';
 import { UpdateChannelPriceDto } from './dto/update-channel-price.dto';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('admin-channels')
 @ApiBearerAuth('JWT-auth')
 @Controller('admin/channels')
@@ -26,6 +27,7 @@ import { UpdateChannelPriceDto } from './dto/update-channel-price.dto';
 export class ChannelsController {
   constructor(private channels: ChannelsService) {}
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Post('assign')
   @ApiOperation({ summary: 'Assign product to sales channel' })
   async assign(@Body() dto: AssignChannelDto): Promise<ApiResponse<unknown>> {
@@ -33,12 +35,14 @@ export class ChannelsController {
     return { data, message: 'Assigned' };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Delete(':id')
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     await this.channels.removeProductFromChannel(id);
     return { data: null, message: 'Removed' };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Put(':id/price')
   async updatePrice(
     @Param('id', ParseUUIDPipe) id: string,
@@ -48,6 +52,7 @@ export class ChannelsController {
     return { data, message: 'Updated' };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Get('product/:productId')
   async byProduct(
     @Param('productId', ParseUUIDPipe) productId: string,
@@ -56,6 +61,7 @@ export class ChannelsController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Get('store/:storeId')
   async byStore(@Param('storeId', ParseUUIDPipe) storeId: string): Promise<ApiResponse<unknown>> {
     const data = await this.channels.getStoreProducts(storeId);

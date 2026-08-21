@@ -26,6 +26,7 @@ import { CreateSettlementDto, ProcessSettlementDto } from './dto/create-settleme
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { SettlementStatus } from '@prisma/client';
 
@@ -41,6 +42,7 @@ export class SettlementsController {
 
   @Roles('ADMIN', 'FINANCE')
   @Post()
+  @RequireAccess({ permission: 'settlements.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Create settlement (Admin/Finance only)',
     description: 'Creates a new settlement for a seller. Admin or Finance access required.',
@@ -63,6 +65,7 @@ export class SettlementsController {
 
   @Roles('ADMIN', 'FINANCE', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
   @Get()
+  @RequireAccess({ permission: 'settlements.view', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Get all settlements',
     description:
@@ -102,6 +105,7 @@ export class SettlementsController {
 
   @Roles('ADMIN', 'FINANCE')
   @Put(':id/process')
+  @RequireAccess({ permission: 'settlements.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Process settlement (Admin/Finance only)',
     description: 'Processes a settlement (marks as paid, etc.). Admin or Finance access required.',
@@ -126,6 +130,7 @@ export class SettlementsController {
 
   @Roles('ADMIN', 'FINANCE')
   @Get('calculate/:sellerId')
+  @RequireAccess({ permission: 'settlements.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Calculate settlement (Admin/Finance only)',
     description:
@@ -166,6 +171,7 @@ export class SettlementsController {
 
   @Roles('ADMIN', 'FINANCE')
   @Post('automation/weekly')
+  @RequireAccess({ permission: 'settlements.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Trigger weekly settlement creation (Admin/Finance only)',
     description:
@@ -184,6 +190,7 @@ export class SettlementsController {
 
   @Roles('ADMIN')
   @Post('automation/cleanup-reservations')
+  @RequireAccess({ permission: 'settlements.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Cleanup expired stock reservations (Admin only)',
     description: 'Manually triggers cleanup of expired stock reservations.',

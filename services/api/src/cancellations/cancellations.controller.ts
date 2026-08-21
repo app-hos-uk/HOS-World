@@ -21,6 +21,7 @@ import { EscalateCancellationDto } from './dto/escalate-cancellation.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 
 @ApiTags('cancellations')
 @ApiBearerAuth('JWT-auth')
@@ -30,6 +31,7 @@ export class CancellationsController {
   constructor(private readonly cancellationsService: CancellationsService) {}
 
   @Post('request')
+  @RequireAccess({ permission: 'cancellations.review', scope: 'SELF' })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Request order cancellation (paid orders require approval)' })
   async requestCancellation(@Request() req: any, @Body() dto: RequestCancellationDto) {
@@ -44,6 +46,7 @@ export class CancellationsController {
   }
 
   @Get()
+  @RequireAccess({ permission: 'cancellations.view', scope: 'SELF' })
   @ApiOperation({ summary: 'List cancellation requests (role-scoped)' })
   async findAll(
     @Request() req: any,
@@ -64,6 +67,7 @@ export class CancellationsController {
   }
 
   @Get('order/:orderId')
+  @RequireAccess({ permission: 'cancellations.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Get latest cancellation request for an order' })
   @ApiParam({ name: 'orderId', type: String })
   async findByOrder(@Request() req: any, @Param('orderId', ParseUUIDPipe) orderId: string) {
@@ -77,6 +81,7 @@ export class CancellationsController {
   }
 
   @Get(':id')
+  @RequireAccess({ permission: 'cancellations.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Get cancellation request by ID' })
   @ApiParam({ name: 'id', type: String })
   async findOne(@Request() req: any, @Param('id', ParseUUIDPipe) id: string) {
@@ -87,6 +92,7 @@ export class CancellationsController {
   @Put(':id/seller-review')
   @UseGuards(RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'cancellations.review', scope: 'MARKET' })
   @ApiOperation({ summary: 'Seller approve or reject cancellation request' })
   async sellerReview(
     @Request() req: any,
@@ -103,6 +109,7 @@ export class CancellationsController {
   @Put(':id/finance-review')
   @UseGuards(RolesGuard)
   @Roles('FINANCE', 'ADMIN')
+  @RequireAccess({ permission: 'cancellations.review', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Finance approve or reject cancellation request' })
   async financeReview(
     @Request() req: any,
@@ -119,6 +126,7 @@ export class CancellationsController {
   }
 
   @Put(':id/escalate')
+  @RequireAccess({ permission: 'cancellations.review', scope: 'SELF' })
   @ApiOperation({ summary: 'Customer escalates rejected cancellation to admin' })
   async escalate(
     @Request() req: any,
@@ -132,6 +140,7 @@ export class CancellationsController {
   @Put(':id/admin-resolve')
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'cancellations.review', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Admin resolves escalated or rejected cancellation' })
   async adminResolve(
     @Request() req: any,

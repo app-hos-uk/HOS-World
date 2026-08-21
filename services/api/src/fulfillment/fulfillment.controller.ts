@@ -29,6 +29,7 @@ import { VerifyShipmentDto, CreateShipmentDto } from './dto/verify-shipment.dto'
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { ShipmentStatus } from '@prisma/client';
 
@@ -40,6 +41,7 @@ export class FulfillmentController {
   // Fulfillment Center Management
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT')
+  @RequireAccess({ permission: 'fulfillment.manage', scope: 'GLOBAL' })
   @Post('centers')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -63,6 +65,7 @@ export class FulfillmentController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT', 'PROCUREMENT')
+  @RequireAccess({ permission: 'fulfillment.view', scope: 'GLOBAL' })
   @Get('centers')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -91,6 +94,7 @@ export class FulfillmentController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT', 'PROCUREMENT')
+  @RequireAccess({ permission: 'fulfillment.view', scope: 'GLOBAL' })
   @Get('centers/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -115,6 +119,7 @@ export class FulfillmentController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT')
+  @RequireAccess({ permission: 'fulfillment.manage', scope: 'GLOBAL' })
   @Put('centers/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -141,6 +146,7 @@ export class FulfillmentController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT')
+  @RequireAccess({ permission: 'fulfillment.manage', scope: 'GLOBAL' })
   @Delete('centers/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -165,6 +171,7 @@ export class FulfillmentController {
   // Shipment Management
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('PROCUREMENT', 'ADMIN')
+  @RequireAccess({ permission: 'shipments.verify', scope: 'GLOBAL' })
   @Post('shipments')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -186,6 +193,7 @@ export class FulfillmentController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('FULFILLMENT', 'ADMIN', 'PROCUREMENT')
+  @RequireAccess({ permission: 'fulfillment.view', scope: 'GLOBAL' })
   @Get('shipments')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -221,6 +229,7 @@ export class FulfillmentController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('FULFILLMENT', 'ADMIN', 'PROCUREMENT')
+  @RequireAccess({ permission: 'fulfillment.view', scope: 'GLOBAL' })
   @Get('shipments/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -243,6 +252,7 @@ export class FulfillmentController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('FULFILLMENT', 'ADMIN')
+  @RequireAccess({ permission: 'shipments.verify', scope: 'GLOBAL' })
   @Put('shipments/:id/verify')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -270,6 +280,7 @@ export class FulfillmentController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('FULFILLMENT', 'ADMIN')
+  @RequireAccess({ permission: 'fulfillment.view', scope: 'GLOBAL' })
   @Get('dashboard/stats')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

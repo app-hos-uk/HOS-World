@@ -18,6 +18,7 @@ import { StoreOnboardingService } from './store-onboarding.service';
 import { CreateStoreDto } from './dto/create-store.dto';
 import { UpdateStoreDto } from './dto/update-store.dto';
 import { OnboardingStepDto } from './dto/onboarding-step.dto';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 
 @ApiTags('admin-stores')
 @ApiBearerAuth('JWT-auth')
@@ -27,28 +28,36 @@ import { OnboardingStepDto } from './dto/onboarding-step.dto';
 export class StoreAdminController {
   constructor(private stores: StoreOnboardingService) {}
 
+  @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @Get()
+  @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List stores with onboarding status' })
   async list(): Promise<ApiResponse<unknown>> {
     const data = await this.stores.listStores();
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post()
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Create store' })
   async create(@Body() dto: CreateStoreDto): Promise<ApiResponse<unknown>> {
     const data = await this.stores.createStore(dto);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @Get(':id')
+  @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Store detail and checklist' })
   async get(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.stores.getStore(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Patch(':id')
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update store' })
   async patch(
     @Param('id', ParseUUIDPipe) id: string,
@@ -58,35 +67,45 @@ export class StoreAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @Get(':id/readiness')
+  @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Auto-derived readiness checks for a store' })
   async readiness(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.stores.getReadiness(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/activate')
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Activate store' })
   async activate(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.stores.activateStore(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/deactivate')
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Deactivate store' })
   async deactivate(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.stores.deactivateStore(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Delete(':id')
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Delete store and related records' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.stores.deleteStore(id);
     return { data, message: 'Store deleted' };
   }
 
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/onboarding/step')
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Mark onboarding step complete' })
   async step(
     @Param('id', ParseUUIDPipe) id: string,
@@ -96,7 +115,9 @@ export class StoreAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @Post(':id/onboarding/complete')
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Mark full onboarding complete' })
   async complete(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.stores.finishOnboarding(id);

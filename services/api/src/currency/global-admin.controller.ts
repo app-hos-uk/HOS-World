@@ -6,6 +6,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrencyService } from './currency.service';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('admin-global')
 @ApiBearerAuth('JWT-auth')
 @Controller('admin/global')
@@ -14,6 +15,7 @@ import { CurrencyService } from './currency.service';
 export class GlobalAdminController {
   constructor(private currency: CurrencyService) {}
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Get('currencies')
   @ApiOperation({ summary: 'Supported currencies and exchange rates (USD base)' })
   async currencies(): Promise<ApiResponse<unknown>> {
@@ -22,6 +24,7 @@ export class GlobalAdminController {
     return { data: { supported, rates }, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Post('currencies/refresh')
   @ApiOperation({ summary: 'Refresh cached exchange rates' })
   async refresh(): Promise<ApiResponse<unknown>> {

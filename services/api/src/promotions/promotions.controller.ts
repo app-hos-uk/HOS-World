@@ -29,6 +29,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 
 @ApiTags('promotions')
 @Controller('promotions')
@@ -38,6 +39,7 @@ export class PromotionsController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'promotions.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create a new promotion',
@@ -79,6 +81,7 @@ export class PromotionsController {
   @Get('admin/all')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'promotions.view', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get all promotions (Admin/Marketing)',
@@ -136,6 +139,7 @@ export class PromotionsController {
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'promotions.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update promotion',
@@ -158,6 +162,7 @@ export class PromotionsController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'promotions.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Delete promotion',
@@ -177,6 +182,7 @@ export class PromotionsController {
   @Post('coupons')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'promotions.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create a coupon',
@@ -195,6 +201,7 @@ export class PromotionsController {
   @Post('coupons/validate')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'promotions.view', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Validate coupon code',
@@ -232,6 +239,7 @@ export class PromotionsController {
   @Post('coupons/apply')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'promotions.manage', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Apply coupon to cart',
@@ -256,6 +264,7 @@ export class PromotionsController {
 
   @Post('coupons/remove')
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'promotions.manage', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Remove coupon from cart',

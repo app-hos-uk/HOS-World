@@ -11,6 +11,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { parseQueryDate } from '../common/utils/parse-query-date';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('finance')
@@ -22,6 +23,7 @@ export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Get('revenue')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get revenue report (Admin only)',
     description:
@@ -69,6 +71,7 @@ export class ReportsController {
   }
 
   @Get('seller-performance')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get seller performance report (Admin only)',
     description: 'Retrieves seller performance metrics report. Admin access required.',
@@ -109,6 +112,7 @@ export class ReportsController {
   }
 
   @Get('customer-spending')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get customer spending report (Admin only)',
     description: 'Retrieves customer spending analysis report. Admin access required.',
@@ -154,6 +158,7 @@ export class ReportsController {
   }
 
   @Get('platform-fees')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get platform fees report (Admin only)',
     description: 'Retrieves platform fees report. Admin access required.',

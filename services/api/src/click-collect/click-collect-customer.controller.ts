@@ -4,6 +4,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { ClickCollectService } from './click-collect.service';
 import { CreateClickCollectDto } from './dto/create-click-collect.dto';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 
 @ApiTags('click-collect')
 @ApiBearerAuth('JWT-auth')
@@ -12,7 +13,9 @@ import { CreateClickCollectDto } from './dto/create-click-collect.dto';
 export class ClickCollectCustomerController {
   constructor(private cc: ClickCollectService) {}
 
+  @RequireAccess({ permission: 'stores.manage', scope: 'SELF' })
   @Post()
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Create click & collect for an order' })
   async create(
     @Req() req: { user: { id: string } },
@@ -22,14 +25,18 @@ export class ClickCollectCustomerController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.view', scope: 'SELF' })
   @Get('my-orders')
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @ApiOperation({ summary: 'My active click & collect orders' })
   async mine(@Req() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
     const data = await this.cc.listMine(req.user.id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'stores.view', scope: 'SELF' })
   @Get('stores')
+  @RequireAccess({ permission: 'stores.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Eligible stores for products' })
   async stores(
     @Query('productIds') productIds?: string,

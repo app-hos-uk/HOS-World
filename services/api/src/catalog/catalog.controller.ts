@@ -24,6 +24,7 @@ import { CreateCatalogEntryDto, UpdateCatalogEntryDto } from './dto/create-catal
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('catalog')
@@ -35,6 +36,7 @@ export class CatalogController {
   @Get('pending')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CATALOG', 'PROCUREMENT', 'MARKETING', 'FINANCE', 'ADMIN')
+  @RequireAccess({ permission: 'catalog.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get pending catalog entries',
     description:
@@ -55,6 +57,7 @@ export class CatalogController {
   @Get('submissions/:submissionId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CATALOG', 'PROCUREMENT', 'MARKETING', 'FINANCE', 'ADMIN')
+  @RequireAccess({ permission: 'catalog.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get catalog submission/entry by ID (alias for entries/:id)',
     description:
@@ -79,6 +82,7 @@ export class CatalogController {
   @Get('entries')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CATALOG', 'PROCUREMENT', 'MARKETING', 'FINANCE', 'ADMIN')
+  @RequireAccess({ permission: 'catalog.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get all catalog entries',
     description:
@@ -106,6 +110,7 @@ export class CatalogController {
   @Get('entries/:submissionId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CATALOG', 'PROCUREMENT', 'MARKETING', 'FINANCE', 'ADMIN')
+  @RequireAccess({ permission: 'catalog.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get catalog entry by submission ID',
     description:
@@ -127,6 +132,7 @@ export class CatalogController {
   @Post('entries/:submissionId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CATALOG', 'ADMIN')
+  @RequireAccess({ permission: 'catalog.create', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Create catalog entry',
     description: 'Creates a new catalog entry from a submission. Catalog/Admin access required.',
@@ -153,6 +159,7 @@ export class CatalogController {
   @Put('entries/:submissionId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CATALOG', 'ADMIN')
+  @RequireAccess({ permission: 'catalog.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Update catalog entry',
     description: 'Updates an existing catalog entry. Catalog/Admin access required.',
@@ -179,6 +186,7 @@ export class CatalogController {
   @Post('entries/:submissionId/complete')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CATALOG', 'ADMIN')
+  @RequireAccess({ permission: 'catalog.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Mark catalog entry as complete',
     description: 'Marks a catalog entry as completed. Catalog/Admin access required.',
@@ -202,6 +210,7 @@ export class CatalogController {
   @Get('dashboard/stats')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CATALOG', 'PROCUREMENT', 'MARKETING', 'FINANCE', 'ADMIN')
+  @RequireAccess({ permission: 'catalog.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get catalog dashboard statistics',
     description:

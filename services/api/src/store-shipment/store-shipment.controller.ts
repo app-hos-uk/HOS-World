@@ -15,6 +15,7 @@ import { Public } from '../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { LoyaltyStaffAuthGuard } from '../loyalty/guards/loyalty-staff-auth.guard';
 import { StoreShipmentService } from './store-shipment.service';
 import { SkuCustomsService } from './sku-customs.service';
@@ -58,6 +59,7 @@ export class StoreShipmentController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'shipments.verify', scope: 'SELF' })
   @Post('claim/:token/attach')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER')
@@ -71,6 +73,7 @@ export class StoreShipmentController {
     return { data, message: 'Claim attached' };
   }
 
+  @RequireAccess({ permission: 'shipments.verify', scope: 'SELF' })
   @Post(':id/resolve-sale')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER')
@@ -83,6 +86,7 @@ export class StoreShipmentController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'SELF' })
   @Post(':id/address')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER')
@@ -96,6 +100,7 @@ export class StoreShipmentController {
     return { data, message: 'Address set' };
   }
 
+  @RequireAccess({ permission: 'shipping.view', scope: 'SELF' })
   @Get(':id/rates')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER')
@@ -108,6 +113,7 @@ export class StoreShipmentController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'SELF' })
   @Post(':id/authorize')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER')
@@ -121,6 +127,7 @@ export class StoreShipmentController {
     return { data, message: 'Payment authorized' };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'SELF' })
   @Post(':id/purchase-label')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER')
@@ -145,6 +152,7 @@ export class StoreShipmentAdminController {
     private skuCustoms: SkuCustomsService,
   ) {}
 
+  @RequireAccess({ permission: 'shipments.verify', scope: 'GLOBAL' })
   @Get()
   @ApiOperation({ summary: 'List store shipment requests' })
   async list(
@@ -156,6 +164,7 @@ export class StoreShipmentAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'shipments.verify', scope: 'GLOBAL' })
   @Get('sku-customs/pending')
   @ApiOperation({ summary: 'SKU customs enrichment queue' })
   async pendingSku(): Promise<ApiResponse<unknown>> {
@@ -163,6 +172,7 @@ export class StoreShipmentAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'shipments.verify', scope: 'GLOBAL' })
   @Post('sku-customs/:id')
   @ApiOperation({ summary: 'Update SKU customs attributes' })
   async updateSku(

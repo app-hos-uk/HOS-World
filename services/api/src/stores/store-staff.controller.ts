@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { StoreCustomerSearchDto } from './dto/store-customer-search.dto';
 import { StoreStaffGuard } from './guards/store-staff.guard';
 import { StoreStaffCustomerService } from './store-staff-customer.service';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 
 @ApiTags('store-staff')
 @ApiBearerAuth('JWT-auth')
@@ -14,7 +15,9 @@ import { StoreStaffCustomerService } from './store-staff-customer.service';
 export class StoreStaffController {
   constructor(private customers: StoreStaffCustomerService) {}
 
+  @RequireAccess({ permission: 'stores.manage', scope: 'STORE' })
   @Post('customers/search')
+  @RequireAccess({ permission: 'stores.operate', scope: 'STORE' })
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   @ApiOperation({
     summary: 'Search loyalty members for store staff (masked results)',

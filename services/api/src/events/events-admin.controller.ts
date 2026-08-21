@@ -23,6 +23,7 @@ import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { InviteEventDto } from './dto/invite-event.dto';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 
 @ApiTags('admin-events')
 @ApiBearerAuth('JWT-auth')
@@ -32,7 +33,9 @@ import { InviteEventDto } from './dto/invite-event.dto';
 export class EventsAdminController {
   constructor(private events: EventsService) {}
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get()
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List events (all statuses)' })
   async list(
     @Query('status') status?: string,
@@ -44,7 +47,9 @@ export class EventsAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post()
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Create draft event' })
   async create(
     @Request() req: { user: { id: string } },
@@ -54,35 +59,45 @@ export class EventsAdminController {
     return { data, message: 'Created' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id/rsvps')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List RSVPs' })
   async rsvps(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.events.getRsvpsForAdmin(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id/attendances')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List attendances' })
   async attendances(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.events.getAttendees(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id/stats')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Event statistics' })
   async stats(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.events.getEventStats(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/publish')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Publish event' })
   async publish(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.events.publish(id);
     return { data, message: 'Published' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/cancel')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Cancel event' })
   async cancel(
     @Param('id', ParseUUIDPipe) id: string,
@@ -92,14 +107,18 @@ export class EventsAdminController {
     return { data, message: 'Cancelled' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/complete')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Mark event completed' })
   async complete(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.events.complete(id);
     return { data, message: 'Completed' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/check-in')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Staff check-in by userId or ticketCode' })
   async checkIn(
     @Request() req: { user: { id: string } },
@@ -117,7 +136,9 @@ export class EventsAdminController {
     throw new BadRequestException('Provide userId or ticketCode');
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/invite')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Bulk invite members' })
   async invite(
     @Param('id', ParseUUIDPipe) id: string,
@@ -127,7 +148,9 @@ export class EventsAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Event detail + stats' })
   async get(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const event = await this.events.findById(id);
@@ -135,7 +158,9 @@ export class EventsAdminController {
     return { data: { event, stats }, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Patch(':id')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update event' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -145,7 +170,9 @@ export class EventsAdminController {
     return { data, message: 'Updated' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Delete(':id')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Delete draft event' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     await this.events.remove(id);

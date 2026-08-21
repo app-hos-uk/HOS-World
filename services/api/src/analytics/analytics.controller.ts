@@ -21,6 +21,7 @@ import { AnalyticsService, AnalyticsFilters } from './analytics.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import * as ExcelJS from 'exceljs';
 import * as PDFDocument from 'pdfkit';
@@ -34,6 +35,7 @@ export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
   @Get('sales/trends')
+  @RequireAccess({ permission: 'system.analytics', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Get sales trends',
     description: 'Retrieves sales trends with growth calculations and period comparisons.',
@@ -93,6 +95,7 @@ export class AnalyticsController {
   }
 
   @Get('customers/metrics')
+  @RequireAccess({ permission: 'system.analytics', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Get customer metrics',
     description: 'Retrieves customer analytics including retention rate and lifetime value.',
@@ -133,6 +136,7 @@ export class AnalyticsController {
   }
 
   @Get('products/performance')
+  @RequireAccess({ permission: 'system.analytics', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Get product performance',
     description: 'Retrieves product performance metrics including revenue and conversion rates.',
@@ -183,6 +187,7 @@ export class AnalyticsController {
 
   @Get('inventory/metrics')
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get inventory metrics (admin only)',
     description:
@@ -229,6 +234,7 @@ export class AnalyticsController {
 
   @Get('revenue/growth')
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get revenue growth (admin only)',
     description:
@@ -268,6 +274,7 @@ export class AnalyticsController {
 
   @Get('wholesale')
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get wholesale metrics (admin only)',
     description:
@@ -300,6 +307,7 @@ export class AnalyticsController {
 
   @Get('operational')
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get operational health metrics (admin only)',
     description:
@@ -312,6 +320,7 @@ export class AnalyticsController {
   }
 
   @Get('export/:format')
+  @RequireAccess({ permission: 'system.analytics', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Export analytics data',
     description: 'Exports analytics data in CSV, Excel, or PDF format.',

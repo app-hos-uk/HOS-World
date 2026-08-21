@@ -24,6 +24,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('privacy')
 @ApiBearerAuth('JWT-auth')
 @Controller('gdpr')
@@ -31,6 +32,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 export class GDPRController {
   constructor(private readonly gdprService: GDPRService) {}
 
+  @RequireAccess({ permission: 'users.edit', scope: 'MARKET' })
   @Post('consent')
   @ApiOperation({
     summary: 'Update privacy consent',
@@ -64,6 +66,7 @@ export class GDPRController {
     };
   }
 
+  @RequireAccess({ permission: 'users.view', scope: 'MARKET' })
   @Get('consent')
   @ApiOperation({
     summary: 'Get privacy consent',
@@ -79,6 +82,7 @@ export class GDPRController {
     };
   }
 
+  @RequireAccess({ permission: 'users.view', scope: 'MARKET' })
   @Get('export')
   @ApiOperation({
     summary: 'Export user data',
@@ -99,6 +103,7 @@ export class GDPRController {
     };
   }
 
+  @RequireAccess({ permission: 'users.edit', scope: 'MARKET' })
   @Delete('data')
   @ApiOperation({
     summary: 'Delete user data',
@@ -119,6 +124,7 @@ export class GDPRController {
     };
   }
 
+  @RequireAccess({ permission: 'users.view', scope: 'MARKET' })
   @Get('consent-history')
   @ApiOperation({
     summary: 'Get consent history',
@@ -134,6 +140,7 @@ export class GDPRController {
     };
   }
 
+  @RequireAccess({ permission: 'users.edit', scope: 'MARKET' })
   @Post('do-not-sell')
   @Public()
   @ApiOperation({
@@ -171,6 +178,7 @@ export class GDPRController {
     };
   }
 
+  @RequireAccess({ permission: 'users.view', scope: 'MARKET' })
   @Get('policy-version')
   @ApiOperation({
     summary: 'Get current privacy policy version',
@@ -184,6 +192,7 @@ export class GDPRController {
     };
   }
 
+  @RequireAccess({ permission: 'users.view', scope: 'MARKET' })
   @Get('admin/audit-log')
   @UseGuards(RolesGuard)
   @Roles('ADMIN')

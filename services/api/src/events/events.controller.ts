@@ -21,6 +21,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { EventsService } from './events.service';
 import { RsvpEventDto } from './dto/rsvp-event.dto';
 import { CheckInDto } from './dto/check-in.dto';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 
 @ApiTags('events')
 @Controller('events')
@@ -46,6 +47,7 @@ export class EventsController {
   }
 
   @Public()
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get()
   @ApiOperation({ summary: 'List upcoming public events' })
   async list(
@@ -68,7 +70,9 @@ export class EventsController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('my/rsvps')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'My event RSVPs' })
@@ -77,7 +81,9 @@ export class EventsController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('my/attendances')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Events I attended' })
@@ -86,7 +92,9 @@ export class EventsController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Post(':id/rsvp')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'RSVP to an event' })
@@ -99,7 +107,9 @@ export class EventsController {
     return { data, message: 'RSVP recorded' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Delete(':id/rsvp')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Cancel RSVP' })
@@ -111,7 +121,9 @@ export class EventsController {
     return { data: null, message: 'Cancelled' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Post(':id/check-in')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @ApiBearerAuth('JWT-auth')
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Self check-in' })
@@ -125,6 +137,7 @@ export class EventsController {
   }
 
   @Public()
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get(':slug')
   @ApiOperation({ summary: 'Event detail by slug' })
   async detail(

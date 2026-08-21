@@ -28,6 +28,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { setAuthCookies } from '../auth/cookie.utils';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
@@ -45,6 +46,7 @@ export class InfluencerInvitationsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @Post('admin/influencer-invitations')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -67,6 +69,7 @@ export class InfluencerInvitationsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @Get('admin/influencer-invitations')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -101,6 +104,7 @@ export class InfluencerInvitationsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @Get('admin/influencer-invitations/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -120,6 +124,7 @@ export class InfluencerInvitationsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @Delete('admin/influencer-invitations/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -140,6 +145,7 @@ export class InfluencerInvitationsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'MARKETING')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @Post('admin/influencer-invitations/:id/resend')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -163,6 +169,7 @@ export class InfluencerInvitationsController {
   // ============================================
 
   @Public()
+  @RequireAccess({ permission: 'influencers.manage', scope: 'MARKET' })
   @Get('influencer-invitations/token/:token')
   @ApiOperation({
     summary: 'Get invitation by token',
@@ -180,6 +187,7 @@ export class InfluencerInvitationsController {
   }
 
   @Public()
+  @RequireAccess({ permission: 'influencers.manage', scope: 'MARKET' })
   @Post('influencer-invitations/accept/:token')
   @ApiOperation({
     summary: 'Accept invitation',

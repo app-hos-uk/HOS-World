@@ -28,6 +28,7 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { ProductSubmissionStatus } from '@prisma/client';
 
@@ -40,6 +41,7 @@ export class ProcurementController {
   constructor(private readonly procurementService: ProcurementService) {}
 
   @Get('submissions')
+  @RequireAccess({ permission: 'procurement.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get all product submissions',
     description:
@@ -63,6 +65,7 @@ export class ProcurementController {
   }
 
   @Get('submissions/:id')
+  @RequireAccess({ permission: 'procurement.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get submission by ID',
     description:
@@ -82,6 +85,7 @@ export class ProcurementController {
   }
 
   @Post('submissions/:id/approve')
+  @RequireAccess({ permission: 'submissions.approve', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Approve product submission',
     description:
@@ -107,6 +111,7 @@ export class ProcurementController {
   }
 
   @Post('submissions/:id/reject')
+  @RequireAccess({ permission: 'submissions.reject', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Reject product submission',
     description: 'Rejects a product submission. Procurement/Admin access required.',
@@ -131,6 +136,7 @@ export class ProcurementController {
   }
 
   @Post('submissions/:id/select-quantity')
+  @RequireAccess({ permission: 'procurement.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Select quantity for submission',
     description:
@@ -160,6 +166,7 @@ export class ProcurementController {
   }
 
   @Put('submissions/:id/quantity')
+  @RequireAccess({ permission: 'procurement.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Update quantity for submission',
     description:
@@ -189,6 +196,7 @@ export class ProcurementController {
   }
 
   @Get('duplicates')
+  @RequireAccess({ permission: 'procurement.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get duplicate alerts',
     description:
@@ -206,6 +214,7 @@ export class ProcurementController {
   }
 
   @Get('dashboard/stats')
+  @RequireAccess({ permission: 'procurement.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get procurement dashboard statistics',
     description:

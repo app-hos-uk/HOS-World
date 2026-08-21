@@ -9,6 +9,7 @@ import {
 import { BadgesService } from './badges.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('badges')
@@ -17,6 +18,7 @@ export class BadgesController {
   constructor(private readonly badgesService: BadgesService) {}
 
   @Public()
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'MARKET' })
   @Get()
   @ApiOperation({
     summary: 'Get all badges',
@@ -32,6 +34,7 @@ export class BadgesController {
   }
 
   @Public()
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'MARKET' })
   @Get(':id')
   @ApiOperation({
     summary: 'Get badge by ID',
@@ -48,9 +51,11 @@ export class BadgesController {
     };
   }
 
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'MARKET' })
   @Get('my-badges')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get user badges',
     description: 'Retrieves all badges earned by the authenticated user.',

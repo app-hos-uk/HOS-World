@@ -32,6 +32,7 @@ import { Public } from '../common/decorators/public.decorator';
 import { isUuid } from '../common/utils/uuid';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('reviews')
 @Controller('reviews')
 export class ReviewsController {
@@ -47,6 +48,7 @@ export class ReviewsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'products.edit', scope: 'SELF' })
   @Post('products/:productId')
   @HttpCode(HttpStatus.CREATED)
   @ApiBearerAuth('JWT-auth')
@@ -75,6 +77,7 @@ export class ReviewsController {
   }
 
   @Public()
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Get('products/:productId')
   @ApiOperation({
     summary: 'Get product reviews',
@@ -112,6 +115,7 @@ export class ReviewsController {
   }
 
   @Public()
+  @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Get(':id')
   @ApiOperation({
     summary: 'Get review by ID',
@@ -129,6 +133,7 @@ export class ReviewsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'products.edit', scope: 'SELF' })
   @Put(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -154,6 +159,7 @@ export class ReviewsController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'products.edit', scope: 'SELF' })
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('JWT-auth')
@@ -179,6 +185,7 @@ export class ReviewsController {
   }
 
   @Public()
+  @RequireAccess({ permission: 'products.edit', scope: 'SELF' })
   @Post(':id/helpful')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

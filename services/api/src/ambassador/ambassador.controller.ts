@@ -15,6 +15,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { AmbassadorService } from './ambassador.service';
 import { EnrollAmbassadorDto } from './dto/enroll-ambassador.dto';
 import { UpdateAmbassadorDto } from './dto/update-ambassador.dto';
@@ -28,14 +29,18 @@ import { SubmitUgcDto } from './dto/submit-ugc.dto';
 export class AmbassadorController {
   constructor(private ambassador: AmbassadorService) {}
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('eligibility')
+  @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Ambassador programme eligibility' })
   async eligibility(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
     const data = await this.ambassador.eligibility(req.user.id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Post('enroll')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'SELF' })
   @ApiOperation({ summary: 'Enroll as ambassador' })
   async enroll(
     @Request() req: { user: { id: string } },
@@ -45,14 +50,18 @@ export class AmbassadorController {
     return { data, message: 'Welcome, ambassador' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('profile')
+  @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Ambassador profile' })
   async profile(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
     const data = await this.ambassador.getProfile(req.user.id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Patch('profile')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'SELF' })
   @ApiOperation({ summary: 'Update ambassador profile' })
   async patchProfile(
     @Request() req: { user: { id: string } },
@@ -62,7 +71,9 @@ export class AmbassadorController {
     return { data, message: 'Updated' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Post('ugc')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'SELF' })
   @ApiOperation({ summary: 'Submit UGC' })
   async submitUgc(
     @Request() req: { user: { id: string } },
@@ -72,7 +83,9 @@ export class AmbassadorController {
     return { data, message: 'Submitted' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('ugc')
+  @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @ApiOperation({ summary: 'List my UGC submissions' })
   async listUgc(
     @Request() req: { user: { id: string } },
@@ -88,14 +101,18 @@ export class AmbassadorController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('dashboard')
+  @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Unified referral dashboard' })
   async dashboard(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
     const data = await this.ambassador.getReferralDashboard(req.user.id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('leaderboard')
+  @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @ApiOperation({ summary: 'Ambassador leaderboard' })
   async leaderboard(
     @Query('period') period?: string,
@@ -109,14 +126,18 @@ export class AmbassadorController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Get('achievements')
+  @RequireAccess({ permission: 'influencers.view', scope: 'SELF' })
   @ApiOperation({ summary: 'My ambassador achievements' })
   async achievements(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
     const data = await this.ambassador.listAchievements(req.user.id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'MARKET' })
   @Post('convert-commission/:commissionId')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'SELF' })
   @ApiOperation({ summary: 'Convert approved influencer commission to loyalty points' })
   async convert(
     @Request() req: { user: { id: string } },

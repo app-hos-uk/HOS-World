@@ -32,6 +32,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse, Order } from '@hos-marketplace/shared-types';
 
 @ApiTags('orders')
@@ -45,6 +46,7 @@ export class OrdersController {
     private readonly orderShippingService: OrderShippingService,
   ) {}
 
+  @RequireAccess({ permission: 'orders.manage', scope: 'SELF' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @Throttle({ default: { limit: 3, ttl: 60000 } })
@@ -67,6 +69,7 @@ export class OrdersController {
     };
   }
 
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Get()
   @ApiOperation({
     summary: 'Get all orders',
@@ -134,6 +137,7 @@ export class OrdersController {
     };
   }
 
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Get(':id')
   @ApiOperation({
     summary: 'Get order by ID',
@@ -156,6 +160,7 @@ export class OrdersController {
     };
   }
 
+  @RequireAccess({ permission: 'orders.manage', scope: 'MARKET' })
   @Put(':id')
   @UseGuards(RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
@@ -181,6 +186,7 @@ export class OrdersController {
     };
   }
 
+  @RequireAccess({ permission: 'orders.manage', scope: 'SELF' })
   @Post(':id/notes')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -204,6 +210,7 @@ export class OrdersController {
     };
   }
 
+  @RequireAccess({ permission: 'orders.accept', scope: 'MARKET' })
   @Post(':id/accept')
   @UseGuards(RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -224,6 +231,7 @@ export class OrdersController {
     return { data: order, message: 'Order accepted successfully' };
   }
 
+  @RequireAccess({ permission: 'orders.manage', scope: 'MARKET' })
   @Post(':id/reject')
   @UseGuards(RolesGuard)
   @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -245,6 +253,7 @@ export class OrdersController {
     return { data: order, message: 'Order rejected' };
   }
 
+  @RequireAccess({ permission: 'orders.cancel', scope: 'SELF' })
   @Post(':id/cancel')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -291,6 +300,7 @@ export class OrdersController {
     };
   }
 
+  @RequireAccess({ permission: 'orders.manage', scope: 'SELF' })
   @Post(':id/reorder')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -325,6 +335,7 @@ export class OrdersController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.view', scope: 'MARKET' })
   @Get(':id/shipping-rates')
   @UseGuards(RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -348,6 +359,7 @@ export class OrdersController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'MARKET' })
   @Post(':id/ship')
   @UseGuards(RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -373,6 +385,7 @@ export class OrdersController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.view', scope: 'SELF' })
   @Get(':id/shipment-tracking')
   @UseGuards(RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CUSTOMER')

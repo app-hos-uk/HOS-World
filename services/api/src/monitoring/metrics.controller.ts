@@ -11,6 +11,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('monitoring')
 @Controller('metrics')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -22,6 +23,7 @@ export class MetricsController {
     private readonly monitoringService: MonitoringService,
   ) {}
 
+  @RequireAccess({ permission: 'system.analytics', scope: 'MARKET' })
   @Get('prometheus')
   @ApiOperation({
     summary: 'Get Prometheus metrics',
@@ -34,6 +36,7 @@ export class MetricsController {
     return this.metricsService.getPrometheusMetrics();
   }
 
+  @RequireAccess({ permission: 'system.analytics', scope: 'MARKET' })
   @Get('json')
   @ApiOperation({
     summary: 'Get metrics as JSON',
@@ -47,6 +50,7 @@ export class MetricsController {
     };
   }
 
+  @RequireAccess({ permission: 'system.analytics', scope: 'MARKET' })
   @Get('health')
   @ApiOperation({
     summary: 'Get monitoring health status',

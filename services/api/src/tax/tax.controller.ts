@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('tax')
@@ -28,6 +29,7 @@ export class TaxController {
   @Post('zones')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tax.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create tax zone',
@@ -45,6 +47,7 @@ export class TaxController {
   @Get('zones')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'tax.view', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get all tax zones',
@@ -65,6 +68,7 @@ export class TaxController {
   @Get('zones/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'tax.view', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get tax zone by ID',
@@ -83,6 +87,7 @@ export class TaxController {
   @Put('zones/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tax.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update tax zone',
@@ -104,6 +109,7 @@ export class TaxController {
   @Delete('zones/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tax.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Delete tax zone',
@@ -124,6 +130,7 @@ export class TaxController {
   @Post('classes')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tax.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create tax class',
@@ -141,6 +148,7 @@ export class TaxController {
   @Get('classes')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'tax.view', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get all tax classes',
@@ -158,6 +166,7 @@ export class TaxController {
   @Get('classes/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'tax.view', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get tax class by ID',
@@ -176,6 +185,7 @@ export class TaxController {
   @Put('classes/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tax.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update tax class',
@@ -197,6 +207,7 @@ export class TaxController {
   @Delete('classes/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tax.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Delete tax class',
@@ -217,6 +228,7 @@ export class TaxController {
   @Get('rates')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'tax.view', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get tax rates',
@@ -249,6 +261,7 @@ export class TaxController {
   @Get('rates/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @RequireAccess({ permission: 'tax.view', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get tax rate by ID',
@@ -267,6 +280,7 @@ export class TaxController {
   @Post('rates')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tax.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create tax rate',
@@ -284,6 +298,7 @@ export class TaxController {
   @Put('rates/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tax.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update tax rate',
@@ -305,6 +320,7 @@ export class TaxController {
   @Delete('rates/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'tax.manage', scope: 'GLOBAL' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Delete tax rate',

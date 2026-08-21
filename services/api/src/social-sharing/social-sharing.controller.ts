@@ -23,6 +23,7 @@ import { SocialSharingService } from './social-sharing.service';
 import { ShareItemDto } from './dto/share-item.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('social-sharing')
@@ -31,6 +32,7 @@ export class SocialSharingController {
   constructor(private readonly socialSharingService: SocialSharingService) {}
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'marketing.create', scope: 'SELF' })
   @Post('share')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -50,6 +52,7 @@ export class SocialSharingController {
   }
 
   @Public()
+  @RequireAccess({ permission: 'marketing.manage', scope: 'SELF' })
   @Get('shared')
   @ApiOperation({
     summary: 'Get shared items',
@@ -76,6 +79,7 @@ export class SocialSharingController {
   }
 
   @Public()
+  @RequireAccess({ permission: 'marketing.manage', scope: 'SELF' })
   @Post(':id/view')
   @ApiOperation({
     summary: 'Track share view',
@@ -93,6 +97,7 @@ export class SocialSharingController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'marketing.manage', scope: 'SELF' })
   @Get('share-url')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

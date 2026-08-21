@@ -11,11 +11,13 @@ import { CreateGalleryImageDto } from './dto/create-gallery-image.dto';
 import { UpdateGalleryImageDto } from './dto/update-gallery-image.dto';
 import { ReorderGalleryImagesDto } from './dto/reorder-gallery-images.dto';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('gallery')
 @Controller('gallery')
 export class GalleryController {
   constructor(private readonly service: GalleryService) {}
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'MARKET' })
   @Get('albums')
   @Public()
   @ApiOperation({ summary: 'List active gallery albums (public)' })
@@ -41,6 +43,7 @@ export class GalleryController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'MARKET' })
   @Get('admin/albums/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -50,6 +53,7 @@ export class GalleryController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'MARKET' })
   @Post('albums')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -59,6 +63,7 @@ export class GalleryController {
     return { data, message: 'Gallery album created' };
   }
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'MARKET' })
   @Put('albums/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -68,6 +73,7 @@ export class GalleryController {
     return { data, message: 'Gallery album updated' };
   }
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'MARKET' })
   @Delete('albums/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -77,6 +83,7 @@ export class GalleryController {
     return { data: null, message: 'Gallery album deleted' };
   }
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'MARKET' })
   @Post('albums/:id/images')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -86,6 +93,7 @@ export class GalleryController {
     return { data, message: 'Image added' };
   }
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'MARKET' })
   @Post('albums/:id/images/bulk')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -95,6 +103,7 @@ export class GalleryController {
     return { data, message: 'Images added' };
   }
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'MARKET' })
   @Put('images/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -104,6 +113,7 @@ export class GalleryController {
     return { data, message: 'Image updated' };
   }
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'MARKET' })
   @Delete('images/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -113,6 +123,7 @@ export class GalleryController {
     return { data: null, message: 'Image deleted' };
   }
 
+  @RequireAccess({ permission: 'uploads.manage', scope: 'MARKET' })
   @Put('albums/:id/images/reorder')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')

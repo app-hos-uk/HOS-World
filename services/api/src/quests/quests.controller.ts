@@ -9,6 +9,7 @@ import {
 import { QuestsService } from './quests.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('quests')
@@ -51,6 +52,7 @@ export class QuestsController {
   @Get('available')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get available quests',
     description: 'Retrieves quests that the user has not started yet.',
@@ -68,6 +70,7 @@ export class QuestsController {
   @Get('active')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get active quests',
     description: 'Retrieves quests that the user has started but not completed.',
@@ -85,6 +88,7 @@ export class QuestsController {
   @Get('completed')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get completed quests',
     description: 'Retrieves quests that the user has completed.',
@@ -102,6 +106,7 @@ export class QuestsController {
   @Post(':id/start')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @ApiOperation({
     summary: 'Start quest',
     description: 'Starts a quest for the authenticated user.',
@@ -125,6 +130,7 @@ export class QuestsController {
   @Post(':id/complete')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @ApiOperation({
     summary: 'Complete quest',
     description: 'Completes a quest for the authenticated user. Awards points and badges.',

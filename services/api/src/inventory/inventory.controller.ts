@@ -29,6 +29,7 @@ import { CreateStockMovementDto } from './dto/create-stock-movement.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { Request } from '@nestjs/common';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
@@ -41,6 +42,7 @@ export class InventoryController {
     private readonly geocodingService: GeocodingService,
   ) {}
 
+  @RequireAccess({ permission: 'inventory.manage', scope: 'MARKET' })
   @Post('warehouses')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -59,6 +61,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Get('warehouses')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
@@ -85,6 +88,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Get('warehouses/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
@@ -104,6 +108,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.manage', scope: 'MARKET' })
   @Post('locations')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
@@ -131,6 +136,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Get('products/:productId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
@@ -149,6 +155,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.manage', scope: 'MARKET' })
   @Post('reserve')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
@@ -167,6 +174,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.manage', scope: 'GLOBAL' })
   @Post('reservations/:id/confirm')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT')
@@ -188,6 +196,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.manage', scope: 'MARKET' })
   @Post('reservations/:id/cancel')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
@@ -210,6 +219,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Get('alerts/low-stock')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
@@ -228,6 +238,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.manage', scope: 'GLOBAL' })
   @Post('allocate')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT')
@@ -248,6 +259,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.manage', scope: 'GLOBAL' })
   @Post('allocate-with-location')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT')
@@ -281,6 +293,7 @@ export class InventoryController {
   }
 
   // Stock Transfers
+  @RequireAccess({ permission: 'inventory.manage', scope: 'MARKET' })
   @Post('transfers')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -302,6 +315,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Get('transfers')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -339,6 +353,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.manage', scope: 'GLOBAL' })
   @Post('transfers/:id/complete')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT')
@@ -362,6 +377,7 @@ export class InventoryController {
   }
 
   // Stock Movements
+  @RequireAccess({ permission: 'inventory.manage', scope: 'MARKET' })
   @Post('movements')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -382,6 +398,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Get('movements')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -432,6 +449,7 @@ export class InventoryController {
   }
 
   // Warehouse Routing Endpoints
+  @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Post('routing/nearest-warehouse')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -462,6 +480,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'fulfillment.view', scope: 'GLOBAL' })
   @Post('routing/nearest-fulfillment-center')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT')
@@ -485,6 +504,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Post('routing/optimal-source')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -530,6 +550,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.view', scope: 'GLOBAL' })
   @Post('routing/warehouses-by-distance')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT')
@@ -558,6 +579,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.manage', scope: 'MARKET' })
   @Post('geocode/:addressId')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -587,6 +609,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.view', scope: 'GLOBAL' })
   @Get('metrics')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT')
@@ -604,6 +627,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Get('locations')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -630,6 +654,7 @@ export class InventoryController {
   }
 
   // Warehouse CRUD
+  @RequireAccess({ permission: 'inventory.manage', scope: 'GLOBAL' })
   @Put('warehouses/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -652,6 +677,7 @@ export class InventoryController {
     };
   }
 
+  @RequireAccess({ permission: 'inventory.manage', scope: 'GLOBAL' })
   @Delete('warehouses/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')

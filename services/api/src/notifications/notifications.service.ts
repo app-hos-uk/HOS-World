@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Job } from 'bullmq';
+import { NotificationType } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 import { QueueService, JobType } from '../queue/queue.service';
 import { TemplatesService } from '../templates/templates.service';
@@ -15,50 +16,7 @@ import { sendViaSendGrid } from '../integrations/sendgrid.client';
 import { resolveOutboundFromEmail } from '../config/protected-admin-emails';
 import * as nodemailer from 'nodemailer';
 
-const VALID_NOTIFICATION_TYPES = new Set([
-  'ORDER_CONFIRMATION',
-  'ORDER_SHIPPED',
-  'ORDER_DELIVERED',
-  'ORDER_CANCELLED',
-  'ORDER_REFUNDED',
-  'CANCELLATION_REQUESTED',
-  'CANCELLATION_SELLER_APPROVED',
-  'CANCELLATION_APPROVED',
-  'CANCELLATION_REJECTED',
-  'CANCELLATION_ESCALATED',
-  'PAYMENT_RECEIVED',
-  'PAYMENT_FAILED',
-  'RETURN_REQUESTED',
-  'RETURN_APPROVED',
-  'REVIEW_REMINDER',
-  'WISHLIST_SALE',
-  'CART_ABANDONED',
-  'SUBMISSION_RESUBMITTED',
-  'SUBMISSION_APPROVED',
-  'SUBMISSION_REJECTED',
-  'CATALOG_COMPLETED',
-  'MARKETING_COMPLETED',
-  'CONTENT_COMPLETED',
-  'FINANCE_APPROVED',
-  'FINANCE_REJECTED',
-  'PRODUCT_APPROVED',
-  'PRODUCT_REJECTED',
-  'PRODUCT_PUBLISHED',
-  'LOYALTY_POINTS_EARNED',
-  'LOYALTY_TIER_UPGRADE',
-  'LOYALTY_TIER_DOWNGRADE',
-  'LOYALTY_POINTS_EXPIRING',
-  'LOYALTY_REDEMPTION',
-  'LOYALTY_WELCOME',
-  'EVENT_INVITATION',
-  'EVENT_REMINDER',
-  'SETTLEMENT_COMPLETED',
-  'LOW_STOCK',
-  'OUT_OF_STOCK',
-  'NEW_ORDER',
-  'SYSTEM',
-  'GENERAL',
-]);
+const VALID_NOTIFICATION_TYPES = new Set<string>(Object.values(NotificationType));
 
 function escapeHtml(str: string): string {
   return str
@@ -723,7 +681,7 @@ export class NotificationsService implements OnModuleInit {
    */
   async sendNotificationToRole(
     role: string,
-    type: string,
+    type: NotificationType | string,
     subject: string,
     content: string,
     metadata?: any,
@@ -779,7 +737,7 @@ export class NotificationsService implements OnModuleInit {
    */
   async sendNotificationToUser(
     userId: string,
-    type: string,
+    type: NotificationType | string,
     subject: string,
     content: string,
     metadata?: any,

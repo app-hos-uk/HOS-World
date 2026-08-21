@@ -12,6 +12,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { TrackReferralDto } from './dto/track-referral.dto';
 
@@ -38,6 +39,7 @@ export class ReferralsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('INFLUENCER')
+  @RequireAccess({ permission: 'marketing.manage', scope: 'SELF' })
   @Get('me')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get my referrals' })

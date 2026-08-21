@@ -2,6 +2,7 @@ import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { RevenueRecognitionService } from './revenue-recognition.service';
 
 @Controller('finance/revenue-recognition')
@@ -11,6 +12,7 @@ export class RevenueRecognitionController {
   constructor(private revenueRecognitionService: RevenueRecognitionService) {}
 
   @Get('breakdown')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   async getBreakdown(@Query() query: { startDate?: string; endDate?: string }) {
     const now = new Date();
     const periodStart = query.startDate
@@ -22,6 +24,7 @@ export class RevenueRecognitionController {
   }
 
   @Get('monthly')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   async getMonthly(@Query() query: { year?: string; month?: string }) {
     const now = new Date();
     const year = query.year ? parseInt(query.year) : now.getFullYear();
@@ -31,6 +34,7 @@ export class RevenueRecognitionController {
   }
 
   @Get('deferred')
+  @RequireAccess({ permission: 'finance.view', scope: 'GLOBAL' })
   async getDeferredRevenue(@Query() query: { page?: string; limit?: string }) {
     const result = await this.revenueRecognitionService.getDeferredRevenueDetails(
       query.page ? parseInt(query.page) : 1,

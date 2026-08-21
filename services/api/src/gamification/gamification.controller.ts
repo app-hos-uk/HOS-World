@@ -9,6 +9,7 @@ import {
 import { GamificationService, LeaderboardResponse } from './gamification.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('gamification')
@@ -67,6 +68,7 @@ export class GamificationController {
   @Get('profile')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get user gamification profile',
     description:
@@ -85,6 +87,7 @@ export class GamificationController {
   @Get('stats')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get user gamification stats',
     description: 'Retrieves quick stats for the authenticated user.',

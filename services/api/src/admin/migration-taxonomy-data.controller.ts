@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { slugify } from '@hos-marketplace/utils';
 import { MeilisearchService } from '../meilisearch/meilisearch.service';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -41,6 +42,7 @@ export class MigrationTaxonomyDataController {
   }
 
   @Post('migrate')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Migrate taxonomy data',
     description:
@@ -274,6 +276,7 @@ export class MigrationTaxonomyDataController {
   }
 
   @Get('status')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get taxonomy migration status',
     description: 'Retrieves the status of taxonomy data migration. Admin access required.',
@@ -348,6 +351,7 @@ export class MigrationTaxonomyDataController {
   ];
 
   @Post('cleanup-categories')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Clean up legacy category names',
     description:

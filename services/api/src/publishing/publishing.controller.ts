@@ -20,6 +20,7 @@ import { PublishingService } from './publishing.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('publishing')
@@ -31,6 +32,7 @@ export class PublishingController {
   constructor(private readonly publishingService: PublishingService) {}
 
   @Get('ready')
+  @RequireAccess({ permission: 'products.publish', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get ready to publish submissions (Admin only)',
     description:
@@ -51,6 +53,7 @@ export class PublishingController {
   }
 
   @Get('published')
+  @RequireAccess({ permission: 'products.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get published products (Admin only)',
     description: 'Retrieves all published products. Admin access required.',
@@ -67,6 +70,7 @@ export class PublishingController {
   }
 
   @Post('publish/:submissionId')
+  @RequireAccess({ permission: 'products.publish', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Publish product (Admin only)',
     description: 'Publishes a product submission to the marketplace. Admin access required.',
@@ -89,6 +93,7 @@ export class PublishingController {
   }
 
   @Post('bulk-publish')
+  @RequireAccess({ permission: 'products.publish', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Bulk publish products (Admin only)',
     description: 'Publishes multiple product submissions at once. Admin access required.',

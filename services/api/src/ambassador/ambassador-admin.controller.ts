@@ -14,6 +14,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { AmbassadorService } from './ambassador.service';
 import { ReviewUgcDto } from './dto/review-ugc.dto';
 
@@ -25,14 +26,18 @@ import { ReviewUgcDto } from './dto/review-ugc.dto';
 export class AmbassadorAdminController {
   constructor(private ambassador: AmbassadorService) {}
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('dashboard')
+  @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Ambassador programme KPIs' })
   async dashboard(): Promise<ApiResponse<unknown>> {
     const data = await this.ambassador.adminDashboard();
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('leaderboard')
+  @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Leaderboard (admin)' })
   async leaderboard(
     @Query('period') period?: string,
@@ -46,7 +51,9 @@ export class AmbassadorAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get('ugc')
+  @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'All UGC submissions' })
   async listUgc(
     @Query('status') status?: string,
@@ -63,7 +70,9 @@ export class AmbassadorAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post('ugc/:id/review')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Review UGC submission' })
   async reviewUgc(
     @Request() req: { user: { id: string } },
@@ -74,7 +83,9 @@ export class AmbassadorAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get()
+  @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List ambassadors' })
   async list(
     @Query('status') status?: string,
@@ -93,21 +104,27 @@ export class AmbassadorAdminController {
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Get(':id')
+  @RequireAccess({ permission: 'influencers.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Ambassador detail' })
   async getOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.ambassador.adminGetAmbassador(id);
     return { data, message: 'OK' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/suspend')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Suspend ambassador' })
   async suspend(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.ambassador.suspendAmbassador(id);
     return { data, message: 'Suspended' };
   }
 
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @Post(':id/reactivate')
+  @RequireAccess({ permission: 'influencers.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Reactivate ambassador' })
   async reactivate(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.ambassador.reactivateAmbassador(id);

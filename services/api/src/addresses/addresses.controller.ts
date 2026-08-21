@@ -24,6 +24,7 @@ import { AddressesService } from './addresses.service';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse, Address } from '@hos-marketplace/shared-types';
 
 @ApiTags('addresses')
@@ -35,6 +36,7 @@ export class AddressesController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @ApiOperation({
     summary: 'Create address',
     description: 'Creates a new shipping or billing address for the authenticated user.',
@@ -55,6 +57,7 @@ export class AddressesController {
   }
 
   @Get()
+  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get all addresses',
     description: 'Retrieves all addresses for the authenticated user.',
@@ -70,6 +73,7 @@ export class AddressesController {
   }
 
   @Get(':id')
+  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
   @ApiOperation({
     summary: 'Get address by ID',
     description: 'Retrieves a specific address by ID. Users can only access their own addresses.',
@@ -91,6 +95,7 @@ export class AddressesController {
   }
 
   @Put(':id')
+  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @ApiOperation({
     summary: 'Update address',
     description: 'Updates an existing address. Users can only update their own addresses.',
@@ -116,6 +121,7 @@ export class AddressesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
+  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @ApiOperation({
     summary: 'Delete address',
     description: 'Deletes an address. Users can only delete their own addresses.',
@@ -138,6 +144,7 @@ export class AddressesController {
 
   @Post(':id/set-default')
   @HttpCode(HttpStatus.OK)
+  @RequireAccess({ permission: 'users.edit', scope: 'SELF' })
   @ApiOperation({
     summary: 'Set default address',
     description: 'Sets an address as the default shipping/billing address for the user.',

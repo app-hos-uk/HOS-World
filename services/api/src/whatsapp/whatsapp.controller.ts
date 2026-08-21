@@ -27,6 +27,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('whatsapp')
@@ -39,6 +40,7 @@ export class WhatsAppController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Post('send')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -128,6 +130,7 @@ export class WhatsAppController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Get('conversations')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -172,6 +175,7 @@ export class WhatsAppController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Get('conversations/:id/messages')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -202,6 +206,7 @@ export class WhatsAppController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Post('templates')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -248,6 +253,7 @@ export class WhatsAppController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Get('templates')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -280,6 +286,7 @@ export class WhatsAppController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'system.settings', scope: 'GLOBAL' })
   @Post('send-template')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

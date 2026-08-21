@@ -26,6 +26,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('support')
 @Controller('support/kb')
 export class KnowledgeBaseController {
@@ -170,6 +171,7 @@ export class KnowledgeBaseController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'support.manage', scope: 'GLOBAL' })
   @Post('articles')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -216,6 +218,7 @@ export class KnowledgeBaseController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
+  @RequireAccess({ permission: 'support.manage', scope: 'GLOBAL' })
   @Put('articles/:id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

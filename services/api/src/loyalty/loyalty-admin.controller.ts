@@ -40,6 +40,7 @@ import {
   LoyaltyProgrammeSettings,
   LoyaltySettingsService,
 } from './services/loyalty-settings.service';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 
 @ApiTags('admin-loyalty')
 @ApiBearerAuth('JWT-auth')
@@ -58,6 +59,7 @@ export class LoyaltyAdminController {
   ) {}
 
   @Get('dashboard')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Loyalty programme KPIs' })
   async dashboard(): Promise<ApiResponse<unknown>> {
     const data = await this.loyalty.adminDashboard();
@@ -67,12 +69,14 @@ export class LoyaltyAdminController {
   // ── Tiers ──────────────────────────────────────────────
 
   @Get('tiers')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   async tiers(): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyTier.findMany({ orderBy: { level: 'asc' } });
     return { data, message: 'OK' };
   }
 
   @Get('tiers/:id')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   async tier(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyTier.findUnique({
       where: { id },
@@ -82,6 +86,7 @@ export class LoyaltyAdminController {
   }
 
   @Post('tiers/review')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Re-run tier placement for every member',
     description:
@@ -96,6 +101,7 @@ export class LoyaltyAdminController {
   }
 
   @Put('tiers/:id')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   async updateTier(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateLoyaltyTierDto,
@@ -110,18 +116,21 @@ export class LoyaltyAdminController {
   // ── Earn Rules ─────────────────────────────────────────
 
   @Get('earn-rules')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   async earnRules(): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyEarnRule.findMany({ orderBy: { action: 'asc' } });
     return { data, message: 'OK' };
   }
 
   @Post('earn-rules')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   async createEarnRule(@Body() body: CreateEarnRuleDto): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyEarnRule.create({ data: body as any });
     return { data, message: 'Created' };
   }
 
   @Put('earn-rules/:id')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   async updateEarnRule(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateEarnRuleDto,
@@ -131,6 +140,7 @@ export class LoyaltyAdminController {
   }
 
   @Delete('earn-rules/:id')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   async deleteEarnRule(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     await this.prisma.loyaltyEarnRule.delete({ where: { id } });
     return { data: null, message: 'Deleted' };
@@ -139,6 +149,7 @@ export class LoyaltyAdminController {
   // ── Redemption Options ─────────────────────────────────
 
   @Get('redemption-options')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   async redemptionOptions(): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyRedemptionOption.findMany({
       orderBy: { pointsCost: 'asc' },
@@ -147,6 +158,7 @@ export class LoyaltyAdminController {
   }
 
   @Post('redemption-options')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   async createRedemptionOption(
     @Body() body: CreateRedemptionOptionDto,
   ): Promise<ApiResponse<unknown>> {
@@ -155,6 +167,7 @@ export class LoyaltyAdminController {
   }
 
   @Put('redemption-options/:id')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   async updateRedemptionOption(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateRedemptionOptionDto,
@@ -167,6 +180,7 @@ export class LoyaltyAdminController {
   }
 
   @Delete('redemption-options/:id')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   async deleteRedemptionOption(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ApiResponse<unknown>> {
@@ -185,18 +199,21 @@ export class LoyaltyAdminController {
   // ── Campaigns ──────────────────────────────────────────
 
   @Get('campaigns')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   async campaigns(): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyBonusCampaign.findMany({ orderBy: { startsAt: 'desc' } });
     return { data, message: 'OK' };
   }
 
   @Post('campaigns')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   async createCampaign(@Body() body: CreateCampaignDto): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyBonusCampaign.create({ data: body as any });
     return { data, message: 'Created' };
   }
 
   @Put('campaigns/:id')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   async updateCampaign(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateCampaignDto,
@@ -209,6 +226,7 @@ export class LoyaltyAdminController {
   }
 
   @Delete('campaigns/:id')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   async deleteCampaign(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     await this.prisma.loyaltyBonusCampaign.delete({ where: { id } });
     return { data: null, message: 'Deleted' };
@@ -217,6 +235,7 @@ export class LoyaltyAdminController {
   // ── Members ────────────────────────────────────────────
 
   @Get('members')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List loyalty members (paginated)' })
   async members(
     @Query('q') q?: string,
@@ -284,6 +303,7 @@ export class LoyaltyAdminController {
   }
 
   @Get('members/:userId')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   async member(@Param('userId', ParseUUIDPipe) userId: string): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyMembership.findUnique({
       where: { userId },
@@ -293,6 +313,7 @@ export class LoyaltyAdminController {
   }
 
   @Delete('members/:userId')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Delete a loyalty membership (optionally the user account for test cleanup)',
   })
@@ -311,6 +332,7 @@ export class LoyaltyAdminController {
   }
 
   @Get('fandom-profile/:userId')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Member fandom affinity profile (JSON)' })
   async fandomProfile(
     @Param('userId', ParseUUIDPipe) userId: string,
@@ -323,6 +345,7 @@ export class LoyaltyAdminController {
   }
 
   @Post('fandom-profiles/recompute')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Recompute all member fandom profiles' })
   async recomputeFandom(): Promise<ApiResponse<unknown>> {
     const count = await this.fandomProfiles.batchUpdateProfiles();
@@ -330,12 +353,14 @@ export class LoyaltyAdminController {
   }
 
   @Post('adjust')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   async adjust(@Body() body: AdminLoyaltyAdjustDto): Promise<ApiResponse<unknown>> {
     const data = await this.loyalty.adminAdjustPoints(body.userId, body.pointsDelta, body.reason);
     return { data, message: 'Adjusted' };
   }
 
   @Get('transactions')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Loyalty ledger',
     description:
@@ -389,6 +414,7 @@ export class LoyaltyAdminController {
   }
 
   @Get('settings')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Get loyalty programme settings (DB over env)' })
   async getSettings(): Promise<ApiResponse<unknown>> {
     const { settings, source } = await this.settings.getResolved(true);
@@ -396,6 +422,7 @@ export class LoyaltyAdminController {
   }
 
   @Put('settings')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update loyalty programme settings' })
   async putSettings(
     @Body() body: Partial<LoyaltyProgrammeSettings>,
@@ -409,6 +436,7 @@ export class LoyaltyAdminController {
   }
 
   @Get('runtime-status')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Effective loyalty/POS/accounting runtime gates' })
   async runtimeStatus(): Promise<ApiResponse<unknown>> {
     const data = await this.settings.getRuntimeStatus();
@@ -416,6 +444,7 @@ export class LoyaltyAdminController {
   }
 
   @Get('members/:userId/instruments')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Member balance instruments (points, GCs, vouchers)' })
   async memberInstruments(
     @Param('userId', ParseUUIDPipe) userId: string,
@@ -450,6 +479,7 @@ export class LoyaltyAdminController {
   }
 
   @Get('pos-vouchers')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'List POS loyalty vouchers' })
   async listPosVouchers(
     @Query('status') status?: string,
@@ -489,6 +519,7 @@ export class LoyaltyAdminController {
   }
 
   @Get('pos-vouchers/:id')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   async getPosVoucher(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.loyaltyPosVoucher.findUnique({
       where: { id },
@@ -504,6 +535,7 @@ export class LoyaltyAdminController {
   }
 
   @Post('pos-vouchers/:id/cancel')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Manager cancel an unused ISSUED voucher (Flow A5)',
     description:
@@ -524,6 +556,7 @@ export class LoyaltyAdminController {
   }
 
   @Post('pos-vouchers/:id/retry')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Retry issuing the POS gift card for a FAILED/PENDING voucher',
     description:
@@ -535,6 +568,7 @@ export class LoyaltyAdminController {
   }
 
   @Post('pos-vouchers/:id/reassign')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Reassign a POS voucher to a different store (admin only)' })
   async reassignPosVoucher(
     @Param('id', ParseUUIDPipe) id: string,
@@ -571,6 +605,7 @@ export class LoyaltyAdminController {
   }
 
   @Get('identity-reviews')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Open identity match reviews (Lightspeed ↔ HOS)' })
   async identityReviews(
     @Query('status') status?: string,
@@ -597,6 +632,7 @@ export class LoyaltyAdminController {
   }
 
   @Patch('identity-reviews/:id')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Resolve an identity match review' })
   async resolveIdentityReview(
     @Param('id', ParseUUIDPipe) id: string,
@@ -703,6 +739,7 @@ export class LoyaltyAdminController {
   }
 
   @Get('liability-report')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @Roles('ADMIN', 'FINANCE')
   @ApiOperation({ summary: 'HOS loyalty & gift-card liability report (SoR)' })
   async liabilityReport(

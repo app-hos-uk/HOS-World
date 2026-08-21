@@ -26,6 +26,7 @@ import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { ProductSubmissionStatus } from '@prisma/client';
 
@@ -38,6 +39,7 @@ export class SubmissionsController {
   constructor(private readonly submissionsService: SubmissionsService) {}
 
   @Get('browse-catalog')
+  @RequireAccess({ permission: 'submissions.review', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Browse existing catalog products by fandom',
     description:
@@ -68,6 +70,7 @@ export class SubmissionsController {
   }
 
   @Get('check-duplicates')
+  @RequireAccess({ permission: 'submissions.review', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Check for duplicate products before submission',
     description:
@@ -98,6 +101,7 @@ export class SubmissionsController {
   }
 
   @Post()
+  @RequireAccess({ permission: 'products.create', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Create product submission',
     description: 'Creates a new product submission for review. Seller access required.',
@@ -119,6 +123,7 @@ export class SubmissionsController {
   }
 
   @Post(':id/resubmit')
+  @RequireAccess({ permission: 'products.edit', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Resubmit a rejected submission',
     description:
@@ -152,6 +157,7 @@ export class SubmissionsController {
   }
 
   @Post('bulk')
+  @RequireAccess({ permission: 'products.create', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Bulk create product submissions',
     description: 'Creates multiple product submissions at once. Seller access required.',
@@ -185,6 +191,7 @@ export class SubmissionsController {
   }
 
   @Get()
+  @RequireAccess({ permission: 'products.view', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Get all product submissions',
     description:
@@ -211,6 +218,7 @@ export class SubmissionsController {
   }
 
   @Get(':id')
+  @RequireAccess({ permission: 'products.view', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Get submission by ID',
     description:
@@ -233,6 +241,7 @@ export class SubmissionsController {
   }
 
   @Put(':id')
+  @RequireAccess({ permission: 'products.edit', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Update product submission',
     description:
@@ -258,6 +267,7 @@ export class SubmissionsController {
   }
 
   @Delete(':id')
+  @RequireAccess({ permission: 'products.delete', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Delete product submission',
     description: 'Deletes a product submission. Sellers can only delete their own submissions.',

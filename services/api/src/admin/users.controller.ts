@@ -1,4 +1,5 @@
 import { Controller, Get, UseGuards, Query, DefaultValuePipe, ParseIntPipe } from '@nestjs/common';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import {
   ApiTags,
   ApiOperation,
@@ -22,6 +23,7 @@ export class AdminUsersController {
   constructor(private prisma: PrismaService) {}
 
   @Get('users')
+  @RequireAccess({ permission: 'users.view', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get all users (Admin only)',
     description:

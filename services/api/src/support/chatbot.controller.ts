@@ -23,6 +23,7 @@ import { Throttle } from '@nestjs/throttler';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { ChatbotMessageDto } from './dto/chatbot-message.dto';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('support')
 @Controller('support/chatbot')
 export class ChatbotController {
@@ -84,6 +85,7 @@ export class ChatbotController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'support.manage', scope: 'SELF' })
   @Post('escalate')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -128,6 +130,7 @@ export class ChatbotController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @RequireAccess({ permission: 'support.view', scope: 'SELF' })
   @Get('history/:conversationId')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

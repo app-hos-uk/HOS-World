@@ -31,6 +31,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import type { ShippingOption } from './types/shipping.types';
 
@@ -39,6 +40,7 @@ import type { ShippingOption } from './types/shipping.types';
 export class ShippingController {
   constructor(private readonly shippingService: ShippingService) {}
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'MARKET' })
   @Post('methods')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -85,6 +87,7 @@ export class ShippingController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.view', scope: 'GLOBAL' })
   @Get('admin/methods')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'FINANCE')
@@ -94,6 +97,7 @@ export class ShippingController {
     return { data: methods, message: 'Shipping methods retrieved successfully' };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'GLOBAL' })
   @Post('admin/seed-defaults')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -123,6 +127,7 @@ export class ShippingController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'MARKET' })
   @Put('methods/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -145,6 +150,7 @@ export class ShippingController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'MARKET' })
   @Post('rules')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -164,6 +170,7 @@ export class ShippingController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'MARKET' })
   @Put('rules/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
@@ -210,6 +217,7 @@ export class ShippingController {
     };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'GLOBAL' })
   @Delete('methods/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -221,6 +229,7 @@ export class ShippingController {
     return { data: null, message: 'Shipping method deleted' };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'GLOBAL' })
   @Delete('rules/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -232,6 +241,7 @@ export class ShippingController {
     return { data: null, message: 'Shipping rule deleted' };
   }
 
+  @RequireAccess({ permission: 'shipping.view', scope: 'MARKET' })
   @Get('carriers')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FINANCE')
@@ -249,6 +259,7 @@ export class ShippingController {
     return { data: carriers, message: 'Shipping carriers retrieved successfully' };
   }
 
+  @RequireAccess({ permission: 'shipping.view', scope: 'GLOBAL' })
   @Get('admin/carriers')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -259,6 +270,7 @@ export class ShippingController {
     return { data: carriers, message: 'Shipping carriers retrieved successfully' };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'GLOBAL' })
   @Post('admin/carriers')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -271,6 +283,7 @@ export class ShippingController {
     return { data: carrier, message: 'Shipping carrier created successfully' };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'GLOBAL' })
   @Put('admin/carriers/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -285,6 +298,7 @@ export class ShippingController {
     return { data: carrier, message: 'Shipping carrier updated successfully' };
   }
 
+  @RequireAccess({ permission: 'shipping.manage', scope: 'GLOBAL' })
   @Delete('admin/carriers/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')

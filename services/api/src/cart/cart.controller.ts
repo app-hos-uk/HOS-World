@@ -30,6 +30,7 @@ import { ApplyCartLoyaltyDto } from '../loyalty/dto/apply-cart-loyalty.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import type { ApiResponse, Cart } from '@hos-marketplace/shared-types';
 
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 @ApiTags('cart')
 @ApiBearerAuth('JWT-auth')
 @Controller('cart')
@@ -37,6 +38,7 @@ import type { ApiResponse, Cart } from '@hos-marketplace/shared-types';
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Get()
   @ApiOperation({
     summary: 'Get user cart',
@@ -52,6 +54,7 @@ export class CartController {
     };
   }
 
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Post('items')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
@@ -74,6 +77,7 @@ export class CartController {
     };
   }
 
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Patch('items/:id')
   @ApiOperation({
     summary: 'Update cart item',
@@ -96,6 +100,7 @@ export class CartController {
     };
   }
 
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Delete('items/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -117,6 +122,7 @@ export class CartController {
     };
   }
 
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Delete('clear')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -133,6 +139,7 @@ export class CartController {
     };
   }
 
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Post('loyalty')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Apply loyalty reward to cart (checkout discount)' })
@@ -145,6 +152,7 @@ export class CartController {
     return { data: cart, message: 'Loyalty reward applied' };
   }
 
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Delete('loyalty')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Remove loyalty reward from cart' })
@@ -153,6 +161,7 @@ export class CartController {
     return { data: cart, message: 'Loyalty reward removed' };
   }
 
+  @RequireAccess({ permission: 'orders.view', scope: 'SELF' })
   @Post('merge-guest')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
