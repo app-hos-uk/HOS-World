@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient, clearFrontendSessionCookie, setFrontendSessionCookie } from '@/lib/api';
-import type { User, UserRole } from '@hos-marketplace/shared-types';
+import { getStoredMarketCode, setStoredMarketCode } from '@/lib/market';
+import type { AccessControlMe, User, UserRole } from '@hos-marketplace/shared-types';
 
 interface AuthContextType {
   user: User | null;
@@ -11,12 +12,17 @@ interface AuthContextType {
   isAuthenticated: boolean;
   hasRole: (role: UserRole | UserRole[]) => boolean;
   hasAnyRole: (roles: UserRole[]) => boolean;
+  hasPermission: (permission: string) => boolean;
   refreshUser: () => Promise<void>;
   logout: () => Promise<void>;
   // Role switching (admin only)
   impersonatedRole: UserRole | null;
   switchRole: (role: UserRole | null) => void;
   effectiveRole: UserRole | null; // Returns impersonated role if set, otherwise user role
+  // Access control / market scoping
+  accessProfile: AccessControlMe | null;
+  activeMarketCode: string | null;
+  setActiveMarketCode: (code: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,7 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const VALID_USER_ROLES: UserRole[] = [
   'CUSTOMER', 'WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN', 'INFLUENCER',
   'PROCUREMENT', 'FULFILLMENT', 'CATALOG', 'MARKETING', 'FINANCE', 'CMS_EDITOR',
-  'STORE_STAFF',
+  'STORE_STAFF', 'SALES',
 ];
 
 function isValidUserRole(value: string): value is UserRole {
@@ -35,6 +41,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [impersonatedRole, setImpersonatedRole] = useState<UserRole | null>(null);
+  const [accessProfile, setAccessProfile] = useState<AccessControlMe | null>(null);
+  const [activeMarketCode, setActiveMarketCodeState] = useState<string | null>(null);
   const router = useRouter();
 
   // Clear impersonated role if user is not admin (e.g. after login as non-admin)
@@ -190,6 +198,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await fetchUser();
   }, [fetchUser]);
 
+  const hasPermission = useCallback((permission: string): boolean => {
+    if (!user) return false;
+    if (accessProfile?.isGlobalAdmin || accessProfile?.permissions.includes('*')) return true;
+    return Boolean(accessProfile?.permissions.includes(permission));
+  }, [user, accessProfile]);
+
+  const setActiveMarketCode = useCallback((code: string | null) => {
+    setActiveMarketCodeState(code);
+    setStoredMarketCode(code);
+  }, []);
+
+  useEffect(() => {
+    setActiveMarketCodeState(getStoredMarketCode());
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setAccessProfile(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await apiClient.getAccessControlMe();
+        if (cancelled) return;
+        const profile = res?.data || null;
+        setAccessProfile(profile);
+
+        // Reconcile the stored market against what this user may actually use.
+        // A code left over from a previous session (logout, expiry, or a shared
+        // browser) must not leak into the next user's requests.
+        const stored = getStoredMarketCode();
+        const allowed = profile?.markets?.some((m) => m.code === stored);
+        if (!stored || !allowed) {
+          setActiveMarketCode(profile?.activeMarket?.code || null);
+        }
+      } catch {
+        if (!cancelled) setAccessProfile(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, setActiveMarketCode]);
+
   const logout = useCallback(async () => {
     try {
       await apiClient.logout();
@@ -198,8 +251,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     localStorage.removeItem('admin_impersonated_role');
     clearFrontendSessionCookie();
+    // The market is per-user. Leaving it behind would make the next sign-in on
+    // this browser inherit the previous user's x-market-code.
+    setStoredMarketCode(null);
     setUser(null);
     setImpersonatedRole(null);
+    setAccessProfile(null);
+    setActiveMarketCodeState(null);
     router.push('/login');
   }, [router]);
 
@@ -233,11 +291,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: !!user,
     hasRole,
     hasAnyRole,
+    hasPermission,
     refreshUser,
     logout,
     impersonatedRole,
     switchRole,
     effectiveRole,
+    accessProfile,
+    activeMarketCode,
+    setActiveMarketCode,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

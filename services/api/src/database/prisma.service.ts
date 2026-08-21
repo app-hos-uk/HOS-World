@@ -1,7 +1,8 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { marketScopeExtension } from './prisma-market-scope';
 
 const execAsync = promisify(exec);
 
@@ -19,10 +20,38 @@ function buildDatasourceUrl(): string | undefined {
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
+  /**
+   * Client with the market-scope extension applied. `$extends` returns a new
+   * client instead of mutating, so the model delegates and `$transaction` on
+   * this service are re-pointed at it below. That keeps `PrismaService`
+   * assignable to `PrismaClient` for the rest of the codebase while ensuring
+   * every query — including those issued inside an interactive transaction —
+   * passes through the extension.
+   */
+  private readonly scoped: ReturnType<typeof PrismaService.prototype.$extends>;
+
   constructor() {
     super({
       datasourceUrl: buildDatasourceUrl(),
     });
+    this.scoped = this.$extends(marketScopeExtension) as never;
+    this.routeThroughScopedClient();
+  }
+
+  private routeThroughScopedClient(): void {
+    const scoped = this.scoped as unknown as Record<string, any>;
+    const self = this as unknown as Record<string, any>;
+
+    for (const model of Prisma.dmmf.datamodel.models) {
+      const delegate = model.name.charAt(0).toLowerCase() + model.name.slice(1);
+      if (scoped[delegate]) {
+        self[delegate] = scoped[delegate];
+      }
+    }
+
+    // Interactive transactions must come from the extended client, otherwise
+    // the `tx` handed to callbacks bypasses the extension entirely.
+    self.$transaction = (...args: unknown[]) => scoped.$transaction(...args);
   }
 
   async onModuleInit() {

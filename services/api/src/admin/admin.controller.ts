@@ -30,6 +30,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Permissions } from '../common/decorators/permissions.decorator';
 import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('admin')
@@ -104,6 +105,7 @@ export class AdminController {
   @Post('users')
   @UseGuards(PermissionsGuard)
   @Permissions('users.create')
+  @RequireAccess({ permission: 'users.create', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Create admin user',
     description: 'Creates a new user with admin privileges. Requires users.create permission.',
@@ -293,6 +295,7 @@ export class AdminController {
   @Get('permissions/catalog')
   @UseGuards(PermissionsGuard)
   @Permissions('system.permissions')
+  @RequireAccess({ permission: 'system.permissions', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get permission catalog',
     description:
@@ -312,6 +315,7 @@ export class AdminController {
   @Get('permissions/:role')
   @UseGuards(PermissionsGuard)
   @Permissions('system.permissions')
+  @RequireAccess({ permission: 'system.permissions', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Get role permissions',
     description:
@@ -335,6 +339,7 @@ export class AdminController {
   @Put('permissions/:role')
   @UseGuards(PermissionsGuard)
   @Permissions('system.permissions')
+  @RequireAccess({ permission: 'system.permissions', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Update role permissions',
     description: 'Updates permissions for a specific role. Requires system.permissions permission.',
@@ -374,6 +379,7 @@ export class AdminController {
   @Get('roles')
   @UseGuards(PermissionsGuard)
   @Permissions('system.permissions')
+  @RequireAccess({ permission: 'system.permissions', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'List all roles',
     description: 'Retrieves all available roles. Requires system.permissions permission.',
@@ -392,6 +398,7 @@ export class AdminController {
   @Post('roles')
   @UseGuards(PermissionsGuard)
   @Permissions('system.permissions')
+  @RequireAccess({ permission: 'system.permissions', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Create role',
     description: 'Creates a new role. Requires system.permissions permission.',

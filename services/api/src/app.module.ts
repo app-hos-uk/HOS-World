@@ -69,6 +69,7 @@ import { TaxModule } from './tax/tax.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { TenantsModule } from './tenants/tenants.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { AccessGuard } from './access-control/access.guard';
 import { LoggerModule } from './common/logger/logger.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
@@ -113,6 +114,7 @@ import { FeatureFlagsModule } from './config/feature-flags.module';
 import { PlatformRegionModule } from './config/platform-region.module';
 import { validateEnvironmentVariables } from './config/env.validation';
 import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
+import { AccessControlModule } from './access-control/access-control.module';
 
 @Module({
   imports: [
@@ -126,6 +128,7 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
       validate: validateEnvironmentVariables,
     }),
     LoggerModule,
+    AccessControlModule,
     ScheduleModule.forRoot(),
     FeatureFlagsModule,
     PlatformRegionModule,
@@ -244,6 +247,11 @@ import { CorrelationIdMiddleware } from './common/middleware/correlation-id.midd
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      // Must run after JwtAuthGuard so req.user is populated.
+      provide: APP_GUARD,
+      useClass: AccessGuard,
     },
     {
       provide: APP_INTERCEPTOR,

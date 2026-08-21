@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
+import { PERMISSION_CATALOG } from '@hos-marketplace/shared-types';
 
 interface Permission {
   id: string;
@@ -17,47 +18,12 @@ interface RolePermissions {
   permissions: string[];
 }
 
-const PERMISSIONS: Permission[] = [
-  // Product Management (ids must match `permissionCatalog` in services/api/src/admin/admin.service.ts)
-  { id: 'products.view', name: 'View Products', description: 'View product catalog and details', category: 'Products' },
-  { id: 'products.create', name: 'Create Products', description: 'Create new products', category: 'Products' },
-  { id: 'products.edit', name: 'Edit Products', description: 'Edit existing products', category: 'Products' },
-  { id: 'products.delete', name: 'Delete Products', description: 'Delete products', category: 'Products' },
-  { id: 'products.publish', name: 'Publish Products', description: 'Publish products to marketplace', category: 'Products' },
-  
-  // Order Management
-  { id: 'orders.view', name: 'View Orders', description: 'View all orders', category: 'Orders' },
-  { id: 'orders.manage', name: 'Manage Orders', description: 'Update order status', category: 'Orders' },
-  { id: 'orders.cancel', name: 'Cancel Orders', description: 'Cancel orders', category: 'Orders' },
-  { id: 'orders.refund', name: 'Process Refunds', description: 'Process order refunds', category: 'Orders' },
-  
-  // User Management
-  { id: 'users.view', name: 'View Users', description: 'View user list', category: 'Users' },
-  { id: 'users.create', name: 'Create Users', description: 'Create new users', category: 'Users' },
-  { id: 'users.edit', name: 'Edit Users', description: 'Edit user details', category: 'Users' },
-  { id: 'users.delete', name: 'Delete Users', description: 'Delete users', category: 'Users' },
-  { id: 'users.roles', name: 'Manage Roles', description: 'Assign/change user roles', category: 'Users' },
-  
-  // Business Operations
-  { id: 'submissions.review', name: 'Review Submissions', description: 'Review product submissions', category: 'Business Operations' },
-  { id: 'submissions.approve', name: 'Approve Submissions', description: 'Approve product submissions', category: 'Business Operations' },
-  { id: 'submissions.reject', name: 'Reject Submissions', description: 'Reject product submissions', category: 'Business Operations' },
-  { id: 'shipments.verify', name: 'Verify Shipments', description: 'Verify incoming shipments', category: 'Business Operations' },
-  { id: 'catalog.create', name: 'Create Catalog Entries', description: 'Create marketplace listings', category: 'Business Operations' },
-  { id: 'marketing.create', name: 'Create Marketing Materials', description: 'Create marketing assets', category: 'Business Operations' },
-  { id: 'pricing.approve', name: 'Approve Pricing', description: 'Approve product pricing', category: 'Business Operations' },
-  
-  // System Administration
-  { id: 'system.settings', name: 'Manage Settings', description: 'Modify system settings', category: 'System' },
-  { id: 'system.themes', name: 'Manage Themes', description: 'Manage platform themes', category: 'System' },
-  { id: 'system.permissions', name: 'Manage Permissions', description: 'Manage role permissions', category: 'System' },
-  { id: 'system.analytics', name: 'View Analytics', description: 'Access analytics and reports', category: 'System' },
-  
-  // Seller Management
-  { id: 'sellers.view', name: 'View Sellers', description: 'View seller list', category: 'Sellers' },
-  { id: 'sellers.approve', name: 'Approve Sellers', description: 'Approve seller applications', category: 'Sellers' },
-  { id: 'sellers.suspend', name: 'Suspend Sellers', description: 'Suspend seller accounts', category: 'Sellers' },
-];
+const FALLBACK_PERMISSIONS: Permission[] = PERMISSION_CATALOG.map((p) => ({
+  id: p.id,
+  name: p.name,
+  description: p.description,
+  category: p.category,
+}));
 
 export default function AdminPermissionsPage() {
   const [roles, setRoles] = useState<string[]>([]);
@@ -67,20 +33,21 @@ export default function AdminPermissionsPage() {
   const [showCreateRole, setShowCreateRole] = useState(false);
   const [newRoleName, setNewRoleName] = useState('');
   const [creatingRole, setCreatingRole] = useState(false);
+  const [permissions, setPermissions] = useState<Permission[]>(FALLBACK_PERMISSIONS);
 
   const currentPermissions = rolePermissions[selectedRole] || [];
 
   const permissionsByCategory = useMemo(() => {
-    return PERMISSIONS.reduce((acc, perm) => {
+    return permissions.reduce((acc, perm) => {
       if (!acc[perm.category]) {
         acc[perm.category] = [];
       }
       acc[perm.category].push(perm);
       return acc;
     }, {} as Record<string, Permission[]>);
-  }, []);
+  }, [permissions]);
 
-  const catalogIdSet = useMemo(() => new Set(PERMISSIONS.map((p) => p.id)), []);
+  const catalogIdSet = useMemo(() => new Set(permissions.map((p) => p.id)), [permissions]);
 
   /** Granted permissions that appear in this UI (excludes unknown ids from older API data). */
   const grantedInMatrixCount = useMemo(() => {
@@ -95,6 +62,15 @@ export default function AdminPermissionsPage() {
 
   useEffect(() => {
     (async () => {
+      try {
+        const catalogRes = await apiClient.getPermissionCatalog();
+        const catalog = catalogRes?.data || [];
+        if (catalog.length > 0 && catalog[0].name) {
+          setPermissions(catalog as Permission[]);
+        }
+      } catch {
+        // keep shared-types fallback
+      }
       try {
         const rolesRes = await apiClient.listPermissionRoles();
         const roleNames = rolesRes?.data || [];
@@ -210,7 +186,7 @@ export default function AdminPermissionsPage() {
                 <div>
                   <h2 className="text-xl font-bold">{selectedRole} Permissions</h2>
                   <p className="text-sm text-hos-text-secondary mt-1">
-                    {grantedInMatrixCount} of {PERMISSIONS.length} permissions granted
+                    {grantedInMatrixCount} of {permissions.length} permissions granted
                     {unknownGrantedIds.length > 0 && (
                       <span className="text-amber-400">
                         {' '}

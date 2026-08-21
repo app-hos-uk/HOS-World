@@ -57,6 +57,7 @@ export function RouteGuard({
           MARKETING: '/marketing/dashboard',
           FINANCE: '/finance/dashboard',
           CMS_EDITOR: '/cms/dashboard',
+          SALES: '/admin/dashboard',
           STORE_STAFF: '/store/lookup',
         } as Record<UserRole, string>;
 

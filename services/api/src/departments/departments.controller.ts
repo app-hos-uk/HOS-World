@@ -42,7 +42,7 @@ export class DepartmentsController {
 
   @Get('all')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all departments including inactive (admin)' })
   @SwaggerApiResponse({ status: 200, description: 'All departments retrieved' })
@@ -53,7 +53,7 @@ export class DepartmentsController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get department by ID' })
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
@@ -63,7 +63,7 @@ export class DepartmentsController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new department' })
   @SwaggerApiResponse({ status: 201, description: 'Department created' })
@@ -74,7 +74,7 @@ export class DepartmentsController {
 
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a department' })
   async update(
@@ -87,7 +87,7 @@ export class DepartmentsController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a department' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
@@ -97,7 +97,7 @@ export class DepartmentsController {
 
   @Put('reorder/batch')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @Roles('ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Reorder departments' })
   async reorder(@Body() body: { orderedIds: string[] }): Promise<ApiResponse<any[]>> {

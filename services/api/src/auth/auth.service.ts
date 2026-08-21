@@ -996,6 +996,7 @@ export class AuthService {
         email: user.email,
         role: user.role,
         permissionRoleId: user.permissionRoleId,
+        tokenVersion: typeof user.tokenVersion === 'number' ? user.tokenVersion : 0,
       };
 
       const accessTokenTTL = this.configService.get<string>('JWT_EXPIRES_IN') || '15m';

@@ -52,6 +52,12 @@ model User {
   permissionRoleId String?
   permissionRole   PermissionRole? @relation(fields: [permissionRoleId], references: [id])
 
+  // Hybrid access control: home market + scoped role assignments
+  homeMarketId    String?
+  homeMarket      Market?              @relation("UserHomeMarket", fields: [homeMarketId], references: [id], onDelete: SetNull)
+  tokenVersion    Int                  @default(0)
+  roleAssignments UserRoleAssignment[]
+
   // Relations
   addresses             Address[]
   orders                Order[]
@@ -187,6 +193,7 @@ model User {
   @@index([deletedAt])
   @@index([phoneNormalized])
   @@index([storeId])
+  @@index([homeMarketId])
   @@map("users")
 }
 
@@ -195,12 +202,111 @@ model PermissionRole {
   id          String   @id @default(uuid())
   name        String   @unique
   permissions Json // array of permission ids (e.g. ["users.view","orders.view"])
+  /// ANY | GLOBAL | MARKET | TENANT | STORE — restricts where this role may be assigned
+  scopeKind   String   @default("ANY")
+  isSystem    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  users User[]
+  users       User[]
+  assignments UserRoleAssignment[]
 
   @@map("permission_roles")
+}
+
+// First-class selling market (US / GB / AE / MY). Independent of Tenant (org).
+model Market {
+  id          String   @id @default(uuid())
+  code        String   @unique // ISO 3166-1 alpha-2 (US, GB, AE, MY)
+  name        String
+  country     String
+  countryCode String
+  currency    String
+  locale      String
+  timezone    String
+  taxOrigin   Json?
+  isActive    Boolean  @default(true)
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  stores                 Store[]
+  orders                 Order[]
+  payments               Payment[]
+  transactions           Transaction[]
+  settlements            Settlement[]
+  carts                  Cart[]
+  giftCards              GiftCard[]
+  returnRequests         ReturnRequest[]
+  cancellationRequests   CancellationRequest[]
+  disputes               Dispute[]
+  posSales               POSSale[]
+  storeShipmentRequests  StoreShipmentRequest[]
+  vendorLedgerEntries    VendorLedgerEntry[]
+  sellerMarkets          SellerMarket[]
+  productMarkets         ProductMarket[]
+  homeUsers              User[]                 @relation("UserHomeMarket")
+
+  @@index([isActive])
+  @@index([isDefault])
+  @@map("markets")
+}
+
+// Seller can list into many markets
+model SellerMarket {
+  id        String   @id @default(uuid())
+  sellerId  String
+  seller    Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  marketId  String
+  market    Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  status    String   @default("ACTIVE") // ACTIVE | PENDING | SUSPENDED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([sellerId, marketId])
+  @@index([marketId])
+  @@index([status])
+  @@map("seller_markets")
+}
+
+// Product availability / price override per market
+model ProductMarket {
+  id            String   @id @default(uuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  marketId      String
+  market        Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  isActive      Boolean  @default(true)
+  priceOverride Decimal? @db.Decimal(10, 2)
+  currency      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([productId, marketId])
+  @@index([marketId])
+  @@index([isActive])
+  @@map("product_markets")
+}
+
+// Scoped role assignment: unifies UserRole + PermissionRole + TenantUser.role
+model UserRoleAssignment {
+  id               String         @id @default(uuid())
+  userId           String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissionRoleId String
+  permissionRole   PermissionRole @relation(fields: [permissionRoleId], references: [id], onDelete: Restrict)
+  /// GLOBAL | MARKET | TENANT | STORE
+  scopeType        String
+  /// null when scopeType = GLOBAL
+  scopeId          String?
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([userId])
+  @@index([permissionRoleId])
+  @@index([scopeType, scopeId])
+  @@map("user_role_assignments")
 }
 
 // Multi-Tenancy Models
@@ -253,6 +359,9 @@ model Store {
   sellerId String?
   seller   Seller? @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 
+  marketId String?
+  market   Market? @relation(fields: [marketId], references: [id], onDelete: SetNull)
+
   name         String  @default("Store")
   code         String  @unique
   storeType    String  @default("STANDARD") // FLAGSHIP, STANDARD, POP_UP, CONCESSION
@@ -295,6 +404,7 @@ model Store {
 
   @@index([tenantId])
   @@index([sellerId])
+  @@index([marketId])
   @@index([country])
   @@index([countryCode])
   @@index([code])
@@ -450,6 +560,7 @@ model Seller {
 
   stores           Store[]
   posConnections   POSConnection[]
+  marketListings   SellerMarket[]
 
   loyaltyEnabled      Boolean  @default(true)
   loyaltyEarnRate     Decimal? @db.Decimal(5, 4)
@@ -603,6 +714,7 @@ model Product {
   ugcSubmissions            UGCSubmission[]
   views                     ProductView[]
   viewCount                 Int                     @default(0)
+  productMarkets            ProductMarket[]
 
   // SEO
   metaTitle       String?
@@ -758,6 +870,8 @@ model VendorLedgerEntry {
   description String?         @db.Text
   metadata    Json?
   referenceId String?         // External reference (Stripe transfer ID, etc.)
+  marketId    String?
+  market      Market?         @relation(fields: [marketId], references: [id], onDelete: SetNull)
   createdAt   DateTime        @default(now())
 
   @@index([sellerId])
@@ -765,6 +879,7 @@ model VendorLedgerEntry {
   @@index([type])
   @@index([createdAt])
   @@index([sellerId, createdAt])
+  @@index([marketId])
   @@map("vendor_ledger_entries")
 }
 
@@ -859,10 +974,14 @@ model Cart {
   loyaltyDiscountAmount   Decimal @default(0) @db.Decimal(10, 2)
   checkoutLockedAt        DateTime?
 
+  marketId   String?
+  market     Market?    @relation(fields: [marketId], references: [id], onDelete: SetNull)
+
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   users      User[]
 
+  @@index([marketId])
   @@map("carts")
 }
 
@@ -999,6 +1118,9 @@ model Order {
 
   idempotencyKey String?
 
+  marketId String?
+  market   Market? @relation(fields: [marketId], references: [id], onDelete: SetNull)
+
   // Soft delete
   deletedAt DateTime?
 
@@ -1008,6 +1130,7 @@ model Order {
   @@index([status])
   @@index([userId])
   @@index([sellerId])
+  @@index([marketId])
   @@index([paymentStatus])
   @@index([createdAt])
   @@index([deletedAt])
@@ -1087,6 +1210,9 @@ model CancellationRequest {
 
   autoApproved        Boolean       @default(false)
 
+  marketId String?
+  market   Market? @relation(fields: [marketId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
@@ -1094,6 +1220,7 @@ model CancellationRequest {
   @@index([requestedById])
   @@index([status])
   @@index([createdAt])
+  @@index([marketId])
   @@map("cancellation_requests")
 }
 
@@ -1228,9 +1355,12 @@ model ReturnRequest {
   processedAt    DateTime?
   items          ReturnItem[] // Item-level returns
   transactions   Transaction[]
+  marketId       String?
+  market         Market?       @relation(fields: [marketId], references: [id], onDelete: SetNull)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
+  @@index([marketId])
   @@map("return_requests")
 }
 
@@ -1287,9 +1417,12 @@ model Payment {
   paymentMethod   String?
   refundAmount    Decimal?      @db.Decimal(10, 2)
   metadata        Json?
+  marketId        String?
+  market          Market?       @relation(fields: [marketId], references: [id], onDelete: SetNull)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
+  @@index([marketId])
   @@map("payments")
 }
 
@@ -1643,6 +1776,8 @@ model Settlement {
   paymentMethod String?
   paidAt        DateTime?
   notes         String?          @db.Text
+  marketId      String?
+  market        Market?          @relation(fields: [marketId], references: [id], onDelete: SetNull)
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
@@ -1651,6 +1786,7 @@ model Settlement {
   transactions     Transaction[]
   discrepancies    Discrepancy[]
 
+  @@index([marketId])
   @@map("settlements")
 }
 
@@ -1911,6 +2047,8 @@ model GiftCard {
   purchasedAt   DateTime              @default(now())
   redeemedAt    DateTime?
   transactions  GiftCardTransaction[]
+  marketId      String?
+  market        Market?               @relation(fields: [marketId], references: [id], onDelete: SetNull)
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @updatedAt
 
@@ -1918,6 +2056,7 @@ model GiftCard {
   @@index([userId])
   @@index([status])
   @@index([source])
+  @@index([marketId])
   @@map("gift_cards")
 }
 
@@ -2028,6 +2167,8 @@ model Transaction {
   returnRequest ReturnRequest?    @relation(fields: [returnId], references: [id])
   description   String?           @db.Text
   metadata      Json?
+  marketId      String?
+  market        Market?           @relation(fields: [marketId], references: [id], onDelete: SetNull)
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   auditLogs     TransactionAuditLog[]
@@ -2040,6 +2181,7 @@ model Transaction {
   @@index([type])
   @@index([status])
   @@index([createdAt])
+  @@index([marketId])
 }
 
 enum TransactionType {
@@ -2140,6 +2282,8 @@ model Dispute {
   outcome             String?
   notes               String?       @db.Text
   metadata            Json?
+  marketId            String?
+  market              Market?       @relation(fields: [marketId], references: [id], onDelete: SetNull)
   resolvedAt          DateTime?
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
@@ -2148,6 +2292,7 @@ model Dispute {
   @@index([sellerId])
   @@index([orderId])
   @@index([createdAt])
+  @@index([marketId])
   @@map("disputes")
 }
 
@@ -4090,6 +4235,8 @@ model POSSale {
   importedAt            DateTime      @default(now())
   processedAt           DateTime?
   storeShipmentRequests StoreShipmentRequest[]
+  marketId              String?
+  market                Market?       @relation(fields: [marketId], references: [id], onDelete: SetNull)
 
   @@unique([provider, externalSaleId])
   @@index([storeId])
@@ -4097,6 +4244,7 @@ model POSSale {
   @@index([customerEmail])
   @@index([externalInvoice])
   @@index([saleDate])
+  @@index([marketId])
   @@map("pos_sales")
 }
 
@@ -4127,6 +4275,8 @@ model StoreShipmentRequest {
   shippingCost          Decimal?  @db.Decimal(10, 2)
   customsSnapshot       Json?
   metadata              Json?
+  marketId              String?
+  market                Market?   @relation(fields: [marketId], references: [id], onDelete: SetNull)
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -4135,6 +4285,7 @@ model StoreShipmentRequest {
   @@index([status])
   @@index([invoiceNumber])
   @@index([claimEmail])
+  @@index([marketId])
   @@map("store_shipment_requests")
 }
 

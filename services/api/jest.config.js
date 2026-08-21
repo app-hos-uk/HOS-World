@@ -21,7 +21,11 @@ module.exports = {
     '!**/dist/**',
     '!**/database/**',
     '!**/types/**',
-    '!**/*.guard.ts',
+    // access-control guards are covered by unit specs; keep other guards out of the denominator
+    '!**/common/guards/*.guard.ts',
+    '!**/auth/strategies/guards/*.guard.ts',
+    '!**/loyalty/guards/*.guard.ts',
+    '!**/stores/guards/*.guard.ts',
     '!**/*.listener.ts',
     '!**/*.jobs.ts',
     '!**/jobs/**',

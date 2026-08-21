@@ -38,6 +38,7 @@ export class ApiClient {
   private baseUrl: string;
   private getToken: () => string | null;
   private onUnauthorized: () => void;
+  private getMarketCode: () => string | null;
   private unauthorizedHandled = false;
   private refreshInFlight: Promise<boolean> | null = null;
 
@@ -45,16 +46,19 @@ export class ApiClient {
     baseUrl: string;
     getToken: () => string | null;
     onUnauthorized: () => void;
+    getMarketCode?: () => string | null;
   }) {
     this.baseUrl = config.baseUrl;
     this.getToken = config.getToken;
     this.onUnauthorized = config.onUnauthorized;
+    this.getMarketCode = config.getMarketCode || (() => null);
   }
 
   static create(config: {
     baseUrl: string;
     getToken: () => string | null;
     onUnauthorized: () => void;
+    getMarketCode?: () => string | null;
   }): ApiClient {
     return new ApiClient(config);
   }
@@ -168,6 +172,10 @@ export class ApiClient {
         const token = this.getToken();
         if (token) {
           nextHeaders['Authorization'] = `Bearer ${token}`;
+        }
+        const marketCode = this.getMarketCode();
+        if (marketCode) {
+          nextHeaders['x-market-code'] = marketCode;
         }
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -3011,10 +3019,22 @@ export class ApiClient {
     });
   }
 
-  async getPermissionCatalog(): Promise<ApiResponse<Array<{ id: string }>>> {
-    return this.request<ApiResponse<Array<{ id: string }>>>('/admin/permissions/catalog', {
+  async getPermissionCatalog(): Promise<
+    ApiResponse<Array<{ id: string; name?: string; description?: string; category?: string }>>
+  > {
+    return this.request('/admin/permissions/catalog', {
       method: 'GET',
     });
+  }
+
+  async getAccessControlMe(): Promise<ApiResponse<import('@hos-marketplace/shared-types').AccessControlMe>> {
+    return this.request('/access-control/me', { method: 'GET' });
+  }
+
+  async listAccessControlMarkets(): Promise<
+    ApiResponse<import('@hos-marketplace/shared-types').MarketSummary[]>
+  > {
+    return this.request('/access-control/markets', { method: 'GET' });
   }
 
   // Themes

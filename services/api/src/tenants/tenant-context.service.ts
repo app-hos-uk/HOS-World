@@ -18,73 +18,84 @@ export class TenantContextService {
     private prisma: PrismaService,
   ) {}
 
+  /**
+   * Never trust a client-supplied tenant id without membership.
+   * Unauthenticated callers cannot pin tenant via header/body/query.
+   * ADMIN platform role may access any active tenant.
+   */
+  private async canAccessTenant(tenantId: string): Promise<boolean> {
+    const user = this.request.user;
+    if (!user?.id) {
+      return false;
+    }
+    if (String(user.role).toUpperCase() === 'ADMIN') {
+      return true;
+    }
+    const membership = await this.prisma.tenantUser.findFirst({
+      where: { tenantId, userId: user.id, isActive: true },
+      select: { id: true },
+    });
+    return Boolean(membership);
+  }
+
+  private async acceptTenant(tenant: {
+    id: string;
+    name: string;
+    isActive: boolean;
+  }): Promise<TenantContext | null> {
+    if (!tenant.isActive) return null;
+    if (!(await this.canAccessTenant(tenant.id))) return null;
+    this.context = {
+      tenantId: tenant.id,
+      tenantName: tenant.name,
+      userId: this.request.user?.id,
+      userRole: this.request.user?.role,
+    };
+    return this.context;
+  }
+
   async resolveContext(): Promise<TenantContext> {
     if (this.context) {
       return this.context;
     }
 
-    // Resolve from request headers
     const domain = this.request.headers['x-tenant-domain'];
     const subdomain = this.request.headers['x-tenant-subdomain'];
     const tenantId = this.request.headers['x-tenant-id'];
-
-    // Resolve from request body (for POST requests)
     const bodyTenantId = this.request.body?.tenantId;
-
-    // Resolve from query params
     const queryTenantId = this.request.query?.tenantId;
-
-    // Priority: header > body > query
     const resolvedTenantId = tenantId || bodyTenantId || queryTenantId;
 
     if (resolvedTenantId) {
       const tenant = await this.prisma.tenant.findUnique({
         where: { id: resolvedTenantId },
       });
-      if (tenant && tenant.isActive) {
-        this.context = {
-          tenantId: tenant.id,
-          tenantName: tenant.name,
-          userId: this.request.user?.id,
-          userRole: this.request.user?.role,
-        };
-        return this.context;
+      if (tenant) {
+        const accepted = await this.acceptTenant(tenant);
+        if (accepted) return accepted;
       }
     }
 
-    // Try domain resolution
     if (domain) {
       const tenant = await this.prisma.tenant.findUnique({
         where: { domain },
       });
-      if (tenant && tenant.isActive) {
-        this.context = {
-          tenantId: tenant.id,
-          tenantName: tenant.name,
-          userId: this.request.user?.id,
-          userRole: this.request.user?.role,
-        };
-        return this.context;
+      if (tenant) {
+        const accepted = await this.acceptTenant(tenant);
+        if (accepted) return accepted;
       }
     }
 
-    // Try subdomain resolution
     if (subdomain) {
       const tenant = await this.prisma.tenant.findUnique({
         where: { subdomain },
       });
-      if (tenant && tenant.isActive) {
-        this.context = {
-          tenantId: tenant.id,
-          tenantName: tenant.name,
-          userId: this.request.user?.id,
-          userRole: this.request.user?.role,
-        };
-        return this.context;
+      if (tenant) {
+        const accepted = await this.acceptTenant(tenant);
+        if (accepted) return accepted;
       }
     }
 
-    // Resolve from user's default tenant or first tenant membership
     if (this.request.user?.id) {
       let user;
 
@@ -132,7 +143,6 @@ export class TenantContextService {
       }
     }
 
-    // Default to platform tenant (create if doesn't exist)
     let platformTenant = await this.prisma.tenant.findUnique({
       where: { id: 'platform' },
     });

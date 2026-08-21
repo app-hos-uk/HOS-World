@@ -358,6 +358,7 @@ async function bootstrap() {
         'Access-Control-Request-Headers',
         'X-API-Key',
         'X-Guest-Session',
+        'x-market-code',
       ],
       exposedHeaders: ['Authorization', 'Content-Type'],
       preflightContinue: false,

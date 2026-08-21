@@ -18,6 +18,7 @@ This guide covers every configurable area in the HOS admin panel, how credential
 10. [Environment-Only Settings](#10-environment-only-settings)
 11. [Credential Security Model](#11-credential-security-model)
 12. [Platform Region Configuration](#12-platform-region-configuration)
+13. [Hybrid Access Control](#13-hybrid-access-control)
 
 ---
 
@@ -453,4 +454,35 @@ Launch mode is **single currency**: `CurrencyService` exposes only the platform 
 
 FX rates come from ExchangeRate-API (`https://api.exchangerate-api.com/v4/latest` open, or authenticated v6 when `EXCHANGE_RATE_API_KEY` is set), with DB + Redis caching. Conversion between arbitrary currencies throws while multi-currency is disabled.
 
-> Region config is **platform-wide**, not per storefront. Running US and UK simultaneously from one deployment is not supported today — see the limitations section in the new-market runbook.
+> When a request has an active market (via `x-market-code` or the user's home market), `PlatformRegionService` reads that `Market` row. Unscoped processes still use env/`PLATFORM_*`. See [§13](#13-hybrid-access-control).
+
+## 13. Hybrid Access Control
+
+The API now has a unified RBAC + ABAC + market-scope layer. It is **off by default** (`legacy`) so existing `@Roles` behaviour is unchanged.
+
+| Variable | Values | Default | Purpose |
+|----------|--------|---------|---------|
+| `ACCESS_CONTROL_MODE` | `legacy` / `shadow` / `enforce` | `legacy` | Guard decision source. `shadow` evaluates the new engine and logs divergences to `ActivityLog` (`ACCESS_CONTROL_DIVERGENCE`) but still honours `@Roles`. `enforce` uses `@RequireAccess` where present. |
+| `ACCESS_CONTROL_MODULE_MODES` | `orders:shadow,finance:legacy` | (none) | Per-module override of the global mode. The module name is the first path segment **after** the `api` prefix and any `v<n>` version segment, so `/api/v1/orders/:id` → `orders`. |
+| `ACCESS_CONTROL_DATA_SCOPE` | `legacy` / `shadow` / `enforce` | `legacy` | Prisma `marketId` injection. Do **not** set `enforce` until the `20261021120000_hybrid_access_control` backfill is verified (nullable `marketId` on unfilled rows would hide data). |
+| `ACCESS_CONTROL_STRICT_COVERAGE` | `true` | unset | Makes the route-coverage unit test fail if any controller lacks `@Public` / `@RequireAccess`. |
+| `ACCESS_CONTROL_ASSIGNMENT_TTL_MS` | integer ms | `15000` | How long resolved role assignments and permission-role lookups are cached per user. Lower it to make permission edits take effect faster at the cost of more queries. |
+| `ACCESS_CONTROL_ASSIGNMENT_CACHE_MAX` | integer | `5000` | Maximum cached users before the oldest entries are evicted. |
+
+### Concepts
+
+- **Market** is independent of **Tenant**. Tenant stays organisational; Market holds country/currency/locale/timezone/tax origin.
+- **UserRoleAssignment** scopes a `PermissionRole` to `GLOBAL` / `MARKET` / `TENANT` / `STORE`. Existing `ADMIN` users are backfilled with a `GLOBAL` assignment so they keep super-admin access.
+- **Implicit assignments.** Users without an explicit assignment row are not locked out. The policy engine derives one from the `permissionRoleId` on their user record, or failing that from `DEFAULT_ROLE_PERMISSIONS[platformRole]`. This is what keeps pre-migration users *and every new signup* working once a route moves to `@RequireAccess`, so customers and sellers never need assignment rows. An assignment carrying a `permissionRoleId` is deliberately **not** global, mirroring `PermissionsGuard`: an `ADMIN` narrowed to a permission role is not a super-admin.
+- **Permission catalog** is the single source of truth in `@hos-marketplace/shared-types` (`PERMISSION_CATALOG`). Admin → Permissions reads it from `GET /admin/permissions/catalog`.
+- Callers send `x-market-code` (`US` / `GB` / `AE` / `MY`). Switching market *narrows* what a request can see, so actors that are not pinned to a market subset may select any active market. Actors with market-scoped assignments, or a `homeMarketId`, are restricted to those. `GET /access-control/me` returns exactly the set the API will accept.
+- **Global admins are scoped when they choose.** Selecting a market via `x-market-code` applies data scoping to a global admin too — otherwise the market switcher would do nothing for the people who most need it. Sending no header keeps the unscoped cross-market view.
+- Non-HTTP entry points (queues, webhooks, cron) must wrap work in `withSystemActor({ marketId, reason })` from `access-control/system-actor.ts`. Cross-market jobs pass `allMarkets: true` (audited bypass).
+- Market scoping is a Prisma **client extension**, so it also covers queries issued inside `$transaction`. Operations with a unique `where` (`findUnique`, `update`, `delete`) get the market ANDed in via `extendedWhereUnique`, meaning a cross-market write is blocked before it executes rather than detected afterwards.
+
+### Rollout
+
+1. Apply migration `20261021120000_hybrid_access_control` and verify every tier-1 table has `marketId` populated (`SELECT count(*) FILTER (WHERE "marketId" IS NULL)`).
+2. Set `ACCESS_CONTROL_MODE=shadow` (and optionally `ACCESS_CONTROL_DATA_SCOPE=shadow`) in staging, then production. Watch `ACCESS_CONTROL_DIVERGENCE` activity logs.
+3. Flip one module at a time: `ACCESS_CONTROL_MODULE_MODES=orders:enforce`.
+4. Only after a clean window, set `ACCESS_CONTROL_DATA_SCOPE=enforce`. A later migration may then make `marketId` `NOT NULL`.

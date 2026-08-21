@@ -270,7 +270,7 @@ Use this after env/deploy changes for the target market.
 
 Verified against the current codebase — do not plan launches that depend on these:
 
-1. **No multi-region single deployment.** `PlatformRegionService` resolves one platform currency/country/locale/timezone for the whole API. There is no per-storefront or per-request region switcher in that service. Concurrent US + UK storefronts from one deployment are unsupported.
+1. **Multi-region single deployment is landing.** A first-class `Market` row (US / GB / AE / MY) plus request-scoped `x-market-code` now feed `PlatformRegionService`. Shopper-facing region follows the resolved market when ALS context is present; env/`PLATFORM_*` remains the process fallback for boot, cron, and unscoped requests. Concurrent storefronts still need host→market mapping and `marketId` backfill verified before flipping `ACCESS_CONTROL_DATA_SCOPE=enforce`. See Admin Configuration Guide §13.
 2. **No admin UI for `platformCurrency` / `platformCountry` / `platformLocale` / `platformTimezone`.** The Payment tab shows a read-only region snapshot; operators change region via env (or raw Config rows).
 3. **Tax origin is env-only.** Cannot be edited in Admin Settings; incomplete origin fails closed in production/staging when a tax provider is active.
 4. **Region cache invalidation is not wired to an admin save path.** Expect up to ~15s propagation for DB overrides; env changes need restart.

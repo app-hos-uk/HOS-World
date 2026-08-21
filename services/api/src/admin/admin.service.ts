@@ -8,6 +8,12 @@ import { UserRole } from '@prisma/client';
 import { DEFAULT_PLATFORM_FEE_RATE } from '../common/platform-config';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 import { PlatformRegionService } from '../config/platform-region.service';
+import { PolicyService } from '../access-control/policy.service';
+import {
+  BUILT_IN_PERMISSION_ROLES,
+  DEFAULT_ROLE_PERMISSIONS,
+  PERMISSION_CATALOG,
+} from '@hos-marketplace/shared-types';
 
 @Injectable()
 export class AdminService {
@@ -16,6 +22,7 @@ export class AdminService {
   constructor(
     private prisma: PrismaService,
     private platformRegion: PlatformRegionService,
+    private policy: PolicyService,
   ) {}
 
   async getUserStats() {
@@ -288,78 +295,13 @@ export class AdminService {
   }
 
   // ---- Permission Roles (custom roles) ----
-  // Canonical permission ids (keep in sync with `apps/web/src/app/admin/permissions/page.tsx`)
-  private readonly permissionCatalog = [
-    // Products
-    'products.create',
-    'products.edit',
-    'products.delete',
-    'products.publish',
-    'products.view',
-    // Orders
-    'orders.view',
-    'orders.manage',
-    'orders.cancel',
-    'orders.refund',
-    // Users
-    'users.view',
-    'users.create',
-    'users.edit',
-    'users.delete',
-    'users.roles',
-    // Business Ops
-    'submissions.review',
-    'submissions.approve',
-    'submissions.reject',
-    'shipments.verify',
-    'catalog.create',
-    'marketing.create',
-    'pricing.approve',
-    // System
-    'system.settings',
-    'system.themes',
-    'system.permissions',
-    'system.analytics',
-    // Sellers
-    'sellers.view',
-    'sellers.approve',
-    'sellers.suspend',
-  ] as const;
+  // Canonical catalog lives in @hos-marketplace/shared-types
+  private readonly permissionCatalog = PERMISSION_CATALOG.map((p) => p.id);
 
-  private readonly builtInRoles = [
-    'ADMIN',
-    'PROCUREMENT',
-    'FULFILLMENT',
-    'CATALOG',
-    'MARKETING',
-    'FINANCE',
-    'SELLER',
-    'B2C_SELLER',
-    'WHOLESALER',
-    'CUSTOMER',
-    'CMS_EDITOR',
-  ] as const;
+  private readonly builtInRoles = BUILT_IN_PERMISSION_ROLES;
 
   private defaultRolePermissions(): Record<string, string[]> {
-    const all = [...this.permissionCatalog];
-    return {
-      ADMIN: all,
-      PROCUREMENT: [
-        'submissions.review',
-        'submissions.approve',
-        'submissions.reject',
-        'products.view',
-      ],
-      FULFILLMENT: ['shipments.verify', 'orders.view', 'orders.manage'],
-      CATALOG: ['catalog.create', 'products.view', 'products.edit'],
-      MARKETING: ['marketing.create', 'products.view'],
-      FINANCE: ['pricing.approve', 'orders.view', 'orders.refund'],
-      SELLER: ['products.create', 'products.edit', 'orders.view', 'orders.manage'],
-      B2C_SELLER: ['products.create', 'products.edit', 'orders.view', 'orders.manage'],
-      WHOLESALER: ['products.create', 'products.edit', 'orders.view'],
-      CUSTOMER: ['products.view', 'orders.view'],
-      CMS_EDITOR: ['products.view', 'products.edit', 'catalog.create'],
-    };
+    return { ...DEFAULT_ROLE_PERMISSIONS };
   }
 
   async listPermissionRoles(): Promise<string[]> {
@@ -446,11 +388,20 @@ export class AdminService {
       },
     });
 
+    // Authorization decisions are cached per user and per role; without this
+    // a permission change would not take effect until the TTL expired.
+    this.policy.invalidate();
+
     return { message: 'Permissions updated successfully', role: roleName, permissions: cleaned };
   }
 
   async getPermissionCatalog() {
-    return this.permissionCatalog.map((id) => ({ id }));
+    return PERMISSION_CATALOG.map((p) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      category: p.category,
+    }));
   }
 
   async getUserById(userId: string) {

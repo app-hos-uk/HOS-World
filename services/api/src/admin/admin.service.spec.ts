@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { PlatformRegionService } from '../config/platform-region.service';
+import { PolicyService } from '../access-control/policy.service';
 import { PrismaService } from '../database/prisma.service';
 import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -70,6 +71,10 @@ describe('AdminService', () => {
         },
         {
           provide: PlatformRegionService,
+          useValue: { invalidate: jest.fn() },
+        },
+        {
+          provide: PolicyService,
           useValue: { invalidate: jest.fn() },
         },
       ],

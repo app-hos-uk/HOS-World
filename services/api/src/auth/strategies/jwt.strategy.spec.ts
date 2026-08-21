@@ -59,11 +59,27 @@ describe('JwtStrategy', () => {
         email: 'a@b.com',
         role: 'ADMIN',
         isActive: true,
+        tokenVersion: 0,
         tenantMemberships: [],
       };
       mockPrisma.user.findUnique.mockResolvedValue(user);
 
       await expect(strategy.validate({ sub: 'u1', type: 'access' })).resolves.toEqual(user);
+    });
+
+    it('rejects tokens whose tokenVersion does not match the user', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        email: 'a@b.com',
+        role: 'ADMIN',
+        isActive: true,
+        tokenVersion: 2,
+        tenantMemberships: [],
+      });
+
+      await expect(
+        strategy.validate({ sub: 'u1', type: 'access', tokenVersion: 0 }),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 });

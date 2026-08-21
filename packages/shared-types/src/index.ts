@@ -82,6 +82,7 @@ export type UserRole =
   | 'MARKETING'
   | 'FINANCE'
   | 'CMS_EDITOR'
+  | 'SALES'
   | 'STORE_STAFF';
 
 // User Types
@@ -356,5 +357,7 @@ export interface AuthResponse {
   token: string;
   refreshToken?: string;
 }
+
+export * from './access-control';
 
 

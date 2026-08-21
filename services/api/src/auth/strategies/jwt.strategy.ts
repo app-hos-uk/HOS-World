@@ -48,6 +48,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           role: true,
           isActive: true,
           permissionRoleId: true,
+          tokenVersion: true,
+          homeMarketId: true,
           avatar: true,
           createdAt: true,
           updatedAt: true,
@@ -79,6 +81,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
       if (!user.isActive) {
         throw new UnauthorizedException('Account has been deactivated');
+      }
+
+      const tokenVersion = typeof payload.tokenVersion === 'number' ? payload.tokenVersion : 0;
+      const currentVersion = typeof user.tokenVersion === 'number' ? user.tokenVersion : 0;
+      if (tokenVersion !== currentVersion) {
+        throw new UnauthorizedException('Session has been revoked');
       }
 
       return user;

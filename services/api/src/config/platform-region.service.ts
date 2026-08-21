@@ -1,6 +1,7 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CacheService } from '../cache/cache.service';
+import { getAccessControlStore } from '../access-control/access-control.als';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 import { PrismaService } from '../database/prisma.service';
 
@@ -52,7 +53,8 @@ function asTrimmedString(v: unknown): string | undefined {
 @Injectable()
 export class PlatformRegionService {
   private readonly logger = new Logger(PlatformRegionService.name);
-  private localCache: { at: number; value: PlatformRegionConfig } | null = null;
+  /** Cache keyed by market id (or `_platform` for the env/DB fallback). */
+  private localCache = new Map<string, { at: number; value: PlatformRegionConfig }>();
   /**
    * Bounds how long any single instance can serve a stale value after another
    * instance saves. Kept short because the backing read is a small indexed
@@ -196,7 +198,7 @@ export class PlatformRegionService {
 
   /** Drops the cached value locally and, when Redis-backed, for every instance. */
   async invalidate(): Promise<void> {
-    this.localCache = null;
+    this.localCache.clear();
     if (!this.sharedCache) return;
     try {
       await this.sharedCache.del(PLATFORM_REGION_CACHE_KEY);
@@ -205,14 +207,64 @@ export class PlatformRegionService {
     }
   }
 
+  private fromMarketRow(row: {
+    currency: string;
+    country: string;
+    locale: string;
+    timezone: string;
+    taxOrigin: unknown;
+    countryCode?: string;
+  }): PlatformRegionConfig {
+    const taxOrigin =
+      row.taxOrigin && typeof row.taxOrigin === 'object'
+        ? (row.taxOrigin as TaxOrigin)
+        : this.buildTaxOrigin(this.envDefaults().taxOriginParts, row.countryCode || row.country);
+    return {
+      currency: row.currency,
+      country: row.countryCode || row.country,
+      locale: row.locale,
+      timezone: row.timezone,
+      taxOrigin,
+    };
+  }
+
+  private async resolveFromActiveMarket(): Promise<PlatformRegionConfig | null> {
+    const store = getAccessControlStore();
+    const marketId = store?.marketId;
+    if (!marketId) return null;
+
+    const hit = this.localCache.get(marketId);
+    if (hit && Date.now() - hit.at < this.cacheTtlMs) {
+      return hit.value;
+    }
+
+    try {
+      const row = await this.prisma.market.findUnique({ where: { id: marketId } });
+      if (!row || !row.isActive) return null;
+      const value = this.fromMarketRow(row);
+      this.localCache.set(marketId, { at: Date.now(), value });
+      return value;
+    } catch (e) {
+      this.logger.warn(`Market region read failed: ${(e as Error).message}`);
+      return null;
+    }
+  }
+
   private async resolve(force = false): Promise<PlatformRegionConfig> {
-    if (!force && this.localCache && Date.now() - this.localCache.at < this.cacheTtlMs) {
-      return this.localCache.value;
+    if (!force) {
+      const fromMarket = await this.resolveFromActiveMarket();
+      if (fromMarket) return fromMarket;
+    }
+
+    const platformKey = '_platform';
+    const cached = this.localCache.get(platformKey);
+    if (!force && cached && Date.now() - cached.at < this.cacheTtlMs) {
+      return cached.value;
     }
     if (!force) {
       const shared = await this.readShared();
       if (shared) {
-        this.localCache = { at: Date.now(), value: shared };
+        this.localCache.set(platformKey, { at: Date.now(), value: shared });
         return shared;
       }
     }
@@ -267,7 +319,7 @@ export class PlatformRegionService {
     );
 
     const resolved: PlatformRegionConfig = { currency, country, locale, timezone, taxOrigin };
-    this.localCache = { at: Date.now(), value: resolved };
+    this.localCache.set('_platform', { at: Date.now(), value: resolved });
     await this.writeShared(resolved);
     return resolved;
   }

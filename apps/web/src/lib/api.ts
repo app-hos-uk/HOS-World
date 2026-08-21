@@ -49,6 +49,14 @@ if (typeof window !== 'undefined') {
 export const apiClient = ApiClient.create({
   baseUrl: API_BASE_URL,
   getToken: () => null,
+  getMarketCode: () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      return window.localStorage.getItem('hos_market_code');
+    } catch {
+      return null;
+    }
+  },
   onUnauthorized: () => {
     if (typeof window !== 'undefined') {
       const currentPath = window.location.pathname;

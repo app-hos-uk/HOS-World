@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { RoleSwitcher } from '@/components/RoleSwitcher';
+import { MarketSwitcher } from '@/components/MarketSwitcher';
 import { CurrencySelector } from '@/components/CurrencySelector';
 import { NotificationBell } from '@/components/NotificationBell';
 import { SearchBar } from '@/components/SearchBar';
@@ -332,6 +333,7 @@ export function Header() {
                     {ROLE_LABELS[currentRole as UserRole] || currentRole}
                   </span>
                   {user.role === 'ADMIN' && isDashboardPage && <RoleSwitcher />}
+                  {isDashboardPage && <MarketSwitcher />}
                   {impersonatedRole && user.role === 'ADMIN' && !isDashboardPage && (
                     <button
                       onClick={handleBackToAdmin}
@@ -560,6 +562,11 @@ export function Header() {
                 {user.role === 'ADMIN' && isDashboardPage && (
                   <div className="px-3 py-1">
                     <RoleSwitcher />
+                  </div>
+                )}
+                {isDashboardPage && (
+                  <div className="px-3 py-1">
+                    <MarketSwitcher />
                   </div>
                 )}
                 {impersonatedRole && user.role === 'ADMIN' && !isDashboardPage && (

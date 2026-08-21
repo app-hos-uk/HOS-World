@@ -18,6 +18,7 @@ const AVAILABLE_ROLES: UserRole[] = [
   'MARKETING',
   'FINANCE',
   'CMS_EDITOR',
+  'SALES',
   'STORE_STAFF',
 ];
 
@@ -34,6 +35,7 @@ const ROLE_LABELS = {
   MARKETING: 'Marketing',
   FINANCE: 'Finance',
   CMS_EDITOR: 'CMS Editor',
+  SALES: 'Sales',
   STORE_STAFF: 'Store Staff',
 } as Record<UserRole, string>;
 
@@ -50,6 +52,7 @@ const ROLE_DASHBOARD_MAP = {
   MARKETING: '/marketing/dashboard',
   FINANCE: '/finance/dashboard',
   CMS_EDITOR: '/cms/dashboard',
+  SALES: '/admin/dashboard',
   STORE_STAFF: '/store/lookup',
 } as Record<UserRole, string>;
 
