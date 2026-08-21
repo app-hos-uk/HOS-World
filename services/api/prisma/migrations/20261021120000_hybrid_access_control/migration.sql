@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS "markets" (
   "isActive" BOOLEAN NOT NULL DEFAULT true,
   "isDefault" BOOLEAN NOT NULL DEFAULT false,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "markets_pkey" PRIMARY KEY ("id")
 );
 
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS "seller_markets" (
   "marketId" TEXT NOT NULL,
   "status" TEXT NOT NULL DEFAULT 'ACTIVE',
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "seller_markets_pkey" PRIMARY KEY ("id")
 );
 
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS "product_markets" (
   "priceOverride" DECIMAL(10, 2),
   "currency" TEXT,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "product_markets_pkey" PRIMARY KEY ("id")
 );
 
@@ -133,7 +133,7 @@ CREATE TABLE IF NOT EXISTS "user_role_assignments" (
   "scopeId" TEXT,
   "isActive" BOOLEAN NOT NULL DEFAULT true,
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "user_role_assignments_pkey" PRIMARY KEY ("id")
 );
 
@@ -172,7 +172,9 @@ DECLARE
     'stores',
     'orders',
     'payments',
-    'transactions',
+    -- Transaction is one of the few models without an @@map, so its table keeps
+    -- Prisma's PascalCase default rather than the snake_case used elsewhere.
+    'Transaction',
     'settlements',
     'carts',
     'gift_cards',
@@ -241,7 +243,7 @@ SET "marketId" = COALESCE(
 )
 WHERE p."marketId" IS NULL;
 
-UPDATE "transactions" t
+UPDATE "Transaction" t
 SET "marketId" = COALESCE(
   (SELECT o."marketId" FROM "orders" o WHERE o.id = t."orderId"),
   (SELECT m.id FROM "markets" m WHERE m."currency" = UPPER(t."currency") LIMIT 1),
