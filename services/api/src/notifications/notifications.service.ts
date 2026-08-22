@@ -337,6 +337,23 @@ export class NotificationsService implements OnModuleInit {
     this.logger.log(`Seller invitation queued for ${email} (${sellerTypeName})`);
   }
 
+  async sendStoreShipmentClaimEmail(data: {
+    email: string;
+    claimUrl: string;
+    invoiceNumber: string;
+    storeName: string;
+    expiresAt: Date;
+  }): Promise<void> {
+    const rendered = await this.templatesService.render('store_shipment_claim', {
+      storeName: data.storeName,
+      invoiceNumber: data.invoiceNumber,
+      claimUrl: data.claimUrl,
+      expiresAt: data.expiresAt.toUTCString(),
+    });
+    await this.queueNotification(data.email, rendered.subject, rendered.body);
+    this.logger.log(`Store shipment claim email queued for ${data.email}`);
+  }
+
   async sendFoundingMemberConfirmation(
     email: string,
     data: { firstName: string },

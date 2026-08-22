@@ -259,6 +259,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     'promotions.manage',
     'influencers.view',
     'influencers.manage',
+    'shipments.verify',
+    'shipping.view',
+    'shipping.manage',
   ],
   CMS_EDITOR: [
     'users.view',

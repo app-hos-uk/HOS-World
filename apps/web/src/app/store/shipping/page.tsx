@@ -13,6 +13,7 @@ export default function StoreShippingPage() {
   const [email, setEmail] = useState('');
   const [consent, setConsent] = useState(false);
   const [claimUrl, setClaimUrl] = useState('');
+  const [emailQueued, setEmailQueued] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
@@ -32,9 +33,16 @@ export default function StoreShippingPage() {
         email: email.trim(),
         shippingConsent: true,
       });
-      const url = (r.data as { claimUrl?: string })?.claimUrl || '';
+      const payload = r.data as { claimUrl?: string; emailQueued?: boolean };
+      const url = payload?.claimUrl || '';
+      const emailed = Boolean(payload?.emailQueued);
       setClaimUrl(url);
-      toast.success('Claim link created — share with the customer');
+      setEmailQueued(emailed);
+      toast.success(
+        emailed
+          ? 'Claim link emailed to the customer'
+          : 'Claim link created — copy it below (email could not be queued)',
+      );
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to create claim');
     } finally {
@@ -47,7 +55,8 @@ export default function StoreShippingPage() {
       <div>
         <h1 className="text-xl font-semibold text-hos-text">Ship purchase home</h1>
         <p className="text-sm text-hos-text-muted mt-1">
-          After the Lightspeed sale completes, capture consent and send a shipping claim link.
+          After the Lightspeed sale completes, capture consent. We email the customer a shipping
+          claim link and also show it here so you can copy it if needed.
         </p>
       </div>
 
@@ -93,7 +102,12 @@ export default function StoreShippingPage() {
 
       {claimUrl && (
         <div className="rounded border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm break-all">
-          <p className="font-medium text-emerald-300 mb-2">Claim link (copy for customer)</p>
+          <p className="font-medium text-emerald-300 mb-2">Claim link</p>
+          <p className="text-hos-text-muted text-xs mb-2">
+            {emailQueued
+              ? 'Also emailed to the customer. Copy this if they need it at the till.'
+              : 'Email was not sent. Copy this link and share it with the customer.'}
+          </p>
           <a href={claimUrl} className="text-violet-300 underline">
             {claimUrl}
           </a>

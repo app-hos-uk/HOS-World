@@ -35,7 +35,7 @@ type Address = {
 type ShipmentState = {
   status: string;
   allReady?: boolean;
-  enrichment?: any;
+  enrichment?: Array<{ sku?: string | null; name?: string; status?: string; reason?: string }>;
 };
 
 function PaymentForm({
@@ -264,8 +264,22 @@ export default function ShipRequestPage() {
         )}
 
         {status === 'BLOCKED' && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
-            This shipment is blocked. The store may have restricted certain items from shipping. Contact support for help.
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300 space-y-2">
+            <p>
+              This shipment is blocked. The store may have restricted certain items from shipping.
+              Contact support for help.
+            </p>
+            {Array.isArray(shipment?.enrichment) && shipment.enrichment.length > 0 && (
+              <ul className="list-disc pl-5 text-xs text-red-200">
+                {shipment.enrichment
+                  .filter((row) => row.status === 'BLOCKED')
+                  .map((row, i) => (
+                    <li key={`${row.sku || 'item'}-${i}`}>
+                      {row.name || row.sku || 'Item'} is not eligible to ship.
+                    </li>
+                  ))}
+              </ul>
+            )}
           </div>
         )}
 

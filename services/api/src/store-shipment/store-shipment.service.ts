@@ -98,7 +98,22 @@ export class StoreShipmentService {
     const claimUrl = this.buildClaimUrl(token);
     this.logger.log(`Store shipment claim link for ${email}: ${claimUrl}`);
 
-    return { shipmentId: shipment.id, claimUrl, expiresAt: claimTokenExpiresAt };
+    let emailQueued = false;
+    try {
+      await this.notifications.sendStoreShipmentClaimEmail({
+        email,
+        claimUrl,
+        invoiceNumber: params.invoiceNumber.trim(),
+        storeName: store.name,
+        expiresAt: claimTokenExpiresAt,
+      });
+      emailQueued = true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Failed to queue store shipment claim email for ${email}: ${message}`);
+    }
+
+    return { shipmentId: shipment.id, claimUrl, expiresAt: claimTokenExpiresAt, emailQueued };
   }
 
   private async resolveClaim(token: string) {
@@ -363,7 +378,7 @@ export class StoreShipmentService {
     const destCountry = to.country.trim().toUpperCase();
 
     for (const item of shipment.posSale?.items ?? []) {
-      const sku = item.sku?.trim();
+      const sku = await this.skuCustoms.resolveLineSku(item);
       if (!sku) {
         blocked = true;
         continue;

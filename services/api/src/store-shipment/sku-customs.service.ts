@@ -124,21 +124,49 @@ export class SkuCustomsService {
     return meta.restrictedCountries.some((c) => c.trim().toUpperCase() === dest);
   }
 
-  async enrichSaleItems(items: Array<{ sku?: string | null; productId?: string | null }>) {
+  /** POS line SKU, or catalog product SKU when the till line omitted it. */
+  async resolveLineSku(item: {
+    sku?: string | null;
+    productId?: string | null;
+  }): Promise<string | null> {
+    const fromLine = item.sku?.trim() || null;
+    if (fromLine) return fromLine;
+    if (!item.productId) return null;
+    const product = await this.prisma.product.findUnique({
+      where: { id: item.productId },
+      select: { sku: true },
+    });
+    return product?.sku?.trim() || null;
+  }
+
+  async enrichSaleItems(
+    items: Array<{ sku?: string | null; productId?: string | null; name?: string }>,
+  ) {
     const results = [];
     let allReady = true;
     let anyBlocked = false;
 
     for (const item of items) {
-      const sku = item.sku?.trim();
+      const sku = await this.resolveLineSku(item);
       if (!sku) {
+        // Missing SKU is a data gap, not a shipping restriction. Treat as pending
+        // so the customer is not hard-blocked with a "restricted items" message.
         allReady = false;
-        results.push({ sku: null, status: 'BLOCKED' as const });
-        anyBlocked = true;
+        results.push({
+          sku: null,
+          name: item.name,
+          status: 'PENDING' as const,
+          reason: 'missing_sku',
+        });
         continue;
       }
       const attr = await this.getOrCreateForSku(sku, item.productId);
-      results.push({ sku, status: attr.status as SkuCustomsStatus, id: attr.id });
+      results.push({
+        sku,
+        name: item.name,
+        status: attr.status as SkuCustomsStatus,
+        id: attr.id,
+      });
       if (attr.status !== 'READY') allReady = false;
       if (attr.status === 'BLOCKED') anyBlocked = true;
     }

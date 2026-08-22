@@ -161,6 +161,33 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
 </div></body></html>`,
   },
   {
+    slug: 'store_shipment_claim',
+    channel: 'EMAIL',
+    subject: 'Complete shipping for your {{storeName}} purchase',
+    description: 'Sent when store staff create a ship-home claim link at the till.',
+    variables: ['storeName', 'invoiceNumber', 'claimUrl', 'expiresAt'],
+    body: `<!DOCTYPE html>
+<html><head><style>
+  body{font-family:Arial,sans-serif;line-height:1.6;color:#333}
+  .container{max-width:600px;margin:0 auto;padding:20px}
+  .header{background:#553c9a;color:#fff;padding:20px;text-align:center}
+  .content{padding:20px;background:#f7fafc}
+  .cta{display:inline-block;padding:12px 24px;background:#553c9a;color:#fff;text-decoration:none;border-radius:6px;margin:16px 0}
+  .footer{text-align:center;padding:20px;color:#718096;font-size:12px}
+</style></head><body>
+<div class="container">
+  <div class="header"><h1>Ship your purchase home</h1></div>
+  <div class="content">
+    <p>Thanks for shopping at <strong>{{storeName}}</strong>.</p>
+    <p>Use the link below to enter your address and pay for shipping of invoice <strong>{{invoiceNumber}}</strong>.</p>
+    <p><a class="cta" href="{{claimUrl}}">Complete shipping</a></p>
+    <p style="word-break:break-all;color:#4299e1;">{{claimUrl}}</p>
+    <p>This link expires on {{expiresAt}}.</p>
+  </div>
+  <div class="footer"><p>House of Spells Marketplace</p></div>
+</div></body></html>`,
+  },
+  {
     slug: 'influencer_invitation',
     channel: 'EMAIL',
     subject: "You've been invited to join House of Spells as an Influencer",
