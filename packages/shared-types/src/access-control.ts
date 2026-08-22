@@ -270,7 +270,16 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
     'marketing.create',
   ],
   INFLUENCER: ['users.view', 'users.edit', 'influencers.view', 'products.view'],
-  STORE_STAFF: ['users.view', 'users.edit', 'stores.operate', 'loyalty.view', 'loyalty.manage', 'orders.view'],
+  STORE_STAFF: [
+    'users.view',
+    'users.edit',
+    'stores.operate',
+    'loyalty.view',
+    'loyalty.manage',
+    'orders.view',
+    'orders.manage',
+    'shipping.view',
+  ],
 };
 
 export interface MarketSummary {

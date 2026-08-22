@@ -276,15 +276,21 @@ export class LoyaltyAdminController {
         }
       : undefined;
 
-    const [total, data] = await this.prisma.$transaction([
+    const [total, data] = await Promise.all([
       this.prisma.loyaltyMembership.count({ where }),
       this.prisma.loyaltyMembership.findMany({
         where,
         skip: (page - 1) * limit,
         take: limit,
-        include: {
+        select: {
+          id: true,
+          userId: true,
+          cardNumber: true,
+          currentBalance: true,
+          totalPointsEarned: true,
+          enrolledAt: true,
           user: { select: { id: true, email: true, firstName: true, lastName: true } },
-          tier: true,
+          tier: { select: { id: true, name: true, level: true } },
         },
         orderBy: { enrolledAt: 'desc' },
       }),
