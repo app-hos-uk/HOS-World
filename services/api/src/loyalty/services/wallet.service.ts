@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { LoyaltyTxType, Prisma } from '@prisma/client';
 import { SegmentationService } from '../../segmentation/segmentation.service';
 
-/** Prisma transaction client; wallet also needs raw SQL for row locks. */
+/** Prisma interactive-transaction client used by wallet writes. */
 export type LoyaltyPrismaTx = Prisma.TransactionClient;
 
 export type ApplyDeltaResult = {
@@ -20,11 +20,21 @@ export class LoyaltyWalletService {
    * Takes the same row lock `applyDelta` uses. Callers whose duplicate or cap
    * checks must not race a concurrent award should call this first, so the check
    * and the award are serialised for that membership.
+   *
+   * Implemented as a Prisma UPDATE rather than `SELECT … FOR UPDATE` raw SQL.
+   * Prisma 6 infers UUID-looking strings as the `uuid` bind type, but
+   * `loyalty_memberships.id` is TEXT, so `$executeRaw` was failing with
+   * `operator does not exist: text = uuid` and admin point adjustments 400'd.
+   * An UPDATE still row-locks in PostgreSQL until the transaction ends.
    */
   async lockMembership(tx: LoyaltyPrismaTx, membershipId: string): Promise<void> {
-    await tx.$executeRaw(
-      Prisma.sql`SELECT 1 FROM loyalty_memberships WHERE id = ${membershipId} FOR UPDATE`,
-    );
+    const locked = await tx.loyaltyMembership.updateMany({
+      where: { id: membershipId },
+      data: { currentBalance: { increment: 0 } },
+    });
+    if (locked.count === 0) {
+      throw new NotFoundException('Loyalty membership not found');
+    }
   }
 
   async applyDelta(

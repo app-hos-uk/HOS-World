@@ -35,6 +35,17 @@ import { LoyaltySettingsService } from './services/loyalty-settings.service';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 import { PlatformRegionService } from '../config/platform-region.service';
 
+/** Prefer Prisma `meta.message` — Error.message is often just "Raw query failed. Code: `42883`." */
+function prismaErrorDetail(err: unknown): string {
+  if (err && typeof err === 'object') {
+    const meta = (err as { meta?: { message?: unknown } }).meta;
+    if (typeof meta?.message === 'string' && meta.message.trim()) {
+      return meta.message;
+    }
+  }
+  return err instanceof Error ? err.message : 'Failed to adjust loyalty points';
+}
+
 @Injectable()
 export class LoyaltyService implements OnModuleInit {
   private readonly logger = new Logger(LoyaltyService.name);
@@ -1092,19 +1103,12 @@ export class LoyaltyService implements OnModuleInit {
       if (err instanceof BadRequestException || err instanceof NotFoundException) {
         throw err;
       }
-      const message = err instanceof Error ? err.message : 'Failed to adjust loyalty points';
+      const message = prismaErrorDetail(err);
       if (/insufficient loyalty balance/i.test(message)) {
         throw new BadRequestException('Insufficient loyalty balance');
       }
       if (/loyalty membership not found/i.test(message)) {
         throw new NotFoundException('Loyalty membership not found');
-      }
-      // Surface actionable DB operator errors (e.g. uuid cast) instead of a generic 400.
-      if (/operator does not exist|invalid input syntax for type uuid/i.test(message)) {
-        this.logger.error(`adminAdjustPoints DB error for ${userId}: ${message}`);
-        throw new BadRequestException(
-          'Loyalty points adjustment failed due to a database type error. Please retry after the latest API deploy.',
-        );
       }
       this.logger.error(`adminAdjustPoints failed for ${userId}: ${message}`);
       throw new BadRequestException('Failed to adjust loyalty points. Please try again.');

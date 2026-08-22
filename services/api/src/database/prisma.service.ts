@@ -51,7 +51,9 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     // Interactive transactions must come from the extended client, otherwise
     // the `tx` handed to callbacks bypasses the extension entirely.
-    self.$transaction = (...args: unknown[]) => scoped.$transaction(...args);
+    // Bind rather than wrapping with rest-spread so Prisma's overload
+    // dispatch (array vs callback vs options object) sees the original this.
+    self.$transaction = scoped.$transaction.bind(scoped);
   }
 
   async onModuleInit() {
