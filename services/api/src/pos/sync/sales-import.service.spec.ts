@@ -90,6 +90,34 @@ const mockParsedSale = {
 
 describe('PosSalesImportService', () => {
   describe('importParsedSale', () => {
+    it('replaces incomplete line items when refreshItems is set', async () => {
+      const { service, prisma, inventorySync } = makeMocks();
+      prisma.pOSSale.findUnique.mockResolvedValue({
+        id: 'existing-1',
+        status: 'PROCESSED',
+        externalInvoice: null,
+        items: [{ sku: null, name: 'Item' }],
+      });
+      prisma.externalEntityMapping.findFirst.mockResolvedValue(null);
+      prisma.product.findFirst.mockResolvedValue(null);
+
+      const result = await service.importParsedSale('s1', 'lightspeed', mockParsedSale, {
+        refreshItems: true,
+      });
+
+      expect(result).toEqual({ id: 'existing-1', duplicate: true });
+      expect(prisma.pOSSale.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'existing-1' },
+          data: expect.objectContaining({
+            externalInvoice: 'INV-001',
+            items: expect.objectContaining({ deleteMany: {}, create: expect.any(Array) }),
+          }),
+        }),
+      );
+      expect(inventorySync.applyPosSaleToInventory).not.toHaveBeenCalled();
+    });
+
     it('deduplicates by provider + externalSaleId', async () => {
       const { service, prisma } = makeMocks();
       prisma.pOSSale.findUnique.mockResolvedValue({ id: 'existing-1' });

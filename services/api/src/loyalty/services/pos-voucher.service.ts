@@ -514,6 +514,7 @@ export class PosVoucherService {
           issuedAt: new Date(),
           expiresAt: expiresAt ?? undefined,
           ttlExpiresAt: voucher.ttlExpiresAt ?? new Date(Date.now() + VOUCHER_TTL_HOURS * 60 * 60 * 1000),
+          metadata: this.issuedMetadata(voucher.metadata),
         },
         include: { redemption: true },
       });
@@ -548,10 +549,10 @@ export class PosVoucherService {
               status: 'ISSUED',
               externalTransactionId: funding.externalTransactionId,
               issuedAt: new Date(),
-              metadata: {
+              metadata: this.issuedMetadata(voucher.metadata, {
                 recoveredAfterError: msg.slice(0, 500),
                 lightspeedPermission: true,
-              } as Prisma.InputJsonValue,
+              }),
             },
             include: { redemption: true },
           });
@@ -630,9 +631,9 @@ export class PosVoucherService {
             status: 'ISSUED',
             externalTransactionId: funding.externalTransactionId,
             issuedAt: new Date(),
-            metadata: {
+            metadata: this.issuedMetadata(voucher.metadata, {
               recoveredAfterError: msg.slice(0, 500),
-            } as Prisma.InputJsonValue,
+            }),
           },
           include: { redemption: true },
         });
@@ -954,6 +955,22 @@ export class PosVoucherService {
   private extractLightspeedStatus(msg: string): number | null {
     const m = msg.match(/Lightspeed API (\d{3})/i);
     return m ? Number(m[1]) : null;
+  }
+
+  /**
+   * Successful issue must drop lastError so admin UI does not keep showing a
+   * stale failure after retry.
+   */
+  private issuedMetadata(
+    existing: Prisma.JsonValue | null | undefined,
+    extra: Record<string, unknown> = {},
+  ): Prisma.InputJsonValue {
+    const base =
+      existing && typeof existing === 'object' && !Array.isArray(existing)
+        ? { ...(existing as Record<string, unknown>) }
+        : {};
+    delete base.lastError;
+    return { ...base, ...extra } as Prisma.InputJsonValue;
   }
 
   private toResult(

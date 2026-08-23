@@ -2,28 +2,39 @@ import { Injectable, Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 
+/** Stored in place of `null` because cache-manager rejects null/undefined. */
+export const CACHE_NONE_SENTINEL = { __hosCacheNone: true as const };
+
+function isCacheNone(value: unknown): value is typeof CACHE_NONE_SENTINEL {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    (value as { __hosCacheNone?: unknown }).__hosCacheNone === true
+  );
+}
+
 @Injectable()
 export class CacheService {
   constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
 
   /**
-   * Get value from cache
+   * Get value from cache.
+   * `undefined` = miss, `null` = cached absence (e.g. no tax zone).
    */
-  async get<T>(key: string): Promise<T | undefined> {
-    return this.cacheManager.get<T>(key);
+  async get<T>(key: string): Promise<T | null | undefined> {
+    const value = await this.cacheManager.get<T | typeof CACHE_NONE_SENTINEL>(key);
+    if (value === undefined) return undefined;
+    if (isCacheNone(value)) return null;
+    return value as T;
   }
 
   /**
-   * Set value in cache
+   * Set value in cache. `null` is stored as a sentinel so "not found" can be cached
+   * without cache-manager throwing "not a cacheable value". `undefined` is skipped.
    */
   async set(key: string, value: any, ttl?: number): Promise<void> {
-    // A lookup that found nothing is a legitimate result, but cache-manager rejects null and
-    // undefined with "not a cacheable value". That turned an address with no matching tax zone
-    // into a 500 at checkout. There is nothing to store, so skip rather than throw; the next
-    // read is simply a miss.
-    if (value === null || value === undefined) return;
-
-    await this.cacheManager.set(key, value, ttl);
+    if (value === undefined) return;
+    await this.cacheManager.set(key, value === null ? CACHE_NONE_SENTINEL : value, ttl);
   }
 
   /**

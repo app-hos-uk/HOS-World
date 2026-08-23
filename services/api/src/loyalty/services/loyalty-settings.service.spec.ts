@@ -112,4 +112,37 @@ describe('LoyaltySettingsService caching', () => {
       service.update({ posVoucherMinAmount: 100, posVoucherMaxAmount: 50 }),
     ).rejects.toThrow('posVoucherMinAmount cannot exceed posVoucherMaxAmount');
   });
+
+  it('does not cache env fallbacks when the database read fails', async () => {
+    const prisma = createPrisma(null);
+    prisma.config.findFirst.mockRejectedValue(new Error('db down'));
+    const sharedCache = createSharedCache();
+    const service = createService(prisma, sharedCache, 5_000);
+
+    const first = await service.getResolved();
+    expect(first.source).toBe('env');
+    expect(sharedCache.store.has(LOYALTY_SETTINGS_CACHE_KEY)).toBe(false);
+
+    await service.getResolved();
+    expect(prisma.config.findFirst).toHaveBeenCalledTimes(2);
+  });
+
+  it('serves last-good settings when a later database read fails', async () => {
+    const prisma = createPrisma({ value: { defaultEarnRate: 9 } });
+    const sharedCache = createSharedCache();
+    const service = createService(prisma, sharedCache, 5_000);
+
+    expect((await service.getResolved()).settings.defaultEarnRate).toBe(9);
+
+    prisma.config.findFirst.mockRejectedValue(new Error('db down'));
+    sharedCache.store.clear();
+    const lastGood = (service as any).localCache.value;
+    (service as any).localCache = { at: 0, value: lastGood };
+    sharedCache.set.mockClear();
+
+    const again = await service.getResolved();
+    expect(again.settings.defaultEarnRate).toBe(9);
+    expect(again.source).toBe('database');
+    expect(sharedCache.set).not.toHaveBeenCalled();
+  });
 });

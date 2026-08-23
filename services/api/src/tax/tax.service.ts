@@ -26,8 +26,9 @@ export class TaxService {
     await this.cache.delPattern('taxrate:*').catch(() => {});
   }
 
-  private async getCachedTaxRate(key: string): Promise<any | null> {
-    return (await this.cache.get(`taxrate:${key}`)) ?? null;
+  /** `undefined` = miss, `null` = cached "no rate". */
+  private async getCachedTaxRate(key: string): Promise<any | null | undefined> {
+    return this.cache.get(`taxrate:${key}`);
   }
 
   private async setCachedTaxRate(key: string, data: any): Promise<void> {
@@ -308,7 +309,7 @@ export class TaxService {
   ) {
     const cacheKey = `taxzone:${country}:${state ?? ''}:${city ?? ''}:${postalCode ?? ''}`;
     const cached = await this.cache.get<any>(cacheKey);
-    if (cached) return cached;
+    if (cached !== undefined) return cached;
 
     const zone = await this._resolveTaxZone(country, state, city, postalCode);
     await this.cache.set(cacheKey, zone, TaxService.CACHE_TTL);
@@ -502,7 +503,7 @@ export class TaxService {
 
     const cacheKey = `${taxZone.id}:${taxClassId}`;
     let taxRate = await this.getCachedTaxRate(cacheKey);
-    if (taxRate === null) {
+    if (taxRate === undefined) {
       taxRate = await this.prisma.taxRate.findFirst({
         where: {
           taxZoneId: taxZone.id,

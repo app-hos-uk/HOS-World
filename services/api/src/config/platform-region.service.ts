@@ -252,7 +252,8 @@ export class PlatformRegionService {
       return value;
     } catch (e) {
       this.logger.warn(`Market region read failed: ${(e as Error).message}`);
-      return null;
+      // Last-good only — never cache the miss so a blip cannot pin the wrong market.
+      return hit?.value ?? null;
     }
   }
 
@@ -314,6 +315,21 @@ export class PlatformRegionService {
       if (dbTimezone) timezone = dbTimezone;
     } catch (e) {
       this.logger.warn(`Platform region DB read failed: ${(e as Error).message}`);
+      // Do not cache env fallbacks: a blip must not pin the wrong currency/origin.
+      if (cached) return cached.value;
+      return {
+        currency: base.currency,
+        country: base.country,
+        locale: base.locale,
+        timezone: base.timezone,
+        taxOrigin: this.buildTaxOrigin(
+          {
+            ...base.taxOriginParts,
+            country: base.taxOriginParts.country || base.country,
+          },
+          base.country,
+        ),
+      };
     }
 
     const taxOrigin = this.buildTaxOrigin(

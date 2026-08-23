@@ -69,23 +69,61 @@ function firstNumber(...candidates: unknown[]): number {
   return 0;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function firstNonEmptyString(...candidates: unknown[]): string | undefined {
+  for (const c of candidates) {
+    if (c === undefined || c === null) continue;
+    const s = String(c).trim();
+    if (s) return s;
+  }
+  return undefined;
+}
+
+function isPresent(value: unknown): boolean {
+  return value !== undefined && value !== null && value !== '';
+}
+
+/**
+ * API 2.0 line items nest product/pricing/tax (`product.id`, `pricing.price`).
+ * API 0.9 / webhooks flatten them (`product_id`, `sku`, `price`, `price_total`).
+ * Never fall back to the line-item `id` — that is not a product id.
+ */
 function mapLineItem(li: Record<string, unknown>): POSSaleItem {
+  const product = asRecord(li.product);
+  const pricing = asRecord(li.pricing);
+  const taxObj = asRecord(li.tax);
+
   const rawQty = Number(li.quantity ?? 1);
   // Prisma POSSaleItem.quantity is Int — round fractional (weighed) qty; preserve sign for returns.
   const quantity =
     Number.isFinite(rawQty) && rawQty !== 0 ? Math.trunc(rawQty) || (rawQty < 0 ? -1 : 1) : 1;
   const absQty = Math.abs(quantity);
-  const hasPriceTotal =
-    li.price_total !== undefined && li.price_total !== null && li.price_total !== '';
-  const hasPrice = li.price !== undefined && li.price !== null && li.price !== '';
+
+  const totalCandidate = isPresent(li.price_total)
+    ? li.price_total
+    : isPresent(pricing?.total)
+      ? pricing?.total
+      : isPresent(pricing?.price_total)
+        ? pricing?.price_total
+        : undefined;
+  const unitCandidate = isPresent(li.price)
+    ? li.price
+    : isPresent(pricing?.price)
+      ? pricing?.price
+      : undefined;
 
   let unitPrice: number;
   let totalPrice: number;
-  if (hasPriceTotal) {
-    totalPrice = Number(li.price_total);
+  if (totalCandidate !== undefined) {
+    totalPrice = Number(totalCandidate);
     unitPrice = absQty > 0 ? totalPrice / absQty : totalPrice;
-  } else if (hasPrice) {
-    unitPrice = Number(li.price);
+  } else if (unitCandidate !== undefined) {
+    unitPrice = Number(unitCandidate);
     // Preserve signed quantity for returns (negative qty × unit price).
     totalPrice = unitPrice * quantity;
   } else {
@@ -93,15 +131,34 @@ function mapLineItem(li: Record<string, unknown>): POSSaleItem {
     totalPrice = 0;
   }
 
+  const externalProductId = firstNonEmptyString(li.product_id, product?.id) ?? '';
+  const sku = firstNonEmptyString(li.sku, product?.sku);
+  const name =
+    firstNonEmptyString(li.name, product?.name, sku, li.gift_card_number ? 'Gift card' : undefined) ??
+    'Item';
+
   return {
-    externalProductId: String(li.product_id ?? li.id ?? ''),
-    sku: li.sku ? String(li.sku) : undefined,
-    name: String(li.name ?? li.sku ?? 'Item'),
+    externalProductId,
+    sku: sku ?? (externalProductId ? `ls:${externalProductId}` : undefined),
+    name,
     quantity,
     unitPrice,
     totalPrice,
-    taxAmount: firstNumber(li.tax_total, li.tax),
+    taxAmount: firstNumber(
+      li.tax_total,
+      taxObj?.total,
+      taxObj?.amount,
+      typeof li.tax === 'object' ? undefined : li.tax,
+    ),
   };
+}
+
+/** True when the staff-entered invoice/receipt matches this Lightspeed sale row. */
+export function saleMatchesInvoice(payload: Record<string, unknown>, invoiceNumber: string): boolean {
+  const target = invoiceNumber.trim().toLowerCase();
+  if (!target) return false;
+  const candidates = [payload.invoice_number, payload.receipt_number, payload.id, payload.sale_id];
+  return candidates.some((c) => c != null && String(c).trim().toLowerCase() === target);
 }
 
 function resolveLineItems(payload: Record<string, unknown>): Record<string, unknown>[] {
@@ -149,7 +206,11 @@ export function mapSaleFromVend(
 
   return {
     externalId: String(payload.id ?? payload.sale_id ?? ''),
-    invoiceNumber: payload.invoice_number ? String(payload.invoice_number) : undefined,
+    invoiceNumber: payload.invoice_number
+      ? String(payload.invoice_number)
+      : payload.receipt_number
+        ? String(payload.receipt_number)
+        : undefined,
     saleDate: saleDateRaw ? new Date(String(saleDateRaw)) : new Date(),
     outletId: String(payload.outlet_id ?? outletId),
     customer:

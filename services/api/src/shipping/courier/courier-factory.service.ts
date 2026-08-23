@@ -22,6 +22,9 @@ import { DHLProvider } from './providers/dhl.provider';
 import { USPSProvider } from './providers/usps.provider';
 import { ShippoProvider } from './providers/shippo.provider';
 
+/** Skip a carrier's rate API after a transient failure so checkout does not hammer it. */
+const QUOTE_NEGATIVE_CACHE_MS = 15_000;
+
 /**
  * CourierFactory - Dynamically loads and manages courier providers
  *
@@ -39,6 +42,7 @@ export class CourierFactoryService implements OnModuleInit {
     string,
     { isActive: boolean; isTestMode: boolean; priority: number }
   > = new Map();
+  private quoteFailures = new Map<string, { until: number; message: string }>();
 
   constructor(
     private prisma: PrismaService,
@@ -108,6 +112,13 @@ export class CourierFactoryService implements OnModuleInit {
         } catch (error: any) {
           this.logger.error(`Failed to load provider ${integration.provider}: ${error.message}`);
         }
+      }
+
+      if (nextProviders.size === 0 && this.providers.size > 0 && integrations.length > 0) {
+        this.logger.error(
+          'All shipping providers failed to load; keeping the previous provider map',
+        );
+        return;
       }
 
       this.providers = nextProviders;
@@ -216,10 +227,21 @@ export class CourierFactoryService implements OnModuleInit {
 
     await Promise.all(
       activeProviders.map(async (provider) => {
+        const blocked = this.openQuoteFailure(provider.providerId);
+        if (blocked) {
+          this.logger.warn(
+            `Skipping rates from ${provider.providerId}: carrier recently failed (${blocked})`,
+          );
+          return;
+        }
         try {
           const rates = await this.withTimeout(provider.getRates(request), 15000);
+          this.clearQuoteFailure(provider.providerId);
           allRates.push(...rates);
         } catch (error: any) {
+          if (this.isTransientQuoteError(error)) {
+            this.rememberQuoteFailure(provider.providerId, error?.message || 'quote failed');
+          }
           this.logger.warn(`Failed to get rates from ${provider.providerId}: ${error.message}`);
         }
       }),
@@ -241,9 +263,21 @@ export class CourierFactoryService implements OnModuleInit {
       );
     }
 
+    const blocked = this.openQuoteFailure(providerName);
+    if (blocked) {
+      throw new BadGatewayException(
+        `Shipping rate lookup skipped (${providerName}): carrier recently failed (${blocked})`,
+      );
+    }
+
     try {
-      return await provider.getRates(request);
+      const rates = await provider.getRates(request);
+      this.clearQuoteFailure(providerName);
+      return rates;
     } catch (error: any) {
+      if (this.isTransientQuoteError(error)) {
+        this.rememberQuoteFailure(providerName, error?.message || 'quote failed');
+      }
       if (error instanceof BadRequestException || error instanceof BadGatewayException) {
         throw error;
       }
@@ -463,6 +497,44 @@ export class CourierFactoryService implements OnModuleInit {
     } catch (error) {
       this.logger.error('Failed to log API call', error);
     }
+  }
+
+  private isTransientQuoteError(error: unknown): boolean {
+    if (error instanceof BadRequestException) return false;
+    const message = error instanceof Error ? error.message : String(error ?? '');
+    const lower = message.toLowerCase();
+    if (
+      lower.includes('not configured') ||
+      lower.includes('incomplete') ||
+      lower.includes('looks masked') ||
+      lower.includes('must start with') ||
+      lower.includes('address rejected') ||
+      lower.includes('returned no rates')
+    ) {
+      return false;
+    }
+    return true;
+  }
+
+  private openQuoteFailure(providerName: string): string | null {
+    const entry = this.quoteFailures.get(providerName);
+    if (!entry) return null;
+    if (Date.now() >= entry.until) {
+      this.quoteFailures.delete(providerName);
+      return null;
+    }
+    return entry.message;
+  }
+
+  private rememberQuoteFailure(providerName: string, message: string): void {
+    this.quoteFailures.set(providerName, {
+      until: Date.now() + QUOTE_NEGATIVE_CACHE_MS,
+      message: String(message).slice(0, 200),
+    });
+  }
+
+  private clearQuoteFailure(providerName: string): void {
+    this.quoteFailures.delete(providerName);
   }
 
   private withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {

@@ -339,29 +339,157 @@ export class LightspeedAdapter implements POSAdapter {
     return { sales, maxVersion };
   }
 
+  private isNotFound(err: unknown): boolean {
+    return err instanceof Error && /Lightspeed API 404\b/.test(err.message);
+  }
+
+  private unwrapSaleRow(data: unknown): Record<string, unknown> | null {
+    if (!data || typeof data !== 'object') return null;
+    const root = data as Record<string, unknown>;
+    const inner = root.data;
+    if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+      return inner as Record<string, unknown>;
+    }
+    if (typeof root.id === 'string' || root.invoice_number != null) {
+      return root;
+    }
+    return null;
+  }
+
+  private unwrapSaleList(data: unknown): Record<string, unknown>[] {
+    if (!data || typeof data !== 'object') return [];
+    const root = data as Record<string, unknown>;
+    if (Array.isArray(root.data)) return root.data as Record<string, unknown>[];
+    if (Array.isArray(root)) return root as Record<string, unknown>[];
+    return [];
+  }
+
+  private lineNeedsProductHydration(item: POSSale['items'][number]): boolean {
+    if (!item.externalProductId) return false;
+    if (!item.sku || item.sku === `ls:${item.externalProductId}`) return true;
+    return item.name === 'Item';
+  }
+
+  private async hydrateSaleLineSkus(sale: POSSale): Promise<POSSale> {
+    const ids = [
+      ...new Set(
+        sale.items.filter((i) => this.lineNeedsProductHydration(i)).map((i) => i.externalProductId),
+      ),
+    ].filter(Boolean);
+    if (!ids.length) return sale;
+
+    const products = new Map<string, { sku?: string; name?: string }>();
+    for (const id of ids) {
+      try {
+        const { data } = await this.client.request<{ data?: Record<string, unknown> }>(
+          'GET',
+          `/products/${encodeURIComponent(id)}`,
+        );
+        const row = this.unwrapSaleRow(data) ?? (data as Record<string, unknown> | null);
+        if (!row) continue;
+        products.set(id, {
+          sku: row.sku != null && String(row.sku).trim() ? String(row.sku).trim() : undefined,
+          name: row.name != null && String(row.name).trim() ? String(row.name).trim() : undefined,
+        });
+      } catch {
+        // Product hydration is best-effort; keep the synthetic ls:{id} SKU.
+      }
+    }
+
+    if (!products.size) return sale;
+
+    return {
+      ...sale,
+      items: sale.items.map((item) => {
+        const product = products.get(item.externalProductId);
+        if (!product) return item;
+        const sku = item.sku && !item.sku.startsWith('ls:') ? item.sku : product.sku || item.sku;
+        const name = item.name !== 'Item' ? item.name : product.name || item.name;
+        return { ...item, sku, name };
+      }),
+    };
+  }
+
+  async getSaleById(
+    saleId: string,
+    options?: { hydrateProducts?: boolean },
+  ): Promise<POSSale | null> {
+    const id = saleId.trim();
+    if (!id) return null;
+    try {
+      const { data } = await this.client.request<unknown>('GET', `/sales/${encodeURIComponent(id)}`);
+      const row = this.unwrapSaleRow(data);
+      if (!row) return null;
+      const mapped = M.mapSaleFromVend(
+        row,
+        String(row.outlet_id ?? ''),
+        this.defaultCurrency,
+      );
+      if (options?.hydrateProducts === false) return mapped;
+      return this.hydrateSaleLineSkus(mapped);
+    } catch (err) {
+      if (this.isNotFound(err)) return null;
+      throw err;
+    }
+  }
+
   async getSaleByInvoice(params: {
     invoiceNumber: string;
     outletId?: string;
+    hydrateProducts?: boolean;
   }): Promise<POSSale | null> {
-    const target = params.invoiceNumber.trim().toLowerCase();
+    const target = params.invoiceNumber.trim();
     if (!target) return null;
+    const hydrate = params.hydrateProducts !== false;
 
-    let after: number | undefined = undefined;
-    for (let page = 0; page < 8; page++) {
-      const { sales, maxVersion } = await this.getSales({
-        afterVersion: after,
-        outletId: params.outletId,
-      });
-      for (const sale of sales) {
-        const inv = (sale.invoiceNumber ?? '').trim().toLowerCase();
-        if (inv === target || sale.externalId === params.invoiceNumber.trim()) {
-          return sale;
-        }
+    const uuidRe =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRe.test(target)) {
+      const byId = await this.getSaleById(target, { hydrateProducts: hydrate });
+      if (byId && this.matchesOutlet(params.outletId, byId.outletId)) {
+        return byId;
       }
-      if (!sales.length || maxVersion == null || maxVersion === after) break;
-      after = maxVersion;
     }
+
+    const qs = new URLSearchParams({ type: 'sales', invoice_number: target });
+    try {
+      const { data } = await this.client.request<unknown>('GET', `/search?${qs.toString()}`);
+      const rows = this.unwrapSaleList(data);
+      const exact = rows.filter(
+        (r) =>
+          M.saleMatchesInvoice(r, target) &&
+          this.matchesOutlet(params.outletId, r.outlet_id != null ? String(r.outlet_id) : ''),
+      );
+      const pick = exact.length === 1 ? exact[0] : null;
+      const saleId = pick?.id != null ? String(pick.id) : '';
+      if (saleId) {
+        const full = await this.getSaleById(saleId, { hydrateProducts: hydrate });
+        if (full) {
+          return this.matchesOutlet(params.outletId, full.outletId) ? full : null;
+        }
+        const mapped = M.mapSaleFromVend(
+          pick!,
+          params.outletId || String(pick!.outlet_id ?? ''),
+          this.defaultCurrency,
+        );
+        if (!this.matchesOutlet(params.outletId, mapped.outletId)) return null;
+        return hydrate ? this.hydrateSaleLineSkus(mapped) : mapped;
+      }
+    } catch (err) {
+      if (!this.isNotFound(err)) {
+        throw err;
+      }
+    }
+
     return null;
+  }
+
+  /** When an outlet is requested, never accept a sale known to belong to another outlet. */
+  private matchesOutlet(requested: string | undefined, actual: string | undefined | null): boolean {
+    if (!requested) return true;
+    const got = (actual ?? '').trim();
+    if (!got) return true;
+    return got === requested;
   }
 
   validateWebhook(payload: unknown, signature: string, secret: string): boolean {

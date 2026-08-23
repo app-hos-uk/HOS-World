@@ -34,21 +34,33 @@ export class StoreShipmentController {
   async createClaim(
     @Body()
     body: {
-      storeId: string;
+      storeId?: string;
       invoiceNumber: string;
       email: string;
       shippingConsent: boolean;
     },
-    @Req() req: { user?: { id?: string }; ip?: string; headers?: Record<string, string | string[] | undefined> },
+    @Req() req: {
+      user?: { id?: string; role?: string; storeId?: string };
+      storeId?: string;
+      ip?: string;
+      headers?: Record<string, string | string[] | undefined>;
+    },
   ): Promise<ApiResponse<unknown>> {
     const ua = req.headers?.['user-agent'];
+    const staffStoreId =
+      req.storeId ||
+      (req.user && 'storeId' in req.user ? (req.user as { storeId?: string }).storeId : undefined);
     const data = await this.shipments.createClaimFromTill({
-      ...body,
+      storeId: body.storeId,
+      assignedStoreId: staffStoreId,
+      invoiceNumber: body.invoiceNumber,
+      email: body.email,
+      shippingConsent: body.shippingConsent,
       staffUserId: req.user?.id,
       ipAddress: req.ip,
       userAgent: Array.isArray(ua) ? ua[0] : ua,
     });
-    return { data, message: 'Claim link created' };
+    return { data, message: data.resent ? 'Claim link resent' : 'Claim link created' };
   }
 
   @Public()

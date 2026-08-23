@@ -500,6 +500,37 @@ describe('PosVoucherService', () => {
     );
   });
 
+  it('clears lastError when a previously failed voucher is issued', async () => {
+    const voucherFindUnique = jest.fn().mockResolvedValue({
+      id: 'voucher-1',
+      membershipId,
+      redemptionId,
+      storeId,
+      cardNumber: 'ABCD2345EFGH',
+      amount: new Decimal('5.00'),
+      currency: 'GBP',
+      clientId: redemptionId,
+      status: 'FAILED',
+      metadata: { lastError: 'Lightspeed API 500: boom', failedAt: '2026-01-01T00:00:00.000Z' },
+      ttlExpiresAt: null,
+      redemption: { pointsSpent: 500, status: 'COMPLETED' },
+      store: { posConnection: { isActive: true, provider: 'lightspeed', credentials: 'enc' } },
+    });
+    const { svc, prisma } = build({ voucherFindUnique });
+
+    const result = await svc.retryFailedVoucher('voucher-1');
+
+    expect(result.status).toBe('ISSUED');
+    expect(prisma.loyaltyPosVoucher.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: 'ISSUED',
+          metadata: expect.not.objectContaining({ lastError: expect.anything() }),
+        }),
+      }),
+    );
+  });
+
   it('keeps the burn and flags review when funding cannot be verified after a failure', async () => {
     const createGiftCard = jest.fn().mockRejectedValue(new Error('Lightspeed API 500: boom'));
     // Card absent on the pre-create probe, then Lightspeed unreachable for the

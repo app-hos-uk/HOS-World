@@ -293,6 +293,248 @@ describe('LightspeedAdapter', () => {
     });
   });
 
+  describe('getSaleByInvoice', () => {
+    function mockClientRequest(adapter: LightspeedAdapter) {
+      const request = jest.fn();
+      (adapter as any).client.request = request;
+      return request;
+    }
+
+    it('searches by invoice then loads the full sale and product SKUs', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request
+        .mockResolvedValueOnce({
+          status: 200,
+          data: { data: [{ id: 'sale-uuid', invoice_number: 'HOS-22', outlet_id: 'out-1' }] },
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          data: {
+            data: {
+              id: 'sale-uuid',
+              invoice_number: 'HOS-22',
+              state: 'closed',
+              outlet_id: 'out-1',
+              line_items: [
+                {
+                  id: 'line-1',
+                  product: { id: 'prod-1' },
+                  quantity: 1,
+                  pricing: { price: 10, total: 10 },
+                },
+              ],
+            },
+          },
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          data: { data: { id: 'prod-1', sku: 'WAND-1', name: 'Elder Wand' } },
+        });
+
+      const sale = await adapter.getSaleByInvoice({ invoiceNumber: 'HOS-22' });
+      expect(request.mock.calls[0][0]).toBe('GET');
+      expect(request.mock.calls[0][1]).toContain('/search?');
+      expect(request.mock.calls[0][1]).toContain('invoice_number=HOS-22');
+      expect(request.mock.calls[1][1]).toBe('/sales/sale-uuid');
+      expect(request.mock.calls[2][1]).toBe('/products/prod-1');
+      expect(sale?.externalId).toBe('sale-uuid');
+      expect(sale?.items[0]).toMatchObject({
+        externalProductId: 'prod-1',
+        sku: 'WAND-1',
+        name: 'Elder Wand',
+        unitPrice: 10,
+      });
+    });
+
+    it('skips product hydration when hydrateProducts is false', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request
+        .mockResolvedValueOnce({
+          status: 200,
+          data: { data: [{ id: 'sale-uuid', invoice_number: 'HOS-22' }] },
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          data: {
+            data: {
+              id: 'sale-uuid',
+              invoice_number: 'HOS-22',
+              state: 'closed',
+              line_items: [
+                {
+                  id: 'line-1',
+                  product: { id: 'prod-1' },
+                  quantity: 1,
+                  pricing: { price: 10, total: 10 },
+                },
+              ],
+            },
+          },
+        });
+
+      const sale = await adapter.getSaleByInvoice({
+        invoiceNumber: 'HOS-22',
+        hydrateProducts: false,
+      });
+      expect(request).toHaveBeenCalledTimes(2);
+      expect(sale?.items[0].sku).toBe('ls:prod-1');
+    });
+
+    it('does not accept a single search hit unless the invoice matches exactly', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request.mockResolvedValueOnce({
+        status: 200,
+        data: { data: [{ id: 'other-sale', invoice_number: 'HOS-99' }] },
+      });
+
+      await expect(adapter.getSaleByInvoice({ invoiceNumber: 'HOS-22' })).resolves.toBeNull();
+      expect(request).toHaveBeenCalledTimes(1);
+    });
+
+    it('loads a sale directly when the invoice is a UUID', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request.mockResolvedValueOnce({
+        status: 200,
+        data: {
+          data: {
+            id: 'ac1b9419-ce84-4eff-91de-6438ed650e80',
+            invoice_number: '99',
+            state: 'closed',
+            sku: undefined,
+            line_items: [
+              { product_id: 'p1', sku: 'SKU-9', name: 'Hat', quantity: 1, price: 5 },
+            ],
+          },
+        },
+      });
+
+      const sale = await adapter.getSaleByInvoice({
+        invoiceNumber: 'ac1b9419-ce84-4eff-91de-6438ed650e80',
+      });
+      expect(request).toHaveBeenCalledTimes(1);
+      expect(request.mock.calls[0][1]).toBe(
+        '/sales/ac1b9419-ce84-4eff-91de-6438ed650e80',
+      );
+      expect(sale?.invoiceNumber).toBe('99');
+      expect(sale?.items[0].sku).toBe('SKU-9');
+    });
+
+    it('rejects a single search hit from another outlet', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request.mockResolvedValueOnce({
+        status: 200,
+        data: {
+          data: [{ id: 'other-store-sale', invoice_number: 'HOS-22', outlet_id: 'out-2' }],
+        },
+      });
+
+      await expect(
+        adapter.getSaleByInvoice({ invoiceNumber: 'HOS-22', outletId: 'out-1' }),
+      ).resolves.toBeNull();
+      expect(request).toHaveBeenCalledTimes(1);
+    });
+
+    it('accepts a single search hit when it belongs to the requested outlet', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request
+        .mockResolvedValueOnce({
+          status: 200,
+          data: { data: [{ id: 'sale-uuid', invoice_number: 'HOS-22', outlet_id: 'out-1' }] },
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          data: {
+            data: {
+              id: 'sale-uuid',
+              invoice_number: 'HOS-22',
+              state: 'closed',
+              outlet_id: 'out-1',
+              line_items: [],
+            },
+          },
+        });
+
+      const sale = await adapter.getSaleByInvoice({
+        invoiceNumber: 'HOS-22',
+        outletId: 'out-1',
+        hydrateProducts: false,
+      });
+      expect(sale?.externalId).toBe('sale-uuid');
+      expect(request).toHaveBeenCalledTimes(2);
+    });
+
+    it('picks the matching outlet when search returns more than one exact invoice', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request
+        .mockResolvedValueOnce({
+          status: 200,
+          data: {
+            data: [
+              { id: 'sale-other', invoice_number: 'HOS-22', outlet_id: 'out-2' },
+              { id: 'sale-here', invoice_number: 'HOS-22', outlet_id: 'out-1' },
+            ],
+          },
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          data: {
+            data: {
+              id: 'sale-here',
+              invoice_number: 'HOS-22',
+              state: 'closed',
+              outlet_id: 'out-1',
+              line_items: [],
+            },
+          },
+        });
+
+      const sale = await adapter.getSaleByInvoice({
+        invoiceNumber: 'HOS-22',
+        outletId: 'out-1',
+        hydrateProducts: false,
+      });
+      expect(sale?.externalId).toBe('sale-here');
+      expect(request.mock.calls[1][1]).toBe('/sales/sale-here');
+    });
+
+    it('rejects a full sale whose outlet does not match after search', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request
+        .mockResolvedValueOnce({
+          status: 200,
+          data: { data: [{ id: 'sale-uuid', invoice_number: 'HOS-22' }] },
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          data: {
+            data: {
+              id: 'sale-uuid',
+              invoice_number: 'HOS-22',
+              state: 'closed',
+              outlet_id: 'out-2',
+              line_items: [],
+            },
+          },
+        });
+
+      await expect(
+        adapter.getSaleByInvoice({
+          invoiceNumber: 'HOS-22',
+          outletId: 'out-1',
+          hydrateProducts: false,
+        }),
+      ).resolves.toBeNull();
+    });
+  });
+
   describe('gift cards', () => {
     function mockClientRequest(adapter: LightspeedAdapter) {
       const request = jest.fn();

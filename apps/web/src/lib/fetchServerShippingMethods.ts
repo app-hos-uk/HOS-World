@@ -25,16 +25,18 @@ export interface PublicShippingMethod {
   rules?: PublicShippingRule[];
 }
 
-/** Server-side fetch for public shipping info page (cached 5 min). */
+/**
+ * Server-side fetch for the public shipping info page.
+ * Not cached: an upstream error or empty catalog must not pin "no methods" for 5 minutes.
+ */
 export async function fetchServerShippingMethods(): Promise<PublicShippingMethod[]> {
   try {
     const base = getDirectApiBaseUrl();
-    const res = await fetch(`${base}/shipping/methods`, {
-      next: { revalidate: 300 },
-    });
+    const res = await fetch(`${base}/shipping/methods`, { cache: 'no-store' });
     if (!res.ok) return [];
     const json = (await res.json()) as { data?: PublicShippingMethod[] };
-    return json?.data ?? [];
+    const methods = json?.data;
+    return Array.isArray(methods) ? methods : [];
   } catch {
     return [];
   }
