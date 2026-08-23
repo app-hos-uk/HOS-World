@@ -553,6 +553,36 @@ describe('LightspeedAdapter', () => {
       ).resolves.toBeNull();
     });
 
+    it('does not treat a search summary as a sale when the full sale cannot be loaded', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request
+        .mockResolvedValueOnce({
+          status: 200,
+          data: {
+            data: [{ id: 'sale-uuid', invoice_number: 'HOS-22', outlet_id: 'out-1', state: 'closed' }],
+          },
+        })
+        .mockRejectedValueOnce(new Error('Lightspeed API 404: not found'));
+
+      await expect(
+        adapter.getSaleByInvoice({ invoiceNumber: 'HOS-22', outletId: 'out-1' }),
+      ).resolves.toBeNull();
+    });
+
+    it('does not treat a search summary as a sale even when no outlet is required', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request
+        .mockResolvedValueOnce({
+          status: 200,
+          data: { data: [{ id: 'sale-uuid', invoice_number: 'HOS-22' }] },
+        })
+        .mockRejectedValueOnce(new Error('Lightspeed API 404: not found'));
+
+      await expect(adapter.getSaleByInvoice({ invoiceNumber: 'HOS-22' })).resolves.toBeNull();
+    });
+
     it('rejects a UUID sale that has no outlet when an outlet is required', async () => {
       const adapter = new LightspeedAdapter(creds);
       const request = mockClientRequest(adapter);

@@ -476,18 +476,11 @@ export class LightspeedAdapter implements POSAdapter {
       const saleId = pick?.id != null ? String(pick.id) : '';
       if (saleId) {
         const full = await this.getSaleById(saleId, { hydrateProducts: hydrate });
-        if (full) {
-          return this.matchesOutlet(params.outletId, full.outletId) ? full : null;
+        if (full && this.matchesOutlet(params.outletId, full.outletId)) {
+          return full;
         }
-        // Search summaries often omit outlet_id. Do not stamp the requested
-        // outlet onto an unverified row if the full sale could not be loaded.
-        const mapped = M.mapSaleFromVend(
-          pick!,
-          String(pick!.outlet_id ?? ''),
-          this.defaultCurrency,
-        );
-        if (!this.matchesOutlet(params.outletId, mapped.outletId)) return null;
-        return hydrate ? this.hydrateSaleLineSkus(mapped) : mapped;
+        // Search hits omit state and often outlet. Never treat a summary as a closed sale.
+        return null;
       }
     } catch (err) {
       if (!this.isNotFound(err)) {

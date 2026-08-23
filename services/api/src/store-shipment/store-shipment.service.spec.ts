@@ -297,4 +297,45 @@ describe('StoreShipmentService.createClaimFromTill', () => {
     await expect(service.createClaimFromTill(claimInput)).rejects.toThrow(/already in progress/);
     expect(notifications.sendStoreShipmentClaimEmail).not.toHaveBeenCalled();
   });
+
+  it('does not confirm a local sale when Lightspeed lookup fails', async () => {
+    const { service, prisma, adapter, notifications } = makeService();
+    prisma.store.findUnique.mockResolvedValue(shipmentBase.store);
+    prisma.pOSSale.findFirst.mockResolvedValue({
+      id: 'pos-old',
+      externalSaleId: 'ls-sale',
+      externalInvoice: 'HOS-22',
+      totalAmount: 45,
+      currency: 'GBP',
+      saleDate: new Date('2026-08-23T10:00:00.000Z'),
+      status: 'PROCESSED',
+    });
+    adapter.getSaleByInvoice.mockRejectedValue(new Error('Lightspeed API 503: unavailable'));
+
+    await expect(service.createClaimFromTill(claimInput)).rejects.toThrow(
+      /Could not confirm this invoice with Lightspeed/,
+    );
+    expect(notifications.sendStoreShipmentClaimEmail).not.toHaveBeenCalled();
+    expect(prisma.storeShipmentRequest.create).not.toHaveBeenCalled();
+  });
+
+  it('can confirm from a local sale when Lightspeed returns no matching invoice', async () => {
+    const { service, prisma, adapter, notifications } = makeService();
+    prisma.store.findUnique.mockResolvedValue(shipmentBase.store);
+    prisma.pOSSale.findFirst.mockResolvedValue({
+      id: 'pos-old',
+      externalSaleId: 'ls-sale',
+      externalInvoice: 'HOS-22',
+      totalAmount: 45,
+      currency: 'GBP',
+      saleDate: new Date('2026-08-23T10:00:00.000Z'),
+      status: 'PROCESSED',
+    });
+    adapter.getSaleByInvoice.mockResolvedValue(null);
+
+    const result = await service.createClaimFromTill(claimInput);
+
+    expect(result.confirmedInvoice).toMatchObject({ number: 'HOS-22', totalAmount: 45 });
+    expect(notifications.sendStoreShipmentClaimEmail).toHaveBeenCalled();
+  });
 });

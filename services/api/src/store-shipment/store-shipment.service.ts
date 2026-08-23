@@ -387,6 +387,12 @@ export class StoreShipmentService {
       };
     }
 
+    if (lightspeedError) {
+      throw new BadRequestException(
+        'Could not confirm this invoice with Lightspeed. Check the connection and try again.',
+      );
+    }
+
     if (local) {
       return {
         externalId: local.externalSaleId,
@@ -398,11 +404,6 @@ export class StoreShipmentService {
       };
     }
 
-    if (lightspeedError) {
-      throw new BadRequestException(
-        'Could not confirm this invoice with Lightspeed. Check the connection and try again.',
-      );
-    }
     throw new BadRequestException(
       `No Lightspeed sale found for invoice "${invoice}". Check the invoice or receipt number.`,
     );
