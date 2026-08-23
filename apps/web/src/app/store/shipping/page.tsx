@@ -74,9 +74,9 @@ export default function StoreShippingPage() {
       <div>
         <h1 className="text-xl font-semibold text-hos-text">Ship purchase home</h1>
         <p className="text-sm text-hos-text-muted mt-1">
-          After the Lightspeed sale is completed, enter the invoice or receipt number. We confirm
-          that sale before emailing the customer a shipping claim link. Product details are loaded
-          later, after they sign in.
+          After the Lightspeed sale is completed, enter the invoice or receipt number and the
+          customer email from that sale. We confirm both before emailing the shipping claim link.
+          Product details are loaded later, after they sign in.
         </p>
       </div>
 
@@ -107,6 +107,7 @@ export default function StoreShippingPage() {
             className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg border-hos-border"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder="Must match the Lightspeed customer on this invoice"
           />
         </label>
         <label className="flex items-start gap-2 text-sm text-hos-text-secondary">

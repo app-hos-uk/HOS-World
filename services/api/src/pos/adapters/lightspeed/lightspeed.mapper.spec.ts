@@ -242,5 +242,35 @@ describe('lightspeed.mapper', () => {
       expect(sale.taxAmount).toBe(13.33);
       expect(sale.items[0].taxAmount).toBe(13.33);
     });
+
+    it('maps customer_id and customer_email when the nested customer object is omitted', () => {
+      const sale = M.mapSaleFromVend(
+        {
+          id: 'sale-cid',
+          invoice_number: '11',
+          customer_id: 'cust-ls',
+          customer_email: 'till@example.com',
+          line_items: [],
+        },
+        'o1',
+      );
+      expect(sale.customer).toEqual({
+        email: 'till@example.com',
+        phone: undefined,
+        externalId: 'cust-ls',
+      });
+    });
+
+    it('reads email_address from a nested Lightspeed customer', () => {
+      const sale = M.mapSaleFromVend(
+        {
+          id: 'sale-addr',
+          customer: { id: 'cust-2', email_address: 'nested@example.com' },
+          line_items: [],
+        },
+        'o1',
+      );
+      expect(sale.customer?.email).toBe('nested@example.com');
+    });
   });
 });

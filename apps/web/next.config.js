@@ -57,6 +57,12 @@ const nextConfig = {
         destination: '/register',
         permanent: true,
       },
+      {
+        // Ship-home and older links used this path; addresses live on profile.
+        source: '/account/addresses',
+        destination: '/profile?tab=addresses&action=add',
+        permanent: false,
+      },
     ];
   },
   async headers() {

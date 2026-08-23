@@ -14,7 +14,8 @@ function makeService() {
       findUnique: jest.fn(),
     },
     store: { findUnique: jest.fn() },
-    gDPRConsentLog: { create: jest.fn().mockResolvedValue({}) },
+    gDPRConsentLog: { create: jest.fn().mockResolvedValue({}), updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
+    user: { findUnique: jest.fn().mockResolvedValue({ email: 'guest@example.com' }) },
   };
   const adapter = {
     providerName: 'lightspeed',
@@ -74,6 +75,7 @@ const closedRemoteSale = {
   currency: 'GBP',
   saleDate: new Date('2026-08-23T10:00:00.000Z'),
   items: [],
+  customer: { email: 'guest@example.com' },
 };
 
 describe('StoreShipmentService.resolveSaleForShipment', () => {
@@ -90,6 +92,7 @@ describe('StoreShipmentService.resolveSaleForShipment', () => {
       externalId: 'ls-sale',
       invoiceNumber: 'HOS-22',
       state: 'closed',
+      customer: { email: 'guest@example.com' },
       items: [{ sku: 'WAND-1', name: 'Wand', quantity: 1, externalProductId: 'prod-1' }],
     });
     salesImport.importParsedSale.mockResolvedValue({ id: 'pos-1', duplicate: false });
@@ -150,6 +153,7 @@ describe('StoreShipmentService.resolveSaleForShipment', () => {
     adapter.getSaleByInvoice.mockResolvedValue({
       externalId: 'ls-sale',
       state: 'closed',
+      customer: { email: 'guest@example.com' },
       items: [{ sku: 'FIG-1', name: 'Figure', quantity: 1, externalProductId: 'p1' }],
     });
     salesImport.importParsedSale.mockResolvedValue({ id: 'pos-old', duplicate: true });
@@ -186,6 +190,7 @@ describe('StoreShipmentService.resolveSaleForShipment', () => {
     adapter.getSaleByInvoice.mockResolvedValue({
       externalId: 'ls-sale',
       state: 'pending',
+      customer: { email: 'guest@example.com' },
       items: [],
     });
     salesImport.importParsedSale.mockResolvedValue({ id: '', duplicate: false, skipped: true });
@@ -271,6 +276,107 @@ describe('StoreShipmentService.createClaimFromTill', () => {
     expect(result.claimUrl).toContain('/ship/claim/');
   });
 
+  it('does not send a claim when the email does not match the Lightspeed customer', async () => {
+    const { service, prisma, adapter, notifications } = makeService();
+    prisma.store.findUnique.mockResolvedValue(shipmentBase.store);
+    prisma.pOSSale.findFirst.mockResolvedValue(null);
+    adapter.getSaleByInvoice.mockResolvedValue({
+      ...closedRemoteSale,
+      customer: { email: 'buyer@example.com' },
+    });
+
+    await expect(
+      service.createClaimFromTill({
+        ...claimInput,
+        email: 'houseofspellsusa@gmail.com',
+      }),
+    ).rejects.toThrow(/does not match the customer on this Lightspeed sale/);
+    expect(notifications.sendStoreShipmentClaimEmail).not.toHaveBeenCalled();
+    expect(prisma.storeShipmentRequest.create).not.toHaveBeenCalled();
+  });
+
+  it('does not send a claim when the Lightspeed sale has no customer email', async () => {
+    const { service, prisma, adapter, notifications } = makeService();
+    prisma.store.findUnique.mockResolvedValue(shipmentBase.store);
+    prisma.pOSSale.findFirst.mockResolvedValue(null);
+    adapter.getSaleByInvoice.mockResolvedValue({ ...closedRemoteSale, customer: undefined });
+
+    await expect(service.createClaimFromTill(claimInput)).rejects.toThrow(
+      /Lightspeed sale has no customer email/,
+    );
+    expect(notifications.sendStoreShipmentClaimEmail).not.toHaveBeenCalled();
+    expect(prisma.storeShipmentRequest.create).not.toHaveBeenCalled();
+  });
+
+  it('accepts the claim email when it matches the Lightspeed customer, ignoring case', async () => {
+    const { service, prisma, adapter, notifications } = makeService();
+    prisma.store.findUnique.mockResolvedValue(shipmentBase.store);
+    prisma.pOSSale.findFirst.mockResolvedValue(null);
+    adapter.getSaleByInvoice.mockResolvedValue({
+      ...closedRemoteSale,
+      customer: { email: 'Buyer@Example.com' },
+    });
+
+    const result = await service.createClaimFromTill({
+      ...claimInput,
+      email: 'buyer@example.com',
+    });
+
+    expect(result.emailQueued).toBe(true);
+    expect(notifications.sendStoreShipmentClaimEmail).toHaveBeenCalled();
+  });
+
+  it('does not send a claim when a local sale customer email does not match', async () => {
+    const { service, prisma, adapter, notifications } = makeService();
+    prisma.store.findUnique.mockResolvedValue(shipmentBase.store);
+    prisma.pOSSale.findFirst.mockResolvedValue({
+      id: 'pos-old',
+      externalSaleId: 'ls-sale',
+      externalInvoice: 'HOS-22',
+      totalAmount: 45,
+      currency: 'GBP',
+      saleDate: new Date('2026-08-23T10:00:00.000Z'),
+      status: 'PROCESSED',
+      customerEmail: 'buyer@example.com',
+    });
+    adapter.getSaleByInvoice.mockResolvedValue(null);
+
+    await expect(
+      service.createClaimFromTill({
+        ...claimInput,
+        email: 'houseofspellsusa@gmail.com',
+      }),
+    ).rejects.toThrow(/does not match the customer/);
+    expect(notifications.sendStoreShipmentClaimEmail).not.toHaveBeenCalled();
+  });
+
+  it('resends to the Lightspeed customer when a draft was previously sent to the wrong email', async () => {
+    const { service, prisma, adapter, notifications } = makeService();
+    prisma.store.findUnique.mockResolvedValue(shipmentBase.store);
+    prisma.pOSSale.findFirst.mockResolvedValue(null);
+    adapter.getSaleByInvoice.mockResolvedValue({
+      ...closedRemoteSale,
+      customer: { email: 'buyer@example.com' },
+    });
+    prisma.storeShipmentRequest.findFirst.mockResolvedValue({
+      id: 'ship-old',
+      status: 'DRAFT',
+      claimEmail: 'houseofspellsusa@gmail.com',
+      userId: null,
+    });
+    prisma.storeShipmentRequest.update.mockResolvedValue({ id: 'ship-old' });
+
+    const result = await service.createClaimFromTill({
+      ...claimInput,
+      email: 'buyer@example.com',
+    });
+
+    expect(prisma.storeShipmentRequest.update).toHaveBeenCalled();
+    expect(prisma.storeShipmentRequest.create).not.toHaveBeenCalled();
+    expect(notifications.sendStoreShipmentClaimEmail).toHaveBeenCalled();
+    expect(result.emailQueued).toBe(true);
+  });
+
   it('binds store staff to their assigned store', async () => {
     const { service } = makeService();
     await expect(
@@ -330,6 +436,7 @@ describe('StoreShipmentService.createClaimFromTill', () => {
       currency: 'GBP',
       saleDate: new Date('2026-08-23T10:00:00.000Z'),
       status: 'PROCESSED',
+      customerEmail: 'guest@example.com',
     });
     adapter.getSaleByInvoice.mockResolvedValue(null);
 
@@ -337,5 +444,119 @@ describe('StoreShipmentService.createClaimFromTill', () => {
 
     expect(result.confirmedInvoice).toMatchObject({ number: 'HOS-22', totalAmount: 45 });
     expect(notifications.sendStoreShipmentClaimEmail).toHaveBeenCalled();
+  });
+});
+
+describe('StoreShipmentService.attachUserToClaim', () => {
+  const claimRow = {
+    id: 'ship-1',
+    storeId: 'store-1',
+    invoiceNumber: 'HOS-22',
+    claimEmail: 'houseofspellsusa@gmail.com',
+    posExternalSaleId: 'ls-sale',
+    claimTokenExpiresAt: new Date(Date.now() + 86400000),
+    metadata: {},
+    store: shipmentBase.store,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('does not continue shipping when the signed-in email is not the Lightspeed customer', async () => {
+    const { service, prisma, adapter } = makeService();
+    prisma.storeShipmentRequest.findUnique.mockResolvedValue(claimRow);
+    prisma.pOSSale.findFirst.mockResolvedValue(null);
+    adapter.getSaleById.mockResolvedValue({
+      ...closedRemoteSale,
+      customer: { email: 'buyer@example.com' },
+    });
+
+    await expect(
+      service.attachUserToClaim('token', 'user-wrong', 'houseofspellsusa@gmail.com'),
+    ).rejects.toThrow(/does not match the customer on this Lightspeed sale/);
+    expect(prisma.storeShipmentRequest.update).not.toHaveBeenCalled();
+  });
+
+  it('continues shipping when the signed-in email matches the Lightspeed customer', async () => {
+    const { service, prisma, adapter, skuCustoms, salesImport } = makeService();
+    prisma.storeShipmentRequest.findUnique.mockResolvedValue({
+      ...claimRow,
+      claimEmail: 'buyer@example.com',
+      userId: null,
+      posSale: null,
+    });
+    prisma.store.findUnique.mockResolvedValue(shipmentBase.store);
+    prisma.pOSSale.findFirst.mockResolvedValue(null);
+    prisma.user.findUnique.mockResolvedValue({ email: 'buyer@example.com' });
+    adapter.getSaleById.mockResolvedValue({
+      ...closedRemoteSale,
+      customer: { email: 'buyer@example.com' },
+      items: [{ sku: 'WAND-1', name: 'Wand', quantity: 1, externalProductId: 'prod-1' }],
+    });
+    adapter.getSaleByInvoice.mockResolvedValue({
+      ...closedRemoteSale,
+      customer: { email: 'buyer@example.com' },
+      items: [{ sku: 'WAND-1', name: 'Wand', quantity: 1, externalProductId: 'prod-1' }],
+    });
+    salesImport.importParsedSale.mockResolvedValue({ id: 'pos-1', duplicate: false });
+    prisma.pOSSale.findUnique.mockResolvedValue({
+      id: 'pos-1',
+      status: 'PROCESSED',
+      externalSaleId: 'ls-sale',
+      items: [{ sku: 'WAND-1', productId: null, name: 'Wand', quantity: 1, externalProductId: 'prod-1' }],
+    });
+    skuCustoms.enrichSaleItems.mockResolvedValue({
+      allReady: false,
+      anyBlocked: false,
+      results: [{ sku: 'WAND-1', status: 'PENDING' }],
+    });
+
+    const result = await service.attachUserToClaim('token', 'user-1', 'buyer@example.com');
+    expect(result).toMatchObject({ status: 'DRAFT' });
+    expect(prisma.storeShipmentRequest.update).toHaveBeenCalled();
+  });
+});
+
+describe('StoreShipmentService.getClaimContext', () => {
+  const claimRow = {
+    id: 'ship-1',
+    storeId: 'store-1',
+    invoiceNumber: 'HOS-22',
+    claimEmail: 'houseofspellsusa@gmail.com',
+    posExternalSaleId: 'ls-sale',
+    claimTokenExpiresAt: new Date(Date.now() + 86400000),
+    metadata: {},
+    store: shipmentBase.store,
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('marks a signed-in email as not matching the Lightspeed customer', async () => {
+    const { service, prisma, adapter } = makeService();
+    prisma.storeShipmentRequest.findUnique.mockResolvedValue(claimRow);
+    prisma.pOSSale.findFirst.mockResolvedValue(null);
+    adapter.getSaleById.mockResolvedValue({
+      ...closedRemoteSale,
+      customer: { email: 'buyer@example.com' },
+    });
+
+    const result = await service.getClaimContext('token', 'houseofspellsusa@gmail.com');
+    expect(result.emailMatchesInvoice).toBe(false);
+  });
+
+  it('marks a signed-in email as matching the Lightspeed customer', async () => {
+    const { service, prisma, adapter } = makeService();
+    prisma.storeShipmentRequest.findUnique.mockResolvedValue(claimRow);
+    prisma.pOSSale.findFirst.mockResolvedValue(null);
+    adapter.getSaleById.mockResolvedValue({
+      ...closedRemoteSale,
+      customer: { email: 'buyer@example.com' },
+    });
+
+    const result = await service.getClaimContext('token', 'buyer@example.com');
+    expect(result.emailMatchesInvoice).toBe(true);
   });
 });

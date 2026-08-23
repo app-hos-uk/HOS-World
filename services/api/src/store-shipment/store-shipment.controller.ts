@@ -13,6 +13,7 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../common/guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
@@ -64,10 +65,14 @@ export class StoreShipmentController {
   }
 
   @Public()
+  @UseGuards(OptionalJwtAuthGuard)
   @Get('claim/:token')
   @ApiOperation({ summary: 'Public claim page context' })
-  async claimContext(@Param('token') token: string): Promise<ApiResponse<unknown>> {
-    const data = await this.shipments.getClaimContext(token);
+  async claimContext(
+    @Param('token') token: string,
+    @Req() req: { user?: { email?: string } },
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.shipments.getClaimContext(token, req.user?.email);
     return { data, message: 'OK' };
   }
 
