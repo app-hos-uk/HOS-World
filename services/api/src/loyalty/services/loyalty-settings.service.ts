@@ -183,23 +183,26 @@ export class LoyaltySettingsService {
       }
     }
     const base = await this.envDefaults();
-    let resolved: ResolvedSettings = { settings: base, source: 'env' };
     try {
       const row = await this.prisma.config.findFirst({
         where: { level: 'PLATFORM', levelId: 'PLATFORM', key: LOYALTY_SETTINGS_CONFIG_KEY },
       });
+      let resolved: ResolvedSettings = { settings: base, source: 'env' };
       if (row?.value && typeof row.value === 'object' && !Array.isArray(row.value)) {
         resolved = {
           settings: this.normalize(row.value as Partial<LoyaltyProgrammeSettings>, base),
           source: 'database',
         };
       }
+      this.localCache = { at: Date.now(), value: resolved };
+      await this.writeShared(resolved);
+      return resolved;
     } catch (e) {
       this.logger.warn(`Loyalty settings DB read failed: ${(e as Error).message}`);
+      // Do not cache env fallbacks: a blip must not pin earn/redeem rates across instances.
+      if (this.localCache) return this.localCache.value;
+      return { settings: base, source: 'env' };
     }
-    this.localCache = { at: Date.now(), value: resolved };
-    await this.writeShared(resolved);
-    return resolved;
   }
 
   async update(

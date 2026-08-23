@@ -47,7 +47,12 @@ export interface POSAdapter {
   getSaleByInvoice?(params: {
     invoiceNumber: string;
     outletId?: string;
+    /** Default true. Till invoice checks skip product SKU hydration. */
+    hydrateProducts?: boolean;
   }): Promise<POSSale | null>;
+
+  /** Fetch one sale by Lightspeed sale id. */
+  getSaleById?(saleId: string, options?: { hydrateProducts?: boolean }): Promise<POSSale | null>;
 
   validateWebhook(payload: unknown, signature: string, secret: string): boolean;
   parseWebhookSale(payload: unknown): POSSale;

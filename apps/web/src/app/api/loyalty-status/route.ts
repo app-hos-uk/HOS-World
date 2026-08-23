@@ -15,12 +15,12 @@ export async function GET() {
       });
     }
   } catch {
-    // API unreachable — fall back to env var
+    // API unreachable — fall back to env var without caching the fallback.
   }
 
   const fallback = process.env.NEXT_PUBLIC_LOYALTY_ENABLED !== 'false';
   return NextResponse.json(
     { enabled: fallback },
-    { headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30' } },
+    { headers: { 'Cache-Control': 'no-store' } },
   );
 }

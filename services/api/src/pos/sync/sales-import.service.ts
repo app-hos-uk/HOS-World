@@ -47,6 +47,14 @@ function extractCardNumberFromMetadata(rawPayload: unknown): string | null {
   return String(card).trim();
 }
 
+export function posSaleItemsNeedRefresh(items: Array<{ sku?: string | null }>): boolean {
+  if (!items.length) return true;
+  return items.some((i) => {
+    const sku = i.sku?.trim() || '';
+    return !sku || sku.startsWith('ls:');
+  });
+}
+
 @Injectable()
 export class PosSalesImportService {
   private readonly logger = new Logger(PosSalesImportService.name);
@@ -282,6 +290,7 @@ export class PosSalesImportService {
     storeId: string,
     provider: string,
     parsed: ParsedSale,
+    options?: { refreshItems?: boolean },
   ): Promise<{ id: string; duplicate: boolean; skipped?: boolean }> {
     if (isVoidedSale(parsed)) {
       const existing = await this.prisma.pOSSale.findUnique({
@@ -325,8 +334,24 @@ export class PosSalesImportService {
           externalSaleId: parsed.externalId,
         },
       },
+      include: { items: true },
     });
     if (existing) {
+      if (
+        options?.refreshItems &&
+        posSaleItemsNeedRefresh(existing.items ?? []) &&
+        parsed.items.length
+      ) {
+        const itemCreates = await this.buildSaleItemCreates(storeId, provider, parsed);
+        await this.prisma.pOSSale.update({
+          where: { id: existing.id },
+          data: {
+            externalInvoice: parsed.invoiceNumber ?? existing.externalInvoice,
+            rawPayload: parsed.rawPayload as object,
+            items: { deleteMany: {}, create: itemCreates },
+          },
+        });
+      }
       // Retry earn if a prior import left the sale IMPORTED (earn failed).
       if (existing.status === 'IMPORTED') {
         try {
@@ -346,46 +371,7 @@ export class PosSalesImportService {
 
     const customerEmail: string | null = parsed.customer?.email ?? null;
     const customerId = await this.resolveCustomerId(storeId, provider, parsed);
-
-    const itemCreates = await Promise.all(
-      parsed.items.map(async (it) => {
-        let productId: string | null = null;
-        if (it.externalProductId) {
-          const map = await this.prisma.externalEntityMapping.findFirst({
-            where: {
-              provider,
-              entityType: 'PRODUCT',
-              externalId: it.externalProductId,
-              storeId,
-            },
-          });
-          productId = map?.internalId ?? null;
-        }
-        if (!productId && it.sku) {
-          const p = await this.prisma.product.findFirst({
-            where: { sku: it.sku },
-            select: { id: true },
-          });
-          productId = p?.id ?? null;
-        }
-        const qty = Number.isFinite(it.quantity) ? Math.trunc(it.quantity) : 0;
-        if (!Number.isFinite(it.quantity) || qty === 0) {
-          throw new Error(
-            `Invalid quantity for POS sale ${parsed.externalId} item ${it.externalProductId}`,
-          );
-        }
-        return {
-          productId,
-          externalProductId: it.externalProductId || null,
-          sku: it.sku ?? null,
-          name: it.name,
-          quantity: qty,
-          unitPrice: new Decimal(it.unitPrice),
-          totalPrice: new Decimal(it.totalPrice),
-          taxAmount: new Decimal(it.taxAmount),
-        };
-      }),
-    );
+    const itemCreates = await this.buildSaleItemCreates(storeId, provider, parsed);
 
     const sale = await this.prisma.pOSSale.create({
       data: {
@@ -422,6 +408,49 @@ export class PosSalesImportService {
     }
 
     return { id: sale.id, duplicate: false };
+  }
+
+  private async buildSaleItemCreates(storeId: string, provider: string, parsed: ParsedSale) {
+    return Promise.all(
+      parsed.items.map(async (it) => {
+        let productId: string | null = null;
+        if (it.externalProductId) {
+          const map = await this.prisma.externalEntityMapping.findFirst({
+            where: {
+              provider,
+              entityType: 'PRODUCT',
+              externalId: it.externalProductId,
+              storeId,
+            },
+          });
+          productId = map?.internalId ?? null;
+        }
+        const catalogSku = it.sku && !it.sku.startsWith('ls:') ? it.sku : null;
+        if (!productId && catalogSku) {
+          const p = await this.prisma.product.findFirst({
+            where: { sku: catalogSku },
+            select: { id: true },
+          });
+          productId = p?.id ?? null;
+        }
+        const qty = Number.isFinite(it.quantity) ? Math.trunc(it.quantity) : 0;
+        if (!Number.isFinite(it.quantity) || qty === 0) {
+          throw new Error(
+            `Invalid quantity for POS sale ${parsed.externalId} item ${it.externalProductId}`,
+          );
+        }
+        return {
+          productId,
+          externalProductId: it.externalProductId || null,
+          sku: it.sku ?? null,
+          name: it.name,
+          quantity: qty,
+          unitPrice: new Decimal(it.unitPrice),
+          totalPrice: new Decimal(it.totalPrice),
+          taxAmount: new Decimal(it.taxAmount),
+        };
+      }),
+    );
   }
 
   async pollStoreSales(storeId: string, _sinceHours = 24): Promise<number> {

@@ -124,23 +124,33 @@ export class SkuCustomsService {
     return meta.restrictedCountries.some((c) => c.trim().toUpperCase() === dest);
   }
 
-  /** POS line SKU, or catalog product SKU when the till line omitted it. */
+  /** POS line SKU, catalog product SKU, or Lightspeed product id fallback. */
   async resolveLineSku(item: {
     sku?: string | null;
     productId?: string | null;
+    externalProductId?: string | null;
   }): Promise<string | null> {
     const fromLine = item.sku?.trim() || null;
     if (fromLine) return fromLine;
-    if (!item.productId) return null;
-    const product = await this.prisma.product.findUnique({
-      where: { id: item.productId },
-      select: { sku: true },
-    });
-    return product?.sku?.trim() || null;
+    if (item.productId) {
+      const product = await this.prisma.product.findUnique({
+        where: { id: item.productId },
+        select: { sku: true },
+      });
+      const fromCatalog = product?.sku?.trim() || null;
+      if (fromCatalog) return fromCatalog;
+    }
+    const fromPos = item.externalProductId?.trim() || null;
+    return fromPos ? `ls:${fromPos}` : null;
   }
 
   async enrichSaleItems(
-    items: Array<{ sku?: string | null; productId?: string | null; name?: string }>,
+    items: Array<{
+      sku?: string | null;
+      productId?: string | null;
+      name?: string;
+      externalProductId?: string | null;
+    }>,
   ) {
     const results = [];
     let allReady = true;

@@ -95,6 +95,39 @@ describe('lightspeed.mapper', () => {
       });
     });
 
+    it('maps API 2.0 nested product/pricing/tax without treating line-item id as product id', () => {
+      const sale = M.mapSaleFromVend(
+        {
+          id: 's-nested',
+          invoice_number: 'HOS-22',
+          state: 'closed',
+          outlet_id: 'o1',
+          totals: { total_price: 44, total_tax: 6.6 },
+          line_items: [
+            {
+              id: 'line-uuid',
+              product: { id: 'prod-uuid' },
+              quantity: 2,
+              pricing: { price: '22', total: '44' },
+              tax: { id: 'tax-1', amount: '3.3', total: '6.6' },
+            },
+          ],
+        },
+        'o1',
+      );
+
+      expect(sale.items).toHaveLength(1);
+      expect(sale.items[0]).toMatchObject({
+        externalProductId: 'prod-uuid',
+        sku: 'ls:prod-uuid',
+        quantity: 2,
+        unitPrice: 22,
+        totalPrice: 44,
+        taxAmount: 6.6,
+      });
+      expect(sale.items[0].externalProductId).not.toBe('line-uuid');
+    });
+
     it('maps full API 2.0 sale with line_items and top-level totals', () => {
       const sale = M.mapSaleFromVend(
         {

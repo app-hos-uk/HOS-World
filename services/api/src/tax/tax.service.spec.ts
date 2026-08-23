@@ -21,7 +21,7 @@ describe('TaxService calculateTax origin propagation', () => {
       taxRate: { findFirst: jest.fn().mockResolvedValue(null) },
     };
     const cache = {
-      get: jest.fn().mockResolvedValue(null),
+      get: jest.fn().mockResolvedValue(undefined),
       set: jest.fn().mockResolvedValue(undefined),
       delPattern: jest.fn().mockResolvedValue(undefined),
     };
@@ -100,5 +100,22 @@ describe('TaxService calculateTax origin propagation', () => {
       rate: 0,
       isInclusive: false,
     });
+  });
+
+  it('caches a no-zone result so the next lookup does not hit the database', async () => {
+    const { service, cache, prisma } = createService({
+      taxOrigin: null,
+      hasActiveProvider: false,
+    });
+
+    const first = await service.findTaxZoneForLocation('XX');
+    expect(first).toBeNull();
+    expect(cache.set).toHaveBeenCalledWith('taxzone:XX:::', null, 300);
+
+    cache.get.mockResolvedValueOnce(null);
+    prisma.taxZone.findMany.mockClear();
+    const second = await service.findTaxZoneForLocation('XX');
+    expect(second).toBeNull();
+    expect(prisma.taxZone.findMany).not.toHaveBeenCalled();
   });
 });

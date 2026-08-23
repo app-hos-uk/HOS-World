@@ -29,6 +29,9 @@ describe('SkuCustomsService.enrichSaleItems', () => {
     expect(await service.resolveLineSku({ sku: null, productId: 'prod-1' })).toBe('FIG-1');
     prisma.product.findUnique.mockResolvedValue({ sku: null });
     expect(await service.resolveLineSku({ sku: '  ', productId: 'prod-2' })).toBeNull();
+    expect(await service.resolveLineSku({ sku: null, externalProductId: 'ls-prod' })).toBe(
+      'ls:ls-prod',
+    );
   });
 
   it('falls back to the catalog product SKU when the POS line has none', async () => {

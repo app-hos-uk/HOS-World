@@ -297,4 +297,37 @@ describe('PlatformRegionService', () => {
 
     await expect(service.assertTaxOriginConfigured(true)).resolves.toBeUndefined();
   });
+
+  it('does not cache env fallbacks when the database read fails', async () => {
+    const prisma = createPrisma([]);
+    prisma.config.findMany.mockRejectedValue(new Error('db down'));
+    const sharedCache = createSharedCache();
+    const service = createService(prisma, sharedCache, { PLATFORM_CURRENCY: 'GBP' }, 5_000);
+
+    const region = await service.getRegion();
+    expect(region.currency).toBe('GBP');
+    expect(sharedCache.store.has(PLATFORM_REGION_CACHE_KEY)).toBe(false);
+
+    await service.getRegion();
+    expect(prisma.config.findMany).toHaveBeenCalledTimes(2);
+  });
+
+  it('serves last-good region when a later database read fails', async () => {
+    const prisma = createPrisma([{ key: PLATFORM_CURRENCY_CONFIG_KEY, value: 'CAD' }]);
+    const sharedCache = createSharedCache();
+    const service = createService(prisma, sharedCache, { PLATFORM_CURRENCY: 'GBP' }, 5_000);
+
+    expect((await service.getRegion()).currency).toBe('CAD');
+
+    prisma.config.findMany.mockRejectedValue(new Error('db down'));
+    sharedCache.store.clear();
+    const localCache = (service as any).localCache as Map<string, { at: number; value: unknown }>;
+    const prev = localCache.get('_platform');
+    localCache.set('_platform', { at: 0, value: prev!.value });
+    sharedCache.set.mockClear();
+
+    const again = await service.getRegion();
+    expect(again.currency).toBe('CAD');
+    expect(sharedCache.set).not.toHaveBeenCalled();
+  });
 });
