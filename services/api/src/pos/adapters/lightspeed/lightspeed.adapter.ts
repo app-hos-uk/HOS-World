@@ -410,6 +410,42 @@ export class LightspeedAdapter implements POSAdapter {
     };
   }
 
+  /**
+   * GET /sales often has customer_id without email. Till confirmation needs
+   * the Lightspeed customer email so staff cannot send the claim to someone else.
+   */
+  private async hydrateSaleCustomer(sale: POSSale): Promise<POSSale> {
+    if (sale.customer?.email) return sale;
+    const customerId = sale.customer?.externalId?.trim();
+    if (!customerId) return sale;
+    try {
+      const { data } = await this.client.request<unknown>(
+        'GET',
+        `/customers/${encodeURIComponent(customerId)}`,
+      );
+      const row = this.unwrapSaleRow(data);
+      if (!row) return sale;
+      const email = M.emailFromVendCustomer(row);
+      const phone = row.phone != null && String(row.phone).trim()
+        ? String(row.phone).trim()
+        : row.mobile != null && String(row.mobile).trim()
+          ? String(row.mobile).trim()
+          : sale.customer?.phone;
+      if (!email && !phone) return sale;
+      return {
+        ...sale,
+        customer: {
+          ...sale.customer,
+          externalId: customerId,
+          email: email || sale.customer?.email,
+          phone,
+        },
+      };
+    } catch {
+      return sale;
+    }
+  }
+
   async getSaleById(
     saleId: string,
     options?: { hydrateProducts?: boolean },
@@ -425,8 +461,9 @@ export class LightspeedAdapter implements POSAdapter {
         String(row.outlet_id ?? ''),
         this.defaultCurrency,
       );
-      if (options?.hydrateProducts === false) return mapped;
-      return this.hydrateSaleLineSkus(mapped);
+      const withCustomer = await this.hydrateSaleCustomer(mapped);
+      if (options?.hydrateProducts === false) return withCustomer;
+      return this.hydrateSaleLineSkus(withCustomer);
     } catch (err) {
       if (this.isNotFound(err)) return null;
       throw err;

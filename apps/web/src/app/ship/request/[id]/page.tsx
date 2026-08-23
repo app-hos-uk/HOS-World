@@ -24,8 +24,8 @@ type Rate = {
 
 type Address = {
   id: string;
-  line1: string;
-  line2?: string;
+  street: string;
+  addressLine2?: string;
   city: string;
   state?: string;
   postalCode: string;
@@ -297,7 +297,7 @@ export default function ShipRequestPage() {
                   <option value="">Select an address</option>
                   {addresses.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.line1}, {a.city} {a.postalCode}, {a.country}
+                      {a.street}, {a.city} {a.postalCode}, {a.country}
                     </option>
                   ))}
                 </select>
@@ -309,11 +309,20 @@ export default function ShipRequestPage() {
                 >
                   Use this address
                 </button>
+                <Link
+                  href={`/account/addresses?action=add&returnUrl=${encodeURIComponent(`/ship/request/${id}`)}`}
+                  className="block text-center text-sm text-violet-400 underline"
+                >
+                  Add a new address
+                </Link>
               </>
             ) : (
               <div className="text-sm text-stone-400">
                 <p>You have no saved addresses.</p>
-                <Link href="/account/addresses" className="text-violet-400 underline">
+                <Link
+                  href={`/account/addresses?action=add&returnUrl=${encodeURIComponent(`/ship/request/${id}`)}`}
+                  className="text-violet-400 underline"
+                >
                   Add an address first
                 </Link>
               </div>

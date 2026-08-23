@@ -161,6 +161,49 @@ export function saleMatchesInvoice(payload: Record<string, unknown>, invoiceNumb
   return candidates.some((c) => c != null && String(c).trim().toLowerCase() === target);
 }
 
+function resolveSaleCustomer(payload: Record<string, unknown>): POSSale['customer'] {
+  const nested = asRecord(payload.customer);
+  const contact = asRecord(nested?.contact) ?? asRecord(payload.contact);
+  const email = firstNonEmptyString(
+    nested ? emailFromVendCustomer(nested) : undefined,
+    contact?.email,
+    payload.customer_email,
+  );
+  const phone = firstNonEmptyString(
+    nested?.phone,
+    nested?.mobile,
+    contact?.phone,
+    contact?.mobile,
+  );
+  const externalId = firstNonEmptyString(
+    nested?.id,
+    payload.customer_id,
+    typeof payload.customer === 'string' ? payload.customer : undefined,
+  );
+  if (!email && !phone && !externalId) return undefined;
+  return { email, phone, externalId };
+}
+
+/** Lightspeed customer rows use several email keys depending on API version. */
+export function emailFromVendCustomer(row: Record<string, unknown>): string | undefined {
+  const contact = asRecord(row.contact);
+  const emails = row.emails;
+  const listed = Array.isArray(emails)
+    ? firstNonEmptyString(
+        ...emails.map((entry) =>
+          typeof entry === 'string' ? entry : asRecord(entry)?.email,
+        ),
+      )
+    : undefined;
+  return firstNonEmptyString(
+    row.email,
+    row.email_address,
+    row.customer_email,
+    contact?.email,
+    listed,
+  );
+}
+
 function resolveLineItems(payload: Record<string, unknown>): Record<string, unknown>[] {
   const registerProducts = payload.register_sale_products;
   if (Array.isArray(registerProducts) && registerProducts.length > 0) {
@@ -186,14 +229,7 @@ export function mapSaleFromVend(
       ? (payload.totals as Record<string, unknown>)
       : undefined;
 
-  const customer = payload.customer as Record<string, unknown> | undefined;
-  const custEmail = customer?.email ? String(customer.email) : undefined;
-  const custPhone = customer?.phone
-    ? String(customer.phone)
-    : customer?.mobile
-      ? String(customer.mobile)
-      : undefined;
-  const custId = customer?.id ? String(customer.id) : undefined;
+  const customer = resolveSaleCustomer(payload);
 
   const saleDateRaw = payload.sale_date ?? payload.created_at;
   const state = payload.state
@@ -213,10 +249,7 @@ export function mapSaleFromVend(
         : undefined,
     saleDate: saleDateRaw ? new Date(String(saleDateRaw)) : new Date(),
     outletId: String(payload.outlet_id ?? outletId),
-    customer:
-      custEmail || custPhone || custId
-        ? { email: custEmail, phone: custPhone, externalId: custId }
-        : undefined,
+    customer,
     items,
     // Prefer goods value (total_price) over tendered (total_payment) for loyalty/inventory.
     totalAmount: firstNumber(

@@ -379,8 +379,11 @@ function ProfilePageContent() {
       fetchAddresses();
 
       if (returnUrl) {
+        const continueTo = returnUrl.startsWith('/ship/') ? 'shipping' : 'checkout';
         toast.success(
-          editingAddress ? 'Address updated! Returning to checkout...' : 'Address added! Returning to checkout...',
+          editingAddress
+            ? `Address updated! Returning to ${continueTo}...`
+            : `Address added! Returning to ${continueTo}...`,
           { id: 'address-save' },
         );
         setTimeout(() => router.push(returnUrl), 1000);
@@ -764,13 +767,15 @@ function ProfilePageContent() {
                 {returnUrl && (
                   <div className="bg-hos-gold/10 border border-hos-border-accent rounded-lg p-4 flex items-center justify-between">
                     <p className="text-sm text-hos-gold">
-                      Add or select a shipping address, then continue your checkout.
+                      {returnUrl.startsWith('/ship/')
+                        ? 'Add a shipping address, then continue your shipment.'
+                        : 'Add or select a shipping address, then continue your checkout.'}
                     </p>
                     <button
                       onClick={() => router.push(returnUrl)}
                       className="ml-4 px-4 py-2 bg-hos-gold text-[#1a1406] text-sm font-medium rounded-lg hover:bg-hos-gold-hover transition-colors whitespace-nowrap"
                     >
-                      Return to Checkout
+                      {returnUrl.startsWith('/ship/') ? 'Continue shipping' : 'Return to Checkout'}
                     </button>
                   </div>
                 )}

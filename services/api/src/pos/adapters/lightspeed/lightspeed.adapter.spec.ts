@@ -382,6 +382,39 @@ describe('LightspeedAdapter', () => {
       expect(sale?.items[0].sku).toBe('ls:prod-1');
     });
 
+    it('loads the Lightspeed customer email when the sale only has customer_id', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request
+        .mockResolvedValueOnce({
+          status: 200,
+          data: { data: [{ id: 'sale-uuid', invoice_number: 'HOS-22' }] },
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          data: {
+            data: {
+              id: 'sale-uuid',
+              invoice_number: 'HOS-22',
+              state: 'closed',
+              customer_id: 'cust-1',
+              line_items: [],
+            },
+          },
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          data: { data: { id: 'cust-1', email: 'buyer@example.com' } },
+        });
+
+      const sale = await adapter.getSaleByInvoice({
+        invoiceNumber: 'HOS-22',
+        hydrateProducts: false,
+      });
+      expect(request.mock.calls[2][1]).toBe('/customers/cust-1');
+      expect(sale?.customer?.email).toBe('buyer@example.com');
+    });
+
     it('does not accept a single search hit unless the invoice matches exactly', async () => {
       const adapter = new LightspeedAdapter(creds);
       const request = mockClientRequest(adapter);

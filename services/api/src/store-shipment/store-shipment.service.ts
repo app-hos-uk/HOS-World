@@ -103,6 +103,9 @@ export class StoreShipmentService {
       store,
     });
 
+    const saleEmail = this.normalizeEmail(confirmed.customerEmail);
+    this.assertEmailMatchesSaleCustomer(email, saleEmail, 'till');
+
     const existing = await this.prisma.storeShipmentRequest.findFirst({
       where: {
         storeId,
@@ -130,7 +133,8 @@ export class StoreShipmentService {
       existing &&
       RESENDABLE_SHIPMENT_STATUSES.includes(existing.status as (typeof RESENDABLE_SHIPMENT_STATUSES)[number]) &&
       existing.claimEmail &&
-      existing.claimEmail !== email
+      existing.claimEmail !== email &&
+      email !== saleEmail
     ) {
       throw new BadRequestException(
         'This invoice already has a shipping claim for a different email.',
@@ -156,6 +160,7 @@ export class StoreShipmentService {
       createdByStaff: params.staffUserId ?? null,
       invoiceValidatedAt: new Date().toISOString(),
       lightspeedSaleId: confirmed.externalId,
+      invoiceCustomerEmail: saleEmail,
     } as object;
 
     const shipment =
@@ -233,25 +238,43 @@ export class StoreShipmentService {
     return row;
   }
 
-  /** Public claim page bootstrap. */
-  async getClaimContext(token: string) {
+  /** Public claim page bootstrap. Optionally checks a signed-in email against Lightspeed. */
+  async getClaimContext(token: string, userEmail?: string) {
     const row = await this.resolveClaim(token);
+    let emailMatchesInvoice: boolean | null = null;
+    if (userEmail) {
+      const saleEmail = await this.resolveInvoiceCustomerEmail({
+        storeId: row.storeId,
+        invoiceNumber: row.invoiceNumber || '',
+        store: row.store,
+        posExternalSaleId: row.posExternalSaleId,
+        metadata: row.metadata,
+      });
+      const signedIn = this.normalizeEmail(userEmail);
+      emailMatchesInvoice = Boolean(saleEmail) && signedIn === saleEmail;
+    }
     return {
       shipmentId: row.id,
       invoiceNumber: row.invoiceNumber,
       email: row.claimEmail,
       status: row.status,
       storeName: row.store.name,
+      emailMatchesInvoice,
     };
   }
 
-  /** Verify email matches claim and attach user after registration/login. */
+  /** Verify email matches the Lightspeed invoice customer, then attach the user. */
   async attachUserToClaim(token: string, userId: string, userEmail: string) {
     const row = await this.resolveClaim(token);
-    const email = userEmail.trim().toLowerCase();
-    if (row.claimEmail && row.claimEmail !== email) {
-      throw new ForbiddenException('Email does not match this shipping claim');
-    }
+    const email = this.normalizeEmail(userEmail);
+    const saleEmail = await this.resolveInvoiceCustomerEmail({
+      storeId: row.storeId,
+      invoiceNumber: row.invoiceNumber || '',
+      store: row.store,
+      posExternalSaleId: row.posExternalSaleId,
+      metadata: row.metadata,
+    });
+    this.assertEmailMatchesSaleCustomer(email, saleEmail, 'claim');
 
     await this.prisma.storeShipmentRequest.update({
       where: { id: row.id },
@@ -263,7 +286,7 @@ export class StoreShipmentService {
       data: { userId },
     });
 
-    return this.resolveSaleForShipment(row.id);
+    return this.resolveSaleForShipment(row.id, userId);
   }
 
   private adapterFromStore(
@@ -301,6 +324,94 @@ export class StoreShipmentService {
     return adapter;
   }
 
+  private normalizeEmail(email?: string | null): string {
+    return (email ?? '').trim().toLowerCase();
+  }
+
+  private metadataCustomerEmail(metadata: unknown): string | undefined {
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return undefined;
+    const value = (metadata as { invoiceCustomerEmail?: unknown }).invoiceCustomerEmail;
+    return typeof value === 'string' ? value : undefined;
+  }
+
+  private assertEmailMatchesSaleCustomer(
+    enteredEmail: string,
+    saleEmail: string,
+    mode: 'till' | 'claim',
+  ): void {
+    if (!saleEmail) {
+      const message =
+        'This Lightspeed sale has no customer email. Add the customer on the sale, then try again.';
+      throw mode === 'till' ? new BadRequestException(message) : new ForbiddenException(message);
+    }
+    if (saleEmail !== enteredEmail) {
+      const message =
+        'This email does not match the customer on this Lightspeed sale. Use the email on the receipt.';
+      throw mode === 'till' ? new BadRequestException(message) : new ForbiddenException(message);
+    }
+  }
+
+  private async resolveInvoiceCustomerEmail(params: {
+    storeId: string;
+    invoiceNumber: string;
+    store: {
+      externalStoreId?: string | null;
+      posConnection?: {
+        isActive: boolean;
+        credentials: string | null;
+        provider: string;
+        externalOutletId?: string | null;
+      } | null;
+    };
+    posExternalSaleId?: string | null;
+    metadata?: unknown;
+  }): Promise<string> {
+    const snapshot = this.normalizeEmail(this.metadataCustomerEmail(params.metadata));
+    const local = await this.prisma.pOSSale.findFirst({
+      where: {
+        storeId: params.storeId,
+        OR: [
+          { externalInvoice: { equals: params.invoiceNumber, mode: 'insensitive' } },
+          { externalSaleId: params.invoiceNumber },
+          ...(params.posExternalSaleId ? [{ externalSaleId: params.posExternalSaleId }] : []),
+        ],
+      },
+      select: { customerEmail: true },
+    });
+    const localEmail = this.normalizeEmail(local?.customerEmail);
+
+    const adapter = this.adapterFromStore(params.store, Date.now() + LIGHTSPEED_LOOKUP_BUDGET_MS);
+    if (adapter) {
+      try {
+        const creds = this.encryption.decryptJson<Record<string, unknown>>(
+          params.store.posConnection!.credentials as string,
+        );
+        await adapter.authenticate(creds);
+        const outletId =
+          params.store.posConnection?.externalOutletId || params.store.externalStoreId || undefined;
+        let remote: POSSale | null = null;
+        if (params.posExternalSaleId && adapter.getSaleById) {
+          remote = await adapter.getSaleById(params.posExternalSaleId, { hydrateProducts: false });
+        }
+        if (!remote && adapter.getSaleByInvoice && params.invoiceNumber) {
+          remote = await adapter.getSaleByInvoice({
+            invoiceNumber: params.invoiceNumber,
+            outletId,
+            hydrateProducts: false,
+          });
+        }
+        const live = this.normalizeEmail(remote?.customer?.email);
+        if (live) return live;
+      } catch (e) {
+        this.logger.warn(
+          `Invoice customer email lookup failed: ${(e as Error).message}`,
+        );
+      }
+    }
+
+    return snapshot || localEmail;
+  }
+
   /**
    * Confirm the till invoice exists and is a completed Lightspeed sale.
    * Does not import line items — product details wait until the customer continues.
@@ -324,6 +435,7 @@ export class StoreShipmentService {
     currency: string;
     saleDate: Date;
     localSaleId?: string;
+    customerEmail?: string;
   }> {
     const invoice = params.invoiceNumber;
     const local = await this.prisma.pOSSale.findFirst({
@@ -384,6 +496,7 @@ export class StoreShipmentService {
         currency: remote.currency,
         saleDate: remote.saleDate,
         localSaleId: local?.externalSaleId === remote.externalId ? local.id : undefined,
+        customerEmail: remote.customer?.email || local?.customerEmail || undefined,
       };
     }
 
@@ -401,6 +514,7 @@ export class StoreShipmentService {
         currency: local.currency,
         saleDate: local.saleDate,
         localSaleId: local.id,
+        customerEmail: local.customerEmail || undefined,
       };
     }
 
@@ -418,6 +532,20 @@ export class StoreShipmentService {
     if (!shipment) throw new NotFoundException('Shipment not found');
     if (userId && shipment.userId && shipment.userId !== userId) {
       throw new ForbiddenException('Not your shipment');
+    }
+    if (userId) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+      });
+      const saleEmail = await this.resolveInvoiceCustomerEmail({
+        storeId: shipment.storeId,
+        invoiceNumber: shipment.invoiceNumber || '',
+        store: shipment.store,
+        posExternalSaleId: shipment.posExternalSaleId,
+        metadata: shipment.metadata,
+      });
+      this.assertEmailMatchesSaleCustomer(this.normalizeEmail(user?.email), saleEmail, 'claim');
     }
 
     const invoice = shipment.invoiceNumber?.trim();
