@@ -533,6 +533,54 @@ describe('LightspeedAdapter', () => {
         }),
       ).resolves.toBeNull();
     });
+
+    it('does not accept a search hit with no outlet when the full sale cannot be loaded', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request
+        .mockResolvedValueOnce({
+          status: 200,
+          data: { data: [{ id: 'sale-uuid', invoice_number: 'HOS-22' }] },
+        })
+        .mockRejectedValueOnce(new Error('Lightspeed API 404: not found'));
+
+      await expect(
+        adapter.getSaleByInvoice({
+          invoiceNumber: 'HOS-22',
+          outletId: 'out-1',
+          hydrateProducts: false,
+        }),
+      ).resolves.toBeNull();
+    });
+
+    it('rejects a UUID sale that has no outlet when an outlet is required', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request
+        .mockResolvedValueOnce({
+          status: 200,
+          data: {
+            data: {
+              id: 'ac1b9419-ce84-4eff-91de-6438ed650e80',
+              invoice_number: '99',
+              state: 'closed',
+              line_items: [],
+            },
+          },
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          data: { data: [] },
+        });
+
+      await expect(
+        adapter.getSaleByInvoice({
+          invoiceNumber: 'ac1b9419-ce84-4eff-91de-6438ed650e80',
+          outletId: 'out-1',
+          hydrateProducts: false,
+        }),
+      ).resolves.toBeNull();
+    });
   });
 
   describe('gift cards', () => {

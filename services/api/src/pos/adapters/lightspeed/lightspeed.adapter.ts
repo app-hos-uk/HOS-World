@@ -455,21 +455,35 @@ export class LightspeedAdapter implements POSAdapter {
     try {
       const { data } = await this.client.request<unknown>('GET', `/search?${qs.toString()}`);
       const rows = this.unwrapSaleList(data);
-      const exact = rows.filter(
-        (r) =>
-          M.saleMatchesInvoice(r, target) &&
-          this.matchesOutlet(params.outletId, r.outlet_id != null ? String(r.outlet_id) : ''),
+      const exact = rows.filter((r) => M.saleMatchesInvoice(r, target));
+      const candidates = exact.filter((r) =>
+        this.searchRowCouldBeOutlet(
+          params.outletId,
+          r.outlet_id != null ? String(r.outlet_id) : '',
+        ),
       );
-      const pick = exact.length === 1 ? exact[0] : null;
+      const verified = params.outletId
+        ? candidates.filter(
+            (r) => String(r.outlet_id ?? '').trim() === params.outletId,
+          )
+        : candidates;
+      const pick =
+        verified.length === 1
+          ? verified[0]
+          : verified.length === 0 && candidates.length === 1
+            ? candidates[0]
+            : null;
       const saleId = pick?.id != null ? String(pick.id) : '';
       if (saleId) {
         const full = await this.getSaleById(saleId, { hydrateProducts: hydrate });
         if (full) {
           return this.matchesOutlet(params.outletId, full.outletId) ? full : null;
         }
+        // Search summaries often omit outlet_id. Do not stamp the requested
+        // outlet onto an unverified row if the full sale could not be loaded.
         const mapped = M.mapSaleFromVend(
           pick!,
-          params.outletId || String(pick!.outlet_id ?? ''),
+          String(pick!.outlet_id ?? ''),
           this.defaultCurrency,
         );
         if (!this.matchesOutlet(params.outletId, mapped.outletId)) return null;
@@ -484,11 +498,22 @@ export class LightspeedAdapter implements POSAdapter {
     return null;
   }
 
-  /** When an outlet is requested, never accept a sale known to belong to another outlet. */
-  private matchesOutlet(requested: string | undefined, actual: string | undefined | null): boolean {
+  /** Drop search hits known to belong to another outlet; keep unknown for full-sale checks. */
+  private searchRowCouldBeOutlet(
+    requested: string | undefined,
+    actual: string | undefined | null,
+  ): boolean {
     if (!requested) return true;
     const got = (actual ?? '').trim();
     if (!got) return true;
+    return got === requested;
+  }
+
+  /** When an outlet is requested, the sale must carry that outlet — missing is not a match. */
+  private matchesOutlet(requested: string | undefined, actual: string | undefined | null): boolean {
+    if (!requested) return true;
+    const got = (actual ?? '').trim();
+    if (!got) return false;
     return got === requested;
   }
 

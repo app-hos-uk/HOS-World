@@ -49,7 +49,10 @@ function extractCardNumberFromMetadata(rawPayload: unknown): string | null {
 
 export function posSaleItemsNeedRefresh(items: Array<{ sku?: string | null }>): boolean {
   if (!items.length) return true;
-  return items.some((i) => !i.sku?.trim());
+  return items.some((i) => {
+    const sku = i.sku?.trim() || '';
+    return !sku || sku.startsWith('ls:');
+  });
 }
 
 @Injectable()
