@@ -32,10 +32,18 @@ type Address = {
   country: string;
 };
 
+type EnrichmentItem = {
+  sku?: string | null;
+  name?: string;
+  status?: string;
+  reason?: string;
+  quantity?: number;
+};
+
 type ShipmentState = {
   status: string;
   allReady?: boolean;
-  enrichment?: Array<{ sku?: string | null; name?: string; status?: string; reason?: string }>;
+  enrichment?: EnrichmentItem[];
 };
 
 function PaymentForm({
@@ -146,10 +154,21 @@ export default function ShipRequestPage() {
     if (!selectedAddress || !id) return;
     try {
       await apiClient.setShipmentAddress(id, selectedAddress);
-      setAddressSet(true);
       toast.success('Address saved');
-      const r = await apiClient.getStoreShipmentRates(id);
-      setRates((r.data as Rate[]) || []);
+      try {
+        const r = await apiClient.getStoreShipmentRates(id);
+        const fetched = (r.data as Rate[]) || [];
+        if (fetched.length === 0) {
+          toast.error('No shipping rates available for this address. Try a different address.');
+          return;
+        }
+        setRates(fetched);
+        setAddressSet(true);
+      } catch (rateErr: unknown) {
+        toast.error(
+          rateErr instanceof Error ? rateErr.message : 'Could not fetch shipping rates',
+        );
+      }
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to set address');
     }
@@ -247,6 +266,32 @@ export default function ShipRequestPage() {
           <span>→</span>
           <span>5. Label</span>
         </div>
+
+        {/* Invoice items */}
+        {Array.isArray(shipment?.enrichment) && shipment.enrichment.length > 0 &&
+          status !== 'BLOCKED' && (
+          <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
+            <p className="font-medium text-stone-200">Items from your invoice</p>
+            <ul className="divide-y divide-stone-800">
+              {shipment.enrichment.map((item, i) => (
+                <li
+                  key={`${item.sku || 'item'}-${i}`}
+                  className="flex items-center justify-between py-2 text-sm"
+                >
+                  <span className="text-stone-300">
+                    {item.name || item.sku || 'Item'}
+                    {item.sku && (
+                      <span className="ml-2 text-xs text-stone-500">({item.sku})</span>
+                    )}
+                  </span>
+                  <span className="text-stone-400 tabular-nums">
+                    ×{item.quantity ?? 1}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Status / enrichment */}
         {status === 'PENDING_ENRICHMENT' && (
