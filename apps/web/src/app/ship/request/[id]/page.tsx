@@ -117,6 +117,8 @@ export default function ShipRequestPage() {
 
   const [rates, setRates] = useState<Rate[]>([]);
   const [selectedRate, setSelectedRate] = useState<Rate | null>(null);
+  const [ratesLoading, setRatesLoading] = useState(false);
+  const [ratesError, setRatesError] = useState<string | null>(null);
 
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentDone, setPaymentDone] = useState(false);
@@ -150,28 +152,46 @@ export default function ShipRequestPage() {
       .catch(() => undefined);
   }, [id, isAuthenticated, resolveSale, router]);
 
+  const fetchRates = useCallback(async () => {
+    if (!id) return;
+    setRatesLoading(true);
+    setRatesError(null);
+    try {
+      const r = await apiClient.getStoreShipmentRates(id);
+      const fetched = (r.data as Rate[]) || [];
+      setRates(fetched);
+      if (fetched.length === 0) {
+        setRatesError('No shipping rates are available for this address. Try a different address.');
+      }
+    } catch (rateErr: unknown) {
+      setRates([]);
+      setRatesError(
+        rateErr instanceof Error ? rateErr.message : 'Could not fetch shipping rates',
+      );
+    } finally {
+      setRatesLoading(false);
+    }
+  }, [id]);
+
   const doSetAddress = async () => {
     if (!selectedAddress || !id) return;
     try {
       await apiClient.setShipmentAddress(id, selectedAddress);
+      // Address is now persisted on the backend — reflect that immediately,
+      // independent of whether rate lookup subsequently succeeds.
+      setAddressSet(true);
       toast.success('Address saved');
-      try {
-        const r = await apiClient.getStoreShipmentRates(id);
-        const fetched = (r.data as Rate[]) || [];
-        if (fetched.length === 0) {
-          toast.error('No shipping rates available for this address. Try a different address.');
-          return;
-        }
-        setRates(fetched);
-        setAddressSet(true);
-      } catch (rateErr: unknown) {
-        toast.error(
-          rateErr instanceof Error ? rateErr.message : 'Could not fetch shipping rates',
-        );
-      }
+      await fetchRates();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to set address');
     }
+  };
+
+  const changeAddress = () => {
+    setAddressSet(false);
+    setRates([]);
+    setSelectedRate(null);
+    setRatesError(null);
   };
 
   const doAuthorize = async () => {
@@ -375,10 +395,50 @@ export default function ShipRequestPage() {
           </div>
         )}
 
+        {/* Step 3: Rate selection — loading / empty / error fallback */}
+        {addressSet && rates.length === 0 && !clientSecret && (
+          <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
+            {ratesLoading ? (
+              <p className="text-sm text-stone-400">Fetching shipping rates…</p>
+            ) : (
+              <>
+                <p className="text-sm text-red-300">
+                  {ratesError || 'No shipping rates available for this address yet.'}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={fetchRates}
+                    className="px-4 py-2 rounded bg-violet-600 text-white text-sm"
+                  >
+                    Retry
+                  </button>
+                  <button
+                    type="button"
+                    onClick={changeAddress}
+                    className="px-4 py-2 rounded border border-stone-600 text-stone-200 text-sm"
+                  >
+                    Change address
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Step 3: Rate selection */}
         {addressSet && rates.length > 0 && !clientSecret && (
           <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
-            <p className="font-medium text-stone-200">Choose a shipping option</p>
+            <div className="flex items-center justify-between">
+              <p className="font-medium text-stone-200">Choose a shipping option</p>
+              <button
+                type="button"
+                onClick={changeAddress}
+                className="text-xs text-violet-400 underline"
+              >
+                Change address
+              </button>
+            </div>
             <ul className="space-y-2">
               {rates.map((rate) => {
                 const key = `${rate.providerId}-${rate.serviceCode}`;
