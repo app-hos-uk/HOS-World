@@ -649,16 +649,21 @@ export class StoreShipmentService {
   ) {
     const { anyBlocked, results } = await this.skuCustoms.enrichSaleItems(items);
 
+    const enrichment = results.map((r, i) => ({
+      ...r,
+      quantity: items[i]?.quantity ?? 1,
+    }));
+
     // Quote with default parcel sizes when HS/dimensions are still pending. Only
     // block restricted SKUs, or wait when Lightspeed has not given us any lines.
     const canQuote = items.length > 0 && !anyBlocked;
     const status = anyBlocked ? 'BLOCKED' : canQuote ? 'DRAFT' : 'PENDING_ENRICHMENT';
     await this.prisma.storeShipmentRequest.update({
       where: { id: shipmentId },
-      data: { status, metadata: { enrichment: results } as object },
+      data: { status, metadata: { enrichment } as object },
     });
 
-    return { shipmentId, status, enrichment: results, allReady: canQuote };
+    return { shipmentId, status, enrichment, allReady: canQuote };
   }
 
   async setDestinationAddress(shipmentId: string, userId: string, addressId: string) {
@@ -858,17 +863,26 @@ export class StoreShipmentService {
       }
     }
 
-    const intent = await provider.createPaymentIntent({
-      amount: params.amount,
-      currency: params.currency || shipment.currency,
-      orderId: shipmentId,
-      metadata: {
-        type: 'store_shipment',
-        shipmentId,
-        carrier: params.carrier,
-        service: params.service,
-      },
-    });
+    let intent: { clientSecret?: string; paymentIntentId: string };
+    try {
+      intent = await provider.createPaymentIntent({
+        amount: params.amount,
+        currency: params.currency || shipment.currency,
+        orderId: shipmentId,
+        metadata: {
+          type: 'store_shipment',
+          shipmentId,
+          carrier: params.carrier,
+          service: params.service,
+        },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Stripe createPaymentIntent failed for shipment ${shipmentId}: ${msg}`);
+      throw new BadRequestException(
+        `Payment could not be processed: ${msg.includes('amount') ? msg : 'please try again or contact support'}`,
+      );
+    }
 
     await this.prisma.storeShipmentRequest.update({
       where: { id: shipmentId },
