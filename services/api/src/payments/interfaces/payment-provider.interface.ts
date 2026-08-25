@@ -62,6 +62,12 @@ export interface CreatePaymentIntentParams {
   metadata?: Record<string, any>;
   returnUrl?: string;
   cancelUrl?: string;
+  /**
+   * Overrides the default `order-{orderId}-{amountMinor}` idempotency key.
+   * Required by flows that cancel and re-create an intent for the same order
+   * and amount, where the default key would replay the cancelled intent.
+   */
+  idempotencyKey?: string;
 }
 
 export interface PaymentIntentResult {

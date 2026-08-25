@@ -203,10 +203,17 @@ export default function ShipRequestPage() {
         amount: selectedRate.rate,
         currency: selectedRate.currency,
       });
-      const data = r.data as { clientSecret?: string };
+      const data = r.data as { clientSecret?: string; alreadyPaid?: boolean };
+      if (data.alreadyPaid) {
+        setPaymentDone(true);
+        toast.success('Shipping is already paid — continue to your label');
+        return;
+      }
       if (data.clientSecret) {
         setClientSecret(data.clientSecret);
+        return;
       }
+      toast.error('Could not start payment. Please try again.');
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Authorization failed');
     }

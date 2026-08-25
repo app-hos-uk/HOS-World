@@ -195,15 +195,17 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
         };
       };
 
+      const baseKey = params.idempotencyKey || `order-${params.orderId}-${amountMinor}`;
+
       try {
-        return await createOnce(`order-${params.orderId}-${amountMinor}`);
+        return await createOnce(baseKey);
       } catch (error: any) {
         if (this.isStripeAuthError(error)) {
           // Admin may have rotated keys after boot; IntegrationsController used to miss re-init.
           this.logger.warn('Stripe auth failed — reloading credentials and retrying once');
           await this.reloadStripeClient();
           if (this.stripe) {
-            return await createOnce(`order-${params.orderId}-${amountMinor}-reload`);
+            return await createOnce(`${baseKey}-reload`);
           }
         }
 

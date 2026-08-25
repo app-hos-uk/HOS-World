@@ -854,12 +854,28 @@ export class StoreShipmentService {
     const provider = this.paymentProvider.getProvider('stripe');
 
     if (shipment.stripePaymentIntentId && provider.cancelPaymentIntent) {
+      let outcome: 'cancelled' | 'already_succeeded' | 'skipped';
       try {
-        await provider.cancelPaymentIntent(shipment.stripePaymentIntentId);
+        outcome = await provider.cancelPaymentIntent(shipment.stripePaymentIntentId);
       } catch (cancelErr) {
-        this.logger.warn(
+        // The prior intent may still be chargeable. Minting a second one would
+        // orphan it, and a payment against it could never satisfy purchaseLabel.
+        this.logger.error(
           `Failed to cancel previous PaymentIntent ${shipment.stripePaymentIntentId}: ${(cancelErr as Error).message}`,
         );
+        throw new BadRequestException(
+          'Could not release the previous payment attempt. Refresh the page and try again.',
+        );
+      }
+
+      // Shipping is already paid — hand back the captured intent so the customer
+      // can go straight to purchasing the label instead of paying twice.
+      if (outcome === 'already_succeeded') {
+        return {
+          clientSecret: undefined,
+          paymentIntentId: shipment.stripePaymentIntentId,
+          alreadyPaid: true,
+        };
       }
     }
 
@@ -875,12 +891,20 @@ export class StoreShipmentService {
           carrier: params.carrier,
           service: params.service,
         },
+        // Each authorization cancels the prior intent, so the key must be fresh —
+        // reusing it replays Stripe's cached (now cancelled) intent, or throws when
+        // the carrier/service metadata differs at the same amount.
+        idempotencyKey: `shipment-${shipmentId}-${Date.now()}`,
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      this.logger.error(`Stripe createPaymentIntent failed for shipment ${shipmentId}: ${msg}`);
+      const code = (err as { code?: string })?.code;
+      this.logger.error(
+        `Stripe createPaymentIntent failed for shipment ${shipmentId}` +
+          `${code ? ` [${code}]` : ''}: ${msg}`,
+      );
       throw new BadRequestException(
-        `Payment could not be processed: ${msg.includes('amount') ? msg : 'please try again or contact support'}`,
+        `Payment could not be processed: ${msg}${code ? ` (${code})` : ''}`,
       );
     }
 
@@ -895,7 +919,11 @@ export class StoreShipmentService {
       },
     });
 
-    return { clientSecret: intent.clientSecret, paymentIntentId: intent.paymentIntentId };
+    return {
+      clientSecret: intent.clientSecret,
+      paymentIntentId: intent.paymentIntentId,
+      alreadyPaid: false,
+    };
   }
 
   async purchaseLabel(shipmentId: string, userId: string) {
