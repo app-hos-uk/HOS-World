@@ -4288,6 +4288,8 @@ model StoreShipmentRequest {
   totalPackagingCost    Decimal?  @db.Decimal(10, 2)
   currency              String    @default("USD")
   stripePaymentIntentId String?
+  /** Counter tender: CASH | CARD | OTHER. Set when staff confirm payment (not Lightspeed / Stripe). */
+  paymentMethod         String?
   selectedCarrier       String?
   selectedService       String?
   trackingCode          String?

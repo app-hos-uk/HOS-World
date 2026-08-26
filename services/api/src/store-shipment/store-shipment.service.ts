@@ -27,6 +27,7 @@ import type {
 } from '../shipping/courier/interfaces/courier-provider.interface';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentProviderService } from '../payments/payment-provider.service';
+import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
 
 const CLAIM_TTL_DAYS = 14;
 const LIGHTSPEED_LOOKUP_BUDGET_MS = 20_000;
@@ -66,6 +67,7 @@ export class StoreShipmentService {
     private notifications: NotificationsService,
     private paymentProvider: PaymentProviderService,
     private salesImport: PosSalesImportService,
+    private featureFlags: FeatureFlagsService,
   ) {}
 
   private hashToken(token: string): string {
@@ -949,6 +951,10 @@ export class StoreShipmentService {
     params: { carrier?: string; service?: string; amount?: number; currency?: string },
   ) {
     const shipment = await this.loadShipmentForQuote(shipmentId, userId);
+
+    if (!this.featureFlags.isEnabled(FeatureFlag.SHIPPING_ONLINE_PAYMENT)) {
+      throw new BadRequestException('Online payment is disabled. Pay cash or card at the shipping counter.');
+    }
 
     if (shipment.status === 'LABEL_PURCHASED' || shipment.status === 'LABEL_CREATED') {
       throw new BadRequestException('Label already purchased — cannot re-authorize');

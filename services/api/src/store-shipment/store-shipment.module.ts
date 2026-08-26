@@ -7,6 +7,7 @@ import { CourierModule } from '../shipping/courier/courier.module';
 import { PaymentProviderModule } from '../payments/payment-provider.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { LoyaltyModule } from '../loyalty/loyalty.module';
+import { FeatureFlagsModule } from '../config/feature-flags.module';
 import { StoreShipmentService } from './store-shipment.service';
 import { SkuCustomsService } from './sku-customs.service';
 import { BoxSizeService } from './box-size.service';
@@ -29,6 +30,7 @@ import { StoreShipmentController, StoreShipmentAdminController, BoxSizeAdminCont
     CourierModule,
     PaymentProviderModule,
     NotificationsModule,
+    FeatureFlagsModule,
     forwardRef(() => LoyaltyModule),
   ],
   controllers: [StoreShipmentController, StoreShipmentAdminController, BoxSizeAdminController, ShippingRatesAdminController],

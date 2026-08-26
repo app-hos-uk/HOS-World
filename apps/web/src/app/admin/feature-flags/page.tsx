@@ -18,13 +18,15 @@ const FLAG_DESCRIPTIONS: Record<string, string> = {
   POS_INTEGRATION: 'Enable point-of-sale system integration',
   MULTI_CURRENCY: 'Enable multi-currency support for international customers',
   ACCOUNTING_XERO: 'Enable Xero accounting integration (daily journals, ledger outbox)',
+  SHIPPING_ONLINE_PAYMENT:
+    'Enable online card payment for in-store shipping (Stripe). When off, staff confirm cash or standalone-machine card at the counter before printing the slip.',
 };
 
 const FLAG_CATEGORIES: Record<string, string[]> = {
   'Core Commerce': ['GUEST_CHECKOUT', 'MULTI_CURRENCY', 'CLICK_COLLECT', 'DIGITAL_PRODUCTS'],
   'Loyalty & Members': ['LOYALTY_PROGRAMME', 'FOUNDING_MEMBERS', 'AMBASSADOR_PROGRAMME'],
   'Marketing & Partnerships': ['BRAND_PARTNERSHIPS', 'INFLUENCER_STOREFRONTS', 'AI_RECOMMENDATIONS'],
-  'System': ['EMAIL_TEMPLATE_OVERRIDES', 'POS_INTEGRATION', 'ACCOUNTING_XERO'],
+  System: ['EMAIL_TEMPLATE_OVERRIDES', 'POS_INTEGRATION', 'ACCOUNTING_XERO', 'SHIPPING_ONLINE_PAYMENT'],
 };
 
 export default function AdminFeatureFlagsPage() {

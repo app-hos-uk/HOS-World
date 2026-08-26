@@ -44,6 +44,7 @@ function makeService() {
     notifications as any,
     {} as any,
     salesImport as any,
+    { isEnabled: jest.fn().mockReturnValue(false) } as any,
   );
   return { service, prisma, factory, adapter, skuCustoms, salesImport, notifications };
 }

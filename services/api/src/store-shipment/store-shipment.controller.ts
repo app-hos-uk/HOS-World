@@ -176,6 +176,24 @@ export class StoreShipmentController {
   }
 
   @Public()
+  @Post('staff/orders/:id/confirm-payment')
+  @UseGuards(LoyaltyStaffAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Staff: confirm cash or standalone card-machine payment at the counter' })
+  async staffConfirmPayment(
+    @Param('id') id: string,
+    @Body() body: { method?: string },
+    @Req() req: StaffReq,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.workflow.staffConfirmPayment(
+      id,
+      { id: req.user?.id, storeId: req.storeId || req.user?.storeId, role: req.user?.role },
+      body,
+    );
+    return { data, message: 'Payment confirmed' };
+  }
+
+  @Public()
   @Post('staff/orders/:id/receive')
   @UseGuards(LoyaltyStaffAuthGuard)
   @ApiBearerAuth('JWT-auth')

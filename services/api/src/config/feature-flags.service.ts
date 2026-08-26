@@ -17,6 +17,8 @@ export enum FeatureFlag {
   MULTI_CURRENCY = 'MULTI_CURRENCY',
   /** HOS → Xero daily journals (offline by default; also requires ACCOUNTING_ENABLED). */
   ACCOUNTING_XERO = 'ACCOUNTING_XERO',
+  /** Stripe card payment on the customer phone for in-store shipping. Off = staff confirms cash/card at the counter. */
+  SHIPPING_ONLINE_PAYMENT = 'SHIPPING_ONLINE_PAYMENT',
 }
 
 const FLAG_DEFAULTS: Record<FeatureFlag, boolean> = {
@@ -33,6 +35,7 @@ const FLAG_DEFAULTS: Record<FeatureFlag, boolean> = {
   [FeatureFlag.POS_INTEGRATION]: false,
   [FeatureFlag.MULTI_CURRENCY]: false,
   [FeatureFlag.ACCOUNTING_XERO]: false,
+  [FeatureFlag.SHIPPING_ONLINE_PAYMENT]: false,
 };
 
 @Injectable()

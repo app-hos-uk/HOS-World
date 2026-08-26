@@ -12,10 +12,14 @@ import { CourierFactoryService } from '../shipping/courier/courier-factory.servi
 import type { RateResponse } from '../shipping/courier/interfaces/courier-provider.interface';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentProviderService } from '../payments/payment-provider.service';
+import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
 import { BoxSizeService } from './box-size.service';
 import { ShippingSlipService } from './shipping-slip.service';
 
 export const PREFERRED_CARRIERS = ['UPS', 'FedEx', 'DHL'] as const;
+
+export const COUNTER_PAYMENT_METHODS = ['CASH', 'CARD', 'OTHER'] as const;
+export type CounterPaymentMethod = (typeof COUNTER_PAYMENT_METHODS)[number];
 
 const PAID_STATUSES = new Set([
   'PAID',
@@ -41,6 +45,7 @@ export class ShippingWorkflowService {
     private notifications: NotificationsService,
     private paymentProvider: PaymentProviderService,
     private config: ConfigService,
+    private featureFlags: FeatureFlagsService,
   ) {}
 
   async lookupPublic(query: string | undefined, storeId?: string) {
@@ -307,9 +312,42 @@ export class ShippingWorkflowService {
     return this.getProgress(shipmentId, { userId: staff.id, role: 'STAFF' });
   }
 
+  async staffConfirmPayment(
+    shipmentId: string,
+    staff: { id?: string; storeId?: string; role?: string },
+    body: { method?: string },
+  ) {
+    const method = (body.method || '').trim().toUpperCase();
+    if (!COUNTER_PAYMENT_METHODS.includes(method as CounterPaymentMethod)) {
+      throw new BadRequestException('Select how the customer paid: Cash, Card, or Other');
+    }
+
+    const order = await this.requireStaffOrder(shipmentId, staff);
+    if (PAID_STATUSES.has(order.status)) {
+      return this.getProgress(shipmentId, { userId: staff.id, role: 'STAFF' });
+    }
+    if (order.status !== 'AWAITING_PAYMENT') {
+      throw new BadRequestException('Finalize the shipping quote before confirming payment');
+    }
+
+    await this.markPaid(shipmentId, method);
+    await this.sendPaidEmail(order);
+
+    return this.getProgress(shipmentId, { userId: staff.id, role: 'STAFF' });
+  }
+
   async confirmPayment(shipmentId: string, userId: string) {
     const order = await this.requireCustomerOrder(shipmentId, userId);
+    if (PAID_STATUSES.has(order.status)) {
+      return this.getProgress(shipmentId, { userId, role: 'CUSTOMER' });
+    }
+    // The flag only blocks starting a new Stripe charge (authorizeShipping).
+    // If a PaymentIntent already exists, record a succeeded capture even if the
+    // flag was turned off between authorize and confirm.
     if (!order.stripePaymentIntentId) {
+      if (!this.featureFlags.isEnabled(FeatureFlag.SHIPPING_ONLINE_PAYMENT)) {
+        throw new BadRequestException('Online payment is disabled. Pay at the shipping counter.');
+      }
       throw new BadRequestException('Shipping payment has not been started');
     }
     const stripe = this.paymentProvider.getProvider('stripe');
@@ -318,19 +356,52 @@ export class ShippingWorkflowService {
       throw new BadRequestException(`Payment has not succeeded (status: ${paymentStatus})`);
     }
 
+    await this.markPaid(shipmentId, 'CARD');
+    await this.sendPaidEmail(order);
+
+    return this.getProgress(shipmentId, { userId, role: 'CUSTOMER' });
+  }
+
+  async slipPdf(shipmentId: string) {
+    const order = await this.prisma.storeShipmentRequest.findUnique({
+      where: { id: shipmentId },
+      select: { status: true },
+    });
+    if (!order) throw new NotFoundException('Shipping order not found');
+    if (!PAID_STATUSES.has(order.status)) {
+      throw new BadRequestException('Confirm payment before printing the shipping slip');
+    }
+    return this.slip.generatePdf(shipmentId);
+  }
+
+  private async markPaid(shipmentId: string, paymentMethod: string) {
     await this.prisma.shipmentGroup.updateMany({
       where: { shippingOrderId: shipmentId },
       data: { status: 'PAID' },
     });
     await this.prisma.storeShipmentRequest.update({
       where: { id: shipmentId },
-      data: { status: 'PAID', shippingSlipUrl: `/store-shipment/${shipmentId}/slip` },
+      data: {
+        status: 'PAID',
+        paymentMethod,
+        shippingSlipUrl: `/store-shipment/${shipmentId}/slip`,
+      },
     });
+  }
 
+  private async sendPaidEmail(order: {
+    id: string;
+    storeId: string;
+    claimEmail?: string | null;
+    hosOrderNumber?: string | null;
+    totalCustomerCharge?: { toString(): string } | number | null;
+    shippingAmount?: { toString(): string } | number | null;
+    currency: string;
+  }) {
     try {
       await this.notifications.sendStoreShipmentPaidEmail({
         email: order.claimEmail || '',
-        hosOrderNumber: order.hosOrderNumber || shipmentId,
+        hosOrderNumber: order.hosOrderNumber || order.id,
         storeName: (await this.prisma.store.findUnique({ where: { id: order.storeId } }))?.name || 'House of Spells',
         amount: Number(order.totalCustomerCharge || order.shippingAmount || 0),
         currency: order.currency,
@@ -338,12 +409,6 @@ export class ShippingWorkflowService {
     } catch (err) {
       this.logger.warn(`Paid email failed: ${(err as Error).message}`);
     }
-
-    return this.getProgress(shipmentId, { userId, role: 'CUSTOMER' });
-  }
-
-  async slipPdf(shipmentId: string) {
-    return this.slip.generatePdf(shipmentId);
   }
 
   async receiveByLogistics(
@@ -713,6 +778,8 @@ export class ShippingWorkflowService {
       totalCustomerCharge: Number(order.totalCustomerCharge || 0),
       totalCarrierCost: Number(order.totalCarrierCost || 0),
       totalPackagingCost: Number(order.totalPackagingCost || 0),
+      paymentMethod: order.paymentMethod,
+      onlinePaymentEnabled: this.featureFlags.isEnabled(FeatureFlag.SHIPPING_ONLINE_PAYMENT),
       specialInstructions: order.specialInstructions,
       receivedByEmployee: order.receivedByEmployee,
       receivedAt: order.receivedAt,
@@ -845,7 +912,11 @@ export class ShippingWorkflowService {
     if (order.groups.some((g) => !g.boxSizeId) || order.status === 'CUSTOMER_DETAILS_REQUIRED') {
       return 'STAFF_QUOTE';
     }
-    if (order.status === 'AWAITING_PAYMENT') return 'PAY';
+    if (order.status === 'AWAITING_PAYMENT') {
+      return this.featureFlags.isEnabled(FeatureFlag.SHIPPING_ONLINE_PAYMENT)
+        ? 'PAY'
+        : 'STAFF_CONFIRM_PAYMENT';
+    }
     if (order.status === 'PAID') return 'SEND_TO_LOGISTICS';
     if (order.status === 'PACKING' || order.status === 'SENT_TO_LOGISTICS') return 'PACK';
     if (order.status === 'PACKED') return 'GENERATE_LABEL';

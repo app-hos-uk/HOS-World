@@ -2924,6 +2924,13 @@ export class ApiClient {
     });
   }
 
+  async staffConfirmShipmentPayment(id: string, body: { method: 'CASH' | 'CARD' | 'OTHER' }) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/staff/orders/${id}/confirm-payment`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
   async receiveStoreShipment(id: string, employeeName: string) {
     return this.request<ApiResponse<unknown>>(`/store-shipment/staff/orders/${id}/receive`, {
       method: 'POST',

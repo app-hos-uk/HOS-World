@@ -39,6 +39,8 @@ type Progress = {
   customerName?: string;
   currency?: string;
   totalCustomerCharge?: number;
+  paymentMethod?: string | null;
+  onlinePaymentEnabled?: boolean;
   lookupUrl?: string;
   invoiceItems?: Array<{ id: string; name: string; sku?: string | null; quantity: number }>;
   groups?: Group[];
@@ -52,6 +54,8 @@ export default function StaffShippingOrderPage() {
   const [boxPick, setBoxPick] = useState<Record<string, string>>({});
   const [customPrice, setCustomPrice] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [payMethod, setPayMethod] = useState<'CASH' | 'CARD' | 'OTHER'>('CASH');
+  const [confirming, setConfirming] = useState(false);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -100,6 +104,20 @@ export default function StaffShippingOrderPage() {
 
   const printSlip = () => {
     window.open(`/api/proxy/store-shipment/${id}/slip`, '_blank');
+  };
+
+  const confirmPayment = async () => {
+    if (!id) return;
+    setConfirming(true);
+    try {
+      await apiClient.staffConfirmShipmentPayment(id, { method: payMethod });
+      toast.success('Payment confirmed — you can print the shipping slip');
+      load();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Could not confirm payment');
+    } finally {
+      setConfirming(false);
+    }
   };
 
   const liveQuote = (order?.groups || []).reduce((sum, group) => {
@@ -221,6 +239,49 @@ export default function StaffShippingOrderPage() {
               ? ` — ${order.currency} ${Number(order.totalCustomerCharge).toFixed(2)}`
               : ''}
         </button>
+      )}
+
+      {order.status === 'AWAITING_PAYMENT' && (
+        <div className="rounded-lg border border-emerald-500/30 p-4 bg-hos-bg-secondary space-y-3">
+          <p className="font-medium text-hos-text">
+            Collect {order.currency || DEFAULT_CURRENCY} {Number(order.totalCustomerCharge || 0).toFixed(2)} at the counter
+          </p>
+          <p className="text-sm text-hos-text-muted">
+            Cash or the standalone card machine — not Lightspeed POS
+            {order.onlinePaymentEnabled ? '. Online Stripe payment is also enabled.' : '.'}
+          </p>
+          <label className="block text-sm text-hos-text-secondary">
+            Payment method
+            <select
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg border-hos-border"
+              value={payMethod}
+              onChange={(e) => setPayMethod(e.target.value as 'CASH' | 'CARD' | 'OTHER')}
+            >
+              <option value="CASH">Cash</option>
+              <option value="CARD">Card (standalone machine)</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </label>
+          <button
+            type="button"
+            onClick={confirmPayment}
+            disabled={confirming}
+            className="w-full py-2 rounded bg-emerald-600 text-white disabled:opacity-50"
+          >
+            {confirming ? 'Confirming…' : 'Confirm payment received'}
+          </button>
+        </div>
+      )}
+
+      {order.paymentMethod && ['PAID', 'PACKING', 'PACKED', 'LABEL_CREATED', 'READY_FOR_PICKUP'].includes(order.status) && (
+        <p className="text-sm text-hos-text-muted">
+          Payment recorded:{' '}
+          {order.paymentMethod === 'CASH'
+            ? 'Cash'
+            : order.paymentMethod === 'CARD'
+              ? 'Card (standalone machine)'
+              : 'Other'}
+        </p>
       )}
 
       {['PAID', 'PACKING', 'PACKED', 'LABEL_CREATED', 'READY_FOR_PICKUP'].includes(order.status) && (

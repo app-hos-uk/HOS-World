@@ -55,6 +55,7 @@ type Progress = {
   claimEmail?: string;
   currency?: string;
   totalCustomerCharge?: number;
+  onlinePaymentEnabled?: boolean;
   invoiceItems?: InvoiceItem[];
   groups?: Group[];
   user?: { firstName?: string; lastName?: string; phone?: string; email?: string };
@@ -215,7 +216,7 @@ function ShipRequestInner() {
   };
 
   const startPay = async () => {
-    if (!id) return;
+    if (!id || !order?.onlinePaymentEnabled) return;
     try {
       const r = await apiClient.authorizeShipment(id, {});
       const data = r.data as { clientSecret?: string; alreadyPaid?: boolean };
@@ -402,18 +403,30 @@ function ShipRequestInner() {
         </div>
       )}
 
-      {order.status === 'AWAITING_PAYMENT' && !clientSecret && (
+      {order.status === 'AWAITING_PAYMENT' && !order.onlinePaymentEnabled && (
+        <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-2">
+          <p className="font-medium">
+            Shipping charge: {order.currency} {Number(order.totalCustomerCharge || 0).toFixed(2)}
+          </p>
+          <p className="text-sm text-stone-300">
+            Please pay at the shipping counter — cash or the card machine there. Online card
+            payment is not available. This screen updates when staff confirm payment.
+          </p>
+        </div>
+      )}
+
+      {order.status === 'AWAITING_PAYMENT' && order.onlinePaymentEnabled && !clientSecret && (
         <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
           <p className="font-medium">
             Shipping charge: {order.currency} {Number(order.totalCustomerCharge || 0).toFixed(2)}
           </p>
           <button type="button" onClick={startPay} className="w-full py-2 rounded bg-violet-600 text-white">
-            Pay at counter
+            Pay online
           </button>
         </div>
       )}
 
-      {clientSecret && stripePromise && (
+      {order.onlinePaymentEnabled && clientSecret && stripePromise && (
         <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50">
           <Elements stripe={stripePromise} options={{ clientSecret }}>
             <PaymentForm clientSecret={clientSecret} onSuccess={afterPay} />
