@@ -3,6 +3,12 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { normalizeCountryCode } from '../common/utils/country-code';
 import { PrismaService } from '../database/prisma.service';
 
+/**
+ * Fixed shipping is priced in a single currency. Mixing currencies across tiers
+ * would let one order sum charges from different currencies into one total.
+ */
+export const SHIPPING_CURRENCY = 'USD';
+
 const DEFAULT_BOXES: Array<{
   name: string;
   label: string;
@@ -65,7 +71,11 @@ const DEFAULT_TIERS: Array<{
   },
 ];
 
-/** Placeholder matrix until admin sets live HoS prices. CUSTOM stays 0. */
+/**
+ * Seed-only starting prices, used when a tier/box pair has no rate row yet.
+ * Live pricing is whatever admin saves at /admin/shipping-rates — editing these
+ * numbers will NOT change an existing deployment. CUSTOM stays 0 (staff quotes it).
+ */
 const DEFAULT_MATRIX: Record<string, Record<string, number>> = {
   SMALL: { TIER_1: 9.99, TIER_2: 14.99, TIER_3: 19.99, TIER_4: 24.99 },
   MEDIUM: { TIER_1: 14.99, TIER_2: 21.99, TIER_3: 29.99, TIER_4: 34.99 },
@@ -115,7 +125,7 @@ export class BoxSizeService {
         heightCm: new Decimal(data.heightCm),
         customerPrice: new Decimal(data.customerPrice),
         packagingCost: new Decimal(data.packagingCost ?? 0),
-        currency: data.currency || 'USD',
+        currency: SHIPPING_CURRENCY,
         sortOrder: data.sortOrder ?? 0,
       },
     });
@@ -148,7 +158,6 @@ export class BoxSizeService {
         ...(data.heightCm != null ? { heightCm: new Decimal(data.heightCm) } : {}),
         ...(data.customerPrice != null ? { customerPrice: new Decimal(data.customerPrice) } : {}),
         ...(data.packagingCost != null ? { packagingCost: new Decimal(data.packagingCost) } : {}),
-        ...(data.currency != null ? { currency: data.currency } : {}),
         ...(data.isActive != null ? { isActive: data.isActive } : {}),
         ...(data.sortOrder != null ? { sortOrder: data.sortOrder } : {}),
       },
@@ -199,6 +208,11 @@ export class BoxSizeService {
   ) {
     const row = await this.prisma.shippingRateTier.findUnique({ where: { id } });
     if (!row) throw new NotFoundException('Shipping tier not found');
+    // Fixed shipping is priced in USD only; a mixed-currency matrix would let a
+    // single order sum charges across currencies.
+    if (data.currency != null && data.currency.toUpperCase() !== SHIPPING_CURRENCY) {
+      throw new BadRequestException(`Shipping rates are ${SHIPPING_CURRENCY}-only`);
+    }
     const codes = data.countryCodes?.map((c) => this.normalizeCountry(c)).filter(Boolean);
     return this.prisma.shippingRateTier.update({
       where: { id },
@@ -207,7 +221,6 @@ export class BoxSizeService {
         ...(data.description != null ? { description: data.description } : {}),
         ...(codes ? { countryCodes: codes } : {}),
         ...(data.isActive != null ? { isActive: data.isActive } : {}),
-        ...(data.currency != null ? { currency: data.currency } : {}),
       },
     });
   }
@@ -330,7 +343,7 @@ export class BoxSizeService {
           heightCm: b.heightCm,
           customerPrice: b.customerPrice,
           packagingCost: b.packagingCost,
-          currency: 'USD',
+          currency: SHIPPING_CURRENCY,
           sortOrder: b.sortOrder,
         })),
       });
@@ -350,7 +363,7 @@ export class BoxSizeService {
             countryCodes: t.countryCodes,
             isCatchAll: t.isCatchAll,
             sortOrder: t.sortOrder,
-            currency: 'USD',
+            currency: SHIPPING_CURRENCY,
           },
         });
       }

@@ -36,7 +36,7 @@ export default function AdminShippingRatesPage() {
   const [matrix, setMatrix] = useState<Matrix | null>(null);
   const [prices, setPrices] = useState<Record<string, string>>({});
   const [tierDrafts, setTierDrafts] = useState<
-    Record<string, { name: string; description: string; countryCodes: string; currency: string }>
+    Record<string, { name: string; description: string; countryCodes: string }>
   >({});
   const [saving, setSaving] = useState(false);
 
@@ -54,14 +54,13 @@ export default function AdminShippingRatesPage() {
       setPrices(next);
       const drafts: Record<
         string,
-        { name: string; description: string; countryCodes: string; currency: string }
+        { name: string; description: string; countryCodes: string }
       > = {};
       for (const t of data.tiers || []) {
         drafts[t.id] = {
           name: t.name,
           description: t.description || '',
           countryCodes: t.isCatchAll ? 'All other countries' : (t.countryCodes || []).join(', '),
-          currency: t.currency || DEFAULT_CURRENCY,
         };
       }
       setTierDrafts(drafts);
@@ -125,7 +124,6 @@ export default function AdminShippingRatesPage() {
             name: tier.name,
             description: '',
             countryCodes: '',
-            currency: tier.currency,
           };
           return (
             <div key={tier.id} className="rounded border border-hos-border p-4 bg-hos-bg-secondary space-y-2">
@@ -159,20 +157,9 @@ export default function AdminShippingRatesPage() {
                   }
                 />
               </label>
-              <label className="block text-xs text-hos-text-muted">
-                Currency
-                <input
-                  className="mt-1 w-24 border rounded px-2 py-1 bg-hos-bg border-hos-border font-mono text-sm uppercase"
-                  maxLength={3}
-                  value={draft.currency}
-                  onChange={(e) =>
-                    setTierDrafts((d) => ({
-                      ...d,
-                      [tier.id]: { ...draft, currency: e.target.value.toUpperCase() },
-                    }))
-                  }
-                />
-              </label>
+              <p className="text-xs text-hos-text-muted">
+                Priced in <span className="font-mono">{DEFAULT_CURRENCY}</span>
+              </p>
               <button
                 type="button"
                 className="text-sm text-violet-400 underline"
@@ -181,7 +168,6 @@ export default function AdminShippingRatesPage() {
                     await apiClient.updateAdminShippingTier(tier.id, {
                       name: draft.name,
                       description: draft.description,
-                      currency: draft.currency,
                       countryCodes: tier.isCatchAll
                         ? []
                         : draft.countryCodes
