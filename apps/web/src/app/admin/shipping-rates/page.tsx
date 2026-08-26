@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 type Tier = {
   id: string;
@@ -60,7 +61,7 @@ export default function AdminShippingRatesPage() {
           name: t.name,
           description: t.description || '',
           countryCodes: t.isCatchAll ? 'All other countries' : (t.countryCodes || []).join(', '),
-          currency: t.currency || 'USD',
+          currency: t.currency || DEFAULT_CURRENCY,
         };
       }
       setTierDrafts(drafts);

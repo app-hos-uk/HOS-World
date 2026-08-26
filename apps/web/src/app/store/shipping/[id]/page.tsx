@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 type BoxSize = {
   id: string;
@@ -215,7 +216,7 @@ export default function StaffShippingOrderPage() {
         >
           Finalize quote
           {liveQuote > 0
-            ? ` — ${order.groups?.[0]?.shippingTier?.currency || order.currency || 'USD'} ${liveQuote.toFixed(2)}`
+            ? ` — ${order.groups?.[0]?.shippingTier?.currency || order.currency || DEFAULT_CURRENCY} ${liveQuote.toFixed(2)}`
             : order.totalCustomerCharge
               ? ` — ${order.currency} ${Number(order.totalCustomerCharge).toFixed(2)}`
               : ''}
