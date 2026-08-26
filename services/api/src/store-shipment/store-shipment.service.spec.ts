@@ -8,6 +8,7 @@ function makeService() {
       findFirst: jest.fn().mockResolvedValue(null),
       update: jest.fn().mockResolvedValue({ id: 'ship-1' }),
       create: jest.fn().mockResolvedValue({ id: 'ship-new' }),
+      count: jest.fn().mockResolvedValue(0),
     },
     pOSSale: {
       findFirst: jest.fn(),
@@ -56,6 +57,7 @@ const shipmentBase = {
   posSale: null,
   store: {
     name: 'Soho',
+    code: 'NYC',
     isActive: true,
     externalStoreId: 'out-1',
     posConnection: {
@@ -128,11 +130,11 @@ describe('StoreShipmentService.resolveSaleForShipment', () => {
       expect.objectContaining({ externalId: 'ls-sale' }),
       { refreshItems: true },
     );
-    expect(result).toMatchObject({ status: 'DRAFT', allReady: true });
+    expect(result).toMatchObject({ status: 'CUSTOMER_DETAILS_REQUIRED', allReady: true });
     expect(prisma.storeShipmentRequest.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'ship-1' },
-        data: expect.objectContaining({ status: 'DRAFT' }),
+        data: expect.objectContaining({ status: 'CUSTOMER_DETAILS_REQUIRED' }),
       }),
     );
   });
@@ -179,7 +181,7 @@ describe('StoreShipmentService.resolveSaleForShipment', () => {
       { refreshItems: true },
     );
     expect(result.allReady).toBe(true);
-    expect(result.status).toBe('DRAFT');
+    expect(result.status).toBe('CUSTOMER_DETAILS_REQUIRED');
   });
 
   it('tells the customer the till sale is unfinished when Lightspeed returns a non-closed sale', async () => {
@@ -246,7 +248,7 @@ describe('StoreShipmentService.createClaimFromTill', () => {
     expect(notifications.sendStoreShipmentClaimEmail).not.toHaveBeenCalled();
   });
 
-  it('confirms the invoice then emails the claim link without importing line items', async () => {
+  it('confirms the invoice then emails the claim link', async () => {
     const { service, prisma, adapter, notifications, salesImport } = makeService();
     prisma.store.findUnique.mockResolvedValue(shipmentBase.store);
     prisma.pOSSale.findFirst.mockResolvedValue(null);
@@ -295,15 +297,27 @@ describe('StoreShipmentService.createClaimFromTill', () => {
     expect(prisma.storeShipmentRequest.create).not.toHaveBeenCalled();
   });
 
-  it('does not send a claim when the Lightspeed sale has no customer email', async () => {
+  it('uses the staff-entered email when Lightspeed has no customer email', async () => {
     const { service, prisma, adapter, notifications } = makeService();
     prisma.store.findUnique.mockResolvedValue(shipmentBase.store);
     prisma.pOSSale.findFirst.mockResolvedValue(null);
     adapter.getSaleByInvoice.mockResolvedValue({ ...closedRemoteSale, customer: undefined });
 
-    await expect(service.createClaimFromTill(claimInput)).rejects.toThrow(
-      /Lightspeed sale has no customer email/,
-    );
+    const result = await service.createClaimFromTill(claimInput);
+    expect(result.emailQueued).toBe(true);
+    expect(notifications.sendStoreShipmentClaimEmail).toHaveBeenCalled();
+    expect(prisma.storeShipmentRequest.create).toHaveBeenCalled();
+  });
+
+  it('does not send a claim when neither Lightspeed nor staff provide an email', async () => {
+    const { service, prisma, adapter, notifications } = makeService();
+    prisma.store.findUnique.mockResolvedValue(shipmentBase.store);
+    prisma.pOSSale.findFirst.mockResolvedValue(null);
+    adapter.getSaleByInvoice.mockResolvedValue({ ...closedRemoteSale, customer: undefined });
+
+    await expect(
+      service.createClaimFromTill({ ...claimInput, email: undefined }),
+    ).rejects.toThrow(/Lightspeed sale has no customer email/);
     expect(notifications.sendStoreShipmentClaimEmail).not.toHaveBeenCalled();
     expect(prisma.storeShipmentRequest.create).not.toHaveBeenCalled();
   });
@@ -513,7 +527,7 @@ describe('StoreShipmentService.attachUserToClaim', () => {
     });
 
     const result = await service.attachUserToClaim('token', 'user-1', 'buyer@example.com');
-    expect(result).toMatchObject({ status: 'DRAFT' });
+    expect(result).toMatchObject({ status: 'CUSTOMER_DETAILS_REQUIRED' });
     expect(prisma.storeShipmentRequest.update).toHaveBeenCalled();
   });
 });

@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/useToast';
 type ClaimContext = {
   shipmentId?: string;
   invoiceNumber?: string;
+  hosOrderNumber?: string;
   status?: string;
   storeName?: string;
   emailMatchesInvoice?: boolean | null;
@@ -129,6 +130,11 @@ export default function ShipClaimPage() {
           <p>
             <span className="text-hos-text-muted">Invoice:</span> {ctx.invoiceNumber}
           </p>
+          {ctx.hosOrderNumber && (
+            <p>
+              <span className="text-hos-text-muted">Order:</span> {ctx.hosOrderNumber}
+            </p>
+          )}
           <p>
             <span className="text-hos-text-muted">Status:</span> {ctx.status}
           </p>

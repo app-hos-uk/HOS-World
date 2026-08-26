@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -13,17 +13,10 @@ import { RouteGuard } from '@/components/RouteGuard';
 const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
-type Rate = {
-  providerId: string;
-  providerName: string;
-  serviceCode: string;
-  serviceName: string;
-  rate: number;
-  currency: string;
-};
-
 type Address = {
   id: string;
+  firstName?: string;
+  lastName?: string;
   street: string;
   addressLine2?: string;
   city: string;
@@ -32,27 +25,42 @@ type Address = {
   country: string;
 };
 
-type EnrichmentItem = {
+type InvoiceItem = {
+  id: string;
   sku?: string | null;
-  name?: string;
-  status?: string;
-  reason?: string;
-  quantity?: number;
+  name: string;
+  quantity: number;
 };
 
-type ShipmentState = {
+type Group = {
+  id: string;
   status: string;
-  allReady?: boolean;
-  enrichment?: EnrichmentItem[];
+  boxSizeName?: string | null;
+  customerPrice?: number;
+  recipientName?: string;
+  trackingCode?: string | null;
+  carrierName?: string | null;
+  labelUrl?: string | null;
+  items: Array<{ id: string; name: string; quantity: number }>;
 };
 
-function PaymentForm({
-  clientSecret,
-  onSuccess,
-}: {
-  clientSecret: string;
-  onSuccess: () => void;
-}) {
+type Progress = {
+  id: string;
+  hosOrderNumber?: string;
+  invoiceNumber?: string;
+  status: string;
+  nextAction?: string;
+  customerName?: string;
+  customerPhone?: string;
+  claimEmail?: string;
+  currency?: string;
+  totalCustomerCharge?: number;
+  invoiceItems?: InvoiceItem[];
+  groups?: Group[];
+  user?: { firstName?: string; lastName?: string; phone?: string; email?: string };
+};
+
+function PaymentForm({ clientSecret, onSuccess }: { clientSecret: string; onSuccess: () => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const toast = useToast();
@@ -82,436 +90,346 @@ function PaymentForm({
   return (
     <div className="space-y-4">
       <div className="rounded border border-stone-700 p-3 bg-stone-900">
-        <CardElement
-          options={{
-            style: {
-              base: { fontSize: '16px', color: '#e7e5e4', '::placeholder': { color: '#78716c' } },
-            },
-          }}
-        />
+        <CardElement options={{ hidePostalCode: true }} />
       </div>
       <button
         type="button"
         disabled={paying || !stripe}
         onClick={handlePay}
-        className="w-full py-2.5 rounded bg-violet-600 text-white font-medium disabled:opacity-50"
+        className="w-full py-2 rounded bg-violet-600 text-white disabled:opacity-50"
       >
-        {paying ? 'Processing…' : 'Pay for shipping'}
+        {paying ? 'Paying…' : 'Pay shipping'}
       </button>
     </div>
   );
 }
 
 export default function ShipRequestPage() {
+  return (
+    <RouteGuard allowedRoles={['CUSTOMER']} showAccessDenied>
+      <ShipRequestInner />
+    </RouteGuard>
+  );
+}
+
+function ShipRequestInner() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const toast = useToast();
-  const { isAuthenticated } = useAuth();
-
-  const [loading, setLoading] = useState(true);
-  const [shipment, setShipment] = useState<ShipmentState | null>(null);
-
+  const { user, isAuthenticated } = useAuth();
+  const [order, setOrder] = useState<Progress | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
-  const [selectedAddress, setSelectedAddress] = useState('');
-  const [addressSet, setAddressSet] = useState(false);
-
-  const [rates, setRates] = useState<Rate[]>([]);
-  const [selectedRate, setSelectedRate] = useState<Rate | null>(null);
-  const [ratesLoading, setRatesLoading] = useState(false);
-  const [ratesError, setRatesError] = useState<string | null>(null);
-
+  const [loading, setLoading] = useState(true);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [multi, setMulti] = useState(false);
+  const [itemAddress, setItemAddress] = useState<Record<string, string>>({});
+  const [carry, setCarry] = useState<Record<string, boolean>>({});
   const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [paymentDone, setPaymentDone] = useState(false);
 
-  const [purchasing, setPurchasing] = useState(false);
-  const [result, setResult] = useState<{ trackingCode: string; labelUrl?: string } | null>(null);
+  const profileSeeded = useRef(false);
 
-  const resolveSale = useCallback(async () => {
-    if (!id) return;
-    setLoading(true);
+  const load = useCallback(async () => {
+    if (!id || !isAuthenticated) return;
     try {
-      const r = await apiClient.resolveStoreShipmentSale(id);
-      const data = r.data as ShipmentState;
-      setShipment(data);
+      try {
+        await apiClient.attachStoreShipmentByLogin(id);
+      } catch {
+        /* already attached or email mismatch handled below */
+      }
+      await apiClient.resolveStoreShipmentSale(id).catch(() => undefined);
+      const [progress, addr] = await Promise.all([
+        apiClient.getStoreShipmentProgress(id),
+        apiClient.getAddresses(),
+      ]);
+      const data = progress.data as Progress;
+      setOrder(data);
+      setAddresses((addr.data as Address[]) || []);
+      if (!profileSeeded.current) {
+        profileSeeded.current = true;
+        setFirstName((prev) => prev || data.user?.firstName || '');
+        setLastName((prev) => prev || data.user?.lastName || '');
+        setPhone((prev) => prev || data.customerPhone || data.user?.phone || '');
+      }
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Could not load shipment');
+      toast.error(e instanceof Error ? e.message : 'Could not load shipping order');
     } finally {
       setLoading(false);
     }
-  }, [id, toast]);
+  }, [id, isAuthenticated, toast]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push(`/login?redirect=/ship/request/${id}`);
+    load();
+    const t = window.setInterval(load, 5000);
+    return () => window.clearInterval(t);
+  }, [load]);
+
+  const saveProfile = async () => {
+    if (!id) return;
+    try {
+      await apiClient.updateStoreShipmentProfile(id, { firstName, lastName, phone });
+      toast.success('Profile saved');
+      load();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Could not save profile');
+    }
+  };
+
+  const assign = async () => {
+    if (!id || !order) return;
+    const items = order.invoiceItems || [];
+    if (!addresses.length) {
+      toast.error('Add a shipping address first');
       return;
     }
-    resolveSale();
-    apiClient
-      .getAddresses()
-      .then((r) => setAddresses((r.data as Address[]) || []))
-      .catch(() => undefined);
-  }, [id, isAuthenticated, resolveSale, router]);
-
-  const fetchRates = useCallback(async () => {
-    if (!id) return;
-    setRatesLoading(true);
-    setRatesError(null);
-    try {
-      const r = await apiClient.getStoreShipmentRates(id);
-      const fetched = (r.data as Rate[]) || [];
-      setRates(fetched);
-      if (fetched.length === 0) {
-        setRatesError('No shipping rates are available for this address. Try a different address.');
+    const defaultAddress = addresses[0].id;
+    const byAddress = new Map<string, Array<{ posSaleItemId: string; quantity: number }>>();
+    const carryInHand: Array<{ posSaleItemId: string; quantity: number }> = [];
+    for (const item of items) {
+      if (carry[item.id]) {
+        carryInHand.push({ posSaleItemId: item.id, quantity: item.quantity });
+        continue;
       }
-    } catch (rateErr: unknown) {
-      setRates([]);
-      setRatesError(
-        rateErr instanceof Error ? rateErr.message : 'Could not fetch shipping rates',
-      );
-    } finally {
-      setRatesLoading(false);
+      const addressId = multi ? itemAddress[item.id] || defaultAddress : defaultAddress;
+      const list = byAddress.get(addressId) || [];
+      list.push({ posSaleItemId: item.id, quantity: item.quantity });
+      byAddress.set(addressId, list);
     }
-  }, [id]);
-
-  const doSetAddress = async () => {
-    if (!selectedAddress || !id) return;
-    try {
-      await apiClient.setShipmentAddress(id, selectedAddress);
-      // Address is now persisted on the backend — reflect that immediately,
-      // independent of whether rate lookup subsequently succeeds.
-      setAddressSet(true);
-      toast.success('Address saved');
-      await fetchRates();
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Failed to set address');
+    if (byAddress.size === 0) {
+      toast.error('Select at least one item to ship');
+      return;
     }
-  };
-
-  const changeAddress = () => {
-    setAddressSet(false);
-    setRates([]);
-    setSelectedRate(null);
-    setRatesError(null);
-  };
-
-  const doAuthorize = async () => {
-    if (!selectedRate || !id) return;
     try {
-      const r = await apiClient.authorizeShipment(id, {
-        carrier: selectedRate.providerId,
-        service: selectedRate.serviceCode,
-        amount: selectedRate.rate,
-        currency: selectedRate.currency,
+      await apiClient.assignStoreShipmentItems(id, {
+        assignments: [...byAddress.entries()].map(([addressId, assigned]) => ({
+          addressId,
+          items: assigned,
+        })),
+        carryInHand,
       });
+      toast.success('Items assigned — staff will confirm the box charge');
+      load();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Could not assign items');
+    }
+  };
+
+  const startPay = async () => {
+    if (!id) return;
+    try {
+      const r = await apiClient.authorizeShipment(id, {});
       const data = r.data as { clientSecret?: string; alreadyPaid?: boolean };
       if (data.alreadyPaid) {
-        setPaymentDone(true);
-        toast.success('Shipping is already paid — continue to your label');
+        await apiClient.confirmStoreShipmentPayment(id);
+        toast.success('Shipping is already paid');
+        load();
         return;
       }
-      if (data.clientSecret) {
-        setClientSecret(data.clientSecret);
+      if (!data.clientSecret) {
+        toast.error('Could not start payment');
         return;
       }
-      toast.error('Could not start payment. Please try again.');
+      setClientSecret(data.clientSecret);
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Authorization failed');
+      toast.error(e instanceof Error ? e.message : 'Payment could not start');
     }
   };
 
-  const doPurchaseLabel = async () => {
+  const afterPay = async () => {
     if (!id) return;
-    setPurchasing(true);
     try {
-      const r = await apiClient.purchaseShipmentLabel(id);
-      const data = r.data as { trackingCode: string; labelUrl?: string };
-      setResult(data);
-      toast.success('Label purchased — check your email for tracking');
+      await apiClient.confirmStoreShipmentPayment(id);
+      setClientSecret(null);
+      toast.success('Your House of Spells shipping order has been received');
+      load();
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Label purchase failed');
-    } finally {
-      setPurchasing(false);
+      toast.error(e instanceof Error ? e.message : 'Could not record payment');
     }
   };
 
-  if (loading) {
-    return <p className="p-8 text-stone-500">Loading shipment…</p>;
+  if (loading && !order) {
+    return <p className="text-stone-400">Loading your shipping order…</p>;
+  }
+  if (!order) {
+    return <p className="text-red-300">Shipping order not found.</p>;
   }
 
-  if (result) {
-    return (
-      <RouteGuard allowedRoles={['CUSTOMER']}>
-        <div className="max-w-lg mx-auto py-10 space-y-6 text-center">
-          <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-6 space-y-3">
-            <p className="text-xl font-semibold text-emerald-300">Shipping label purchased</p>
-            <p className="text-stone-300 text-sm">
-              Tracking: <span className="font-mono font-semibold">{result.trackingCode}</span>
-            </p>
-            {result.labelUrl && (
-              <a
-                href={result.labelUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block mt-2 px-4 py-2 rounded bg-violet-600 text-white text-sm"
-              >
-                Download label
-              </a>
-            )}
-          </div>
-          <Link href="/" className="text-sm text-violet-400 hover:underline">
-            Return to home
-          </Link>
-        </div>
-      </RouteGuard>
-    );
-  }
-
-  const status = shipment?.status || 'DRAFT';
+  const paid = ['PAID', 'SENT_TO_LOGISTICS', 'PACKING', 'PACKED', 'LABEL_CREATED', 'READY_FOR_PICKUP', 'HANDED_TO_CARRIER', 'IN_TRANSIT', 'DELIVERED'].includes(
+    order.status,
+  );
 
   return (
-    <RouteGuard allowedRoles={['CUSTOMER']}>
-      <div className="max-w-lg mx-auto py-8 space-y-6">
-        <div>
-          <Link href="/" className="text-sm text-violet-400 hover:underline">
-            ← Home
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold">Ship your purchase</h1>
+        <p className="text-sm text-stone-400 mt-1">
+          {order.hosOrderNumber || 'Shipping order'} · Invoice {order.invoiceNumber || '—'}
+        </p>
+      </div>
+
+      <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
+        <p className="font-medium">Your details</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <input
+            className="border rounded px-3 py-2 bg-stone-950 border-stone-700"
+            placeholder="First name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+          <input
+            className="border rounded px-3 py-2 bg-stone-950 border-stone-700"
+            placeholder="Last name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
+          <input
+            className="border rounded px-3 py-2 bg-stone-950 border-stone-700 sm:col-span-2"
+            placeholder="Phone"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </div>
+        <p className="text-xs text-stone-500">Email: {order.claimEmail || user?.email}</p>
+        <button type="button" onClick={saveProfile} className="px-4 py-2 rounded bg-stone-700 text-sm">
+          Save profile
+        </button>
+      </div>
+
+      <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="font-medium">Shipping addresses</p>
+          <Link
+            href={`/account/addresses?action=add&returnUrl=/ship/request/${id}`}
+            className="text-sm text-violet-400 underline"
+          >
+            Add address
           </Link>
-          <h1 className="text-2xl font-semibold mt-2 text-stone-100">Complete your shipping</h1>
-          <p className="text-sm text-stone-400 mt-1">Shipment {id}</p>
         </div>
-
-        {/* Step indicator */}
-        <div className="flex items-center gap-2 text-xs font-medium text-stone-500">
-          <span className={status !== 'PENDING_ENRICHMENT' ? 'text-violet-400' : ''}>
-            1. Verify items
-          </span>
-          <span>→</span>
-          <span className={addressSet ? 'text-violet-400' : ''}>2. Address</span>
-          <span>→</span>
-          <span className={rates.length > 0 ? 'text-violet-400' : ''}>3. Select rate</span>
-          <span>→</span>
-          <span className={paymentDone ? 'text-violet-400' : ''}>4. Pay</span>
-          <span>→</span>
-          <span>5. Label</span>
-        </div>
-
-        {/* Invoice items */}
-        {Array.isArray(shipment?.enrichment) && shipment.enrichment.length > 0 &&
-          status !== 'BLOCKED' && (
-          <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
-            <p className="font-medium text-stone-200">Items from your invoice</p>
-            <ul className="divide-y divide-stone-800">
-              {shipment.enrichment.map((item, i) => (
-                <li
-                  key={`${item.sku || 'item'}-${i}`}
-                  className="flex items-center justify-between py-2 text-sm"
-                >
-                  <span className="text-stone-300">
-                    {item.name || item.sku || 'Item'}
-                    {item.sku && (
-                      <span className="ml-2 text-xs text-stone-500">({item.sku})</span>
-                    )}
-                  </span>
-                  <span className="text-stone-400 tabular-nums">
-                    ×{item.quantity ?? 1}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
+        {addresses.length === 0 ? (
+          <p className="text-sm text-stone-400">Add every destination you need, including gift addresses.</p>
+        ) : (
+          <ul className="text-sm text-stone-300 space-y-1">
+            {addresses.map((a) => (
+              <li key={a.id}>
+                {a.street}, {a.city} {a.postalCode}
+              </li>
+            ))}
+          </ul>
         )}
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={multi} onChange={(e) => setMulti(e.target.checked)} />
+          Ship items to multiple addresses
+        </label>
+      </div>
 
-        {/* Status / enrichment */}
-        {status === 'PENDING_ENRICHMENT' && (
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">
-            We are confirming your items with the store. We will email you when it is ready — you can
-            also refresh this page.
-            <button
-              type="button"
-              onClick={resolveSale}
-              className="block mt-2 text-violet-400 underline text-xs"
-            >
-              Refresh
-            </button>
-          </div>
-        )}
-
-        {status === 'BLOCKED' && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300 space-y-2">
-            <p>
-              This shipment is blocked. The store may have restricted certain items from shipping.
-              Contact support for help.
-            </p>
-            {Array.isArray(shipment?.enrichment) && shipment.enrichment.length > 0 && (
-              <ul className="list-disc pl-5 text-xs text-red-200">
-                {shipment.enrichment
-                  .filter((row) => row.status === 'BLOCKED')
-                  .map((row, i) => (
-                    <li key={`${row.sku || 'item'}-${i}`}>
-                      {row.name || row.sku || 'Item'} is not eligible to ship.
-                    </li>
-                  ))}
-              </ul>
-            )}
-          </div>
-        )}
-
-        {/* Step 2: Address */}
-        {shipment?.allReady && !addressSet && status !== 'BLOCKED' && (
-          <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
-            <p className="font-medium text-stone-200">Where should we ship to?</p>
-            {addresses.length > 0 ? (
-              <>
+      <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
+        <p className="font-medium">Items from your invoice</p>
+        <p className="text-xs text-stone-500">
+          Uncheck “Carry in hand” for items that should ship. If you chose multiple addresses, pick a
+          destination for each item.
+        </p>
+        <ul className="divide-y divide-stone-800">
+          {(order.invoiceItems || []).map((item) => (
+            <li key={item.id} className="py-3 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span>
+                  {item.name} {item.sku ? <span className="text-stone-500">({item.sku})</span> : null}
+                </span>
+                <span className="text-stone-400">×{item.quantity}</span>
+              </div>
+              <label className="flex items-center gap-2 text-xs text-stone-400">
+                <input
+                  type="checkbox"
+                  checked={Boolean(carry[item.id])}
+                  onChange={(e) => setCarry((c) => ({ ...c, [item.id]: e.target.checked }))}
+                />
+                Carry in hand
+              </label>
+              {multi && !carry[item.id] && (
                 <select
-                  value={selectedAddress}
-                  onChange={(e) => setSelectedAddress(e.target.value)}
-                  className="w-full border rounded px-3 py-2 bg-stone-900 border-stone-700 text-stone-200"
+                  className="w-full border rounded px-2 py-1 bg-stone-950 border-stone-700 text-sm"
+                  value={itemAddress[item.id] || addresses[0]?.id || ''}
+                  onChange={(e) => setItemAddress((m) => ({ ...m, [item.id]: e.target.value }))}
                 >
-                  <option value="">Select an address</option>
                   {addresses.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.street}, {a.city} {a.postalCode}, {a.country}
+                      {a.street}, {a.city}
                     </option>
                   ))}
                 </select>
-                <button
-                  type="button"
-                  disabled={!selectedAddress}
-                  onClick={doSetAddress}
-                  className="w-full py-2 rounded bg-violet-600 text-white disabled:opacity-50"
-                >
-                  Use this address
-                </button>
-                <Link
-                  href={`/account/addresses?action=add&returnUrl=${encodeURIComponent(`/ship/request/${id}`)}`}
-                  className="block text-center text-sm text-violet-400 underline"
-                >
-                  Add a new address
-                </Link>
-              </>
-            ) : (
-              <div className="text-sm text-stone-400">
-                <p>You have no saved addresses.</p>
-                <Link
-                  href={`/account/addresses?action=add&returnUrl=${encodeURIComponent(`/ship/request/${id}`)}`}
-                  className="text-violet-400 underline"
-                >
-                  Add an address first
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Step 3: Rate selection — loading / empty / error fallback */}
-        {addressSet && rates.length === 0 && !clientSecret && (
-          <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
-            {ratesLoading ? (
-              <p className="text-sm text-stone-400">Fetching shipping rates…</p>
-            ) : (
-              <>
-                <p className="text-sm text-red-300">
-                  {ratesError || 'No shipping rates available for this address yet.'}
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={fetchRates}
-                    className="px-4 py-2 rounded bg-violet-600 text-white text-sm"
-                  >
-                    Retry
-                  </button>
-                  <button
-                    type="button"
-                    onClick={changeAddress}
-                    className="px-4 py-2 rounded border border-stone-600 text-stone-200 text-sm"
-                  >
-                    Change address
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Step 3: Rate selection */}
-        {addressSet && rates.length > 0 && !clientSecret && (
-          <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="font-medium text-stone-200">Choose a shipping option</p>
-              <button
-                type="button"
-                onClick={changeAddress}
-                className="text-xs text-violet-400 underline"
-              >
-                Change address
-              </button>
-            </div>
-            <ul className="space-y-2">
-              {rates.map((rate) => {
-                const key = `${rate.providerId}-${rate.serviceCode}`;
-                const active = selectedRate && `${selectedRate.providerId}-${selectedRate.serviceCode}` === key;
-                return (
-                  <li key={key}>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedRate(rate)}
-                      className={`w-full text-left border rounded p-3 text-sm transition-colors ${
-                        active
-                          ? 'border-violet-500 bg-violet-500/10 text-stone-100'
-                          : 'border-stone-700 bg-stone-900 text-stone-300 hover:border-stone-600'
-                      }`}
-                    >
-                      <span className="font-medium">{rate.providerName}</span>
-                      <span className="mx-2 text-stone-500">·</span>
-                      {rate.serviceName}
-                      <span className="float-right font-semibold">
-                        {rate.currency} {rate.rate.toFixed(2)}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-            {selectedRate && (
-              <button
-                type="button"
-                onClick={doAuthorize}
-                className="w-full py-2 rounded bg-violet-600 text-white"
-              >
-                Continue to payment — {selectedRate.currency} {selectedRate.rate.toFixed(2)}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Step 4: Payment */}
-        {clientSecret && !paymentDone && stripePromise && (
-          <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
-            <p className="font-medium text-stone-200">Pay for shipping</p>
-            <Elements stripe={stripePromise} options={{ clientSecret }}>
-              <PaymentForm clientSecret={clientSecret} onSuccess={() => setPaymentDone(true)} />
-            </Elements>
-          </div>
-        )}
-
-        {/* Step 5: Purchase label */}
-        {paymentDone && !result && (
-          <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
-            <p className="font-medium text-stone-200">Payment complete — purchase your label</p>
-            <p className="text-sm text-stone-400">
-              Once purchased, the carrier label and tracking number will be emailed to you.
-            </p>
-            <button
-              type="button"
-              disabled={purchasing}
-              onClick={doPurchaseLabel}
-              className="w-full py-2.5 rounded bg-emerald-600 text-white font-medium disabled:opacity-50"
-            >
-              {purchasing ? 'Purchasing…' : 'Purchase shipping label'}
-            </button>
-          </div>
+              )}
+            </li>
+          ))}
+        </ul>
+        {!paid && (
+          <button type="button" onClick={assign} className="w-full py-2 rounded bg-violet-600 text-white">
+            Confirm items &amp; addresses
+          </button>
         )}
       </div>
-    </RouteGuard>
+
+      {(order.groups || []).length > 0 && (
+        <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
+          <p className="font-medium">Your shipments</p>
+          {order.groups!.map((g, i) => (
+            <div key={g.id} className="text-sm text-stone-300">
+              <p>
+                Box {i + 1}: {g.boxSizeName || 'Waiting for staff to choose a box'} — {g.recipientName}
+              </p>
+              {g.customerPrice ? (
+                <p className="text-stone-400">
+                  {order.currency} {Number(g.customerPrice).toFixed(2)}
+                </p>
+              ) : null}
+              {g.trackingCode && (
+                <p className="text-emerald-300">
+                  {g.carrierName} {g.trackingCode}
+                  {g.labelUrl ? (
+                    <>
+                      {' '}
+                      <a href={g.labelUrl} className="underline" target="_blank" rel="noreferrer">
+                        track
+                      </a>
+                    </>
+                  ) : null}
+                </p>
+              )}
+            </div>
+          ))}
+          {order.status === 'CUSTOMER_DETAILS_REQUIRED' && (
+            <p className="text-amber-300 text-sm">Staff is confirming the box size and House of Spells shipping charge.</p>
+          )}
+        </div>
+      )}
+
+      {order.status === 'AWAITING_PAYMENT' && !clientSecret && (
+        <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50 space-y-3">
+          <p className="font-medium">
+            Shipping charge: {order.currency} {Number(order.totalCustomerCharge || 0).toFixed(2)}
+          </p>
+          <button type="button" onClick={startPay} className="w-full py-2 rounded bg-violet-600 text-white">
+            Pay at counter
+          </button>
+        </div>
+      )}
+
+      {clientSecret && stripePromise && (
+        <div className="rounded-lg border border-stone-700 p-4 bg-stone-900/50">
+          <Elements stripe={stripePromise} options={{ clientSecret }}>
+            <PaymentForm clientSecret={clientSecret} onSuccess={afterPay} />
+          </Elements>
+        </div>
+      )}
+
+      {paid && (
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 space-y-2">
+          <p className="font-medium text-emerald-200">Your House of Spells shipping order has been received.</p>
+          <p className="text-sm text-stone-300">
+            Order {order.hosOrderNumber}. You can leave the store — we will pack and send tracking when
+            the carrier label is created.
+          </p>
+        </div>
+      )}
+    </div>
   );
 }

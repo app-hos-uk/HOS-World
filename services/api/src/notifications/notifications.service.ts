@@ -354,6 +354,48 @@ export class NotificationsService implements OnModuleInit {
     this.logger.log(`Store shipment claim email queued for ${data.email}`);
   }
 
+  async sendStoreShipmentPaidEmail(data: {
+    email: string;
+    hosOrderNumber: string;
+    storeName: string;
+    amount: number;
+    currency: string;
+  }): Promise<void> {
+    if (!data.email) return;
+    const rendered = await this.templatesService.render('store_shipment_paid', {
+      storeName: data.storeName,
+      hosOrderNumber: data.hosOrderNumber,
+      amount: data.amount.toFixed(2),
+      currency: data.currency,
+    });
+    await this.queueNotification(data.email, rendered.subject, rendered.body);
+    this.logger.log(`Store shipment paid email queued for ${data.email}`);
+  }
+
+  async sendStoreShipmentTrackingEmail(data: {
+    email: string;
+    hosOrderNumber: string;
+    storeName: string;
+    destination: string;
+    carrier: string;
+    trackingCode: string;
+    trackingUrl: string;
+    items: string;
+  }): Promise<void> {
+    if (!data.email) return;
+    const rendered = await this.templatesService.render('store_shipment_tracking', {
+      hosOrderNumber: data.hosOrderNumber,
+      storeName: data.storeName,
+      destination: data.destination,
+      carrier: data.carrier,
+      trackingCode: data.trackingCode,
+      trackingUrl: data.trackingUrl || '#',
+      items: data.items,
+    });
+    await this.queueNotification(data.email, rendered.subject, rendered.body);
+    this.logger.log(`Store shipment tracking email queued for ${data.email}`);
+  }
+
   async sendFoundingMemberConfirmation(
     email: string,
     data: { firstName: string },
