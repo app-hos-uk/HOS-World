@@ -245,7 +245,7 @@ export class StoreShipmentService {
               hosOrderNumber,
               qrAccessCode,
               status: 'CUSTOMER_DETAILS_REQUIRED',
-              currency: confirmed.currency || store.currency || 'GBP',
+              currency: 'USD',
               posSaleId: confirmed.localSaleId,
               posExternalSaleId: confirmed.externalId,
               metadata,
