@@ -3,7 +3,7 @@ FROM node:20-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ openssl \
     && rm -rf /var/lib/apt/lists/* \
-    && npm install -g pnpm
+    && npm install -g pnpm@10.28.2
 
 WORKDIR /app
 
@@ -12,7 +12,8 @@ COPY scripts/setup-git-hooks.mjs ./scripts/setup-git-hooks.mjs
 COPY packages ./packages
 COPY services/api ./services/api
 
-RUN (pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile) \
+RUN pnpm config set onlyBuiltDependencies '["*"]' --location=project \
+    && (pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile) \
     && cd /app/packages/shared-types && pnpm build \
     && cd /app/packages/utils && pnpm build \
     && cd /app/packages/api-client && pnpm build \

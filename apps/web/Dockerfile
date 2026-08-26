@@ -3,7 +3,7 @@
 # declares engines.node ">=20.9.0", and xlsx requires ">=20". Node 18 is also EOL.
 FROM node:20-slim AS base
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.28.2
 
 WORKDIR /app
 
