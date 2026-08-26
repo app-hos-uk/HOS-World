@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
+import { BarcodeScanner } from '@/components/BarcodeScanner';
 
 type ConfirmedInvoice = {
   number: string;
@@ -12,8 +14,20 @@ type ConfirmedInvoice = {
   saleDate: string | Date;
 };
 
+type CreatedOrder = {
+  shipmentId?: string;
+  hosOrderNumber?: string;
+  lookupUrl?: string;
+  claimUrl?: string;
+  emailQueued?: boolean;
+  customerEmail?: string;
+  items?: Array<{ id?: string; sku?: string | null; name: string; quantity: number }>;
+  confirmedInvoice?: ConfirmedInvoice;
+};
+
 export default function StoreShippingPage() {
   const toast = useToast();
+  const router = useRouter();
   const { user } = useAuth();
   const assignedStoreId = user?.storeId || '';
   const staffLockedToStore = user?.role === 'STORE_STAFF' && Boolean(assignedStoreId);
@@ -21,15 +35,14 @@ export default function StoreShippingPage() {
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [email, setEmail] = useState('');
   const [consent, setConsent] = useState(false);
-  const [claimUrl, setClaimUrl] = useState('');
-  const [emailQueued, setEmailQueued] = useState(false);
-  const [confirmed, setConfirmed] = useState<ConfirmedInvoice | null>(null);
+  const [result, setResult] = useState<CreatedOrder | null>(null);
   const [loading, setLoading] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   const submit = async () => {
     const resolvedStoreId = staffLockedToStore ? assignedStoreId : storeId.trim();
-    if (!resolvedStoreId || !invoiceNumber.trim() || !email.trim()) {
-      toast.error('Store, invoice, and email are required');
+    if (!resolvedStoreId || !invoiceNumber.trim()) {
+      toast.error('Store and invoice number are required');
       return;
     }
     if (!consent) {
@@ -41,29 +54,21 @@ export default function StoreShippingPage() {
       const r = await apiClient.createStoreShipmentClaim({
         storeId: resolvedStoreId,
         invoiceNumber: invoiceNumber.trim(),
-        email: email.trim(),
+        ...(email.trim() ? { email: email.trim() } : {}),
         shippingConsent: true,
       });
-      const payload = r.data as {
-        claimUrl?: string;
-        emailQueued?: boolean;
-        resent?: boolean;
-        confirmedInvoice?: ConfirmedInvoice;
-      };
-      const url = payload?.claimUrl || '';
-      const emailed = Boolean(payload?.emailQueued);
-      setClaimUrl(url);
-      setEmailQueued(emailed);
-      setConfirmed(payload?.confirmedInvoice || null);
+      const payload = (r.data || {}) as CreatedOrder;
+      setResult(payload);
       toast.success(
-        emailed
-          ? payload?.resent
-            ? 'Invoice confirmed — claim link resent to the customer'
-            : 'Invoice confirmed — claim link emailed to the customer'
-          : 'Invoice confirmed — copy the claim link below (email could not be queued)',
+        payload.emailQueued
+          ? 'Invoice imported — magic link emailed to the customer'
+          : 'Invoice imported — share the QR or magic link with the customer',
       );
+      if (payload.shipmentId) {
+        router.push(`/store/shipping/${payload.shipmentId}`);
+      }
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Failed to create claim');
+      toast.error(e instanceof Error ? e.message : 'Failed to create shipping order');
     } finally {
       setLoading(false);
     }
@@ -72,11 +77,10 @@ export default function StoreShippingPage() {
   return (
     <div className="max-w-lg space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-hos-text">Ship purchase home</h1>
+        <h1 className="text-xl font-semibold text-hos-text">Shipping counter</h1>
         <p className="text-sm text-hos-text-muted mt-1">
-          After the Lightspeed sale is completed, enter the invoice or receipt number and the
-          customer email from that sale. We confirm both before emailing the shipping claim link.
-          Product details are loaded later, after they sign in.
+          Scan or enter the Lightspeed invoice. Customer email and items are imported automatically.
+          The customer then scans the store QR or opens the magic link on their phone.
         </p>
       </div>
 
@@ -93,21 +97,30 @@ export default function StoreShippingPage() {
         </label>
         <label className="block text-sm text-hos-text-secondary">
           Invoice / receipt number
-          <input
-            className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg border-hos-border"
-            value={invoiceNumber}
-            onChange={(e) => setInvoiceNumber(e.target.value)}
-            placeholder="As shown on the Lightspeed receipt"
-          />
+          <div className="mt-1 flex gap-2">
+            <input
+              className="flex-1 border rounded px-3 py-2 bg-hos-bg border-hos-border"
+              value={invoiceNumber}
+              onChange={(e) => setInvoiceNumber(e.target.value)}
+              placeholder="Scan barcode or type the receipt number"
+            />
+            <button
+              type="button"
+              onClick={() => setScanning(true)}
+              className="px-3 py-2 rounded border border-violet-500 text-violet-300 text-sm"
+            >
+              Scan
+            </button>
+          </div>
         </label>
         <label className="block text-sm text-hos-text-secondary">
-          Customer email
+          Customer email (optional fallback)
           <input
             type="email"
             className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg border-hos-border"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Must match the Lightspeed customer on this invoice"
+            placeholder="Only needed if Lightspeed has no customer email"
           />
         </label>
         <label className="flex items-start gap-2 text-sm text-hos-text-secondary">
@@ -120,30 +133,38 @@ export default function StoreShippingPage() {
           onClick={submit}
           className="w-full py-2 rounded bg-violet-600 text-white disabled:opacity-50"
         >
-          {loading ? 'Checking invoice…' : 'Confirm invoice & send claim link'}
+          {loading ? 'Importing invoice…' : 'Create shipping order'}
         </button>
       </div>
 
-      {claimUrl && (
-        <div className="rounded border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm break-all space-y-2">
-          <p className="font-medium text-emerald-300">Claim link</p>
-          {confirmed && (
-            <p className="text-hos-text-muted text-xs">
-              Confirmed invoice {confirmed.number}
-              {confirmed.totalAmount != null
-                ? ` · ${confirmed.currency || ''} ${Number(confirmed.totalAmount).toFixed(2)}`
-                : ''}
-            </p>
-          )}
+      {result?.hosOrderNumber && (
+        <div className="rounded border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm space-y-2">
+          <p className="font-medium text-emerald-300">{result.hosOrderNumber}</p>
           <p className="text-hos-text-muted text-xs">
-            {emailQueued
-              ? 'Also emailed to the customer. Copy this if they need it at the till.'
-              : 'Email was not sent. Copy this link and share it with the customer.'}
+            Email: {result.customerEmail || '—'}
+            {result.confirmedInvoice
+              ? ` · Invoice ${result.confirmedInvoice.number}`
+              : ''}
           </p>
-          <a href={claimUrl} className="text-violet-300 underline">
-            {claimUrl}
-          </a>
+          {result.lookupUrl && (
+            <img
+              alt="Customer QR"
+              className="bg-white p-2 rounded w-44 h-44"
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(result.lookupUrl)}`}
+            />
+          )}
         </div>
+      )}
+
+      {scanning && (
+        <BarcodeScanner
+          onScan={(text) => {
+            setInvoiceNumber(text);
+            setScanning(false);
+            toast.success('Barcode captured');
+          }}
+          onClose={() => setScanning(false)}
+        />
       )}
     </div>
   );

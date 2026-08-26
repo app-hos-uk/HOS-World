@@ -2831,13 +2831,19 @@ export class ApiClient {
   async createStoreShipmentClaim(body: {
     storeId: string;
     invoiceNumber: string;
-    email: string;
+    email?: string;
     shippingConsent: boolean;
   }) {
     return this.request<ApiResponse<unknown>>('/store-shipment/staff/create-claim', {
       method: 'POST',
       body: JSON.stringify(body),
     });
+  }
+
+  async lookupStoreShipment(query: string, storeId?: string) {
+    const qs = new URLSearchParams({ q: query });
+    if (storeId) qs.set('storeId', storeId);
+    return this.request<ApiResponse<unknown>>(`/store-shipment/lookup?${qs.toString()}`);
   }
 
   async getStoreShipmentClaim(token: string) {
@@ -2848,6 +2854,238 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>(`/store-shipment/claim/${token}/attach`, {
       method: 'POST',
     });
+  }
+
+  async attachStoreShipmentByLogin(shipmentId: string) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/${shipmentId}/attach-login`, {
+      method: 'POST',
+    });
+  }
+
+  async getStoreShipmentProgress(shipmentId: string) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/${shipmentId}/progress`);
+  }
+
+  async updateStoreShipmentProfile(
+    shipmentId: string,
+    body: { firstName?: string; lastName?: string; phone?: string },
+  ) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/${shipmentId}/profile`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async assignStoreShipmentItems(
+    shipmentId: string,
+    body: {
+      assignments: Array<{
+        addressId: string;
+        recipientName?: string;
+        recipientEmail?: string;
+        recipientPhone?: string;
+        items: Array<{ posSaleItemId: string; quantity: number }>;
+      }>;
+      carryInHand?: Array<{ posSaleItemId: string; quantity: number }>;
+    },
+  ) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/${shipmentId}/assign-items`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async confirmStoreShipmentPayment(shipmentId: string) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/${shipmentId}/confirm-payment`, {
+      method: 'POST',
+    });
+  }
+
+  async listStaffStoreShipments(params?: { status?: string; page?: number; limit?: number }) {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const q = qs.toString();
+    return this.request<ApiResponse<unknown>>(`/store-shipment/staff/orders${q ? `?${q}` : ''}`);
+  }
+
+  async getStaffStoreShipment(id: string) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/staff/orders/${id}`);
+  }
+
+  async setStoreShipmentBoxSizes(
+    id: string,
+    body: { groups: Array<{ groupId: string; boxSizeId: string; customPrice?: number }> },
+  ) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/staff/orders/${id}/box-sizes`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async receiveStoreShipment(id: string, employeeName: string) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/staff/orders/${id}/receive`, {
+      method: 'POST',
+      body: JSON.stringify({ employeeName }),
+    });
+  }
+
+  async carrierPickupStoreShipment(id: string) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/staff/orders/${id}/carrier-pickup`, {
+      method: 'POST',
+    });
+  }
+
+  async listBackofficeStoreShipments(status?: string) {
+    const q = status ? `?status=${encodeURIComponent(status)}` : '';
+    return this.request<ApiResponse<unknown>>(`/store-shipment/staff/backoffice${q}`);
+  }
+
+  async verifyStoreShipmentItems(
+    groupId: string,
+    body: { verifiedItemIds: string[]; packedBy?: string },
+  ) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/staff/groups/${groupId}/verify-items`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async setStoreShipmentGroupWeight(
+    groupId: string,
+    body: { weightKg: number; lengthCm?: number; widthCm?: number; heightCm?: number },
+  ) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/staff/groups/${groupId}/set-weight`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async generateStoreShipmentLabel(groupId: string, serviceCode?: string) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/staff/groups/${groupId}/generate-label`, {
+      method: 'POST',
+      body: JSON.stringify({ serviceCode }),
+    });
+  }
+
+  async verifyStoreShipmentLabel(
+    groupId: string,
+    body: { hosOrderNumber: string; carrierTrackingNumber: string },
+  ) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/staff/groups/${groupId}/verify-label`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async listAdminBoxSizes(params?: { storeId?: string; includeInactive?: boolean }) {
+    const qs = new URLSearchParams();
+    if (params?.storeId) qs.set('storeId', params.storeId);
+    if (params?.includeInactive) qs.set('includeInactive', 'true');
+    const q = qs.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/box-sizes${q ? `?${q}` : ''}`);
+  }
+
+  async createAdminBoxSize(body: {
+    storeId?: string;
+    name: string;
+    label: string;
+    lengthCm: number;
+    widthCm: number;
+    heightCm: number;
+    customerPrice: number;
+    packagingCost?: number;
+    currency?: string;
+    sortOrder?: number;
+  }) {
+    return this.request<ApiResponse<unknown>>('/admin/box-sizes', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async updateAdminBoxSize(
+    id: string,
+    body: {
+      label?: string;
+      lengthCm?: number;
+      widthCm?: number;
+      heightCm?: number;
+      customerPrice?: number;
+      packagingCost?: number;
+      currency?: string;
+      isActive?: boolean;
+      sortOrder?: number;
+    },
+  ) {
+    return this.request<ApiResponse<unknown>>(`/admin/box-sizes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async deactivateAdminBoxSize(id: string) {
+    return this.request<ApiResponse<unknown>>(`/admin/box-sizes/${id}`, { method: 'DELETE' });
+  }
+
+  async getAdminShippingRateMatrix() {
+    return this.request<ApiResponse<unknown>>('/admin/shipping-rates');
+  }
+
+  async updateAdminShippingTier(
+    id: string,
+    body: {
+      name?: string;
+      description?: string;
+      countryCodes?: string[];
+      isActive?: boolean;
+      currency?: string;
+    },
+  ) {
+    return this.request<ApiResponse<unknown>>(`/admin/shipping-rates/tiers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async saveAdminShippingRateMatrix(
+    rates: Array<{ boxSizeId: string; tierId: string; customerPrice: number }>,
+  ) {
+    return this.request<ApiResponse<unknown>>('/admin/shipping-rates/matrix', {
+      method: 'PUT',
+      body: JSON.stringify({ rates }),
+    });
+  }
+
+  async getShippingDashboardSummary(from?: string, to?: string) {
+    const qs = new URLSearchParams();
+    if (from) qs.set('from', from);
+    if (to) qs.set('to', to);
+    const q = qs.toString();
+    return this.request<ApiResponse<unknown>>(
+      `/admin/store-shipments/dashboard/summary${q ? `?${q}` : ''}`,
+    );
+  }
+
+  async getShippingDashboardFinancials(from?: string, to?: string) {
+    const qs = new URLSearchParams();
+    if (from) qs.set('from', from);
+    if (to) qs.set('to', to);
+    const q = qs.toString();
+    return this.request<ApiResponse<unknown>>(
+      `/admin/store-shipments/dashboard/financials${q ? `?${q}` : ''}`,
+    );
+  }
+
+  async getShippingDashboardOperations(from?: string, to?: string) {
+    const qs = new URLSearchParams();
+    if (from) qs.set('from', from);
+    if (to) qs.set('to', to);
+    const q = qs.toString();
+    return this.request<ApiResponse<unknown>>(
+      `/admin/store-shipments/dashboard/operations${q ? `?${q}` : ''}`,
+    );
   }
 
   async resolveStoreShipmentSale(shipmentId: string) {
@@ -2869,7 +3107,7 @@ export class ApiClient {
 
   async authorizeShipment(
     shipmentId: string,
-    body: { carrier: string; service: string; amount: number; currency?: string },
+    body: { carrier?: string; service?: string; amount?: number; currency?: string },
   ) {
     return this.request<ApiResponse<unknown>>(`/store-shipment/${shipmentId}/authorize`, {
       method: 'POST',

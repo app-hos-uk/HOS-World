@@ -295,6 +295,21 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
       .sort((a, b) => a.rate - b.rate);
   }
 
+  private prioritizeCarriers(rates: RateResponse[], preferred?: string[]): RateResponse[] {
+    if (!preferred?.length) return rates;
+    const rank = (rate: RateResponse) => {
+      const hay = `${rate.metadata?.carrier || ''} ${rate.serviceName || ''}`.toLowerCase();
+      const idx = preferred.findIndex((p) => hay.includes(p.toLowerCase()));
+      return idx === -1 ? preferred.length : idx;
+    };
+    return [...rates].sort((a, b) => {
+      const ra = rank(a);
+      const rb = rank(b);
+      if (ra !== rb) return ra - rb;
+      return a.rate - b.rate;
+    });
+  }
+
   async testConnection(): Promise<TestConnectionResult> {
     const start = Date.now();
     if (!this.isConfigured()) {
@@ -359,7 +374,7 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
     }
 
     const shipment = await this.createShippoShipment(request);
-    const mapped = this.mapRates(shipment);
+    const mapped = this.prioritizeCarriers(this.mapRates(shipment), request.preferredCarriers);
 
     if (mapped.length === 0) {
       const messages = Array.isArray(shipment?.messages)

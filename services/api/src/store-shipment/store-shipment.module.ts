@@ -9,7 +9,10 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { StoreShipmentService } from './store-shipment.service';
 import { SkuCustomsService } from './sku-customs.service';
-import { StoreShipmentController, StoreShipmentAdminController } from './store-shipment.controller';
+import { BoxSizeService } from './box-size.service';
+import { ShippingSlipService } from './shipping-slip.service';
+import { ShippingWorkflowService } from './shipping-workflow.service';
+import { StoreShipmentController, StoreShipmentAdminController, BoxSizeAdminController, ShippingRatesAdminController } from './store-shipment.controller';
 
 @Module({
   imports: [
@@ -28,8 +31,14 @@ import { StoreShipmentController, StoreShipmentAdminController } from './store-s
     NotificationsModule,
     forwardRef(() => LoyaltyModule),
   ],
-  controllers: [StoreShipmentController, StoreShipmentAdminController],
-  providers: [StoreShipmentService, SkuCustomsService],
-  exports: [StoreShipmentService, SkuCustomsService],
+  controllers: [StoreShipmentController, StoreShipmentAdminController, BoxSizeAdminController, ShippingRatesAdminController],
+  providers: [
+    StoreShipmentService,
+    SkuCustomsService,
+    BoxSizeService,
+    ShippingSlipService,
+    ShippingWorkflowService,
+  ],
+  exports: [StoreShipmentService, SkuCustomsService, BoxSizeService, ShippingWorkflowService],
 })
 export class StoreShipmentModule {}

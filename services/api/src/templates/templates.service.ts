@@ -183,6 +183,61 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
     <p><a class="cta" href="{{claimUrl}}">Complete shipping</a></p>
     <p style="word-break:break-all;color:#4299e1;">{{claimUrl}}</p>
     <p>This link expires on {{expiresAt}}.</p>
+    <p>You can also scan the QR code at the shipping counter and enter your House of Spells shipping order number.</p>
+  </div>
+  <div class="footer"><p>House of Spells Marketplace</p></div>
+</div></body></html>`,
+  },
+  {
+    slug: 'store_shipment_paid',
+    channel: 'EMAIL',
+    subject: 'Your House of Spells shipping order has been received ({{hosOrderNumber}})',
+    description: 'Sent after the customer pays the in-store shipping charge.',
+    variables: ['storeName', 'hosOrderNumber', 'amount', 'currency'],
+    body: `<!DOCTYPE html>
+<html><head><style>
+  body{font-family:Arial,sans-serif;line-height:1.6;color:#333}
+  .container{max-width:600px;margin:0 auto;padding:20px}
+  .header{background:#553c9a;color:#fff;padding:20px;text-align:center}
+  .content{padding:20px;background:#f7fafc}
+  .footer{text-align:center;padding:20px;color:#718096;font-size:12px}
+</style></head><body>
+<div class="container">
+  <div class="header"><h1>Shipping order received</h1></div>
+  <div class="content">
+    <p>Thanks for shopping at <strong>{{storeName}}</strong>.</p>
+    <p>Your House of Spells shipping order <strong>{{hosOrderNumber}}</strong> has been received.</p>
+    <p>Shipping charge paid: <strong>{{currency}} {{amount}}</strong>.</p>
+    <p>Our team will pack your items and email tracking as soon as the carrier label is created. You can leave the store — we will take it from here.</p>
+  </div>
+  <div class="footer"><p>House of Spells Marketplace</p></div>
+</div></body></html>`,
+  },
+  {
+    slug: 'store_shipment_tracking',
+    channel: 'EMAIL',
+    subject: 'Your magical delivery is on its way! ({{hosOrderNumber}})',
+    description: 'Sent when a store shipment is handed to the carrier.',
+    variables: ['hosOrderNumber', 'storeName', 'destination', 'carrier', 'trackingCode', 'trackingUrl', 'items'],
+    body: `<!DOCTYPE html>
+<html><head><style>
+  body{font-family:Arial,sans-serif;line-height:1.6;color:#333}
+  .container{max-width:600px;margin:0 auto;padding:20px}
+  .header{background:#553c9a;color:#fff;padding:20px;text-align:center}
+  .content{padding:20px;background:#f7fafc}
+  .cta{display:inline-block;padding:12px 24px;background:#553c9a;color:#fff;text-decoration:none;border-radius:6px;margin:16px 0}
+  .footer{text-align:center;padding:20px;color:#718096;font-size:12px}
+</style></head><body>
+<div class="container">
+  <div class="header"><h1>Your magical delivery is on its way!</h1></div>
+  <div class="content">
+    <p>A parcel from <strong>{{storeName}}</strong> is on its way.</p>
+    <p><strong>HOS order:</strong> {{hosOrderNumber}}<br/>
+    <strong>Destination:</strong> {{destination}}<br/>
+    <strong>Carrier:</strong> {{carrier}}<br/>
+    <strong>Tracking:</strong> {{trackingCode}}</p>
+    <p><strong>Items:</strong> {{items}}</p>
+    <p><a class="cta" href="{{trackingUrl}}">Track shipment</a></p>
   </div>
   <div class="footer"><p>House of Spells Marketplace</p></div>
 </div></body></html>`,

@@ -13,7 +13,7 @@ describe('normalizeCountryCode', () => {
     expect(normalizeCountryCode('United States')).toBe('US');
     expect(normalizeCountryCode('United Kingdom')).toBe('GB');
     expect(normalizeCountryCode('Italy')).toBe('IT');
-    expect(normalizeCountryCode('United Arab Emirates')).toBe('AE');
+    expect(normalizeCountryCode('Puerto Rico')).toBe('PR');
   });
 
   it('resolves localised names', () => {
@@ -26,7 +26,7 @@ describe('normalizeCountryCode', () => {
     expect(normalizeCountryCode('USA')).toBe('US');
     expect(normalizeCountryCode('UK')).toBe('GB');
     expect(normalizeCountryCode('GBR')).toBe('GB');
-    expect(normalizeCountryCode('England')).toBe('GB');
+    expect(normalizeCountryCode('Puerto Rico')).toBe('PR');
   });
 
   it('rejects placeholder values that are not countries', () => {

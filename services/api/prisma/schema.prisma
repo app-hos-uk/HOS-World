@@ -398,6 +398,7 @@ model Store {
   loyaltyPosVouchers   LoyaltyPosVoucher[]
   storeStaff             User[]                  @relation("StoreStaff")
   storeShipmentRequests  StoreShipmentRequest[]
+  boxSizes               BoxSize[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -4254,10 +4255,15 @@ model POSSale {
   @@map("pos_sales")
 }
 
-/// Post-purchase ship-from-store (B1). Shipping-only billing; goods sale stays in Lightspeed.
+/// Post-purchase ship-from-store. Shipping-only billing; goods sale stays in Lightspeed.
 model StoreShipmentRequest {
   id                    String    @id @default(uuid())
-  status                String    @default("DRAFT") // DRAFT | PENDING_ENRICHMENT | QUOTED | PAID | LABEL_PURCHASED | IN_TRANSIT | DELIVERED | BLOCKED | CANCELLED
+  status                String    @default("NEW")
+  // NEW | CUSTOMER_DETAILS_REQUIRED | AWAITING_PAYMENT | PAID | SENT_TO_LOGISTICS | PACKING | PACKED
+  // | LABEL_CREATED | READY_FOR_PICKUP | HANDED_TO_CARRIER | IN_TRANSIT | DELIVERED
+  // | ADDRESS_ISSUE | ITEM_MISSING | PAYMENT_ISSUE | SHIPPING_HOLD | RETURNED_TO_STORE
+  // | LOST_CARRIER_ISSUE | CANCELLED | BLOCKED
+  // Legacy: DRAFT | PENDING_ENRICHMENT | QUOTED | LABEL_PURCHASED
   storeId               String
   store                 Store     @relation(fields: [storeId], references: [id], onDelete: Restrict)
   userId                String?
@@ -4266,12 +4272,20 @@ model StoreShipmentRequest {
   posSale               POSSale?  @relation(fields: [posSaleId], references: [id], onDelete: SetNull)
   posExternalSaleId     String?
   invoiceNumber         String?
+  hosOrderNumber        String?   @unique
+  qrAccessCode          String?   @unique
+  customerName          String?
+  customerPhone         String?
   claimEmail            String?
   claimTokenHash        String?   @unique
   claimTokenExpiresAt   DateTime?
   destinationAddressId  String?
   destinationAddress    Address?  @relation(fields: [destinationAddressId], references: [id], onDelete: SetNull)
+  selectedItems         Json?
   shippingAmount        Decimal?  @db.Decimal(10, 2)
+  totalCustomerCharge   Decimal?  @db.Decimal(10, 2)
+  totalCarrierCost      Decimal?  @db.Decimal(10, 2)
+  totalPackagingCost    Decimal?  @db.Decimal(10, 2)
   currency              String    @default("USD")
   stripePaymentIntentId String?
   selectedCarrier       String?
@@ -4279,10 +4293,15 @@ model StoreShipmentRequest {
   trackingCode          String?
   labelUrl              String?
   shippingCost          Decimal?  @db.Decimal(10, 2)
+  shippingSlipUrl       String?
+  specialInstructions   String?   @db.Text
+  receivedByEmployee    String?
+  receivedAt            DateTime?
   customsSnapshot       Json?
   metadata              Json?
   marketId              String?
   market                Market?   @relation(fields: [marketId], references: [id], onDelete: SetNull)
+  groups                ShipmentGroup[]
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
@@ -4292,7 +4311,123 @@ model StoreShipmentRequest {
   @@index([invoiceNumber])
   @@index([claimEmail])
   @@index([marketId])
+  @@index([hosOrderNumber])
   @@map("store_shipment_requests")
+}
+
+model BoxSize {
+  id             String   @id @default(uuid())
+  storeId        String?
+  store          Store?   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name           String
+  label          String
+  lengthCm       Decimal  @db.Decimal(10, 2)
+  widthCm        Decimal  @db.Decimal(10, 2)
+  heightCm       Decimal  @db.Decimal(10, 2)
+  customerPrice  Decimal  @db.Decimal(10, 2)
+  packagingCost  Decimal  @default(0) @db.Decimal(10, 2)
+  currency       String   @default("USD")
+  isActive       Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  groups         ShipmentGroup[]
+  rates          BoxSizeRate[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([storeId])
+  @@index([isActive])
+  @@map("box_sizes")
+}
+
+/// Geographic shipping price band. Customer charge = box size × destination tier.
+model ShippingRateTier {
+  id           String        @id @default(uuid())
+  code         String        @unique
+  name         String
+  description  String?       @db.Text
+  countryCodes Json
+  isCatchAll   Boolean       @default(false)
+  sortOrder    Int           @default(0)
+  isActive     Boolean       @default(true)
+  currency     String        @default("USD")
+  rates        BoxSizeRate[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("shipping_rate_tiers")
+}
+
+model BoxSizeRate {
+  id            String           @id @default(uuid())
+  boxSizeId     String
+  boxSize       BoxSize          @relation(fields: [boxSizeId], references: [id], onDelete: Cascade)
+  tierId        String
+  tier          ShippingRateTier @relation(fields: [tierId], references: [id], onDelete: Cascade)
+  customerPrice Decimal          @db.Decimal(10, 2)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@unique([boxSizeId, tierId])
+  @@index([tierId])
+  @@map("box_size_rates")
+}
+
+model ShipmentGroup {
+  id                   String   @id @default(uuid())
+  shippingOrderId      String
+  shippingOrder        StoreShipmentRequest @relation(fields: [shippingOrderId], references: [id], onDelete: Cascade)
+  destinationAddressId String?
+  destinationSnapshot  Json?
+  recipientName        String?
+  recipientEmail       String?
+  recipientPhone       String?
+  boxSizeId            String?
+  boxSize              BoxSize? @relation(fields: [boxSizeId], references: [id], onDelete: SetNull)
+  boxSizeName          String?
+  customerPrice        Decimal? @db.Decimal(10, 2)
+  packagingCost        Decimal? @db.Decimal(10, 2)
+  actualWeightKg       Decimal? @db.Decimal(10, 3)
+  actualLengthCm       Decimal? @db.Decimal(10, 2)
+  actualWidthCm        Decimal? @db.Decimal(10, 2)
+  actualHeightCm       Decimal? @db.Decimal(10, 2)
+  shippoTransactionId  String?
+  trackingCode         String?
+  labelUrl             String?
+  carrierName          String?
+  carrierService       String?
+  carrierCost          Decimal? @db.Decimal(10, 2)
+  status               String   @default("PENDING")
+  packedBy             String?
+  packedAt             DateTime?
+  labelCreatedAt       DateTime?
+  handedToCarrierAt    DateTime?
+  items                ShipmentGroupItem[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([shippingOrderId])
+  @@index([status])
+  @@index([boxSizeId])
+  @@map("shipment_groups")
+}
+
+model ShipmentGroupItem {
+  id            String        @id @default(uuid())
+  groupId       String
+  group         ShipmentGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  posSaleItemId String?
+  sku           String?
+  name          String
+  quantity      Int           @default(1)
+  verified      Boolean       @default(false)
+  verifiedAt    DateTime?
+  createdAt     DateTime      @default(now())
+
+  @@index([groupId])
+  @@index([posSaleItemId])
+  @@map("shipment_group_items")
 }
 
 /// Customs / shipping attributes keyed by SKU for international labels.

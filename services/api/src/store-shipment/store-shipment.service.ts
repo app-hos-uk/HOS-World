@@ -33,12 +33,24 @@ const LIGHTSPEED_LOOKUP_BUDGET_MS = 20_000;
 const DEFAULT_PARCEL = { weight: 0.5, length: 30, width: 20, height: 10 };
 const IN_FLIGHT_SHIPMENT_STATUSES = [
   'QUOTED',
+  'AWAITING_PAYMENT',
   'PAID',
+  'SENT_TO_LOGISTICS',
+  'PACKING',
+  'PACKED',
+  'LABEL_CREATED',
+  'READY_FOR_PICKUP',
+  'HANDED_TO_CARRIER',
   'LABEL_PURCHASED',
   'IN_TRANSIT',
   'DELIVERED',
 ] as const;
-const RESENDABLE_SHIPMENT_STATUSES = ['DRAFT', 'PENDING_ENRICHMENT'] as const;
+const RESENDABLE_SHIPMENT_STATUSES = [
+  'DRAFT',
+  'NEW',
+  'PENDING_ENRICHMENT',
+  'CUSTOMER_DETAILS_REQUIRED',
+] as const;
 
 @Injectable()
 export class StoreShipmentService {
@@ -65,12 +77,39 @@ export class StoreShipmentService {
     return `${base.replace(/\/$/, '')}/ship/claim/${token}`;
   }
 
+  private buildLookupUrl(storeId: string): string {
+    const base = this.config.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    return `${base.replace(/\/$/, '')}/ship/lookup?store=${storeId}`;
+  }
+
+  private async generateHosOrderNumber(storeCode: string): Promise<string> {
+    const code = (storeCode || 'HOS').replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6) || 'HOS';
+    const now = new Date();
+    const dd = String(now.getUTCDate()).padStart(2, '0');
+    const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
+    const yy = String(now.getUTCFullYear()).slice(-2);
+    const prefix = `HOS-${code}-${dd}${mm}${yy}-`;
+    const count = await this.prisma.storeShipmentRequest.count({
+      where: { hosOrderNumber: { startsWith: prefix } },
+    });
+    let seq = count + 1;
+    for (let i = 0; i < 25; i++) {
+      const candidate = `${prefix}${String(seq).padStart(4, '0')}`;
+      const exists = await this.prisma.storeShipmentRequest.findUnique({
+        where: { hosOrderNumber: candidate },
+      });
+      if (!exists) return candidate;
+      seq += 1;
+    }
+    return `${prefix}${Date.now().toString().slice(-4)}`;
+  }
+
   /** B1 step 2–3: confirm the till invoice, then capture consent and send the claim link. */
   async createClaimFromTill(params: {
     storeId?: string;
     assignedStoreId?: string | null;
     invoiceNumber: string;
-    email: string;
+    email?: string;
     shippingConsent: boolean;
     staffUserId?: string;
     ipAddress?: string;
@@ -79,8 +118,7 @@ export class StoreShipmentService {
     if (!params.shippingConsent) {
       throw new BadRequestException('Shipping consent is required');
     }
-    const email = params.email.trim().toLowerCase();
-    if (!email.includes('@')) throw new BadRequestException('Valid email required');
+    const enteredEmail = this.normalizeEmail(params.email);
 
     const invoice = params.invoiceNumber.trim();
     if (!invoice) throw new BadRequestException('Invoice number is required');
@@ -104,7 +142,19 @@ export class StoreShipmentService {
     });
 
     const saleEmail = this.normalizeEmail(confirmed.customerEmail);
-    this.assertEmailMatchesSaleCustomer(email, saleEmail, 'till');
+    let email = enteredEmail;
+    if (!email) {
+      if (!saleEmail) {
+        throw new BadRequestException(
+          'This Lightspeed sale has no customer email. Enter the email manually.',
+        );
+      }
+      email = saleEmail;
+    } else if (saleEmail && email !== saleEmail) {
+      this.assertEmailMatchesSaleCustomer(email, saleEmail, 'till');
+    } else if (!saleEmail && !email.includes('@')) {
+      throw new BadRequestException('Valid email required');
+    }
 
     const existing = await this.prisma.storeShipmentRequest.findFirst({
       where: {
@@ -156,11 +206,14 @@ export class StoreShipmentService {
     const token = randomBytes(32).toString('hex');
     const claimTokenHash = this.hashToken(token);
     const claimTokenExpiresAt = new Date(Date.now() + CLAIM_TTL_DAYS * 24 * 60 * 60 * 1000);
+    const hosOrderNumber =
+      existing?.hosOrderNumber || (await this.generateHosOrderNumber(store.code));
+    const qrAccessCode = existing?.qrAccessCode || randomBytes(4).toString('hex').toUpperCase();
     const metadata = {
       createdByStaff: params.staffUserId ?? null,
       invoiceValidatedAt: new Date().toISOString(),
       lightspeedSaleId: confirmed.externalId,
-      invoiceCustomerEmail: saleEmail,
+      invoiceCustomerEmail: saleEmail || email,
     } as object;
 
     const shipment =
@@ -175,6 +228,10 @@ export class StoreShipmentService {
               invoiceNumber: confirmed.invoiceNumber,
               posSaleId: confirmed.localSaleId ?? existing.posSaleId,
               posExternalSaleId: confirmed.externalId,
+              hosOrderNumber,
+              qrAccessCode,
+              currency: confirmed.currency || store.currency || existing.currency,
+              status: 'CUSTOMER_DETAILS_REQUIRED',
               metadata,
             },
           })
@@ -185,7 +242,10 @@ export class StoreShipmentService {
               claimEmail: email,
               claimTokenHash,
               claimTokenExpiresAt,
-              status: 'DRAFT',
+              hosOrderNumber,
+              qrAccessCode,
+              status: 'CUSTOMER_DETAILS_REQUIRED',
+              currency: 'USD',
               posSaleId: confirmed.localSaleId,
               posExternalSaleId: confirmed.externalId,
               metadata,
@@ -193,6 +253,7 @@ export class StoreShipmentService {
           });
 
     const claimUrl = this.buildClaimUrl(token);
+    const lookupUrl = this.buildLookupUrl(storeId);
     this.logger.log(`Store shipment claim link for ${email}: ${claimUrl}`);
 
     let emailQueued = false;
@@ -210,12 +271,54 @@ export class StoreShipmentService {
       this.logger.error(`Failed to queue store shipment claim email for ${email}: ${message}`);
     }
 
+    let items: Array<{ id?: string; sku?: string | null; name: string; quantity: number }> = [];
+    try {
+      const resolved = await this.resolveSaleForShipment(shipment.id);
+      items = (resolved.enrichment || []).map((row, i) => ({
+        sku: row.sku,
+        name: row.name || row.sku || 'Item',
+        quantity: row.quantity ?? 1,
+        id: String(i),
+      }));
+      const sale = await this.prisma.pOSSale.findFirst({
+        where: {
+          storeId,
+          OR: [
+            { externalSaleId: confirmed.externalId },
+            { externalInvoice: { equals: confirmed.invoiceNumber, mode: 'insensitive' } },
+          ],
+        },
+        include: { items: true },
+      });
+      if (sale?.items?.length) {
+        items = sale.items.map((it) => ({
+          id: it.id,
+          sku: it.sku,
+          name: it.name,
+          quantity: it.quantity,
+        }));
+      }
+      await this.prisma.storeShipmentRequest.update({
+        where: { id: shipment.id },
+        data: { status: 'CUSTOMER_DETAILS_REQUIRED' },
+      });
+    } catch (err) {
+      this.logger.warn(
+        `Could not import invoice items for ${shipment.id}: ${(err as Error).message}`,
+      );
+    }
+
     return {
       shipmentId: shipment.id,
+      hosOrderNumber,
+      qrAccessCode,
+      lookupUrl,
       claimUrl,
       expiresAt: claimTokenExpiresAt,
       emailQueued,
       resent: Boolean(existing),
+      customerEmail: email,
+      items,
       confirmedInvoice: {
         number: confirmed.invoiceNumber,
         totalAmount: confirmed.totalAmount,
@@ -255,10 +358,12 @@ export class StoreShipmentService {
     }
     return {
       shipmentId: row.id,
+      hosOrderNumber: row.hosOrderNumber,
       invoiceNumber: row.invoiceNumber,
       email: row.claimEmail,
       status: row.status,
       storeName: row.store.name,
+      lookupUrl: this.buildLookupUrl(row.storeId),
       emailMatchesInvoice,
     };
   }
@@ -657,7 +762,7 @@ export class StoreShipmentService {
     // Quote with default parcel sizes when HS/dimensions are still pending. Only
     // block restricted SKUs, or wait when Lightspeed has not given us any lines.
     const canQuote = items.length > 0 && !anyBlocked;
-    const status = anyBlocked ? 'BLOCKED' : canQuote ? 'DRAFT' : 'PENDING_ENRICHMENT';
+    const status = anyBlocked ? 'BLOCKED' : canQuote ? 'CUSTOMER_DETAILS_REQUIRED' : 'PENDING_ENRICHMENT';
     await this.prisma.storeShipmentRequest.update({
       where: { id: shipmentId },
       data: { status, metadata: { enrichment } as object },
@@ -711,13 +816,16 @@ export class StoreShipmentService {
         store: true,
         destinationAddress: true,
         posSale: { include: { items: true } },
+        groups: { select: { id: true, boxSizeId: true, customerPrice: true } },
       },
     });
     if (!shipment) throw new NotFoundException('Shipment not found');
     if (shipment.userId && shipment.userId !== userId) {
       throw new ForbiddenException('Not your shipment');
     }
-    if (!shipment.destinationAddress) {
+    const hasFixedQuote =
+      Number(shipment.totalCustomerCharge || 0) > 0 && (shipment.groups?.length || 0) > 0;
+    if (!hasFixedQuote && !shipment.destinationAddress) {
       throw new BadRequestException('Destination address required');
     }
     if (shipment.status === 'BLOCKED' || shipment.status === 'CANCELLED') {
@@ -838,13 +946,26 @@ export class StoreShipmentService {
   async authorizeShipping(
     shipmentId: string,
     userId: string,
-    params: { carrier: string; service: string; amount: number; currency?: string },
+    params: { carrier?: string; service?: string; amount?: number; currency?: string },
   ) {
     const shipment = await this.loadShipmentForQuote(shipmentId, userId);
 
-    if (shipment.status === 'LABEL_PURCHASED') {
+    if (shipment.status === 'LABEL_PURCHASED' || shipment.status === 'LABEL_CREATED') {
       throw new BadRequestException('Label already purchased — cannot re-authorize');
     }
+    if (['PAID', 'PACKING', 'PACKED', 'READY_FOR_PICKUP', 'HANDED_TO_CARRIER'].includes(shipment.status)) {
+      return {
+        clientSecret: undefined,
+        paymentIntentId: shipment.stripePaymentIntentId,
+        alreadyPaid: true,
+      };
+    }
+
+    const fixed = Number(shipment.totalCustomerCharge || 0);
+    const amount = fixed > 0 ? fixed : Number(params.amount || 0);
+    if (!(amount > 0)) throw new BadRequestException('Shipping amount is missing');
+    const carrier = fixed > 0 ? 'HOS' : params.carrier || 'HOS';
+    const service = fixed > 0 ? 'FIXED_BOX' : params.service || 'standard';
 
     await this.paymentProvider.ensureAvailableProviders();
     if (!this.paymentProvider.isProviderAvailable('stripe')) {
@@ -882,14 +1003,14 @@ export class StoreShipmentService {
     let intent: { clientSecret?: string; paymentIntentId: string };
     try {
       intent = await provider.createPaymentIntent({
-        amount: params.amount,
+        amount,
         currency: params.currency || shipment.currency,
         orderId: shipmentId,
         metadata: {
           type: 'store_shipment',
           shipmentId,
-          carrier: params.carrier,
-          service: params.service,
+          carrier,
+          service,
         },
         // Each authorization cancels the prior intent, so the key must be fresh —
         // reusing it replays Stripe's cached (now cancelled) intent, or throws when
@@ -911,11 +1032,11 @@ export class StoreShipmentService {
     await this.prisma.storeShipmentRequest.update({
       where: { id: shipmentId },
       data: {
-        shippingAmount: new Decimal(params.amount.toFixed(2)),
-        selectedCarrier: params.carrier,
-        selectedService: params.service,
+        shippingAmount: new Decimal(amount.toFixed(2)),
+        selectedCarrier: carrier,
+        selectedService: service,
         stripePaymentIntentId: intent.paymentIntentId,
-        status: 'QUOTED',
+        status: fixed > 0 ? 'AWAITING_PAYMENT' : 'QUOTED',
       },
     });
 

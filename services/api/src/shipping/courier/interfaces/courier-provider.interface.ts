@@ -31,6 +31,8 @@ export interface RateRequest {
   shipDate?: Date;
   service?: string; // Specific service code if known
   isReturn?: boolean;
+  /** Prefer these carrier names in order (e.g. UPS, FedEx, DHL). */
+  preferredCarriers?: string[];
 }
 
 export interface RateResponse {

@@ -39,6 +39,15 @@ export default function AdminStoreShipmentsPage() {
           className="border rounded px-2 py-1 bg-hos-bg-secondary border-hos-border"
         >
           <option value="">All statuses</option>
+          <option value="NEW">NEW</option>
+          <option value="CUSTOMER_DETAILS_REQUIRED">CUSTOMER_DETAILS_REQUIRED</option>
+          <option value="AWAITING_PAYMENT">AWAITING_PAYMENT</option>
+          <option value="PAID">PAID</option>
+          <option value="PACKING">PACKING</option>
+          <option value="PACKED">PACKED</option>
+          <option value="LABEL_CREATED">LABEL_CREATED</option>
+          <option value="READY_FOR_PICKUP">READY_FOR_PICKUP</option>
+          <option value="HANDED_TO_CARRIER">HANDED_TO_CARRIER</option>
           <option value="DRAFT">DRAFT</option>
           <option value="PENDING_ENRICHMENT">PENDING_ENRICHMENT</option>
           <option value="QUOTED">QUOTED</option>
@@ -57,6 +66,7 @@ export default function AdminStoreShipmentsPage() {
           <table className="w-full text-sm border-collapse">
             <thead>
               <tr className="border-b border-hos-border text-left">
+                <th className="py-2 pr-4">Order</th>
                 <th className="py-2 pr-4">Invoice</th>
                 <th className="py-2 pr-4">Store</th>
                 <th className="py-2 pr-4">Email</th>
@@ -67,6 +77,7 @@ export default function AdminStoreShipmentsPage() {
             <tbody>
               {items.map((row) => (
                 <tr key={row.id} className="border-b border-hos-border/50">
+                  <td className="py-2 pr-4">{row.hosOrderNumber || '—'}</td>
                   <td className="py-2 pr-4">{row.invoiceNumber || '—'}</td>
                   <td className="py-2 pr-4">{row.store?.name || row.storeId}</td>
                   <td className="py-2 pr-4">{row.claimEmail || row.user?.email || '—'}</td>

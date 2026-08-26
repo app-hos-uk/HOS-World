@@ -62,6 +62,14 @@ const ALIASES: Record<string, string> = {
   BRASIL: 'BR',
   MEXICO: 'MX',
   'SOUTH AFRICA': 'ZA',
+  'PUERTO RICO': 'PR',
+  LUXEMBOURG: 'LU',
+  ICELAND: 'IS',
+  GREECE: 'GR',
+  'CZECH REPUBLIC': 'CZ',
+  CZECHIA: 'CZ',
+  SLOVAKIA: 'SK',
+  HUNGARY: 'HU',
 };
 
 /**
