@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 type Box = {
   id: string;
@@ -26,7 +27,7 @@ const empty = {
   heightCm: '10',
   customerPrice: '9.99',
   packagingCost: '1.00',
-  currency: 'USD',
+  currency: DEFAULT_CURRENCY,
   sortOrder: '1',
 };
 
