@@ -12,8 +12,7 @@ COPY scripts/setup-git-hooks.mjs ./scripts/setup-git-hooks.mjs
 COPY packages ./packages
 COPY services/api ./services/api
 
-RUN pnpm config set onlyBuiltDependencies '["*"]' --location=project \
-    && (pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile) \
+RUN (pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile) \
     && cd /app/packages/shared-types && pnpm build \
     && cd /app/packages/utils && pnpm build \
     && cd /app/packages/api-client && pnpm build \

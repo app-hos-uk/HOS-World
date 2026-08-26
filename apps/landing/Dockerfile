@@ -3,7 +3,7 @@
 # ">=20.9.0") runs here even though landing has no direct sharp dependency.
 FROM node:20-slim AS base
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.28.2
 
 WORKDIR /app
 

@@ -2,13 +2,14 @@ FROM node:20-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ openssl \
     && rm -rf /var/lib/apt/lists/* \
-    && npm install -g pnpm
+    && npm install -g pnpm@10.28.2
 
 WORKDIR /app
 
 # ── Layer 1: Workspace config + lockfile (rarely changes) ──
-COPY package.json pnpm-lock.yaml ./
-RUN printf 'packages:\n  - packages/*\n  - services/api\n\nignoredBuiltDependencies:\n  - "@nestjs/core"\n  - msgpackr-extract\n  - unrs-resolver\n\nonlyBuiltDependencies:\n  - prisma\n  - "@prisma/client"\n  - "@prisma/engines"\n  - bcrypt\n' > pnpm-workspace.yaml
+# Use the real pnpm-workspace.yaml rather than a hand-written subset: it carries
+# the overrides block (security pins), and a local copy would silently drift.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 
 COPY scripts/setup-git-hooks.mjs ./scripts/setup-git-hooks.mjs
 
