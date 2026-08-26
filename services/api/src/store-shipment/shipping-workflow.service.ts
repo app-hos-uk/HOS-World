@@ -43,8 +43,8 @@ export class ShippingWorkflowService {
     private config: ConfigService,
   ) {}
 
-  async lookupPublic(query: string, storeId?: string) {
-    const q = query.trim();
+  async lookupPublic(query: string | undefined, storeId?: string) {
+    const q = (query ?? '').trim();
     if (!q) throw new BadRequestException('Enter a shipping order number or email');
     const row = await this.prisma.storeShipmentRequest.findFirst({
       where: {
