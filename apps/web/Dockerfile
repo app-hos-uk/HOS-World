@@ -8,7 +8,7 @@ RUN npm install -g pnpm
 WORKDIR /app
 
 # ── Layer 1: Workspace config + lockfile (rarely changes) ──
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 # Root `prepare` runs on pnpm install; include this script before any install.
 COPY scripts/setup-git-hooks.mjs ./scripts/setup-git-hooks.mjs
 
