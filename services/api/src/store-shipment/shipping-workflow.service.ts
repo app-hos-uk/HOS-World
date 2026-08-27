@@ -529,15 +529,34 @@ export class ShippingWorkflowService {
     const width = Number(group.actualWidthCm || box?.widthCm || 20);
     const height = Number(group.actualHeightCm || box?.heightCm || 10);
 
+    const senderPhone =
+      order.store.contactPhone?.trim() || this.config.get<string>('SHIPPO_SENDER_PHONE')?.trim() || '';
+    const senderEmail =
+      order.store.contactEmail?.trim() || this.config.get<string>('SHIPPO_SENDER_EMAIL')?.trim() || '';
+    if (!senderPhone || !senderEmail) {
+      throw new BadRequestException(
+        'Store sender phone and email are required for carrier labels. Set them on the store or SHIPPO_SENDER_PHONE / SHIPPO_SENDER_EMAIL.',
+      );
+    }
+    if (!order.store.address?.trim()) {
+      throw new BadRequestException('Store street address is required before generating a label');
+    }
+
+    const destCountry = dest.countryCode || dest.country || 'US';
+    const destIsUs = ['US', 'USA', 'UNITED STATES'].includes(destCountry.trim().toUpperCase());
+    if (destIsUs && !dest.state?.trim()) {
+      throw new BadRequestException('Destination state is required for US labels');
+    }
+
     const from = {
       name: order.store.name || 'House of Spells',
-      street1: order.store.address || 'Store',
+      street1: order.store.address.trim(),
       city: order.store.city || 'New York',
       state: order.store.state || 'NY',
       postalCode: order.store.postalCode || '10001',
       country: order.store.countryCode || order.store.country || 'US',
-      phone: order.store.contactPhone || this.config.get<string>('SHIPPO_SENDER_PHONE') || '',
-      email: order.store.contactEmail || this.config.get<string>('SHIPPO_SENDER_EMAIL') || '',
+      phone: senderPhone,
+      email: senderEmail,
     };
     const to = {
       name: group.recipientName || `${dest.firstName || ''} ${dest.lastName || ''}`.trim() || 'Customer',
@@ -546,9 +565,9 @@ export class ShippingWorkflowService {
       city: dest.city,
       state: dest.state || undefined,
       postalCode: dest.postalCode,
-      country: dest.countryCode || dest.country || 'US',
-      phone: group.recipientPhone || dest.phone,
-      email: group.recipientEmail || order.claimEmail || undefined,
+      country: destCountry,
+      phone: group.recipientPhone || dest.phone || order.customerPhone || senderPhone,
+      email: group.recipientEmail || dest.email || order.claimEmail || senderEmail,
     };
 
     let customsInfo: CustomsInfo | undefined;
@@ -601,26 +620,20 @@ export class ShippingWorkflowService {
     const defaultProv = this.courierFactory.getDefaultProvider();
     if (!defaultProv) throw new BadRequestException('No shipping provider configured');
 
-    const rates = await this.courierFactory.getRates(defaultProv.providerId, {
-      from,
-      to,
-      packages: [{ weight, length, width, height }],
-      preferredCarriers: [...PREFERRED_CARRIERS],
-    });
-    const selected = this.pickPreferredRate(rates, body?.serviceCode);
-    if (!selected) throw new BadRequestException('No UPS, FedEx, or DHL rates are available');
-
+    // Create the Shippo shipment once and purchase a rate from that same shipment.
+    // A prior getRates() call produced a different shipment; buying that stale rate
+    // fails with "A rate may only be purchased if it was generated with complete address information."
     const label = await this.courierFactory.createShipment(defaultProv.providerId, {
       orderId: `${order.id}:${group.id}`,
       from,
       to,
       packages: [{ weight, length, width, height }],
-      serviceCode: selected.serviceCode,
+      serviceCode: body?.serviceCode || 'auto',
       reference1: order.hosOrderNumber || order.invoiceNumber || order.id,
       customsInfo,
     });
     const labelUrl = label.labels?.[0]?.url ?? label.trackingUrl;
-    const carrierCost = selected.rate;
+    const carrierCost = Number(label.rate || 0);
 
     await this.prisma.shipmentGroup.update({
       where: { id: groupId },
@@ -628,8 +641,8 @@ export class ShippingWorkflowService {
         status: 'LABEL_CREATED',
         trackingCode: label.trackingNumber,
         labelUrl,
-        carrierName: String(selected.metadata?.carrier || selected.providerName),
-        carrierService: selected.serviceName,
+        carrierName: String(label.metadata?.carrier || label.providerName),
+        carrierService: label.serviceName,
         carrierCost: new Decimal(carrierCost.toFixed(2)),
         shippoTransactionId: label.trackingNumber,
         labelCreatedAt: new Date(),
@@ -654,8 +667,12 @@ export class ShippingWorkflowService {
 
     return {
       ...(await this.getProgress(order.id, { userId: staff.id, role: 'STAFF' })),
-      rates,
-      selectedRate: selected,
+      selectedRate: {
+        serviceCode: label.serviceCode,
+        serviceName: label.serviceName,
+        rate: carrierCost,
+        carrier: label.metadata?.carrier,
+      },
     };
   }
 

@@ -201,6 +201,9 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
       normalizedCountry,
     );
 
+    const phone = address.phone?.trim() || undefined;
+    const email = address.email?.trim() || undefined;
+
     return {
       name: address.name || 'Recipient',
       company: address.company,
@@ -210,8 +213,8 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
       state,
       zip,
       country: normalizedCountry,
-      phone: address.phone,
-      email: address.email,
+      ...(phone ? { phone } : {}),
+      ...(email ? { email } : {}),
     };
   }
 
@@ -235,30 +238,44 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
     }));
   }
 
-  private assertAddress(label: string, address: Address): void {
+  private assertAddress(label: string, address: Address, opts?: { requireContact?: boolean }): void {
     const missing: string[] = [];
-    if (!address?.street1?.trim()) missing.push('street');
+    if (!address?.street1?.trim() || /^store$/i.test(address.street1.trim())) missing.push('street');
     if (!address?.city?.trim()) missing.push('city');
     if (!address?.postalCode?.trim()) missing.push('postal code');
     if (!address?.country?.trim()) missing.push('country');
+    if (opts?.requireContact) {
+      if (!address?.name?.trim()) missing.push('name');
+      const country = String(address?.country || '').trim().toUpperCase();
+      const isUs = country === 'US' || country === 'USA' || country === 'UNITED STATES';
+      if (isUs && !address?.state?.trim()) missing.push('state');
+      if (!address?.phone?.trim()) missing.push('phone');
+      if (!address?.email?.trim()) missing.push('email');
+    }
     if (missing.length) {
       throw new Error(`Shippo ${label} address is incomplete (missing ${missing.join(', ')})`);
     }
   }
 
-  private async createShippoShipment(request: RateRequest): Promise<any> {
+  private async createShippoShipment(
+    request: RateRequest,
+    opts?: { requireContact?: boolean },
+  ): Promise<any> {
     if (!this.isConfigured()) {
       throw new Error(
         'Shippo is not configured with a valid API token (expected shippo_live_… or shippo_test_…). Re-save the token in Admin → Integrations → Shipping.',
       );
     }
-    this.assertAddress('origin', request.from);
-    this.assertAddress('destination', request.to);
+    this.assertAddress('origin', request.from, opts);
+    this.assertAddress('destination', request.to, opts);
 
     return this.apiRequest('/shipments/', 'POST', {
       address_from: this.toShippoAddress(request.from),
       address_to: this.toShippoAddress(request.to),
       parcels: this.toShippoParcels(request.packages),
+      extra: {
+        reference_1: (request as RateRequest & { reference1?: string }).reference1,
+      },
       async: false,
     });
   }
@@ -418,13 +435,27 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
       service: request.serviceCode,
     };
 
-    const shipment = await this.createShippoShipment(rateRequest);
+    const shipment = await this.createShippoShipment(rateRequest, { requireContact: true });
     const rates = Array.isArray(shipment?.rates) ? shipment.rates : [];
+    const preferred = ['UPS', 'FedEx', 'DHL'];
+    const serviceCode = request.serviceCode?.trim();
+    const autoPick = !serviceCode || serviceCode === 'auto';
 
-    const selectedRate =
-      rates.find((rate: any) => rate.object_id === request.serviceCode) ||
-      rates.find((rate: any) => rate.servicelevel?.token === request.serviceCode) ||
-      rates[0];
+    const matchesPreferred = (rate: any) => {
+      const hay = `${rate.provider || ''} ${rate.servicelevel?.name || ''} ${rate.servicelevel?.token || ''}`.toLowerCase();
+      return preferred.some((p) => hay.includes(p.toLowerCase()));
+    };
+    const cheapest = (list: any[]) =>
+      [...list].sort((a, b) => parseFloat(a.amount || '0') - parseFloat(b.amount || '0'))[0];
+
+    // Purchase a rate from THIS shipment only. A rate object_id from a previous
+    // getRates() call belongs to a different shipment and cannot be purchased.
+    const selectedRate = autoPick
+      ? cheapest(rates.filter((rate: any) => matchesPreferred(rate) && rate.object_id)) || rates[0]
+      : rates.find((rate: any) => rate.object_id === serviceCode) ||
+        rates.find((rate: any) => rate.servicelevel?.token === serviceCode) ||
+        cheapest(rates.filter((rate: any) => matchesPreferred(rate) && rate.object_id)) ||
+        rates[0];
 
     if (!selectedRate?.object_id) {
       throw new Error('No Shippo rates available for this shipment');
