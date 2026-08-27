@@ -256,12 +256,18 @@ export class ShippingWorkflowService {
     body: { groups: Array<{ groupId: string; boxSizeId: string; customPrice?: number }> },
   ) {
     const order = await this.requireStaffOrder(shipmentId, staff);
+    if (PAID_STATUSES.has(order.status)) {
+      throw new BadRequestException('This order is already paid — void the payment before re-quoting');
+    }
     if (!body.groups?.length) throw new BadRequestException('Select a box size for each shipment');
 
     let totalCharge = 0;
     let totalPackaging = 0;
     let currency = order.currency || 'USD';
     const groupCurrencies = new Set<string>();
+
+    type GroupWrite = { id: string; boxSizeId: string; boxSizeName: string; customerPrice: Decimal; packagingCost: Decimal };
+    const groupWrites: GroupWrite[] = [];
 
     for (const g of body.groups) {
       const group = await this.prisma.shipmentGroup.findFirst({
@@ -281,14 +287,12 @@ export class ShippingWorkflowService {
       totalCharge += price;
       totalPackaging += quoted.packagingCost;
       currency = resolvedCurrency;
-      await this.prisma.shipmentGroup.update({
-        where: { id: group.id },
-        data: {
-          boxSizeId: box.id,
-          boxSizeName: box.label,
-          customerPrice: new Decimal(price.toFixed(2)),
-          packagingCost: box.packagingCost,
-        },
+      groupWrites.push({
+        id: group.id,
+        boxSizeId: box.id,
+        boxSizeName: box.label,
+        customerPrice: new Decimal(price.toFixed(2)),
+        packagingCost: box.packagingCost,
       });
     }
 
@@ -298,16 +302,29 @@ export class ShippingWorkflowService {
       );
     }
 
-    await this.prisma.storeShipmentRequest.update({
-      where: { id: shipmentId },
-      data: {
-        totalCustomerCharge: new Decimal(totalCharge.toFixed(2)),
-        totalPackagingCost: new Decimal(totalPackaging.toFixed(2)),
-        shippingAmount: new Decimal(totalCharge.toFixed(2)),
-        currency,
-        status: 'AWAITING_PAYMENT',
-      },
-    });
+    await this.prisma.$transaction([
+      ...groupWrites.map((gw) =>
+        this.prisma.shipmentGroup.update({
+          where: { id: gw.id },
+          data: {
+            boxSizeId: gw.boxSizeId,
+            boxSizeName: gw.boxSizeName,
+            customerPrice: gw.customerPrice,
+            packagingCost: gw.packagingCost,
+          },
+        }),
+      ),
+      this.prisma.storeShipmentRequest.update({
+        where: { id: shipmentId },
+        data: {
+          totalCustomerCharge: new Decimal(totalCharge.toFixed(2)),
+          totalPackagingCost: new Decimal(totalPackaging.toFixed(2)),
+          shippingAmount: new Decimal(totalCharge.toFixed(2)),
+          currency,
+          status: 'AWAITING_PAYMENT',
+        },
+      }),
+    ]);
 
     return this.getProgress(shipmentId, { userId: staff.id, role: 'STAFF' });
   }
@@ -330,8 +347,8 @@ export class ShippingWorkflowService {
       throw new BadRequestException('Finalize the shipping quote before confirming payment');
     }
 
-    await this.markPaid(shipmentId, method);
-    await this.sendPaidEmail(order);
+    const wrote = await this.markPaid(shipmentId, method);
+    if (wrote) await this.sendPaidEmail(order);
 
     return this.getProgress(shipmentId, { userId: staff.id, role: 'STAFF' });
   }
@@ -341,9 +358,6 @@ export class ShippingWorkflowService {
     if (PAID_STATUSES.has(order.status)) {
       return this.getProgress(shipmentId, { userId, role: 'CUSTOMER' });
     }
-    // The flag only blocks starting a new Stripe charge (authorizeShipping).
-    // If a PaymentIntent already exists, record a succeeded capture even if the
-    // flag was turned off between authorize and confirm.
     if (!order.stripePaymentIntentId) {
       if (!this.featureFlags.isEnabled(FeatureFlag.SHIPPING_ONLINE_PAYMENT)) {
         throw new BadRequestException('Online payment is disabled. Pay at the shipping counter.');
@@ -356,36 +370,36 @@ export class ShippingWorkflowService {
       throw new BadRequestException(`Payment has not succeeded (status: ${paymentStatus})`);
     }
 
-    await this.markPaid(shipmentId, 'CARD');
-    await this.sendPaidEmail(order);
+    const wrote = await this.markPaid(shipmentId, 'CARD');
+    if (wrote) await this.sendPaidEmail(order);
 
     return this.getProgress(shipmentId, { userId, role: 'CUSTOMER' });
   }
 
-  async slipPdf(shipmentId: string) {
-    const order = await this.prisma.storeShipmentRequest.findUnique({
-      where: { id: shipmentId },
-      select: { status: true },
-    });
-    if (!order) throw new NotFoundException('Shipping order not found');
+  async slipPdf(shipmentId: string, staff: { storeId?: string; role?: string }) {
+    const order = await this.requireStaffOrder(shipmentId, staff);
     if (!PAID_STATUSES.has(order.status)) {
       throw new BadRequestException('Confirm payment before printing the shipping slip');
     }
     return this.slip.generatePdf(shipmentId);
   }
 
-  private async markPaid(shipmentId: string, paymentMethod: string) {
-    await this.prisma.shipmentGroup.updateMany({
-      where: { shippingOrderId: shipmentId },
-      data: { status: 'PAID' },
-    });
-    await this.prisma.storeShipmentRequest.update({
-      where: { id: shipmentId },
-      data: {
-        status: 'PAID',
-        paymentMethod,
-        shippingSlipUrl: `/store-shipment/${shipmentId}/slip`,
-      },
+  private async markPaid(shipmentId: string, paymentMethod: string): Promise<boolean> {
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.storeShipmentRequest.updateMany({
+        where: { id: shipmentId, status: 'AWAITING_PAYMENT' },
+        data: {
+          status: 'PAID',
+          paymentMethod,
+          shippingSlipUrl: `/store-shipment/${shipmentId}/slip`,
+        },
+      });
+      if (updated.count === 0) return false;
+      await tx.shipmentGroup.updateMany({
+        where: { shippingOrderId: shipmentId },
+        data: { status: 'PAID' },
+      });
+      return true;
     });
   }
 
@@ -684,7 +698,10 @@ export class ShippingWorkflowService {
     const page = opts?.page || 1;
     const limit = Math.min(opts?.limit || 30, 100);
     const where: Record<string, unknown> = {};
-    if (staff.role !== 'ADMIN' && staff.storeId) where.storeId = staff.storeId;
+    if (staff.role !== 'ADMIN') {
+      if (!staff.storeId) throw new ForbiddenException('Store context required');
+      where.storeId = staff.storeId;
+    }
     if (opts?.status) where.status = opts.status;
     const [items, total] = await Promise.all([
       this.prisma.storeShipmentRequest.findMany({
@@ -702,20 +719,34 @@ export class ShippingWorkflowService {
     return { items, pagination: { page, limit, total } };
   }
 
-  async listBackoffice(staff: { id?: string; storeId?: string; role?: string }, status?: string) {
+  async listBackoffice(
+    staff: { id?: string; storeId?: string; role?: string },
+    status?: string,
+    opts?: { page?: number; limit?: number },
+  ) {
+    const page = opts?.page || 1;
+    const limit = Math.min(opts?.limit || 50, 200);
     const where: Record<string, unknown> = {
       status: status || { in: ['PAID', 'SENT_TO_LOGISTICS', 'PACKING', 'PACKED', 'LABEL_CREATED', 'READY_FOR_PICKUP', 'ITEM_MISSING'] },
     };
-    if (staff.role !== 'ADMIN' && staff.storeId) where.storeId = staff.storeId;
-    return this.prisma.storeShipmentRequest.findMany({
-      where,
-      orderBy: { createdAt: 'asc' },
-      include: {
-        store: { select: { name: true, code: true } },
-        groups: { include: { items: true, boxSize: true } },
-      },
-      take: 100,
-    });
+    if (staff.role !== 'ADMIN') {
+      if (!staff.storeId) throw new ForbiddenException('Store context required');
+      where.storeId = staff.storeId;
+    }
+    const [items, total] = await Promise.all([
+      this.prisma.storeShipmentRequest.findMany({
+        where,
+        orderBy: { createdAt: 'asc' },
+        include: {
+          store: { select: { name: true, code: true } },
+          groups: { include: { items: true, boxSize: true } },
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.storeShipmentRequest.count({ where }),
+    ]);
+    return { items, pagination: { page, limit, total } };
   }
 
   async getProgress(
@@ -745,11 +776,17 @@ export class ShippingWorkflowService {
       unitPrice: Number(i.unitPrice),
     }));
 
+    const priceCache = new Map<string, Awaited<ReturnType<BoxSizeService['pricesForCountry']>>>();
     const groups = [];
     for (const g of order.groups) {
       const dest = (g.destinationSnapshot || {}) as Record<string, string>;
       const country = dest.countryCode || dest.country;
-      const priced = await this.boxSizes.pricesForCountry(country);
+      const cacheKey = (country || '').toUpperCase();
+      let priced = priceCache.get(cacheKey);
+      if (!priced) {
+        priced = await this.boxSizes.pricesForCountry(country);
+        priceCache.set(cacheKey, priced);
+      }
       groups.push({
         ...g,
         customerPrice: Number(g.customerPrice || 0),
@@ -952,6 +989,17 @@ export class ShippingWorkflowService {
     if (!order) throw new NotFoundException('Shipping order not found');
     if (order.userId && order.userId !== userId) throw new ForbiddenException('Not your shipping order');
     if (!order.userId) {
+      const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+      const userEmail = (user?.email || '').toLowerCase();
+      const claimEmail = (order.claimEmail || '').toLowerCase();
+      if (claimEmail) {
+        if (!userEmail) {
+          throw new ForbiddenException('Your account has no email — cannot verify ownership of this shipping order');
+        }
+        if (userEmail !== claimEmail) {
+          throw new ForbiddenException('Your email does not match this shipping order');
+        }
+      }
       await this.prisma.storeShipmentRequest.update({ where: { id: shipmentId }, data: { userId } });
     }
     return order;
@@ -963,8 +1011,9 @@ export class ShippingWorkflowService {
       include: include as never,
     });
     if (!order) throw new NotFoundException('Shipping order not found');
-    if (staff.role !== 'ADMIN' && staff.storeId && order.storeId !== staff.storeId) {
-      throw new ForbiddenException('This order belongs to another store');
+    if (staff.role !== 'ADMIN') {
+      if (!staff.storeId) throw new ForbiddenException('Store context required');
+      if (order.storeId !== staff.storeId) throw new ForbiddenException('This order belongs to another store');
     }
     return order;
   }
@@ -981,8 +1030,9 @@ export class ShippingWorkflowService {
       },
     });
     if (!group) throw new NotFoundException('Shipment group not found');
-    if (staff.role !== 'ADMIN' && staff.storeId && group.shippingOrder.storeId !== staff.storeId) {
-      throw new ForbiddenException('This order belongs to another store');
+    if (staff.role !== 'ADMIN') {
+      if (!staff.storeId) throw new ForbiddenException('Store context required');
+      if (group.shippingOrder.storeId !== staff.storeId) throw new ForbiddenException('This order belongs to another store');
     }
     return group;
   }

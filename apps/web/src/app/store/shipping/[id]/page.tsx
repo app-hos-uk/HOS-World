@@ -81,9 +81,14 @@ export default function StaffShippingOrderPage() {
 
   useEffect(() => {
     load();
-    const t = window.setInterval(load, 5000);
-    return () => window.clearInterval(t);
   }, [load]);
+
+  useEffect(() => {
+    const SLOW_POLL = ['DELIVERED', 'CANCELLED', 'BLOCKED', 'HANDED_TO_CARRIER', 'IN_TRANSIT'];
+    const interval = SLOW_POLL.includes(order?.status || '') ? 30000 : 5000;
+    const t = window.setInterval(load, interval);
+    return () => window.clearInterval(t);
+  }, [load, order?.status]);
 
   const saveQuote = async () => {
     if (!id || !order?.groups?.length) return;
@@ -226,7 +231,8 @@ export default function StaffShippingOrderPage() {
         );
       })}
 
-      {(order.groups || []).length > 0 && (
+      {(order.groups || []).length > 0 &&
+        !['PAID', 'SENT_TO_LOGISTICS', 'PACKING', 'PACKED', 'LABEL_CREATED', 'READY_FOR_PICKUP', 'HANDED_TO_CARRIER', 'IN_TRANSIT', 'DELIVERED'].includes(order.status) && (
         <button
           type="button"
           onClick={saveQuote}

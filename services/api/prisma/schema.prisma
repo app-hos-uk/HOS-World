@@ -4314,6 +4314,9 @@ model StoreShipmentRequest {
   @@index([claimEmail])
   @@index([marketId])
   @@index([hosOrderNumber])
+  @@index([createdAt])
+  @@index([storeId, status, createdAt])
+  @@index([status, createdAt])
   @@map("store_shipment_requests")
 }
 

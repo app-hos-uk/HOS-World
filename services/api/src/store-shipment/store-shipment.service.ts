@@ -641,18 +641,27 @@ export class StoreShipmentService {
       throw new ForbiddenException('Not your shipment');
     }
     if (userId) {
-      const user = await this.prisma.user.findUnique({
-        where: { id: userId },
-        select: { email: true },
-      });
-      const saleEmail = await this.resolveInvoiceCustomerEmail({
-        storeId: shipment.storeId,
-        invoiceNumber: shipment.invoiceNumber || '',
-        store: shipment.store,
-        posExternalSaleId: shipment.posExternalSaleId,
-        metadata: shipment.metadata,
-      });
-      this.assertEmailMatchesSaleCustomer(this.normalizeEmail(user?.email), saleEmail, 'claim');
+      const cachedEmail = this.metadataCustomerEmail(shipment.metadata);
+      if (!cachedEmail) {
+        const user = await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { email: true },
+        });
+        const saleEmail = await this.resolveInvoiceCustomerEmail({
+          storeId: shipment.storeId,
+          invoiceNumber: shipment.invoiceNumber || '',
+          store: shipment.store,
+          posExternalSaleId: shipment.posExternalSaleId,
+          metadata: shipment.metadata,
+        });
+        this.assertEmailMatchesSaleCustomer(this.normalizeEmail(user?.email), saleEmail, 'claim');
+        if (saleEmail) {
+          await this.prisma.storeShipmentRequest.update({
+            where: { id: shipmentId },
+            data: { metadata: { ...(shipment.metadata as object || {}), invoiceCustomerEmail: saleEmail } },
+          });
+        }
+      }
     }
 
     const invoice = shipment.invoiceNumber?.trim();

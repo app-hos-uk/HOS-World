@@ -38,7 +38,9 @@ export default function BackofficeShippingPage() {
   const load = useCallback(async () => {
     try {
       const r = await apiClient.listBackofficeStoreShipments();
-      setOrders((r.data as Order[]) || []);
+      const payload = r.data as { items?: Order[] } | Order[] | null;
+      const list = Array.isArray(payload) ? payload : (payload?.items ?? []);
+      setOrders(list);
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to load packing queue');
     }

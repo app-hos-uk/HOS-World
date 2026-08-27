@@ -271,7 +271,7 @@ export class CourierFactoryService implements OnModuleInit {
     }
 
     try {
-      const rates = await provider.getRates(request);
+      const rates = await this.withTimeout(provider.getRates(request), 15000);
       this.clearQuoteFailure(providerName);
       return rates;
     } catch (error: any) {

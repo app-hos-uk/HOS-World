@@ -29,13 +29,20 @@ function makeService(opts?: { onlinePayment?: boolean; stripeStatus?: string }) 
     totalPackagingCost: 0,
   };
 
+  const storeShipmentRequest = {
+    findUnique: jest.fn().mockResolvedValue(order),
+    update: jest.fn().mockResolvedValue({ ...order, status: 'PAID', paymentMethod: 'CASH' }),
+    updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+  };
+  const shipmentGroup = { updateMany: jest.fn().mockResolvedValue({ count: 1 }) };
   const prisma: any = {
-    storeShipmentRequest: {
-      findUnique: jest.fn().mockResolvedValue(order),
-      update: jest.fn().mockResolvedValue({ ...order, status: 'PAID', paymentMethod: 'CASH' }),
-    },
-    shipmentGroup: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
+    storeShipmentRequest,
+    shipmentGroup,
     store: { findUnique: jest.fn().mockResolvedValue({ name: 'Soho' }) },
+    user: { findUnique: jest.fn().mockResolvedValue({ email: 'guest@example.com' }) },
+    $transaction: jest.fn(async (fn: (tx: any) => Promise<any>) =>
+      fn({ storeShipmentRequest, shipmentGroup }),
+    ),
   };
   const boxSizes = {
     list: jest.fn().mockResolvedValue([]),
@@ -86,17 +93,18 @@ describe('ShippingWorkflowService.staffConfirmPayment', () => {
       { id: 'staff-1', storeId: 'store-1', role: 'STORE_STAFF' },
       { method: 'cash' },
     );
-    expect(prisma.shipmentGroup.updateMany).toHaveBeenCalledWith({
-      where: { shippingOrderId: 'ship-1' },
-      data: { status: 'PAID' },
-    });
-    expect(prisma.storeShipmentRequest.update).toHaveBeenCalledWith({
-      where: { id: 'ship-1' },
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(prisma.storeShipmentRequest.updateMany).toHaveBeenCalledWith({
+      where: { id: 'ship-1', status: 'AWAITING_PAYMENT' },
       data: {
         status: 'PAID',
         paymentMethod: 'CASH',
         shippingSlipUrl: '/store-shipment/ship-1/slip',
       },
+    });
+    expect(prisma.shipmentGroup.updateMany).toHaveBeenCalledWith({
+      where: { shippingOrderId: 'ship-1' },
+      data: { status: 'PAID' },
     });
     expect(notifications.sendStoreShipmentPaidEmail).toHaveBeenCalled();
   });
@@ -129,8 +137,9 @@ describe('ShippingWorkflowService.confirmPayment', () => {
   it('marks paid once Stripe has succeeded', async () => {
     const { service, prisma, notifications } = makeService({ onlinePayment: true });
     await service.confirmPayment('ship-1', 'user-1');
-    expect(prisma.storeShipmentRequest.update).toHaveBeenCalledWith({
-      where: { id: 'ship-1' },
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(prisma.storeShipmentRequest.updateMany).toHaveBeenCalledWith({
+      where: { id: 'ship-1', status: 'AWAITING_PAYMENT' },
       data: {
         status: 'PAID',
         paymentMethod: 'CARD',
@@ -143,8 +152,9 @@ describe('ShippingWorkflowService.confirmPayment', () => {
   it('still records a succeeded Stripe charge if the online-payment flag was turned off', async () => {
     const { service, prisma, notifications } = makeService({ onlinePayment: false });
     await service.confirmPayment('ship-1', 'user-1');
-    expect(prisma.storeShipmentRequest.update).toHaveBeenCalledWith({
-      where: { id: 'ship-1' },
+    expect(prisma.$transaction).toHaveBeenCalled();
+    expect(prisma.storeShipmentRequest.updateMany).toHaveBeenCalledWith({
+      where: { id: 'ship-1', status: 'AWAITING_PAYMENT' },
       data: {
         status: 'PAID',
         paymentMethod: 'CARD',

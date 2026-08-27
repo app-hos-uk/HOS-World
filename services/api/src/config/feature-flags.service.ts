@@ -38,10 +38,14 @@ const FLAG_DEFAULTS: Record<FeatureFlag, boolean> = {
   [FeatureFlag.SHIPPING_ONLINE_PAYMENT]: false,
 };
 
+const CACHE_TTL_MS = 30_000;
+
 @Injectable()
 export class FeatureFlagsService implements OnModuleInit {
   private readonly logger = new Logger(FeatureFlagsService.name);
   private readonly flags = new Map<string, boolean>();
+  private readonly envDefaults = new Map<string, boolean>();
+  private lastRefreshAt = 0;
 
   constructor(
     private configService: ConfigService,
@@ -55,18 +59,10 @@ export class FeatureFlagsService implements OnModuleInit {
       const resolved =
         envValue !== undefined ? envValue === 'true' || envValue === '1' : defaultValue;
       this.flags.set(flag, resolved);
+      this.envDefaults.set(flag, resolved);
     }
 
-    try {
-      const rows = await this.prisma.platformSetting.findMany({
-        where: { category: 'feature_flag' },
-      });
-      for (const row of rows) {
-        this.flags.set(row.key, row.value === 'true');
-      }
-    } catch {
-      this.logger.warn('platform_settings table not available yet — using env/defaults');
-    }
+    await this.refreshFromDb();
 
     const enabled = [...this.flags.entries()].filter(([, v]) => v).map(([k]) => k);
     this.logger.log(
@@ -75,10 +71,12 @@ export class FeatureFlagsService implements OnModuleInit {
   }
 
   isEnabled(flag: FeatureFlag): boolean {
+    this.maybeRefresh();
     return this.flags.get(flag) ?? false;
   }
 
   getAll(): Record<string, boolean> {
+    this.maybeRefresh();
     const result: Record<string, boolean> = {};
     for (const [key, value] of this.flags) {
       result[key] = value;
@@ -99,7 +97,38 @@ export class FeatureFlagsService implements OnModuleInit {
     } catch (err) {
       this.logger.warn(`Could not persist flag ${flag} — ${(err as Error).message}`);
     }
+    this.lastRefreshAt = Date.now();
     this.logger.log(`Feature flag ${flag} set to ${enabled} (persisted=${persisted})`);
     return { persisted };
+  }
+
+  private refreshPromise: Promise<void> | null = null;
+
+  private maybeRefresh() {
+    if (Date.now() - this.lastRefreshAt > CACHE_TTL_MS) {
+      this.lastRefreshAt = Date.now();
+      if (!this.refreshPromise) {
+        this.refreshPromise = this.refreshFromDb()
+          .catch((err) =>
+            this.logger.warn(`Flag refresh failed: ${(err as Error).message}`),
+          )
+          .finally(() => { this.refreshPromise = null; });
+      }
+    }
+  }
+
+  private async refreshFromDb() {
+    try {
+      const rows = await this.prisma.platformSetting.findMany({
+        where: { category: 'feature_flag' },
+      });
+      for (const [flag, envDefault] of this.envDefaults) {
+        const row = rows.find((r) => r.key === flag);
+        this.flags.set(flag, row ? row.value === 'true' : envDefault);
+      }
+      this.lastRefreshAt = Date.now();
+    } catch {
+      this.logger.warn('platform_settings table not available yet — using env/defaults');
+    }
   }
 }

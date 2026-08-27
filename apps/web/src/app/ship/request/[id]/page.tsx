@@ -129,16 +129,12 @@ function ShipRequestInner() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   const profileSeeded = useRef(false);
+  const mountedRef = useRef(false);
+  const SLOW_POLL_STATUSES = ['DELIVERED', 'CANCELLED', 'BLOCKED', 'HANDED_TO_CARRIER', 'IN_TRANSIT'];
 
-  const load = useCallback(async () => {
+  const loadProgress = useCallback(async () => {
     if (!id || !isAuthenticated) return;
     try {
-      try {
-        await apiClient.attachStoreShipmentByLogin(id);
-      } catch {
-        /* already attached or email mismatch handled below */
-      }
-      await apiClient.resolveStoreShipmentSale(id).catch(() => undefined);
       const [progress, addr] = await Promise.all([
         apiClient.getStoreShipmentProgress(id),
         apiClient.getAddresses(),
@@ -160,17 +156,28 @@ function ShipRequestInner() {
   }, [id, isAuthenticated, toast]);
 
   useEffect(() => {
-    load();
-    const t = window.setInterval(load, 5000);
+    if (!id || !isAuthenticated || mountedRef.current) return;
+    mountedRef.current = true;
+    (async () => {
+      try { await apiClient.attachStoreShipmentByLogin(id); } catch { /* already attached */ }
+      await apiClient.resolveStoreShipmentSale(id).catch(() => undefined);
+      await loadProgress();
+    })();
+  }, [id, isAuthenticated, loadProgress]);
+
+  useEffect(() => {
+    if (!mountedRef.current) return;
+    const interval = SLOW_POLL_STATUSES.includes(order?.status || '') ? 30000 : 5000;
+    const t = window.setInterval(loadProgress, interval);
     return () => window.clearInterval(t);
-  }, [load]);
+  }, [loadProgress, order?.status]);
 
   const saveProfile = async () => {
     if (!id) return;
     try {
       await apiClient.updateStoreShipmentProfile(id, { firstName, lastName, phone });
       toast.success('Profile saved');
-      load();
+      loadProgress();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Could not save profile');
     }
@@ -209,7 +216,7 @@ function ShipRequestInner() {
         carryInHand,
       });
       toast.success('Items assigned — staff will confirm the box charge');
-      load();
+      loadProgress();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Could not assign items');
     }
@@ -223,7 +230,7 @@ function ShipRequestInner() {
       if (data.alreadyPaid) {
         await apiClient.confirmStoreShipmentPayment(id);
         toast.success('Shipping is already paid');
-        load();
+        loadProgress();
         return;
       }
       if (!data.clientSecret) {
@@ -242,7 +249,7 @@ function ShipRequestInner() {
       await apiClient.confirmStoreShipmentPayment(id);
       setClientSecret(null);
       toast.success('Your House of Spells shipping order has been received');
-      load();
+      loadProgress();
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Could not record payment');
     }

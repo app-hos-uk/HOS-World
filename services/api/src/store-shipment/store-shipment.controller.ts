@@ -14,6 +14,7 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { Public } from '../common/decorators/public.decorator';
@@ -75,6 +76,7 @@ export class StoreShipmentController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 15, ttl: 60000 } })
   @Get('lookup')
   @ApiOperation({ summary: 'Customer: find a shipping order by HOS number, invoice, or email' })
   async lookup(
@@ -135,10 +137,13 @@ export class StoreShipmentController {
   async backoffice(
     @Req() req: StaffReq,
     @Query('status') status?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit?: number,
   ): Promise<ApiResponse<unknown>> {
     const data = await this.workflow.listBackoffice(
       { id: req.user?.id, storeId: req.storeId || req.user?.storeId, role: req.user?.role },
       status,
+      { page, limit },
     );
     return { data, message: 'OK' };
   }
@@ -176,6 +181,7 @@ export class StoreShipmentController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('staff/orders/:id/confirm-payment')
   @UseGuards(LoyaltyStaffAuthGuard)
   @ApiBearerAuth('JWT-auth')
@@ -373,8 +379,11 @@ export class StoreShipmentController {
   @UseGuards(LoyaltyStaffAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @Header('Content-Type', 'application/pdf')
-  async slip(@Param('id') id: string, @Res() res: Response) {
-    const buf = await this.workflow.slipPdf(id);
+  async slip(@Param('id') id: string, @Req() req: StaffReq, @Res() res: Response) {
+    const buf = await this.workflow.slipPdf(id, {
+      storeId: req.storeId || req.user?.storeId,
+      role: req.user?.role,
+    });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="shipping-slip-${id}.pdf"`);
     res.send(buf);

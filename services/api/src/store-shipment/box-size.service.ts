@@ -86,6 +86,8 @@ const DEFAULT_MATRIX: Record<string, Record<string, number>> = {
 
 @Injectable()
 export class BoxSizeService {
+  private seeded = false;
+
   constructor(private prisma: PrismaService) {}
 
   async list(storeId?: string, includeInactive = false) {
@@ -328,12 +330,28 @@ export class BoxSizeService {
     return list.find((t) => t.isCatchAll) || list[list.length - 1] || null;
   }
 
+  private seedingPromise: Promise<void> | null = null;
+
   private async ensureDefaults(storeId?: string) {
+    if (this.seeded && !storeId) return;
+    if (!storeId) {
+      if (!this.seedingPromise) {
+        this.seedingPromise = this.doEnsureDefaults(undefined).finally(() => {
+          this.seedingPromise = null;
+        });
+      }
+      return this.seedingPromise;
+    }
+    return this.doEnsureDefaults(storeId);
+  }
+
+  private async doEnsureDefaults(storeId?: string) {
     const existing = await this.prisma.boxSize.count({
       where: storeId ? { OR: [{ storeId }, { storeId: null }] } : { storeId: null },
     });
     if (existing === 0) {
       await this.prisma.boxSize.createMany({
+        skipDuplicates: true,
         data: DEFAULT_BOXES.map((b) => ({
           storeId: null,
           name: b.name,
@@ -348,6 +366,7 @@ export class BoxSizeService {
         })),
       });
     }
+    if (!storeId) this.seeded = true;
     await this.ensureTiersAndRates();
   }
 
