@@ -129,7 +129,7 @@ function ShipRequestInner() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   const profileSeeded = useRef(false);
-  const mountedRef = useRef(false);
+  const initializedIdRef = useRef<string | null>(null);
   const SLOW_POLL_STATUSES = ['DELIVERED', 'CANCELLED', 'BLOCKED', 'HANDED_TO_CARRIER', 'IN_TRANSIT'];
 
   const loadProgress = useCallback(async () => {
@@ -156,8 +156,12 @@ function ShipRequestInner() {
   }, [id, isAuthenticated, toast]);
 
   useEffect(() => {
-    if (!id || !isAuthenticated || mountedRef.current) return;
-    mountedRef.current = true;
+    if (!id || !isAuthenticated || initializedIdRef.current === id) return;
+    initializedIdRef.current = id;
+    profileSeeded.current = false;
+    setOrder(null);
+    setLoading(true);
+    setClientSecret(null);
     (async () => {
       try { await apiClient.attachStoreShipmentByLogin(id); } catch { /* already attached */ }
       await apiClient.resolveStoreShipmentSale(id).catch(() => undefined);
@@ -166,7 +170,7 @@ function ShipRequestInner() {
   }, [id, isAuthenticated, loadProgress]);
 
   useEffect(() => {
-    if (!mountedRef.current) return;
+    if (!initializedIdRef.current) return;
     const interval = SLOW_POLL_STATUSES.includes(order?.status || '') ? 30000 : 5000;
     const t = window.setInterval(loadProgress, interval);
     return () => window.clearInterval(t);
