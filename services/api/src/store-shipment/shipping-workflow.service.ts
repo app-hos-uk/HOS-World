@@ -555,8 +555,10 @@ export class ShippingWorkflowService {
     if (fromCountry !== toCountry) {
       const saleItems = order.posSale?.items ?? [];
       const unitPriceBySku = new Map(
-        saleItems.map((si) => [si.sku?.trim().toLowerCase(), Number(si.unitPrice ?? 0)] as const),
+        saleItems.map((si) => [si.sku?.trim()?.toLowerCase(), Number(si.unitPrice ?? 0)] as const),
       );
+      const itemCount = group.items.reduce((n, i) => n + i.quantity, 0) || 1;
+      const perItemWeight = weight / itemCount;
       const customsItems = [];
       for (const item of group.items) {
         const sku = item.sku?.trim() || null;
@@ -567,7 +569,7 @@ export class ShippingWorkflowService {
             description: item.name.slice(0, 60),
             quantity: item.quantity,
             value: unitPrice,
-            weight: Number(attr.weightKg ?? weight),
+            weight: Number(attr.weightKg ?? perItemWeight),
             hsCode: attr.hsCode ?? undefined,
             countryOfOrigin: attr.countryOfOrigin ?? 'US',
             currency: 'USD',
@@ -577,7 +579,7 @@ export class ShippingWorkflowService {
             description: item.name.slice(0, 60),
             quantity: item.quantity,
             value: unitPrice,
-            weight,
+            weight: perItemWeight,
             countryOfOrigin: 'US',
             currency: 'USD',
           });
