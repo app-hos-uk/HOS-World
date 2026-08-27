@@ -877,12 +877,14 @@ export class StoreShipmentService {
     if (!shipment.destinationAddress) throw new BadRequestException('Address required');
 
     const from = {
-      name: 'House of Spells',
+      name: shipment.store.name || 'House of Spells',
       street1: shipment.store.address || 'Store',
       city: shipment.store.city || 'New York',
       state: shipment.store.state || 'NY',
       postalCode: shipment.store.postalCode || '10001',
       country: shipment.store.countryCode || shipment.store.country || 'US',
+      phone: shipment.store.contactPhone || this.config.get<string>('SHIPPO_SENDER_PHONE') || '',
+      email: shipment.store.contactEmail || this.config.get<string>('SHIPPO_SENDER_EMAIL') || '',
     };
 
     const to = {

@@ -536,6 +536,8 @@ export class ShippingWorkflowService {
       state: order.store.state || 'NY',
       postalCode: order.store.postalCode || '10001',
       country: order.store.countryCode || order.store.country || 'US',
+      phone: order.store.contactPhone || this.config.get<string>('SHIPPO_SENDER_PHONE') || '',
+      email: order.store.contactEmail || this.config.get<string>('SHIPPO_SENDER_EMAIL') || '',
     };
     const to = {
       name: group.recipientName || `${dest.firstName || ''} ${dest.lastName || ''}`.trim() || 'Customer',
