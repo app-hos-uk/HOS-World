@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Header,
   Param,
@@ -158,7 +159,7 @@ export class StoreShipmentController {
       role: 'STAFF',
     });
     if (req.user?.role !== 'ADMIN' && (req.storeId || req.user?.storeId) && data.store.id !== (req.storeId || req.user?.storeId)) {
-      return { data: null, message: 'Not your store' };
+      throw new ForbiddenException('This order belongs to another store');
     }
     return { data, message: 'OK' };
   }

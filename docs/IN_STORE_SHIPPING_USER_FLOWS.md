@@ -66,7 +66,8 @@ Till scan invoice
         └──────────────────────────────► Customer sees USD charge
                                                        │
                                                        ▼
-                                              Pay with Stripe on phone
+                                    Staff confirms payment (cash / card / other)
+                                    — or customer pays online if SHIPPING_ONLINE_PAYMENT is on
                                                        │
                                                        ▼
                                               Status PAID — customer can leave
@@ -95,8 +96,8 @@ Order (`StoreShipmentRequest.status`) moves roughly as:
 | Status | Who caused it | What the other party should see |
 |---|---|---|
 | `CUSTOMER_DETAILS_REQUIRED` | Staff created the claim, or customer attached their account | Staff: “Waiting for the customer to add addresses…” |
-| `AWAITING_PAYMENT` | Staff finalized the box quote | Customer: shipping charge + **Pay at counter** (Stripe on the phone) |
-| `PAID` | Customer Stripe payment succeeded | Customer: “order has been received”; packing queue lists the order |
+| `AWAITING_PAYMENT` | Staff finalized the box quote | Customer: shipping charge. Default: message to pay at counter. If `SHIPPING_ONLINE_PAYMENT` on: **Pay online** (Stripe). |
+| `PAID` | Staff confirmed counter payment, or customer Stripe payment succeeded | Customer: “order has been received”; packing queue lists the order |
 | `PACKING` | Back office **Scan received** | Chain of custody recorded (`receivedByEmployee`) |
 | `PACKED` | All groups sealed | Ready to weigh / label |
 | `LABEL_CREATED` | Shippo label generated | Tracking code on group; customer can see carrier + tracking |
@@ -296,7 +297,7 @@ There are two ways onto the order:
 
 | Field | Detail |
 |---|---|
-| **Steps** | 1. **Add address** → `/profile?tab=addresses&action=add&returnUrl=/ship/request/{id}` <br> 2. Save a **US** address <br> 3. Confirm return to the shipping request page <br> 4. Address listed |
+| **Steps** | 1. **Add address** → `/account/addresses?action=add&returnUrl=/ship/request/{id}` <br> 2. Save a **US** address <br> 3. Confirm return to the shipping request page <br> 4. Address listed |
 | **Expected** | Address belongs to this customer. Country is stored so staff later see the correct tier. |
 | **Pass** | [ ] |
 
@@ -325,12 +326,13 @@ There are two ways onto the order:
 | **Expected** | One shipment group per address. Staff sees two boxes and two destination tiers. |
 | **Pass** | [ ] |
 
-### TC-C-010: Pay after staff quote
+### TC-C-010: Pay after staff quote (default: counter payment)
 
 | Field | Detail |
 |---|---|
-| **Pre-condition** | Staff completed Flow D (status `AWAITING_PAYMENT`) |
-| **Steps** | 1. Charge shows as `USD {total}` <br> 2. **Pay at counter** (starts Stripe PaymentIntent) <br> 3. Enter test card <br> 4. **Pay shipping** |
+| **Pre-condition** | Staff completed Flow D (status `AWAITING_PAYMENT`). Feature flag `SHIPPING_ONLINE_PAYMENT` determines whether the customer pays online or staff confirm at the counter. |
+| **Steps (flag OFF — default)** | 1. Customer screen shows the USD charge and a message to pay at the counter (cash or standalone card machine) <br> 2. Staff selects Cash / Card / Other on their order screen <br> 3. Staff clicks **Confirm payment received** |
+| **Steps (flag ON)** | 1. Customer screen shows the USD charge and **Pay online** <br> 2. Customer enters card details (Stripe) <br> 3. Customer clicks **Pay shipping** |
 | **Expected** | Success. Status `PAID`. Green banner: customer can leave the store. Groups show box name and USD price. Re-assigning items is blocked once paid. |
 | **Pass** | [ ] |
 
@@ -524,7 +526,7 @@ Run these in order on a clean invoice each time. Tick the case IDs as you go.
 
 ## Tester notes (known product behaviour)
 
-- The customer button is labelled **Pay at counter** but payment is **Stripe card on the customer device**, not a Lightspeed till tender.
+- Payment defaults to **staff confirmation at the counter** (cash / standalone card machine / other). When the feature flag `SHIPPING_ONLINE_PAYMENT` is enabled, the customer sees a **Pay online** button and pays with Stripe on their phone instead. Neither path uses Lightspeed till tender.
 - Staff and customer UIs poll; if something looks stale, wait 5 seconds or refresh.
 - **Print shipping slip** is for store paperwork after payment; the **carrier label** is generated in back office after weigh.
 - `/store/lookup` is loyalty member search, **not** shipping lookup. Shipping lookup is `/ship/lookup`.

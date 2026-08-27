@@ -91,8 +91,12 @@ export default function BackofficeShippingPage() {
               type="button"
               className="px-3 py-2 rounded bg-violet-600 text-white text-sm"
               onClick={async () => {
+                if (!employeeName.trim()) {
+                  toast.error('Employee name is required for chain of custody');
+                  return;
+                }
                 try {
-                  await apiClient.receiveStoreShipment(order.id, employeeName || 'Staff');
+                  await apiClient.receiveStoreShipment(order.id, employeeName.trim());
                   toast.success('Received by logistics');
                   load();
                 } catch (e: unknown) {

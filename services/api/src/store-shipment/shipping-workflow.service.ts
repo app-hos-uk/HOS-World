@@ -9,7 +9,8 @@ import { ConfigService } from '@nestjs/config';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../database/prisma.service';
 import { CourierFactoryService } from '../shipping/courier/courier-factory.service';
-import type { RateResponse } from '../shipping/courier/interfaces/courier-provider.interface';
+import type { RateResponse, CustomsInfo } from '../shipping/courier/interfaces/courier-provider.interface';
+import { SkuCustomsService } from './sku-customs.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentProviderService } from '../payments/payment-provider.service';
 import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
@@ -46,6 +47,7 @@ export class ShippingWorkflowService {
     private paymentProvider: PaymentProviderService,
     private config: ConfigService,
     private featureFlags: FeatureFlagsService,
+    private skuCustoms: SkuCustomsService,
   ) {}
 
   async lookupPublic(query: string | undefined, storeId?: string) {
@@ -283,6 +285,9 @@ export class ShippingWorkflowService {
       groupCurrencies.add(resolvedCurrency);
       const price =
         box.name === 'CUSTOM' && g.customPrice != null ? g.customPrice : quoted.price;
+      if (box.name === 'CUSTOM' && (g.customPrice == null || !(g.customPrice > 0))) {
+        throw new BadRequestException('Enter a custom price greater than zero for the Custom box');
+      }
       if (!(price >= 0)) throw new BadRequestException('Invalid box price');
       totalCharge += price;
       totalPackaging += quoted.packagingCost;
@@ -544,6 +549,51 @@ export class ShippingWorkflowService {
       email: group.recipientEmail || order.claimEmail || undefined,
     };
 
+    let customsInfo: CustomsInfo | undefined;
+    const fromCountry = (from.country || 'US').toUpperCase();
+    const toCountry = (to.country || 'US').toUpperCase();
+    if (fromCountry !== toCountry) {
+      const saleItems = order.posSale?.items ?? [];
+      const unitPriceBySku = new Map(
+        saleItems.map((si) => [si.sku?.trim().toLowerCase(), Number(si.unitPrice ?? 0)] as const),
+      );
+      const customsItems = [];
+      for (const item of group.items) {
+        const sku = item.sku?.trim() || null;
+        const unitPrice = unitPriceBySku.get(sku?.toLowerCase() ?? '') ?? 0;
+        if (sku) {
+          const attr = await this.skuCustoms.getOrCreateForSku(sku);
+          customsItems.push({
+            description: item.name.slice(0, 60),
+            quantity: item.quantity,
+            value: unitPrice,
+            weight: Number(attr.weightKg ?? weight),
+            hsCode: attr.hsCode ?? undefined,
+            countryOfOrigin: attr.countryOfOrigin ?? 'US',
+            currency: 'USD',
+          });
+        } else {
+          customsItems.push({
+            description: item.name.slice(0, 60),
+            quantity: item.quantity,
+            value: unitPrice,
+            weight,
+            countryOfOrigin: 'US',
+            currency: 'USD',
+          });
+        }
+      }
+      if (customsItems.length) {
+        customsInfo = {
+          contentsType: 'MERCHANDISE',
+          nonDeliveryOption: 'RETURN',
+          items: customsItems,
+          totalValue: customsItems.reduce((s, i) => s + i.value * i.quantity, 0),
+          currency: 'USD',
+        };
+      }
+    }
+
     const defaultProv = this.courierFactory.getDefaultProvider();
     if (!defaultProv) throw new BadRequestException('No shipping provider configured');
 
@@ -563,6 +613,7 @@ export class ShippingWorkflowService {
       packages: [{ weight, length, width, height }],
       serviceCode: selected.serviceCode,
       reference1: order.hosOrderNumber || order.invoiceNumber || order.id,
+      customsInfo,
     });
     const labelUrl = label.labels?.[0]?.url ?? label.trackingUrl;
     const carrierCost = selected.rate;
@@ -642,6 +693,11 @@ export class ShippingWorkflowService {
     staff: { id?: string; storeId?: string; role?: string },
   ) {
     const order = await this.requireStaffOrder(shipmentId, staff);
+    if (order.status !== 'READY_FOR_PICKUP') {
+      throw new BadRequestException(
+        `Order must be READY_FOR_PICKUP before carrier collection (current: ${order.status})`,
+      );
+    }
     const store = await this.prisma.store.findUnique({ where: { id: order.storeId } });
     await this.prisma.shipmentGroup.updateMany({
       where: { shippingOrderId: shipmentId },
@@ -1025,7 +1081,7 @@ export class ShippingWorkflowService {
         items: true,
         boxSize: true,
         shippingOrder: {
-          include: { store: true },
+          include: { store: true, posSale: { include: { items: true } } },
         },
       },
     });
