@@ -15,7 +15,8 @@ type EditForm = {
   code: string;
   address: string;
   city: string;
-  postcode: string;
+  state: string;
+  postalCode: string;
   countryCode: string;
 };
 
@@ -28,7 +29,8 @@ function toEditForm(row: Record<string, unknown>): EditForm {
     code: String(row.code ?? ''),
     address: String(row.address ?? ''),
     city: String(row.city ?? ''),
-    postcode: String(row.postcode ?? ''),
+    state: String(row.state ?? ''),
+    postalCode: String(row.postalCode ?? row.postcode ?? ''),
     countryCode: resolveCountryCode(row),
   };
 }
@@ -41,7 +43,15 @@ export default function AdminStoreDetailPage() {
 
   const [row, setRow] = useState<Record<string, unknown> | null>(null);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState<EditForm>({ name: '', code: '', address: '', city: '', postcode: '', countryCode: '' });
+  const [form, setForm] = useState<EditForm>({
+    name: '',
+    code: '',
+    address: '',
+    city: '',
+    state: '',
+    postalCode: '',
+    countryCode: '',
+  });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -104,10 +114,10 @@ export default function AdminStoreDetailPage() {
       const countryName = COUNTRIES.find((c) => c.code === form.countryCode)?.name;
       await apiClient.adminUpdateStore(id, {
         name: form.name.trim(),
-        code: form.code.trim(),
         address: form.address.trim() || undefined,
         city: form.city.trim() || undefined,
-        postcode: form.postcode.trim() || undefined,
+        state: form.state.trim() || undefined,
+        postalCode: form.postalCode.trim() || undefined,
         country: countryName || form.countryCode || undefined,
         countryCode: form.countryCode || undefined,
         defaultRegionCode: form.countryCode || undefined,
@@ -205,7 +215,7 @@ export default function AdminStoreDetailPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-hos-text-secondary mb-1">Code</label>
-                    <input className={INPUT_CLS} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} />
+                    <input className={`${INPUT_CLS} disabled:opacity-70`} value={form.code} disabled readOnly />
                   </div>
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-medium text-hos-text-secondary mb-1">Address</label>
@@ -216,8 +226,12 @@ export default function AdminStoreDetailPage() {
                     <input className={INPUT_CLS} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Postcode</label>
-                    <input className={INPUT_CLS} value={form.postcode} onChange={(e) => setForm({ ...form, postcode: e.target.value })} />
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">State</label>
+                    <input className={INPUT_CLS} value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} placeholder="NY" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Postal code</label>
+                    <input className={INPUT_CLS} value={form.postalCode} onChange={(e) => setForm({ ...form, postalCode: e.target.value })} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-hos-text-secondary mb-1">Country</label>
