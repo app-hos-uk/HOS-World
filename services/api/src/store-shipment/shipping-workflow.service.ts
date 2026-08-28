@@ -529,35 +529,13 @@ export class ShippingWorkflowService {
     const width = Number(group.actualWidthCm || box?.widthCm || 20);
     const height = Number(group.actualHeightCm || box?.heightCm || 10);
 
-    const senderPhone =
-      order.store.contactPhone?.trim() || this.config.get<string>('SHIPPO_SENDER_PHONE')?.trim() || '';
-    const senderEmail =
-      order.store.contactEmail?.trim() || this.config.get<string>('SHIPPO_SENDER_EMAIL')?.trim() || '';
-    if (!senderPhone || !senderEmail) {
-      throw new BadRequestException(
-        'Store sender phone and email are required for carrier labels. Set them on the store or SHIPPO_SENDER_PHONE / SHIPPO_SENDER_EMAIL.',
-      );
-    }
-    if (!order.store.address?.trim()) {
-      throw new BadRequestException('Store street address is required before generating a label');
-    }
-
     const destCountry = dest.countryCode || dest.country || 'US';
     const destIsUs = ['US', 'USA', 'UNITED STATES'].includes(destCountry.trim().toUpperCase());
     if (destIsUs && !dest.state?.trim()) {
       throw new BadRequestException('Destination state is required for US labels');
     }
 
-    const from = {
-      name: order.store.name || 'House of Spells',
-      street1: order.store.address.trim(),
-      city: order.store.city || 'New York',
-      state: order.store.state || 'NY',
-      postalCode: order.store.postalCode || '10001',
-      country: order.store.countryCode || order.store.country || 'US',
-      phone: senderPhone,
-      email: senderEmail,
-    };
+    const from = this.resolveLabelOrigin(order.store);
     const to = {
       name: group.recipientName || `${dest.firstName || ''} ${dest.lastName || ''}`.trim() || 'Customer',
       street1: dest.street,
@@ -566,8 +544,8 @@ export class ShippingWorkflowService {
       state: dest.state || undefined,
       postalCode: dest.postalCode,
       country: destCountry,
-      phone: group.recipientPhone || dest.phone || order.customerPhone || senderPhone,
-      email: group.recipientEmail || dest.email || order.claimEmail || senderEmail,
+      phone: group.recipientPhone || dest.phone || order.customerPhone || from.phone,
+      email: group.recipientEmail || dest.email || order.claimEmail || from.email,
     };
 
     let customsInfo: CustomsInfo | undefined;
@@ -1037,6 +1015,70 @@ export class ShippingWorkflowService {
     if (order.status === 'LABEL_CREATED') return 'VERIFY_LABEL';
     if (order.status === 'READY_FOR_PICKUP') return 'CARRIER_PICKUP';
     return order.status;
+  }
+
+  private resolveLabelOrigin(store: {
+    name?: string | null;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postalCode?: string | null;
+    country?: string | null;
+    countryCode?: string | null;
+    contactPhone?: string | null;
+    contactEmail?: string | null;
+  }) {
+    const env = (key: string) => this.config.get<string>(key)?.trim() || '';
+    const street =
+      store.address?.trim() ||
+      env('SHIPPO_FROM_STREET') ||
+      env('SHIPPO_SENDER_STREET');
+    const city = store.city?.trim() || env('SHIPPO_FROM_CITY') || env('SHIPPO_SENDER_CITY');
+    const state = store.state?.trim() || env('SHIPPO_FROM_STATE') || env('SHIPPO_SENDER_STATE');
+    const postalCode =
+      store.postalCode?.trim() ||
+      env('SHIPPO_FROM_POSTAL_CODE') ||
+      env('SHIPPO_SENDER_POSTAL_CODE');
+    const country =
+      store.countryCode?.trim() ||
+      store.country?.trim() ||
+      env('SHIPPO_FROM_COUNTRY') ||
+      env('SHIPPO_SENDER_COUNTRY') ||
+      'US';
+    const phone =
+      store.contactPhone?.trim() ||
+      env('SHIPPO_SENDER_PHONE') ||
+      env('SHIPPO_FROM_PHONE');
+    const email =
+      store.contactEmail?.trim() ||
+      env('SHIPPO_SENDER_EMAIL') ||
+      env('SHIPPO_FROM_EMAIL');
+
+    if (!street || !city || !postalCode) {
+      throw new BadRequestException(
+        'Store origin address is incomplete. Set the store street/city/postal code, or SHIPPO_FROM_STREET / CITY / POSTAL_CODE.',
+      );
+    }
+    if (!phone || !email) {
+      throw new BadRequestException(
+        'Store sender phone and email are required for carrier labels. Set them on the store or SHIPPO_SENDER_PHONE / SHIPPO_SENDER_EMAIL.',
+      );
+    }
+    const isUs = ['US', 'USA', 'UNITED STATES'].includes(country.toUpperCase());
+    if (isUs && !state) {
+      throw new BadRequestException('Store origin state is required for US labels');
+    }
+
+    return {
+      name: store.name?.trim() || env('SHIPPO_FROM_NAME') || 'House of Spells',
+      street1: street,
+      city,
+      state: state || undefined,
+      postalCode,
+      country,
+      phone,
+      email,
+    };
   }
 
   private formatDest(snapshot: unknown) {
