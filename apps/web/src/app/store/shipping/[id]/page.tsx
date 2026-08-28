@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
+import { CustomerQr } from '@/components/CustomerQr';
 
 type BoxSize = {
   id: string;
@@ -153,13 +154,7 @@ export default function StaffShippingOrderPage() {
             Invoice {order.invoiceNumber || '—'} · {order.claimEmail || '—'} · {order.status}
           </p>
         </div>
-        {order.lookupUrl && (
-          <img
-            alt="Customer QR"
-            className="bg-white p-2 rounded w-32 h-32"
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(order.lookupUrl)}`}
-          />
-        )}
+        {order.lookupUrl && <CustomerQr value={order.lookupUrl} size={128} />}
       </div>
 
       <div className="rounded-lg border border-hos-border p-4 bg-hos-bg-secondary space-y-2">

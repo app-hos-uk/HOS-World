@@ -6,6 +6,7 @@ import { apiClient } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { BarcodeScanner } from '@/components/BarcodeScanner';
+import { CustomerQr } from '@/components/CustomerQr';
 
 type ConfirmedInvoice = {
   number: string;
@@ -147,11 +148,7 @@ export default function StoreShippingPage() {
               : ''}
           </p>
           {result.lookupUrl && (
-            <img
-              alt="Customer QR"
-              className="bg-white p-2 rounded w-44 h-44"
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(result.lookupUrl)}`}
-            />
+            <CustomerQr value={result.lookupUrl} size={176} className="flex flex-col items-start gap-1" />
           )}
         </div>
       )}

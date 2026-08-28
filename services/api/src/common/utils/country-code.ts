@@ -70,6 +70,10 @@ const ALIASES: Record<string, string> = {
   CZECHIA: 'CZ',
   SLOVAKIA: 'SK',
   HUNGARY: 'HU',
+  'SAUDI ARABIA': 'SA',
+  'KINGDOM OF SAUDI ARABIA': 'SA',
+  KSA: 'SA',
+  SAU: 'SA',
 };
 
 /**

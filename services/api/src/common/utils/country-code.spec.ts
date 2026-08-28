@@ -14,6 +14,8 @@ describe('normalizeCountryCode', () => {
     expect(normalizeCountryCode('United Kingdom')).toBe('GB');
     expect(normalizeCountryCode('Italy')).toBe('IT');
     expect(normalizeCountryCode('Puerto Rico')).toBe('PR');
+    expect(normalizeCountryCode('Saudi Arabia')).toBe('SA');
+    expect(normalizeCountryCode('KSA')).toBe('SA');
   });
 
   it('resolves localised names', () => {

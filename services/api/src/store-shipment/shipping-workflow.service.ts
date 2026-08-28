@@ -15,6 +15,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { PaymentProviderService } from '../payments/payment-provider.service';
 import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
 import { BoxSizeService } from './box-size.service';
+import { normalizeCountryCode } from '../common/utils/country-code';
 import { ShippingSlipService } from './shipping-slip.service';
 
 export const PREFERRED_CARRIERS = ['UPS', 'FedEx', 'DHL'] as const;
@@ -529,8 +530,18 @@ export class ShippingWorkflowService {
     const width = Number(group.actualWidthCm || box?.widthCm || 20);
     const height = Number(group.actualHeightCm || box?.heightCm || 10);
 
-    const destCountry = dest.countryCode || dest.country || 'US';
-    const destIsUs = ['US', 'USA', 'UNITED STATES'].includes(destCountry.trim().toUpperCase());
+    const destCountry =
+      normalizeCountryCode(dest.countryCode) || normalizeCountryCode(dest.country);
+    if (!destCountry) {
+      const raw = (dest.countryCode || dest.country || '').trim();
+      if (raw) {
+        throw new BadRequestException(
+          `Destination country "${raw}" is not recognized. Use an ISO country code (e.g. US, GB, SA).`,
+        );
+      }
+    }
+    const resolvedDestCountry = destCountry || 'US';
+    const destIsUs = resolvedDestCountry === 'US' || resolvedDestCountry === 'PR';
     if (destIsUs && !dest.state?.trim()) {
       throw new BadRequestException('Destination state is required for US labels');
     }
@@ -543,9 +554,10 @@ export class ShippingWorkflowService {
       city: dest.city,
       state: dest.state || undefined,
       postalCode: dest.postalCode,
-      country: destCountry,
+      country: resolvedDestCountry,
       phone: group.recipientPhone || dest.phone || order.customerPhone || from.phone,
       email: group.recipientEmail || dest.email || order.claimEmail || from.email,
+      isResidential: true,
     };
 
     let customsInfo: CustomsInfo | undefined;
@@ -1040,10 +1052,10 @@ export class ShippingWorkflowService {
       env('SHIPPO_FROM_POSTAL_CODE') ||
       env('SHIPPO_SENDER_POSTAL_CODE');
     const country =
-      store.countryCode?.trim() ||
-      store.country?.trim() ||
-      env('SHIPPO_FROM_COUNTRY') ||
-      env('SHIPPO_SENDER_COUNTRY') ||
+      normalizeCountryCode(store.countryCode) ||
+      normalizeCountryCode(store.country) ||
+      normalizeCountryCode(env('SHIPPO_FROM_COUNTRY')) ||
+      normalizeCountryCode(env('SHIPPO_SENDER_COUNTRY')) ||
       'US';
     const phone =
       store.contactPhone?.trim() ||

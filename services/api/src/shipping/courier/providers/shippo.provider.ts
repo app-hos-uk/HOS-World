@@ -12,8 +12,10 @@ import {
   AddressValidationResult,
   Address,
   TestConnectionResult,
+  CustomsInfo,
 } from '../interfaces/courier-provider.interface';
 import { PLATFORM_DEFAULT_CURRENCY } from '../../../common/currency-defaults';
+import { normalizeCountryCode } from '../../../common/utils/country-code';
 
 interface ShippoAddress {
   name: string;
@@ -184,16 +186,12 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
   }
 
   private toShippoAddress(address: Address): ShippoAddress {
-    const country = String(address.country || '')
-      .trim()
-      .toUpperCase();
-    // Shippo expects ISO 2-letter country codes
-    const normalizedCountry =
-      country === 'USA' || country === 'UNITED STATES'
-        ? 'US'
-        : country === 'UK' || country === 'GBR'
-          ? 'GB'
-          : country;
+    const normalizedCountry = normalizeCountryCode(address.country);
+    if (!normalizedCountry) {
+      throw new Error(
+        `Shippo address country is not a valid ISO code: ${address.country?.trim() || '(empty)'}`,
+      );
+    }
 
     const { zip, state } = this.normalizePostalAndState(
       address.postalCode,
@@ -257,9 +255,42 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
     }
   }
 
+  private formatShipmentMessages(shipment: any): string {
+    if (!Array.isArray(shipment?.messages) || !shipment.messages.length) return '';
+    return shipment.messages
+      .map((m: any) =>
+        typeof m === 'string' ? m : [m?.source, m?.text].filter(Boolean).join(': '),
+      )
+      .filter(Boolean)
+      .join('; ');
+  }
+
+  private async createCustomsDeclaration(info: CustomsInfo, signer: string): Promise<string | undefined> {
+    const items = (info.items || []).map((item) => ({
+      description: item.description.slice(0, 50),
+      quantity: Math.max(1, item.quantity),
+      net_weight: String(Math.max(0.01, Number(item.weight) || 0.01)),
+      mass_unit: 'kg',
+      value_amount: String(Math.max(0.01, Number(item.value) || 0.01)),
+      value_currency: item.currency || info.currency || 'USD',
+      origin_country: normalizeCountryCode(item.countryOfOrigin) || 'US',
+      tariff_number: item.hsCode || undefined,
+    }));
+    if (!items.length) return undefined;
+    const declaration = await this.apiRequest('/customs/declarations/', 'POST', {
+      contents_type: info.contentsType === 'DOCUMENTS' ? 'DOCUMENTS' : 'MERCHANDISE',
+      contents_explanation: info.contentsExplanation || 'Merchandise',
+      non_delivery_option: info.nonDeliveryOption === 'ABANDON' ? 'ABANDON' : 'RETURN',
+      certify: true,
+      certify_signer: (signer || 'House of Spells').slice(0, 40),
+      items,
+    });
+    return declaration?.object_id;
+  }
+
   private async createShippoShipment(
     request: RateRequest,
-    opts?: { requireContact?: boolean },
+    opts?: { requireContact?: boolean; customsInfo?: CustomsInfo; reference1?: string },
   ): Promise<any> {
     if (!this.isConfigured()) {
       throw new Error(
@@ -269,15 +300,24 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
     this.assertAddress('origin', request.from, opts);
     this.assertAddress('destination', request.to, opts);
 
-    return this.apiRequest('/shipments/', 'POST', {
+    const customsId = opts?.customsInfo
+      ? await this.createCustomsDeclaration(opts.customsInfo, request.from.name)
+      : undefined;
+
+    const body: Record<string, unknown> = {
       address_from: this.toShippoAddress(request.from),
-      address_to: this.toShippoAddress(request.to),
+      address_to: { ...this.toShippoAddress(request.to), is_residential: request.to.isResidential !== false },
       parcels: this.toShippoParcels(request.packages),
-      extra: {
-        reference_1: (request as RateRequest & { reference1?: string }).reference1,
-      },
       async: false,
-    });
+    };
+    if (opts?.reference1) {
+      body.extra = { reference_1: opts.reference1 };
+    }
+    if (customsId) {
+      body.customs_declaration = customsId;
+    }
+
+    return this.apiRequest('/shipments/', 'POST', body);
   }
 
   private mapRates(shipment: any): RateResponse[] {
@@ -435,7 +475,11 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
       service: request.serviceCode,
     };
 
-    const shipment = await this.createShippoShipment(rateRequest, { requireContact: true });
+    const shipment = await this.createShippoShipment(rateRequest, {
+      requireContact: true,
+      customsInfo: request.customsInfo,
+      reference1: request.reference1,
+    });
     const rates = Array.isArray(shipment?.rates) ? shipment.rates : [];
     const preferred = ['UPS', 'FedEx', 'DHL'];
     const serviceCode = request.serviceCode?.trim();
@@ -458,7 +502,15 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
         rates[0];
 
     if (!selectedRate?.object_id) {
-      throw new Error('No Shippo rates available for this shipment');
+      const messages = this.formatShipmentMessages(shipment);
+      const tokenMode = this.getTokenMode();
+      const tokenHint =
+        tokenMode === 'test'
+          ? ' A shippo_test_ token is configured — use shippo_live_ for production carrier rates.'
+          : '';
+      const detail = messages ? ` Details: ${messages.slice(0, 400)}` : '';
+      this.logger.warn(`Shippo createShipment returned 0 rates (token=${tokenMode}). ${messages}`);
+      throw new Error(`Shippo returned no rates for this shipment.${tokenHint}${detail}`.trim());
     }
 
     const labelFormat =
