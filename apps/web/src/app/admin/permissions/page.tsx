@@ -42,8 +42,8 @@ export default function AdminPermissionsPage() {
   const [creatingRole, setCreatingRole] = useState(false);
   const [permissions, setPermissions] = useState<Permission[]>(FALLBACK_PERMISSIONS);
 
-  const selectedRole = rolesDetailed.find((r) => r.name === selectedRoleName) || null;
-  const currentPermissions = rolePermissions[selectedRoleName] || [];
+  const selectedRole = useMemo(() => rolesDetailed.find((r) => r.name === selectedRoleName) || null, [rolesDetailed, selectedRoleName]);
+  const currentPermissions = useMemo(() => rolePermissions[selectedRoleName] || [], [rolePermissions, selectedRoleName]);
   const currentScopeKind = roleScopeKinds[selectedRoleName] || selectedRole?.scopeKind || 'ANY';
 
   const permissionsByCategory = useMemo(() => {

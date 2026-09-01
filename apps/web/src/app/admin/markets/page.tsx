@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
+import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface Market {
   id: string;
@@ -23,7 +24,7 @@ const EMPTY_MARKET = {
   name: '',
   country: '',
   countryCode: '',
-  currency: 'USD',
+  currency: DEFAULT_CURRENCY,
   locale: 'en-US',
   timezone: 'America/New_York',
   isActive: true,
@@ -223,7 +224,7 @@ export default function AdminMarketsPage() {
                     type="text"
                     value={form.currency}
                     onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })}
-                    placeholder="USD"
+                    placeholder={DEFAULT_CURRENCY}
                     className="input w-full"
                     maxLength={3}
                   />
