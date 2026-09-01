@@ -316,6 +316,8 @@ describe('LoyaltyEarnEngine', () => {
         },
         vendorProduct: { findFirst: jest.fn().mockResolvedValue(null) },
         user: { findUnique: jest.fn().mockResolvedValue({ id: 'u1', country: 'GB' }) },
+        loyaltyReferral: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
+        partnerReferralConversion: { findFirst: jest.fn().mockResolvedValue(null) },
         $transaction: jest.fn(async (fn: (tx: any) => Promise<any>) =>
           fn({
             loyaltyMembership: { update: jest.fn() },
@@ -412,6 +414,8 @@ describe('LoyaltyEarnEngine', () => {
         },
         vendorProduct: { findFirst: jest.fn().mockResolvedValue(null) },
         user: { findUnique: jest.fn().mockResolvedValue({ id: 'u1', country: null }) },
+        loyaltyReferral: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
+        partnerReferralConversion: { findFirst: jest.fn().mockResolvedValue(null) },
         $transaction: jest.fn(async (fn: (tx: any) => Promise<any>) =>
           fn({
             loyaltyMembership: { update: jest.fn() },

@@ -66,6 +66,7 @@ function makeService(opts?: { onlinePayment?: boolean; stripeStatus?: string }) 
     paymentProvider as any,
     { get: jest.fn().mockReturnValue('https://hos.example') } as any,
     featureFlags as any,
+    {} as any,
   );
   return { service, prisma, notifications, order, paymentProvider };
 }

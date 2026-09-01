@@ -1,4 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   type AccessControlMe,
   type MarketSummary,
@@ -51,6 +56,94 @@ export class AccessControlService {
       // Permissions just changed, so the cached assignment snapshot is stale.
       this.policy.invalidate(userId);
     }
+  }
+
+  async listAssignments(userId: string) {
+    return this.prisma.userRoleAssignment.findMany({
+      where: { userId },
+      include: { permissionRole: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async createAssignment(data: {
+    userId: string;
+    permissionRoleId: string;
+    scopeType: string;
+    scopeId?: string | null;
+  }) {
+    const [user, role] = await Promise.all([
+      this.prisma.user.findUnique({ where: { id: data.userId } }),
+      this.prisma.permissionRole.findUnique({ where: { id: data.permissionRoleId } }),
+    ]);
+    if (!user) throw new NotFoundException('User not found');
+    if (!role) throw new NotFoundException('PermissionRole not found');
+
+    if (data.scopeType === 'GLOBAL' && data.scopeId) {
+      throw new BadRequestException('scopeId must be null when scopeType is GLOBAL');
+    }
+    if (data.scopeType !== 'GLOBAL' && !data.scopeId) {
+      throw new BadRequestException('scopeId is required when scopeType is not GLOBAL');
+    }
+
+    const assignment = await this.prisma.userRoleAssignment.create({
+      data: {
+        userId: data.userId,
+        permissionRoleId: data.permissionRoleId,
+        scopeType: data.scopeType,
+        scopeId: data.scopeId ?? null,
+      },
+      include: { permissionRole: true },
+    });
+
+    await this.bumpTokenVersion(data.userId);
+    return assignment;
+  }
+
+  async deleteAssignment(id: string) {
+    const assignment = await this.prisma.userRoleAssignment.findUnique({
+      where: { id },
+    });
+    if (!assignment) throw new NotFoundException('Assignment not found');
+
+    await this.prisma.userRoleAssignment.delete({ where: { id } });
+    await this.bumpTokenVersion(assignment.userId);
+
+    return { deleted: true };
+  }
+
+  async listRoles() {
+    return this.prisma.permissionRole.findMany({
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        permissions: true,
+        scopeKind: true,
+        isSystem: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  async updateRole(id: string, data: { permissions?: string[]; scopeKind?: string }) {
+    const role = await this.prisma.permissionRole.findUnique({ where: { id } });
+    if (!role) throw new NotFoundException('PermissionRole not found');
+
+    const updated = await this.prisma.permissionRole.update({
+      where: { id },
+      data,
+    });
+
+    this.policy.invalidate();
+    return updated;
+  }
+
+  async listStores() {
+    return this.prisma.store.findMany({
+      select: { id: true, name: true, code: true },
+      orderBy: { name: 'asc' },
+    });
   }
 
   async getMe(user: {

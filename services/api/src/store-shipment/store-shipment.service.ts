@@ -847,12 +847,15 @@ export class StoreShipmentService {
 
   private async buildRateContext(shipment: {
     store: {
+      name?: string | null;
       address?: string | null;
       city?: string | null;
       state?: string | null;
       postalCode?: string | null;
       country?: string | null;
       countryCode?: string | null;
+      contactPhone?: string | null;
+      contactEmail?: string | null;
     };
     destinationAddress: {
       street: string;

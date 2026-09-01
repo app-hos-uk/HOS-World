@@ -57,6 +57,62 @@ export class MarketService {
     return all.find((m) => m.id === id) ?? null;
   }
 
+  async listAll(): Promise<MarketRow[]> {
+    const markets = (await this.prisma.market.findMany({
+      orderBy: [{ isDefault: 'desc' }, { code: 'asc' }],
+    })) as MarketRow[];
+    return markets;
+  }
+
+  async create(data: {
+    code: string;
+    name: string;
+    country: string;
+    countryCode: string;
+    currency: string;
+    locale: string;
+    timezone: string;
+    isActive?: boolean;
+    isDefault?: boolean;
+  }): Promise<MarketRow> {
+    if (data.isDefault) {
+      await this.prisma.market.updateMany({
+        where: { isDefault: true },
+        data: { isDefault: false },
+      });
+    }
+    const market = (await this.prisma.market.create({ data })) as MarketRow;
+    this.invalidate();
+    return market;
+  }
+
+  async update(
+    id: string,
+    data: Partial<{
+      name: string;
+      country: string;
+      countryCode: string;
+      currency: string;
+      locale: string;
+      timezone: string;
+      isActive: boolean;
+      isDefault: boolean;
+    }>,
+  ): Promise<MarketRow> {
+    if (data.isDefault === true) {
+      await this.prisma.market.updateMany({
+        where: { isDefault: true },
+        data: { isDefault: false },
+      });
+    }
+    const market = (await this.prisma.market.update({
+      where: { id },
+      data,
+    })) as MarketRow;
+    this.invalidate();
+    return market;
+  }
+
   invalidate(): void {
     this.cache = null;
   }

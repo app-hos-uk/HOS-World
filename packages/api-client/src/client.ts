@@ -3397,6 +3397,69 @@ export class ApiClient {
     return this.request('/access-control/markets', { method: 'GET' });
   }
 
+  async listRoleAssignments(userId: string): Promise<ApiResponse<any[]>> {
+    return this.request(`/access-control/assignments?userId=${encodeURIComponent(userId)}`, { method: 'GET' });
+  }
+
+  async createRoleAssignment(body: {
+    userId: string;
+    permissionRoleId: string;
+    scopeType: string;
+    scopeId?: string;
+  }): Promise<ApiResponse<any>> {
+    return this.request('/access-control/assignments', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async deleteRoleAssignment(id: string): Promise<ApiResponse<any>> {
+    return this.request(`/access-control/assignments/${id}`, { method: 'DELETE' });
+  }
+
+  async listPermissionRolesDetailed(): Promise<ApiResponse<any[]>> {
+    return this.request('/access-control/roles', { method: 'GET' });
+  }
+
+  async updatePermissionRole(id: string, body: { permissions?: string[]; scopeKind?: string }): Promise<ApiResponse<any>> {
+    return this.request(`/access-control/roles/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async listAdminMarkets(): Promise<ApiResponse<any[]>> {
+    return this.request('/access-control/admin/markets', { method: 'GET' });
+  }
+
+  async createMarket(body: {
+    code: string;
+    name: string;
+    country: string;
+    countryCode: string;
+    currency: string;
+    locale: string;
+    timezone: string;
+    isActive?: boolean;
+    isDefault?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request('/access-control/admin/markets', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async updateMarket(id: string, body: Record<string, unknown>): Promise<ApiResponse<any>> {
+    return this.request(`/access-control/admin/markets/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async listStoresForScope(): Promise<ApiResponse<any[]>> {
+    return this.request('/access-control/stores', { method: 'GET' });
+  }
+
   // Themes
   async getThemes(type?: string): Promise<ApiResponse<any[]>> {
     const url = type ? `/themes?type=${type}` : '/themes';

@@ -8,6 +8,8 @@ import type { UserRole } from '@hos-marketplace/shared-types';
 interface RouteGuardProps {
   children: React.ReactNode;
   allowedRoles: UserRole[];
+  /** Optional: also require one of these permissions (checked via access control profile) */
+  requiredPermissions?: string[];
   redirectTo?: string;
   showAccessDenied?: boolean;
 }
@@ -15,35 +17,37 @@ interface RouteGuardProps {
 export function RouteGuard({ 
   children, 
   allowedRoles, 
+  requiredPermissions,
   redirectTo = '/login',
   showAccessDenied = false 
 }: RouteGuardProps) {
-  const { user, loading, isAuthenticated, effectiveRole } = useAuth();
+  const { user, loading, isAuthenticated, effectiveRole, hasPermission } = useAuth();
   const router = useRouter();
 
+  const currentRole = effectiveRole || user?.role;
+  const isActualAdmin = user?.role === 'ADMIN';
+  const hasRequiredRole = currentRole
+    ? allowedRoles.includes(currentRole) || isActualAdmin
+    : false;
+  const hasRequiredPermission =
+    !requiredPermissions?.length ||
+    isActualAdmin ||
+    requiredPermissions.some((p) => hasPermission(p));
+
+  const allowed = hasRequiredRole && hasRequiredPermission;
+
   useEffect(() => {
-    if (loading) return; // Wait for auth check to complete
+    if (loading) return;
 
     if (!isAuthenticated || !user) {
-      // Not authenticated - redirect to login
       router.push(redirectTo);
       return;
     }
 
-    // Check if user has required role
-    // Use effective role (impersonated if set, otherwise actual role)
-    const currentRole = effectiveRole || user.role;
-    // ADMIN role has access to all dashboards, even when impersonating
-    const isActualAdmin = user.role === 'ADMIN';
-    // Allow access if: role matches OR user is admin (admin can access any dashboard)
-    const hasRequiredRole = allowedRoles.includes(currentRole) || isActualAdmin;
-
-    if (!hasRequiredRole) {
+    if (!allowed) {
       if (showAccessDenied) {
-        // Show access denied page instead of redirecting
         router.push('/access-denied');
       } else {
-        // Redirect based on effective role
         const roleRedirectMap: Record<UserRole, string> = {
           CUSTOMER: '/customer/dashboard',
           WHOLESALER: '/wholesaler/dashboard',
@@ -57,21 +61,16 @@ export function RouteGuard({
           MARKETING: '/marketing/dashboard',
           FINANCE: '/finance/dashboard',
           CMS_EDITOR: '/cms/dashboard',
-          // SALES has no dedicated console yet, and /admin/dashboard is
-          // ADMIN-only, so routing there would bounce straight to access-denied.
           SALES: '/',
           STORE_STAFF: '/store/lookup',
         } as Record<UserRole, string>;
 
-        const defaultRedirect = roleRedirectMap[currentRole] || '/';
+        const defaultRedirect = (currentRole && roleRedirectMap[currentRole]) || '/';
         router.push(defaultRedirect);
       }
     }
-  // Intentionally omit pathname: only re-run redirect when auth state changes, not on client-side nav.
-  // This avoids random "access denied" when cycling sidebar (no race with pathname updates).
-  }, [user, loading, isAuthenticated, allowedRoles, router, redirectTo, showAccessDenied, effectiveRole]);
+  }, [user, loading, isAuthenticated, allowed, router, redirectTo, showAccessDenied, currentRole]);
 
-  // Show loading state while checking authentication
   if (loading) {
     return (
       <div className="min-h-screen bg-hos-bg-secondary flex items-center justify-center">
@@ -82,24 +81,10 @@ export function RouteGuard({
     );
   }
 
-  // Show nothing while redirecting
-  if (!isAuthenticated || !user) {
+  if (!isAuthenticated || !user || !allowed) {
     return null;
   }
 
-  // Check if user has required role
-  // Use effective role (impersonated if set, otherwise actual role)
-  const currentRole = effectiveRole || user.role;
-  // ADMIN role has access to all dashboards, even when impersonating
-  const isActualAdmin = user.role === 'ADMIN';
-  // Allow access if: role matches OR user is admin (admin can access any dashboard)
-  const hasRequiredRole = allowedRoles.includes(currentRole) || isActualAdmin;
-
-  if (!hasRequiredRole) {
-    return null; // Will redirect in useEffect
-  }
-
-  // User is authenticated and has required role
   return <>{children}</>;
 }
 
