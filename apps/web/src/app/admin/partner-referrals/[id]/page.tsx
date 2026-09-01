@@ -21,6 +21,8 @@ import {
   str,
 } from '../_shared';
 
+type BrandPartnershipOption = { id: string; name: string };
+
 export default function AdminPartnerReferralDetailPage() {
   const params = useParams();
   const id = String(params.id);
@@ -34,6 +36,8 @@ export default function AdminPartnerReferralDetailPage() {
   const [creatingLink, setCreatingLink] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  const [brandPartnerships, setBrandPartnerships] = useState<BrandPartnershipOption[]>([]);
+  const [loadingBPs, setLoadingBPs] = useState(false);
   const [form, setForm] = useState({
     name: '',
     type: 'EXTERNAL',
@@ -69,6 +73,26 @@ export default function AdminPartnerReferralDetailPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!editing || form.type !== 'BRAND_PARTNER') return;
+    let cancelled = false;
+    setLoadingBPs(true);
+    apiClient
+      .adminListBrandPartnerships({ limit: 200 })
+      .then((r) => {
+        if (cancelled) return;
+        const items = Array.isArray(r.data) ? r.data : (r.data as Record<string, unknown>)?.items;
+        const list = (Array.isArray(items) ? items : []).map((bp: Record<string, unknown>) => ({
+          id: String(bp.id ?? ''),
+          name: String(bp.name ?? bp.brandName ?? bp.id ?? ''),
+        })).filter((bp: BrandPartnershipOption) => bp.id);
+        setBrandPartnerships(list);
+      })
+      .catch(() => { if (!cancelled) setBrandPartnerships([]); })
+      .finally(() => setLoadingBPs(false));
+    return () => { cancelled = true; };
+  }, [editing, form.type]);
 
   const openEdit = () => {
     if (!row) return;
@@ -195,12 +219,23 @@ export default function AdminPartnerReferralDetailPage() {
                     </label>
                     {form.type === 'BRAND_PARTNER' && (
                       <label className="block text-sm font-secondary">
-                        <span className="text-stone-300">Brand partnership ID</span>
-                        <input
-                          className={FIELD_CLASS}
-                          value={form.brandPartnershipId}
-                          onChange={(e) => setForm({ ...form, brandPartnershipId: e.target.value })}
-                        />
+                        <span className="text-stone-300">Brand Partnership</span>
+                        {loadingBPs ? (
+                          <p className="text-xs text-stone-500 mt-1">Loading brand partnerships…</p>
+                        ) : brandPartnerships.length === 0 ? (
+                          <p className="text-xs text-stone-500 mt-1">No brand partnerships found.</p>
+                        ) : (
+                          <select
+                            className={FIELD_CLASS}
+                            value={form.brandPartnershipId}
+                            onChange={(e) => setForm({ ...form, brandPartnershipId: e.target.value })}
+                          >
+                            <option value="">Select a brand partnership…</option>
+                            {brandPartnerships.map((bp) => (
+                              <option key={bp.id} value={bp.id}>{bp.name}</option>
+                            ))}
+                          </select>
+                        )}
                       </label>
                     )}
                   <label className="block text-sm font-secondary">

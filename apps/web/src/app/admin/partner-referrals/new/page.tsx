@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { FIELD_CLASS, PRIMARY_BTN, SECONDARY_BTN, entityId } from '../_shared';
+
+type BrandPartnershipOption = { id: string; name: string };
 
 export default function AdminPartnerReferralNewPage() {
   const router = useRouter();
@@ -19,7 +21,29 @@ export default function AdminPartnerReferralNewPage() {
   const [contractStart, setContractStart] = useState('');
   const [contractEnd, setContractEnd] = useState('');
   const [brandPartnershipId, setBrandPartnershipId] = useState('');
+  const [brandPartnerships, setBrandPartnerships] = useState<BrandPartnershipOption[]>([]);
+  const [loadingBPs, setLoadingBPs] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (type !== 'BRAND_PARTNER') return;
+    let cancelled = false;
+    setLoadingBPs(true);
+    apiClient
+      .adminListBrandPartnerships({ limit: 200 })
+      .then((r) => {
+        if (cancelled) return;
+        const items = Array.isArray(r.data) ? r.data : (r.data as Record<string, unknown>)?.items;
+        const list = (Array.isArray(items) ? items : []).map((bp: Record<string, unknown>) => ({
+          id: String(bp.id ?? ''),
+          name: String(bp.name ?? bp.brandName ?? bp.id ?? ''),
+        })).filter((bp: BrandPartnershipOption) => bp.id);
+        setBrandPartnerships(list);
+      })
+      .catch(() => { if (!cancelled) setBrandPartnerships([]); })
+      .finally(() => setLoadingBPs(false));
+    return () => { cancelled = true; };
+  }, [type]);
 
   const save = async () => {
     if (!name.trim()) {
@@ -27,7 +51,7 @@ export default function AdminPartnerReferralNewPage() {
       return;
     }
     if (type === 'BRAND_PARTNER' && !brandPartnershipId.trim()) {
-      toast.error('Brand partnership ID is required for BRAND_PARTNER');
+      toast.error('Please select a brand partnership');
       return;
     }
     setSaving(true);
@@ -75,14 +99,24 @@ export default function AdminPartnerReferralNewPage() {
           {type === 'BRAND_PARTNER' && (
             <label className="block text-sm font-secondary">
               <span className="text-stone-300">
-                Brand partnership ID <span className="text-red-400">*</span>
+                Brand Partnership <span className="text-red-400">*</span>
               </span>
-              <input
-                className={FIELD_CLASS}
-                value={brandPartnershipId}
-                onChange={(e) => setBrandPartnershipId(e.target.value)}
-                placeholder="UUID of an existing brand partnership"
-              />
+              {loadingBPs ? (
+                <p className="text-xs text-stone-500 mt-1">Loading brand partnerships…</p>
+              ) : brandPartnerships.length === 0 ? (
+                <p className="text-xs text-stone-500 mt-1">No brand partnerships found. Create one in Brand Partnerships first.</p>
+              ) : (
+                <select
+                  className={FIELD_CLASS}
+                  value={brandPartnershipId}
+                  onChange={(e) => setBrandPartnershipId(e.target.value)}
+                >
+                  <option value="">Select a brand partnership…</option>
+                  {brandPartnerships.map((bp) => (
+                    <option key={bp.id} value={bp.id}>{bp.name}</option>
+                  ))}
+                </select>
+              )}
             </label>
           )}
           <label className="block text-sm font-secondary">
