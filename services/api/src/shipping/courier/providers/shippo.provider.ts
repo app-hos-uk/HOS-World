@@ -272,7 +272,7 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
       net_weight: String(Math.max(0.01, Number(item.weight) || 0.01)),
       mass_unit: 'kg',
       value_amount: String(Math.max(0.01, Number(item.value) || 0.01)),
-      value_currency: item.currency || info.currency || 'USD',
+      value_currency: item.currency || info.currency || PLATFORM_DEFAULT_CURRENCY,
       origin_country: normalizeCountryCode(item.countryOfOrigin) || 'US',
       tariff_number: item.hsCode || undefined,
     }));

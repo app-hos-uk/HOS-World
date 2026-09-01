@@ -13,6 +13,8 @@ import { RouteGuard } from '@/components/RouteGuard';
 const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '';
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
+const SLOW_POLL_STATUSES = ['DELIVERED', 'CANCELLED', 'BLOCKED', 'HANDED_TO_CARRIER', 'IN_TRANSIT'];
+
 type Address = {
   id: string;
   firstName?: string;
@@ -130,7 +132,6 @@ function ShipRequestInner() {
 
   const profileSeeded = useRef(false);
   const initializedIdRef = useRef<string | null>(null);
-  const SLOW_POLL_STATUSES = ['DELIVERED', 'CANCELLED', 'BLOCKED', 'HANDED_TO_CARRIER', 'IN_TRANSIT'];
 
   const loadProgress = useCallback(async () => {
     if (!id || !isAuthenticated) return;

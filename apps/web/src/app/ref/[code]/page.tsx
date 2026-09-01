@@ -30,7 +30,7 @@ async function fetchPartnerInfo(code: string): Promise<PartnerLandingInfo | null
   try {
     const res = await fetch(
       `${getDirectApiBaseUrl()}/partner-referrals/resolve/${encodeURIComponent(code)}`,
-      { cache: 'no-store', headers: { Accept: 'application/json' } },
+      { cache: 'no-store', headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(5000) },
     );
     if (!res.ok) return null;
     const json: unknown = await res.json();

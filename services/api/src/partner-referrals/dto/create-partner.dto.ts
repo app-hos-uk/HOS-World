@@ -5,6 +5,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  IsUrl,
   MaxLength,
   MinLength,
   ValidateIf,
@@ -38,7 +39,8 @@ export class CreatePartnerDto {
   contactEmail?: string;
 
   @IsOptional()
-  @IsString()
+  @ValidateIf((_, v) => typeof v === 'string' && v.trim().length > 0)
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true }, { message: 'logoUrl must be a valid http(s) URL' })
   @MaxLength(2048)
   logoUrl?: string;
 

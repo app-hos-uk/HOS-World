@@ -106,7 +106,7 @@ export default function AdminPermissionsPage() {
   }, []);
 
   useEffect(() => {
-    if (!selectedRoleName || rolePermissions[selectedRoleName]) return;
+    if (!selectedRoleName || rolePermissions[selectedRoleName] !== undefined) return;
     (async () => {
       try {
         const permsRes = await apiClient.getRolePermissions(selectedRoleName);
@@ -116,7 +116,9 @@ export default function AdminPermissionsPage() {
         setRolePermissions((prev) => ({ ...prev, [selectedRoleName]: [] }));
       }
     })();
-  }, [selectedRoleName, rolePermissions]);
+  // Only re-fetch when the selected role changes, not when permissions are edited locally
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRoleName]);
 
   const togglePermission = (permissionId: string) => {
     const rolePerms = rolePermissions[selectedRoleName] || [];

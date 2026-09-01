@@ -66,12 +66,20 @@ export class AccessControlService {
     });
   }
 
+  private static readonly VALID_SCOPE_TYPES = new Set(['GLOBAL', 'MARKET', 'TENANT', 'STORE']);
+
   async createAssignment(data: {
     userId: string;
     permissionRoleId: string;
     scopeType: string;
     scopeId?: string | null;
   }) {
+    if (!AccessControlService.VALID_SCOPE_TYPES.has(data.scopeType)) {
+      throw new BadRequestException(
+        `Invalid scopeType "${data.scopeType}". Must be one of: ${[...AccessControlService.VALID_SCOPE_TYPES].join(', ')}`,
+      );
+    }
+
     const [user, role] = await Promise.all([
       this.prisma.user.findUnique({ where: { id: data.userId } }),
       this.prisma.permissionRole.findUnique({ where: { id: data.permissionRoleId } }),

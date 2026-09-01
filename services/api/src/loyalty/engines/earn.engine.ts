@@ -570,8 +570,8 @@ export class LoyaltyEarnEngine {
       if (partnerConversion?.link?.pointsMultiplier) {
         partnerMultiplier = new Decimal(partnerConversion.link.pointsMultiplier);
       }
-    } catch {
-      // Non-blocking — partner multiplier check failed
+    } catch (e) {
+      this.logger.warn(`Partner multiplier lookup failed for user ${membership.userId}: ${e instanceof Error ? e.message : 'unknown'}`);
     }
     const afterCampaignPoints = new Decimal(campPoints)
       .mul(partnerMultiplier)
@@ -880,8 +880,8 @@ export class LoyaltyEarnEngine {
       if (partnerConversion?.link?.pointsMultiplier) {
         partnerMultiplier = new Decimal(partnerConversion.link.pointsMultiplier);
       }
-    } catch {
-      // Non-blocking — partner multiplier check failed
+    } catch (e) {
+      this.logger.warn(`Partner multiplier lookup failed for user ${membership.userId}: ${e instanceof Error ? e.message : 'unknown'}`);
     }
     const afterCampaignPoints = new Decimal(campPoints)
       .mul(partnerMultiplier)

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { randomBytes } from 'crypto';
 
 export type PartnerLinkUrlInput = {
   code: string;
@@ -45,7 +46,7 @@ export class PartnerUrlService {
       .replace(/[^a-zA-Z0-9]/g, '')
       .slice(0, 12)
       .toUpperCase();
-    const randomSuffix = Math.random().toString(36).slice(2, 6).toUpperCase();
+    const randomSuffix = randomBytes(3).toString('hex').slice(0, 4).toUpperCase();
     return `PARTNER-${slugPart}-${namePart}-${randomSuffix}`.replace(/-+/g, '-').replace(/-$/, '');
   }
 }

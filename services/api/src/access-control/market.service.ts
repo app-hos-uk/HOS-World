@@ -75,13 +75,12 @@ export class MarketService {
     isActive?: boolean;
     isDefault?: boolean;
   }): Promise<MarketRow> {
-    if (data.isDefault) {
-      await this.prisma.market.updateMany({
-        where: { isDefault: true },
-        data: { isDefault: false },
-      });
-    }
-    const market = (await this.prisma.market.create({ data })) as MarketRow;
+    const market = await this.prisma.$transaction(async (tx) => {
+      if (data.isDefault) {
+        await tx.market.updateMany({ where: { isDefault: true }, data: { isDefault: false } });
+      }
+      return tx.market.create({ data });
+    }) as MarketRow;
     this.invalidate();
     return market;
   }
@@ -99,16 +98,12 @@ export class MarketService {
       isDefault: boolean;
     }>,
   ): Promise<MarketRow> {
-    if (data.isDefault === true) {
-      await this.prisma.market.updateMany({
-        where: { isDefault: true },
-        data: { isDefault: false },
-      });
-    }
-    const market = (await this.prisma.market.update({
-      where: { id },
-      data,
-    })) as MarketRow;
+    const market = await this.prisma.$transaction(async (tx) => {
+      if (data.isDefault === true) {
+        await tx.market.updateMany({ where: { isDefault: true }, data: { isDefault: false } });
+      }
+      return tx.market.update({ where: { id }, data });
+    }) as MarketRow;
     this.invalidate();
     return market;
   }

@@ -369,9 +369,10 @@ function LoginPageInner() {
         throw new Error('Registration failed — no user profile returned');
       }
 
-      // Confirm loyalty enroll + referral after register. Backend may have already
-      // enrolled (idempotent). Only clear the stashed code when conversion actually
-      // applied (or was already applied) — enroll can succeed while referral fails.
+      // Backend register() calls loyaltyService.enroll() with the referral code,
+      // but that enroll can fail silently (try/catch in auth.service). Confirm
+      // enrollment succeeded before clearing the stashed code so the user can
+      // retry from the loyalty page if it didn't take.
       if (loyaltyReferralCode) {
         try {
           const enrollRes = await apiClient.enrollLoyalty({ referralCode: loyaltyReferralCode });

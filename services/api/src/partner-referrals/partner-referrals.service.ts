@@ -359,7 +359,6 @@ export class PartnerReferralsService {
       name: link.name,
       targetUrl: link.targetUrl,
       partner: {
-        id: link.partner.id,
         name: link.partner.name,
         slug: link.partner.slug,
         logoUrl: link.partner.logoUrl,

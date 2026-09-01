@@ -4189,9 +4189,9 @@ model ReferralPartnerLink {
 model PartnerReferralConversion {
   id                  String    @id @default(uuid())
   partnerId           String
-  partner             ReferralPartner @relation(fields: [partnerId], references: [id])
+  partner             ReferralPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
   linkId              String
-  link                ReferralPartnerLink @relation(fields: [linkId], references: [id])
+  link                ReferralPartnerLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
   userId              String
   user                User      @relation(fields: [userId], references: [id])
   utmSource           String?
