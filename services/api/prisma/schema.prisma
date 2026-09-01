@@ -180,6 +180,9 @@ model User {
   // Phase 8: Brand partnerships
   brandCampaignRedemptions BrandCampaignRedemption[]
 
+  // Partner Referral Registration
+  partnerReferralConversions PartnerReferralConversion[]
+
   // Soft delete
   deletedAt DateTime?
 
@@ -3726,6 +3729,9 @@ model LoyaltyMembership {
   avgOrderValue       Decimal?  @db.Decimal(10, 2)
   purchaseFrequency   Decimal?  @db.Decimal(6, 4)
 
+  partnerReferralLinkId String?
+  partnerReferralLink   ReferralPartnerLink? @relation(fields: [partnerReferralLinkId], references: [id], onDelete: SetNull)
+
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -4112,6 +4118,102 @@ model BrandCampaignRedemption {
   @@index([userId])
   @@index([campaignId, userId])
   @@map("brand_campaign_redemptions")
+}
+
+// === Partner Referral Registration ===
+
+model ReferralPartner {
+  id                 String    @id @default(uuid())
+  name               String
+  slug               String    @unique
+  type               String    @default("EXTERNAL")
+  brandPartnershipId String?   @unique
+  contactName        String?
+  contactEmail       String?
+  logoUrl            String?
+  description        String?   @db.Text
+  status             String    @default("ACTIVE")
+  contractStart      DateTime?
+  contractEnd        DateTime?
+  metadata           Json?
+
+  links              ReferralPartnerLink[]
+  conversions        PartnerReferralConversion[]
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([status])
+  @@map("referral_partners")
+}
+
+model ReferralPartnerLink {
+  id                  String    @id @default(uuid())
+  partnerId           String
+  partner             ReferralPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  code                String    @unique
+  name                String
+  targetUrl           String    @default("/register")
+  utmSource           String
+  utmMedium           String    @default("referral")
+  utmCampaign         String?
+  utmContent          String?
+  utmTerm             String?
+
+  signupBonusPoints   Int       @default(0)
+  pointsMultiplier    Decimal?  @db.Decimal(3, 2)
+  multiplierDays      Int?
+  couponCode          String?
+  discountPercent     Decimal?  @db.Decimal(5, 2)
+  discountFixedAmount Decimal?  @db.Decimal(10, 2)
+  maxRedemptions      Int?
+
+  isActive            Boolean   @default(true)
+  expiresAt           DateTime?
+
+  totalClicks         Int       @default(0)
+  totalRegistrations  Int       @default(0)
+  totalConversions    Int       @default(0)
+
+  conversions         PartnerReferralConversion[]
+  memberships         LoyaltyMembership[]
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([partnerId])
+  @@index([code])
+  @@map("referral_partner_links")
+}
+
+model PartnerReferralConversion {
+  id                  String    @id @default(uuid())
+  partnerId           String
+  partner             ReferralPartner @relation(fields: [partnerId], references: [id])
+  linkId              String
+  link                ReferralPartnerLink @relation(fields: [linkId], references: [id])
+  userId              String
+  user                User      @relation(fields: [userId], references: [id])
+  utmSource           String?
+  utmMedium           String?
+  utmCampaign         String?
+  utmContent          String?
+  utmTerm             String?
+  signupBonusAwarded  Int       @default(0)
+  multiplierApplied   Boolean   @default(false)
+  multiplierExpiresAt DateTime?
+  couponApplied       String?
+  firstOrderId        String?
+  firstOrderTotal     Decimal?  @db.Decimal(10, 2)
+  convertedAt         DateTime?
+  landingPage         String?
+
+  createdAt           DateTime  @default(now())
+
+  @@index([partnerId])
+  @@index([linkId])
+  @@unique([userId])
+  @@map("partner_referral_conversions")
 }
 
 model LoyaltyAnalyticsSnapshot {

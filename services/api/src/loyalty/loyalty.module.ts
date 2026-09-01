@@ -32,6 +32,7 @@ import { ProductCampaignsModule } from '../product-campaigns/product-campaigns.m
 import { FeatureFlagsModule } from '../config/feature-flags.module';
 import { PosModule } from '../pos/pos.module';
 import { ActivityModule } from '../activity/activity.module';
+import { PartnerReferralsModule } from '../partner-referrals/partner-referrals.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ActivityModule } from '../activity/activity.module';
     forwardRef(() => AmbassadorModule),
     BrandPartnershipsModule,
     ProductCampaignsModule,
+    forwardRef(() => PartnerReferralsModule),
     SegmentationModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

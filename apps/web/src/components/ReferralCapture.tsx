@@ -6,13 +6,13 @@ import {
   captureInfluencerReferralFromQuery,
   isValidInfluencerReferralCode,
   stashReferralFromQuery,
-  isValidLoyaltyReferralCode,
+  isValidProgramReferralCode,
 } from '@/lib/referralAttribution';
 
 /**
  * Global ?ref= capture for shared referral links.
  * Influencer codes → trackReferral + localStorage (commission attribution).
- * Loyalty codes (HOS-*) → session stash only (Enchanted Circle; cookie set in middleware on /ref/[code]).
+ * Loyalty / partner codes (HOS-*, PARTNER-*) → session stash (cookie set in middleware on /ref/[code]).
  */
 export function ReferralCapture() {
   const searchParams = useSearchParams();
@@ -27,7 +27,7 @@ export function ReferralCapture() {
     if (handledRef.current === key) return;
     handledRef.current = key;
 
-    if (isValidLoyaltyReferralCode(ref)) {
+    if (isValidProgramReferralCode(ref)) {
       stashReferralFromQuery(ref);
       return;
     }

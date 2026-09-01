@@ -19,9 +19,9 @@ export class EnrollLoyaltyDto {
   @MaxLength(64)
   enrollmentChannel?: string;
 
-  /** Enchanted Circle referral code from /ref/[code], cookie hos_ref, or ?ref= */
+  /** Enchanted Circle (HOS-*) or partner (PARTNER-*) code from /ref/[code], cookie hos_ref, or ?ref= */
   @IsOptional()
   @IsString()
-  @MaxLength(48)
+  @MaxLength(80)
   referralCode?: string;
 }

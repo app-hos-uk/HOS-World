@@ -34,6 +34,7 @@ import { isPosRuntimeEnabled } from '../pos/pos-enabled';
 import { LoyaltySettingsService } from './services/loyalty-settings.service';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 import { PlatformRegionService } from '../config/platform-region.service';
+import { PartnerIncentiveService } from '../partner-referrals/services/partner-incentive.service';
 
 /** Prefer Prisma `meta.message` — Error.message is often just "Raw query failed. Code: `42883`." */
 function prismaErrorDetail(err: unknown): string {
@@ -67,6 +68,9 @@ export class LoyaltyService implements OnModuleInit {
     @Optional()
     @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
+    @Optional()
+    @Inject(forwardRef(() => PartnerIncentiveService))
+    private partnerIncentiveService?: PartnerIncentiveService,
   ) {}
 
   async onModuleInit() {
@@ -157,6 +161,26 @@ export class LoyaltyService implements OnModuleInit {
       if (ref) {
         referralStatus = await this.loyaltyListener.onUserRegistered(userId, ref);
       }
+
+      // Partner referral incentive handling
+      if (ref) {
+        try {
+          const partnerIncentive = this.partnerIncentiveService
+            ? await this.partnerIncentiveService.applyPartnerIncentives(userId, ref)
+            : null;
+          if (partnerIncentive) {
+            this.logger.log(`Partner referral incentives applied for ${userId} via code ${ref}`);
+            if (referralStatus !== 'applied' && referralStatus !== 'already_applied') {
+              referralStatus = 'applied';
+            }
+          }
+        } catch (partnerErr: unknown) {
+          this.logger.warn(
+            `Partner referral incentive failed for ${userId}: ${partnerErr instanceof Error ? partnerErr.message : 'unknown'}`,
+          );
+        }
+      }
+
       const membership = await this.prisma.loyaltyMembership.findUnique({
         where: { userId },
         include: { tier: true },
@@ -223,6 +247,25 @@ export class LoyaltyService implements OnModuleInit {
     let referralStatus: 'applied' | 'already_applied' | 'not_applied' | undefined;
     if (ref) {
       referralStatus = await this.loyaltyListener.onUserRegistered(userId, ref);
+    }
+
+    // Partner referral incentive handling
+    if (ref) {
+      try {
+        const partnerIncentive = this.partnerIncentiveService
+          ? await this.partnerIncentiveService.applyPartnerIncentives(userId, ref)
+          : null;
+        if (partnerIncentive) {
+          this.logger.log(`Partner referral incentives applied for ${userId} via code ${ref}`);
+          if (referralStatus !== 'applied' && referralStatus !== 'already_applied') {
+            referralStatus = 'applied';
+          }
+        }
+      } catch (partnerErr: unknown) {
+        this.logger.warn(
+          `Partner referral incentive failed for ${userId}: ${partnerErr instanceof Error ? partnerErr.message : 'unknown'}`,
+        );
+      }
     }
 
     // Return refreshed membership so clients see signup / referral balance immediately.

@@ -14,8 +14,14 @@ const VISITOR_ID_KEY = 'visitor_id';
 /** Loyalty referral code format (e.g. HOS-JAMES-A7F2). */
 export const LOYALTY_REF_CODE_RE = /^HOS-[A-Z0-9][A-Z0-9-]{2,62}$/i;
 
+/** Partner referral codes (e.g. PARTNER-HILTON-NYC-A7F2) */
+export const PARTNER_REF_CODE_RE = /^PARTNER-[A-Z0-9][A-Z0-9_-]{2,62}$/i;
+
 /** Influencer / generic referral codes — alphanumeric with optional hyphens/underscores. */
 export const INFLUENCER_REF_CODE_RE = /^[A-Za-z0-9][A-Za-z0-9_-]{2,63}$/;
+
+export const HOS_UTM_COOKIE = 'hos_utm';
+export const HOS_UTM_COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
 /** Best-effort: query ?ref= → session stash → loyalty attribution cookie (set on /ref/[code]). */
 export function getPendingReferralCode(): string | undefined {
@@ -59,14 +65,56 @@ export function clearPendingReferral(): void {
   } catch {
     /* ignore */
   }
+  clearUtmCookie();
 }
 
 export function isValidLoyaltyReferralCode(code: string): boolean {
   return LOYALTY_REF_CODE_RE.test(code.trim());
 }
 
+export function isValidPartnerReferralCode(code: string): boolean {
+  return PARTNER_REF_CODE_RE.test(code.trim());
+}
+
+/** Enchanted Circle (HOS-*) or partner (PARTNER-*) codes that satisfy invite-only registration. */
+export function isValidProgramReferralCode(code: string): boolean {
+  return isValidLoyaltyReferralCode(code) || isValidPartnerReferralCode(code);
+}
+
+export function getStoredUtmParams(): Record<string, string> | undefined {
+  if (typeof document === 'undefined') return undefined;
+  try {
+    const m = document.cookie.match(new RegExp(`(?:^|; )${HOS_UTM_COOKIE}=([^;]*)`));
+    if (!m?.[1]) return undefined;
+    const raw = m[1];
+    try {
+      return JSON.parse(decodeURIComponent(raw));
+    } catch {
+      return JSON.parse(raw);
+    }
+  } catch {
+    /* ignore */
+  }
+  return undefined;
+}
+
+export function clearUtmCookie(): void {
+  try {
+    if (typeof document !== 'undefined') {
+      const secure =
+        typeof location !== 'undefined' && location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `${HOS_UTM_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax${secure}`;
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 export function isValidInfluencerReferralCode(code: string): boolean {
-  return INFLUENCER_REF_CODE_RE.test(code.trim());
+  const trimmed = code.trim();
+  // Partner and loyalty codes also match the generic alphanumeric pattern.
+  if (isValidProgramReferralCode(trimmed)) return false;
+  return INFLUENCER_REF_CODE_RE.test(trimmed);
 }
 
 export function getOrCreateVisitorId(): string {

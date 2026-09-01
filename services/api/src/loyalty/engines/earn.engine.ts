@@ -184,7 +184,11 @@ export class LoyaltyEarnEngine {
    * VendorProduct routing so loyalty earn applies to the same seller that
    * receives the vendor ledger entry.
    */
-  private async attachReferralFirstOrder(userId: string | null, orderId: string): Promise<void> {
+  private async attachReferralFirstOrder(
+    userId: string | null,
+    orderId: string,
+    orderTotal?: Prisma.Decimal | number | null,
+  ): Promise<void> {
     if (!userId) return;
     const m = await this.prisma.loyaltyMembership.findUnique({
       where: { userId },
@@ -199,6 +203,31 @@ export class LoyaltyEarnEngine {
       },
       data: { convertedOrderId: orderId },
     });
+
+    try {
+      const conversion = await this.prisma.partnerReferralConversion.findFirst({
+        where: { userId, firstOrderId: null },
+      });
+      if (!conversion) return;
+      await this.prisma.$transaction([
+        this.prisma.partnerReferralConversion.update({
+          where: { id: conversion.id },
+          data: {
+            firstOrderId: orderId,
+            firstOrderTotal: orderTotal != null ? new Decimal(orderTotal) : undefined,
+            convertedAt: new Date(),
+          },
+        }),
+        this.prisma.referralPartnerLink.update({
+          where: { id: conversion.linkId },
+          data: { totalConversions: { increment: 1 } },
+        }),
+      ]);
+    } catch (e) {
+      this.logger.warn(
+        `Partner referral first-order attach failed for user ${userId}: ${e instanceof Error ? e.message : 'unknown'}`,
+      );
+    }
   }
 
   private async resolveSellerForItem(
@@ -526,6 +555,29 @@ export class LoyaltyEarnEngine {
     const tierMult =
       applyTierMult && membership.tier?.multiplier ? membership.tier.multiplier.toNumber() : 1;
 
+    // Check for active partner referral multiplier (kept as Decimal to avoid
+    // float precision loss before applyTierMultiplier's Decimal arithmetic).
+    let partnerMultiplier = new Decimal(1);
+    try {
+      const partnerConversion = await this.prisma.partnerReferralConversion.findFirst({
+        where: {
+          userId: membership.userId,
+          multiplierApplied: true,
+          multiplierExpiresAt: { gt: new Date() },
+        },
+        include: { link: true },
+      });
+      if (partnerConversion?.link?.pointsMultiplier) {
+        partnerMultiplier = new Decimal(partnerConversion.link.pointsMultiplier);
+      }
+    } catch {
+      // Non-blocking — partner multiplier check failed
+    }
+    const afterCampaignPoints = new Decimal(campPoints)
+      .mul(partnerMultiplier)
+      .toDecimalPlaces(0, Decimal.ROUND_HALF_UP)
+      .toNumber();
+
     const tierLevel = membership.tier?.level ?? 0;
     const orderTotalNum = new Decimal(order.subtotal).toNumber();
     const ccBonus =
@@ -570,7 +622,7 @@ export class LoyaltyEarnEngine {
         const productDelta = productBoost.points + ccBonus;
 
         const split = this.applyTierMultiplier(
-          { internal: campPoints, brand: brandDelta, product: productDelta },
+          { internal: afterCampaignPoints, brand: brandDelta, product: productDelta },
           tierMult,
         );
         totalFinal = split.totalFinal;
@@ -687,7 +739,7 @@ export class LoyaltyEarnEngine {
       }
 
       await this.brandPartnerships.reconcileAfterOrder(brandCampaignId);
-      await this.attachReferralFirstOrder(order.userId, order.id);
+      await this.attachReferralFirstOrder(order.userId, order.id, order.subtotal);
       await this.tiers.recalculateTier(membership.id);
     } catch (e) {
       this.logger.error(
@@ -813,6 +865,29 @@ export class LoyaltyEarnEngine {
     const tierMult =
       applyTierMult && membership.tier?.multiplier ? membership.tier.multiplier.toNumber() : 1;
 
+    // Check for active partner referral multiplier (kept as Decimal to avoid
+    // float precision loss before applyTierMultiplier's Decimal arithmetic).
+    let partnerMultiplier = new Decimal(1);
+    try {
+      const partnerConversion = await this.prisma.partnerReferralConversion.findFirst({
+        where: {
+          userId: membership.userId,
+          multiplierApplied: true,
+          multiplierExpiresAt: { gt: new Date() },
+        },
+        include: { link: true },
+      });
+      if (partnerConversion?.link?.pointsMultiplier) {
+        partnerMultiplier = new Decimal(partnerConversion.link.pointsMultiplier);
+      }
+    } catch {
+      // Non-blocking — partner multiplier check failed
+    }
+    const afterCampaignPoints = new Decimal(campPoints)
+      .mul(partnerMultiplier)
+      .toDecimalPlaces(0, Decimal.ROUND_HALF_UP)
+      .toNumber();
+
     const tierLevel = membership.tier?.level ?? 0;
     const primarySellerId = sellerIds.length === 1 ? sellerIds[0] : undefined;
     const subtotal = sale.items.reduce(
@@ -854,7 +929,7 @@ export class LoyaltyEarnEngine {
         const productDelta = productBoost.points;
 
         const split = this.applyTierMultiplier(
-          { internal: campPoints, brand: brandDelta, product: productDelta },
+          { internal: afterCampaignPoints, brand: brandDelta, product: productDelta },
           tierMult,
         );
         totalFinal = split.totalFinal;
@@ -963,6 +1038,7 @@ export class LoyaltyEarnEngine {
       }
 
       await this.brandPartnerships.reconcileAfterOrder(brandCampaignId);
+      await this.attachReferralFirstOrder(sale.customerId, sale.id, subtotal);
       await this.tiers.recalculateTier(membership.id);
     } catch (e) {
       this.logger.error(

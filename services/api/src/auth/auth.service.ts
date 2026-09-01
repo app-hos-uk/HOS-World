@@ -150,6 +150,25 @@ export class AuthService {
     return !!hit;
   }
 
+  private async isActivePartnerReferralCode(code: string): Promise<boolean> {
+    const normalized = code?.trim();
+    if (!normalized) return false;
+    try {
+      const link = await this.prisma.referralPartnerLink.findFirst({
+        where: {
+          code: { equals: normalized, mode: 'insensitive' },
+          isActive: true,
+          partner: { status: 'ACTIVE' },
+          OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        },
+        select: { id: true },
+      });
+      return !!link;
+    } catch {
+      return false;
+    }
+  }
+
   /**
    * Shared invite-only / founding-member gate for register, guest checkout, and OAuth signup.
    * A valid pending loyalty referral code also satisfies the invite gate (referral soft-launch).
@@ -206,6 +225,19 @@ export class AuthService {
         .filter((c): c is string => !!c);
       for (const candidate of referralCandidates) {
         if (await this.isActiveLoyaltyReferralCode(candidate)) {
+          bypassInviteGate = true;
+          break;
+        }
+      }
+    }
+
+    if (!bypassInviteGate) {
+      // Accept partner referral codes as invite bypass
+      const partnerCandidates = [referralCode, inviteCode]
+        .map((c) => c?.trim())
+        .filter((c): c is string => !!c);
+      for (const candidate of partnerCandidates) {
+        if (await this.isActivePartnerReferralCode(candidate)) {
           bypassInviteGate = true;
           break;
         }
@@ -368,7 +400,10 @@ export class AuthService {
           let referralCode = registerDto.referralCode?.trim() || undefined;
           if (!referralCode && registerDto.inviteCode?.trim()) {
             const inviteAsReferral = registerDto.inviteCode.trim();
-            if (await this.isActiveLoyaltyReferralCode(inviteAsReferral)) {
+            if (
+              (await this.isActiveLoyaltyReferralCode(inviteAsReferral)) ||
+              (await this.isActivePartnerReferralCode(inviteAsReferral))
+            ) {
               referralCode = inviteAsReferral;
             }
           }

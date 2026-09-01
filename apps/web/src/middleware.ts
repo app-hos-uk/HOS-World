@@ -10,9 +10,11 @@ import {
 } from '@/lib/shopAccess';
 import { isShopPublic } from '@/lib/shopGate';
 import {
-  isValidLoyaltyReferralCode,
+  isValidProgramReferralCode,
   LOYALTY_REF_COOKIE,
   LOYALTY_REF_COOKIE_MAX_AGE,
+  HOS_UTM_COOKIE,
+  HOS_UTM_COOKIE_MAX_AGE,
 } from '@/lib/referralAttribution';
 
 /**
@@ -244,13 +246,13 @@ export async function middleware(request: NextRequest) {
     return res;
   };
 
-  // --- Loyalty referral attribution (/ref/HOS-…) ---
+  // --- Referral attribution (/ref/HOS-… or /ref/PARTNER-…) ---
   // Cookie must be set here (or in a Route Handler), never in a Server Component render.
   const loyaltyRefMatch = pathname.match(/^\/ref\/([^/]+)\/?$/);
   if (loyaltyRefMatch) {
     const code = decodeURIComponent(loyaltyRefMatch[1] || '').trim();
     const res = withPreviewCookie(NextResponse.next());
-    if (code && isValidLoyaltyReferralCode(code)) {
+    if (code && isValidProgramReferralCode(code)) {
       res.cookies.set({
         name: LOYALTY_REF_COOKIE,
         value: code,
@@ -259,6 +261,27 @@ export async function middleware(request: NextRequest) {
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production',
       });
+
+      // Store UTM params from the URL. Next.js cookie serialization already
+      // percent-encodes the value — do not encodeURIComponent here or reads fail.
+      const url = request.nextUrl;
+      const utmSource = url.searchParams.get('utm_source');
+      if (utmSource) {
+        const utmData: Record<string, string> = {};
+        for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']) {
+          const val = url.searchParams.get(key);
+          if (val) utmData[key] = val;
+        }
+        res.cookies.set({
+          name: HOS_UTM_COOKIE,
+          value: JSON.stringify(utmData),
+          path: '/',
+          maxAge: HOS_UTM_COOKIE_MAX_AGE,
+          httpOnly: false,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
+        });
+      }
     }
     return res;
   }

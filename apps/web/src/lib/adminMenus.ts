@@ -129,6 +129,16 @@ export const menuItems: ShellMenuItem[] = [
     ],
   },
   {
+    title: 'Partner Referrals',
+    icon: navIcon('link'),
+    zone: 'growth',
+    children: [
+      { title: 'Partners', href: '/admin/partner-referrals', icon: navIcon('handshake') },
+      { title: 'Dashboard', href: '/admin/partner-referrals/dashboard', icon: navIcon('dashboard') },
+      { title: 'New Partner', href: '/admin/partner-referrals/new', icon: navIcon('plus') },
+    ],
+  },
+  {
     title: 'Loyalty',
     icon: navIcon('gem'),
     zone: 'growth',

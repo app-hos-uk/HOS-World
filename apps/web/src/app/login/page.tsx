@@ -6,7 +6,7 @@ import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth, setFrontendSessio
 import {
   clearPendingReferral,
   getPendingReferralCode,
-  isValidLoyaltyReferralCode,
+  isValidProgramReferralCode,
   stashReferralFromQuery,
 } from '@/lib/referralAttribution';
 import { CharacterSelector } from '@/components/CharacterSelector';
@@ -65,10 +65,10 @@ function LoginPageInner() {
   const [inviteCode, setInviteCode] = useState('');
   const [pendingReferral, setPendingReferral] = useState<string | undefined>(undefined);
   const requiresInviteCode = process.env.NEXT_PUBLIC_REGISTRATION_REQUIRES_INVITE === 'true';
-  // Only treat Enchanted Circle (HOS-*) codes as invite substitutes — influencer/other ?ref=
-  // values must not hide the invite field during soft-launch.
+  // Enchanted Circle (HOS-*) and partner (PARTNER-*) codes substitute for invite-only
+  // registration. Influencer/other ?ref= values must not hide the invite field.
   const hasReferralInvite = Boolean(
-    pendingReferral && isValidLoyaltyReferralCode(pendingReferral),
+    pendingReferral && isValidProgramReferralCode(pendingReferral),
   );
   const showInviteField = requiresInviteCode && !hasReferralInvite;
   const oauthGoogleEnabled = process.env.NEXT_PUBLIC_OAUTH_GOOGLE_ENABLED === 'true';
@@ -155,10 +155,10 @@ function LoginPageInner() {
         /* ignore */
       }
     }
-    // Soft-launch: only a loyalty (HOS-*) referral satisfies invite-only registration.
+    // Soft-launch: loyalty (HOS-*) and partner (PARTNER-*) referrals satisfy invite-only.
     if (!invite) {
       const pending = (getPendingReferralCode() || '').trim();
-      if (pending && isValidLoyaltyReferralCode(pending)) {
+      if (pending && isValidProgramReferralCode(pending)) {
         invite = pending;
       }
     }
@@ -339,9 +339,9 @@ function LoginPageInner() {
 
       const pendingRaw = getPendingReferralCode();
       const pendingLoyalty =
-        pendingRaw && isValidLoyaltyReferralCode(pendingRaw) ? pendingRaw : undefined;
+        pendingRaw && isValidProgramReferralCode(pendingRaw) ? pendingRaw : undefined;
       const inviteAsLoyalty =
-        resolvedInvite && isValidLoyaltyReferralCode(resolvedInvite)
+        resolvedInvite && isValidProgramReferralCode(resolvedInvite)
           ? resolvedInvite
           : undefined;
       const loyaltyReferralCode = pendingLoyalty || inviteAsLoyalty;

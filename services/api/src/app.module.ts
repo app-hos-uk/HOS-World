@@ -87,6 +87,7 @@ import { EventsModule } from './events/events.module';
 import { SegmentationModule } from './segmentation/segmentation.module';
 import { AmbassadorModule } from './ambassador/ambassador.module';
 import { BrandPartnershipsModule } from './brand-partnerships/brand-partnerships.module';
+import { PartnerReferralsModule } from './partner-referrals/partner-referrals.module';
 import { LoyaltyAnalyticsModule } from './loyalty-analytics/loyalty-analytics.module';
 import { StoreAdminModule } from './stores/store-admin.module';
 import { ClickCollectModule } from './click-collect/click-collect.module';
@@ -237,6 +238,7 @@ import { AccessControlModule } from './access-control/access-control.module';
     SegmentationModule,
     AmbassadorModule,
     BrandPartnershipsModule,
+    PartnerReferralsModule,
     LoyaltyAnalyticsModule,
     StoreAdminModule,
     ClickCollectModule,

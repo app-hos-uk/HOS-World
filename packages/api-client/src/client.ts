@@ -1293,6 +1293,121 @@ export class ApiClient {
     );
   }
 
+  // ── Partner Referrals (Admin) ──
+
+  async adminGetPartnerReferralDashboard(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/partner-referrals/dashboard');
+  }
+
+  async adminListPartnerReferrals(params?: {
+    status?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const query = new URLSearchParams();
+    if (params?.status) query.set('status', params.status);
+    if (params?.search) query.set('search', params.search);
+    if (params?.page != null) query.set('page', String(params.page));
+    if (params?.limit != null) query.set('limit', String(params.limit));
+    const qs = query.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/partner-referrals${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminCreatePartnerReferral(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/partner-referrals', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminGetPartnerReferral(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/partner-referrals/${encodeURIComponent(id)}`,
+    );
+  }
+
+  async adminUpdatePartnerReferral(
+    id: string,
+    body: Record<string, unknown>,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/partner-referrals/${encodeURIComponent(id)}`,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async adminArchivePartnerReferral(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/partner-referrals/${encodeURIComponent(id)}/archive`,
+      { method: 'POST' },
+    );
+  }
+
+  async adminGetPartnerReferralReport(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/partner-referrals/${encodeURIComponent(id)}/report`,
+    );
+  }
+
+  async adminCreatePartnerReferralLink(
+    partnerId: string,
+    body: Record<string, unknown>,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/partner-referrals/${encodeURIComponent(partnerId)}/links`,
+      { method: 'POST', body: JSON.stringify(body) },
+    );
+  }
+
+  async adminListPartnerReferralLinks(partnerId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/partner-referrals/${encodeURIComponent(partnerId)}/links`,
+    );
+  }
+
+  async adminGetPartnerReferralLink(linkId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/partner-referrals/links/${encodeURIComponent(linkId)}`,
+    );
+  }
+
+  async adminUpdatePartnerReferralLink(
+    linkId: string,
+    body: Record<string, unknown>,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/partner-referrals/links/${encodeURIComponent(linkId)}`,
+      { method: 'PATCH', body: JSON.stringify(body) },
+    );
+  }
+
+  async adminGetPartnerReferralLinkReport(linkId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/partner-referrals/links/${encodeURIComponent(linkId)}/report`,
+    );
+  }
+
+  async adminGetPartnerReferralLinkUrl(linkId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/partner-referrals/links/${encodeURIComponent(linkId)}/url`,
+    );
+  }
+
+  async adminGetPartnerReferralLinkQr(linkId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/admin/partner-referrals/links/${encodeURIComponent(linkId)}/qr`,
+    );
+  }
+
+  // ── Partner Referrals (Public) ──
+
+  async resolvePartnerReferralLink(code: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(
+      `/partner-referrals/resolve/${encodeURIComponent(code)}`,
+    );
+  }
+
   async adminGetLoyaltyHealth(): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>('/admin/loyalty-analytics/health');
   }
