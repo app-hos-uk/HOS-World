@@ -3064,6 +3064,14 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>(`/store-shipment/staff/backoffice${q}`);
   }
 
+  async listStaffPendingCustomerQueue(params?: { page?: number; limit?: number }) {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const q = qs.toString();
+    return this.request<ApiResponse<unknown>>(`/store-shipment/staff/pending-customer-queue${q ? `?${q}` : ''}`);
+  }
+
   async verifyStoreShipmentItems(
     groupId: string,
     body: { verifiedItemIds: string[]; packedBy?: string },

@@ -132,6 +132,24 @@ export class StoreShipmentController {
   }
 
   @Public()
+  @Get('staff/pending-customer-queue')
+  @UseGuards(LoyaltyStaffAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Staff: shipments awaiting customer registration or data completion' })
+  async staffPendingQueue(
+    @Req() req: StaffReq,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(30), ParseIntPipe) limit?: number,
+  ): Promise<ApiResponse<unknown>> {
+    const storeId = req.user?.role === 'ADMIN' ? undefined : (req.storeId || req.user?.storeId);
+    if (!storeId && req.user?.role !== 'ADMIN') {
+      throw new ForbiddenException('Store context required');
+    }
+    const data = await this.shipments.listPendingCustomerQueue(page, limit, storeId);
+    return { data, message: 'OK' };
+  }
+
+  @Public()
   @Get('staff/backoffice')
   @UseGuards(LoyaltyStaffAuthGuard)
   @ApiBearerAuth('JWT-auth')

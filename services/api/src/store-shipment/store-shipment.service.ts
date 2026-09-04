@@ -1177,11 +1177,12 @@ export class StoreShipmentService {
   }
 
   /** Shipments where the customer hasn't registered / completed their details yet. */
-  async listPendingCustomerQueue(page = 1, limit = 30) {
-    const where = {
+  async listPendingCustomerQueue(page = 1, limit = 30, storeId?: string) {
+    const where: Record<string, unknown> = {
       userId: null,
       status: { in: ['NEW', 'CUSTOMER_DETAILS_REQUIRED', 'DRAFT', 'PENDING_ENRICHMENT'] },
     };
+    if (storeId) where.storeId = storeId;
     const [items, total] = await Promise.all([
       this.prisma.storeShipmentRequest.findMany({
         where,
