@@ -177,9 +177,21 @@ export class StoreShipmentService {
       );
     }
     if (existing && existing.userId) {
-      throw new BadRequestException(
-        'A shipping claim for this invoice is already in progress for this customer.',
-      );
+      // Customer already registered and attached — redirect staff to the existing order
+      // instead of blocking with an error.
+      return {
+        shipmentId: existing.id,
+        hosOrderNumber: existing.hosOrderNumber,
+        qrAccessCode: existing.qrAccessCode,
+        lookupUrl: this.buildLookupUrl(storeId),
+        claimUrl: undefined,
+        expiresAt: existing.claimTokenExpiresAt,
+        emailQueued: false,
+        resent: false,
+        customerEmail: existing.claimEmail || email,
+        existingOrder: true,
+        items: [],
+      };
     }
     if (
       existing &&

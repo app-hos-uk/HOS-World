@@ -22,6 +22,7 @@ type CreatedOrder = {
   claimUrl?: string;
   emailQueued?: boolean;
   customerEmail?: string;
+  existingOrder?: boolean;
   items?: Array<{ id?: string; sku?: string | null; name: string; quantity: number }>;
   confirmedInvoice?: ConfirmedInvoice;
 };
@@ -60,11 +61,15 @@ export default function StoreShippingPage() {
       });
       const payload = (r.data || {}) as CreatedOrder;
       setResult(payload);
-      toast.success(
-        payload.emailQueued
-          ? 'Invoice imported — magic link emailed to the customer'
-          : 'Invoice imported — share the QR or magic link with the customer',
-      );
+      if (payload.existingOrder) {
+        toast.success('Customer already registered — opening the existing order');
+      } else {
+        toast.success(
+          payload.emailQueued
+            ? 'Invoice imported — magic link emailed to the customer'
+            : 'Invoice imported — share the QR or magic link with the customer',
+        );
+      }
       if (payload.shipmentId) {
         router.push(`/store/shipping/${payload.shipmentId}`);
       }
