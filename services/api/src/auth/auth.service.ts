@@ -182,7 +182,10 @@ export class AuthService {
         claimEmail: { equals: normalized, mode: 'insensitive' },
         userId: null,
         status: { notIn: ['CANCELLED', 'BLOCKED'] },
-        claimTokenExpiresAt: { gt: new Date() },
+        OR: [
+          { claimTokenExpiresAt: null },
+          { claimTokenExpiresAt: { gt: new Date() } },
+        ],
       },
       select: { id: true },
     });
