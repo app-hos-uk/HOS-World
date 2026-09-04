@@ -86,6 +86,7 @@ export function AppShellLayout({
     (item: ShellMenuItem) => {
       const paths = [...(item.href ? [item.href] : []), ...(item.activePathnames ?? [])];
       if (paths.length === 0) return false;
+      if (item.exactMatch) return paths.some((p) => pathname === p);
       return pathnameMatchesAny(pathname, paths);
     },
     [pathname]

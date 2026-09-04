@@ -10,10 +10,11 @@ import type { UserRole } from '@hos-marketplace/shared-types';
 const ALLOWED_ROLES: UserRole[] = ['STORE_STAFF', 'ADMIN'];
 
 const menuItems = [
-  { title: 'Customer Lookup', href: '/store/lookup', icon: navIcon('search') },
-  { title: 'Ship purchase', href: '/store/shipping', icon: navIcon('truck') },
+  { title: 'Dashboard', href: '/store', icon: navIcon('home'), exactMatch: true },
+  { title: 'Ship purchase', href: '/store/shipping', icon: navIcon('truck'), exactMatch: true },
   { title: 'Pending customers', href: '/store/shipping/pending-queue', icon: navIcon('clock') },
   { title: 'Back office packing', href: '/store/shipping/backoffice', icon: navIcon('package') },
+  { title: 'Customer Lookup', href: '/store/lookup', icon: navIcon('search') },
 ];
 
 export default function StoreLayout({ children }: { children: React.ReactNode }) {

@@ -7,6 +7,7 @@ export interface ShellMenuItem {
   icon: React.ReactNode;
   badge?: number;
   activePathnames?: string[];
+  exactMatch?: boolean;
   children?: ShellMenuItem[];
   zone?: string;
 }
