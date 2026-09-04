@@ -11,6 +11,8 @@ type QueueItem = {
   claimEmail?: string;
   status: string;
   customerName?: string;
+  userId?: string | null;
+  user?: { email?: string; firstName?: string; lastName?: string } | null;
   store?: { name?: string; code?: string };
   createdAt: string;
   claimTokenExpiresAt?: string;
@@ -29,6 +31,12 @@ function timeSince(dateStr: string) {
 function isExpired(dateStr?: string) {
   if (!dateStr) return false;
   return new Date(dateStr).getTime() < Date.now();
+}
+
+function customerStep(row: QueueItem): { label: string; color: string } {
+  if (!row.userId) return { label: 'Awaiting registration', color: 'text-red-400' };
+  if (!row.customerName) return { label: 'Needs profile', color: 'text-amber-400' };
+  return { label: 'Needs address / items', color: 'text-amber-400' };
 }
 
 export default function StorePendingQueuePage() {
@@ -96,28 +104,37 @@ export default function StorePendingQueuePage() {
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="border-b border-hos-border text-left">
+                  <th className="py-2 pr-3 w-10">#</th>
                   <th className="py-2 pr-4">HOS Order</th>
                   <th className="py-2 pr-4">Invoice</th>
-                  <th className="py-2 pr-4">Customer Email</th>
-                  <th className="py-2 pr-4">Status</th>
+                  <th className="py-2 pr-4">Customer</th>
+                  <th className="py-2 pr-4">Step</th>
                   <th className="py-2 pr-4">Created</th>
-                  <th className="py-2 pr-4">Claim Link</th>
+                  <th className="py-2 pr-4">Link</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((row) => {
+                {items.map((row, idx) => {
                   const expired = isExpired(row.claimTokenExpiresAt);
+                  const step = customerStep(row);
+                  const serial = (page - 1) * limit + idx + 1;
+                  const name = row.customerName
+                    || [row.user?.firstName, row.user?.lastName].filter(Boolean).join(' ')
+                    || undefined;
+                  const email = row.claimEmail || row.user?.email;
                   return (
                     <tr key={row.id} className="border-b border-hos-border/50">
+                      <td className="py-2 pr-3 text-hos-text-muted font-mono text-xs">{serial}</td>
                       <td className="py-2 pr-4 font-mono text-xs">
                         {row.hosOrderNumber || '\u2014'}
                       </td>
                       <td className="py-2 pr-4">{row.invoiceNumber || '\u2014'}</td>
-                      <td className="py-2 pr-4">{row.claimEmail || '\u2014'}</td>
                       <td className="py-2 pr-4">
-                        <span className="inline-block px-2 py-0.5 rounded text-xs bg-amber-900/30 text-amber-400">
-                          {row.status}
-                        </span>
+                        <div>{name || <span className="text-hos-text-muted italic">Not registered</span>}</div>
+                        {email && <div className="text-xs text-hos-text-muted">{email}</div>}
+                      </td>
+                      <td className="py-2 pr-4">
+                        <span className={`text-xs font-medium ${step.color}`}>{step.label}</span>
                       </td>
                       <td className="py-2 pr-4 text-hos-text-muted text-xs">
                         {timeSince(row.createdAt)}

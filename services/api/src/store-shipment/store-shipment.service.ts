@@ -1176,21 +1176,21 @@ export class StoreShipmentService {
     return { items, pagination: { page, limit, total } };
   }
 
-  /** Shipments where the customer hasn't registered / completed their details yet. */
+  /** Shipments where the customer hasn't finished entering their details yet. */
   async listPendingCustomerQueue(page = 1, limit = 30, storeId?: string) {
     const where: Record<string, unknown> = {
-      userId: null,
       status: { in: ['NEW', 'CUSTOMER_DETAILS_REQUIRED', 'DRAFT', 'PENDING_ENRICHMENT'] },
     };
     if (storeId) where.storeId = storeId;
     const [items, total] = await Promise.all([
       this.prisma.storeShipmentRequest.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: 'asc' },
         skip: (page - 1) * limit,
         take: limit,
         include: {
           store: { select: { name: true, code: true } },
+          user: { select: { email: true, firstName: true, lastName: true } },
         },
       }),
       this.prisma.storeShipmentRequest.count({ where }),
