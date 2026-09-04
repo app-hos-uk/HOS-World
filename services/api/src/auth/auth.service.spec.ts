@@ -94,6 +94,12 @@ describe('AuthService', () => {
     loyaltyReferral: {
       findFirst: jest.fn().mockResolvedValue(null),
     },
+    referralPartnerLink: {
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
+    storeShipmentRequest: {
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
   };
 
   const mockJwtService = {
@@ -1240,6 +1246,27 @@ describe('AuthService', () => {
       };
 
       await service.assertRegistrationAllowed('friend@test.com', 'HOS-SABRINA-3FB5');
+    });
+
+    it('should allow invite-only registration when email has a pending store shipment claim', async () => {
+      mockConfigService.get.mockImplementation((key: string, defaultValue?: any) => {
+        if (key === 'REGISTRATION_MODE') return 'invite_only';
+        if (key === 'REGISTRATION_INVITE_CODES') return '';
+        return defaultValue;
+      });
+      mockPrismaService.loyaltyReferral = {
+        findFirst: jest.fn().mockResolvedValue(null),
+      };
+      mockPrismaService.referralPartnerLink = {
+        findFirst: jest.fn().mockResolvedValue(null),
+      };
+      mockPrismaService.storeShipmentRequest = {
+        ...mockPrismaService.storeShipmentRequest,
+        findFirst: jest.fn().mockResolvedValue({ id: 'ship-1' }),
+      };
+
+      await service.assertRegistrationAllowed('customer@store.com');
+      expect(mockPrismaService.storeShipmentRequest.findFirst).toHaveBeenCalled();
     });
   });
 

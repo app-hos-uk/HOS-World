@@ -170,6 +170,26 @@ export class AuthService {
   }
 
   /**
+   * True when `email` is the claimEmail on a non-cancelled store shipment that
+   * hasn't been linked to a user yet — i.e. the customer was invited to register
+   * by staff at the till.  This lets them bypass the invite-only gate.
+   */
+  private async hasPendingStoreShipmentClaim(email: string): Promise<boolean> {
+    const normalized = email?.trim().toLowerCase();
+    if (!normalized) return false;
+    const hit = await this.prisma.storeShipmentRequest.findFirst({
+      where: {
+        claimEmail: { equals: normalized, mode: 'insensitive' },
+        userId: null,
+        status: { notIn: ['CANCELLED', 'BLOCKED'] },
+        claimTokenExpiresAt: { gt: new Date() },
+      },
+      select: { id: true },
+    });
+    return !!hit;
+  }
+
+  /**
    * Shared invite-only / founding-member gate for register, guest checkout, and OAuth signup.
    * A valid pending loyalty referral code also satisfies the invite gate (referral soft-launch).
    */
@@ -241,6 +261,13 @@ export class AuthService {
           bypassInviteGate = true;
           break;
         }
+      }
+    }
+
+    if (!bypassInviteGate) {
+      // Staff-created store shipping claims implicitly invite the customer to register
+      if (await this.hasPendingStoreShipmentClaim(email)) {
+        bypassInviteGate = true;
       }
     }
 

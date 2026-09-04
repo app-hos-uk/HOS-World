@@ -1175,4 +1175,25 @@ export class StoreShipmentService {
     ]);
     return { items, pagination: { page, limit, total } };
   }
+
+  /** Shipments where the customer hasn't registered / completed their details yet. */
+  async listPendingCustomerQueue(page = 1, limit = 30) {
+    const where = {
+      userId: null,
+      status: { in: ['NEW', 'CUSTOMER_DETAILS_REQUIRED', 'DRAFT', 'PENDING_ENRICHMENT'] },
+    };
+    const [items, total] = await Promise.all([
+      this.prisma.storeShipmentRequest.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+          store: { select: { name: true, code: true } },
+        },
+      }),
+      this.prisma.storeShipmentRequest.count({ where }),
+    ]);
+    return { items, pagination: { page, limit, total } };
+  }
 }

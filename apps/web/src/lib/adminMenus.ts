@@ -52,6 +52,7 @@ export const menuItems: ShellMenuItem[] = [
       { title: 'Shipping Methods', href: '/admin/shipping', icon: navIcon('package') },
       { title: 'Manual Carriers', href: '/admin/shipping/carriers', icon: navIcon('tag') },
       { title: 'Store Shipments', href: '/admin/store-shipments', icon: navIcon('truck') },
+      { title: 'Pending Customer Queue', href: '/admin/store-shipments/pending-queue', icon: navIcon('clock') },
       { title: 'Shipping Dashboard', href: '/admin/shipping-dashboard', icon: navIcon('dashboard') },
       { title: 'Box Sizes', href: '/admin/box-sizes', icon: navIcon('package') },
       { title: 'Shipping Rates', href: '/admin/shipping-rates', icon: navIcon('dollar') },

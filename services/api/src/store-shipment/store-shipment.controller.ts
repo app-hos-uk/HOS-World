@@ -483,6 +483,17 @@ export class StoreShipmentAdminController {
   }
 
   @RequireAccess({ permission: 'shipments.verify', scope: 'GLOBAL' })
+  @Get('pending-customer-queue')
+  @ApiOperation({ summary: 'Shipments awaiting customer registration or data completion' })
+  async pendingCustomerQueue(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(30), ParseIntPipe) limit?: number,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.shipments.listPendingCustomerQueue(page, limit);
+    return { data, message: 'OK' };
+  }
+
+  @RequireAccess({ permission: 'shipments.verify', scope: 'GLOBAL' })
   @Get('dashboard/summary')
   async summary(
     @Query('from') from?: string,

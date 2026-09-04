@@ -3252,6 +3252,14 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>(`/admin/store-shipments${q ? `?${q}` : ''}`);
   }
 
+  async listPendingCustomerQueue(params?: { page?: number; limit?: number }) {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const q = qs.toString();
+    return this.request<ApiResponse<unknown>>(`/admin/store-shipments/pending-customer-queue${q ? `?${q}` : ''}`);
+  }
+
   async listPendingSkuCustoms() {
     return this.request<ApiResponse<unknown>>('/admin/store-shipments/sku-customs/pending');
   }
