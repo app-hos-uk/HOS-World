@@ -319,6 +319,16 @@ export async function middleware(request: NextRequest) {
     subdomain = hostWithoutPort.replace('.localhost', '');
   }
 
+  // Known non-seller subdomains: redirect their root to the intended page.
+  if (subdomain === 'join') {
+    if (pathname === '/' || pathname === '') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/loyalty/join';
+      return withPreviewCookie(NextResponse.redirect(url));
+    }
+    return withPreviewCookie(NextResponse.next());
+  }
+
   if (subdomain && subdomain !== 'www' && subdomain !== 'api') {
     if (pathname === '/' || pathname === '') {
       const url = request.nextUrl.clone();

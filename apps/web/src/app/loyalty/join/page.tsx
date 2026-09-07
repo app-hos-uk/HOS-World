@@ -21,6 +21,9 @@ import {
 /** Points-per-currency-unit fallback when the actual balance is not yet available. */
 const DEFAULT_POINTS_PER_CURRENCY_UNIT = 100;
 
+/** Global Enchanted Circle join code — bypasses invite-only registration gate. */
+const ENCHANTED_CIRCLE_JOIN_CODE = 'ENCHANTED-CIRCLE-2026';
+
 const NAME_RE = /^[\p{L}\s\-'.]+$/u;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
@@ -252,7 +255,7 @@ function JoinPageInner() {
           ? { inviteCode: inviteParam }
           : ref && !isValidProgramReferralCode(ref)
             ? { inviteCode: ref }
-            : {}),
+            : { inviteCode: ENCHANTED_CIRCLE_JOIN_CODE }),
       });
 
       setFrontendSessionCookie();

@@ -33,6 +33,7 @@ const nextConfig = {
       { protocol: 'https', hostname: 'cdn.shopify.com', pathname: '/**' },
       { protocol: 'https', hostname: '*.amazonaws.com', pathname: '/**' },
       { protocol: 'https', hostname: 'hos-marketplaceweb-production.up.railway.app', pathname: '/**' },
+      { protocol: 'https', hostname: 'join.houseofspells.com', pathname: '/**' },
       { protocol: 'https', hostname: 'hos-world-web.vercel.app', pathname: '/**' },
       { protocol: 'https', hostname: 'picsum.photos', pathname: '/**' },
       ...(process.env.NODE_ENV !== 'production'
