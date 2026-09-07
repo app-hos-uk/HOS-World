@@ -161,10 +161,12 @@ export class LoyaltyListener {
           ? referrerRule.pointsAmount
           : this.config.get<number>('LOYALTY_REFERRAL_REFERRER_BONUS', 200);
 
+      const weeklyReferralCap = Number(
+        this.config.get<string | number>('REFERRAL_WEEKLY_CAP', '5'),
+      );
+
       let claimedOk = false;
       await this.prisma.$transaction(async (tx) => {
-        // Only the first successful claim should award points; concurrent
-        // signups with the same code must not double-pay.
         const claimed = await tx.loyaltyReferral.updateMany({
           where: {
             id: referral.id,
@@ -193,20 +195,39 @@ export class LoyaltyListener {
           data: { totalPointsEarned: { increment: refereePoints } },
         });
 
-        await this.wallet.applyDelta(tx, referral.referrerId, referrerPoints, LoyaltyTxType.BONUS, {
-          source: 'REFERRAL_REWARD',
-          sourceId: referral.id,
-          channel: 'WEB',
-          description: `Referral reward – friend joined`,
-          idempotencyKey: `bonus:REFERRAL_REWARD:${referral.id}`,
-        });
-        await tx.loyaltyMembership.update({
-          where: { id: referral.referrerId },
-          data: {
-            totalPointsEarned: { increment: referrerPoints },
-            engagementCount: { increment: 1 },
+        // Check weekly referral cap for the referrer
+        const weekStart = new Date();
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+        weekStart.setHours(0, 0, 0, 0);
+        const referralCountThisWeek = await tx.loyaltyTransaction.count({
+          where: {
+            membershipId: referral.referrerId,
+            source: 'REFERRAL_REWARD',
+            type: LoyaltyTxType.BONUS,
+            createdAt: { gte: weekStart },
           },
         });
+
+        if (referralCountThisWeek >= weeklyReferralCap) {
+          this.logger.warn(
+            `Referrer ${referral.referrerId} hit weekly cap (${weeklyReferralCap}) — reward skipped`,
+          );
+        } else {
+          await this.wallet.applyDelta(tx, referral.referrerId, referrerPoints, LoyaltyTxType.BONUS, {
+            source: 'REFERRAL_REWARD',
+            sourceId: referral.id,
+            channel: 'WEB',
+            description: `Referral reward – friend joined`,
+            idempotencyKey: `bonus:REFERRAL_REWARD:${referral.id}`,
+          });
+          await tx.loyaltyMembership.update({
+            where: { id: referral.referrerId },
+            data: {
+              totalPointsEarned: { increment: referrerPoints },
+              engagementCount: { increment: 1 },
+            },
+          });
+        }
         claimedOk = true;
       });
 

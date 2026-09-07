@@ -79,6 +79,12 @@ export class LoyaltyBurnEngine {
     idempotencyKey?: string | null;
     /** Qualifying merchandise subtotal (gift cards excluded) for welcome-reward gates. */
     purchaseSubtotal?: number | null;
+    /**
+     * Skip the welcome-reward purchase minimum gate. Set by the POS voucher flow
+     * where points are converted to a gift card used at the till — the purchase
+     * happens after the card is issued.
+     */
+    skipWelcomeGate?: boolean;
     prismaTx?: Prisma.TransactionClient;
   }): Promise<{ redemptionId: string; couponCode?: string }> {
     if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
@@ -173,14 +179,16 @@ export class LoyaltyBurnEngine {
         }
       }
 
-      await this.assertWelcomePurchaseMinimum({
-        option,
-        membershipId: params.membershipId,
-        points: params.points,
-        purchaseSubtotal: params.purchaseSubtotal,
-        orderId: params.orderId,
-        prismaTx: tx,
-      });
+      if (!params.skipWelcomeGate) {
+        await this.assertWelcomePurchaseMinimum({
+          option,
+          membershipId: params.membershipId,
+          points: params.points,
+          purchaseSubtotal: params.purchaseSubtotal,
+          orderId: params.orderId,
+          prismaTx: tx,
+        });
+      }
 
       const optionIdForRow =
         params.optionId ?? (await this.ensureGenericBurnOption(tx as Prisma.TransactionClient));

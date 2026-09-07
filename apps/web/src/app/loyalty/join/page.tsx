@@ -71,6 +71,104 @@ function isAlreadyRegisteredError(message: string): boolean {
   );
 }
 
+type FandomChallenge = {
+  token: string;
+  question: string;
+  options: string[];
+  fandom: string;
+  expiresAt: string;
+};
+
+function FandomChallengeWidget({
+  challenge,
+  loadFailed,
+  selectedIndex,
+  onSelect,
+  onRefresh,
+  disabled,
+}: {
+  challenge: FandomChallenge | null;
+  loadFailed?: boolean;
+  selectedIndex: number | null;
+  onSelect: (idx: number) => void;
+  onRefresh: () => void;
+  disabled?: boolean;
+}) {
+  if (!challenge && loadFailed) {
+    return null;
+  }
+
+  if (!challenge) {
+    return (
+      <div className="rounded-xl border border-amber-700/30 bg-stone-900/60 p-4">
+        <div className="flex items-center justify-between">
+          <p className="font-secondary text-sm text-stone-400">Loading fandom challenge…</p>
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
+        </div>
+      </div>
+    );
+  }
+
+  const OPTION_LABELS = ['A', 'B', 'C', 'D'];
+
+  return (
+    <div className="rounded-xl border border-amber-600/40 bg-gradient-to-b from-amber-950/20 to-stone-950/80 p-4 shadow-[0_0_16px_rgba(217,119,6,0.08)]">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-lg" role="img" aria-label="wand">&#x2728;</span>
+        <p className="font-secondary text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-400/90">
+          Prove You&apos;re a True Fan
+        </p>
+        <span className="ml-auto inline-block rounded-full bg-amber-950/50 px-2 py-0.5 text-[10px] font-secondary text-amber-400/70">
+          {challenge.fandom}
+        </span>
+      </div>
+
+      <p className="font-secondary text-sm text-stone-200 leading-relaxed mb-3">
+        {challenge.question}
+      </p>
+
+      <div className="grid grid-cols-1 gap-2">
+        {challenge.options.map((option, idx) => {
+          const isSelected = selectedIndex === idx;
+          return (
+            <button
+              key={idx}
+              type="button"
+              disabled={disabled}
+              onClick={() => onSelect(idx)}
+              className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm font-secondary transition-all ${
+                isSelected
+                  ? 'border-amber-400 bg-amber-500/15 text-amber-100 shadow-[0_0_8px_rgba(245,158,11,0.15)]'
+                  : 'border-stone-700/50 bg-stone-900/40 text-stone-300 hover:border-amber-600/40 hover:bg-stone-900/60'
+              } disabled:opacity-50`}
+            >
+              <span
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                  isSelected
+                    ? 'bg-amber-500 text-stone-950'
+                    : 'bg-stone-800 text-stone-400'
+                }`}
+              >
+                {OPTION_LABELS[idx]}
+              </span>
+              {option}
+            </button>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={onRefresh}
+        disabled={disabled}
+        className="mt-3 font-secondary text-xs text-amber-500/70 hover:text-amber-400 disabled:opacity-40"
+      >
+        Try a different question
+      </button>
+    </div>
+  );
+}
+
 function JoinPageInner() {
   const searchParams = useSearchParams();
   const { user, loading: authLoading, refreshUser } = useAuth();
@@ -89,6 +187,10 @@ function JoinPageInner() {
   const [checkingSession, setCheckingSession] = useState(true);
   const didCheckSession = useRef(false);
 
+  const [fandomChallenge, setFandomChallenge] = useState<FandomChallenge | null>(null);
+  const [fandomAnswer, setFandomAnswer] = useState<number | null>(null);
+  const [challengeLoadFailed, setChallengeLoadFailed] = useState(false);
+
   const countryCode = getRegionConfig().country || 'US';
   const countryName = COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
   const loginHref = `/login?returnUrl=${encodeURIComponent('/loyalty/card')}`;
@@ -100,6 +202,25 @@ function JoinPageInner() {
     if (pending) setReferralCode(pending);
     else if (refParam) setReferralCode(refParam);
   }, [searchParams]);
+
+  const loadFandomChallenge = useCallback(async () => {
+    try {
+      const res = await apiClient.getFandomChallenge();
+      if (res?.data) {
+        setFandomChallenge(res.data);
+        setFandomAnswer(null);
+        setChallengeLoadFailed(false);
+      } else {
+        setChallengeLoadFailed(true);
+      }
+    } catch {
+      setChallengeLoadFailed(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user) void loadFandomChallenge();
+  }, [user, loadFandomChallenge]);
 
   const loadExistingMembership = useCallback(async (): Promise<JoinSuccess | null> => {
     try {
@@ -242,6 +363,10 @@ function JoinPageInner() {
       setError('Please acknowledge the Privacy Policy to join');
       return;
     }
+    if (fandomChallenge && fandomAnswer == null) {
+      setError('Answer the fandom question to prove you are a true fan!');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -265,6 +390,8 @@ function JoinPageInner() {
             : { inviteCode: ENCHANTED_CIRCLE_JOIN_CODE }),
         enrollmentChannel: 'STORE',
         ...(storeId ? { storeId } : {}),
+        ...(fandomChallenge ? { fandomChallengeToken: fandomChallenge.token } : {}),
+        ...(fandomAnswer != null ? { fandomChallengeAnswer: fandomAnswer } : {}),
       });
 
       setFrontendSessionCookie();
@@ -296,6 +423,10 @@ function JoinPageInner() {
         setAlreadyMember(true);
         setError(null);
       } else {
+        if (/fandom|true fan|challenge/i.test(msg)) {
+          void loadFandomChallenge();
+          setFandomAnswer(null);
+        }
         setError(msg || 'Could not complete sign-up. Please try again.');
       }
     } finally {
@@ -524,6 +655,28 @@ function JoinPageInner() {
                 placeholder="HOS-FRIEND-A7F2"
               />
             </label>
+
+            {/* Honeypot — invisible to real users, bots auto-fill it */}
+            <div className="absolute -left-[9999px] opacity-0 h-0 overflow-hidden" aria-hidden="true">
+              <label>
+                Website
+                <input
+                  type="text"
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </label>
+            </div>
+
+            <FandomChallengeWidget
+              challenge={fandomChallenge}
+              loadFailed={challengeLoadFailed}
+              selectedIndex={fandomAnswer}
+              onSelect={setFandomAnswer}
+              onRefresh={() => void loadFandomChallenge()}
+              disabled={submitting}
+            />
 
             <label className="flex items-start gap-3 rounded-lg border border-stone-800 bg-stone-900/40 p-3 text-sm font-secondary text-stone-300">
               <input

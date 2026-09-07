@@ -354,6 +354,18 @@ export class ApiClient {
   }
 
   // Auth endpoints
+  async getFandomChallenge(): Promise<
+    ApiResponse<{
+      token: string;
+      question: string;
+      options: string[];
+      fandom: string;
+      expiresAt: string;
+    }>
+  > {
+    return this.request('/auth/fandom-challenge');
+  }
+
   async register(data: {
     email: string;
     password: string;
@@ -371,6 +383,9 @@ export class ApiClient {
     referralCode?: string;
     enrollmentChannel?: string;
     storeId?: string;
+    fandomChallengeToken?: string;
+    fandomChallengeAnswer?: number;
+    website?: string;
   }): Promise<ApiResponse<AuthResponse>> {
     return this.request<ApiResponse<AuthResponse>>('/auth/register', {
       method: 'POST',

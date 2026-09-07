@@ -211,6 +211,7 @@ export class PosVoucherService {
       storeId: dto.storeId,
       idempotencyKey,
       purchaseSubtotal: dto.purchaseSubtotal,
+      skipWelcomeGate: true,
     });
 
     // Burn engine replay: redemptionId matches an existing voucher from a prior attempt

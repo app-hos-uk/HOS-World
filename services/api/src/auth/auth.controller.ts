@@ -22,6 +22,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import { FandomChallengeService, FandomChallenge } from './fandom-challenge.service';
 import { RegisterDto } from './dto/register.dto';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 import { GuestCheckoutDto } from './dto/guest-checkout.dto';
@@ -48,6 +49,7 @@ import type { ApiResponse, AuthResponse, User } from '@hos-marketplace/shared-ty
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    private readonly fandomChallenge: FandomChallengeService,
     private readonly adminSellersService: AdminSellersService,
     private readonly configService: ConfigService,
   ) {}
@@ -125,6 +127,21 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Get('fandom-challenge')
+  @ApiOperation({
+    summary: 'Get a fandom trivia challenge',
+    description:
+      'Returns a random fandom trivia question with an HMAC-signed token. ' +
+      'Submit the token and chosen answer index with the registration request.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Fandom challenge generated' })
+  getFandomChallenge(): ApiResponse<FandomChallenge> {
+    const challenge = this.fandomChallenge.generate();
+    return { data: challenge, message: 'Prove you are a true fan!' };
+  }
+
+  @Public()
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute for registration
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -142,6 +159,26 @@ export class AuthController {
     @Request() req: any,
     @Res({ passthrough: true }) res: Response,
   ): Promise<ApiResponse<AuthResponse>> {
+    // Honeypot — bots that fill hidden fields get rejected silently
+    if (registerDto.website) {
+      throw new BadRequestException('Registration failed');
+    }
+
+    // Fandom challenge — required for customer registration via the web join flow.
+    // When the challenge API was unreachable the client sends neither field;
+    // only enforce validation when at least one field is present or when the
+    // strict env flag demands it even for missing challenges.
+    const challengeRequired =
+      this.configService.get<string>('FANDOM_CHALLENGE_REQUIRED') !== 'false';
+    const hasAnyChallengeData =
+      registerDto.fandomChallengeToken != null || registerDto.fandomChallengeAnswer != null;
+    if (challengeRequired && registerDto.role === 'customer' && hasAnyChallengeData) {
+      this.fandomChallenge.validate(
+        registerDto.fandomChallengeToken,
+        registerDto.fandomChallengeAnswer,
+      );
+    }
+
     const ipAddress =
       req.headers['x-forwarded-for']?.split(',')[0] ||
       req.headers['x-real-ip'] ||

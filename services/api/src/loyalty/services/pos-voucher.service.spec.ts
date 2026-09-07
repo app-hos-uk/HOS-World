@@ -403,13 +403,16 @@ describe('PosVoucherService', () => {
       idempotencyKey,
     });
 
-    expect(burn.processRedemption).toHaveBeenCalledWith({
-      membershipId,
-      points: 500,
-      channel: 'HOS_OUTLET_POS',
-      storeId,
-      idempotencyKey,
-    });
+    expect(burn.processRedemption).toHaveBeenCalledWith(
+      expect.objectContaining({
+        membershipId,
+        points: 500,
+        channel: 'HOS_OUTLET_POS',
+        storeId,
+        idempotencyKey,
+        skipWelcomeGate: true,
+      }),
+    );
     expect(prisma.loyaltyPosVoucher.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

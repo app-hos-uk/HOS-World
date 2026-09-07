@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthOAuthController } from './auth.controller.oauth';
 import { AuthService } from './auth.service';
+import { FandomChallengeService } from './fandom-challenge.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { AdminModule } from '../admin/admin.module';
 import { GeolocationModule } from '../geolocation/geolocation.module';
@@ -48,8 +49,8 @@ const logger = new Logger('AuthModule');
     forwardRef(() => LoyaltyModule),
   ],
   controllers: [AuthController, AuthOAuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [AuthService],
+  providers: [AuthService, FandomChallengeService, JwtStrategy],
+  exports: [AuthService, FandomChallengeService],
 })
 export class AuthModule implements OnModuleInit {
   constructor(

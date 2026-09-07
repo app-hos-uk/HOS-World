@@ -5,11 +5,14 @@ import {
   IsOptional,
   IsEnum,
   IsBoolean,
+  IsInt,
+  Min,
+  Max,
   Matches,
   MaxLength,
   Length,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export enum RegisterRole {
   CUSTOMER = 'customer',
@@ -146,4 +149,24 @@ export class RegisterDto {
   @IsString()
   @MaxLength(64)
   storeId?: string;
+
+  /** HMAC-signed fandom challenge token from GET /auth/fandom-challenge. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  fandomChallengeToken?: string;
+
+  /** 0-based index of the selected answer option. */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(3)
+  fandomChallengeAnswer?: number;
+
+  /** Honeypot — must be empty. Bots that fill hidden fields get rejected. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(0, { message: 'Unexpected field' })
+  website?: string;
 }

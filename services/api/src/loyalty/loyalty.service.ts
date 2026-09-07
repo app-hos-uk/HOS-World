@@ -311,6 +311,26 @@ export class LoyaltyService implements OnModuleInit {
     userId: string,
     ctx?: { channel?: string; regionCode?: string; storeId?: string },
   ): Promise<boolean> {
+    const deferEnabled =
+      this.config.get<string>('DEFER_SIGNUP_BONUS') !== 'false';
+    const isPosChannel =
+      ctx?.channel === 'POS' ||
+      ctx?.channel === 'HOS_OUTLET_POS' ||
+      ctx?.channel === 'AUTO_PURCHASE';
+
+    if (deferEnabled && !isPosChannel) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { emailVerified: true },
+      });
+      if (!user?.emailVerified) {
+        this.logger.log(
+          `Signup bonus deferred for user ${userId} — awaiting email verification`,
+        );
+        return false;
+      }
+    }
+
     const membership = await this.prisma.loyaltyMembership.findUnique({
       where: { id: membershipId },
       select: { enrollmentChannel: true, regionCode: true },
@@ -402,6 +422,23 @@ export class LoyaltyService implements OnModuleInit {
       );
       return false;
     }
+  }
+
+  /**
+   * Called after email verification to award the deferred SIGNUP bonus.
+   * Safe to call if the bonus was already awarded (idempotent).
+   */
+  async awardDeferredSignupBonus(userId: string): Promise<boolean> {
+    const membership = await this.prisma.loyaltyMembership.findUnique({
+      where: { userId },
+      select: { id: true, enrollmentChannel: true, regionCode: true },
+    });
+    if (!membership) return false;
+
+    return this.ensureSignupBonus(membership.id, userId, {
+      channel: membership.enrollmentChannel,
+      regionCode: membership.regionCode,
+    });
   }
 
   async getMembership(userId: string) {

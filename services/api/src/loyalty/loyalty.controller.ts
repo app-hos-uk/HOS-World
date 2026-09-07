@@ -12,6 +12,7 @@ import {
   DefaultValuePipe,
   ParseIntPipe,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Request as ExpressRequest } from 'express';
 import {
   ApiBearerAuth,
@@ -43,6 +44,7 @@ export class LoyaltyController {
   ) {}
 
   @Post('enroll')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Join The Enchanted Circle' })
@@ -124,6 +126,7 @@ export class LoyaltyController {
   }
 
   @Post('redeem')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({
@@ -188,6 +191,7 @@ export class LoyaltyController {
   }
 
   @Post('redeem-in-store')
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Burn points and issue an in-store gift card voucher (Flow A1)' })

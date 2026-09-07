@@ -3,7 +3,8 @@ import { AuthController } from './auth.controller';
 
 describe('AuthController invitation validation', () => {
   const adminSellersService = { getInvitationByToken: jest.fn() };
-  const controller = new AuthController({} as any, adminSellersService as any, {} as any);
+  const fandomChallenge = { generate: jest.fn(), validate: jest.fn() };
+  const controller = new AuthController({} as any, fandomChallenge as any, adminSellersService as any, {} as any);
 
   beforeEach(() => jest.clearAllMocks());
 
