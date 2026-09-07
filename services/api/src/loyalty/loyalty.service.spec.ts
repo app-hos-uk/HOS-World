@@ -13,6 +13,7 @@ import { LoyaltyEventService } from './services/loyalty-event.service';
 import { QueueService } from '../queue/queue.service';
 import { LoyaltyListener } from './listeners/loyalty.listener';
 import { LoyaltySettingsService } from './services/loyalty-settings.service';
+import { LoyaltyCampaignService } from './services/campaign.service';
 import { PlatformRegionService } from '../config/platform-region.service';
 
 describe('LoyaltyService', () => {
@@ -59,6 +60,7 @@ describe('LoyaltyService', () => {
     },
     loyaltyTransaction: {
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       count: jest.fn(),
       aggregate: jest.fn(),
     },
@@ -147,6 +149,12 @@ describe('LoyaltyService', () => {
     isCheckoutRedemptionEnabled: jest.fn().mockResolvedValue(true),
   };
 
+  const mockCampaigns = {
+    getActiveForContext: jest.fn().mockResolvedValue([]),
+    resolveSignupAward: jest.fn((_c: unknown, fallback: number) => ({ points: fallback })),
+    applyCampaignsToBasePoints: jest.fn().mockReturnValue({ points: 0, mult: 1, bonus: 0 }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -164,12 +172,14 @@ describe('LoyaltyService', () => {
         { provide: LoyaltyListener, useValue: mockLoyaltyListener },
         { provide: LoyaltySettingsService, useValue: mockLoyaltySettings },
         { provide: PlatformRegionService, useValue: mockRegion },
+        { provide: LoyaltyCampaignService, useValue: mockCampaigns },
       ],
     }).compile();
 
     service = module.get(LoyaltyService);
     jest.clearAllMocks();
     mockFeatureFlags.isEnabled.mockReturnValue(true);
+    mockCampaigns.getActiveForContext.mockResolvedValue([]);
     mockConfig.get.mockImplementation((key: string, defaultVal?: any) => {
       const map: Record<string, any> = {
         LOYALTY_ENABLED: 'true',

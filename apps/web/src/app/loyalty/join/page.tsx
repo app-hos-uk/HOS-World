@@ -27,6 +27,7 @@ const ENCHANTED_CIRCLE_JOIN_CODE = 'ENCHANTED-CIRCLE-2026';
 const NAME_RE = /^[\p{L}\s\-'.]+$/u;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const INPUT_CLS =
   'mt-1 w-full rounded-lg border border-amber-700/30 bg-stone-950/70 px-3.5 py-3 text-base text-stone-100 placeholder:text-stone-500 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/40 font-secondary min-h-11';
@@ -160,9 +161,13 @@ function JoinPageInner() {
     setSubmitting(true);
     try {
       const ref = referralCode.trim() || getPendingReferralCode();
+      const storeParam = searchParams.get('store')?.trim();
+      const storeId = storeParam && UUID_RE.test(storeParam) ? storeParam : undefined;
       await apiClient.enrollLoyalty({
         enrollmentChannel: 'STORE',
         ...(ref ? { referralCode: ref } : {}),
+        ...(storeId ? { storeId } : {}),
+        ...(countryCode.length === 2 ? { regionCode: countryCode.toUpperCase() } : {}),
       });
       if (ref) clearPendingReferral();
       await refreshUser();
@@ -201,6 +206,8 @@ function JoinPageInner() {
     const ph = phone.trim();
     const ref = referralCode.trim() || getPendingReferralCode();
     const inviteParam = searchParams.get('invite')?.trim();
+    const storeParam = searchParams.get('store')?.trim();
+    const storeId = storeParam && UUID_RE.test(storeParam) ? storeParam : undefined;
 
     const fnErr = validateNameLike(fn, 'First name');
     if (fnErr) {
@@ -256,6 +263,8 @@ function JoinPageInner() {
           : ref && !isValidProgramReferralCode(ref)
             ? { inviteCode: ref }
             : { inviteCode: ENCHANTED_CIRCLE_JOIN_CODE }),
+        enrollmentChannel: 'STORE',
+        ...(storeId ? { storeId } : {}),
       });
 
       setFrontendSessionCookie();
@@ -265,6 +274,8 @@ function JoinPageInner() {
         await apiClient.enrollLoyalty({
           enrollmentChannel: 'STORE',
           ...(ref ? { referralCode: ref } : {}),
+          ...(storeId ? { storeId } : {}),
+          ...(countryCode.length === 2 ? { regionCode: countryCode.toUpperCase() } : {}),
         });
         if (ref) clearPendingReferral();
       } catch {

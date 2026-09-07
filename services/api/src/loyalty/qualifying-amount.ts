@@ -1,4 +1,5 @@
 import { Decimal } from '@prisma/client/runtime/library';
+import { isSignupBonusCampaign } from './signup-bonus';
 
 /** Matches "gift card", "gift cards", "gift-card", "gift_card", "giftcard". */
 const GIFT_CARD_RE = /\bgift[\s_-]*cards?\b/i;
@@ -62,6 +63,7 @@ export function computeQualifyingSubtotal(lines: QualifyingLineInput[]): Decimal
 }
 
 export function isPercentageOfQualifyingCampaign(campaign: ThresholdCampaignInput): boolean {
+  if (isSignupBonusCampaign(campaign)) return false;
   if (campaign.type === 'PERCENTAGE_OF_QUALIFYING') return true;
   const conditions = asRecord(campaign.conditions);
   return (

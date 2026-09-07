@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import {
+  enrollmentChannelAliases,
+  purchaseEarnCampaigns,
+  resolveSignupCampaignAward,
+  type SignupCampaignLike,
+} from '../signup-bonus';
 
 @Injectable()
 export class LoyaltyCampaignService {
@@ -15,6 +21,7 @@ export class LoyaltyCampaignService {
           OR: [{ storeIds: { isEmpty: true } }, { storeIds: { has: storeId } }],
         }
       : { storeIds: { isEmpty: true } };
+    const channelAliases = enrollmentChannelAliases(channel);
     return this.prisma.loyaltyBonusCampaign.findMany({
       where: {
         isActive: true,
@@ -23,31 +30,46 @@ export class LoyaltyCampaignService {
         endsAt: { gte: now },
         AND: [
           { OR: [{ regionCodes: { isEmpty: true } }, { regionCodes: { has: regionCode } }] },
-          { OR: [{ channelCodes: { isEmpty: true } }, { channelCodes: { has: channel } }] },
+          {
+            OR: [
+              { channelCodes: { isEmpty: true } },
+              { channelCodes: { hasSome: channelAliases } },
+            ],
+          },
           storeFilter,
         ],
       },
     });
   }
 
+  resolveSignupAward(
+    campaigns: SignupCampaignLike[],
+    fallbackPoints: number,
+  ): { points: number; campaignId?: string; campaignName?: string } {
+    return resolveSignupCampaignAward(campaigns, fallbackPoints);
+  }
+
   /**
-   * Apply best multiplier + flat bonus from matching campaigns (simple combine).
+   * Apply best multiplier + flat bonus from matching purchase campaigns.
+   * SIGNUP_BONUS campaigns are ignored here so welcome offers never inflate order earn.
    */
   applyCampaignsToBasePoints(
     campaigns: Array<{
       id: string;
+      type?: string | null;
       multiplier: { toNumber(): number } | null;
       bonusPoints: number | null;
     }>,
     basePoints: number,
   ): { points: number; campaignId?: string; mult: number; bonus: number } {
-    if (!campaigns.length) {
+    const earnCampaigns = purchaseEarnCampaigns(campaigns);
+    if (!earnCampaigns.length) {
       return { points: Math.round(basePoints), mult: 1, bonus: 0 };
     }
     let bestMult = 1;
     let bonus = 0;
     let campaignId: string | undefined;
-    for (const c of campaigns) {
+    for (const c of earnCampaigns) {
       const m = c.multiplier ? c.multiplier.toNumber() : 1;
       if (m > bestMult) {
         bestMult = m;

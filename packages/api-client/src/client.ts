@@ -369,6 +369,8 @@ export class ApiClient {
     dataProcessingConsent?: Record<string, boolean>;
     inviteCode?: string;
     referralCode?: string;
+    enrollmentChannel?: string;
+    storeId?: string;
   }): Promise<ApiResponse<AuthResponse>> {
     return this.request<ApiResponse<AuthResponse>>('/auth/register', {
       method: 'POST',
@@ -585,6 +587,7 @@ export class ApiClient {
     preferredCurrency?: string;
     enrollmentChannel?: string;
     referralCode?: string;
+    storeId?: string;
   }): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>('/loyalty/enroll', {
       method: 'POST',

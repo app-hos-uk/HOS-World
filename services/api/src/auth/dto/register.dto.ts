@@ -135,4 +135,15 @@ export class RegisterDto {
   @IsString()
   @MaxLength(80)
   referralCode?: string;
+
+  /** WEB | STORE | POS — used to match seasonal SIGNUP_BONUS campaigns. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  enrollmentChannel?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  storeId?: string;
 }

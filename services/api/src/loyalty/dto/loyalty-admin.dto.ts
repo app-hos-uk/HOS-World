@@ -105,7 +105,7 @@ export class CreateCampaignDto {
   @IsOptional() @IsString() description?: string;
   @IsString() type!: string;
   @IsOptional() @IsNumber() @Type(() => Number) multiplier?: number;
-  @IsOptional() @IsInt() @Min(0) bonusPoints?: number;
+  @IsOptional() @IsInt() @Type(() => Number) @Min(0) bonusPoints?: number;
   @IsOptional() @IsObject() conditions?: Record<string, any>;
   @IsOptional() @IsArray() @IsString({ each: true }) regionCodes?: string[];
   @IsOptional() @IsArray() @IsString({ each: true }) channelCodes?: string[];
@@ -120,7 +120,7 @@ export class UpdateCampaignDto {
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsString() type?: string;
   @IsOptional() @IsNumber() @Type(() => Number) multiplier?: number;
-  @IsOptional() @IsInt() @Min(0) bonusPoints?: number;
+  @IsOptional() @IsInt() @Type(() => Number) @Min(0) bonusPoints?: number;
   @IsOptional() @IsObject() conditions?: Record<string, any>;
   @IsOptional() @IsArray() @IsString({ each: true }) regionCodes?: string[];
   @IsOptional() @IsArray() @IsString({ each: true }) channelCodes?: string[];

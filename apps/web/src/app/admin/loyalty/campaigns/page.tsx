@@ -27,10 +27,12 @@ export default function AdminLoyaltyCampaignsPage() {
     description: '',
     type: 'MULTIPLIER',
     multiplier: 2,
+    bonusPoints: 2000,
     startsAt: '',
     endsAt: '',
     isActive: true,
     storeIds: [] as string[],
+    channelCodes: [] as string[],
     threshold: 0,
     earnRate: 0,
     pointsPerDollar: 0,
@@ -95,10 +97,12 @@ export default function AdminLoyaltyCampaignsPage() {
       description: '',
       type: 'MULTIPLIER',
       multiplier: 2,
+      bonusPoints: 2000,
       startsAt: '',
       endsAt: '',
       isActive: true,
       storeIds: [],
+      channelCodes: [],
       threshold: defaults.threshold,
       earnRate: defaults.earnRate,
       pointsPerDollar: defaults.pointsPerDollar,
@@ -120,10 +124,12 @@ export default function AdminLoyaltyCampaignsPage() {
       description: c.description || '',
       type: c.type || 'MULTIPLIER',
       multiplier: c.multiplier || 2,
+      bonusPoints: Number(c.bonusPoints ?? 0),
       startsAt: c.startsAt ? new Date(c.startsAt).toISOString().slice(0, 16) : '',
       endsAt: c.endsAt ? new Date(c.endsAt).toISOString().slice(0, 16) : '',
       isActive: c.isActive ?? true,
       storeIds: Array.isArray(c.storeIds) ? c.storeIds : [],
+      channelCodes: Array.isArray(c.channelCodes) ? c.channelCodes : [],
       threshold: Number(cond.threshold ?? defaults.threshold),
       earnRate: Number(cond.earnRate ?? defaults.earnRate),
       pointsPerDollar: Number(cond.pointsPerDollar ?? defaults.pointsPerDollar),
@@ -161,12 +167,31 @@ export default function AdminLoyaltyCampaignsPage() {
         name,
         description: description || undefined,
         type: form.type || 'MULTIPLIER',
-        multiplier: form.multiplier,
         isActive: form.isActive,
         startsAt: new Date(form.startsAt).toISOString(),
         endsAt: new Date(form.endsAt).toISOString(),
         storeIds: form.storeIds,
+        channelCodes: form.channelCodes,
       };
+      if (form.type === 'SIGNUP_BONUS') {
+        const pts = Math.max(0, Math.floor(Number(form.bonusPoints) || 0));
+        if (pts <= 0) {
+          toast.error('Welcome points must be greater than 0');
+          setSaving(false);
+          return;
+        }
+        payload.bonusPoints = pts;
+        payload.multiplier = 1;
+      } else if (form.type === 'BONUS_POINTS') {
+        payload.bonusPoints = Math.max(0, Math.floor(Number(form.bonusPoints) || 0));
+        payload.multiplier = 1;
+      } else if (form.type === 'PERCENTAGE_OF_QUALIFYING') {
+        payload.multiplier = 1;
+        payload.bonusPoints = 0;
+      } else {
+        payload.multiplier = form.multiplier;
+        payload.bonusPoints = 0;
+      }
       if (form.type === 'PERCENTAGE_OF_QUALIFYING') {
         payload.conditions = {
           threshold: form.threshold,
@@ -222,7 +247,7 @@ export default function AdminLoyaltyCampaignsPage() {
               <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-hos-text-secondary">Bonus Campaigns</h1>
-            <p className="text-hos-text-secondary mt-1">Create double-points and multiplier campaigns</p>
+            <p className="text-hos-text-secondary mt-1">Seasonal multipliers, spend bonuses, and welcome-point offers by registration source</p>
           </div>
           <button onClick={() => { resetForm(); setShowForm(true); }} className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover text-sm font-medium">
             + New Campaign
@@ -239,17 +264,31 @@ export default function AdminLoyaltyCampaignsPage() {
                 {fieldErrors.name && <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.name}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Multiplier</label>
-                <input type="number" step="0.5" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.multiplier} onChange={(e) => setForm({ ...form, multiplier: parseFloat(e.target.value) || 1 })} />
-              </div>
-              <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Type</label>
                 <select className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-                  <option value="MULTIPLIER">Multiplier</option>
-                  <option value="BONUS_POINTS">Bonus Points</option>
+                  <option value="MULTIPLIER">Purchase multiplier</option>
+                  <option value="BONUS_POINTS">Purchase bonus points</option>
                   <option value="PERCENTAGE_OF_QUALIFYING">% of spend above threshold</option>
+                  <option value="SIGNUP_BONUS">Welcome / signup bonus</option>
                 </select>
               </div>
+              {(form.type === 'SIGNUP_BONUS' || form.type === 'BONUS_POINTS') && (
+                <div>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">
+                    {form.type === 'SIGNUP_BONUS' ? 'Welcome points' : 'Bonus points'}
+                  </label>
+                  <input type="number" min={0} className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.bonusPoints} onChange={(e) => setForm({ ...form, bonusPoints: parseInt(e.target.value, 10) || 0 })} />
+                  {form.type === 'SIGNUP_BONUS' ? (
+                    <p className="mt-1 text-xs text-hos-text-muted">Replaces the default SIGNUP earn-rule amount for matching enrollments. 2000 pts = $20 at 100 pts per currency unit.</p>
+                  ) : null}
+                </div>
+              )}
+              {form.type === 'MULTIPLIER' && (
+                <div>
+                  <label className="block text-sm font-medium text-hos-text-secondary mb-1">Multiplier</label>
+                  <input type="number" step="0.5" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.multiplier} onChange={(e) => setForm({ ...form, multiplier: parseFloat(e.target.value) || 1 })} />
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Starts At</label>
                 <input type="datetime-local" min={editing ? undefined : nowDateTimeLocalValue()} className={`w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none ${fieldErrors.startsAt ? 'border-red-500' : 'border-hos-border'}`} value={form.startsAt} onChange={(e) => { setForm({ ...form, startsAt: e.target.value }); if (fieldErrors.startsAt) setFieldErrors((p) => ({ ...p, startsAt: undefined })); }} aria-invalid={!!fieldErrors.startsAt} />
@@ -280,6 +319,35 @@ export default function AdminLoyaltyCampaignsPage() {
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
                 <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Registration / earn channel</label>
+                <p className="text-xs text-hos-text-muted mb-2">
+                  Optional. Leave empty to apply to every channel. For in-store QR joins, select Store.
+                </p>
+                <div className="flex flex-wrap gap-4">
+                  {(['WEB', 'STORE', 'POS'] as const).map((code) => {
+                    const checked = form.channelCodes.includes(code);
+                    return (
+                      <label key={code} className="flex items-center gap-2 text-sm text-hos-text-secondary">
+                        <input
+                          type="checkbox"
+                          className="rounded"
+                          checked={checked}
+                          onChange={() => {
+                            setForm({
+                              ...form,
+                              channelCodes: checked
+                                ? form.channelCodes.filter((c) => c !== code)
+                                : [...form.channelCodes, code],
+                            });
+                          }}
+                        />
+                        <span>{code === 'WEB' ? 'Website' : code === 'STORE' ? 'Store QR / join page' : 'POS till'}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Applicable Stores</label>
@@ -355,10 +423,19 @@ export default function AdminLoyaltyCampaignsPage() {
                       <p className="text-sm text-hos-text-secondary mb-2">{c.description || 'No description'}</p>
                       <div className="flex flex-wrap gap-4 text-sm text-hos-text-muted">
                         <span>
-                          {c.type === 'PERCENTAGE_OF_QUALIFYING'
-                            ? `${Number(c.conditions?.earnRate ?? defaults.earnRate) * 100}% above $${c.conditions?.threshold ?? defaults.threshold}`
-                            : <><strong>{c.multiplier}x</strong> multiplier</>}
+                          {c.type === 'SIGNUP_BONUS'
+                            ? `Welcome ${Number(c.bonusPoints ?? 0)} pts`
+                            : c.type === 'BONUS_POINTS'
+                              ? `+${Number(c.bonusPoints ?? 0)} pts`
+                              : c.type === 'PERCENTAGE_OF_QUALIFYING'
+                                ? `${Number(c.conditions?.earnRate ?? defaults.earnRate) * 100}% above $${c.conditions?.threshold ?? defaults.threshold}`
+                                : <><strong>{c.multiplier}x</strong> multiplier</>}
                         </span>
+                        {Array.isArray(c.channelCodes) && c.channelCodes.length > 0 ? (
+                          <span>Channels: {c.channelCodes.join(', ')}</span>
+                        ) : (
+                          <span>Channels: all</span>
+                        )}
                         {c.startsAt && <span>From: {formatDate(c.startsAt)}</span>}
                         {c.endsAt && <span>Until: {formatDate(c.endsAt)}</span>}
                         <span>

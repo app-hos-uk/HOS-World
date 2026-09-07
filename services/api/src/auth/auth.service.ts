@@ -437,7 +437,16 @@ export class AuthService {
               referralCode = inviteAsReferral;
             }
           }
-          await this.loyaltyService.enroll(user.id, referralCode ? { referralCode } : undefined);
+          await this.loyaltyService.enroll(user.id, {
+            ...(referralCode ? { referralCode } : {}),
+            ...(registerDto.enrollmentChannel
+              ? { enrollmentChannel: registerDto.enrollmentChannel }
+              : {}),
+            ...(registerDto.storeId ? { storeId: registerDto.storeId } : {}),
+            ...(normalizedIsoCode && normalizedIsoCode.length === 2
+              ? { regionCode: normalizedIsoCode }
+              : {}),
+          });
         } catch (loyaltyErr: unknown) {
           this.logger.warn(
             `Customer loyalty auto-enroll failed for ${user.email}: ${loyaltyErr instanceof Error ? loyaltyErr.message : 'unknown'}`,

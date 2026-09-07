@@ -19,6 +19,7 @@ import {
   type QualifyingLineInput,
   type ThresholdCampaignInput,
 } from '../qualifying-amount';
+import { resolveSignupCampaignAward } from '../signup-bonus';
 
 @Injectable()
 export class LoyaltyEarnEngine {
@@ -50,7 +51,11 @@ export class LoyaltyEarnEngine {
    * no membership yet. Quiet (no welcome side-effects) so payment/POS paths
    * are not blocked by notification failures.
    */
-  private async ensureMembershipForUser(userId: string, channel = 'WEB') {
+  private async ensureMembershipForUser(
+    userId: string,
+    channel = 'WEB',
+    storeId?: string,
+  ) {
     const existing = await this.prisma.loyaltyMembership.findUnique({
       where: { userId },
       include: { tier: true },
@@ -104,7 +109,7 @@ export class LoyaltyEarnEngine {
         },
         include: { tier: true },
       });
-      await this.awardSignupBonusForMembership(membership.id, userId, channel);
+      await this.awardSignupBonusForMembership(membership.id, userId, channel, storeId);
       return membership;
     } catch {
       // Concurrent enroll — return whatever now exists (and repair missing signup bonus).
@@ -113,7 +118,7 @@ export class LoyaltyEarnEngine {
         include: { tier: true },
       });
       if (raced) {
-        await this.awardSignupBonusForMembership(raced.id, userId, channel);
+        await this.awardSignupBonusForMembership(raced.id, userId, channel, storeId);
       }
       return raced;
     }
@@ -127,35 +132,47 @@ export class LoyaltyEarnEngine {
     membershipId: string,
     userId: string,
     channel: string,
+    storeId?: string,
   ): Promise<void> {
+    const membership = await this.prisma.loyaltyMembership.findUnique({
+      where: { id: membershipId },
+      select: { regionCode: true },
+    });
     const signupRule = await this.prisma.loyaltyEarnRule.findFirst({
       where: { action: 'SIGNUP', isActive: true },
     });
 
-    let points = 0;
+    let fallbackPoints = 0;
     if (signupRule) {
-      points = signupRule.pointsAmount ?? 0;
-      if (points <= 0) {
-        this.logger.debug(
-          `Signup bonus skipped for auto-enroll user ${userId}: active SIGNUP rule has 0 points`,
-        );
-        return;
-      }
+      fallbackPoints = signupRule.pointsAmount ?? 0;
     } else {
       const inactiveSignupRule = await this.prisma.loyaltyEarnRule.findFirst({
         where: { action: 'SIGNUP', isActive: false },
       });
-      if (inactiveSignupRule) {
-        this.logger.debug(`Signup bonus skipped for auto-enroll user ${userId}: SIGNUP rule is inactive`);
-        return;
+      if (!inactiveSignupRule) {
+        const envBonusRaw = this.config.get<string | number>('LOYALTY_SIGNUP_BONUS');
+        const envBonus = typeof envBonusRaw === 'number' ? envBonusRaw : Number(envBonusRaw);
+        fallbackPoints = Number.isFinite(envBonus) && envBonus > 0 ? envBonus : 100;
+        this.logger.warn(
+          `No SIGNUP earn rule configured; awarding fallback ${fallbackPoints} pts for auto-enroll user ${userId}`,
+        );
       }
-      const envBonusRaw = this.config.get<string | number>('LOYALTY_SIGNUP_BONUS');
-      const envBonus = typeof envBonusRaw === 'number' ? envBonusRaw : Number(envBonusRaw);
-      points = Number.isFinite(envBonus) && envBonus > 0 ? envBonus : 100;
-      this.logger.warn(
-        `No SIGNUP earn rule configured; awarding fallback ${points} pts for auto-enroll user ${userId}`,
-      );
     }
+
+    const region = membership?.regionCode || (await this.region.getRegion()).country;
+    const activeCampaigns = await this.campaigns.getActiveForContext(region, channel, storeId);
+    const award = resolveSignupCampaignAward(activeCampaigns, fallbackPoints);
+    const points = award.points;
+    if (points <= 0) {
+      this.logger.debug(
+        `Signup bonus skipped for auto-enroll user ${userId}: no earn-rule amount and no matching SIGNUP_BONUS campaign`,
+      );
+      return;
+    }
+
+    const description = award.campaignName
+      ? `Welcome bonus: ${award.campaignName}`
+      : 'Welcome bonus for joining The Enchanted Circle';
 
     try {
       await this.prisma.$transaction(async (tx) => {
@@ -168,7 +185,11 @@ export class LoyaltyEarnEngine {
         const result = await this.wallet.applyDelta(tx, membershipId, points, LoyaltyTxType.BONUS, {
           source: 'SIGNUP',
           channel,
-          description: 'Welcome bonus for joining The Enchanted Circle',
+          campaignId: award.campaignId,
+          description,
+          metadata: award.campaignId
+            ? { campaignId: award.campaignId, campaignName: award.campaignName ?? null }
+            : undefined,
           idempotencyKey: `bonus:SIGNUP:${membershipId}`,
         });
         if (!result?.applied) return;
@@ -953,7 +974,11 @@ export class LoyaltyEarnEngine {
       })),
     );
 
-    const membership = await this.ensureMembershipForUser(sale.customerId, 'HOS_OUTLET_POS');
+    const membership = await this.ensureMembershipForUser(
+      sale.customerId,
+      'HOS_OUTLET_POS',
+      sale.storeId,
+    );
     if (!membership) return;
 
     const purchaseRule = await this.prisma.loyaltyEarnRule.findUnique({
