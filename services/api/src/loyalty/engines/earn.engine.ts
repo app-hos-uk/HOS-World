@@ -13,6 +13,12 @@ import { FeatureFlagsService } from '../../config/feature-flags.service';
 import { PlatformRegionService } from '../../config/platform-region.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 import { LoyaltySettingsService } from '../services/loyalty-settings.service';
+import {
+  computeQualifyingSubtotal as sumQualifyingSubtotal,
+  computeThresholdBonusPoints as sumThresholdBonusPoints,
+  type QualifyingLineInput,
+  type ThresholdCampaignInput,
+} from '../qualifying-amount';
 
 @Injectable()
 export class LoyaltyEarnEngine {
@@ -44,7 +50,7 @@ export class LoyaltyEarnEngine {
    * no membership yet. Quiet (no welcome side-effects) so payment/POS paths
    * are not blocked by notification failures.
    */
-  private async ensureMembershipForUser(userId: string) {
+  private async ensureMembershipForUser(userId: string, channel = 'WEB') {
     const existing = await this.prisma.loyaltyMembership.findUnique({
       where: { userId },
       include: { tier: true },
@@ -86,7 +92,7 @@ export class LoyaltyEarnEngine {
     const region = await this.region.getRegion();
 
     try {
-      return await this.prisma.loyaltyMembership.create({
+      const membership = await this.prisma.loyaltyMembership.create({
         data: {
           userId,
           tierId: tier.id,
@@ -98,13 +104,147 @@ export class LoyaltyEarnEngine {
         },
         include: { tier: true },
       });
+      await this.awardSignupBonusForMembership(membership.id, userId, channel);
+      return membership;
     } catch {
-      // Concurrent enroll — return whatever now exists
-      return this.prisma.loyaltyMembership.findUnique({
+      // Concurrent enroll — return whatever now exists (and repair missing signup bonus).
+      const raced = await this.prisma.loyaltyMembership.findUnique({
         where: { userId },
         include: { tier: true },
       });
+      if (raced) {
+        await this.awardSignupBonusForMembership(raced.id, userId, channel);
+      }
+      return raced;
     }
+  }
+
+  /**
+   * Mirror of LoyaltyService.ensureSignupBonus, inlined to avoid a circular import.
+   * Idempotent via `bonus:SIGNUP:${membershipId}`.
+   */
+  private async awardSignupBonusForMembership(
+    membershipId: string,
+    userId: string,
+    channel: string,
+  ): Promise<void> {
+    const signupRule = await this.prisma.loyaltyEarnRule.findFirst({
+      where: { action: 'SIGNUP', isActive: true },
+    });
+
+    let points = 0;
+    if (signupRule) {
+      points = signupRule.pointsAmount ?? 0;
+      if (points <= 0) {
+        this.logger.debug(
+          `Signup bonus skipped for auto-enroll user ${userId}: active SIGNUP rule has 0 points`,
+        );
+        return;
+      }
+    } else {
+      const inactiveSignupRule = await this.prisma.loyaltyEarnRule.findFirst({
+        where: { action: 'SIGNUP', isActive: false },
+      });
+      if (inactiveSignupRule) {
+        this.logger.debug(`Signup bonus skipped for auto-enroll user ${userId}: SIGNUP rule is inactive`);
+        return;
+      }
+      const envBonusRaw = this.config.get<string | number>('LOYALTY_SIGNUP_BONUS');
+      const envBonus = typeof envBonusRaw === 'number' ? envBonusRaw : Number(envBonusRaw);
+      points = Number.isFinite(envBonus) && envBonus > 0 ? envBonus : 100;
+      this.logger.warn(
+        `No SIGNUP earn rule configured; awarding fallback ${points} pts for auto-enroll user ${userId}`,
+      );
+    }
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await this.wallet.lockMembership(tx, membershipId);
+        const existingSignup = await tx.loyaltyTransaction.findFirst({
+          where: { membershipId, source: 'SIGNUP', type: LoyaltyTxType.BONUS },
+        });
+        if (existingSignup) return;
+
+        const result = await this.wallet.applyDelta(tx, membershipId, points, LoyaltyTxType.BONUS, {
+          source: 'SIGNUP',
+          channel,
+          description: 'Welcome bonus for joining The Enchanted Circle',
+          idempotencyKey: `bonus:SIGNUP:${membershipId}`,
+        });
+        if (!result?.applied) return;
+        await tx.loyaltyMembership.update({
+          where: { id: membershipId },
+          data: { totalPointsEarned: { increment: points } },
+        });
+      });
+    } catch (e) {
+      this.logger.error(
+        `Auto-enroll signup bonus failed for user ${userId}: ${e instanceof Error ? e.message : 'unknown'}`,
+        e instanceof Error ? e.stack : undefined,
+      );
+    }
+  }
+
+  /** Merchandise subtotal excluding gift-card lines. */
+  computeQualifyingSubtotal(lines: QualifyingLineInput[]): Decimal {
+    return sumQualifyingSubtotal(lines);
+  }
+
+  /**
+   * Campaign bonus: (qualifyingSubtotal - threshold) * earnRate * pointsPerDollar
+   * when qualifying spend is strictly above the threshold.
+   */
+  computeThresholdBonusPoints(
+    qualifyingSubtotal: Decimal,
+    activeCampaigns: ThresholdCampaignInput[],
+    pointsPerDollar = 100,
+  ): { points: number; breakdown: Array<{ campaignId: string; points: number }> } {
+    return sumThresholdBonusPoints(qualifyingSubtotal, activeCampaigns, { pointsPerDollar });
+  }
+
+  private async applyCampaignThresholdBonuses(
+    tx: Prisma.TransactionClient,
+    membershipId: string,
+    bonuses: Array<{ campaignId: string; points: number }>,
+    common: {
+      sourceId: string;
+      channel: string;
+      storeId?: string;
+      orderNumber?: string;
+      externalSaleId?: string;
+    },
+  ): Promise<number> {
+    let applied = 0;
+    for (const bonus of bonuses) {
+      if (bonus.points <= 0) continue;
+      const result = await this.wallet.applyDelta(
+        tx,
+        membershipId,
+        bonus.points,
+        LoyaltyTxType.EARN,
+        {
+          source: 'CAMPAIGN_THRESHOLD_BONUS',
+          sourceId: common.sourceId,
+          channel: common.channel,
+          storeId: common.storeId ?? null,
+          campaignId: bonus.campaignId,
+          description: 'Campaign bonus: spend over threshold',
+          metadata: {
+            ...(common.orderNumber ? { orderNumber: common.orderNumber } : {}),
+            ...(common.externalSaleId ? { externalSaleId: common.externalSaleId } : {}),
+            campaignId: bonus.campaignId,
+          } as Prisma.InputJsonValue,
+          idempotencyKey: `earn:CAMPAIGN_THRESHOLD_BONUS:${common.sourceId}:${bonus.campaignId}`,
+        },
+      );
+      if (result?.applied) applied += bonus.points;
+    }
+    if (applied > 0) {
+      this.logger.log(
+        `Awarded ${applied} CAMPAIGN_THRESHOLD_BONUS points on ${common.sourceId} for membership ${membershipId}`,
+      );
+    }
+    return applied;
   }
 
   /**
@@ -473,8 +613,23 @@ export class LoyaltyEarnEngine {
     if (!order?.userId || order.items.length === 0) return;
     if (order.loyaltyPointsEarned > 0) return;
 
-    const membership = await this.ensureMembershipForUser(order.userId);
-    if (!membership) return;
+    const qualifyingSubtotal = this.computeQualifyingSubtotal(
+      order.items.map((line) => ({
+        quantity: line.quantity,
+        price: line.price,
+        name: line.product?.name,
+        product: line.product,
+      })),
+    );
+
+    const membership = await this.ensureMembershipForUser(order.userId, 'WEB');
+    if (!membership) {
+      await this.prisma.order.update({
+        where: { id: order.id },
+        data: { qualifyingSubtotal },
+      });
+      return;
+    }
 
     const purchaseRule = await this.prisma.loyaltyEarnRule.findUnique({
       where: { action: 'PURCHASE' },
@@ -528,7 +683,12 @@ export class LoyaltyEarnEngine {
       });
     }
 
-    if (basePoints.lte(0)) {
+    const platformRegion = await this.region.getRegion();
+    const region = membership.regionCode || order.user?.country || platformRegion.country;
+    const activeCampaigns = await this.campaigns.getActiveForContext(region, 'WEB');
+    const thresholdBonus = this.computeThresholdBonusPoints(qualifyingSubtotal, activeCampaigns);
+
+    if (basePoints.lte(0) && thresholdBonus.points <= 0) {
       if (skippedDisabledSeller > 0) {
         this.logger.warn(
           `Order ${order.id}: no loyalty earn — ${skippedDisabledSeller} line(s) from sellers with loyaltyEnabled=false`,
@@ -536,20 +696,20 @@ export class LoyaltyEarnEngine {
       }
       await this.prisma.order.update({
         where: { id: order.id },
-        data: { loyaltyPointsEarned: 0 },
+        data: { loyaltyPointsEarned: 0, qualifyingSubtotal },
       });
       return;
     }
 
-    const platformRegion = await this.region.getRegion();
-    const region = membership.regionCode || order.user?.country || platformRegion.country;
-    const activeCampaigns = await this.campaigns.getActiveForContext(region, 'WEB');
     const {
       points: campPoints,
       campaignId,
       mult: internalMult,
       bonus: internalBonus,
-    } = this.campaigns.applyCampaignsToBasePoints(activeCampaigns, basePoints.toNumber());
+    } = this.campaigns.applyCampaignsToBasePoints(
+      activeCampaigns,
+      basePoints.gt(0) ? basePoints.toNumber() : 0,
+    );
 
     const applyTierMult = purchaseRule?.multiplierStack !== false;
     const tierMult =
@@ -628,11 +788,27 @@ export class LoyaltyEarnEngine {
         totalFinal = split.totalFinal;
         const { internalFinal, productFinal, brandFinal } = split;
 
-        if (totalFinal === 0) {
+        let appliedPoints = 0;
+
+        const thresholdApplied = await this.applyCampaignThresholdBonuses(
+          tx,
+          membership.id,
+          thresholdBonus.breakdown,
+          {
+            sourceId: order.id,
+            channel: 'WEB',
+            orderNumber: order.orderNumber,
+          },
+        );
+        appliedPoints += thresholdApplied;
+
+        if (totalFinal === 0 && thresholdApplied === 0) {
+          await tx.order.update({
+            where: { id: order.id },
+            data: { loyaltyPointsEarned: 0, qualifyingSubtotal },
+          });
           return;
         }
-
-        let appliedPoints = 0;
 
         if (internalFinal > 0) {
           const result = await this.wallet.applyDelta(
@@ -726,14 +902,17 @@ export class LoyaltyEarnEngine {
         // Always stamp the order so retries after a wallet-only success do not re-enter.
         await tx.order.update({
           where: { id: order.id },
-          data: { loyaltyPointsEarned: totalFinal },
+          data: {
+            loyaltyPointsEarned: totalFinal + thresholdBonus.points,
+            qualifyingSubtotal,
+          },
         });
       });
 
-      if (totalFinal === 0) {
+      if (totalFinal === 0 && thresholdBonus.points <= 0) {
         await this.prisma.order.update({
           where: { id: order.id },
-          data: { loyaltyPointsEarned: 0 },
+          data: { loyaltyPointsEarned: 0, qualifyingSubtotal },
         });
         return;
       }
@@ -764,7 +943,17 @@ export class LoyaltyEarnEngine {
     if (!sale?.customerId || sale.items.length === 0) return;
     if (sale.loyaltyPointsEarned > 0) return;
 
-    const membership = await this.ensureMembershipForUser(sale.customerId);
+    const qualifyingSubtotal = this.computeQualifyingSubtotal(
+      sale.items.map((line) => ({
+        quantity: line.quantity,
+        unitPrice: line.unitPrice,
+        totalPrice: line.totalPrice,
+        name: line.name,
+        product: line.product,
+      })),
+    );
+
+    const membership = await this.ensureMembershipForUser(sale.customerId, 'HOS_OUTLET_POS');
     if (!membership) return;
 
     const purchaseRule = await this.prisma.loyaltyEarnRule.findUnique({
@@ -837,7 +1026,17 @@ export class LoyaltyEarnEngine {
       }
     }
 
-    if (basePoints.lte(0)) {
+    const user = await this.prisma.user.findUnique({ where: { id: sale.customerId } });
+    const platformRegion = await this.region.getRegion();
+    const region = membership.regionCode || user?.country || platformRegion.country;
+    const activeCampaigns = await this.campaigns.getActiveForContext(
+      region,
+      'HOS_OUTLET_POS',
+      sale.storeId,
+    );
+    const thresholdBonus = this.computeThresholdBonusPoints(qualifyingSubtotal, activeCampaigns);
+
+    if (basePoints.lte(0) && thresholdBonus.points <= 0) {
       if (skippedDisabledSeller > 0) {
         this.logger.warn(
           `POS sale ${sale.id}: no loyalty earn — ${skippedDisabledSeller} line(s) from sellers with loyaltyEnabled=false`,
@@ -850,16 +1049,15 @@ export class LoyaltyEarnEngine {
       return;
     }
 
-    const user = await this.prisma.user.findUnique({ where: { id: sale.customerId } });
-    const platformRegion = await this.region.getRegion();
-    const region = membership.regionCode || user?.country || platformRegion.country;
-    const activeCampaigns = await this.campaigns.getActiveForContext(region, 'HOS_OUTLET_POS');
     const {
       points: campPoints,
       campaignId,
       mult: internalMult,
       bonus: internalBonus,
-    } = this.campaigns.applyCampaignsToBasePoints(activeCampaigns, basePoints.toNumber());
+    } = this.campaigns.applyCampaignsToBasePoints(
+      activeCampaigns,
+      basePoints.gt(0) ? basePoints.toNumber() : 0,
+    );
 
     const applyTierMult = purchaseRule?.multiplierStack !== false;
     const tierMult =
@@ -935,11 +1133,24 @@ export class LoyaltyEarnEngine {
         totalFinal = split.totalFinal;
         const { internalFinal, productFinal, brandFinal } = split;
 
-        if (totalFinal === 0) {
+        let appliedPoints = 0;
+
+        const thresholdApplied = await this.applyCampaignThresholdBonuses(
+          tx,
+          membership.id,
+          thresholdBonus.breakdown,
+          {
+            sourceId: sale.id,
+            channel: 'HOS_OUTLET_POS',
+            storeId: sale.storeId,
+            externalSaleId: sale.externalSaleId ?? undefined,
+          },
+        );
+        appliedPoints += thresholdApplied;
+
+        if (totalFinal === 0 && thresholdApplied === 0) {
           return;
         }
-
-        let appliedPoints = 0;
 
         if (internalFinal > 0) {
           const result = await this.wallet.applyDelta(
@@ -1025,11 +1236,11 @@ export class LoyaltyEarnEngine {
 
         await tx.pOSSale.update({
           where: { id: sale.id },
-          data: { loyaltyPointsEarned: totalFinal },
+          data: { loyaltyPointsEarned: totalFinal + thresholdBonus.points },
         });
       });
 
-      if (totalFinal === 0) {
+      if (totalFinal === 0 && thresholdBonus.points <= 0) {
         await this.prisma.pOSSale.update({
           where: { id: sale.id },
           data: { loyaltyPointsEarned: 0 },

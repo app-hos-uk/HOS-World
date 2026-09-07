@@ -99,6 +99,7 @@ describe('LoyaltyService', () => {
 
   const mockBurn = {
     processRedemption: jest.fn(),
+    assertWelcomePurchaseMinimum: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockEarn = {

@@ -7,13 +7,23 @@ type Props = {
   value: string;
   size?: number;
   className?: string;
+  /** Accessible label for the QR image. */
+  alt?: string;
+  /** When false, hide the payload text/link under the code (loyalty cards use JSON, not URLs). */
+  showValue?: boolean;
 };
 
 /**
  * Renders a customer lookup QR as a data URL so the till does not depend on
  * api.qrserver.com (blocked by the app Content-Security-Policy img-src list).
  */
-export function CustomerQr({ value, size = 180, className }: Props) {
+export function CustomerQr({
+  value,
+  size = 180,
+  className,
+  alt = 'Customer QR',
+  showValue = true,
+}: Props) {
   const [src, setSrc] = useState('');
   const [failed, setFailed] = useState(false);
 
@@ -45,11 +55,13 @@ export function CustomerQr({ value, size = 180, className }: Props) {
 
   if (!value) return null;
 
+  const isHttpUrl = /^https?:\/\//i.test(value);
+
   return (
     <div className={className ?? 'flex flex-col items-end gap-1'}>
       {src ? (
         <img
-          alt="Customer QR"
+          alt={alt}
           className="bg-white p-2 rounded"
           src={src}
           width={size}
@@ -64,14 +76,18 @@ export function CustomerQr({ value, size = 180, className }: Props) {
           {failed ? 'QR unavailable' : ''}
         </div>
       )}
-      <a
-        href={value}
-        target="_blank"
-        rel="noreferrer"
-        className="text-[10px] text-hos-text-muted underline break-all max-w-[10rem] text-right"
-      >
-        {value}
-      </a>
+      {showValue && isHttpUrl ? (
+        <a
+          href={value}
+          target="_blank"
+          rel="noreferrer"
+          className="text-[10px] text-hos-text-muted underline break-all max-w-[10rem] text-right"
+        >
+          {value}
+        </a>
+      ) : showValue ? (
+        <p className="text-[10px] text-hos-text-muted break-all max-w-[10rem] text-right">{value}</p>
+      ) : null}
     </div>
   );
 }

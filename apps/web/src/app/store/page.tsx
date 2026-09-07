@@ -87,6 +87,14 @@ export default function StoreDashboardPage() {
       color: 'bg-hos-bg-secondary',
       textColor: 'text-hos-text-secondary',
     },
+    {
+      title: 'Enroll walk-in',
+      description: 'Join a customer to the Enchanted Circle at the till. Email and name are enough.',
+      href: '/store/enroll',
+      badge: null,
+      color: 'bg-amber-900/20',
+      textColor: 'text-amber-200',
+    },
   ];
 
   return (

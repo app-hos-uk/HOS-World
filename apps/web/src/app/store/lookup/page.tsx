@@ -1,10 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
+import { CustomerQr } from '@/components/CustomerQr';
+import { StaffLoyaltyEnrollForm } from '@/components/store/StaffLoyaltyEnrollForm';
 
 type SearchResult = {
   userId: string;
@@ -35,6 +38,7 @@ export default function StoreLookupPage() {
   const [searching, setSearching] = useState(false);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [redeemPoints, setRedeemPoints] = useState('');
+  const [merchandiseTotal, setMerchandiseTotal] = useState('');
   const [terminalId, setTerminalId] = useState('');
   const [otpSentFor, setOtpSentFor] = useState<string | null>(null);
   const [otpCode, setOtpCode] = useState('');
@@ -44,6 +48,7 @@ export default function StoreLookupPage() {
     currency: string;
     qrPayload?: string;
   } | null>(null);
+  const [showEnroll, setShowEnroll] = useState(false);
 
   const needsAdminStore = user?.role === 'ADMIN' && !user.storeId;
 
@@ -139,6 +144,12 @@ export default function StoreLookupPage() {
       return;
     }
 
+    const merch = Number(merchandiseTotal);
+    if (!Number.isFinite(merch) || merch < 0) {
+      toast.error('Enter the till merchandise total (gift cards excluded)');
+      return;
+    }
+
     setRedeemingId(row.userId);
     try {
       const idempotencyKey = `${terminalId.trim()}:${storeId}:${row.userId}:${points}:${Math.floor(Date.now() / 300000)}`;
@@ -150,6 +161,7 @@ export default function StoreLookupPage() {
         idempotencyKey,
         terminalId: terminalId.trim(),
         otpCode: otpCode.trim() || undefined,
+        purchaseSubtotal: merch,
       });
       const data = r.data as {
         cardNumber?: string;
@@ -190,7 +202,34 @@ export default function StoreLookupPage() {
         <p className="text-sm text-hos-text-muted mt-1">
           Find loyalty members by card, email, phone, or name. Results are masked for privacy.
         </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setShowEnroll((v) => !v)}
+            className="rounded-md border border-hos-border px-3 py-1.5 text-sm text-hos-text-secondary hover:bg-hos-bg"
+          >
+            {showEnroll ? 'Hide enrollment' : 'Enroll walk-in customer'}
+          </button>
+          <Link
+            href="/store/enroll"
+            className="rounded-md border border-hos-border px-3 py-1.5 text-sm text-hos-text-secondary hover:bg-hos-bg"
+          >
+            Open enroll page
+          </Link>
+        </div>
       </div>
+
+      {showEnroll && (
+        <div className="rounded-lg border border-amber-700/30 bg-hos-bg-secondary p-4 space-y-3">
+          <div>
+            <h2 className="text-sm font-medium text-hos-text-secondary">Enchanted Circle enrollment</h2>
+            <p className="text-xs text-hos-text-muted mt-1">
+              Use this when a walk-in customer is not yet a member. Existing emails are enrolled, not duplicated.
+            </p>
+          </div>
+          <StaffLoyaltyEnrollForm />
+        </div>
+      )}
 
       <div className="space-y-3 rounded-lg border border-hos-border bg-hos-bg-secondary p-4">
         <div className="flex flex-wrap gap-2">
@@ -300,8 +339,23 @@ export default function StoreLookupPage() {
                     min={1}
                     value={redeemPoints}
                     onChange={(e) => setRedeemPoints(e.target.value)}
-                    placeholder="e.g. 100"
+                    placeholder="e.g. 2000"
                   />
+                </label>
+                <label className="block text-sm flex-1 min-w-[8rem]">
+                  <span className="text-hos-text-secondary">Merchandise total</span>
+                  <input
+                    className={INPUT_CLS}
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={merchandiseTotal}
+                    onChange={(e) => setMerchandiseTotal(e.target.value)}
+                    placeholder="Till total, no gift cards"
+                  />
+                  <span className="block text-xs text-hos-text-muted mt-1">
+                    Welcome Reward requires a minimum merchandise total. Gift cards do not count.
+                  </span>
                 </label>
                 <button
                   type="button"
@@ -346,7 +400,15 @@ export default function StoreLookupPage() {
             {lastVoucher.currency} {lastVoucher.amount.toFixed(2)}
           </p>
           {lastVoucher.qrPayload && (
-            <p className="text-xs text-hos-text-muted break-all">{lastVoucher.qrPayload}</p>
+            <div className="flex flex-col items-start pt-2">
+              <CustomerQr
+                value={lastVoucher.qrPayload}
+                size={160}
+                alt="Gift card voucher QR"
+                showValue={false}
+                className="flex flex-col items-start"
+              />
+            </div>
           )}
         </div>
       )}

@@ -210,6 +210,7 @@ export class PosVoucherService {
       channel: 'HOS_OUTLET_POS',
       storeId: dto.storeId,
       idempotencyKey,
+      purchaseSubtotal: dto.purchaseSubtotal,
     });
 
     // Burn engine replay: redemptionId matches an existing voucher from a prior attempt

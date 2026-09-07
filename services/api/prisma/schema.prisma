@@ -1116,6 +1116,8 @@ model Order {
   loyaltyPointsRedeemed    Int      @default(0)
   loyaltyDiscountAmount    Decimal? @db.Decimal(10, 2)
   loyaltyRedemptionChannel String? // MARKETPLACE_CHECKOUT or HOS_OUTLET_POS
+  /// Spend counted toward campaign thresholds after excluding gift-card lines.
+  qualifyingSubtotal       Decimal? @db.Decimal(10, 2)
 
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
@@ -4021,6 +4023,8 @@ model LoyaltyBonusCampaign {
   conditions   Json?
   regionCodes  String[]  @default([])
   channelCodes String[]  @default([])
+  /// Empty = global (all stores). When set, campaign applies only to these store IDs.
+  storeIds     String[]  @default([])
   isActive     Boolean   @default(true)
   startsAt     DateTime
   endsAt       DateTime

@@ -28,6 +28,7 @@ describe('LoyaltyAnalyticsService', () => {
     loyaltyTransaction: {
       aggregate: jest.fn().mockResolvedValue({ _sum: { points: 1000 }, _count: 5 }),
       findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(3),
     },
     loyaltyTier: {
       findMany: jest.fn().mockResolvedValue([
@@ -63,6 +64,7 @@ describe('LoyaltyAnalyticsService', () => {
       aggregate: jest
         .fn()
         .mockResolvedValue({ _sum: { totalAmount: new Decimal(200) }, _count: 5 }),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     segmentMembership: {},
   };
@@ -172,5 +174,36 @@ describe('LoyaltyAnalyticsService', () => {
     const r: any = await service.getChannelPerformance();
     expect(r.web).toBeDefined();
     expect(r.pos).toBeDefined();
+  });
+
+  it('getCampaignPerformanceMetrics returns threshold KPIs', async () => {
+    prisma.loyaltyMembership.findMany.mockResolvedValue([{ userId: 'u1' }]);
+    prisma.order.findMany.mockResolvedValue([
+      { subtotal: new Decimal(100), createdAt: new Date('2026-09-08T12:00:00Z'), userId: 'u1' },
+      { subtotal: new Decimal(40), createdAt: new Date('2026-09-09T12:00:00Z'), userId: 'u1' },
+    ]);
+    prisma.pOSSale.findMany.mockResolvedValue([]);
+    prisma.loyaltyTransaction.aggregate
+      .mockResolvedValueOnce({ _sum: { points: 500 } })
+      .mockResolvedValueOnce({ _sum: { points: 120 } });
+    prisma.loyaltyTransaction.count.mockResolvedValue(2);
+    prisma.loyaltyMembership.count.mockResolvedValue(4);
+
+    const r = await service.getCampaignPerformanceMetrics(undefined, undefined, {
+      from: new Date('2026-09-07'),
+      to: new Date('2026-09-20'),
+    });
+
+    expect(r.newRegistrations).toBe(4);
+    expect(r.totalTransactions).toBe(2);
+    expect(r.transactionsAboveThreshold).toBe(2);
+    expect(r.thresholdRate).toBe(100);
+    expect(r.avgTransactionValue).toBe(70);
+    expect(r.welcomeRewardsIssued).toBe(2);
+    expect(r.loyaltyBonusPointsAwarded).toBe(120);
+    expect(r.totalPointsAwarded).toBe(500);
+    expect(r.threshold).toBe(0);
+    expect(r.bonusEarnRate).toBe(0);
+    expect(r.revenuePerDay.length).toBeGreaterThan(0);
   });
 });

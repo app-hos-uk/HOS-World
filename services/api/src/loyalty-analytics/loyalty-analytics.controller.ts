@@ -116,6 +116,28 @@ export class LoyaltyAnalyticsController {
     return { data, message: 'OK' };
   }
 
+  @Get('campaign-performance')
+  @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
+  @ApiOperation({ summary: 'Campaign performance KPIs (registrations, $85+ threshold, points)' })
+  async campaignPerformance(
+    @Query('campaignId') campaignId?: string,
+    @Query('storeId') storeId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.analytics.getCampaignPerformanceMetrics(
+      campaignId || undefined,
+      storeId || undefined,
+      from || to
+        ? {
+            from: from ? new Date(from) : new Date(Date.now() - 14 * 86_400_000),
+            to: to ? new Date(to) : new Date(),
+          }
+        : undefined,
+    );
+    return { data, message: 'OK' };
+  }
+
   @Get('cohorts')
   @RequireAccess({ permission: 'system.analytics', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Cohort retention matrix' })

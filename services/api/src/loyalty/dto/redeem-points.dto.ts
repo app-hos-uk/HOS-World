@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsString, IsUUID, Length, Matches, Min } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, IsString, IsUUID, Length, Matches, Min } from 'class-validator';
 
 export class RedeemPointsDto {
   @IsInt()
@@ -15,6 +15,12 @@ export class RedeemPointsDto {
   @IsOptional()
   @IsUUID()
   storeId?: string;
+
+  /** Qualifying merchandise subtotal (gift cards excluded). Required to redeem the Welcome Reward. */
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  purchaseSubtotal?: number;
 
   /**
    * Client-generated key that makes a retried redeem return the original

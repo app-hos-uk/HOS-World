@@ -25,6 +25,7 @@ import { PaymentProviderService } from '../payments/payment-provider.service';
 import { ShippingService } from '../shipping/shipping.service';
 import { PromotionsService } from '../promotions/promotions.service';
 import { LoyaltyService } from '../loyalty/loyalty.service';
+import { computeQualifyingSubtotal } from '../loyalty/qualifying-amount';
 import { LoyaltyReversalService } from '../loyalty/services/loyalty-reversal.service';
 import { AmbassadorService } from '../ambassador/ambassador.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -921,6 +922,14 @@ export class OrdersService {
 
           // Create parent order (customer-facing, represents the full checkout)
           const parentOrderNumber = this.generateOrderNumber();
+          const qualifyingSubtotal = computeQualifyingSubtotal(
+            cart.items.map((item) => ({
+              quantity: item.quantity,
+              price: item.price,
+              name: item.product?.name,
+              product: item.product,
+            })),
+          );
           const parentOrder = await tx.order.create({
             data: {
               userId,
@@ -931,6 +940,7 @@ export class OrdersService {
               total: grandTotal,
               shippingAmount: cartShipping,
               discountAmount: cartDiscount,
+              qualifyingSubtotal,
               currency: cart.items[0].product.currency || PLATFORM_DEFAULT_CURRENCY,
               status: 'PENDING',
               paymentStatus: 'PENDING',
@@ -1080,6 +1090,7 @@ export class OrdersService {
               pendingLoyaltyPoints,
               pendingLoyaltyOptionId,
               loyaltyDisc,
+              qualifyingSubtotal.toNumber(),
             );
           }
 

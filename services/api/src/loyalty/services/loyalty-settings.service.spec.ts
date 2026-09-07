@@ -113,6 +113,14 @@ describe('LoyaltySettingsService caching', () => {
     ).rejects.toThrow('posVoucherMinAmount cannot exceed posVoucherMaxAmount');
   });
 
+  it('defaults Enchanted Circle campaign threshold settings', async () => {
+    const service = createService(createPrisma(null), undefined, 0);
+    const { settings } = await service.getResolved();
+    expect(settings.campaignMinPurchaseThreshold).toBe(85);
+    expect(settings.campaignBonusEarnRate).toBe(0.2);
+    expect(settings.campaignBonusPointsPerDollar).toBe(100);
+  });
+
   it('does not cache env fallbacks when the database read fails', async () => {
     const prisma = createPrisma(null);
     prisma.config.findFirst.mockRejectedValue(new Error('db down'));

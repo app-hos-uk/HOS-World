@@ -1,4 +1,5 @@
-import { IsInt, IsOptional, IsString, IsUUID, MaxLength, Min, MinLength } from 'class-validator';
+import { IsInt, IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min, MinLength } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class RedeemForVoucherDto {
   @IsInt()
@@ -59,4 +60,14 @@ export class RedeemForVoucherDto {
   @MinLength(6)
   @MaxLength(6)
   otpCode?: string;
+
+  /**
+   * Merchandise total on the till (gift cards excluded). Required to redeem the
+   * Welcome Reward — must be at least the campaign threshold.
+   */
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  @Min(0)
+  purchaseSubtotal?: number;
 }

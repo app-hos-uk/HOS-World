@@ -62,11 +62,12 @@ export const apiClient = ApiClient.create({
       const currentPath = window.location.pathname;
       
       // Public pages that should never redirect to login
-      const publicPages = ['/', '/products', '/fandoms', '/sellers', '/help', '/shipping', '/returns', '/privacy-policy'];
+      const publicPages = ['/', '/products', '/fandoms', '/sellers', '/help', '/shipping', '/returns', '/privacy-policy', '/loyalty/join'];
       const isPublicPage = publicPages.includes(currentPath) || 
                           currentPath.startsWith('/products/') ||
                           currentPath.startsWith('/fandoms/') ||
-                          currentPath.startsWith('/sellers/');
+                          currentPath.startsWith('/sellers/') ||
+                          currentPath.startsWith('/loyalty/join');
       
       if (isPublicPage) {
         clearFrontendSessionCookie();

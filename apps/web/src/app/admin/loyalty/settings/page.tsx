@@ -23,6 +23,9 @@ type Settings = {
   clawEarnOnCancel: boolean;
   restoreBurnOnReturn: boolean;
   clawEarnOnReturn: boolean;
+  campaignMinPurchaseThreshold: number;
+  campaignBonusEarnRate: number;
+  campaignBonusPointsPerDollar: number;
 };
 
 function GateBadge({ on, label }: { on: boolean; label: string }) {
@@ -55,7 +58,12 @@ export default function AdminLoyaltySettingsPage() {
       ]);
       const payload = settingsRes?.data as { settings: Settings; source: 'database' | 'env' };
       if (payload?.settings) {
-        setForm(payload.settings);
+        setForm({
+          ...payload.settings,
+          campaignMinPurchaseThreshold: Number(payload.settings.campaignMinPurchaseThreshold ?? 0),
+          campaignBonusEarnRate: Number(payload.settings.campaignBonusEarnRate ?? 0),
+          campaignBonusPointsPerDollar: Number(payload.settings.campaignBonusPointsPerDollar ?? 0),
+        });
         setSource(payload.source);
       }
       setRuntime(runtimeRes?.data ?? null);
@@ -152,6 +160,46 @@ export default function AdminLoyaltySettingsPage() {
                 onChange={(e) => set('redemptionAtCheckout', e.target.checked)}
               />
               Allow redemption at checkout
+            </label>
+          </section>
+
+          <section className="space-y-3 p-4 rounded-lg border border-hos-border bg-hos-bg-secondary">
+            <h2 className="text-lg text-hos-gold font-display">Enchanted Circle campaign</h2>
+            <p className="text-xs text-hos-text-muted font-ui">
+              Qualifying threshold and bonus rate for the current loyalty campaign (used on the
+              campaign performance dashboard and welcome-reward redemption).
+            </p>
+            <label className="block text-sm text-hos-text-secondary font-ui">
+              Minimum purchase threshold ({getCurrencySymbol(currency)})
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
+                value={form.campaignMinPurchaseThreshold}
+                onChange={(e) => set('campaignMinPurchaseThreshold', Number(e.target.value))}
+              />
+            </label>
+            <label className="block text-sm text-hos-text-secondary font-ui">
+              Bonus earn rate (fraction, 0.20 = 20%)
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
+                value={form.campaignBonusEarnRate}
+                onChange={(e) => set('campaignBonusEarnRate', Number(e.target.value))}
+              />
+            </label>
+            <label className="block text-sm text-hos-text-secondary font-ui">
+              Bonus points per {getCurrencySymbol(currency)}
+              <input
+                type="number"
+                min="0"
+                className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
+                value={form.campaignBonusPointsPerDollar}
+                onChange={(e) => set('campaignBonusPointsPerDollar', Number(e.target.value))}
+              />
             </label>
           </section>
 

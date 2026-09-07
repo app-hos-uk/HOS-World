@@ -178,6 +178,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/ref') ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/register') ||
+    pathname.startsWith('/loyalty/join') ||
     pathname.includes('.');
   if (
     previewSecret &&
@@ -194,8 +195,13 @@ export async function middleware(request: NextRequest) {
     return res;
   }
 
+  // In-store QR landing is public so customers can join without an account.
+  const isPublicLoyaltyJoin =
+    pathname === '/loyalty/join' || pathname.startsWith('/loyalty/join/');
+
   // --- Auth Protection ---
-  const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const isProtected =
+    !isPublicLoyaltyJoin && PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   const needsShopGate = isShopGatedPath(pathname);
   // Only consult the admin kill switch for commerce routes (keeps other middleware
   // matches free of upstream latency). Testers come through ?preview=/cookie.

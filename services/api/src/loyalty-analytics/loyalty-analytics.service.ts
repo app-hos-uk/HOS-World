@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PrismaService } from '../database/prisma.service';
+import { LoyaltySettingsService } from '../loyalty/services/loyalty-settings.service';
 import { computeClv } from './engines/clv.engine';
 import { computeRoi } from './engines/attribution.engine';
 
@@ -33,6 +34,14 @@ function daysBetween(a: Date, b: Date): number {
 function monthKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
+function localDateKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+/** Prisma `in: []` is invalid; UUID columns also reject empty strings. */
+const NONE_ID = '00000000-0000-0000-0000-000000000000';
+function inOrNone(ids: string[]): string[] {
+  return ids.length ? ids : [NONE_ID];
+}
 
 @Injectable()
 export class LoyaltyAnalyticsService {
@@ -41,6 +50,7 @@ export class LoyaltyAnalyticsService {
   constructor(
     private prisma: PrismaService,
     private config: ConfigService,
+    @Optional() private loyaltySettings?: LoyaltySettingsService,
   ) {}
 
   // ── Daily Snapshot ──
@@ -522,6 +532,272 @@ export class LoyaltyAnalyticsService {
       points: r.pointsAwarded,
       roi: r.roi ? new Decimal(r.roi).toNumber() : 0,
     }));
+  }
+
+  // ── Campaign performance (Enchanted Circle / threshold campaigns) ──
+
+  async getCampaignPerformanceMetrics(
+    campaignId?: string,
+    storeId?: string,
+    dateRange?: { from: Date; to: Date },
+  ): Promise<{
+    newRegistrations: number;
+    avgTransactionValue: number;
+    transactionsAboveThreshold: number;
+    totalTransactions: number;
+    thresholdRate: number;
+    totalPointsAwarded: number;
+    welcomeRewardsIssued: number;
+    loyaltyBonusPointsAwarded: number;
+    revenuePerDay: Array<{ date: string; revenue: number }>;
+    threshold: number;
+    bonusEarnRate: number;
+    bonusPointsPerDollar: number;
+    campaign: {
+      id: string;
+      name: string;
+      storeIds: string[];
+      startsAt: string;
+      endsAt: string;
+    } | null;
+  }> {
+    let campaign: {
+      id: string;
+      name: string;
+      storeIds: string[];
+      startsAt: Date;
+      endsAt: Date;
+    } | null = null;
+
+    if (campaignId) {
+      campaign = await this.prisma.loyaltyBonusCampaign.findUnique({
+        where: { id: campaignId },
+        select: { id: true, name: true, storeIds: true, startsAt: true, endsAt: true },
+      });
+    }
+
+    const from = startOfDay(dateRange?.from ?? campaign?.startsAt ?? daysAgo(14));
+    const to = endOfDay(dateRange?.to ?? campaign?.endsAt ?? new Date());
+    const createdAtRange = { gte: from, lte: to };
+
+    let settingsThreshold = 0;
+    let bonusEarnRate = 0;
+    let bonusPointsPerDollar = 0;
+    if (this.loyaltySettings) {
+      try {
+        const { settings } = await this.loyaltySettings.getResolved();
+        settingsThreshold = settings.campaignMinPurchaseThreshold;
+        bonusEarnRate = settings.campaignBonusEarnRate;
+        bonusPointsPerDollar = settings.campaignBonusPointsPerDollar;
+      } catch {
+        // Env defaults above still apply.
+      }
+    }
+
+    const scopedStoreIds: string[] | null = storeId
+      ? [storeId]
+      : campaign?.storeIds?.length
+        ? campaign.storeIds
+        : null;
+    const posStoreWhere = scopedStoreIds ? { storeId: { in: scopedStoreIds } } : {};
+
+    const [posCustomers, txMemberships] = scopedStoreIds
+      ? await Promise.all([
+          this.prisma.pOSSale.findMany({
+            where: { ...posStoreWhere, saleDate: createdAtRange, customerId: { not: null } },
+            select: { customerId: true },
+            distinct: ['customerId'],
+            take: 50_000,
+          }),
+          this.prisma.loyaltyTransaction.findMany({
+            where: { storeId: { in: scopedStoreIds }, createdAt: createdAtRange },
+            select: { membershipId: true },
+            distinct: ['membershipId'],
+            take: 50_000,
+          }),
+        ])
+      : [
+          [] as Array<{ customerId: string | null }>,
+          [] as Array<{ membershipId: string }>,
+        ];
+
+    const posCustomerIds = posCustomers
+      .map((s) => s.customerId)
+      .filter((id): id is string => Boolean(id));
+    const txMembershipIds = txMemberships.map((t) => t.membershipId);
+
+    const registrationWhere: Prisma.LoyaltyMembershipWhereInput = {
+      enrolledAt: createdAtRange,
+    };
+    if (scopedStoreIds) {
+      registrationWhere.OR = [
+        { id: { in: inOrNone(txMembershipIds) } },
+        { userId: { in: inOrNone(posCustomerIds) } },
+      ];
+    }
+
+    const memberWhere: Prisma.LoyaltyMembershipWhereInput = scopedStoreIds
+      ? {
+          OR: [
+            { id: { in: inOrNone(txMembershipIds) } },
+            { userId: { in: inOrNone(posCustomerIds) } },
+          ],
+        }
+      : {};
+
+    const signupWhere: Prisma.LoyaltyTransactionWhereInput = {
+      type: 'BONUS',
+      source: 'SIGNUP',
+      createdAt: createdAtRange,
+    };
+    if (scopedStoreIds) {
+      signupWhere.OR = [
+        { storeId: { in: scopedStoreIds } },
+        {
+          membership: {
+            enrolledAt: createdAtRange,
+            userId: { in: inOrNone(posCustomerIds) },
+          },
+        },
+      ];
+    }
+
+    const bonusPointsWhere: Prisma.LoyaltyTransactionWhereInput = {
+      createdAt: createdAtRange,
+      campaignId: campaignId ? campaignId : { not: null },
+    };
+    if (scopedStoreIds) {
+      bonusPointsWhere.storeId = { in: scopedStoreIds };
+    }
+
+    const pointsWhere: Prisma.LoyaltyTransactionWhereInput = {
+      type: { in: ['EARN', 'BONUS'] },
+      createdAt: createdAtRange,
+    };
+    if (scopedStoreIds) {
+      pointsWhere.storeId = { in: scopedStoreIds };
+    }
+
+    const [newRegistrations, memberRows, pointsAgg, welcomeRewardsIssued, bonusAgg] =
+      await Promise.all([
+        this.prisma.loyaltyMembership.count({ where: registrationWhere }),
+        this.prisma.loyaltyMembership.findMany({
+          where: memberWhere,
+          select: { userId: true },
+          take: 50_000,
+        }),
+        this.prisma.loyaltyTransaction.aggregate({
+          where: pointsWhere,
+          _sum: { points: true },
+        }),
+        this.prisma.loyaltyTransaction.count({ where: signupWhere }),
+        this.prisma.loyaltyTransaction.aggregate({
+          where: bonusPointsWhere,
+          _sum: { points: true },
+        }),
+      ]);
+
+    const memberUserIds = memberRows.map((m) => m.userId);
+    const memberSet = new Set(memberUserIds);
+    // Empty `in: []` is invalid in Prisma; use a sentinel that matches nothing.
+    const userIdIn = inOrNone(memberUserIds);
+
+    const orderWhere: Prisma.OrderWhereInput = {
+      parentOrderId: null,
+      status: { not: 'CANCELLED' },
+      createdAt: createdAtRange,
+      userId: { in: userIdIn },
+    };
+
+    const posWhere: Prisma.POSSaleWhereInput = {
+      saleDate: createdAtRange,
+      ...posStoreWhere,
+      customerId: { in: userIdIn },
+    };
+
+    // Store-scoped campaigns are in-store only; skip web orders when a store filter applies.
+    const [orders, posSales] = await Promise.all([
+      scopedStoreIds
+        ? Promise.resolve([] as Array<{ qualifyingSubtotal: Decimal | null; subtotal: Decimal; createdAt: Date; userId: string }>)
+        : this.prisma.order.findMany({
+            where: orderWhere,
+            select: { qualifyingSubtotal: true, subtotal: true, createdAt: true, userId: true },
+            take: 50_000,
+          }),
+      this.prisma.pOSSale.findMany({
+        where: posWhere,
+        select: { totalAmount: true, taxAmount: true, saleDate: true, customerId: true },
+        take: 50_000,
+      }),
+    ]);
+
+    type TxRow = { amount: number; date: Date };
+    const txs: TxRow[] = [];
+    for (const o of orders) {
+      if (o.userId && memberSet.has(o.userId)) {
+        const qualifying = o.qualifyingSubtotal != null
+          ? new Decimal(o.qualifyingSubtotal).toNumber()
+          : new Decimal(o.subtotal).toNumber();
+        txs.push({ amount: qualifying, date: o.createdAt });
+      }
+    }
+    for (const s of posSales) {
+      if (s.customerId && memberSet.has(s.customerId)) {
+        const subtotal = new Decimal(s.totalAmount).sub(new Decimal(s.taxAmount ?? 0)).toNumber();
+        txs.push({ amount: subtotal, date: s.saleDate });
+      }
+    }
+
+    const totalTransactions = txs.length;
+    const totalRevenue = txs.reduce((sum, t) => sum + t.amount, 0);
+    const avgTransactionValue =
+      totalTransactions > 0 ? Math.round((totalRevenue / totalTransactions) * 100) / 100 : 0;
+    const transactionsAboveThreshold = txs.filter((t) => t.amount >= settingsThreshold).length;
+    const thresholdRate =
+      totalTransactions > 0
+        ? Math.round((transactionsAboveThreshold / totalTransactions) * 10000) / 100
+        : 0;
+
+    const byDay = new Map<string, number>();
+    const cursor = new Date(from);
+    const last = startOfDay(to);
+    while (cursor <= last) {
+      const key = localDateKey(cursor);
+      byDay.set(key, 0);
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    for (const t of txs) {
+      const key = localDateKey(t.date);
+      byDay.set(key, (byDay.get(key) ?? 0) + t.amount);
+    }
+    const revenuePerDay = [...byDay.entries()].map(([date, revenue]) => ({
+      date,
+      revenue: Math.round(revenue * 100) / 100,
+    }));
+
+    return {
+      newRegistrations,
+      avgTransactionValue,
+      transactionsAboveThreshold,
+      totalTransactions,
+      thresholdRate,
+      totalPointsAwarded: pointsAgg._sum.points ?? 0,
+      welcomeRewardsIssued,
+      loyaltyBonusPointsAwarded: bonusAgg._sum.points ?? 0,
+      revenuePerDay,
+      threshold: settingsThreshold,
+      bonusEarnRate,
+      bonusPointsPerDollar,
+      campaign: campaign
+        ? {
+            id: campaign.id,
+            name: campaign.name,
+            storeIds: campaign.storeIds,
+            startsAt: campaign.startsAt.toISOString(),
+            endsAt: campaign.endsAt.toISOString(),
+          }
+        : null,
+    };
   }
 
   // ── Fandom Trends ──

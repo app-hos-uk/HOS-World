@@ -14,4 +14,11 @@ describe('CustomerQr', () => {
     expect(img).toHaveAttribute('src', expect.stringMatching(/^data:image\/svg\+xml/));
     expect(screen.getByRole('link', { name: value })).toHaveAttribute('href', value);
   });
+
+  it('omits the payload link when showValue is false', async () => {
+    const value = '{"t":"hos-loyalty","c":"HOS-TEST"}';
+    render(<CustomerQr value={value} size={80} showValue={false} alt="Loyalty card" />);
+    await waitFor(() => screen.getByAltText('Loyalty card'));
+    expect(screen.queryByRole('link')).toBeNull();
+  });
 });

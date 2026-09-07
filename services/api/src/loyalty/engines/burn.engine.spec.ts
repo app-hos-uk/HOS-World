@@ -704,4 +704,175 @@ describe('LoyaltyBurnEngine', () => {
       expect(redemptionCreate).not.toHaveBeenCalled();
     });
   });
+
+  describe('Welcome Reward purchase minimum', () => {
+    it('rejects welcome-reward redemption below the $85 threshold', async () => {
+      const mockFindUnique = jest
+        .fn()
+        .mockResolvedValueOnce({ id: 'm1', currentBalance: 2000 })
+        .mockResolvedValueOnce({
+          id: 'opt-welcome',
+          name: '$20 Welcome Reward',
+          pointsCost: 2000,
+          type: 'DISCOUNT',
+          isActive: true,
+          stock: null,
+          regionCodes: [],
+          channels: [],
+          value: 20,
+        });
+
+      const mockPrisma = {
+        $transaction: jest.fn().mockImplementation(async (fn: any) =>
+          fn({
+            loyaltyMembership: { findUnique: mockFindUnique, update: jest.fn() },
+            loyaltyRedemptionOption: {
+              findUnique: mockFindUnique,
+              findFirst: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+            },
+            loyaltyTransaction: { findUnique: jest.fn().mockResolvedValue(null) },
+            loyaltyRedemption: { create: jest.fn(), findFirst: jest.fn() },
+            loyaltyBonusCampaign: { findMany: jest.fn().mockResolvedValue([]) },
+            order: { findUnique: jest.fn() },
+          }),
+        ),
+      };
+      const mockConfig = {
+        get: jest.fn().mockImplementation((key: string, defaultVal?: any) => {
+          if (key === 'LOYALTY_ENABLED') return 'true';
+          if (key === 'LOYALTY_MIN_REDEMPTION_POINTS') return 100;
+          return defaultVal;
+        }),
+      };
+      const engine = new LoyaltyBurnEngine(
+        mockPrisma as any,
+        { applyDelta: jest.fn() } as any,
+        mockConfig as any,
+        mockFeatureFlags as any,
+      );
+
+      await expect(
+        engine.processRedemption({
+          membershipId: 'm1',
+          points: 2000,
+          channel: 'MARKETPLACE_CHECKOUT',
+          optionId: 'opt-welcome',
+          purchaseSubtotal: 50,
+        }),
+      ).rejects.toThrow('Minimum purchase of 85.00 required to redeem Welcome Reward');
+    });
+
+    it('allows welcome-reward redemption at the $85 threshold', async () => {
+      const mockFindUnique = jest
+        .fn()
+        .mockResolvedValueOnce({ id: 'm1', currentBalance: 2000, userId: 'u1' })
+        .mockResolvedValueOnce({
+          id: 'opt-welcome',
+          name: '$20 Welcome Reward',
+          pointsCost: 2000,
+          type: 'DISCOUNT',
+          isActive: true,
+          stock: null,
+          regionCodes: [],
+          channels: [],
+          value: 20,
+        });
+      const mockWallet = {
+        applyDelta: jest.fn().mockResolvedValue({ applied: true }),
+      };
+      const mockPrisma = {
+        $transaction: jest.fn().mockImplementation(async (fn: any) =>
+          fn({
+            loyaltyMembership: { findUnique: mockFindUnique, update: jest.fn() },
+            loyaltyRedemptionOption: {
+              findUnique: mockFindUnique,
+              findFirst: jest.fn(),
+              create: jest.fn(),
+              update: jest.fn(),
+            },
+            loyaltyTransaction: { findUnique: jest.fn().mockResolvedValue(null), create: jest.fn() },
+            loyaltyRedemption: {
+              create: jest.fn().mockResolvedValue({ id: 'r1' }),
+              findFirst: jest.fn(),
+            },
+            loyaltyBonusCampaign: { findMany: jest.fn().mockResolvedValue([]) },
+            promotion: { create: jest.fn().mockResolvedValue({ id: 'promo-1' }) },
+            coupon: { create: jest.fn(), findUnique: jest.fn().mockResolvedValue(null) },
+          }),
+        ),
+      };
+      const mockConfig = {
+        get: jest.fn().mockImplementation((key: string, defaultVal?: any) => {
+          if (key === 'LOYALTY_ENABLED') return 'true';
+          if (key === 'LOYALTY_MIN_REDEMPTION_POINTS') return 100;
+          return defaultVal;
+        }),
+      };
+      const engine = new LoyaltyBurnEngine(
+        mockPrisma as any,
+        mockWallet as any,
+        mockConfig as any,
+        mockFeatureFlags as any,
+      );
+
+      const result = await engine.processRedemption({
+        membershipId: 'm1',
+        points: 2000,
+        channel: 'MARKETPLACE_CHECKOUT',
+        optionId: 'opt-welcome',
+        orderId: 'order-1',
+        purchaseSubtotal: 85,
+      });
+      expect(result.redemptionId).toBe('r1');
+      expect(mockWallet.applyDelta).toHaveBeenCalled();
+    });
+
+    it('gates a POS voucher burn of the signup bonus without a catalogue option', async () => {
+      const mockPrisma = {
+        $transaction: jest.fn().mockImplementation(async (fn: any) =>
+          fn({
+            loyaltyMembership: {
+              findUnique: jest.fn().mockResolvedValue({ id: 'm1', currentBalance: 2000, userId: 'u1' }),
+            },
+            loyaltyRedemptionOption: {
+              findUnique: jest.fn(),
+              findFirst: jest.fn().mockResolvedValue({ id: 'generic' }),
+              create: jest.fn(),
+              update: jest.fn(),
+            },
+            loyaltyTransaction: {
+              findUnique: jest.fn().mockResolvedValue(null),
+              findFirst: jest.fn().mockResolvedValue({ points: 2000 }),
+            },
+            loyaltyRedemption: { create: jest.fn(), findFirst: jest.fn(), count: jest.fn().mockResolvedValue(0) },
+            loyaltyBonusCampaign: { findMany: jest.fn().mockResolvedValue([]) },
+          }),
+        ),
+      };
+      const mockConfig = {
+        get: jest.fn().mockImplementation((key: string, defaultVal?: any) => {
+          if (key === 'LOYALTY_ENABLED') return 'true';
+          if (key === 'LOYALTY_MIN_REDEMPTION_POINTS') return 100;
+          return defaultVal;
+        }),
+      };
+      const engine = new LoyaltyBurnEngine(
+        mockPrisma as any,
+        { applyDelta: jest.fn() } as any,
+        mockConfig as any,
+        mockFeatureFlags as any,
+      );
+
+      await expect(
+        engine.processRedemption({
+          membershipId: 'm1',
+          points: 2000,
+          channel: 'MARKETPLACE_CHECKOUT',
+          purchaseSubtotal: 40,
+        }),
+      ).rejects.toThrow('Minimum purchase of 85.00 required to redeem Welcome Reward');
+    });
+  });
 });

@@ -5,20 +5,40 @@ import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { CustomerQr } from '@/components/CustomerQr';
 import { apiClient } from '@/lib/api';
 
+type LoyaltyCard = {
+  cardNumber?: string;
+  tier?: string;
+  balance?: number;
+  qrPayload?: unknown;
+};
+
+function qrValueFromCard(card: LoyaltyCard): string {
+  const payload = card.qrPayload;
+  if (typeof payload === 'string' && payload.trim()) return payload;
+  if (payload && typeof payload === 'object') return JSON.stringify(payload);
+  if (card.cardNumber) {
+    return JSON.stringify({ t: 'hos-loyalty', c: card.cardNumber });
+  }
+  return '';
+}
+
 export default function LoyaltyCardPage() {
-  const [card, setCard] = useState<any>(null);
+  const [card, setCard] = useState<LoyaltyCard | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     apiClient
       .getLoyaltyCard()
-      .then((r) => setCard(r.data))
-      .catch((e: any) => setError(e?.message || 'Could not load card'))
+      .then((r) => setCard((r.data as LoyaltyCard) ?? null))
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not load card'))
       .finally(() => setLoading(false));
   }, []);
+
+  const qrValue = card ? qrValueFromCard(card) : '';
 
   return (
     <RouteGuard allowedRoles={['CUSTOMER']}>
@@ -36,12 +56,27 @@ export default function LoyaltyCardPage() {
           ) : !card ? (
             <p className="font-secondary text-stone-500">No card found. Enroll first.</p>
           ) : (
-            <div className="rounded-xl border-2 border-amber-700/50 bg-gradient-to-br from-stone-900 to-stone-950 p-8 shadow-lg">
+            <div className="rounded-xl border-2 border-amber-700/50 bg-gradient-to-br from-stone-900 to-stone-950 p-8 shadow-lg flex flex-col items-center text-center">
               <p className="text-xs text-stone-500 font-secondary tracking-widest">HOUSE OF SPELLS</p>
               <p className="font-primary text-lg text-amber-100 mt-2">{card.tier}</p>
-              <p className="font-mono text-stone-300 mt-6 text-sm break-all">{card.cardNumber}</p>
-              <p className="text-stone-500 text-sm mt-4 font-secondary">{card.balance} points</p>
-              <p className="text-xs text-stone-600 mt-6 break-all font-mono">{card.qrPayload}</p>
+              {qrValue ? (
+                <CustomerQr
+                  value={qrValue}
+                  size={220}
+                  alt="Enchanted Circle loyalty card"
+                  showValue={false}
+                  className="mt-6 flex flex-col items-center"
+                />
+              ) : null}
+              <p className="font-mono text-stone-200 mt-5 text-sm tracking-wide break-all">
+                {card.cardNumber}
+              </p>
+              <p className="text-stone-500 text-sm mt-3 font-secondary">
+                {card.balance} points
+              </p>
+              <p className="text-xs text-stone-500 mt-4 font-secondary">
+                Show this code at the till to earn and redeem.
+              </p>
             </div>
           )}
         </main>

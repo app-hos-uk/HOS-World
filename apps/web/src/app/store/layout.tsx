@@ -15,6 +15,7 @@ const menuItems = [
   { title: 'Pending customers', href: '/store/shipping/pending-queue', icon: navIcon('clock') },
   { title: 'Back office packing', href: '/store/shipping/backoffice', icon: navIcon('package') },
   { title: 'Customer Lookup', href: '/store/lookup', icon: navIcon('search') },
+  { title: 'Enroll member', href: '/store/enroll', icon: navIcon('idCard') },
 ];
 
 export default function StoreLayout({ children }: { children: React.ReactNode }) {

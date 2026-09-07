@@ -18,6 +18,7 @@ import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import type { Cart, Product } from '@hos-marketplace/shared-types';
 import { Decimal } from '@prisma/client/runtime/library';
 import { LoyaltyService } from '../loyalty/loyalty.service';
+import { computeQualifyingSubtotal } from '../loyalty/qualifying-amount';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 // Valid product status values for the shared types Product interface
@@ -929,9 +930,34 @@ export class CartService {
     if (!this.loyaltyService) {
       throw new BadRequestException('Loyalty is not available');
     }
-    const { points, discount } = await this.loyaltyService.validateCartRedemption(userId, optionId);
-    const cartRow = await this.prisma.cart.findUnique({ where: { userId } });
+    const cartRow = await this.prisma.cart.findUnique({
+      where: { userId },
+      include: {
+        items: {
+          include: {
+            product: {
+              select: { name: true, sku: true, slug: true, tags: true, category: true },
+            },
+          },
+        },
+      },
+    });
     if (!cartRow) throw new NotFoundException('Cart not found');
+
+    const purchaseSubtotal = computeQualifyingSubtotal(
+      (cartRow.items ?? []).map((item) => ({
+        quantity: item.quantity,
+        price: item.price,
+        name: item.product?.name,
+        product: item.product,
+      })),
+    ).toNumber();
+
+    const { points, discount } = await this.loyaltyService.validateCartRedemption(
+      userId,
+      optionId,
+      purchaseSubtotal,
+    );
 
     await this.prisma.cart.update({
       where: { id: cartRow.id },

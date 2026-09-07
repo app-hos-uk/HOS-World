@@ -21,8 +21,15 @@ import { LoyaltyWalletService } from '../services/wallet.service';
 import { LoyaltySettingsService } from '../services/loyalty-settings.service';
 import { FeatureFlagsService } from '../../config/feature-flags.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
+import {
+  isSignupSizedWelcomeBurn,
+  isWelcomeRewardOption,
+  welcomeMinPurchaseFromConditions,
+} from '../qualifying-amount';
 
 export type BurnChannel = 'MARKETPLACE_CHECKOUT' | 'HOS_OUTLET_POS';
+
+const DEFAULT_WELCOME_MIN_PURCHASE = 85;
 
 @Injectable()
 export class LoyaltyBurnEngine {
@@ -70,6 +77,8 @@ export class LoyaltyBurnEngine {
      * A repeated call returns the original redemption instead of burning again.
      */
     idempotencyKey?: string | null;
+    /** Qualifying merchandise subtotal (gift cards excluded) for welcome-reward gates. */
+    purchaseSubtotal?: number | null;
     prismaTx?: Prisma.TransactionClient;
   }): Promise<{ redemptionId: string; couponCode?: string }> {
     if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
@@ -163,6 +172,15 @@ export class LoyaltyBurnEngine {
           throw new BadRequestException('Reward is out of stock');
         }
       }
+
+      await this.assertWelcomePurchaseMinimum({
+        option,
+        membershipId: params.membershipId,
+        points: params.points,
+        purchaseSubtotal: params.purchaseSubtotal,
+        orderId: params.orderId,
+        prismaTx: tx,
+      });
 
       const optionIdForRow =
         params.optionId ?? (await this.ensureGenericBurnOption(tx as Prisma.TransactionClient));
@@ -287,6 +305,114 @@ export class LoyaltyBurnEngine {
       return run(params.prismaTx);
     }
     return this.prisma.$transaction(async (tx) => run(tx));
+  }
+
+  /**
+   * Welcome Reward (signup bonus) cannot be redeemed below the campaign purchase minimum.
+   */
+  async assertWelcomePurchaseMinimum(params: {
+    option: { id: string; name: string; type: string } | null;
+    membershipId?: string | null;
+    points?: number | null;
+    purchaseSubtotal?: number | null;
+    orderId?: string | null;
+    prismaTx?: Prisma.TransactionClient;
+  }): Promise<void> {
+    const db = params.prismaTx ?? this.prisma;
+    const campaignConditions = await this.loadActiveCampaignConditions(db);
+    let isWelcome = isWelcomeRewardOption(params.option, campaignConditions);
+
+    if (!isWelcome && params.membershipId && params.points && params.points > 0) {
+      try {
+        const signupTx = await db.loyaltyTransaction.findFirst({
+          where: {
+            membershipId: params.membershipId,
+            source: 'SIGNUP',
+            type: LoyaltyTxType.BONUS,
+          },
+          select: { points: true },
+        });
+        const priorWelcome = await db.loyaltyRedemption.count({
+          where: {
+            membershipId: params.membershipId,
+            status: 'COMPLETED',
+            pointsSpent: signupTx?.points ?? -1,
+          },
+        });
+        isWelcome = isSignupSizedWelcomeBurn(
+          params.points,
+          signupTx?.points,
+          priorWelcome,
+        );
+      } catch {
+        // Tests / mocks without these models still honour option-based welcome detection.
+      }
+    }
+
+    if (!isWelcome) return;
+
+    let purchaseSubtotal = params.purchaseSubtotal;
+    if ((purchaseSubtotal == null || Number.isNaN(Number(purchaseSubtotal))) && params.orderId) {
+      try {
+        const order = await db.order.findUnique({
+          where: { id: params.orderId },
+          select: { qualifyingSubtotal: true, subtotal: true },
+        });
+        if (order?.qualifyingSubtotal != null) {
+          purchaseSubtotal = Number(order.qualifyingSubtotal);
+        } else if (order?.subtotal != null) {
+          purchaseSubtotal = Number(order.subtotal);
+        }
+      } catch {
+        // Tests / clients without an Order model on the mock still gate via purchaseSubtotal.
+      }
+    }
+
+    let fallback = DEFAULT_WELCOME_MIN_PURCHASE;
+    if (this.loyaltySettings) {
+      try {
+        const { settings } = await this.loyaltySettings.getResolved();
+        if (settings.welcomeRewardMinPurchase > 0) {
+          fallback = settings.welcomeRewardMinPurchase;
+        } else if (settings.campaignMinPurchaseThreshold > 0) {
+          fallback = settings.campaignMinPurchaseThreshold;
+        }
+      } catch {
+        fallback = DEFAULT_WELCOME_MIN_PURCHASE;
+      }
+    }
+
+    const threshold = welcomeMinPurchaseFromConditions(campaignConditions, fallback);
+    const spent = Number(purchaseSubtotal);
+    if (!Number.isFinite(spent) || spent < threshold) {
+      const formatted = threshold.toFixed(2);
+      throw new BadRequestException(
+        `Minimum purchase of ${formatted} required to redeem Welcome Reward`,
+      );
+    }
+  }
+
+  private async loadActiveCampaignConditions(
+    db: Prisma.TransactionClient | PrismaService,
+  ): Promise<Record<string, unknown>[]> {
+    try {
+      const now = new Date();
+      const rows = await db.loyaltyBonusCampaign.findMany({
+        where: {
+          isActive: true,
+          startsAt: { lte: now },
+          endsAt: { gte: now },
+        },
+        select: { conditions: true },
+      });
+      return rows.map((row) => {
+        const raw = row.conditions;
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+        return raw as Record<string, unknown>;
+      });
+    } catch {
+      return [];
+    }
   }
 
   /**

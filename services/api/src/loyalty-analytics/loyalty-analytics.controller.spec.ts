@@ -15,6 +15,7 @@ describe('LoyaltyAnalyticsController', () => {
     getFandomTrends: jest.fn().mockResolvedValue([]),
     getTierAnalysis: jest.fn().mockResolvedValue([]),
     getChannelPerformance: jest.fn().mockResolvedValue({}),
+    getCampaignPerformanceMetrics: jest.fn().mockResolvedValue({}),
     getCohortRetention: jest.fn().mockResolvedValue([]),
     computeDailySnapshot: jest.fn().mockResolvedValue({}),
     recomputeAllClv: jest.fn().mockResolvedValue({ computed: 5, errors: 0 }),
@@ -63,6 +64,18 @@ describe('LoyaltyAnalyticsController', () => {
   it('fandom trends', async () => {
     await controller.fandomTrends('30');
     expect(analytics.getFandomTrends).toHaveBeenCalledWith(30);
+  });
+
+  it('campaign performance', async () => {
+    await controller.campaignPerformance('c1', 's1', '2026-09-07', '2026-09-20');
+    expect(analytics.getCampaignPerformanceMetrics).toHaveBeenCalledWith(
+      'c1',
+      's1',
+      expect.objectContaining({
+        from: expect.any(Date),
+        to: expect.any(Date),
+      }),
+    );
   });
 
   it('export', async () => {

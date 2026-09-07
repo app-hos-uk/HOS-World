@@ -595,6 +595,7 @@ export class LoyaltyService implements OnModuleInit {
       optionId?: string;
       storeId?: string;
       idempotencyKey?: string;
+      purchaseSubtotal?: number;
     },
   ) {
     this.assertEnabled();
@@ -609,6 +610,7 @@ export class LoyaltyService implements OnModuleInit {
       optionId: body.optionId,
       regionCode: membership.regionCode,
       idempotencyKey: body.idempotencyKey,
+      purchaseSubtotal: body.purchaseSubtotal,
     });
   }
 
@@ -926,6 +928,7 @@ export class LoyaltyService implements OnModuleInit {
     points: number,
     optionId: string | null,
     discountAmount: Decimal,
+    purchaseSubtotal?: number,
   ): Promise<void> {
     if (points <= 0) return;
     this.assertEnabled();
@@ -940,6 +943,7 @@ export class LoyaltyService implements OnModuleInit {
       optionId,
       orderId,
       prismaTx: tx,
+      purchaseSubtotal,
     });
 
     await tx.order.update({
@@ -959,6 +963,7 @@ export class LoyaltyService implements OnModuleInit {
   async validateCartRedemption(
     userId: string,
     optionId: string,
+    purchaseSubtotal?: number,
   ): Promise<{ points: number; discount: Decimal }> {
     this.assertEnabled();
     const { settings } = await this.loyaltySettings.getResolved();
@@ -988,6 +993,13 @@ export class LoyaltyService implements OnModuleInit {
     if (opt.pointsCost < minRedeem) {
       throw new BadRequestException(`Minimum redemption is ${minRedeem} points`);
     }
+
+    await this.burn.assertWelcomePurchaseMinimum({
+      option: { id: opt.id, name: opt.name, type: opt.type },
+      membershipId: membership.id,
+      points: opt.pointsCost,
+      purchaseSubtotal,
+    });
 
     let discount = new Decimal(0);
     if (opt.type === 'DISCOUNT' && opt.value != null) {

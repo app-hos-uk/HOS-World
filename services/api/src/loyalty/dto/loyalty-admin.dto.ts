@@ -7,6 +7,7 @@ import {
   IsArray,
   IsObject,
   IsDateString,
+  IsUUID,
   Min,
   Matches,
 } from 'class-validator';
@@ -108,6 +109,7 @@ export class CreateCampaignDto {
   @IsOptional() @IsObject() conditions?: Record<string, any>;
   @IsOptional() @IsArray() @IsString({ each: true }) regionCodes?: string[];
   @IsOptional() @IsArray() @IsString({ each: true }) channelCodes?: string[];
+  @IsOptional() @IsArray() @IsUUID('4', { each: true }) storeIds?: string[];
   @IsOptional() @IsBoolean() isActive?: boolean;
   @IsDateString() startsAt!: string;
   @IsDateString() endsAt!: string;
@@ -122,6 +124,7 @@ export class UpdateCampaignDto {
   @IsOptional() @IsObject() conditions?: Record<string, any>;
   @IsOptional() @IsArray() @IsString({ each: true }) regionCodes?: string[];
   @IsOptional() @IsArray() @IsString({ each: true }) channelCodes?: string[];
+  @IsOptional() @IsArray() @IsUUID('4', { each: true }) storeIds?: string[];
   @IsOptional() @IsBoolean() isActive?: boolean;
   @IsOptional() @IsDateString() startsAt?: string;
   @IsOptional() @IsDateString() endsAt?: string;

@@ -158,6 +158,7 @@ export const menuItems: ShellMenuItem[] = [
       { title: 'Identity Reviews', href: '/admin/loyalty/identity-reviews', icon: navIcon('users') },
       { title: 'Liability Report', href: '/admin/loyalty/liability', icon: navIcon('scale') },
       { title: 'Program Health', href: '/admin/loyalty-analytics', icon: navIcon('lightbulb') },
+      { title: 'Campaign Performance', href: '/admin/loyalty-analytics/campaign-performance', icon: navIcon('target') },
       { title: 'CLV Report', href: '/admin/loyalty-analytics/clv', icon: navIcon('user') },
       { title: 'Fandom Trends', href: '/admin/loyalty-analytics/fandom-trends', icon: navIcon('zap') },
     ],
@@ -285,6 +286,7 @@ export const TEAM_ADMIN_SHELL_MENUS: Record<string, ShellMenuItem[]> = {
     { title: 'Loyalty Campaigns', href: '/admin/loyalty/campaigns', icon: navIcon('target'), zone: 'growth' },
     { title: 'Loyalty Earn Rules', href: '/admin/loyalty/earn-rules', icon: navIcon('zap'), zone: 'growth' },
     { title: 'Loyalty Analytics', href: '/admin/loyalty-analytics', icon: navIcon('trending'), zone: 'growth' },
+    { title: 'Campaign Performance', href: '/admin/loyalty-analytics/campaign-performance', icon: navIcon('target'), zone: 'growth' },
   ],
   FINANCE: [
     { title: 'Finance Dashboard', href: '/finance/dashboard', icon: navIcon('dashboard'), zone: 'quickAccess' },

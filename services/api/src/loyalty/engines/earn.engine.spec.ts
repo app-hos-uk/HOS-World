@@ -120,6 +120,11 @@ describe('LoyaltyEarnEngine', () => {
             pointsAmount: 1,
             multiplierStack: true,
           }),
+          findFirst: jest.fn().mockResolvedValue({
+            action: 'SIGNUP',
+            isActive: true,
+            pointsAmount: 0,
+          }),
         },
         vendorProduct: {
           findFirst: jest.fn().mockResolvedValue(null),
@@ -459,7 +464,11 @@ describe('LoyaltyEarnEngine', () => {
         'EARN',
         expect.objectContaining({ source: 'POS_PURCHASE' }),
       );
-      expect(mockCampaigns.getActiveForContext).toHaveBeenCalledWith('US', 'HOS_OUTLET_POS');
+      expect(mockCampaigns.getActiveForContext).toHaveBeenCalledWith(
+        'US',
+        'HOS_OUTLET_POS',
+        'store-1',
+      );
     });
 
     it('does not fall back when seller opted out of loyalty', async () => {
@@ -514,6 +523,17 @@ describe('LoyaltyEarnEngine', () => {
           findUnique: jest.fn().mockResolvedValue(null),
         },
         vendorProduct: { findFirst: jest.fn().mockResolvedValue(null) },
+        user: { findUnique: jest.fn().mockResolvedValue({ id: 'u1', country: 'US' }) },
+      };
+
+      const mockCampaigns = {
+        getActiveForContext: jest.fn().mockResolvedValue([]),
+        applyCampaignsToBasePoints: jest.fn().mockReturnValue({
+          points: 0,
+          campaignId: undefined,
+          mult: 1,
+          bonus: 0,
+        }),
       };
 
       const engine = new LoyaltyEarnEngine(
@@ -521,7 +541,7 @@ describe('LoyaltyEarnEngine', () => {
         mockConfig as any,
         mockFeatureFlags as any,
         mockWallet as any,
-        null as any,
+        mockCampaigns as any,
         null as any,
         mockBrandPartnerships as any,
         mockProductCampaigns as any,
@@ -580,6 +600,17 @@ describe('LoyaltyEarnEngine', () => {
           findUnique: jest.fn().mockResolvedValue(null),
         },
         vendorProduct: { findFirst: jest.fn().mockResolvedValue(null) },
+        user: { findUnique: jest.fn().mockResolvedValue({ id: 'u1', country: 'US' }) },
+      };
+
+      const mockCampaigns = {
+        getActiveForContext: jest.fn().mockResolvedValue([]),
+        applyCampaignsToBasePoints: jest.fn().mockReturnValue({
+          points: 0,
+          campaignId: undefined,
+          mult: 1,
+          bonus: 0,
+        }),
       };
 
       const engine = new LoyaltyEarnEngine(
@@ -587,7 +618,7 @@ describe('LoyaltyEarnEngine', () => {
         mockConfig as any,
         mockFeatureFlags as any,
         mockWallet as any,
-        null as any,
+        mockCampaigns as any,
         null as any,
         mockBrandPartnerships as any,
         mockProductCampaigns as any,
@@ -705,6 +736,171 @@ describe('LoyaltyEarnEngine', () => {
       );
       expect(saleUpdate).toHaveBeenCalledWith(
         expect.objectContaining({ data: { loyaltyPointsEarned: 0 } }),
+      );
+    });
+  });
+
+  describe('campaign qualifying helpers', () => {
+    const engine = new LoyaltyEarnEngine(
+      null as any,
+      { get: jest.fn() } as any,
+      mockFeatureFlags as any,
+      null as any,
+      null as any,
+      null as any,
+      mockBrandPartnerships as any,
+      mockProductCampaigns as any,
+      mockRegion as any,
+    );
+
+    it('excludes gift cards from the qualifying subtotal', () => {
+      const total = engine.computeQualifyingSubtotal([
+        { product: { name: 'Robe' }, price: 100, quantity: 1 },
+        { product: { name: 'Gift Card $50' }, price: 50, quantity: 1 },
+      ]);
+      expect(total.toNumber()).toBe(100);
+    });
+
+    it('computes 20% of qualifying spend above the campaign threshold', () => {
+      const { points } = engine.computeThresholdBonusPoints(
+        engine.computeQualifyingSubtotal([{ product: { name: 'Robe' }, price: 185, quantity: 1 }]),
+        [
+          {
+            id: 'ts-campaign',
+            type: 'PERCENTAGE_OF_QUALIFYING',
+            conditions: { threshold: 85, earnRate: 0.2, pointsPerDollar: 100 },
+          },
+        ],
+      );
+      expect(points).toBe(2000);
+    });
+  });
+
+  describe('auto-enroll signup bonus', () => {
+    it('awards the SIGNUP welcome bonus when membership is created on purchase', async () => {
+      const mockConfig = {
+        get: jest.fn().mockImplementation((key: string, defaultVal?: any) => {
+          if (key === 'LOYALTY_ENABLED') return 'true';
+          if (key === 'LOYALTY_DEFAULT_EARN_RATE') return 1;
+          if (key === 'LOYALTY_CARD_PREFIX') return 'HOS';
+          if (key === 'HOS_SELLER_ID') return '';
+          return defaultVal;
+        }),
+      };
+      const createdMembership = {
+        id: 'm-new',
+        userId: 'u1',
+        tier: { multiplier: { toNumber: () => 1 }, level: 1 },
+        regionCode: 'US',
+      };
+      const mockWallet = {
+        applyDelta: jest.fn().mockResolvedValue({ applied: true }),
+        lockMembership: jest.fn().mockResolvedValue(undefined),
+      };
+      const mockPrisma = {
+        order: {
+          findFirst: jest.fn().mockResolvedValue({
+            id: 'o1',
+            userId: 'u1',
+            loyaltyPointsEarned: 0,
+            orderNumber: 'ORD-1',
+            subtotal: 100,
+            items: [
+              {
+                product: {
+                  id: 'p1',
+                  sellerId: 's1',
+                  isPlatformOwned: false,
+                  seller: { id: 's1', loyaltyEnabled: true, loyaltyEarnRate: null },
+                  fandom: null,
+                  brand: null,
+                  categoryId: null,
+                  name: 'Robe',
+                },
+                price: 100,
+                quantity: 1,
+              },
+            ],
+            user: { country: 'US' },
+            clickCollect: null,
+          }),
+          update: jest.fn(),
+        },
+        user: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'u1',
+            role: 'CUSTOMER',
+            country: 'US',
+            currencyPreference: 'USD',
+            birthday: null,
+          }),
+        },
+        loyaltyMembership: {
+          findUnique: jest.fn().mockResolvedValueOnce(null).mockResolvedValue(createdMembership),
+          create: jest.fn().mockResolvedValue(createdMembership),
+          update: jest.fn(),
+        },
+        loyaltyTier: {
+          findFirst: jest.fn().mockResolvedValue({ id: 'tier-1', slug: 'initiate' }),
+        },
+        loyaltyEarnRule: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'rule-purchase',
+            action: 'PURCHASE',
+            isActive: true,
+            pointsType: 'PER_CURRENCY_UNIT',
+            pointsAmount: 1,
+            multiplierStack: true,
+          }),
+          findFirst: jest.fn().mockResolvedValue({
+            action: 'SIGNUP',
+            isActive: true,
+            pointsAmount: 2000,
+          }),
+        },
+        vendorProduct: { findFirst: jest.fn().mockResolvedValue(null) },
+        loyaltyReferral: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
+        $transaction: jest.fn(async (fn: (tx: any) => Promise<any>) =>
+          fn({
+            loyaltyMembership: { update: jest.fn() },
+            order: { update: jest.fn() },
+            clickCollectOrder: { update: jest.fn() },
+            loyaltyTransaction: { findFirst: jest.fn().mockResolvedValue(null) },
+          }),
+        ),
+      };
+      const mockCampaigns = {
+        getActiveForContext: jest.fn().mockResolvedValue([]),
+        applyCampaignsToBasePoints: jest.fn().mockReturnValue({
+          points: 100,
+          campaignId: undefined,
+          mult: 1,
+          bonus: 0,
+        }),
+      };
+      const engine = new LoyaltyEarnEngine(
+        mockPrisma as any,
+        mockConfig as any,
+        mockFeatureFlags as any,
+        mockWallet as any,
+        mockCampaigns as any,
+        { recalculateTier: jest.fn() } as any,
+        mockBrandPartnerships as any,
+        mockProductCampaigns as any,
+        mockRegion as any,
+      );
+
+      await engine.processOrderComplete('order-1');
+
+      expect(mockWallet.applyDelta).toHaveBeenCalledWith(
+        expect.anything(),
+        'm-new',
+        2000,
+        'BONUS',
+        expect.objectContaining({
+          source: 'SIGNUP',
+          idempotencyKey: 'bonus:SIGNUP:m-new',
+        }),
       );
     });
   });

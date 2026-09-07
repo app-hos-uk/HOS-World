@@ -17,6 +17,8 @@ import { useDateTime } from '@/hooks/useDateTime';
 export default function AdminLoyaltyCampaignsPage() {
   const { formatDate } = useDateTime();
   const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [stores, setStores] = useState<Array<{ id: string; name: string; code?: string }>>([]);
+  const [storesLoading, setStoresLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
@@ -28,7 +30,12 @@ export default function AdminLoyaltyCampaignsPage() {
     startsAt: '',
     endsAt: '',
     isActive: true,
+    storeIds: [] as string[],
+    threshold: 0,
+    earnRate: 0,
+    pointsPerDollar: 0,
   });
+  const [defaults, setDefaults] = useState({ threshold: 85, earnRate: 0.2, pointsPerDollar: 100 });
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; description?: string; startsAt?: string; endsAt?: string }>({});
   const [saving, setSaving] = useState(false);
   const toast = useToast();
@@ -54,8 +61,48 @@ export default function AdminLoyaltyCampaignsPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    setStoresLoading(true);
+    apiClient
+      .adminListStores()
+      .then((r) => {
+        const d = r.data as Array<{ id: string; name: string; code?: string }> | undefined;
+        setStores(Array.isArray(d) ? d : []);
+      })
+      .catch((err: unknown) => {
+        toast.error(err instanceof Error ? err.message : 'Failed to load stores');
+      })
+      .finally(() => setStoresLoading(false));
+
+    apiClient
+      .adminGetLoyaltySettings()
+      .then((r) => {
+        const payload = r.data as { settings?: { campaignMinPurchaseThreshold?: number; campaignBonusEarnRate?: number; campaignBonusPointsPerDollar?: number } };
+        if (payload?.settings) {
+          setDefaults({
+            threshold: Number(payload.settings.campaignMinPurchaseThreshold || 0),
+            earnRate: Number(payload.settings.campaignBonusEarnRate || 0),
+            pointsPerDollar: Number(payload.settings.campaignBonusPointsPerDollar || 0),
+          });
+        }
+      })
+      .catch(() => {});
+  }, [toast]);
+
   const resetForm = () => {
-    setForm({ name: '', description: '', type: 'MULTIPLIER', multiplier: 2, startsAt: '', endsAt: '', isActive: true });
+    setForm({
+      name: '',
+      description: '',
+      type: 'MULTIPLIER',
+      multiplier: 2,
+      startsAt: '',
+      endsAt: '',
+      isActive: true,
+      storeIds: [],
+      threshold: defaults.threshold,
+      earnRate: defaults.earnRate,
+      pointsPerDollar: defaults.pointsPerDollar,
+    });
     setFieldErrors({});
     setEditing(null);
     setShowForm(false);
@@ -63,6 +110,11 @@ export default function AdminLoyaltyCampaignsPage() {
 
   const startEdit = (c: any) => {
     setEditing(c);
+    const cond = (c.conditions && typeof c.conditions === 'object' ? c.conditions : {}) as {
+      threshold?: number;
+      earnRate?: number;
+      pointsPerDollar?: number;
+    };
     setForm({
       name: c.name || '',
       description: c.description || '',
@@ -71,6 +123,10 @@ export default function AdminLoyaltyCampaignsPage() {
       startsAt: c.startsAt ? new Date(c.startsAt).toISOString().slice(0, 16) : '',
       endsAt: c.endsAt ? new Date(c.endsAt).toISOString().slice(0, 16) : '',
       isActive: c.isActive ?? true,
+      storeIds: Array.isArray(c.storeIds) ? c.storeIds : [],
+      threshold: Number(cond.threshold ?? defaults.threshold),
+      earnRate: Number(cond.earnRate ?? defaults.earnRate),
+      pointsPerDollar: Number(cond.pointsPerDollar ?? defaults.pointsPerDollar),
     });
     setShowForm(true);
   };
@@ -101,7 +157,7 @@ export default function AdminLoyaltyCampaignsPage() {
     }
     setSaving(true);
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         name,
         description: description || undefined,
         type: form.type || 'MULTIPLIER',
@@ -109,7 +165,16 @@ export default function AdminLoyaltyCampaignsPage() {
         isActive: form.isActive,
         startsAt: new Date(form.startsAt).toISOString(),
         endsAt: new Date(form.endsAt).toISOString(),
+        storeIds: form.storeIds,
       };
+      if (form.type === 'PERCENTAGE_OF_QUALIFYING') {
+        payload.conditions = {
+          threshold: form.threshold,
+          earnRate: form.earnRate,
+          pointsPerDollar: form.pointsPerDollar,
+          minPurchaseToRedeem: form.threshold,
+        };
+      }
       if (editing) {
         await apiClient.adminUpdateLoyaltyCampaign(editing.id, payload);
         toast.success('Campaign updated');
@@ -182,6 +247,7 @@ export default function AdminLoyaltyCampaignsPage() {
                 <select className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
                   <option value="MULTIPLIER">Multiplier</option>
                   <option value="BONUS_POINTS">Bonus Points</option>
+                  <option value="PERCENTAGE_OF_QUALIFYING">% of spend above threshold</option>
                 </select>
               </div>
               <div>
@@ -194,9 +260,67 @@ export default function AdminLoyaltyCampaignsPage() {
                 <input type="datetime-local" min={editing ? undefined : nowDateTimeLocalValue()} className={`w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none ${fieldErrors.endsAt ? 'border-red-500' : 'border-hos-border'}`} value={form.endsAt} onChange={(e) => { setForm({ ...form, endsAt: e.target.value }); if (fieldErrors.endsAt) setFieldErrors((p) => ({ ...p, endsAt: undefined })); }} aria-invalid={!!fieldErrors.endsAt} />
                 {fieldErrors.endsAt && <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.endsAt}</p>}
               </div>
+              {form.type === 'PERCENTAGE_OF_QUALIFYING' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Purchase threshold</label>
+                    <input type="number" min={0} step="0.01" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border" value={form.threshold} onChange={(e) => setForm({ ...form, threshold: Number(e.target.value) })} />
+                    <p className="mt-1 text-xs text-hos-text-muted">Welcome Reward and bonus both require at least this merchandise total.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Bonus rate (0.20 = 20%)</label>
+                    <input type="number" min={0} step="0.01" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border" value={form.earnRate} onChange={(e) => setForm({ ...form, earnRate: Number(e.target.value) })} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Points per currency unit of bonus</label>
+                    <input type="number" min={1} className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border" value={form.pointsPerDollar} onChange={(e) => setForm({ ...form, pointsPerDollar: Number(e.target.value) })} />
+                  </div>
+                </>
+              )}
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
                 <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Applicable Stores</label>
+                <p className="text-xs text-hos-text-muted mb-2">
+                  Optional. Leave empty to apply globally (all stores). Select specific stores to limit this campaign.
+                </p>
+                {storesLoading ? (
+                  <p className="text-sm text-hos-text-muted">Loading stores…</p>
+                ) : stores.length === 0 ? (
+                  <p className="text-sm text-hos-text-muted">No stores found. Campaign will apply globally.</p>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto border border-hos-border rounded-lg p-3 space-y-2 bg-hos-bg-secondary">
+                    {stores.map((s) => {
+                      const checked = form.storeIds.includes(s.id);
+                      return (
+                        <label key={s.id} className="flex items-center gap-2 text-sm text-hos-text-secondary">
+                          <input
+                            type="checkbox"
+                            className="rounded"
+                            checked={checked}
+                            onChange={() => {
+                              setForm({
+                                ...form,
+                                storeIds: checked
+                                  ? form.storeIds.filter((id) => id !== s.id)
+                                  : [...form.storeIds, s.id],
+                              });
+                            }}
+                          />
+                          <span>{s.name}</span>
+                          {s.code ? <span className="text-hos-text-muted text-xs">({s.code})</span> : null}
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+                {form.storeIds.length === 0 ? (
+                  <p className="mt-1 text-xs text-hos-gold">Applies to all stores</p>
+                ) : (
+                  <p className="mt-1 text-xs text-hos-text-muted">{form.storeIds.length} store{form.storeIds.length === 1 ? '' : 's'} selected</p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="campActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded" />
@@ -230,9 +354,22 @@ export default function AdminLoyaltyCampaignsPage() {
                       </div>
                       <p className="text-sm text-hos-text-secondary mb-2">{c.description || 'No description'}</p>
                       <div className="flex flex-wrap gap-4 text-sm text-hos-text-muted">
-                        <span><strong>{c.multiplier}x</strong> multiplier</span>
+                        <span>
+                          {c.type === 'PERCENTAGE_OF_QUALIFYING'
+                            ? `${Number(c.conditions?.earnRate ?? defaults.earnRate) * 100}% above $${c.conditions?.threshold ?? defaults.threshold}`
+                            : <><strong>{c.multiplier}x</strong> multiplier</>}
+                        </span>
                         {c.startsAt && <span>From: {formatDate(c.startsAt)}</span>}
                         {c.endsAt && <span>Until: {formatDate(c.endsAt)}</span>}
+                        <span>
+                          Stores:{' '}
+                          {Array.isArray(c.storeIds) && c.storeIds.length > 0
+                            ? stores
+                                .filter((s) => c.storeIds.includes(s.id))
+                                .map((s) => s.name)
+                                .join(', ') || `${c.storeIds.length} selected`
+                            : 'All stores'}
+                        </span>
                       </div>
                     </div>
                     <div className="flex gap-2 shrink-0">

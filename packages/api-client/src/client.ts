@@ -1452,6 +1452,23 @@ export class ApiClient {
     );
   }
 
+  async adminGetCampaignPerformance(params?: {
+    campaignId?: string;
+    storeId?: string;
+    from?: string;
+    to?: string;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.campaignId) q.set('campaignId', params.campaignId);
+    if (params?.storeId) q.set('storeId', params.storeId);
+    if (params?.from) q.set('from', params.from);
+    if (params?.to) q.set('to', params.to);
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(
+      `/admin/loyalty-analytics/campaign-performance${qs ? `?${qs}` : ''}`,
+    );
+  }
+
   async adminGetFandomTrends(days?: number): Promise<ApiResponse<unknown>> {
     const qs = days != null ? `?days=${days}` : '';
     return this.request<ApiResponse<unknown>>(`/admin/loyalty-analytics/fandom-trends${qs}`);
@@ -2882,6 +2899,19 @@ export class ApiClient {
     });
   }
 
+  async enrollLoyaltyPos(body: {
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+    country?: string;
+  }): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/loyalty/pos/enroll', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
   async redeemLoyaltyPosVoucher(body: {
     points: number;
     storeId: string;
@@ -2893,6 +2923,7 @@ export class ApiClient {
     idempotencyKey?: string;
     terminalId?: string;
     otpCode?: string;
+    purchaseSubtotal?: number;
   }): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>('/loyalty/pos/redeem-for-voucher', {
       method: 'POST',

@@ -155,6 +155,7 @@ export default function LoyaltyAnalyticsPage() {
             {/* Sub-report links */}
             <div className="flex flex-wrap gap-3 text-sm">
               <Link href="/admin/loyalty-analytics/clv" className="text-hos-gold hover:text-hos-gold-hover">CLV report →</Link>
+              <Link href="/admin/loyalty-analytics/campaign-performance" className="text-hos-gold hover:text-hos-gold-hover">Campaign performance →</Link>
               <Link href="/admin/loyalty-analytics/attribution" className="text-hos-gold hover:text-hos-gold-hover">Campaign ROI →</Link>
               <Link href="/admin/loyalty-analytics/fandom-trends" className="text-hos-gold hover:text-hos-gold-hover">Fandom trends →</Link>
               <Link href="/admin/loyalty-analytics/tiers" className="text-hos-gold hover:text-hos-gold-hover">Tier analysis →</Link>

@@ -15,6 +15,8 @@ export type LoyaltyProgrammeSettings = {
   defaultEarnRate: number;
   defaultRedeemValue: number;
   minRedemptionPoints: number;
+  /** Minimum qualifying merchandise spend to redeem the Welcome Reward (signup bonus). */
+  welcomeRewardMinPurchase: number;
   pointsExpiryMonths: number;
   cardPrefix: string;
   redemptionAtCheckout: boolean;
@@ -27,6 +29,12 @@ export type LoyaltyProgrammeSettings = {
   clawEarnOnCancel: boolean;
   restoreBurnOnReturn: boolean;
   clawEarnOnReturn: boolean;
+  /** Minimum purchase (currency units) for Enchanted Circle welcome-reward redemption. */
+  campaignMinPurchaseThreshold: number;
+  /** Fraction of qualifying amount earned as campaign bonus (0.20 = 20%). */
+  campaignBonusEarnRate: number;
+  /** Loyalty points per currency unit of campaign bonus. */
+  campaignBonusPointsPerDollar: number;
 };
 
 export type LoyaltyRuntimeStatus = {
@@ -87,6 +95,10 @@ export class LoyaltySettingsService {
         0,
         Math.floor(num(this.config.get('LOYALTY_MIN_REDEMPTION_POINTS'), 100)),
       ),
+      welcomeRewardMinPurchase: Math.max(
+        0,
+        num(this.config.get('LOYALTY_WELCOME_MIN_PURCHASE'), 85),
+      ),
       pointsExpiryMonths: Math.max(
         0,
         Math.floor(num(this.config.get('LOYALTY_POINTS_EXPIRY_MONTHS'), 24)),
@@ -106,6 +118,18 @@ export class LoyaltySettingsService {
       clawEarnOnCancel: true,
       restoreBurnOnReturn: true,
       clawEarnOnReturn: true,
+      campaignMinPurchaseThreshold: Math.max(
+        0,
+        num(this.config.get('LOYALTY_CAMPAIGN_MIN_PURCHASE_THRESHOLD'), 85),
+      ),
+      campaignBonusEarnRate: Math.max(
+        0,
+        num(this.config.get('LOYALTY_CAMPAIGN_BONUS_EARN_RATE'), 0.2),
+      ),
+      campaignBonusPointsPerDollar: Math.max(
+        0,
+        Math.floor(num(this.config.get('LOYALTY_CAMPAIGN_BONUS_POINTS_PER_DOLLAR'), 100)),
+      ),
     };
   }
 
@@ -119,6 +143,13 @@ export class LoyaltySettingsService {
       minRedemptionPoints: Math.max(
         0,
         Math.floor(num(partial.minRedemptionPoints, base.minRedemptionPoints)),
+      ),
+      welcomeRewardMinPurchase: Math.max(
+        0,
+        num(
+          partial.campaignMinPurchaseThreshold ?? partial.welcomeRewardMinPurchase,
+          base.campaignMinPurchaseThreshold ?? base.welcomeRewardMinPurchase,
+        ),
       ),
       pointsExpiryMonths: Math.max(
         0,
@@ -137,6 +168,21 @@ export class LoyaltySettingsService {
       clawEarnOnCancel: bool(partial.clawEarnOnCancel, base.clawEarnOnCancel),
       restoreBurnOnReturn: bool(partial.restoreBurnOnReturn, base.restoreBurnOnReturn),
       clawEarnOnReturn: bool(partial.clawEarnOnReturn, base.clawEarnOnReturn),
+      campaignMinPurchaseThreshold: Math.max(
+        0,
+        num(
+          partial.campaignMinPurchaseThreshold ?? partial.welcomeRewardMinPurchase,
+          base.campaignMinPurchaseThreshold ?? base.welcomeRewardMinPurchase,
+        ),
+      ),
+      campaignBonusEarnRate: Math.max(
+        0,
+        num(partial.campaignBonusEarnRate, base.campaignBonusEarnRate),
+      ),
+      campaignBonusPointsPerDollar: Math.max(
+        0,
+        Math.floor(num(partial.campaignBonusPointsPerDollar, base.campaignBonusPointsPerDollar)),
+      ),
     };
   }
 

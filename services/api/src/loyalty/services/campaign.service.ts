@@ -5,9 +5,16 @@ import { PrismaService } from '../../database/prisma.service';
 export class LoyaltyCampaignService {
   constructor(private prisma: PrismaService) {}
 
-  /** Active campaigns overlapping now, optionally filtered by region / channel */
-  async getActiveForContext(regionCode: string, channel: string) {
+  /** Active campaigns overlapping now, optionally filtered by region / channel / store */
+  async getActiveForContext(regionCode: string, channel: string, storeId?: string) {
     const now = new Date();
+    // Store-scoped campaigns are outlet-only. Web (no storeId) must not inherit
+    // a Times Square campaign just because channelCodes is empty.
+    const storeFilter = storeId
+      ? {
+          OR: [{ storeIds: { isEmpty: true } }, { storeIds: { has: storeId } }],
+        }
+      : { storeIds: { isEmpty: true } };
     return this.prisma.loyaltyBonusCampaign.findMany({
       where: {
         isActive: true,
@@ -17,6 +24,7 @@ export class LoyaltyCampaignService {
         AND: [
           { OR: [{ regionCodes: { isEmpty: true } }, { regionCodes: { has: regionCode } }] },
           { OR: [{ channelCodes: { isEmpty: true } }, { channelCodes: { has: channel } }] },
+          storeFilter,
         ],
       },
     });
