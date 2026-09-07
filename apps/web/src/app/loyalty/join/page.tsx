@@ -211,9 +211,13 @@ function JoinPageInner() {
         setFandomAnswer(null);
         setChallengeLoadFailed(false);
       } else {
+        setFandomChallenge(null);
+        setFandomAnswer(null);
         setChallengeLoadFailed(true);
       }
     } catch {
+      setFandomChallenge(null);
+      setFandomAnswer(null);
       setChallengeLoadFailed(true);
     }
   }, []);

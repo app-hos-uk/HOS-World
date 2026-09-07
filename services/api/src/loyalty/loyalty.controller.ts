@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Post,
@@ -25,6 +26,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { LoyaltyService } from './loyalty.service';
+import { PrismaService } from '../database/prisma.service';
 import { EnrollLoyaltyDto } from './dto/enroll.dto';
 import { RedeemPointsDto } from './dto/redeem-points.dto';
 import { LoyaltyCheckInDto } from './dto/check-in.dto';
@@ -41,6 +43,7 @@ export class LoyaltyController {
   constructor(
     private loyalty: LoyaltyService,
     private posVouchers: PosVoucherService,
+    private prisma: PrismaService,
   ) {}
 
   @Post('enroll')
@@ -199,7 +202,27 @@ export class LoyaltyController {
     @Request() req: { user: { id: string } },
     @Body() body: RedeemInStoreDto,
   ): Promise<ApiResponse<unknown>> {
-    const data = await this.posVouchers.redeemInStoreForCustomer(req.user.id, body);
+    let { storeId } = body;
+    if (!storeId && body.storeCode) {
+      const code = body.storeCode.trim().toUpperCase();
+      const store = await this.prisma.store.findUnique({
+        where: { code },
+        select: { id: true },
+      });
+      if (!store) {
+        throw new BadRequestException(
+          `Store code "${code}" not found — check with staff`,
+        );
+      }
+      storeId = store.id;
+    }
+    if (!storeId) {
+      throw new BadRequestException('Provide a store code or store ID');
+    }
+    const data = await this.posVouchers.redeemInStoreForCustomer(req.user.id, {
+      ...body,
+      storeId,
+    });
     return { data, message: 'Voucher issued' };
   }
 

@@ -195,10 +195,13 @@ export class LoyaltyListener {
           data: { totalPointsEarned: { increment: refereePoints } },
         });
 
-        // Check weekly referral cap for the referrer
-        const weekStart = new Date();
-        weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-        weekStart.setHours(0, 0, 0, 0);
+        // Check weekly referral cap for the referrer (UTC week boundary)
+        const now = new Date();
+        const weekStart = new Date(Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate() - now.getUTCDay(),
+        ));
         const referralCountThisWeek = await tx.loyaltyTransaction.count({
           where: {
             membershipId: referral.referrerId,

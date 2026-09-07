@@ -2970,7 +2970,8 @@ export class ApiClient {
 
   async redeemLoyaltyInStore(body: {
     points: number;
-    storeId: string;
+    storeId?: string;
+    storeCode?: string;
     idempotencyKey?: string;
   }) {
     return this.request<ApiResponse<unknown>>('/loyalty/redeem-in-store', {

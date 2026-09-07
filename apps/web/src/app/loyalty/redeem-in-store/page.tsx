@@ -21,7 +21,7 @@ export default function RedeemInStorePage() {
   const toast = useToast();
   const { user } = useAuth();
   const [membership, setMembership] = useState<{ currentBalance?: number } | null>(null);
-  const [storeId, setStoreId] = useState('');
+  const [storeCode, setStoreCode] = useState('');
   const [points, setPoints] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VoucherResult | null>(null);
@@ -47,8 +47,9 @@ export default function RedeemInStorePage() {
 
   const redeem = async () => {
     const pts = Number(points);
-    if (!storeId.trim()) {
-      toast.error('Enter the store ID shown at the till');
+    const code = storeCode.trim().toUpperCase();
+    if (!code) {
+      toast.error('Enter the store code shown at the till');
       return;
     }
     if (!Number.isInteger(pts) || pts < 1) {
@@ -59,8 +60,8 @@ export default function RedeemInStorePage() {
     try {
       const r = await apiClient.redeemLoyaltyInStore({
         points: pts,
-        storeId: storeId.trim(),
-        idempotencyKey: `web-customer:${user?.id}:${storeId.trim()}:${pts}:${Math.floor(Date.now() / 300000)}`,
+        storeCode: code,
+        idempotencyKey: `web-customer:${user?.id}:${code}:${pts}:${Math.floor(Date.now() / 300000)}`,
       });
       setResult(r.data as VoucherResult);
       toast.success('Voucher ready — show this code at the till');
@@ -103,13 +104,17 @@ export default function RedeemInStorePage() {
       {!result ? (
         <div className="space-y-4 rounded-lg border border-hos-border p-4 bg-hos-bg-secondary">
           <label className="block text-sm text-hos-text-secondary">
-            Store ID
+            Store code
             <input
-              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg text-hos-text border-hos-border"
-              value={storeId}
-              onChange={(e) => setStoreId(e.target.value)}
-              placeholder="Ask staff for store ID"
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg text-hos-text border-hos-border uppercase tracking-wider"
+              value={storeCode}
+              onChange={(e) => setStoreCode(e.target.value)}
+              placeholder="e.g. HOS-LONDON-01"
+              maxLength={30}
             />
+            <span className="text-xs text-hos-text-muted mt-1 block">
+              Ask staff for the store code displayed at the till
+            </span>
           </label>
           <label className="block text-sm text-hos-text-secondary">
             Points to redeem
