@@ -127,6 +127,11 @@ export class LoyaltyEarnEngine {
   /**
    * Mirror of LoyaltyService.ensureSignupBonus, inlined to avoid a circular import.
    * Idempotent via `bonus:SIGNUP:${membershipId}`.
+   *
+   * Respects DEFER_SIGNUP_BONUS: when enabled (default) and the channel is not
+   * POS-originated, the bonus is skipped if the user's email is not yet verified.
+   * This prevents the earn-engine from racing ahead of the deferred-bonus path
+   * and locking in the default 100 pts before a campaign-aware award can run.
    */
   private async awardSignupBonusForMembership(
     membershipId: string,
@@ -134,6 +139,26 @@ export class LoyaltyEarnEngine {
     channel: string,
     storeId?: string,
   ): Promise<void> {
+    const deferEnabled =
+      this.config.get<string>('DEFER_SIGNUP_BONUS') !== 'false';
+    const isPosChannel =
+      channel === 'POS' ||
+      channel === 'HOS_OUTLET_POS' ||
+      channel === 'AUTO_PURCHASE';
+
+    if (deferEnabled && !isPosChannel) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { emailVerified: true },
+      });
+      if (!user?.emailVerified) {
+        this.logger.log(
+          `Auto-enroll signup bonus deferred for user ${userId} — awaiting email verification`,
+        );
+        return;
+      }
+    }
+
     const membership = await this.prisma.loyaltyMembership.findUnique({
       where: { id: membershipId },
       select: { regionCode: true },
@@ -180,7 +205,33 @@ export class LoyaltyEarnEngine {
         const existingSignup = await tx.loyaltyTransaction.findFirst({
           where: { membershipId, source: 'SIGNUP', type: LoyaltyTxType.BONUS },
         });
-        if (existingSignup) return;
+        if (existingSignup) {
+          // If the existing bonus was the default (no campaign) but a campaign now
+          // matches, upgrade by crediting the difference so the customer gets the
+          // full campaign amount.
+          if (!existingSignup.campaignId && award.campaignId && award.points > existingSignup.points) {
+            const diff = award.points - existingSignup.points;
+            const upgradeResult = await this.wallet.applyDelta(tx, membershipId, diff, LoyaltyTxType.BONUS, {
+              source: 'SIGNUP',
+              channel,
+              campaignId: award.campaignId,
+              description: `Welcome bonus upgrade: ${award.campaignName ?? 'campaign'}`,
+              metadata: {
+                campaignId: award.campaignId,
+                campaignName: award.campaignName ?? null,
+                upgradedFrom: existingSignup.points,
+              },
+              idempotencyKey: `bonus:SIGNUP_UPGRADE:${membershipId}`,
+            });
+            if (upgradeResult?.applied) {
+              await tx.loyaltyMembership.update({
+                where: { id: membershipId },
+                data: { totalPointsEarned: { increment: diff } },
+              });
+            }
+          }
+          return;
+        }
 
         const result = await this.wallet.applyDelta(tx, membershipId, points, LoyaltyTxType.BONUS, {
           source: 'SIGNUP',

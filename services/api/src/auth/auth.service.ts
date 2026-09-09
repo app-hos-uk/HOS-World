@@ -1636,7 +1636,7 @@ export class AuthService {
 
     // Award any deferred signup bonus now that the email is confirmed
     try {
-      const awarded = await this.loyaltyService.awardDeferredSignupBonus(user.id);
+      const awarded = await this.loyaltyService?.awardDeferredSignupBonus(user.id);
       if (awarded) {
         this.logger.log(`Deferred signup bonus awarded for user ${user.id} on email verification`);
       }

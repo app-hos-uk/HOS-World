@@ -478,7 +478,7 @@ export class PosVoucherService {
 
   private async issueGiftCardForVoucher(
     voucherId: string,
-    connection: { provider: string; credentials: string },
+    connection: { provider: string; credentials: string; settings?: unknown },
   ): Promise<{
     voucherId: string;
     redemptionId: string;
@@ -499,6 +499,12 @@ export class PosVoucherService {
 
     const amount = Number(voucher.amount);
     const adapter = await this.buildAdapter(connection, ISSUE_BUDGET_MS);
+    const connSettings = (connection.settings && typeof connection.settings === 'object'
+      ? connection.settings
+      : {}) as Record<string, unknown>;
+    const channelId = connSettings.lightspeedChannelId
+      ? String(connSettings.lightspeedChannelId)
+      : undefined;
 
     try {
       const { externalTransactionId, expiresAt } = await this.createOrReloadGiftCard(
@@ -506,6 +512,7 @@ export class PosVoucherService {
         voucher.cardNumber,
         amount,
         voucher.clientId,
+        { currency: voucher.currency, channelId },
       );
 
       const updated = await this.prisma.loyaltyPosVoucher.update({
@@ -738,6 +745,7 @@ export class PosVoucherService {
     cardNumber: string,
     amount: number,
     clientId: string,
+    opts?: { currency?: string; channelId?: string },
   ): Promise<{ externalTransactionId: string; expiresAt?: Date | null }> {
     const existing = await adapter.getGiftCardByNumber(cardNumber);
 
@@ -754,6 +762,7 @@ export class PosVoucherService {
         amount,
         type: 'RELOADING',
         clientId,
+        currency: opts?.currency,
       });
       return {
         externalTransactionId: tx.id,
@@ -761,7 +770,12 @@ export class PosVoucherService {
       };
     }
 
-    const created = await adapter.createGiftCard({ number: cardNumber, amount });
+    const created = await adapter.createGiftCard({
+      number: cardNumber,
+      amount,
+      currency: opts?.currency,
+      channelId: opts?.channelId,
+    });
     // Prefer a transaction tagged with our clientId; ACTIVATION may not carry it.
     const byClient = created.transactions?.find((t) => t.clientId === clientId);
     const activation = created.transactions?.find((t) => t.type === 'ACTIVATION');

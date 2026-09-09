@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSecureUrlToken } from '@/hooks/useSecureUrlToken';
@@ -12,12 +12,24 @@ function VerifyEmailContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState('');
 
+  const verifiedRef = useRef(false);
+
   useEffect(() => {
     if (!token) {
-      setStatus('error');
-      setMessage('No verification token provided.');
-      return;
+      // Give useSecureUrlToken one render cycle to settle (it reads from
+      // the URL then defers cleanup via queueMicrotask). If the token is
+      // still null after a short delay, it genuinely wasn't provided.
+      const timeout = setTimeout(() => {
+        if (!verifiedRef.current) {
+          setStatus('error');
+          setMessage('No verification token provided.');
+        }
+      }, 500);
+      return () => clearTimeout(timeout);
     }
+
+    if (verifiedRef.current) return;
+    verifiedRef.current = true;
 
     const verify = async () => {
       try {
@@ -27,7 +39,6 @@ function VerifyEmailContent() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              // Required by apps/web API proxy for mutating requests
               'X-Requested-With': 'XMLHttpRequest',
             },
             body: JSON.stringify({ token }),

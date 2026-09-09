@@ -99,6 +99,10 @@ export type POSGiftCardCreatePayload = {
   number: string;
   amount: number;
   expiresAt?: Date | string;
+  /** ISO 4217 currency code — required by Lightspeed for multi-currency accounts. */
+  currency?: string;
+  /** Lightspeed channel ID — required when the merchant has multiple channels. */
+  channelId?: string;
 };
 
 export type POSGiftCardTransactionPayload = {
@@ -106,6 +110,8 @@ export type POSGiftCardTransactionPayload = {
   type: POSGiftCardTransactionType;
   /** Idempotency key — must be stable across retries. */
   clientId: string;
+  /** ISO 4217 currency code — required by Lightspeed for multi-currency accounts. */
+  currency?: string;
 };
 
 export type POSGiftCardTransaction = {

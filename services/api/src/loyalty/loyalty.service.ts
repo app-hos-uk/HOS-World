@@ -386,7 +386,34 @@ export class LoyaltyService implements OnModuleInit {
         const existingSignup = await tx.loyaltyTransaction.findFirst({
           where: { membershipId, source: 'SIGNUP', type: LoyaltyTxType.BONUS },
         });
-        if (existingSignup) return;
+        if (existingSignup) {
+          // If the existing bonus was the default (no campaign) but a campaign now
+          // matches, upgrade by crediting the difference so the customer gets the
+          // full campaign amount.
+          if (!existingSignup.campaignId && award.campaignId && award.points > existingSignup.points) {
+            const diff = award.points - existingSignup.points;
+            const upgradeResult = await this.wallet.applyDelta(tx, membershipId, diff, LoyaltyTxType.BONUS, {
+              source: 'SIGNUP',
+              channel,
+              campaignId: award.campaignId,
+              description: `Welcome bonus upgrade: ${award.campaignName ?? 'campaign'}`,
+              metadata: {
+                campaignId: award.campaignId,
+                campaignName: award.campaignName ?? null,
+                upgradedFrom: existingSignup.points,
+              },
+              idempotencyKey: `bonus:SIGNUP_UPGRADE:${membershipId}`,
+            });
+            if (upgradeResult?.applied) {
+              await tx.loyaltyMembership.update({
+                where: { id: membershipId },
+                data: { totalPointsEarned: { increment: diff } },
+              });
+              awarded = true;
+            }
+          }
+          return;
+        }
 
         const result = await this.wallet.applyDelta(tx, membershipId, points, LoyaltyTxType.BONUS, {
           source: 'SIGNUP',

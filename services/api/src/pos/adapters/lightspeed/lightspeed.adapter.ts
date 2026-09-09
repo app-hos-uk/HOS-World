@@ -639,6 +639,9 @@ export class LightspeedAdapter implements POSAdapter {
       amount: payload.amount,
       number: payload.number,
     };
+    const currency = payload.currency || this.defaultCurrency;
+    if (currency) body.currency = currency;
+    if (payload.channelId) body.channel_id = payload.channelId;
     if (payload.expiresAt) {
       const d = payload.expiresAt instanceof Date ? payload.expiresAt : new Date(payload.expiresAt);
       if (!Number.isNaN(d.getTime())) {
@@ -678,14 +681,17 @@ export class LightspeedAdapter implements POSAdapter {
     const abs = Math.abs(Number(payload.amount));
     const signed = payload.type === 'REDEEMING' ? -abs : abs;
     const encoded = encodeURIComponent(number);
+    const body: Record<string, unknown> = {
+      amount: signed,
+      type: payload.type,
+      client_id: payload.clientId,
+    };
+    const currency = payload.currency || this.defaultCurrency;
+    if (currency) body.currency = currency;
     const { data } = await this.client.request<{ data?: Record<string, unknown> }>(
       'POST',
       `/gift_cards/${encoded}/transactions`,
-      {
-        amount: signed,
-        type: payload.type,
-        client_id: payload.clientId,
-      },
+      body,
     );
     return this.mapGiftCardTransaction(data?.data ?? (data as unknown as Record<string, unknown>));
   }
