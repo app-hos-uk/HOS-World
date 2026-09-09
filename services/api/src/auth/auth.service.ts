@@ -1635,15 +1635,17 @@ export class AuthService {
     });
 
     // Award any deferred signup bonus now that the email is confirmed
-    try {
-      const awarded = await this.loyaltyService?.awardDeferredSignupBonus(user.id);
-      if (awarded) {
-        this.logger.log(`Deferred signup bonus awarded for user ${user.id} on email verification`);
+    if (this.loyaltyService?.isEnabled()) {
+      try {
+        const awarded = await this.loyaltyService.awardDeferredSignupBonus(user.id);
+        if (awarded) {
+          this.logger.log(`Deferred signup bonus awarded for user ${user.id} on email verification`);
+        }
+      } catch (bonusErr: unknown) {
+        this.logger.warn(
+          `Deferred signup bonus check failed for user ${user.id}: ${bonusErr instanceof Error ? bonusErr.message : 'unknown'}`,
+        );
       }
-    } catch (bonusErr: unknown) {
-      this.logger.warn(
-        `Deferred signup bonus check failed for user ${user.id}: ${bonusErr instanceof Error ? bonusErr.message : 'unknown'}`,
-      );
     }
 
     return { message: 'Email verified successfully.' };
