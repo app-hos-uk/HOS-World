@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -40,6 +41,7 @@ function customerStep(row: QueueItem): { label: string; color: string } {
 }
 
 export default function PendingCustomerQueuePage() {
+  const router = useRouter();
   const toast = useToast();
   const [items, setItems] = useState<QueueItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -124,7 +126,11 @@ export default function PendingCustomerQueuePage() {
                     || undefined;
                   const email = row.claimEmail || row.user?.email;
                   return (
-                    <tr key={row.id} className="border-b border-hos-border/50">
+                    <tr
+                      key={row.id}
+                      className="border-b border-hos-border/50 hover:bg-hos-bg-secondary/50 cursor-pointer transition-colors"
+                      onClick={() => router.push(`/store/shipping/${row.id}`)}
+                    >
                       <td className="py-2 pr-3 text-hos-text-muted font-mono text-xs">{serial}</td>
                       <td className="py-2 pr-4 font-mono text-xs">
                         {row.hosOrderNumber || '\u2014'}

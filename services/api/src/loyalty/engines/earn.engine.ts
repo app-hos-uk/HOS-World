@@ -141,12 +141,13 @@ export class LoyaltyEarnEngine {
   ): Promise<void> {
     const deferEnabled =
       this.config.get<string>('DEFER_SIGNUP_BONUS') !== 'false';
-    const isPosChannel =
+    const isInStoreChannel =
       channel === 'POS' ||
       channel === 'HOS_OUTLET_POS' ||
-      channel === 'AUTO_PURCHASE';
+      channel === 'AUTO_PURCHASE' ||
+      channel === 'STORE';
 
-    if (deferEnabled && !isPosChannel) {
+    if (deferEnabled && !isInStoreChannel) {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
         select: { emailVerified: true },

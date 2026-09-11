@@ -125,6 +125,7 @@ function ShipRequestInner() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
+  const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [multi, setMulti] = useState(false);
   const [itemAddress, setItemAddress] = useState<Record<string, string>>({});
   const [carry, setCarry] = useState<Record<string, boolean>>({});
@@ -142,7 +143,11 @@ function ShipRequestInner() {
       ]);
       const data = progress.data as Progress;
       setOrder(data);
-      setAddresses((addr.data as Address[]) || []);
+      const addrList = (addr.data as Address[]) || [];
+      setAddresses(addrList);
+      if (addrList.length === 1) {
+        setSelectedAddress(addrList[0].id);
+      }
       if (!profileSeeded.current) {
         profileSeeded.current = true;
         setFirstName((prev) => prev || data.user?.firstName || '');
@@ -195,7 +200,11 @@ function ShipRequestInner() {
       toast.error('Add a shipping address first');
       return;
     }
-    const defaultAddress = addresses[0].id;
+    if (!multi && !selectedAddress) {
+      toast.error('Please select a shipping address');
+      return;
+    }
+    const primaryAddress = selectedAddress || addresses[0].id;
     const byAddress = new Map<string, Array<{ posSaleItemId: string; quantity: number }>>();
     const carryInHand: Array<{ posSaleItemId: string; quantity: number }> = [];
     for (const item of items) {
@@ -203,7 +212,7 @@ function ShipRequestInner() {
         carryInHand.push({ posSaleItemId: item.id, quantity: item.quantity });
         continue;
       }
-      const addressId = multi ? itemAddress[item.id] || defaultAddress : defaultAddress;
+      const addressId = multi ? itemAddress[item.id] || primaryAddress : primaryAddress;
       const list = byAddress.get(addressId) || [];
       list.push({ posSaleItemId: item.id, quantity: item.quantity });
       byAddress.set(addressId, list);
@@ -321,10 +330,24 @@ function ShipRequestInner() {
         {addresses.length === 0 ? (
           <p className="text-sm text-stone-400">Add every destination you need, including gift addresses.</p>
         ) : (
-          <ul className="text-sm text-stone-300 space-y-1">
+          <ul className="text-sm text-stone-300 space-y-2">
             {addresses.map((a) => (
               <li key={a.id}>
-                {a.street}, {a.city} {a.postalCode}
+                <label className="flex items-start gap-2 cursor-pointer">
+                  {!multi && (
+                    <input
+                      type="radio"
+                      name="shippingAddress"
+                      checked={selectedAddress === a.id}
+                      onChange={() => setSelectedAddress(a.id)}
+                      className="mt-0.5"
+                    />
+                  )}
+                  <span>
+                    {a.firstName || a.lastName ? `${a.firstName ?? ''} ${a.lastName ?? ''} — `.trim() : ''}
+                    {a.street}, {a.city} {a.postalCode}
+                  </span>
+                </label>
               </li>
             ))}
           </ul>
@@ -375,7 +398,12 @@ function ShipRequestInner() {
           ))}
         </ul>
         {!paid && (
-          <button type="button" onClick={assign} className="w-full py-2 rounded bg-violet-600 text-white">
+          <button
+            type="button"
+            onClick={assign}
+            disabled={!multi && !selectedAddress}
+            className="w-full py-2 rounded bg-violet-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Confirm items &amp; addresses
           </button>
         )}

@@ -220,6 +220,7 @@ export class LoyaltyService implements OnModuleInit {
         preferredCurrency:
           dto?.preferredCurrency || user.currencyPreference || PLATFORM_DEFAULT_CURRENCY,
         enrollmentChannel: dto?.enrollmentChannel || 'WEB',
+        enrollmentStoreId: dto?.storeId || undefined,
         cardNumber,
         // Profile birthday is the source of truth for birthday jobs
         birthday: user.birthday ?? undefined,
@@ -313,12 +314,13 @@ export class LoyaltyService implements OnModuleInit {
   ): Promise<boolean> {
     const deferEnabled =
       this.config.get<string>('DEFER_SIGNUP_BONUS') !== 'false';
-    const isPosChannel =
+    const isInStoreChannel =
       ctx?.channel === 'POS' ||
       ctx?.channel === 'HOS_OUTLET_POS' ||
-      ctx?.channel === 'AUTO_PURCHASE';
+      ctx?.channel === 'AUTO_PURCHASE' ||
+      ctx?.channel === 'STORE';
 
-    if (deferEnabled && !isPosChannel) {
+    if (deferEnabled && !isInStoreChannel) {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
         select: { emailVerified: true },
@@ -333,10 +335,11 @@ export class LoyaltyService implements OnModuleInit {
 
     const membership = await this.prisma.loyaltyMembership.findUnique({
       where: { id: membershipId },
-      select: { enrollmentChannel: true, regionCode: true },
+      select: { enrollmentChannel: true, regionCode: true, enrollmentStoreId: true },
     });
     const channel = ctx?.channel || membership?.enrollmentChannel || 'WEB';
     const regionCode = ctx?.regionCode || membership?.regionCode || (await this.region.getCountry());
+    const storeId = ctx?.storeId || membership?.enrollmentStoreId || undefined;
 
     const signupRule = await this.prisma.loyaltyEarnRule.findFirst({
       where: { action: 'SIGNUP', isActive: true },
@@ -362,7 +365,7 @@ export class LoyaltyService implements OnModuleInit {
     const activeCampaigns = await this.campaigns.getActiveForContext(
       regionCode,
       channel,
-      ctx?.storeId,
+      storeId,
     );
     const award = resolveSignupCampaignAward(activeCampaigns, fallbackPoints);
     const points = award.points;
@@ -458,13 +461,14 @@ export class LoyaltyService implements OnModuleInit {
   async awardDeferredSignupBonus(userId: string): Promise<boolean> {
     const membership = await this.prisma.loyaltyMembership.findUnique({
       where: { userId },
-      select: { id: true, enrollmentChannel: true, regionCode: true },
+      select: { id: true, enrollmentChannel: true, regionCode: true, enrollmentStoreId: true },
     });
     if (!membership) return false;
 
     return this.ensureSignupBonus(membership.id, userId, {
       channel: membership.enrollmentChannel,
       regionCode: membership.regionCode,
+      storeId: membership.enrollmentStoreId ?? undefined,
     });
   }
 
@@ -477,7 +481,11 @@ export class LoyaltyService implements OnModuleInit {
     });
     // Repair missing joining / profile bonuses for members enrolled before reliability fixes
     if (membership) {
-      const awardedSignup = await this.ensureSignupBonus(membership.id, userId);
+      const awardedSignup = await this.ensureSignupBonus(membership.id, userId, {
+        channel: membership.enrollmentChannel,
+        regionCode: membership.regionCode,
+        storeId: membership.enrollmentStoreId ?? undefined,
+      });
       let awardedProfile = 0;
       try {
         awardedProfile = await this.loyaltyListener.onProfileUpdated(userId);

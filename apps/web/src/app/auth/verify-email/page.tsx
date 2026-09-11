@@ -16,9 +16,6 @@ function VerifyEmailContent() {
 
   useEffect(() => {
     if (!token) {
-      // Give useSecureUrlToken one render cycle to settle (it reads from
-      // the URL then defers cleanup via queueMicrotask). If the token is
-      // still null after a short delay, it genuinely wasn't provided.
       const timeout = setTimeout(() => {
         if (!verifiedRef.current) {
           setStatus('error');
@@ -28,8 +25,14 @@ function VerifyEmailContent() {
       return () => clearTimeout(timeout);
     }
 
-    if (verifiedRef.current) return;
+    // Guard against double-invocation across Suspense remounts.
+    // React refs are lost when the Suspense boundary unmounts/remounts the
+    // component (triggered by router.replace in useSecureUrlToken).
+    // sessionStorage survives those cycles.
+    const storageKey = `hos_email_verify_sent_${token}`;
+    if (verifiedRef.current || sessionStorage.getItem(storageKey)) return;
     verifiedRef.current = true;
+    sessionStorage.setItem(storageKey, '1');
 
     const verify = async () => {
       try {
@@ -57,6 +60,10 @@ function VerifyEmailContent() {
       } catch {
         setStatus('error');
         setMessage('Something went wrong. Please try again later.');
+      } finally {
+        setTimeout(() => {
+          try { sessionStorage.removeItem(storageKey); } catch {}
+        }, 30000);
       }
     };
 

@@ -3707,6 +3707,7 @@ model LoyaltyMembership {
   cardNumber          String?  @unique
   enrolledAt          DateTime @default(now())
   enrollmentChannel   String   @default("WEB")
+  enrollmentStoreId   String?
   preferredCurrency   String   @default("USD")
   regionCode          String   @default("US")
   fandomProfile       Json?

@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
 export default function AdminStoreShipmentsPage() {
+  const router = useRouter();
   const toast = useToast();
   const [items, setItems] = useState<any[]>([]);
   const [status, setStatus] = useState('');
@@ -76,7 +78,11 @@ export default function AdminStoreShipmentsPage() {
             </thead>
             <tbody>
               {items.map((row) => (
-                <tr key={row.id} className="border-b border-hos-border/50">
+                <tr
+                  key={row.id}
+                  className="border-b border-hos-border/50 hover:bg-hos-bg-secondary/50 cursor-pointer transition-colors"
+                  onClick={() => router.push(`/store/shipping/${row.id}`)}
+                >
                   <td className="py-2 pr-4">{row.hosOrderNumber || '—'}</td>
                   <td className="py-2 pr-4">{row.invoiceNumber || '—'}</td>
                   <td className="py-2 pr-4">{row.store?.name || row.storeId}</td>
