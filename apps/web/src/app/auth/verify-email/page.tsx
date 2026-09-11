@@ -30,9 +30,11 @@ function VerifyEmailContent() {
     // component (triggered by router.replace in useSecureUrlToken).
     // sessionStorage survives those cycles.
     const storageKey = `hos_email_verify_sent_${token}`;
-    if (verifiedRef.current || sessionStorage.getItem(storageKey)) return;
+    let alreadySent = false;
+    try { alreadySent = !!sessionStorage.getItem(storageKey); } catch {}
+    if (verifiedRef.current || alreadySent) return;
     verifiedRef.current = true;
-    sessionStorage.setItem(storageKey, '1');
+    try { sessionStorage.setItem(storageKey, '1'); } catch {}
 
     const verify = async () => {
       try {
