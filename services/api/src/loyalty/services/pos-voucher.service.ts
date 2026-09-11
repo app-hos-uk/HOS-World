@@ -512,7 +512,7 @@ export class PosVoucherService {
         voucher.cardNumber,
         amount,
         voucher.clientId,
-        { currency: voucher.currency, channelId },
+        { currency: channelId ? voucher.currency : undefined, channelId },
       );
 
       const updated = await this.prisma.loyaltyPosVoucher.update({
