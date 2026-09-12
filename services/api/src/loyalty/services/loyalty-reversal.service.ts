@@ -143,6 +143,109 @@ export class LoyaltyReversalService {
     }
   }
 
+  /**
+   * Pro-rata earn clawback when an in-store (POS) return is approved without
+   * inspection, or completed after inspection. Idempotent per return via
+   * `reverse:POS_RETURN_EARN:{returnId}`.
+   */
+  async onPosReturnCompleted(params: {
+    returnId: string;
+    posSaleId: string;
+    refundAmount: number;
+  }): Promise<void> {
+    if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) return;
+
+    const posSale = await this.prisma.pOSSale.findUnique({
+      where: { id: params.posSaleId },
+      select: {
+        id: true,
+        customerId: true,
+        totalAmount: true,
+        loyaltyPointsEarned: true,
+        storeId: true,
+      },
+    });
+    if (!posSale?.customerId) return;
+    if (posSale.loyaltyPointsEarned === 0) return;
+
+    const membership = await this.prisma.loyaltyMembership.findUnique({
+      where: { userId: posSale.customerId },
+    });
+    if (!membership) return;
+
+    const { settings } = await this.settings.getResolved();
+    if (!settings.clawEarnOnReturn) return;
+
+    const saleTotal = Number(posSale.totalAmount);
+    const share = saleTotal > 0 ? Math.min(1, Math.max(0, params.refundAmount / saleTotal)) : 0;
+    if (share <= 0) return;
+
+    const targetClaw = Math.round(posSale.loyaltyPointsEarned * share);
+    if (targetClaw <= 0) return;
+
+    try {
+      let clawAmount = 0;
+      let applied = false;
+      await this.prisma.$transaction(async (tx) => {
+        await this.wallet.lockMembership(tx, membership.id);
+        const locked = await tx.loyaltyMembership.findUnique({ where: { id: membership.id } });
+        if (!locked) return;
+
+        clawAmount = Math.min(targetClaw, locked.currentBalance);
+        if (clawAmount < targetClaw) {
+          this.logger.warn(
+            `POS return ${params.returnId} clawed only ${clawAmount}/${targetClaw} points for membership ${membership.id} — balance was already spent`,
+          );
+        }
+        if (clawAmount <= 0) return;
+
+        const result = await this.wallet.applyDelta(
+          tx,
+          membership.id,
+          -clawAmount,
+          LoyaltyTxType.ADJUST,
+          {
+            source: 'POS_RETURN_REFUND',
+            sourceId: params.returnId,
+            channel: 'HOS_OUTLET_POS',
+            storeId: posSale.storeId,
+            description: 'Points adjusted for in-store return',
+            idempotencyKey: `reverse:POS_RETURN_EARN:${params.returnId}`,
+            metadata: {
+              posSaleId: posSale.id,
+              share,
+              refundAmount: params.refundAmount,
+              targetPoints: targetClaw,
+              appliedPoints: clawAmount,
+            },
+          },
+        );
+        if (!result.applied) return;
+        applied = true;
+
+        await tx.loyaltyMembership.update({
+          where: { id: membership.id },
+          data: {
+            totalPointsEarned: { decrement: Math.min(clawAmount, locked.totalPointsEarned) },
+          },
+        });
+
+        await tx.pOSSale.update({
+          where: { id: posSale.id },
+          data: { loyaltyPointsEarned: { decrement: clawAmount } },
+        });
+      });
+
+      if (applied) {
+        await this.tiers.recalculateTier(membership.id);
+      }
+    } catch (e) {
+      this.logger.warn(
+        `POS return earn clawback failed for ${posSale.customerId}: ${(e as Error).message}`,
+      );
+    }
+  }
+
   private async applyClawEarn(
     userId: string,
     points: number,

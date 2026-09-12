@@ -5,6 +5,8 @@ import {
   ForbiddenException,
   Logger,
   Optional,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { PrismaService } from '../database/prisma.service';
@@ -15,6 +17,7 @@ import { ActivityService } from '../activity/activity.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { OrdersService } from '../orders/orders.service';
 import { ReturnPoliciesService } from '../return-policies/return-policies.service';
+import { LoyaltyReversalService } from '../loyalty/services/loyalty-reversal.service';
 
 interface ReturnTimelineStep {
   step: string;
@@ -23,9 +26,57 @@ interface ReturnTimelineStep {
   completed: boolean;
 }
 
+const ACTIVE_RETURN_STATUSES = [
+  'PENDING',
+  'APPROVED',
+  'PROCESSING',
+  'AWAITING_CUSTOMER_RETURN',
+  'ITEM_RECEIVED',
+  'REFUND_PENDING',
+] as const;
+
+const POS_RETURNABLE_SALE_STATUSES = ['PROCESSED', 'IMPORTED'] as const;
+
+const POS_SALE_DETAIL_INCLUDE = {
+  store: { select: { id: true, name: true, code: true, sellerId: true } },
+  items: {
+    include: {
+      product: {
+        select: { id: true, name: true, price: true, sellerId: true, categoryId: true },
+      },
+    },
+  },
+};
+
+const RETURN_ITEMS_INCLUDE = {
+  orderItem: {
+    include: {
+      product: {
+        select: {
+          id: true,
+          name: true,
+          price: true,
+        },
+      },
+    },
+  },
+  posSaleItem: {
+    include: {
+      product: {
+        select: {
+          id: true,
+          name: true,
+          price: true,
+        },
+      },
+    },
+  },
+};
+
 interface ReturnRequest {
   id: string;
-  orderId: string;
+  orderId?: string;
+  posSaleId?: string;
   userId: string;
   reason: string;
   status: string;
@@ -42,11 +93,31 @@ interface ReturnRequest {
     currency?: string;
     paymentStatus?: string;
   };
+  posSale?: {
+    id: string;
+    externalInvoice?: string;
+    externalSaleId?: string;
+    total?: number;
+    currency?: string;
+    saleDate?: Date;
+    status?: string;
+    store?: { id: string; name?: string; code?: string };
+    items?: Array<{
+      id: string;
+      name: string;
+      sku?: string;
+      quantity: number;
+      unitPrice?: number;
+      totalPrice?: number;
+    }>;
+  };
   items?: Array<{
     id: string;
     quantity: number;
     reason?: string;
     productName?: string;
+    orderItemId?: string;
+    posSaleItemId?: string;
   }>;
   refundTransactions?: Array<{
     id: string;
@@ -71,6 +142,9 @@ export class ReturnsService {
     @Optional() private notificationsService?: NotificationsService,
     @Optional() private activityService?: ActivityService,
     @Optional() private _inventoryService?: InventoryService,
+    @Optional()
+    @Inject(forwardRef(() => LoyaltyReversalService))
+    private loyaltyReversalService?: LoyaltyReversalService,
   ) {}
 
   private getOrdersService(): OrdersService {
@@ -78,10 +152,19 @@ export class ReturnsService {
   }
 
   async create(userId: string, createReturnDto: CreateReturnDto): Promise<ReturnRequest> {
+    const orderId = createReturnDto.orderId?.trim() || undefined;
+    const posSaleId = createReturnDto.posSaleId?.trim() || undefined;
+    if (!!orderId === !!posSaleId) {
+      throw new BadRequestException('Exactly one of orderId or posSaleId must be provided');
+    }
+    if (posSaleId) {
+      return this.createFromPosSale(userId, createReturnDto, posSaleId);
+    }
+
     // Verify order exists and belongs to user
     const order = await this.prisma.order.findFirst({
       where: {
-        id: createReturnDto.orderId,
+        id: orderId,
         userId,
       },
       include: {
@@ -103,7 +186,7 @@ export class ReturnsService {
     }
 
     const eligibility = await this.returnPoliciesService.checkReturnEligibility(
-      createReturnDto.orderId,
+      orderId!,
       createReturnDto.items?.[0]
         ? order.items.find((i) => i.id === createReturnDto.items![0].orderItemId)?.productId
         : order.items[0]?.productId,
@@ -120,6 +203,9 @@ export class ReturnsService {
     if (createReturnDto.items && createReturnDto.items.length > 0) {
       // Validate each item
       for (const returnItem of createReturnDto.items) {
+        if (!returnItem.orderItemId) {
+          throw new BadRequestException('Online returns require orderItemId for each item');
+        }
         const orderItem = order.items.find((item) => item.id === returnItem.orderItemId);
         if (!orderItem) {
           throw new BadRequestException(`Order item ${returnItem.orderItemId} not found in order`);
@@ -157,7 +243,7 @@ export class ReturnsService {
       // Full order return - block only active return requests
       const existingReturn = await this.prisma.returnRequest.findFirst({
         where: {
-          orderId: createReturnDto.orderId,
+          orderId,
           status: {
             in: [
               'PENDING',
@@ -179,7 +265,7 @@ export class ReturnsService {
     // Create return request
     const returnRequest = await this.prisma.returnRequest.create({
       data: {
-        orderId: createReturnDto.orderId,
+        orderId,
         userId,
         reason: createReturnDto.reason,
         notes: createReturnDto.notes,
@@ -188,7 +274,7 @@ export class ReturnsService {
         items: createReturnDto.items
           ? {
               create: createReturnDto.items.map((item) => ({
-                orderItemId: item.orderItemId,
+                orderItemId: item.orderItemId!,
                 quantity: item.quantity,
                 reason: item.reason || createReturnDto.reason,
                 status: 'PENDING',
@@ -273,6 +359,197 @@ export class ReturnsService {
     return this.mapToReturnType(returnRequest);
   }
 
+  private async createFromPosSale(
+    userId: string,
+    createReturnDto: CreateReturnDto,
+    posSaleId: string,
+  ): Promise<ReturnRequest> {
+    const sale = await this.prisma.pOSSale.findFirst({
+      where: { id: posSaleId, customerId: userId },
+      include: POS_SALE_DETAIL_INCLUDE,
+    });
+
+    if (!sale) {
+      throw new NotFoundException('POS sale not found');
+    }
+
+    if (
+      !POS_RETURNABLE_SALE_STATUSES.includes(
+        sale.status as (typeof POS_RETURNABLE_SALE_STATUSES)[number],
+      )
+    ) {
+      throw new BadRequestException('POS sale must be processed or imported to request a return');
+    }
+
+    const requestedItem = createReturnDto.items?.[0];
+    const matchedSaleItem = requestedItem?.posSaleItemId
+      ? sale.items.find((item) => item.id === requestedItem.posSaleItemId)
+      : sale.items[0];
+    const product = matchedSaleItem?.product;
+
+    const policy = product?.id
+      ? await this.returnPoliciesService.getApplicablePolicy(
+          product.id,
+          product.sellerId || sale.store?.sellerId || undefined,
+          product.categoryId || undefined,
+        )
+      : null;
+
+    const effectivePolicy =
+      policy ||
+      ({
+        id: null,
+        isReturnable: true,
+        returnWindowDays: 30,
+      } as const);
+
+    if (!effectivePolicy.isReturnable) {
+      throw new BadRequestException('Product is not returnable');
+    }
+
+    const daysSinceSale = Math.floor(
+      (Date.now() - sale.saleDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    if (daysSinceSale > effectivePolicy.returnWindowDays) {
+      throw new BadRequestException(
+        `Return window expired. Return must be initiated within ${effectivePolicy.returnWindowDays} days of purchase.`,
+      );
+    }
+
+    const applicablePolicyId = policy?.id && typeof policy.id === 'string' ? policy.id : undefined;
+
+    if (createReturnDto.items && createReturnDto.items.length > 0) {
+      for (const returnItem of createReturnDto.items) {
+        if (!returnItem.posSaleItemId) {
+          throw new BadRequestException('POS returns require posSaleItemId for each item');
+        }
+        const saleItem = sale.items.find((item) => item.id === returnItem.posSaleItemId);
+        if (!saleItem) {
+          throw new BadRequestException(
+            `POS sale item ${returnItem.posSaleItemId} not found in sale`,
+          );
+        }
+        if (returnItem.quantity > saleItem.quantity) {
+          throw new BadRequestException(
+            `Return quantity (${returnItem.quantity}) exceeds sold quantity (${saleItem.quantity}) for item ${saleItem.id}`,
+          );
+        }
+
+        const existingReturnItem = await this.prisma.returnItem.findFirst({
+          where: {
+            posSaleItemId: returnItem.posSaleItemId,
+            returnRequest: {
+              status: { in: [...ACTIVE_RETURN_STATUSES] },
+            },
+          },
+        });
+
+        if (existingReturnItem) {
+          throw new BadRequestException(
+            `Item ${returnItem.posSaleItemId} is already being returned`,
+          );
+        }
+      }
+    } else {
+      const existingReturn = await this.prisma.returnRequest.findFirst({
+        where: {
+          posSaleId,
+          status: { in: [...ACTIVE_RETURN_STATUSES] },
+        },
+      });
+
+      if (existingReturn) {
+        throw new BadRequestException('An active return request already exists for this POS sale');
+      }
+    }
+
+    const saleLabel = sale.externalInvoice || sale.externalSaleId || sale.id;
+
+    const returnRequest = await this.prisma.returnRequest.create({
+      data: {
+        posSaleId,
+        userId,
+        reason: createReturnDto.reason,
+        notes: createReturnDto.notes,
+        status: 'PENDING',
+        refundMethod: 'IN_STORE',
+        returnPolicyId: applicablePolicyId,
+        marketId: sale.marketId || undefined,
+        items: createReturnDto.items
+          ? {
+              create: createReturnDto.items.map((item) => ({
+                posSaleItemId: item.posSaleItemId!,
+                quantity: item.quantity,
+                reason: item.reason || createReturnDto.reason,
+                status: 'PENDING',
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        posSale: { include: POS_SALE_DETAIL_INCLUDE },
+        items: { include: RETURN_ITEMS_INCLUDE },
+      },
+    });
+
+    this.activityService
+      ?.createLog({
+        userId,
+        action: 'RETURN_REQUESTED',
+        entityType: 'ReturnRequest',
+        entityId: returnRequest.id,
+        description: `Return requested for POS sale ${saleLabel}`,
+        metadata: { posSaleId: sale.id, reason: createReturnDto.reason },
+      })
+      .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+
+    if (this.notificationsService) {
+      this.notificationsService
+        .sendNotificationToUser(
+          userId,
+          'RETURN_REQUESTED',
+          'Return request received',
+          `Your return request for in-store sale ${saleLabel} has been submitted and is pending review.`,
+          { returnId: returnRequest.id, posSaleId: sale.id },
+        )
+        .catch((e) => this.logger.warn(`Return notification failed: ${(e as Error).message}`));
+
+      if (sale.store?.sellerId) {
+        const seller = await this.prisma.seller.findUnique({
+          where: { id: sale.store.sellerId },
+          select: { userId: true },
+        });
+        if (seller?.userId) {
+          this.notificationsService
+            .sendNotificationToUser(
+              seller.userId,
+              'RETURN_REQUESTED',
+              'New return request',
+              `A customer has requested a return for in-store sale ${saleLabel}. Please review it in your returns dashboard.`,
+              { returnId: returnRequest.id, posSaleId: sale.id },
+            )
+            .catch((e) =>
+              this.logger.warn(`Seller return notification failed: ${(e as Error).message}`),
+            );
+        }
+      }
+
+      this.notificationsService
+        .sendNotificationToRole(
+          'ADMIN',
+          'RETURN_REQUESTED',
+          'New return request',
+          `A return has been requested for in-store sale ${saleLabel}. Review pending in the returns management queue.`,
+          { returnId: returnRequest.id, posSaleId: sale.id },
+        )
+        .catch((e) =>
+          this.logger.warn(`Admin return notification failed: ${(e as Error).message}`),
+        );
+    }
+
+    return this.mapToReturnType(returnRequest);
+  }
+
   async findAll(userId: string, role: string, page = 1, limit = 50): Promise<ReturnRequest[]> {
     const where: any = {};
 
@@ -281,9 +558,14 @@ export class ReturnsService {
     } else if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
       const seller = await this.prisma.seller.findUnique({ where: { userId } });
       if (seller) {
-        where.order = {
-          OR: [{ sellerId: seller.id }, { childOrders: { some: { sellerId: seller.id } } }],
-        };
+        where.OR = [
+          {
+            order: {
+              OR: [{ sellerId: seller.id }, { childOrders: { some: { sellerId: seller.id } } }],
+            },
+          },
+          { posSale: { store: { sellerId: seller.id } } },
+        ];
       } else {
         where.userId = userId;
       }
@@ -305,20 +587,9 @@ export class ReturnsService {
             total: true,
           },
         },
+        posSale: { include: POS_SALE_DETAIL_INCLUDE },
         items: {
-          include: {
-            orderItem: {
-              include: {
-                product: {
-                  select: {
-                    id: true,
-                    name: true,
-                    price: true,
-                  },
-                },
-              },
-            },
-          },
+          include: RETURN_ITEMS_INCLUDE,
         },
         transactions: {
           where: { type: 'REFUND' },
@@ -353,20 +624,9 @@ export class ReturnsService {
             parentOrderId: true,
           },
         },
+        posSale: { include: POS_SALE_DETAIL_INCLUDE },
         items: {
-          include: {
-            orderItem: {
-              include: {
-                product: {
-                  select: {
-                    id: true,
-                    name: true,
-                    price: true,
-                  },
-                },
-              },
-            },
-          },
+          include: RETURN_ITEMS_INCLUDE,
         },
         transactions: {
           where: { type: 'REFUND' },
@@ -392,17 +652,24 @@ export class ReturnsService {
       throw new ForbiddenException('You do not have permission to view this return');
     } else if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
       const seller = await this.prisma.seller.findUnique({ where: { userId } });
-      const order = returnRequest.order;
-      const isDirectSeller = seller && order?.sellerId === seller.id;
-      let hasChildOrder = false;
-      if (seller && order?.id && !isDirectSeller) {
-        hasChildOrder =
-          (await this.prisma.order.count({
-            where: { parentOrderId: order.id, sellerId: seller.id },
-          })) > 0;
-      }
-      if (!seller || (!isDirectSeller && !hasChildOrder)) {
-        throw new ForbiddenException('You do not have permission to view this return');
+      if (returnRequest.posSaleId) {
+        const storeSellerId = returnRequest.posSale?.store?.sellerId;
+        if (!seller || !storeSellerId || storeSellerId !== seller.id) {
+          throw new ForbiddenException('You do not have permission to view this return');
+        }
+      } else {
+        const order = returnRequest.order;
+        const isDirectSeller = seller && order?.sellerId === seller.id;
+        let hasChildOrder = false;
+        if (seller && order?.id && !isDirectSeller) {
+          hasChildOrder =
+            (await this.prisma.order.count({
+              where: { parentOrderId: order.id, sellerId: seller.id },
+            })) > 0;
+        }
+        if (!seller || (!isDirectSeller && !hasChildOrder)) {
+          throw new ForbiddenException('You do not have permission to view this return');
+        }
       }
     }
 
@@ -431,7 +698,16 @@ export class ReturnsService {
             seller: true,
           },
         },
-        items: true,
+        posSale: { include: POS_SALE_DETAIL_INCLUDE },
+        items: {
+          include: {
+            posSaleItem: {
+              include: {
+                product: { select: { id: true, categoryId: true, sellerId: true } },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -443,16 +719,23 @@ export class ReturnsService {
       const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
       if (sellerRoles.includes(role)) {
         const seller = await this.prisma.seller.findUnique({ where: { userId } });
-        // Check direct sellerId OR if seller has a child order for this parent order
-        const isDirectSeller = seller && returnRequest.order?.sellerId === seller.id;
-        const hasChildOrder =
-          seller && returnRequest.order?.id
-            ? (await this.prisma.order.count({
-                where: { parentOrderId: returnRequest.order.id, sellerId: seller.id },
-              })) > 0
-            : false;
-        if (!seller || (!isDirectSeller && !hasChildOrder)) {
-          throw new ForbiddenException('You do not have permission to update this return');
+        if (returnRequest.posSaleId) {
+          const storeSellerId = returnRequest.posSale?.store?.sellerId;
+          if (!seller || !storeSellerId || storeSellerId !== seller.id) {
+            throw new ForbiddenException('You do not have permission to update this return');
+          }
+        } else {
+          // Check direct sellerId OR if seller has a child order for this parent order
+          const isDirectSeller = seller && returnRequest.order?.sellerId === seller.id;
+          const hasChildOrder =
+            seller && returnRequest.order?.id
+              ? (await this.prisma.order.count({
+                  where: { parentOrderId: returnRequest.order.id, sellerId: seller.id },
+                })) > 0
+              : false;
+          if (!seller || (!isDirectSeller && !hasChildOrder)) {
+            throw new ForbiddenException('You do not have permission to update this return');
+          }
         }
       }
     }
@@ -484,6 +767,13 @@ export class ReturnsService {
     // is required, approve without processing refund/restock (those happen at
     // COMPLETED). Otherwise, process refund immediately on approval.
     if (newStatus === 'APPROVED') {
+      if (this.isPosReturn(returnRequest)) {
+        return this.approvePosReturn(id, returnRequest, refundAmount, refundMethod, userId);
+      }
+      if (!returnRequest.order) {
+        throw new BadRequestException('Return is not linked to an order');
+      }
+
       const policyProduct = this.resolveReturnPolicyProduct(returnRequest);
       const policy = returnRequest.order
         ? await this.returnPoliciesService.getApplicablePolicy(
@@ -583,7 +873,7 @@ export class ReturnsService {
         }
       });
 
-      if (refundSucceeded) {
+      if (refundSucceeded && returnRequest.orderId) {
         try {
           await this.getOrdersService().reverseInfluencerAttribution(returnRequest.orderId);
         } catch (commErr) {
@@ -650,7 +940,12 @@ export class ReturnsService {
         },
       });
 
-      if (newStatus === 'COMPLETED' && returnRequest.order && refundFullyProcessed) {
+      if (
+        newStatus === 'COMPLETED' &&
+        returnRequest.order &&
+        returnRequest.orderId &&
+        refundFullyProcessed
+      ) {
         const isPartial =
           returnRequest.items?.length > 0 &&
           returnRequest.items.length < (returnRequest.order?.items?.length ?? 0);
@@ -662,7 +957,9 @@ export class ReturnsService {
 
     // If transitioning to COMPLETED and no successful refund exists yet
     // (inspection flow), process refund + restock + mark order now.
-    if (newStatus === 'COMPLETED' && returnRequest.order && !refundFullyProcessed) {
+    if (newStatus === 'COMPLETED' && this.isPosReturn(returnRequest)) {
+      await this.completePosReturn(id, returnRequest, refundAmount, refundMethod);
+    } else if (newStatus === 'COMPLETED' && returnRequest.order && !refundFullyProcessed) {
       const policyProduct = this.resolveReturnPolicyProduct(returnRequest);
       const policy = await this.returnPoliciesService.getApplicablePolicy(
         policyProduct?.id || returnRequest.order.items[0]?.productId || '',
@@ -693,7 +990,9 @@ export class ReturnsService {
               const isPartial =
                 returnRequest.items?.length > 0 &&
                 returnRequest.items.length < (returnRequest.order?.items?.length ?? 0);
-              await this.markOrderRefundedInTx(tx, returnRequest.orderId, isPartial);
+              if (returnRequest.orderId) {
+                await this.markOrderRefundedInTx(tx, returnRequest.orderId, isPartial);
+              }
             });
             await this.prisma.returnRequest.update({
               where: { id },
@@ -705,12 +1004,14 @@ export class ReturnsService {
                   .join(' '),
               },
             });
-            try {
-              await this.getOrdersService().reverseInfluencerAttribution(returnRequest.orderId);
-            } catch (commErr) {
-              this.logger.error(
-                `Influencer attribution reversal failed for completed return order ${returnRequest.orderId}: ${(commErr as Error).message}`,
-              );
+            if (returnRequest.orderId) {
+              try {
+                await this.getOrdersService().reverseInfluencerAttribution(returnRequest.orderId);
+              } catch (commErr) {
+                this.logger.error(
+                  `Influencer attribution reversal failed for completed return order ${returnRequest.orderId}: ${(commErr as Error).message}`,
+                );
+              }
             }
           } else {
             await this.prisma.returnRequest.update({
@@ -736,15 +1037,17 @@ export class ReturnsService {
     }
 
     if (this.notificationsService && ['REJECTED', 'COMPLETED'].includes(newStatus)) {
-      const orderLabel = returnRequest.order?.orderNumber || returnRequest.orderId;
+      const sourceLabel = this.returnSourceLabel(returnRequest);
       const title = newStatus === 'REJECTED' ? 'Return request rejected' : 'Return completed';
       let message: string;
       if (newStatus === 'REJECTED') {
-        message = `Your return request for order ${orderLabel} has been rejected.${notes ? ` Reason: ${notes}` : ''}`;
+        message = `Your return request for ${sourceLabel} has been rejected.${notes ? ` Reason: ${notes}` : ''}`;
+      } else if (this.isPosReturn(returnRequest)) {
+        message = `Your return for ${sourceLabel} has been completed. Your in-store refund is being processed.`;
       } else if (refundFullyProcessed) {
-        message = `Your return for order ${orderLabel} has been completed. Your refund was already processed.`;
+        message = `Your return for ${sourceLabel} has been completed. Your refund was already processed.`;
       } else {
-        message = `Your return for order ${orderLabel} has been completed and your refund is being processed.`;
+        message = `Your return for ${sourceLabel} has been completed and your refund is being processed.`;
       }
       this.notificationsService
         .sendNotificationToUser(
@@ -765,7 +1068,7 @@ export class ReturnsService {
         action: `RETURN_${newStatus}`,
         entityType: 'ReturnRequest',
         entityId: id,
-        description: `Return ${newStatus.toLowerCase()} for order ${returnRequest.order?.orderNumber || returnRequest.orderId}`,
+        description: `Return ${newStatus.toLowerCase()} for ${this.returnSourceLabel(returnRequest)}`,
       })
       .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
@@ -813,6 +1116,10 @@ export class ReturnsService {
     }
     if (role && role !== 'ADMIN' && role !== 'FINANCE') {
       throw new ForbiddenException('Only admin or finance can retry refunds');
+    }
+
+    if (!returnRequest.orderId || this.isPosReturn(returnRequest)) {
+      throw new BadRequestException('In-store POS returns do not use Stripe refunds');
     }
 
     const refundResult = await this.refundsService.retryReturnRefund(id);
@@ -869,7 +1176,7 @@ export class ReturnsService {
       where: { id: returnId },
       include: { order: { include: { items: true, seller: true } }, items: true },
     });
-    if (!returnRequest?.order) return;
+    if (!returnRequest?.order || !returnRequest.orderId) return;
 
     const isPartial =
       returnRequest.items?.length > 0 &&
@@ -889,7 +1196,12 @@ export class ReturnsService {
     }
   }
 
-  private async markOrderRefundedInTx(tx: any, orderId: string, isPartial?: boolean) {
+  private async markOrderRefundedInTx(
+    tx: any,
+    orderId: string | null | undefined,
+    isPartial?: boolean,
+  ) {
+    if (!orderId) return;
     if (isPartial) {
       // For partial returns, only update paymentStatus to REFUNDED but keep order
       // status unchanged — the order is only partially returned, not fully refunded.
@@ -916,6 +1228,7 @@ export class ReturnsService {
   }
 
   private async applyRestockForReturn(tx: any, returnRequest: any) {
+    if (!returnRequest.order) return;
     const returnItems = returnRequest.items;
     if (returnItems && returnItems.length > 0) {
       for (const ri of returnItems) {
@@ -974,7 +1287,229 @@ export class ReturnsService {
     return (matched || orderItems[0])?.product;
   }
 
+  private isPosReturn(returnRequest: { posSaleId?: string | null }): boolean {
+    return Boolean(returnRequest.posSaleId);
+  }
+
+  private posReturnLabel(returnRequest: any): string {
+    return (
+      returnRequest.posSale?.store?.name ||
+      returnRequest.posSale?.externalInvoice ||
+      returnRequest.posSaleId ||
+      'in-store purchase'
+    );
+  }
+
+  private resolvePosReturnPolicyProduct(
+    returnRequest: any,
+  ): { id: string; categoryId?: string | null; sellerId?: string | null } | undefined {
+    const returnedPosItemId = returnRequest.items?.[0]?.posSaleItemId;
+    const saleItems = returnRequest.posSale?.items || [];
+    const matched = returnedPosItemId
+      ? saleItems.find((item: any) => item.id === returnedPosItemId)
+      : saleItems[0];
+    const fromInclude = returnRequest.items?.[0]?.posSaleItem?.product;
+    const product = fromInclude || matched?.product;
+    if (!product?.id) return undefined;
+    return {
+      id: product.id,
+      categoryId: product.categoryId,
+      sellerId: product.sellerId,
+    };
+  }
+
+  private calculatePosReturnRefundAmount(returnRequest: any): number {
+    const saleItems = returnRequest.posSale?.items || [];
+    const returnItems = returnRequest.items;
+    const saleTotal = Number(returnRequest.posSale?.totalAmount ?? 0);
+
+    if (returnItems && returnItems.length > 0) {
+      let itemsTotal = 0;
+      let saleItemsTotal = 0;
+      for (const ri of returnItems) {
+        const saleItem =
+          saleItems.find((item: any) => item.id === ri.posSaleItemId) || ri.posSaleItem;
+        if (saleItem) {
+          itemsTotal += Number(saleItem.unitPrice ?? 0) * (ri.quantity || 1);
+        } else if (ri.refundAmount != null) {
+          itemsTotal += Number(ri.refundAmount);
+        }
+      }
+      for (const item of saleItems) {
+        saleItemsTotal += Number(item.unitPrice ?? 0) * Number(item.quantity || 1);
+      }
+      if (itemsTotal > 0 && saleItemsTotal > 0 && saleTotal > 0) {
+        return Math.round(saleTotal * (itemsTotal / saleItemsTotal) * 100) / 100;
+      }
+      if (itemsTotal > 0) return Math.round(itemsTotal * 100) / 100;
+    }
+
+    return saleTotal;
+  }
+
+  private async triggerPosLoyaltyClawback(
+    returnRequest: any,
+    refundAmount: number,
+  ): Promise<void> {
+    if (!returnRequest.posSaleId || !this.loyaltyReversalService) return;
+    const amount =
+      refundAmount > 0 ? refundAmount : this.calculatePosReturnRefundAmount(returnRequest);
+    if (amount <= 0) return;
+    try {
+      await this.loyaltyReversalService.onPosReturnCompleted({
+        returnId: returnRequest.id,
+        posSaleId: returnRequest.posSaleId,
+        refundAmount: amount,
+      });
+    } catch (e) {
+      this.logger.warn(
+        `POS loyalty clawback failed for return ${returnRequest.id}: ${(e as Error).message}`,
+      );
+    }
+  }
+
+  private async approvePosReturn(
+    id: string,
+    returnRequest: any,
+    refundAmount?: number,
+    refundMethod?: string,
+    userId?: string,
+  ): Promise<ReturnRequest> {
+    const policyProduct = this.resolvePosReturnPolicyProduct(returnRequest);
+    const productId = policyProduct?.id;
+    const policy = productId
+      ? await this.returnPoliciesService.getApplicablePolicy(
+          productId,
+          policyProduct?.sellerId || returnRequest.posSale?.store?.sellerId || undefined,
+          policyProduct?.categoryId || undefined,
+        )
+      : null;
+
+    const saleLabel = this.posReturnLabel(returnRequest);
+
+    if (policy?.requiresInspection) {
+      await this.prisma.returnRequest.update({
+        where: { id },
+        data: {
+          status: 'APPROVED' as any,
+          refundMethod: refundMethod || 'IN_STORE',
+        },
+      });
+
+      this.activityService
+        ?.createLog({
+          userId: userId || returnRequest.userId,
+          action: 'RETURN_APPROVED',
+          entityType: 'ReturnRequest',
+          entityId: id,
+          description: `Return approved (inspection required) for in-store purchase at ${saleLabel}`,
+        })
+        .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+
+      if (this.notificationsService) {
+        this.notificationsService
+          .sendNotificationToUser(
+            returnRequest.userId,
+            'RETURN_APPROVED',
+            'Return approved — awaiting inspection',
+            `Your in-store return at ${saleLabel} has been approved. Please bring the item(s) back to the store. Your refund will be processed after inspection.`,
+            { returnId: id },
+          )
+          .catch((e) =>
+            this.logger.warn(`Return approval notification failed: ${(e as Error).message}`),
+          );
+      }
+
+      const updated = await this.prisma.returnRequest.findUnique({
+        where: { id },
+        include: {
+          posSale: { include: POS_SALE_DETAIL_INCLUDE },
+          items: { include: RETURN_ITEMS_INCLUDE },
+        },
+      });
+      return this.mapToReturnType(updated);
+    }
+
+    const maxRefundable = this.calculatePosReturnRefundAmount(returnRequest);
+    let amount = Math.min(refundAmount ?? maxRefundable, maxRefundable);
+    const restockingFee = policy?.restockingFee != null ? Number(policy.restockingFee) : 0;
+    if (restockingFee > 0) {
+      amount = Math.max(0, Math.round((amount - restockingFee) * 100) / 100);
+    }
+
+    await this.prisma.returnRequest.update({
+      where: { id },
+      data: {
+        status: 'APPROVED' as any,
+        refundAmount: amount,
+        refundMethod: refundMethod || 'IN_STORE',
+      },
+    });
+
+    await this.triggerPosLoyaltyClawback(returnRequest, amount);
+
+    this.activityService
+      ?.createLog({
+        userId: userId || returnRequest.userId,
+        action: 'RETURN_APPROVED',
+        entityType: 'ReturnRequest',
+        entityId: id,
+        description: `Return approved for in-store purchase at ${saleLabel}`,
+        metadata: { refundAmount: amount },
+      })
+      .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
+
+    if (this.notificationsService) {
+      this.notificationsService
+        .sendNotificationToUser(
+          returnRequest.userId,
+          'RETURN_APPROVED',
+          'Return approved',
+          `Your in-store return at ${saleLabel} has been approved.`,
+          { returnId: id },
+        )
+        .catch((e) =>
+          this.logger.warn(`Return approval notification failed: ${(e as Error).message}`),
+        );
+    }
+
+    const updated = await this.prisma.returnRequest.findUnique({
+      where: { id },
+      include: {
+        posSale: { include: POS_SALE_DETAIL_INCLUDE },
+        items: { include: RETURN_ITEMS_INCLUDE },
+      },
+    });
+    return this.mapToReturnType(updated);
+  }
+
+  private async completePosReturn(
+    id: string,
+    returnRequest: any,
+    refundAmount?: number,
+    refundMethod?: string,
+  ): Promise<void> {
+    const existing = returnRequest.refundAmount != null ? Number(returnRequest.refundAmount) : 0;
+    const amount =
+      refundAmount ?? (existing > 0 ? existing : this.calculatePosReturnRefundAmount(returnRequest));
+
+    if (amount > 0 && !(existing > 0)) {
+      await this.prisma.returnRequest.update({
+        where: { id },
+        data: {
+          refundAmount: amount,
+          refundMethod: refundMethod || returnRequest.refundMethod || 'IN_STORE',
+        },
+      });
+    }
+
+    await this.triggerPosLoyaltyClawback(returnRequest, amount);
+  }
+
   private calculateReturnRefundAmount(returnRequest: any): number {
+    if (this.isPosReturn(returnRequest)) {
+      return this.calculatePosReturnRefundAmount(returnRequest);
+    }
     const returnItems = returnRequest.items;
     if (returnItems && returnItems.length > 0) {
       let itemsTotal = 0;
@@ -1139,6 +1674,18 @@ export class ReturnsService {
     return steps;
   }
 
+  private returnSourceLabel(returnRequest: any): string {
+    if (this.isPosReturn(returnRequest)) {
+      return (
+        returnRequest.posSale?.store?.name ||
+        returnRequest.posSale?.externalInvoice ||
+        returnRequest.posSale?.externalSaleId ||
+        returnRequest.posSaleId
+      );
+    }
+    return returnRequest.order?.orderNumber || returnRequest.orderId;
+  }
+
   private mapToReturnType(returnRequest: any): ReturnRequest {
     const refundTransactions = (returnRequest.transactions || []).map((t: any) => ({
       id: t.id,
@@ -1152,7 +1699,8 @@ export class ReturnsService {
 
     return {
       id: returnRequest.id,
-      orderId: returnRequest.orderId,
+      orderId: returnRequest.orderId || undefined,
+      posSaleId: returnRequest.posSaleId || undefined,
       userId: returnRequest.userId,
       reason: returnRequest.reason,
       status: returnRequest.status.toLowerCase(),
@@ -1172,11 +1720,43 @@ export class ReturnsService {
             paymentStatus: returnRequest.order.paymentStatus,
           }
         : undefined,
+      posSale: returnRequest.posSale
+        ? {
+            id: returnRequest.posSale.id,
+            externalInvoice: returnRequest.posSale.externalInvoice || undefined,
+            externalSaleId: returnRequest.posSale.externalSaleId || undefined,
+            total:
+              returnRequest.posSale.totalAmount != null
+                ? Number(returnRequest.posSale.totalAmount)
+                : undefined,
+            currency: returnRequest.posSale.currency,
+            saleDate: returnRequest.posSale.saleDate,
+            status: returnRequest.posSale.status,
+            store: returnRequest.posSale.store
+              ? {
+                  id: returnRequest.posSale.store.id,
+                  name: returnRequest.posSale.store.name,
+                  code: returnRequest.posSale.store.code,
+                }
+              : undefined,
+            items: returnRequest.posSale.items?.map((item: any) => ({
+              id: item.id,
+              name: item.name,
+              sku: item.sku || undefined,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice != null ? Number(item.unitPrice) : undefined,
+              totalPrice: item.totalPrice != null ? Number(item.totalPrice) : undefined,
+            })),
+          }
+        : undefined,
       items: returnRequest.items?.map((ri: any) => ({
         id: ri.id,
         quantity: ri.quantity,
         reason: ri.reason,
-        productName: ri.orderItem?.product?.name,
+        productName:
+          ri.orderItem?.product?.name || ri.posSaleItem?.product?.name || ri.posSaleItem?.name,
+        orderItemId: ri.orderItemId || undefined,
+        posSaleItemId: ri.posSaleItemId || undefined,
       })),
       refundTransactions,
       timeline: this.buildReturnTimeline(returnRequest),

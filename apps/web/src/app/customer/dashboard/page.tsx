@@ -39,6 +39,7 @@ interface DashboardStats {
   totalSpent: number;
   wishlistItems: number;
   cartItems: number;
+  inStoreCount: number;
 }
 
 // Local Order type that matches what we receive from JSON API (dates as strings)
@@ -55,6 +56,20 @@ interface DashboardOrder {
 
 type TabType = 'overview' | 'orders' | 'analytics' | 'activity';
 
+interface DashboardPurchase {
+  id: string;
+  type: 'online' | 'in-store';
+  date: string;
+  storeName?: string | null;
+  orderNumber?: string | null;
+  items?: { name: string; quantity: number; price: number }[];
+  total: number;
+  currency?: string;
+  pointsEarned?: number;
+  status: string;
+  paidWithLoyaltyVoucher?: boolean;
+}
+
 export default function CustomerDashboardPage() {
   const { formatDate: formatDateShared } = useDateTime();
   const router = useRouter();
@@ -68,6 +83,7 @@ export default function CustomerDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<DashboardOrder[]>([]);
+  const [recentPurchases, setRecentPurchases] = useState<DashboardPurchase[]>([]);
   const [allOrders, setAllOrders] = useState<DashboardOrder[]>([]);
   const [profileStats, setProfileStats] = useState<any>(null);
   const [recentWishlist, setRecentWishlist] = useState<any[]>([]);
@@ -121,6 +137,7 @@ export default function CustomerDashboardPage() {
         loyaltyRes,
         loyaltyProgressRes,
         recommendationsRes,
+        purchaseHistoryRes,
       ] = await Promise.allSettled([
         withTimeout(apiClient.getOrders().catch(() => ({ data: [] }))),
         withTimeout(apiClient.getWishlist({ limit: 8 }).catch(() => ({ data: [] }))),
@@ -129,6 +146,7 @@ export default function CustomerDashboardPage() {
         withTimeout(apiClient.getLoyaltyMembership().catch(() => null)),
         withTimeout(apiClient.getLoyaltyTierProgress().catch(() => null)),
         withTimeout(apiClient.getAIRecommendations().catch(() => null)),
+        withTimeout(apiClient.getPurchaseHistory({ page: 1, limit: 20 }).catch(() => null)),
       ]);
 
       const ordersResult = ordersResponse.status === 'fulfilled' ? ordersResponse.value : { data: [] };
@@ -138,23 +156,52 @@ export default function CustomerDashboardPage() {
       const loyaltyRes_data = loyaltyRes.status === 'fulfilled' ? loyaltyRes.value : null;
       const loyaltyProgressRes_data = loyaltyProgressRes.status === 'fulfilled' ? loyaltyProgressRes.value : null;
       const recommendationsRes_data = recommendationsRes.status === 'fulfilled' ? recommendationsRes.value : null;
+      const purchaseHistory_data = purchaseHistoryRes.status === 'fulfilled' ? purchaseHistoryRes.value : null;
 
       const orders: DashboardOrder[] = Array.isArray(ordersResult?.data) ? ordersResult.data : [];
       setAllOrders(orders);
-      
-      // Calculate stats
-      const totalOrders = orders.length;
+
+      const purchasePayload = purchaseHistory_data?.data as
+        | {
+            items?: DashboardPurchase[];
+            total?: number;
+            summary?: {
+              onlineCount?: number;
+              inStoreCount?: number;
+              completedCount?: number;
+              totalSpent?: number;
+              totalPointsEarned?: number;
+            };
+          }
+        | DashboardPurchase[]
+        | null;
+      const purchaseItems: DashboardPurchase[] = Array.isArray(purchasePayload)
+        ? purchasePayload
+        : Array.isArray(purchasePayload?.items)
+          ? purchasePayload.items
+          : [];
+      const purchaseSummary = !Array.isArray(purchasePayload) ? purchasePayload?.summary : undefined;
+      setRecentPurchases(purchaseItems.slice(0, 5));
+
       const pendingOrders = orders.filter((o) => {
         const status = o.status?.toUpperCase();
         const paid = o.paymentStatus?.toUpperCase() === 'PAID';
         return paid && ['PENDING', 'PROCESSING', 'SHIPPED'].includes(status);
       }).length;
-      const completedOrders = orders.filter((o) => 
-        ['DELIVERED', 'COMPLETED', 'PAID'].includes(o.status?.toUpperCase())
+      const onlineCompleted = orders.filter((o) =>
+        ['DELIVERED', 'COMPLETED', 'PAID'].includes(o.status?.toUpperCase()),
       ).length;
-      const totalSpent = orders
+      const onlineSpent = orders
         .filter((o) => ['DELIVERED', 'COMPLETED', 'PAID'].includes(o.status?.toUpperCase()))
         .reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
+      const inStoreCount = purchaseSummary?.inStoreCount ?? purchaseItems.filter((p) => p.type === 'in-store').length;
+      const totalOrders =
+        purchaseSummary != null
+          ? (purchaseSummary.onlineCount ?? orders.length) + (purchaseSummary.inStoreCount ?? 0)
+          : orders.length + inStoreCount;
+      const completedOrders = purchaseSummary?.completedCount ?? onlineCompleted + inStoreCount;
+      const totalSpent = purchaseSummary?.totalSpent ?? onlineSpent;
 
       // Fetch wishlist — request a separate count call for the true total
       const wishlistData = wishlistResult?.data as any;
@@ -182,21 +229,38 @@ export default function CustomerDashboardPage() {
       const recs = recommendationsRes_data?.data;
       setRecommendedProducts(Array.isArray(recs) ? recs.slice(0, 8) : []);
 
-      // Build recent activity from orders and wishlist
+      // Build recent activity from purchases and wishlist
       const activity: any[] = [];
-      
-      // Add recent orders to activity
-      orders.slice(0, 5).forEach((order) => {
-        activity.push({
-          id: `order-${order.id}`,
-          type: 'order',
-          title: `Order #${order.orderNumber || order.id.slice(0, 8)}`,
-          description: `${order.status} - ${formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}`,
-          date: order.createdAt,
-          icon: navIcon('package'),
-          link: `/orders/${order.id}`,
+
+      const activityPurchases = purchaseItems.length > 0 ? purchaseItems.slice(0, 5) : [];
+      if (activityPurchases.length > 0) {
+        activityPurchases.forEach((purchase) => {
+          const isInStore = purchase.type === 'in-store';
+          activity.push({
+            id: `${purchase.type}-${purchase.id}`,
+            type: isInStore ? 'in-store' : 'order',
+            title: isInStore
+              ? `In-store · ${purchase.storeName || 'Store'}`
+              : `Order #${purchase.orderNumber || purchase.id.slice(0, 8)}`,
+            description: `${purchase.status} - ${formatPrice(purchase.total, purchase.currency || DEFAULT_CURRENCY)}`,
+            date: purchase.date,
+            icon: navIcon(isInStore ? 'store' : 'package'),
+            link: isInStore ? '/purchases' : `/orders/${purchase.id}`,
+          });
         });
-      });
+      } else {
+        orders.slice(0, 5).forEach((order) => {
+          activity.push({
+            id: `order-${order.id}`,
+            type: 'order',
+            title: `Order #${order.orderNumber || order.id.slice(0, 8)}`,
+            description: `${order.status} - ${formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}`,
+            date: order.createdAt,
+            icon: navIcon('package'),
+            link: `/orders/${order.id}`,
+          });
+        });
+      }
 
       // Add recent wishlist items to activity
       wishlistArray.slice(0, 3).forEach((item: any) => {
@@ -223,6 +287,7 @@ export default function CustomerDashboardPage() {
         totalSpent,
         wishlistItems: wishlistItemsCount,
         cartItems,
+        inStoreCount,
       });
 
       setRecentOrders(orders.slice(0, 5));
@@ -469,7 +534,7 @@ export default function CustomerDashboardPage() {
               {/* Stats Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
                 {[
-                  { icon: navIcon('package', 'w-8 h-8'), value: stats?.totalOrders || 0, label: 'Total Orders' },
+                  { icon: navIcon('package', 'w-8 h-8'), value: stats?.totalOrders || 0, label: 'Purchases' },
                   { icon: navIcon('hourglass', 'w-8 h-8'), value: stats?.pendingOrders || 0, label: 'In Progress' },
                   { icon: navIcon('checkCircle', 'w-8 h-8'), value: stats?.completedOrders || 0, label: 'Completed' },
                   { icon: navIcon('dollar', 'w-8 h-8'), value: formatPrice(stats?.totalSpent || 0), label: 'Total Spent', accent: true },
@@ -768,7 +833,7 @@ export default function CustomerDashboardPage() {
               </div>
 
               {/* Quick Actions — horizontal tiles */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
                   <Link
                     href="/orders"
                     className="flex flex-col items-center text-center gap-2 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-hos-border-accent transition-all"
@@ -777,6 +842,16 @@ export default function CustomerDashboardPage() {
                     <div>
                       <p className="font-semibold text-hos-text-secondary text-sm">View All Orders</p>
                       <p className="text-xs text-hos-text-muted mt-0.5">Track orders</p>
+                    </div>
+                  </Link>
+                  <Link
+                    href="/purchases"
+                    className="flex flex-col items-center text-center gap-2 bg-hos-bg-secondary rounded-xl p-4 shadow-sm border border-hos-border hover:shadow-md hover:border-amber-500/30 transition-all"
+                  >
+                    <div className="w-12 h-12 rounded-lg bg-amber-500/15 flex items-center justify-center text-2xl">{navIcon('receipt', 'w-6 h-6')}</div>
+                    <div>
+                      <p className="font-semibold text-hos-text-secondary text-sm">Purchase History</p>
+                      <p className="text-xs text-hos-text-muted mt-0.5">Online + in-store</p>
                     </div>
                   </Link>
                   <Link
@@ -811,19 +886,19 @@ export default function CustomerDashboardPage() {
                   </Link>
               </div>
 
-              {/* Recent Orders */}
+              {/* Recent Purchases */}
               <div className="bg-hos-bg-secondary rounded-xl shadow-sm border border-hos-border">
                 <div className="p-6 border-b border-hos-border flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-hos-text-secondary">Recent Orders</h2>
-                  <Link href="/orders" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
-                    View All →
+                  <h2 className="text-lg font-semibold text-hos-text-secondary">Recent Purchases</h2>
+                  <Link href="/purchases" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
+                    View Purchase History →
                   </Link>
                 </div>
                 <div className="divide-y divide-hos-border">
-                  {recentOrders.length === 0 ? (
+                  {recentPurchases.length === 0 && recentOrders.length === 0 ? (
                     <div className="text-center py-12">
                       <div className="text-5xl mb-4 flex justify-center">{navIcon('package', 'w-12 h-12')}</div>
-                      <p className="text-hos-text-muted mb-4">No orders yet</p>
+                      <p className="text-hos-text-muted mb-4">No purchases yet</p>
                       <Link
                         href="/products"
                         className="inline-block px-6 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover"
@@ -832,31 +907,60 @@ export default function CustomerDashboardPage() {
                       </Link>
                     </div>
                   ) : (
-                    recentOrders.map((order) => (
+                    (recentPurchases.length > 0 ? recentPurchases : recentOrders.map((order) => ({
+                      id: order.id,
+                      type: 'online' as const,
+                      date: typeof order.createdAt === 'string' ? order.createdAt : new Date(order.createdAt).toISOString(),
+                      orderNumber: order.orderNumber,
+                      total: order.total,
+                      currency: order.currency,
+                      status: order.status,
+                    }))).map((purchase) => {
+                      const isInStore = purchase.type === 'in-store';
+                      return (
                       <Link
-                        key={order.id}
-                        href={`/orders/${order.id}`}
+                        key={`${purchase.type}-${purchase.id}`}
+                        href={isInStore ? '/purchases' : `/orders/${purchase.id}`}
                         className="flex items-center justify-between p-4 hover:bg-hos-bg-tertiary transition-colors"
                       >
                         <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-full bg-hos-gold/20 flex items-center justify-center text-lg">
-                            {navIcon('package', 'w-5 h-5')}
+                            {navIcon(isInStore ? 'store' : 'package', 'w-5 h-5')}
                           </div>
                           <div>
                             <p className="font-medium text-hos-text-secondary">
-                              Order #{order.orderNumber || order.id.slice(0, 8)}
+                              {isInStore
+                                ? purchase.storeName || 'In-store purchase'
+                                : `Order #${purchase.orderNumber || purchase.id.slice(0, 8)}`}
                             </p>
-                            <p className="text-sm text-hos-text-muted">{formatDate(order.createdAt)}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <p className="text-sm text-hos-text-muted">{formatDate(purchase.date)}</p>
+                              <span
+                                className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                                  isInStore
+                                    ? 'bg-amber-500/15 text-amber-200'
+                                    : 'bg-hos-bg-tertiary text-hos-text-secondary'
+                                }`}
+                              >
+                                {isInStore ? 'In-store' : 'Online'}
+                              </span>
+                              {purchase.paidWithLoyaltyVoucher && (
+                                <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/20 text-amber-100 border border-amber-500/40">
+                                  Paid with loyalty points
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                            {order.status}
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(purchase.status)}`}>
+                            {purchase.status}
                           </span>
-                          <p className="text-sm font-semibold text-hos-text-secondary mt-1">{formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}</p>
+                          <p className="text-sm font-semibold text-hos-text-secondary mt-1">{formatPrice(purchase.total, purchase.currency || DEFAULT_CURRENCY)}</p>
                         </div>
                       </Link>
-                    ))
+                      );
+                    })
                   )}
                 </div>
               </div>
@@ -870,7 +974,7 @@ export default function CustomerDashboardPage() {
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-hos-border text-center">
                   <p className="text-3xl font-bold text-hos-text-secondary">{stats?.totalOrders || 0}</p>
-                  <p className="text-sm text-hos-text-muted">Total Orders</p>
+                  <p className="text-sm text-hos-text-muted">Purchases</p>
                 </div>
                 <div className="bg-hos-bg-secondary rounded-xl p-6 shadow-sm border border-yellow-500/30 text-center">
                   <p className="text-3xl font-bold text-yellow-400">{stats?.pendingOrders || 0}</p>
@@ -890,9 +994,14 @@ export default function CustomerDashboardPage() {
               <div className="bg-hos-bg-secondary rounded-xl shadow-sm border border-hos-border">
                 <div className="p-6 border-b border-hos-border flex items-center justify-between">
                   <h2 className="text-lg font-semibold text-hos-text-secondary">All Orders</h2>
-                  <Link href="/orders" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
-                    View Full Page →
-                  </Link>
+                  <div className="flex items-center gap-4">
+                    <Link href="/purchases" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
+                      Purchase History →
+                    </Link>
+                    <Link href="/orders" className="text-hos-gold hover:text-hos-gold-hover text-sm font-medium">
+                      View Full Page →
+                    </Link>
+                  </div>
                 </div>
                 <div className="divide-y divide-hos-border">
                   {allOrders.length === 0 ? (
@@ -964,7 +1073,7 @@ export default function CustomerDashboardPage() {
                     accent: 'bg-emerald-500',
                   },
                   {
-                    label: 'Total Orders',
+                    label: 'Purchases',
                     value: String(stats?.totalOrders || 0),
                     accent: 'bg-amber-500',
                   },
@@ -1024,7 +1133,7 @@ export default function CustomerDashboardPage() {
                             {stats?.totalOrders ?? 0}
                           </p>
                           <p className="mt-1.5 text-[11px] uppercase leading-none tracking-wide text-hos-text-muted">
-                            Total Orders
+                            Purchases
                           </p>
                         </div>
                         <ResponsiveContainer width="100%" height="100%">
@@ -1152,7 +1261,7 @@ export default function CustomerDashboardPage() {
             <div className="bg-hos-bg-secondary rounded-xl shadow-sm border border-hos-border">
               <div className="p-6 border-b border-hos-border">
                 <h2 className="text-lg font-semibold text-hos-text-secondary">Recent Activity</h2>
-                <p className="text-sm text-hos-text-muted">Your recent orders and wishlist updates</p>
+                <p className="text-sm text-hos-text-muted">Your recent orders, in-store visits, and wishlist updates</p>
               </div>
               <div className="divide-y divide-hos-border">
                 {recentActivity.length === 0 ? (

@@ -622,6 +622,19 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>(`/loyalty/transactions${qs ? `?${qs}` : ''}`);
   }
 
+  async getPurchaseHistory(params?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    if (params?.type) q.set('type', params.type);
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/loyalty/purchase-history${qs ? `?${qs}` : ''}`);
+  }
+
   async getLoyaltyTierProgress(): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>('/loyalty/tier-progress');
   }
@@ -6584,11 +6597,13 @@ export class ApiClient {
   }
 
   async createReturnRequest(data: {
-    orderId: string;
+    orderId?: string;
+    posSaleId?: string;
     reason: string;
     notes?: string;
     items?: Array<{
-      orderItemId: string;
+      orderItemId?: string;
+      posSaleItemId?: string;
       quantity: number;
       reason?: string;
     }>;

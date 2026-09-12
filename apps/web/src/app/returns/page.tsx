@@ -30,13 +30,33 @@ interface Order {
     quantity: number;
     price: number;
   }>;
-  createdAt?: string; // Optional to allow for missing/invalid dates
+  createdAt?: string;
   deliveredAt?: string;
+}
+
+interface PosPurchaseItem {
+  id?: string;
+  name: string;
+  quantity: number;
+  price: number;
+  product?: { id?: string; name: string; images: Array<{ url: string }> };
+}
+
+interface PosPurchase {
+  id: string;
+  type: 'in-store';
+  date: string;
+  storeName?: string | null;
+  total: number;
+  currency: string;
+  status: string;
+  items: PosPurchaseItem[];
 }
 
 interface ReturnRequest {
   id: string;
-  orderId: string;
+  orderId?: string;
+  posSaleId?: string;
   status: string;
   reason: string;
   notes?: string;
@@ -44,7 +64,17 @@ interface ReturnRequest {
   refundMethod?: string;
   createdAt: string;
   updatedAt: string;
+  order?: { id: string; orderNumber?: string; currency?: string };
+  posSale?: {
+    id: string;
+    store?: { name?: string };
+    currency?: string;
+  };
 }
+
+type SelectedPurchase =
+  | { kind: 'order'; order: Order }
+  | { kind: 'pos'; sale: PosPurchase };
 
 export default function ReturnsPage() {
   return (
@@ -60,16 +90,19 @@ function ReturnsContent() {
   const { formatPrice } = useCurrency();
   const searchParams = useSearchParams();
   const orderIdParam = searchParams.get('orderId');
+  const posSaleIdParam = searchParams.get('posSaleId');
   const [orders, setOrders] = useState<Order[]>([]);
+  const [posPurchases, setPosPurchases] = useState<PosPurchase[]>([]);
   const [returnRequests, setReturnRequests] = useState<ReturnRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selected, setSelected] = useState<SelectedPurchase | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'orders' | 'returns'>('orders');
 
   const [returnForm, setReturnForm] = useState({
     orderId: '',
+    posSaleId: '',
     reason: '',
     notes: '',
     selectedItems: [] as string[],
@@ -81,55 +114,48 @@ function ReturnsContent() {
   }, []);
 
   useEffect(() => {
-    if (!orderIdParam || loading || orders.length === 0) return;
-    const matchedOrder = orders.find((o) => o.id === orderIdParam);
-    if (matchedOrder && canReturnOrder(matchedOrder)) {
-      handleCreateReturn(matchedOrder);
+    if (loading) return;
+    if (orderIdParam && orders.length > 0) {
+      const matchedOrder = orders.find((o) => o.id === orderIdParam);
+      if (matchedOrder && canReturnOrder(matchedOrder)) {
+        handleCreateOrderReturn(matchedOrder);
+      }
+    }
+    if (posSaleIdParam && posPurchases.length > 0) {
+      const matchedSale = posPurchases.find((s) => s.id === posSaleIdParam);
+      if (matchedSale && canReturnPosSale(matchedSale)) {
+        handleCreatePosReturn(matchedSale);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderIdParam, loading, orders]);
+  }, [orderIdParam, posSaleIdParam, loading, orders, posPurchases]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      // NOTE: apiClient uses shared-types where dates may be typed as Date.
-      // The UI expects ISO strings. Normalize date fields defensively to avoid build-time type conflicts.
       const ordersResponse = await apiClient
         .getOrders()
         .catch(() => ({ data: [] as any[] } as any));
       const returnsResponse = await apiClient
         .getReturns()
         .catch(() => ({ data: [] as any[] } as any));
+      const historyResponse = await apiClient
+        .getPurchaseHistory({ limit: 100, type: 'in-store' })
+        .catch(() => ({ data: { items: [] } } as any));
 
       const rawOrders: any[] = Array.isArray(ordersResponse?.data) ? ordersResponse.data : [];
       const normalizedOrders: Order[] = rawOrders.map((o: any) => {
-        // Safely normalize createdAt - check for existence and validity
-        // If missing or invalid, set to undefined so UI can show 'N/A' instead of misleading date
         let normalizedCreatedAt: string | undefined;
         if (!o?.createdAt) {
-          // Missing date - set to undefined (not a fallback date) so UI can display 'N/A'
           normalizedCreatedAt = undefined;
         } else if (typeof o.createdAt === 'string') {
-          // Validate string date before using it
           const date = new Date(o.createdAt);
-          if (isNaN(date.getTime())) {
-            // Invalid date string, set to undefined
-            normalizedCreatedAt = undefined;
-          } else {
-            normalizedCreatedAt = o.createdAt;
-          }
+          normalizedCreatedAt = isNaN(date.getTime()) ? undefined : o.createdAt;
         } else {
           const date = new Date(o.createdAt);
-          // Check if date is valid before calling toISOString()
-          if (isNaN(date.getTime())) {
-            // Invalid date, set to undefined (not a fallback date)
-            normalizedCreatedAt = undefined;
-          } else {
-            normalizedCreatedAt = date.toISOString();
-          }
+          normalizedCreatedAt = isNaN(date.getTime()) ? undefined : date.toISOString();
         }
 
-        // Safely normalize deliveredAt - check for existence and validity
         let normalizedDeliveredAt: string | undefined;
         if (o?.deliveredAt == null) {
           normalizedDeliveredAt = undefined;
@@ -137,13 +163,7 @@ function ReturnsContent() {
           normalizedDeliveredAt = o.deliveredAt;
         } else {
           const date = new Date(o.deliveredAt);
-          // Check if date is valid before calling toISOString()
-          if (isNaN(date.getTime())) {
-            // Invalid date, set to undefined
-            normalizedDeliveredAt = undefined;
-          } else {
-            normalizedDeliveredAt = date.toISOString();
-          }
+          normalizedDeliveredAt = isNaN(date.getTime()) ? undefined : date.toISOString();
         }
 
         return {
@@ -153,6 +173,34 @@ function ReturnsContent() {
         };
       });
       setOrders(normalizedOrders);
+
+      const historyPayload = historyResponse?.data;
+      const historyItems: any[] = Array.isArray(historyPayload)
+        ? historyPayload
+        : Array.isArray(historyPayload?.items)
+          ? historyPayload.items
+          : [];
+      const posRows: PosPurchase[] = historyItems
+        .filter((row: any) => row?.type === 'in-store' && row?.id)
+        .map((row: any) => ({
+          id: row.id,
+          type: 'in-store' as const,
+          date: typeof row.date === 'string' ? row.date : new Date(row.date).toISOString(),
+          storeName: row.storeName ?? null,
+          total: Number(row.total) || 0,
+          currency: row.currency || DEFAULT_CURRENCY,
+          status: row.status || 'COMPLETED',
+          items: Array.isArray(row.items)
+            ? row.items.map((item: any) => ({
+                id: item.id,
+                name: item.name || item.product?.name || 'Item',
+                quantity: item.quantity || 1,
+                price: Number(item.price) || 0,
+                product: item.product,
+              }))
+            : [],
+        }));
+      setPosPurchases(posRows);
 
       const rawReturns: any[] = Array.isArray(returnsResponse?.data) ? returnsResponse.data : [];
       setReturnRequests(rawReturns as ReturnRequest[]);
@@ -164,10 +212,23 @@ function ReturnsContent() {
     }
   };
 
-  const handleCreateReturn = (order: Order) => {
-    setSelectedOrder(order);
+  const handleCreateOrderReturn = (order: Order) => {
+    setSelected({ kind: 'order', order });
     setReturnForm({
       orderId: order.id,
+      posSaleId: '',
+      reason: '',
+      notes: '',
+      selectedItems: [],
+    });
+    setShowCreateModal(true);
+  };
+
+  const handleCreatePosReturn = (sale: PosPurchase) => {
+    setSelected({ kind: 'pos', sale });
+    setReturnForm({
+      orderId: '',
+      posSaleId: sale.id,
       reason: '',
       notes: '',
       selectedItems: [],
@@ -176,7 +237,7 @@ function ReturnsContent() {
   };
 
   const handleSubmitReturn = async () => {
-    if (!selectedOrder) return;
+    if (!selected) return;
 
     if (!returnForm.reason.trim()) {
       toast.error('Please provide a reason for the return');
@@ -185,20 +246,24 @@ function ReturnsContent() {
 
     try {
       setActionLoading(true);
+      const isPos = selected.kind === 'pos';
+      const sourceItems =
+        selected.kind === 'order' ? selected.order.items : selected.sale.items;
       await toast.promise(
         apiClient.createReturnRequest({
-          orderId: returnForm.orderId,
+          ...(isPos ? { posSaleId: returnForm.posSaleId } : { orderId: returnForm.orderId }),
           reason: returnForm.reason.trim(),
           notes: returnForm.notes.trim() || undefined,
-          items: returnForm.selectedItems.length > 0
-            ? selectedOrder.items
-                .filter((item) => returnForm.selectedItems.includes(item.id))
-                .map((item) => ({
-                  orderItemId: item.id,
-                  quantity: Math.max(1, Number(item.quantity) || 1),
-                  reason: returnForm.reason,
-                }))
-            : undefined,
+          items:
+            returnForm.selectedItems.length > 0
+              ? sourceItems
+                  .filter((item) => item.id && returnForm.selectedItems.includes(item.id))
+                  .map((item) => ({
+                    ...(isPos ? { posSaleItemId: item.id } : { orderItemId: item.id }),
+                    quantity: Math.max(1, Number(item.quantity) || 1),
+                    reason: returnForm.reason,
+                  }))
+              : undefined,
         }),
         {
           loading: 'Creating return request...',
@@ -252,6 +317,38 @@ function ReturnsContent() {
     return s === 'delivered';
   };
 
+  const canReturnPosSale = (sale: PosPurchase) => {
+    const s = (sale.status || '').toUpperCase();
+    return s !== 'CANCELLED' && s !== 'VOIDED' && s !== 'VOID';
+  };
+
+  const returnSourceLabel = (returnRequest: ReturnRequest) => {
+    if (returnRequest.posSaleId) {
+      const storeName =
+        returnRequest.posSale?.store?.name ||
+        posPurchases.find((s) => s.id === returnRequest.posSaleId)?.storeName;
+      return storeName ? `In-store return at ${storeName}` : 'In-store return';
+    }
+    const order =
+      returnRequest.order || orders.find((o) => o.id === returnRequest.orderId);
+    if (order?.orderNumber) return `Order #${order.orderNumber}`;
+    return null;
+  };
+
+  const selectedItems =
+    selected?.kind === 'order'
+      ? selected.order.items
+      : selected?.kind === 'pos'
+        ? selected.sale.items
+        : [];
+  const selectedCurrency =
+    selected?.kind === 'order'
+      ? selected.order.currency
+      : selected?.kind === 'pos'
+        ? selected.sale.currency
+        : DEFAULT_CURRENCY;
+  const hasEligiblePurchases = orders.length > 0 || posPurchases.length > 0;
+
   return (
     <RouteGuard allowedRoles={['CUSTOMER', 'ADMIN']} showAccessDenied={true}>
     <div className="min-h-screen bg-hos-bg-secondary">
@@ -261,7 +358,6 @@ function ReturnsContent() {
           Returns & Refunds
         </h1>
 
-        {/* Tabs */}
         <div className="border-b border-hos-border mb-6">
           <nav className="flex gap-4">
             <button
@@ -272,7 +368,7 @@ function ReturnsContent() {
                   : 'text-hos-text-muted hover:text-hos-text-secondary'
               }`}
             >
-              My Orders
+              My Purchases
             </button>
             <button
               onClick={() => setActiveTab('returns')}
@@ -291,14 +387,14 @@ function ReturnsContent() {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold mx-auto mb-4"></div>
-              <p className="text-sm sm:text-base text-hos-text-secondary">Loading...</p>
+              <p className="text-sm sm:text-base text-hos-text-secondary font-secondary">Loading...</p>
             </div>
           </div>
         ) : activeTab === 'orders' ? (
           <div className="space-y-4">
-            {orders.length === 0 ? (
+            {!hasEligiblePurchases ? (
               <div className="bg-hos-bg-secondary rounded-lg p-8 text-center">
-                <p className="text-hos-text-secondary mb-4">You have no orders yet.</p>
+                <p className="text-hos-text-secondary mb-4 font-secondary">You have no purchases yet.</p>
                 <Link
                   href="/products"
                   className="inline-block px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
@@ -307,14 +403,15 @@ function ReturnsContent() {
                 </Link>
               </div>
             ) : (
-              orders.map((order) => (
+              <>
+                {orders.map((order) => (
                 <div key={order.id} className="bg-hos-bg-secondary border rounded-lg shadow-sm p-4 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-hos-text-secondary">
+                      <h3 className="text-lg font-semibold text-hos-text-secondary font-primary">
                         Order #{order.orderNumber}
                       </h3>
-                      <p className="text-sm text-hos-text-muted">
+                      <p className="text-sm text-hos-text-muted font-secondary">
                         Placed on {order.createdAt ? formatDate(order.createdAt) : 'N/A'}
                       </p>
                     </div>
@@ -344,7 +441,7 @@ function ReturnsContent() {
                         />
                         <div className="flex-grow">
                           <p className="font-medium text-hos-text-secondary">{item.product.name}</p>
-                          <p className="text-sm text-hos-text-muted">
+                          <p className="text-sm text-hos-text-muted font-secondary">
                             Quantity: {item.quantity} × {formatPrice(item.price, order.currency || DEFAULT_CURRENCY)}
                           </p>
                         </div>
@@ -354,44 +451,102 @@ function ReturnsContent() {
 
                   {canReturnOrder(order) && (
                     <button
-                      onClick={() => handleCreateReturn(order)}
+                      onClick={() => handleCreateOrderReturn(order)}
                       className="w-full sm:w-auto px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
                     >
                       Request Return
                     </button>
                   )}
                 </div>
-              ))
+                ))}
+
+                {posPurchases.map((sale) => (
+                <div key={sale.id} className="bg-hos-bg-secondary border rounded-lg shadow-sm p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-hos-text-secondary font-primary">
+                        {sale.storeName || 'In-store purchase'}
+                      </h3>
+                      <p className="text-sm text-hos-text-muted font-secondary">
+                        Purchased on {sale.date ? formatDate(sale.date) : 'N/A'}
+                      </p>
+                    </div>
+                    <div className="mt-2 sm:mt-0 text-right">
+                      <p className="text-lg font-semibold text-hos-gold">
+                        {formatPrice(sale.total, sale.currency || DEFAULT_CURRENCY)}
+                      </p>
+                      <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-amber-500/15 text-amber-300">
+                        In-store
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 mb-4">
+                    {sale.items.map((item, idx) => (
+                      <div key={item.id || `${sale.id}-${idx}`} className="flex items-center gap-4 p-3 bg-hos-bg-secondary rounded-lg">
+                        <Image
+                          src={item.product?.images?.[0]?.url || '/placeholder-image.jpg'}
+                          alt={item.name}
+                          width={64}
+                          height={64}
+                          className="object-cover rounded-md"
+                        />
+                        <div className="flex-grow">
+                          <p className="font-medium text-hos-text-secondary">{item.name}</p>
+                          <p className="text-sm text-hos-text-muted font-secondary">
+                            Quantity: {item.quantity} × {formatPrice(item.price, sale.currency || DEFAULT_CURRENCY)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {canReturnPosSale(sale) && (
+                    <button
+                      onClick={() => handleCreatePosReturn(sale)}
+                      className="w-full sm:w-auto px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
+                    >
+                      Request Return
+                    </button>
+                  )}
+                </div>
+                ))}
+              </>
             )}
           </div>
         ) : (
           <div className="space-y-4">
             {returnRequests.length === 0 ? (
               <div className="bg-hos-bg-secondary rounded-lg p-8 text-center">
-                <p className="text-hos-text-secondary mb-4">You have no return requests.</p>
+                <p className="text-hos-text-secondary mb-4 font-secondary">You have no return requests.</p>
                 <button
                   onClick={() => setActiveTab('orders')}
                   className="inline-block px-6 py-3 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
                 >
-                  View Orders
+                  View Purchases
                 </button>
               </div>
             ) : (
               returnRequests.map((returnRequest) => {
-                const order = orders.find((o) => o.id === returnRequest.orderId);
+                const sourceLabel = returnSourceLabel(returnRequest);
+                const currency =
+                  returnRequest.order?.currency ||
+                  returnRequest.posSale?.currency ||
+                  orders.find((o) => o.id === returnRequest.orderId)?.currency ||
+                  DEFAULT_CURRENCY;
                 return (
                   <div key={returnRequest.id} className="bg-hos-bg-secondary border rounded-lg shadow-sm p-4 sm:p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold text-hos-text-secondary">
+                        <h3 className="text-lg font-semibold text-hos-text-secondary font-primary">
                           Return Request #{returnRequest.id.slice(0, 8)}
                         </h3>
-                        {order && (
-                          <p className="text-sm text-hos-text-muted">
-                            Order #{order.orderNumber}
+                        {sourceLabel && (
+                          <p className="text-sm text-hos-text-muted font-secondary">
+                            {sourceLabel}
                           </p>
                         )}
-                        <p className="text-sm text-hos-text-muted">
+                        <p className="text-sm text-hos-text-muted font-secondary">
                           Created on {returnRequest.createdAt ? formatDate(returnRequest.createdAt) : 'N/A'}
                         </p>
                       </div>
@@ -403,26 +558,26 @@ function ReturnsContent() {
                     <div className="space-y-2 mb-4">
                       <div>
                         <p className="text-sm font-medium text-hos-text-secondary">Reason:</p>
-                        <p className="text-sm text-hos-text-secondary">{returnRequest.reason}</p>
+                        <p className="text-sm text-hos-text-secondary font-secondary">{returnRequest.reason}</p>
                       </div>
                       {returnRequest.notes && (
                         <div>
                           <p className="text-sm font-medium text-hos-text-secondary">Notes:</p>
-                          <p className="text-sm text-hos-text-secondary">{returnRequest.notes}</p>
+                          <p className="text-sm text-hos-text-secondary font-secondary">{returnRequest.notes}</p>
                         </div>
                       )}
                       {returnRequest.refundAmount && (
                         <div>
                           <p className="text-sm font-medium text-hos-text-secondary">Refund Amount:</p>
                           <p className="text-lg font-semibold text-green-400">
-                            {formatPrice(returnRequest.refundAmount, order?.currency || DEFAULT_CURRENCY)}
+                            {formatPrice(returnRequest.refundAmount, currency)}
                           </p>
                         </div>
                       )}
                       {returnRequest.refundMethod && (
                         <div>
                           <p className="text-sm font-medium text-hos-text-secondary">Refund Method:</p>
-                          <p className="text-sm text-hos-text-secondary">{returnRequest.refundMethod}</p>
+                          <p className="text-sm text-hos-text-secondary font-secondary">{returnRequest.refundMethod}</p>
                         </div>
                       )}
                     </div>
@@ -440,27 +595,42 @@ function ReturnsContent() {
           </div>
         )}
 
-        {/* Create Return Modal */}
-        {showCreateModal && selectedOrder && (
+        {showCreateModal && selected && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-hos-bg-secondary rounded-lg max-w-2xl w-full p-6 my-8">
-              <h2 className="text-xl font-bold mb-4">Request Return</h2>
-              <p className="text-sm text-hos-text-secondary mb-4">
-                Order #{selectedOrder.orderNumber}
+            <div className="bg-hos-bg-secondary rounded-lg max-w-2xl w-full p-6 my-8 border border-hos-border">
+              <h2 className="text-xl font-bold mb-4 font-primary text-hos-gold">Request Return</h2>
+              <p className="text-sm text-hos-text-secondary mb-4 font-secondary">
+                {selected.kind === 'pos'
+                  ? selected.sale.storeName || 'In-store purchase'
+                  : `Order #${selected.order.orderNumber}`}
               </p>
 
               <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
                 <div>
                   <label className="block text-sm font-medium text-hos-text-secondary mb-2">
-                    Select Items to Return (optional - leave empty to return entire order)
+                    Select Items to Return (optional - leave empty to return the entire purchase)
                   </label>
                   <div className="space-y-2">
-                    {selectedOrder.items.map((item) => (
-                      <label key={item.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-hos-bg-tertiary cursor-pointer">
+                    {selectedItems.map((item, idx) => {
+                      const itemId = item.id || `${idx}`;
+                      const isOrderItem = selected.kind === 'order';
+                      const name = isOrderItem
+                        ? (item as Order['items'][number]).product?.name
+                        : (item as PosPurchaseItem).name;
+                      const imageUrl = isOrderItem
+                        ? (item as Order['items'][number]).product?.images?.[0]?.url
+                        : (item as PosPurchaseItem).product?.images?.[0]?.url;
+                      const price = isOrderItem
+                        ? (item as Order['items'][number]).price
+                        : (item as PosPurchaseItem).price;
+                      return (
+                      <label key={itemId} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-hos-bg-tertiary cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={returnForm.selectedItems.includes(item.id)}
+                          checked={!!item.id && returnForm.selectedItems.includes(item.id)}
+                          disabled={!item.id}
                           onChange={(e) => {
+                            if (!item.id) return;
                             if (e.target.checked) {
                               setReturnForm({
                                 ...returnForm,
@@ -476,20 +646,21 @@ function ReturnsContent() {
                           className="rounded border-hos-border text-hos-gold focus:ring-hos-gold/50"
                         />
                         <Image
-                          src={item.product.images[0]?.url || '/placeholder-image.jpg'}
-                          alt={item.product.name}
+                          src={imageUrl || '/placeholder-image.jpg'}
+                          alt={name || 'Item'}
                           width={48}
                           height={48}
                           className="object-cover rounded-md"
                         />
                         <div className="flex-grow">
-                          <p className="font-medium text-hos-text-secondary">{item.product.name}</p>
-                          <p className="text-sm text-hos-text-muted">
-                            Qty: {item.quantity} × {formatPrice(item.price, selectedOrder.currency || DEFAULT_CURRENCY)}
+                          <p className="font-medium text-hos-text-secondary">{name}</p>
+                          <p className="text-sm text-hos-text-muted font-secondary">
+                            Qty: {item.quantity} × {formatPrice(price, selectedCurrency || DEFAULT_CURRENCY)}
                           </p>
                         </div>
                       </label>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -500,7 +671,7 @@ function ReturnsContent() {
                   <select
                     value={returnForm.reason}
                     onChange={(e) => setReturnForm({ ...returnForm, reason: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none"
                     required
                   >
                     <option value="">Select a reason</option>
@@ -520,7 +691,7 @@ function ReturnsContent() {
                   <textarea
                     value={returnForm.notes}
                     onChange={(e) => setReturnForm({ ...returnForm, notes: e.target.value })}
-                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
+                    className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-hos-gold/50 focus:border-hos-gold bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none font-secondary"
                     rows={4}
                     placeholder="Please provide any additional details about your return..."
                   />

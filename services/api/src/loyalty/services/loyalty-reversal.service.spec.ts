@@ -32,6 +32,16 @@ describe('LoyaltyReversalService', () => {
           parentOrderId: null,
         }),
       },
+      pOSSale: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'sale-1',
+          customerId: userId,
+          totalAmount: 100,
+          loyaltyPointsEarned: 80,
+          storeId: 'store-1',
+        }),
+        update: jest.fn(),
+      },
       loyaltyMembership: {
         findUnique: jest.fn().mockResolvedValue(membership),
         update: membershipUpdate,
@@ -72,7 +82,7 @@ describe('LoyaltyReversalService', () => {
       tiers,
     );
 
-    return { service, prisma, wallet, applyDelta, membershipUpdate, tiers };
+    return { service, prisma, wallet, applyDelta, membershipUpdate, tiers, settings };
   }
 
   describe('onReturnRefunded — earn clawback', () => {
@@ -159,6 +169,93 @@ describe('LoyaltyReversalService', () => {
       await service.onReturnRefunded({ returnId: 'ret-1', orderId: 'order-1', refundAmount: 100 });
 
       expect(membershipUpdate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('onPosReturnCompleted', () => {
+    it('claws back a pro-rata share of POS earn points', async () => {
+      const { service, applyDelta, prisma, tiers } = build({});
+
+      await service.onPosReturnCompleted({
+        returnId: 'ret-pos-1',
+        posSaleId: 'sale-1',
+        refundAmount: 50,
+      });
+
+      expect(applyDelta).toHaveBeenCalledWith(
+        expect.anything(),
+        membershipId,
+        -40,
+        'ADJUST',
+        expect.objectContaining({
+          source: 'POS_RETURN_REFUND',
+          sourceId: 'ret-pos-1',
+          channel: 'HOS_OUTLET_POS',
+          storeId: 'store-1',
+          description: 'Points adjusted for in-store return',
+          idempotencyKey: 'reverse:POS_RETURN_EARN:ret-pos-1',
+        }),
+      );
+      expect(prisma.pOSSale.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { loyaltyPointsEarned: { decrement: 40 } },
+        }),
+      );
+      expect(tiers.recalculateTier).toHaveBeenCalledWith(membershipId);
+    });
+
+    it('caps the clawback at the live balance', async () => {
+      const { service, applyDelta } = build({
+        membership: { currentBalance: 10 },
+      });
+
+      await service.onPosReturnCompleted({
+        returnId: 'ret-pos-1',
+        posSaleId: 'sale-1',
+        refundAmount: 100,
+      });
+
+      expect(applyDelta).toHaveBeenCalledWith(
+        expect.anything(),
+        membershipId,
+        -10,
+        'ADJUST',
+        expect.objectContaining({ source: 'POS_RETURN_REFUND' }),
+      );
+    });
+
+    it('does nothing when the sale earned no points', async () => {
+      const { service, applyDelta, prisma } = build({});
+      prisma.pOSSale.findUnique.mockResolvedValue({
+        id: 'sale-1',
+        customerId: userId,
+        totalAmount: 100,
+        loyaltyPointsEarned: 0,
+        storeId: 'store-1',
+      });
+
+      await service.onPosReturnCompleted({
+        returnId: 'ret-pos-1',
+        posSaleId: 'sale-1',
+        refundAmount: 100,
+      });
+
+      expect(applyDelta).not.toHaveBeenCalled();
+    });
+
+    it('respects the clawEarnOnReturn policy flag', async () => {
+      const { service, applyDelta, settings } = build({});
+      settings.getResolved.mockResolvedValue({
+        settings: { clawEarnOnReturn: false },
+      });
+
+      await service.onPosReturnCompleted({
+        returnId: 'ret-pos-1',
+        posSaleId: 'sale-1',
+        refundAmount: 100,
+      });
+
+      expect(applyDelta).not.toHaveBeenCalled();
     });
   });
 });

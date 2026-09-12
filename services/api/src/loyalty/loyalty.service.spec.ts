@@ -89,6 +89,13 @@ describe('LoyaltyService', () => {
     },
     order: {
       count: jest.fn(),
+      findMany: jest.fn(),
+    },
+    pOSSale: {
+      findMany: jest.fn(),
+    },
+    loyaltyPosVoucher: {
+      findMany: jest.fn(),
     },
     cart: {
       update: jest.fn(),
@@ -242,6 +249,114 @@ describe('LoyaltyService', () => {
       const result = await service.getTransactions('user-1', { page: -1, limit: 500 });
       expect(result.page).toBe(1);
       expect(result.limit).toBe(100);
+    });
+  });
+
+  describe('getPurchaseHistory', () => {
+    const onlineOrder = {
+      id: 'ord-1',
+      orderNumber: 'HOS-1001',
+      createdAt: new Date('2026-09-10T12:00:00.000Z'),
+      total: 40,
+      currency: 'USD',
+      status: 'DELIVERED',
+      loyaltyPointsEarned: 40,
+      loyaltyPointsRedeemed: 0,
+      items: [{ quantity: 1, price: 40, product: { name: 'Wand' } }],
+    };
+
+    const posSale = {
+      id: 'sale-1',
+      saleDate: new Date('2026-09-11T15:00:00.000Z'),
+      totalAmount: 25,
+      currency: 'USD',
+      status: 'PROCESSED',
+      loyaltyPointsEarned: 25,
+      loyaltyPointsRedeemed: 0,
+      rawPayload: {
+        payments: [{ name: 'Gift Card', gift_card_number: 'HOS-ABCD' }],
+      },
+      storeId: 'store-1',
+      externalInvoice: 'INV-9',
+      store: { name: 'York Flagship' },
+      items: [{ name: 'Mug', quantity: 1, unitPrice: 25 }],
+    };
+
+    beforeEach(() => {
+      mockPrisma.order.findMany.mockResolvedValue([]);
+      mockPrisma.pOSSale.findMany.mockResolvedValue([]);
+      mockPrisma.loyaltyMembership.findUnique.mockResolvedValue(null);
+      mockPrisma.loyaltyPosVoucher.findMany.mockResolvedValue([]);
+    });
+
+    it('merges online orders and POS sales sorted by date descending', async () => {
+      mockPrisma.order.findMany.mockResolvedValue([onlineOrder]);
+      mockPrisma.pOSSale.findMany.mockResolvedValue([posSale]);
+
+      const result = await service.getPurchaseHistory('user-1', { page: 1, limit: 20 });
+
+      expect(result.total).toBe(2);
+      expect(result.items[0].type).toBe('in-store');
+      expect(result.items[0].storeName).toBe('York Flagship');
+      expect(result.items[1].type).toBe('online');
+      expect(result.items[1].orderNumber).toBe('HOS-1001');
+      expect(result.summary).toMatchObject({
+        onlineCount: 1,
+        inStoreCount: 1,
+        completedCount: 2,
+        totalSpent: 65,
+        totalPointsEarned: 65,
+      });
+    });
+
+    it('filters to in-store purchases when type=in-store', async () => {
+      mockPrisma.order.findMany.mockResolvedValue([onlineOrder]);
+      mockPrisma.pOSSale.findMany.mockResolvedValue([posSale]);
+
+      const result = await service.getPurchaseHistory('user-1', {
+        page: 1,
+        limit: 20,
+        type: 'in-store',
+      });
+      expect(result.total).toBe(1);
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].type).toBe('in-store');
+    });
+
+    it('paginates the merged list and clamps page/limit', async () => {
+      mockPrisma.order.findMany.mockResolvedValue([onlineOrder]);
+      mockPrisma.pOSSale.findMany.mockResolvedValue([posSale]);
+
+      const result = await service.getPurchaseHistory('user-1', { page: -1, limit: 1 });
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(1);
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].type).toBe('in-store');
+    });
+
+    it('flags POS sales paid with a matching loyalty voucher card number', async () => {
+      mockPrisma.pOSSale.findMany.mockResolvedValue([posSale]);
+      mockPrisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'mem-1' });
+      mockPrisma.loyaltyPosVoucher.findMany.mockResolvedValue([
+        {
+          cardNumber: 'HOS-ABCD',
+          storeId: 'store-1',
+          issuedAt: new Date('2026-09-11T14:30:00.000Z'),
+          createdAt: new Date('2026-09-11T14:30:00.000Z'),
+        },
+      ]);
+
+      const result = await service.getPurchaseHistory('user-1', {});
+      expect(result.items[0].paidWithLoyaltyVoucher).toBe(true);
+    });
+
+    it('does not require loyalty enrolment to list purchases', async () => {
+      mockPrisma.order.findMany.mockResolvedValue([onlineOrder]);
+      mockPrisma.loyaltyMembership.findUnique.mockResolvedValue(null);
+
+      const result = await service.getPurchaseHistory('user-1', {});
+      expect(result.items).toHaveLength(1);
+      expect(mockPrisma.loyaltyPosVoucher.findMany).not.toHaveBeenCalled();
     });
   });
 

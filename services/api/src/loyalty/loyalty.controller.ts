@@ -106,6 +106,29 @@ export class LoyaltyController {
     return { data, message: 'OK' };
   }
 
+  @Get('purchase-history')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
+  @Roles('CUSTOMER')
+  @ApiOperation({ summary: 'Unified purchase history (online orders and in-store POS sales)' })
+  async purchaseHistory(
+    @Request() req: { user: { id: string } },
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+    @Query('type') type?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.loyalty.getPurchaseHistory(req.user.id, { page, limit, type });
+    return {
+      data,
+      message: 'OK',
+      pagination: {
+        page: data.page,
+        limit: data.limit,
+        total: data.total,
+        totalPages: Math.ceil(data.total / data.limit) || 0,
+      },
+    };
+  }
+
   @Get('tier-progress')
   @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @Roles('CUSTOMER')

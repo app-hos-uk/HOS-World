@@ -7,6 +7,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { ActivityModule } from '../activity/activity.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { ReturnPoliciesModule } from '../return-policies/return-policies.module';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { RETURN_FULFILMENT } from './return-fulfilment.token';
 
 @Module({
@@ -16,6 +17,7 @@ import { RETURN_FULFILMENT } from './return-fulfilment.token';
     forwardRef(() => NotificationsModule),
     ActivityModule,
     InventoryModule,
+    forwardRef(() => LoyaltyModule),
   ],
   controllers: [ReturnsController],
   providers: [

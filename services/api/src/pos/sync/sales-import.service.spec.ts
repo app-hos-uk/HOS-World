@@ -4,8 +4,10 @@ function makeMocks() {
   const prisma: any = {
     pOSSale: {
       findUnique: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
       create: jest.fn().mockResolvedValue({ id: 'sale-new' }),
       update: jest.fn(),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
     },
     user: {
       findFirst: jest.fn(),
@@ -42,6 +44,7 @@ function makeMocks() {
     create: jest.fn().mockReturnValue({
       authenticate: jest.fn(),
       getSales: jest.fn().mockResolvedValue({ sales: [], maxVersion: null }),
+      lookupCustomer: jest.fn().mockResolvedValue(null),
     }),
   };
   const encryption: any = {
@@ -418,6 +421,7 @@ describe('PosSalesImportService', () => {
           sales: [mockParsedSale],
           maxVersion: 100,
         }),
+        lookupCustomer: jest.fn(),
       };
       factory.create.mockReturnValue(adapter);
 
@@ -428,6 +432,7 @@ describe('PosSalesImportService', () => {
 
       const count = await service.pollStoreSales('s1');
       expect(count).toBe(1);
+      expect(adapter.lookupCustomer).not.toHaveBeenCalled();
       expect(adapter.getSales).toHaveBeenCalledWith({
         afterVersion: undefined,
         outletId: 'out-1',
@@ -455,6 +460,7 @@ describe('PosSalesImportService', () => {
       const adapter = {
         authenticate: jest.fn(),
         getSales: jest.fn().mockResolvedValue({ sales: [], maxVersion: null }),
+        lookupCustomer: jest.fn(),
       };
       factory.create.mockReturnValue(adapter);
 
@@ -480,11 +486,189 @@ describe('PosSalesImportService', () => {
       const adapter = {
         authenticate: jest.fn(),
         getSales: jest.fn().mockRejectedValue(new Error('api down')),
+        lookupCustomer: jest.fn(),
       };
       factory.create.mockReturnValue(adapter);
 
       await expect(service.pollStoreSales('s1')).rejects.toThrow('api down');
       expect(prisma.pOSConnection.update).not.toHaveBeenCalled();
+    });
+
+    it('hydrates customer email via lookupCustomer before import', async () => {
+      const { service, prisma, factory } = makeMocks();
+      prisma.pOSConnection.findFirst.mockResolvedValue({
+        id: 'conn-1',
+        provider: 'lightspeed',
+        credentials: '{}',
+        externalOutletId: 'out-1',
+        lastSaleImportedAt: null,
+        settings: {},
+        store: { externalStoreId: null },
+      });
+      const saleWithoutEmail = {
+        ...mockParsedSale,
+        customer: { externalId: 'ls-cust-1' },
+        rawPayload: { customer_id: 'ls-cust-1' },
+      };
+      const adapter = {
+        authenticate: jest.fn(),
+        getSales: jest.fn().mockResolvedValue({
+          sales: [saleWithoutEmail],
+          maxVersion: 101,
+        }),
+        lookupCustomer: jest.fn().mockResolvedValue({
+          externalId: 'ls-cust-1',
+          email: 'buyer@example.com',
+          phone: '+447700900123',
+        }),
+      };
+      factory.create.mockReturnValue(adapter);
+
+      prisma.pOSSale.findUnique.mockResolvedValue(null);
+      prisma.user.findFirst.mockResolvedValue({ id: 'user-1' });
+      prisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'mem-1' });
+      prisma.externalEntityMapping.findFirst.mockResolvedValue(null);
+      prisma.product.findFirst.mockResolvedValue(null);
+
+      await service.pollStoreSales('s1');
+
+      expect(adapter.lookupCustomer).toHaveBeenCalledTimes(1);
+      expect(adapter.lookupCustomer).toHaveBeenCalledWith('ls-cust-1');
+      expect(prisma.user.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { email: { equals: 'buyer@example.com', mode: 'insensitive' } },
+        }),
+      );
+      expect(prisma.pOSSale.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            customerId: 'user-1',
+            customerEmail: 'buyer@example.com',
+          }),
+        }),
+      );
+    });
+
+    it('looks up each unique customer id once per poll', async () => {
+      const { service, prisma, factory } = makeMocks();
+      prisma.pOSConnection.findFirst.mockResolvedValue({
+        id: 'conn-1',
+        provider: 'lightspeed',
+        credentials: '{}',
+        externalOutletId: 'out-1',
+        lastSaleImportedAt: null,
+        settings: {},
+        store: { externalStoreId: null },
+      });
+      const saleA = {
+        ...mockParsedSale,
+        externalId: 'sale-a',
+        customer: { externalId: 'ls-cust-1' },
+      };
+      const saleB = {
+        ...mockParsedSale,
+        externalId: 'sale-b',
+        customer: { externalId: 'ls-cust-1' },
+      };
+      const adapter = {
+        authenticate: jest.fn(),
+        getSales: jest.fn().mockResolvedValue({
+          sales: [saleA, saleB],
+          maxVersion: 102,
+        }),
+        lookupCustomer: jest.fn().mockResolvedValue({
+          externalId: 'ls-cust-1',
+          email: 'buyer@example.com',
+        }),
+      };
+      factory.create.mockReturnValue(adapter);
+
+      prisma.pOSSale.findUnique.mockResolvedValue(null);
+      prisma.user.findFirst.mockResolvedValue(null);
+      prisma.externalEntityMapping.findFirst.mockResolvedValue(null);
+      prisma.product.findFirst.mockResolvedValue(null);
+
+      await service.pollStoreSales('s1');
+
+      expect(adapter.lookupCustomer).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('retroLinkUnattributedSales', () => {
+    it('sets customerId and earns loyalty on unattributed non-voided sales', async () => {
+      const { service, prisma, earnEngine } = makeMocks();
+      prisma.pOSSale.findMany.mockResolvedValue([
+        {
+          id: 'sale-old',
+          loyaltyPointsEarned: 0,
+          status: 'PROCESSED',
+          rawPayload: { customer_id: 'ls-cust-1' },
+        },
+        {
+          id: 'sale-void',
+          loyaltyPointsEarned: 0,
+          status: 'VOIDED',
+          rawPayload: { customer_id: 'ls-cust-1' },
+        },
+        {
+          id: 'sale-other',
+          loyaltyPointsEarned: 0,
+          status: 'PROCESSED',
+          rawPayload: { customer_id: 'ls-other' },
+        },
+        {
+          id: 'sale-earned',
+          loyaltyPointsEarned: 50,
+          status: 'PROCESSED',
+          rawPayload: { customer: { id: 'ls-cust-1' } },
+        },
+      ]);
+      prisma.pOSSale.updateMany.mockResolvedValue({ count: 2 });
+
+      const n = await service.retroLinkUnattributedSales('ls-cust-1', 'user-1', 's1');
+
+      expect(n).toBe(3);
+      expect(prisma.pOSSale.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ['sale-old', 'sale-void', 'sale-earned'] }, customerId: null },
+        data: { customerId: 'user-1' },
+      });
+      expect(earnEngine.processPosSale).toHaveBeenCalledWith('sale-old');
+      expect(earnEngine.processPosSale).not.toHaveBeenCalledWith('sale-void');
+      expect(earnEngine.processPosSale).not.toHaveBeenCalledWith('sale-earned');
+    });
+
+    it('runs after a new identity mapping is created', async () => {
+      const { service, prisma, earnEngine } = makeMocks();
+      prisma.pOSSale.findUnique.mockResolvedValue(null);
+      prisma.user.findFirst.mockResolvedValue({ id: 'user-1' });
+      prisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'mem-1' });
+      prisma.externalEntityMapping.findFirst.mockResolvedValue(null);
+      prisma.product.findFirst.mockResolvedValue(null);
+      prisma.pOSSale.findMany.mockResolvedValue([
+        {
+          id: 'sale-old',
+          loyaltyPointsEarned: 0,
+          status: 'PROCESSED',
+          rawPayload: { customer_id: 'ls-99' },
+        },
+      ]);
+
+      const sale = {
+        ...mockParsedSale,
+        customer: {
+          email: 'test@example.com',
+          phone: null,
+          externalId: 'ls-99',
+        },
+      };
+      await service.importParsedSale('s1', 'lightspeed', sale);
+
+      expect(prisma.externalEntityMapping.upsert).toHaveBeenCalled();
+      expect(prisma.pOSSale.updateMany).toHaveBeenCalledWith({
+        where: { id: { in: ['sale-old'] }, customerId: null },
+        data: { customerId: 'user-1' },
+      });
+      expect(earnEngine.processPosSale).toHaveBeenCalledWith('sale-old');
     });
   });
 });

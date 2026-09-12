@@ -152,18 +152,45 @@ export class LightspeedAdapter implements POSAdapter {
     return String(data?.data?.id ?? (data as { id?: string })?.id ?? customer.internalId);
   }
 
-  /** Lookup by customer_code first, then email. */
+  /** Lookup by Lightspeed customer id, then customer_code, then email. */
   async lookupCustomer(identifier: string): Promise<POSCustomer | null> {
+    const id = identifier.trim();
+    if (!id) return null;
+
+    // POS poll hydrates sales that only have customer_id (a Lightspeed UUID).
+    if (!id.includes('@')) {
+      try {
+        const { data } = await this.client.request<unknown>(
+          'GET',
+          `/customers/${encodeURIComponent(id)}`,
+        );
+        const row = this.unwrapSaleRow(data);
+        if (row) return this.mapCustomerRow(row, id);
+      } catch {
+        // Fall through to customer_code / email search.
+      }
+    }
+
     const row =
-      (await this.findCustomerRow({ customer_code: identifier })) ??
-      (await this.findCustomerRow({ email: identifier }));
+      (await this.findCustomerRow({ customer_code: id })) ??
+      (await this.findCustomerRow({ email: id }));
     if (!row) return null;
+    return this.mapCustomerRow(row);
+  }
+
+  private mapCustomerRow(row: Record<string, unknown>, fallbackId?: string): POSCustomer {
+    const phone =
+      row.phone != null && String(row.phone).trim()
+        ? String(row.phone).trim()
+        : row.mobile != null && String(row.mobile).trim()
+          ? String(row.mobile).trim()
+          : undefined;
     return {
-      externalId: String(row.id ?? ''),
-      email: row.email ? String(row.email) : undefined,
+      externalId: String(row.id ?? fallbackId ?? ''),
+      email: M.emailFromVendCustomer(row),
       firstName: row.first_name ? String(row.first_name) : undefined,
       lastName: row.last_name ? String(row.last_name) : undefined,
-      phone: row.phone ? String(row.phone) : row.mobile ? String(row.mobile) : undefined,
+      phone,
     };
   }
 

@@ -52,6 +52,10 @@ export class RefundsService {
       throw new NotFoundException('Return request not found');
     }
 
+    if (!returnRequest.order || !returnRequest.orderId) {
+      throw new BadRequestException('Stripe refund is only available for online order returns');
+    }
+
     const allowedStatuses = data.isRetry ? ['APPROVED', 'PROCESSING'] : ['PENDING', 'APPROVED'];
     if (!allowedStatuses.includes(returnRequest.status)) {
       throw new BadRequestException(
@@ -377,6 +381,9 @@ export class RefundsService {
     });
     if (!returnRequest) {
       throw new NotFoundException('Return request not found');
+    }
+    if (!returnRequest.order || !returnRequest.orderId) {
+      throw new BadRequestException('Stripe refund is only available for online order returns');
     }
     if (!['APPROVED', 'PROCESSING'].includes(returnRequest.status)) {
       throw new BadRequestException('Only approved returns with a failed refund can be retried');

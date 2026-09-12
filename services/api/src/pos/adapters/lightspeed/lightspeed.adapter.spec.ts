@@ -197,6 +197,52 @@ describe('LightspeedAdapter', () => {
     });
   });
 
+  describe('lookupCustomer', () => {
+    function mockClientRequest(adapter: LightspeedAdapter) {
+      const request = jest.fn();
+      (adapter as any).client.request = request;
+      return request;
+    }
+
+    it('loads the customer by Lightspeed id', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request.mockResolvedValueOnce({
+        status: 200,
+        data: { data: { id: 'cust-1', email: 'buyer@example.com', phone: '+44111' } },
+      });
+
+      const customer = await adapter.lookupCustomer('cust-1');
+      expect(request).toHaveBeenCalledWith('GET', '/customers/cust-1');
+      expect(customer).toEqual(
+        expect.objectContaining({
+          externalId: 'cust-1',
+          email: 'buyer@example.com',
+          phone: '+44111',
+        }),
+      );
+    });
+
+    it('falls back to customer_code search when GET by id fails', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request
+        .mockRejectedValueOnce(new Error('Lightspeed API 404'))
+        .mockResolvedValueOnce({
+          status: 200,
+          data: {
+            data: [{ id: 'ls-1', customer_code: 'mem-abc', email: 'ada@example.com' }],
+          },
+        });
+
+      const customer = await adapter.lookupCustomer('mem-abc');
+      expect(request.mock.calls[0][1]).toBe('/customers/mem-abc');
+      expect(request.mock.calls[1][1]).toContain('customer_code=mem-abc');
+      expect(customer?.externalId).toBe('ls-1');
+      expect(customer?.email).toBe('ada@example.com');
+    });
+  });
+
   describe('getSales', () => {
     it('pages /sales with after cursor until short page', async () => {
       const adapter = new LightspeedAdapter(creds);

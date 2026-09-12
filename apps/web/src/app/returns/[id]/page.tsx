@@ -141,7 +141,8 @@ function ReturnDetailContent() {
     );
   }
 
-  const currency = returnRequest.order?.currency || DEFAULT_CURRENCY;
+  const currency =
+    returnRequest.order?.currency || returnRequest.posSale?.currency || DEFAULT_CURRENCY;
 
   const formatReturnStatus = (status: string) => {
     const labels: Record<string, string> = {
@@ -165,10 +166,15 @@ function ReturnDetailContent() {
       </Link>
       <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Return Request Details</h1>
+          <h1 className="text-2xl font-bold font-primary text-hos-gold">Return Request Details</h1>
           {returnRequest.order?.orderNumber && (
-            <p className="text-sm text-hos-text-muted mt-1">
+            <p className="text-sm text-hos-text-muted mt-1 font-secondary">
               Order #{returnRequest.order.orderNumber}
+            </p>
+          )}
+          {returnRequest.posSaleId && (
+            <p className="text-sm text-hos-text-muted mt-1 font-secondary">
+              In-store return at {returnRequest.posSale?.store?.name || 'store'}
             </p>
           )}
         </div>

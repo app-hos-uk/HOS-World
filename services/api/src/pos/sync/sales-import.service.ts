@@ -1,13 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
-import type { POSSale as ParsedSale } from '../interfaces/pos-types';
+import type {
+  LightspeedCredentials,
+  POSCustomer,
+  POSSale as ParsedSale,
+} from '../interfaces/pos-types';
 import { PosInventorySyncService } from './inventory-sync.service';
 import { LoyaltyEarnEngine } from '../../loyalty/engines/earn.engine';
 import { POSAdapterFactory } from '../pos-adapter.factory';
 import { EncryptionService } from '../../integrations/encryption.service';
 import { Decimal } from '@prisma/client/runtime/library';
 import { isClosedSale, isVoidedSale } from '../adapters/lightspeed/lightspeed.mapper';
-import type { LightspeedCredentials } from '../interfaces/pos-types';
 import { LightspeedAdapter } from '../adapters/lightspeed/lightspeed.adapter';
 import { normalizePhoneToE164 } from '../../common/utils/phone-normalize';
 
@@ -20,6 +23,23 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
+}
+
+/** Lightspeed customer id as stored on the raw sale payload (no POSSale column). */
+export function extractCustomerExternalId(rawPayload: unknown): string | null {
+  const raw = asRecord(rawPayload);
+  if (!raw) return null;
+  if (raw.customer_id != null && String(raw.customer_id).trim()) {
+    return String(raw.customer_id).trim();
+  }
+  const customer = asRecord(raw.customer);
+  if (customer?.id != null && String(customer.id).trim()) {
+    return String(customer.id).trim();
+  }
+  if (typeof raw.customer === 'string' && raw.customer.trim()) {
+    return raw.customer.trim();
+  }
+  return null;
 }
 
 function extractCustomerCode(rawPayload: unknown): string | null {
@@ -108,7 +128,7 @@ export class PosSalesImportService {
         select: { userId: true },
       });
       if (membership) {
-        await this.linkCustomerMappingIfNeeded(provider, membership.userId, externalId);
+        await this.linkCustomerMappingIfNeeded(provider, membership.userId, externalId, storeId);
         return membership.userId;
       }
     }
@@ -121,7 +141,7 @@ export class PosSalesImportService {
         select: { userId: true },
       });
       if (membership) {
-        await this.linkCustomerMappingIfNeeded(provider, membership.userId, externalId);
+        await this.linkCustomerMappingIfNeeded(provider, membership.userId, externalId, storeId);
         return membership.userId;
       }
     }
@@ -134,7 +154,7 @@ export class PosSalesImportService {
         select: { id: true },
       });
       if (user) {
-        await this.linkCustomerMappingIfNeeded(provider, user.id, externalId);
+        await this.linkCustomerMappingIfNeeded(provider, user.id, externalId, storeId);
         return user.id;
       }
     }
@@ -156,7 +176,7 @@ export class PosSalesImportService {
           take: 5,
         });
         if (users.length === 1) {
-          await this.linkCustomerMappingIfNeeded(provider, users[0].id, externalId);
+          await this.linkCustomerMappingIfNeeded(provider, users[0].id, externalId, storeId);
           return users[0].id;
         }
         if (users.length > 1) {
@@ -222,6 +242,7 @@ export class PosSalesImportService {
     provider: string,
     userId: string,
     externalId: string | null,
+    storeId: string,
   ): Promise<void> {
     if (!externalId) return;
     const membership = await this.prisma.loyaltyMembership.findUnique({
@@ -283,7 +304,54 @@ export class PosSalesImportService {
       } catch {
         // review create is best-effort
       }
+      return;
     }
+
+    await this.retroLinkUnattributedSales(externalId, userId, storeId);
+  }
+
+  /**
+   * Attach previously imported POS sales that had this Lightspeed customer id
+   * but no HOS user, then award loyalty for ones that never earned.
+   * POSSale has no externalCustomerId column — match via rawPayload.customer_id.
+   */
+  async retroLinkUnattributedSales(
+    externalCustomerId: string,
+    userId: string,
+    storeId: string,
+  ): Promise<number> {
+    const extId = externalCustomerId.trim();
+    if (!extId || !userId || !storeId) return 0;
+
+    const unattributed = await this.prisma.pOSSale.findMany({
+      where: { storeId, customerId: null },
+      select: { id: true, loyaltyPointsEarned: true, status: true, rawPayload: true },
+    });
+    const matched = unattributed.filter(
+      (s) => extractCustomerExternalId(s.rawPayload) === extId,
+    );
+    if (!matched.length) return 0;
+
+    await this.prisma.pOSSale.updateMany({
+      where: { id: { in: matched.map((s) => s.id) }, customerId: null },
+      data: { customerId: userId },
+    });
+
+    for (const sale of matched) {
+      if (sale.loyaltyPointsEarned !== 0 || sale.status === 'VOIDED') continue;
+      try {
+        await this.earnEngine.processPosSale(sale.id);
+      } catch (e) {
+        this.logger.warn(
+          `Loyalty earn after retro-link for POS sale ${sale.id}: ${(e as Error).message}`,
+        );
+      }
+    }
+
+    this.logger.log(
+      `Retro-linked ${matched.length} unattributed POS sale(s) for Lightspeed customer ${extId} → user ${userId} (store ${storeId})`,
+    );
+    return matched.length;
   }
 
   async importParsedSale(
@@ -475,9 +543,38 @@ export class PosSalesImportService {
 
     // Failures before cursor update must not advance version / lastSaleImportedAt.
     const { sales, maxVersion } = await adapter.getSales({ afterVersion, outletId });
+
+    // GET /sales often has customer_id without email. Hydrate once per unique id
+    // so the identity ladder can match on email/phone.
+    const customerCache = new Map<string, POSCustomer | null>();
+    const idsToLookup = [
+      ...new Set(
+        sales
+          .map((s) => {
+            const extId = s.customer?.externalId?.trim();
+            const email = s.customer?.email?.trim();
+            return extId && !email ? extId : null;
+          })
+          .filter((id): id is string => !!id),
+      ),
+    ];
+    for (const externalId of idsToLookup) {
+      try {
+        customerCache.set(externalId, await adapter.lookupCustomer(externalId));
+      } catch (e) {
+        this.logger.warn(
+          `POS customer lookup failed for ${externalId}: ${(e as Error).message}`,
+        );
+        customerCache.set(externalId, null);
+      }
+    }
+
     let imported = 0;
     for (const s of sales) {
-      const r = await this.importParsedSale(storeId, conn.provider, s);
+      const extId = s.customer?.externalId?.trim();
+      const hydrated = extId ? customerCache.get(extId) : undefined;
+      const parsed = this.mergeHydratedCustomer(s, hydrated ?? null);
+      const r = await this.importParsedSale(storeId, conn.provider, parsed);
       if (!r.duplicate && !r.skipped) imported++;
     }
 
@@ -515,5 +612,21 @@ export class PosSalesImportService {
     });
 
     return imported;
+  }
+
+  private mergeHydratedCustomer(
+    sale: ParsedSale,
+    hydrated: POSCustomer | null,
+  ): ParsedSale {
+    if (!hydrated) return sale;
+    return {
+      ...sale,
+      customer: {
+        ...sale.customer,
+        externalId: sale.customer?.externalId || hydrated.externalId,
+        email: sale.customer?.email?.trim() || hydrated.email?.trim() || undefined,
+        phone: sale.customer?.phone?.trim() || hydrated.phone?.trim() || undefined,
+      },
+    };
   }
 }

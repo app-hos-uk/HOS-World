@@ -7,6 +7,7 @@ import {
   Body,
   UseGuards,
   Request,
+  BadRequestException,
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
@@ -41,17 +42,24 @@ export class ReturnsController {
   @ApiOperation({
     summary: 'Create return request',
     description:
-      'Creates a new return request for an order. Customers can return items within the return window.',
+      'Creates a new return request for an online order or an in-store POS sale. Provide exactly one of orderId or posSaleId. Customers can return items within the return window.',
   })
   @ApiBody({ type: CreateReturnDto })
   @SwaggerApiResponse({ status: 201, description: 'Return request created successfully' })
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data or return window expired' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
-  @SwaggerApiResponse({ status: 404, description: 'Order not found' })
+  @SwaggerApiResponse({ status: 404, description: 'Order or POS sale not found' })
   async create(
     @Request() req: any,
     @Body() createReturnDto: CreateReturnDto,
   ): Promise<ApiResponse<any>> {
+    const hasOrderId =
+      typeof createReturnDto.orderId === 'string' && createReturnDto.orderId.trim().length > 0;
+    const hasPosSaleId =
+      typeof createReturnDto.posSaleId === 'string' && createReturnDto.posSaleId.trim().length > 0;
+    if (hasOrderId === hasPosSaleId) {
+      throw new BadRequestException('Exactly one of orderId or posSaleId must be provided');
+    }
     const returnRequest = await this.returnsService.create(req.user.id, createReturnDto);
     return {
       data: returnRequest,
@@ -64,7 +72,7 @@ export class ReturnsController {
   @ApiOperation({
     summary: 'Get all return requests',
     description:
-      'Retrieves all return requests. Customers see their own returns, sellers see returns for their products, admins see all.',
+      'Retrieves all return requests, including POS sale returns when present. Customers see their own returns, sellers see returns for their products and store sales, admins see all.',
   })
   @SwaggerApiResponse({ status: 200, description: 'Return requests retrieved successfully' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
@@ -81,7 +89,7 @@ export class ReturnsController {
   @ApiOperation({
     summary: 'Get return request by ID',
     description:
-      'Retrieves a specific return request by ID. Users can only access their own returns unless they are seller/admin.',
+      'Retrieves a specific return request by ID, including POS sale details when the return originated in-store. Users can only access their own returns unless they are seller/admin.',
   })
   @ApiParam({ name: 'id', description: 'Return request UUID', type: String })
   @SwaggerApiResponse({ status: 200, description: 'Return request retrieved successfully' })

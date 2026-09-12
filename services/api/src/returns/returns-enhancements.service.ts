@@ -110,6 +110,10 @@ export class ReturnsEnhancementsService {
       throw new NotFoundException('Return request not found');
     }
 
+    if (!returnRequest.order || !returnRequest.orderId) {
+      throw new BadRequestException('Stripe refund is only available for online order returns');
+    }
+
     if (!['APPROVED', 'PROCESSING'].includes(returnRequest.status)) {
       throw new BadRequestException('Return must be approved before processing refund');
     }

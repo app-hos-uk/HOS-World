@@ -37,6 +37,13 @@ import { PlatformRegionService } from '../config/platform-region.service';
 import { PartnerIncentiveService } from '../partner-referrals/services/partner-incentive.service';
 import { LoyaltyCampaignService } from './services/campaign.service';
 import { resolveSignupCampaignAward } from './signup-bonus';
+import {
+  countsTowardSpend,
+  mapOnlineOrder,
+  mapPosSale,
+  type LoyaltyVoucherHint,
+  type PurchaseHistoryItem,
+} from './purchase-history.util';
 
 /** Prefer Prisma `meta.message` — Error.message is often just "Raw query failed. Code: `42883`." */
 function prismaErrorDetail(err: unknown): string {
@@ -631,6 +638,123 @@ export class LoyaltyService implements OnModuleInit {
       this.prisma.loyaltyTransaction.count({ where: { membershipId: membership.id } }),
     ]);
     return { items, total, page, limit };
+  }
+
+  /**
+   * Customer-facing ledger of marketplace orders plus in-store POS sales
+   * linked to this user. Does not require loyalty enrolment.
+   */
+  async getPurchaseHistory(
+    userId: string,
+    query: { page?: number; limit?: number; type?: string },
+  ) {
+    const page = Math.max(1, query.page || 1);
+    const limit = Math.min(100, Math.max(1, query.limit || 20));
+    const typeFilter = (query.type || '').trim().toLowerCase();
+
+    const [orders, posSales, membership] = await Promise.all([
+      this.prisma.order.findMany({
+        where: { userId, deletedAt: null, parentOrderId: null },
+        select: {
+          id: true,
+          orderNumber: true,
+          createdAt: true,
+          total: true,
+          currency: true,
+          status: true,
+          loyaltyPointsEarned: true,
+          loyaltyPointsRedeemed: true,
+          items: {
+            select: {
+              id: true,
+              quantity: true,
+              price: true,
+              product: { select: { name: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.pOSSale.findMany({
+        where: { customerId: userId },
+        select: {
+          id: true,
+          saleDate: true,
+          totalAmount: true,
+          currency: true,
+          status: true,
+          loyaltyPointsEarned: true,
+          loyaltyPointsRedeemed: true,
+          rawPayload: true,
+          storeId: true,
+          externalInvoice: true,
+          store: { select: { name: true } },
+          items: {
+            select: {
+              id: true,
+              name: true,
+              quantity: true,
+              unitPrice: true,
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  images: { take: 1, orderBy: { order: 'asc' }, select: { url: true } },
+                },
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.loyaltyMembership.findUnique({
+        where: { userId },
+        select: { id: true },
+      }),
+    ]);
+
+    const vouchers: LoyaltyVoucherHint[] = membership
+      ? await this.prisma.loyaltyPosVoucher.findMany({
+          where: {
+            membershipId: membership.id,
+            status: { in: ['ISSUED', 'RECONCILED'] },
+          },
+          select: {
+            cardNumber: true,
+            storeId: true,
+            issuedAt: true,
+            createdAt: true,
+            metadata: true,
+          },
+        })
+      : [];
+
+    let unified: PurchaseHistoryItem[] = [
+      ...orders.map(mapOnlineOrder),
+      ...posSales.map((sale) => mapPosSale(sale, vouchers)),
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    if (typeFilter === 'in-store' || typeFilter === 'pos' || typeFilter === 'hos_outlet_pos') {
+      unified = unified.filter((row) => row.type === 'in-store');
+    } else if (typeFilter === 'online') {
+      unified = unified.filter((row) => row.type === 'online');
+    }
+
+    const total = unified.length;
+    const items = unified.slice((page - 1) * limit, page * limit);
+    const completed = unified.filter(countsTowardSpend);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      summary: {
+        onlineCount: orders.length,
+        inStoreCount: posSales.length,
+        completedCount: completed.length,
+        totalSpent: completed.reduce((sum, row) => sum + row.total, 0),
+        totalPointsEarned: unified.reduce((sum, row) => sum + row.pointsEarned, 0),
+      },
+    };
   }
 
   async tierProgress(userId: string) {
