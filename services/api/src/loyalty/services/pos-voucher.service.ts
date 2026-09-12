@@ -1228,4 +1228,62 @@ export class PosVoucherService {
       qrPayload: `hos-voucher:${v.cardNumber}:${v.id}`,
     }));
   }
+
+  async listVouchersForUser(
+    userId: string,
+    query: { page?: number; limit?: number },
+  ): Promise<{
+    items: Array<{
+      id: string;
+      cardNumber: string;
+      amount: number;
+      currency: string;
+      status: string;
+      createdAt: Date;
+      issuedAt: Date | null;
+      expiresAt: Date | null;
+      ttlExpiresAt: Date | null;
+      storeName: string;
+      qrPayload: string;
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const page = Math.max(1, query.page || 1);
+    const limit = Math.min(100, Math.max(1, query.limit || 20));
+    const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
+    if (!membership) {
+      return { items: [], total: 0, page, limit };
+    }
+    const where = { membershipId: membership.id };
+    const [rows, total] = await Promise.all([
+      this.prisma.loyaltyPosVoucher.findMany({
+        where,
+        include: { store: { select: { name: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.loyaltyPosVoucher.count({ where }),
+    ]);
+    return {
+      items: rows.map((v) => ({
+        id: v.id,
+        cardNumber: v.cardNumber,
+        amount: Number(v.amount),
+        currency: v.currency,
+        status: v.status,
+        createdAt: v.createdAt,
+        issuedAt: v.issuedAt,
+        expiresAt: v.expiresAt,
+        ttlExpiresAt: v.ttlExpiresAt,
+        storeName: v.store?.name || 'Store',
+        qrPayload: `hos-voucher:${v.cardNumber}:${v.id}`,
+      })),
+      total,
+      page,
+      limit,
+    };
+  }
 }

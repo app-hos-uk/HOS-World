@@ -7,17 +7,80 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useDateTime } from '@/hooks/useDateTime';
 import { FandomRadar } from '@/components/loyalty/FandomRadar';
 import { clearPendingReferral, getPendingReferralCode } from '@/lib/referralAttribution';
 
+type PosVoucherRow = {
+  id: string;
+  cardNumber: string;
+  amount: number;
+  currency: string;
+  status: string;
+  createdAt?: string;
+  issuedAt?: string | null;
+  expiresAt?: string | null;
+  ttlExpiresAt?: string | null;
+  storeName?: string;
+  qrPayload?: string;
+};
+
+function voucherStatusClass(status: string): string {
+  switch (status) {
+    case 'ISSUED':
+      return 'bg-emerald-900/40 text-emerald-300 border-emerald-800/50';
+    case 'PENDING':
+      return 'bg-amber-900/40 text-amber-300 border-amber-800/50';
+    case 'FAILED':
+      return 'bg-red-900/40 text-red-300 border-red-800/50';
+    case 'REVERSED':
+    case 'RECONCILED':
+      return 'bg-stone-800 text-stone-400 border-stone-700';
+    default:
+      return 'bg-stone-800 text-stone-400 border-stone-700';
+  }
+}
+
+function canCancelVoucher(status: string): boolean {
+  return status === 'ISSUED' || status === 'PENDING';
+}
+
 export default function LoyaltyDashboardPage() {
   const toast = useToast();
+  const { formatDate } = useDateTime();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [membership, setMembership] = useState<any>(null);
   const [progress, setProgress] = useState<any>(null);
   const [fandomProfile, setFandomProfile] = useState<Record<string, number> | null>(null);
   const [brandCampaigns, setBrandCampaigns] = useState<Record<string, unknown>[]>([]);
+  const [vouchers, setVouchers] = useState<PosVoucherRow[]>([]);
+  const [voucherPage, setVoucherPage] = useState(1);
+  const [voucherTotal, setVoucherTotal] = useState(0);
+  const [voucherLimit] = useState(10);
+  const [vouchersLoading, setVouchersLoading] = useState(false);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  const loadVouchers = useCallback(async (page: number) => {
+    setVouchersLoading(true);
+    try {
+      const res = await apiClient.getPosVouchers({ page, limit: voucherLimit });
+      const data = res?.data as { items?: PosVoucherRow[]; total?: number } | null;
+      const items = Array.isArray(data?.items) ? data.items : [];
+      setVouchers(items);
+      setVoucherTotal(
+        typeof data?.total === 'number'
+          ? data.total
+          : ((res as { pagination?: { total?: number } })?.pagination?.total ?? items.length),
+      );
+      setVoucherPage(page);
+    } catch {
+      setVouchers([]);
+      setVoucherTotal(0);
+    } finally {
+      setVouchersLoading(false);
+    }
+  }, [voucherLimit]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -28,9 +91,10 @@ export default function LoyaltyDashboardPage() {
         apiClient.getLoyaltyTierProgress(),
         apiClient.getLoyaltyFandomProfile(),
         apiClient.getActiveBrandCampaigns(),
+        apiClient.getPosVouchers({ page: 1, limit: voucherLimit }),
       ]);
 
-      const [mResult, pResult, fResult, bResult] = results;
+      const [mResult, pResult, fResult, bResult, vResult] = results;
 
       const membershipDisabled =
         mResult.status === 'rejected' &&
@@ -55,16 +119,46 @@ export default function LoyaltyDashboardPage() {
       setFandomProfile(fResult.status === 'fulfilled' ? ((fResult.value?.data as Record<string, number>) ?? null) : null);
       const bd = bResult.status === 'fulfilled' ? bResult.value?.data : null;
       setBrandCampaigns(Array.isArray(bd) ? (bd as Record<string, unknown>[]) : []);
+
+      if (vResult.status === 'fulfilled') {
+        const vData = vResult.value?.data as { items?: PosVoucherRow[]; total?: number } | null;
+        const items = Array.isArray(vData?.items) ? vData.items : [];
+        setVouchers(items);
+        setVoucherTotal(
+          typeof vData?.total === 'number'
+            ? vData.total
+            : ((vResult.value as { pagination?: { total?: number } })?.pagination?.total ?? items.length),
+        );
+        setVoucherPage(1);
+      } else {
+        setVouchers([]);
+        setVoucherTotal(0);
+      }
     } catch (e: any) {
       setLoadError(e?.message || 'Something went wrong loading loyalty data');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [voucherLimit]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const cancelVoucher = async (voucherId: string) => {
+    setCancellingId(voucherId);
+    try {
+      await apiClient.cancelPosVoucher(voucherId, 'Customer cancelled');
+      toast.success('Voucher cancelled and points restored');
+      await load();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Cancel failed');
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  const voucherTotalPages = Math.max(1, Math.ceil(voucherTotal / voucherLimit) || 1);
 
   const enroll = async () => {
     try {
@@ -214,6 +308,108 @@ export default function LoyaltyDashboardPage() {
                   </ul>
                 </div>
               )}
+              <div className="rounded-lg border border-stone-800 bg-stone-900/50 p-6">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div>
+                    <p className="text-sm text-stone-500 font-secondary">In-store redemptions</p>
+                    <h2 className="font-primary text-xl text-amber-100 mt-1">My Vouchers</h2>
+                  </div>
+                  <Link
+                    href="/loyalty/redeem-in-store"
+                    className="text-xs text-amber-500 hover:text-amber-400 font-secondary shrink-0"
+                  >
+                    Redeem in store →
+                  </Link>
+                </div>
+
+                {vouchersLoading && vouchers.length === 0 ? (
+                  <p className="font-secondary text-stone-500 text-sm">Loading vouchers…</p>
+                ) : vouchers.length === 0 ? (
+                  <p className="font-secondary text-stone-500 text-sm">
+                    No vouchers yet. Redeem points in store to receive a gift card number.
+                  </p>
+                ) : (
+                  <>
+                    <div className="overflow-x-auto rounded-lg border border-stone-800">
+                      <table className="w-full text-sm font-secondary">
+                        <thead className="bg-stone-950/60 text-stone-400">
+                          <tr>
+                            <th className="px-3 py-2 text-left">Gift card number</th>
+                            <th className="px-3 py-2 text-left">Amount</th>
+                            <th className="px-3 py-2 text-left">Status</th>
+                            <th className="px-3 py-2 text-left hidden sm:table-cell">Store</th>
+                            <th className="px-3 py-2 text-left hidden md:table-cell">Date</th>
+                            <th className="px-3 py-2 text-right">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {vouchers.map((v) => (
+                            <tr key={v.id} className="border-t border-stone-800 text-stone-200">
+                              <td className="px-3 py-2 font-mono text-xs text-amber-100 break-all">
+                                {v.cardNumber}
+                              </td>
+                              <td className="px-3 py-2 tabular-nums whitespace-nowrap">
+                                {v.currency} {Number(v.amount).toFixed(2)}
+                              </td>
+                              <td className="px-3 py-2">
+                                <span
+                                  className={`inline-flex rounded-full border px-2 py-0.5 text-xs ${voucherStatusClass(v.status)}`}
+                                >
+                                  {v.status}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2 text-xs text-stone-400 hidden sm:table-cell">
+                                {v.storeName || '—'}
+                              </td>
+                              <td className="px-3 py-2 text-xs text-stone-400 hidden md:table-cell">
+                                {v.createdAt ? formatDate(v.createdAt) : '—'}
+                              </td>
+                              <td className="px-3 py-2 text-right">
+                                {canCancelVoucher(v.status) ? (
+                                  <button
+                                    type="button"
+                                    disabled={cancellingId === v.id}
+                                    onClick={() => cancelVoucher(v.id)}
+                                    className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50"
+                                  >
+                                    {cancellingId === v.id ? 'Cancelling…' : 'Cancel'}
+                                  </button>
+                                ) : (
+                                  <span className="text-xs text-stone-600">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {voucherTotal > voucherLimit && (
+                      <div className="mt-4 flex items-center gap-3">
+                        <button
+                          type="button"
+                          disabled={voucherPage <= 1 || vouchersLoading}
+                          onClick={() => loadVouchers(voucherPage - 1)}
+                          className="rounded-md border border-stone-600 px-3 py-1.5 text-sm disabled:opacity-40"
+                        >
+                          Previous
+                        </button>
+                        <span className="text-sm text-stone-500 font-secondary">
+                          Page {voucherPage} of {voucherTotalPages}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={voucherPage >= voucherTotalPages || vouchersLoading}
+                          onClick={() => loadVouchers(voucherPage + 1)}
+                          className="rounded-md border border-stone-600 px-3 py-1.5 text-sm disabled:opacity-40"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {[
                   { href: '/events', label: 'Events', highlight: true },

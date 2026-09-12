@@ -249,6 +249,28 @@ export class LoyaltyController {
     return { data, message: 'Voucher issued' };
   }
 
+  @Get('pos-vouchers')
+  @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
+  @Roles('CUSTOMER')
+  @ApiOperation({ summary: 'Full in-store voucher history for the logged-in member' })
+  async listVouchers(
+    @Request() req: { user: { id: string } },
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.posVouchers.listVouchersForUser(req.user.id, { page, limit });
+    return {
+      data,
+      message: 'OK',
+      pagination: {
+        page: data.page,
+        limit: data.limit,
+        total: data.total,
+        totalPages: Math.ceil(data.total / data.limit) || 0,
+      },
+    };
+  }
+
   @Get('pos-vouchers/active')
   @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @Roles('CUSTOMER')

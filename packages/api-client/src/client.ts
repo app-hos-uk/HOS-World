@@ -2999,6 +2999,14 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>('/loyalty/pos-vouchers/active');
   }
 
+  async getPosVouchers(params?: { page?: number; limit?: number }) {
+    const q = new URLSearchParams();
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(`/loyalty/pos-vouchers${qs ? `?${qs}` : ''}`);
+  }
+
   async cancelPosVoucher(voucherId: string, reason?: string) {
     return this.request<ApiResponse<unknown>>(`/loyalty/pos-vouchers/${voucherId}/cancel`, {
       method: 'POST',
