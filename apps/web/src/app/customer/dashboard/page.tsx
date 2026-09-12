@@ -907,14 +907,15 @@ export default function CustomerDashboardPage() {
                       </Link>
                     </div>
                   ) : (
-                    (recentPurchases.length > 0 ? recentPurchases : recentOrders.map((order) => ({
+                    (recentPurchases.length > 0 ? recentPurchases : recentOrders.map((order): DashboardPurchase => ({
                       id: order.id,
-                      type: 'online' as const,
+                      type: 'online',
                       date: typeof order.createdAt === 'string' ? order.createdAt : new Date(order.createdAt).toISOString(),
                       orderNumber: order.orderNumber,
                       total: order.total,
                       currency: order.currency,
                       status: order.status,
+                      paidWithLoyaltyVoucher: false,
                     }))).map((purchase) => {
                       const isInStore = purchase.type === 'in-store';
                       return (
