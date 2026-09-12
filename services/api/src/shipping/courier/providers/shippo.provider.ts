@@ -498,8 +498,22 @@ export class ShippoProvider extends BaseCourierProvider implements ICourierProvi
       ? cheapest(rates.filter((rate: any) => matchesPreferred(rate) && rate.object_id)) || rates[0]
       : rates.find((rate: any) => rate.object_id === serviceCode) ||
         rates.find((rate: any) => rate.servicelevel?.token === serviceCode) ||
-        cheapest(rates.filter((rate: any) => matchesPreferred(rate) && rate.object_id)) ||
-        rates[0];
+        rates.find((rate: any) => {
+          const hay = `${rate.provider || ''} ${rate.servicelevel?.name || ''} ${rate.servicelevel?.token || ''}`;
+          return hay.toLowerCase() === serviceCode.toLowerCase() ||
+            (rate.servicelevel?.name && hay.toLowerCase().includes(serviceCode.toLowerCase()));
+        });
+
+    if (!autoPick && !selectedRate?.object_id) {
+      const available = rates
+        .map((rate: any) => `${rate.provider || ''} ${rate.servicelevel?.name || rate.servicelevel?.token || ''}`.trim())
+        .filter(Boolean)
+        .slice(0, 12)
+        .join(', ');
+      throw new Error(
+        `No matching carrier rate for "${serviceCode}".${available ? ` Available: ${available}.` : ''}`,
+      );
+    }
 
     if (!selectedRate?.object_id) {
       const messages = this.formatShipmentMessages(shipment);

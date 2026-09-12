@@ -7,6 +7,14 @@ import { useToast } from '@/hooks/useToast';
 import { useAuth } from '@/contexts/AuthContext';
 
 type Item = { id: string; name: string; sku?: string | null; quantity: number; verified?: boolean };
+type CarrierRate = {
+  serviceCode: string;
+  serviceName: string;
+  carrier: string;
+  rate: number;
+  currency: string;
+  estimatedDays?: number;
+};
 type Group = {
   id: string;
   status: string;
@@ -34,6 +42,10 @@ export default function BackofficeShippingPage() {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [weight, setWeight] = useState<Record<string, string>>({});
   const [trackScan, setTrackScan] = useState<Record<string, string>>({});
+  const [ratesByGroup, setRatesByGroup] = useState<Record<string, CarrierRate[]>>({});
+  const [selectedRate, setSelectedRate] = useState<Record<string, string>>({});
+  const [quoting, setQuoting] = useState<Record<string, boolean>>({});
+  const [buying, setBuying] = useState<Record<string, boolean>>({});
 
   const load = useCallback(async () => {
     try {
@@ -57,8 +69,8 @@ export default function BackofficeShippingPage() {
       <div>
         <h1 className="text-xl font-semibold text-hos-text">Back office packing</h1>
         <p className="text-sm text-hos-text-muted mt-1">
-          Receive the order, check off items, weigh the box, generate the Shippo label, then verify
-          the HOS barcode against the carrier tracking barcode.
+          Receive the order, check off items, weigh the box, review carrier rates, then generate
+          the selected label and verify the HOS barcode against the carrier tracking barcode.
         </p>
       </div>
       <label className="block text-sm text-hos-text-secondary max-w-sm">
@@ -156,25 +168,96 @@ export default function BackofficeShippingPage() {
                 <button
                   type="button"
                   className="px-3 py-1.5 rounded border border-hos-border text-sm"
+                  disabled={quoting[group.id] || Boolean(group.labelUrl)}
                   onClick={async () => {
+                    const kg = Number(weight[group.id]);
+                    if (!(kg > 0)) {
+                      toast.error('Enter the packed weight in kg');
+                      return;
+                    }
+                    setQuoting((q) => ({ ...q, [group.id]: true }));
                     try {
-                      await apiClient.setStoreShipmentGroupWeight(group.id, {
-                        weightKg: Number(weight[group.id]),
-                      });
-                      const r = await apiClient.generateStoreShipmentLabel(group.id);
-                      toast.success('Label generated');
-                      const data = r.data as { groups?: Group[] };
-                      const g = (data.groups || []).find((x) => x.id === group.id);
-                      if (g?.labelUrl) window.open(g.labelUrl, '_blank');
-                      load();
+                      await apiClient.setStoreShipmentGroupWeight(group.id, { weightKg: kg });
+                      const r = await apiClient.quoteStoreShipmentLabelRates(group.id);
+                      const payload = r.data as { rates?: CarrierRate[] };
+                      const rates = Array.isArray(payload?.rates) ? payload.rates : [];
+                      setRatesByGroup((prev) => ({ ...prev, [group.id]: rates }));
+                      setSelectedRate((s) => ({ ...s, [group.id]: '' }));
+                      if (!rates.length) toast.error('No carrier rates returned for this package');
                     } catch (e: unknown) {
-                      toast.error(e instanceof Error ? e.message : 'Label failed');
+                      toast.error(e instanceof Error ? e.message : 'Could not load carrier rates');
+                    } finally {
+                      setQuoting((q) => ({ ...q, [group.id]: false }));
                     }
                   }}
                 >
-                  Weigh & generate label
+                  {quoting[group.id] ? 'Loading rates…' : 'Weigh & get rates'}
                 </button>
               </div>
+              {(ratesByGroup[group.id] || []).length > 0 && !group.labelUrl && (
+                <div className="space-y-2">
+                  <p className="text-xs text-hos-text-muted">Select a carrier, then generate the label.</p>
+                  {ratesByGroup[group.id].map((rate) => {
+                    const selected = selectedRate[group.id] === rate.serviceCode;
+                    return (
+                      <button
+                        key={rate.serviceCode}
+                        type="button"
+                        onClick={() => setSelectedRate((s) => ({ ...s, [group.id]: rate.serviceCode }))}
+                        className={`w-full text-left p-3 rounded-lg border text-sm ${
+                          selected
+                            ? 'border-violet-400 bg-violet-500/15'
+                            : 'border-hos-border bg-hos-bg hover:border-violet-400/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="font-medium text-hos-text">
+                              {rate.carrier} — {rate.serviceName}
+                            </p>
+                            <p className="text-xs text-hos-text-muted mt-0.5">
+                              {rate.estimatedDays
+                                ? `Est. ${rate.estimatedDays} day${rate.estimatedDays === 1 ? '' : 's'}`
+                                : 'Transit time varies'}
+                            </p>
+                          </div>
+                          <p className="font-semibold text-hos-text">
+                            {rate.currency} {Number(rate.rate || 0).toFixed(2)}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 rounded bg-violet-600 text-white text-sm disabled:opacity-50"
+                    disabled={!selectedRate[group.id] || buying[group.id]}
+                    onClick={async () => {
+                      const code = selectedRate[group.id];
+                      if (!code) {
+                        toast.error('Select a carrier before generating the label');
+                        return;
+                      }
+                      setBuying((b) => ({ ...b, [group.id]: true }));
+                      try {
+                        const r = await apiClient.generateStoreShipmentLabel(group.id, code);
+                        toast.success('Label generated');
+                        const data = r.data as { groups?: Group[] };
+                        const g = (data.groups || []).find((x) => x.id === group.id);
+                        if (g?.labelUrl) window.open(g.labelUrl, '_blank');
+                        setRatesByGroup((prev) => ({ ...prev, [group.id]: [] }));
+                        load();
+                      } catch (e: unknown) {
+                        toast.error(e instanceof Error ? e.message : 'Label failed');
+                      } finally {
+                        setBuying((b) => ({ ...b, [group.id]: false }));
+                      }
+                    }}
+                  >
+                    {buying[group.id] ? 'Generating…' : 'Generate selected label'}
+                  </button>
+                </div>
+              )}
               {group.trackingCode && (
                 <div className="space-y-2">
                   <p className="text-xs text-hos-text-muted">Carrier tracking: {group.trackingCode}</p>

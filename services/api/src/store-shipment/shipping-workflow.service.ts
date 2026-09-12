@@ -510,10 +510,99 @@ export class ShippingWorkflowService {
     return this.getProgress(group.shippingOrderId, { userId: staff.id, role: 'STAFF' });
   }
 
+  async quoteLabelRates(groupId: string, staff: { id?: string; storeId?: string; role?: string }) {
+    const ctx = await this.prepareLabelContext(groupId, staff);
+    const rates = await this.courierFactory.getRates(ctx.providerId, {
+      from: ctx.from,
+      to: ctx.to,
+      packages: ctx.packages,
+      preferredCarriers: [...PREFERRED_CARRIERS],
+    });
+    return {
+      groupId,
+      rates: rates.map((rate) => ({
+        serviceCode: rate.metadata?.serviceToken || rate.serviceCode,
+        serviceName: rate.serviceName,
+        carrier: rate.metadata?.carrier || rate.providerName,
+        rate: rate.rate,
+        currency: rate.currency,
+        estimatedDays: rate.estimatedDays,
+        estimatedDeliveryDate: rate.estimatedDeliveryDate,
+      })),
+    };
+  }
+
   async generateLabel(
     groupId: string,
     staff: { id?: string; storeId?: string; role?: string },
     body?: { serviceCode?: string },
+  ) {
+    const serviceCode = body?.serviceCode?.trim();
+    if (!serviceCode || serviceCode === 'auto') {
+      throw new BadRequestException('Select a carrier service before generating a label');
+    }
+
+    const ctx = await this.prepareLabelContext(groupId, staff);
+    const { order, group, from, to, packages, customsInfo, providerId } = ctx;
+
+    // Purchase a rate from a new Shippo shipment (stale rate object IDs from
+    // quoteLabelRates cannot be bought). serviceCode is the service token staff selected.
+    const label = await this.courierFactory.createShipment(providerId, {
+      orderId: `${order.id}:${group.id}`,
+      from,
+      to,
+      packages,
+      serviceCode,
+      reference1: order.hosOrderNumber || order.invoiceNumber || order.id,
+      customsInfo,
+    });
+    const labelUrl = label.labels?.[0]?.url ?? label.trackingUrl;
+    const carrierCost = Number(label.rate || 0);
+
+    await this.prisma.shipmentGroup.update({
+      where: { id: groupId },
+      data: {
+        status: 'LABEL_CREATED',
+        trackingCode: label.trackingNumber,
+        labelUrl,
+        carrierName: String(label.metadata?.carrier || label.providerName),
+        carrierService: label.serviceName,
+        carrierCost: new Decimal(carrierCost.toFixed(2)),
+        shippoTransactionId: label.trackingNumber,
+        labelCreatedAt: new Date(),
+      },
+    });
+
+    const groups = await this.prisma.shipmentGroup.findMany({ where: { shippingOrderId: order.id } });
+    const allLabeled = groups.every((g) => g.id === groupId || ['LABEL_CREATED', 'READY_FOR_PICKUP', 'HANDED_TO_CARRIER'].includes(g.status));
+    const totalCarrier = groups.reduce(
+      (s, g) => s + (g.id === groupId ? carrierCost : Number(g.carrierCost || 0)),
+      0,
+    );
+    await this.prisma.storeShipmentRequest.update({
+      where: { id: order.id },
+      data: {
+        status: allLabeled ? 'LABEL_CREATED' : order.status,
+        totalCarrierCost: new Decimal(totalCarrier.toFixed(2)),
+        trackingCode: label.trackingNumber,
+        labelUrl,
+      },
+    });
+
+    return {
+      ...(await this.getProgress(order.id, { userId: staff.id, role: 'STAFF' })),
+      selectedRate: {
+        serviceCode: label.serviceCode,
+        serviceName: label.serviceName,
+        rate: carrierCost,
+        carrier: label.metadata?.carrier,
+      },
+    };
+  }
+
+  private async prepareLabelContext(
+    groupId: string,
+    staff: { id?: string; storeId?: string; role?: string },
   ) {
     const group = await this.loadStaffGroup(groupId, staff);
     const order = group.shippingOrder;
@@ -525,7 +614,10 @@ export class ShippingWorkflowService {
       throw new BadRequestException('Destination address is incomplete');
     }
     const box = group.boxSize;
-    const weight = Number(group.actualWeightKg || 0.5);
+    const weight = Number(group.actualWeightKg || 0);
+    if (!(weight > 0)) {
+      throw new BadRequestException('Enter the packed weight before requesting carrier rates');
+    }
     const length = Number(group.actualLengthCm || box?.lengthCm || 30);
     const width = Number(group.actualWidthCm || box?.widthCm || 20);
     const height = Number(group.actualHeightCm || box?.heightCm || 10);
@@ -610,59 +702,14 @@ export class ShippingWorkflowService {
     const defaultProv = this.courierFactory.getDefaultProvider();
     if (!defaultProv) throw new BadRequestException('No shipping provider configured');
 
-    // Create the Shippo shipment once and purchase a rate from that same shipment.
-    // A prior getRates() call produced a different shipment; buying that stale rate
-    // fails with "A rate may only be purchased if it was generated with complete address information."
-    const label = await this.courierFactory.createShipment(defaultProv.providerId, {
-      orderId: `${order.id}:${group.id}`,
+    return {
+      group,
+      order,
       from,
       to,
       packages: [{ weight, length, width, height }],
-      serviceCode: body?.serviceCode || 'auto',
-      reference1: order.hosOrderNumber || order.invoiceNumber || order.id,
       customsInfo,
-    });
-    const labelUrl = label.labels?.[0]?.url ?? label.trackingUrl;
-    const carrierCost = Number(label.rate || 0);
-
-    await this.prisma.shipmentGroup.update({
-      where: { id: groupId },
-      data: {
-        status: 'LABEL_CREATED',
-        trackingCode: label.trackingNumber,
-        labelUrl,
-        carrierName: String(label.metadata?.carrier || label.providerName),
-        carrierService: label.serviceName,
-        carrierCost: new Decimal(carrierCost.toFixed(2)),
-        shippoTransactionId: label.trackingNumber,
-        labelCreatedAt: new Date(),
-      },
-    });
-
-    const groups = await this.prisma.shipmentGroup.findMany({ where: { shippingOrderId: order.id } });
-    const allLabeled = groups.every((g) => g.id === groupId || ['LABEL_CREATED', 'READY_FOR_PICKUP', 'HANDED_TO_CARRIER'].includes(g.status));
-    const totalCarrier = groups.reduce(
-      (s, g) => s + (g.id === groupId ? carrierCost : Number(g.carrierCost || 0)),
-      0,
-    );
-    await this.prisma.storeShipmentRequest.update({
-      where: { id: order.id },
-      data: {
-        status: allLabeled ? 'LABEL_CREATED' : order.status,
-        totalCarrierCost: new Decimal(totalCarrier.toFixed(2)),
-        trackingCode: label.trackingNumber,
-        labelUrl,
-      },
-    });
-
-    return {
-      ...(await this.getProgress(order.id, { userId: staff.id, role: 'STAFF' })),
-      selectedRate: {
-        serviceCode: label.serviceCode,
-        serviceName: label.serviceName,
-        rate: carrierCost,
-        carrier: label.metadata?.carrier,
-      },
+      providerId: defaultProv.providerId,
     };
   }
 

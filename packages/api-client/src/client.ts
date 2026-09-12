@@ -3155,7 +3155,13 @@ export class ApiClient {
     });
   }
 
-  async generateStoreShipmentLabel(groupId: string, serviceCode?: string) {
+  async quoteStoreShipmentLabelRates(groupId: string) {
+    return this.request<ApiResponse<unknown>>(`/store-shipment/staff/groups/${groupId}/label-rates`, {
+      method: 'POST',
+    });
+  }
+
+  async generateStoreShipmentLabel(groupId: string, serviceCode: string) {
     return this.request<ApiResponse<unknown>>(`/store-shipment/staff/groups/${groupId}/generate-label`, {
       method: 'POST',
       body: JSON.stringify({ serviceCode }),

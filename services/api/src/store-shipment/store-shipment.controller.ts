@@ -283,6 +283,23 @@ export class StoreShipmentController {
   }
 
   @Public()
+  @Post('staff/groups/:groupId/label-rates')
+  @UseGuards(LoyaltyStaffAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Staff: list carrier rates for a packed box before buying a label' })
+  async quoteLabelRates(
+    @Param('groupId') groupId: string,
+    @Req() req: StaffReq,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.workflow.quoteLabelRates(groupId, {
+      id: req.user?.id,
+      storeId: req.storeId || req.user?.storeId,
+      role: req.user?.role,
+    });
+    return { data, message: 'OK' };
+  }
+
+  @Public()
   @Post('staff/groups/:groupId/generate-label')
   @UseGuards(LoyaltyStaffAuthGuard)
   @ApiBearerAuth('JWT-auth')
