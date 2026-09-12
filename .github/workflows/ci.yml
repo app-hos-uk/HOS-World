@@ -31,7 +31,7 @@ jobs:
       NEXT_PUBLIC_API_URL: 'http://localhost:3001/api'
       ACCESS_CONTROL_STRICT_COVERAGE: 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v2
         with:
