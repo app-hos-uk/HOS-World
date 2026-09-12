@@ -148,18 +148,16 @@ export class LoyaltyListener {
       if (!referral || referral.status !== 'PENDING') return 'not_applied';
       if (referral.referrerId === refereeMembership.id) return 'not_applied';
 
-      const [refereeRule, referrerRule] = await Promise.all([
-        this.prisma.loyaltyEarnRule.findUnique({ where: { action: 'REFERRAL_REFEREE' } }),
-        this.prisma.loyaltyEarnRule.findUnique({ where: { action: 'REFERRAL_REFERRER' } }),
-      ]);
-      const refereePoints =
-        refereeRule?.isActive && refereeRule.pointsAmount != null
-          ? refereeRule.pointsAmount
-          : this.config.get<number>('LOYALTY_REFERRAL_REFEREE_BONUS', 100);
-      const referrerPoints =
-        referrerRule?.isActive && referrerRule.pointsAmount != null
-          ? referrerRule.pointsAmount
-          : this.config.get<number>('LOYALTY_REFERRAL_REFERRER_BONUS', 200);
+      const refereeResolved = await this.resolveEarnRule('REFERRAL_REFEREE', 0);
+      const referrerResolved = await this.resolveEarnRule('REFERRAL_REFERRER', 0);
+      const refereePoints = refereeResolved?.points ?? 0;
+      const referrerPoints = referrerResolved?.points ?? 0;
+      if (refereePoints <= 0 && referrerPoints <= 0) {
+        this.logger.warn(
+          'Referral conversion skipped: REFERRAL_REFEREE and REFERRAL_REFERRER rules missing, inactive, or 0 points',
+        );
+        return 'not_applied';
+      }
 
       const weeklyReferralCap = Number(
         this.config.get<string | number>('REFERRAL_WEEKLY_CAP', '5'),
@@ -183,17 +181,20 @@ export class LoyaltyListener {
           return;
         }
 
-        await this.wallet.applyDelta(tx, refereeMembership.id, refereePoints, LoyaltyTxType.BONUS, {
-          source: 'REFERRAL_BONUS',
-          sourceId: referral.id,
-          channel: 'WEB',
-          description: 'Referral welcome bonus',
-          idempotencyKey: `bonus:REFERRAL_BONUS:${referral.id}`,
-        });
-        await tx.loyaltyMembership.update({
-          where: { id: refereeMembership.id },
-          data: { totalPointsEarned: { increment: refereePoints } },
-        });
+        if (refereePoints > 0) {
+          await this.wallet.applyDelta(tx, refereeMembership.id, refereePoints, LoyaltyTxType.BONUS, {
+            source: 'REFERRAL_BONUS',
+            sourceId: referral.id,
+            channel: 'WEB',
+            description: 'Referral welcome bonus',
+            idempotencyKey: `bonus:REFERRAL_BONUS:${referral.id}`,
+            earnRuleId: refereeResolved?.rule?.id,
+          });
+          await tx.loyaltyMembership.update({
+            where: { id: refereeMembership.id },
+            data: { totalPointsEarned: { increment: refereePoints } },
+          });
+        }
 
         // Check weekly referral cap for the referrer (UTC week boundary)
         const now = new Date();
@@ -215,13 +216,14 @@ export class LoyaltyListener {
           this.logger.warn(
             `Referrer ${referral.referrerId} hit weekly cap (${weeklyReferralCap}) — reward skipped`,
           );
-        } else {
+        } else if (referrerPoints > 0) {
           await this.wallet.applyDelta(tx, referral.referrerId, referrerPoints, LoyaltyTxType.BONUS, {
             source: 'REFERRAL_REWARD',
             sourceId: referral.id,
             channel: 'WEB',
             description: `Referral reward – friend joined`,
             idempotencyKey: `bonus:REFERRAL_REWARD:${referral.id}`,
+            earnRuleId: referrerResolved?.rule?.id,
           });
           await tx.loyaltyMembership.update({
             where: { id: referral.referrerId },
@@ -300,7 +302,7 @@ export class LoyaltyListener {
       PHOTO_IN_REVIEW.test(text);
     const action = isPhoto ? 'PHOTO_REVIEW' : 'REVIEW';
 
-    const resolved = await this.resolveEarnRule(action, isPhoto ? 50 : 25);
+    const resolved = await this.resolveEarnRule(action, 0);
     if (!resolved) return 0;
     const { rule, points: pts } = resolved;
     if (pts <= 0) return 0;
@@ -358,7 +360,7 @@ export class LoyaltyListener {
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) return 0;
 
-    const resolved = await this.resolveEarnRule('SOCIAL_SHARE', 10);
+    const resolved = await this.resolveEarnRule('SOCIAL_SHARE', 0);
     if (!resolved) return 0;
     const { rule, points: pts } = resolved;
     if (pts <= 0) return 0;
@@ -551,7 +553,7 @@ export class LoyaltyListener {
         where: { action: 'PROFILE_COMPLETE', isActive: false },
       });
       if (inactive) return 0;
-      pts = this.config.get<number>('LOYALTY_PROFILE_COMPLETE_BONUS', 50);
+      pts = this.config.get<number>('LOYALTY_PROFILE_COMPLETE_BONUS', 0);
       if (pts <= 0) return 0;
     }
 

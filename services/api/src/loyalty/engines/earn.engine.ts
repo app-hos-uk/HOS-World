@@ -45,7 +45,7 @@ export class LoyaltyEarnEngine {
       const { settings } = await this.loyaltySettings.getResolved();
       return settings.defaultEarnRate || 0;
     }
-    return Number(this.config.get('LOYALTY_DEFAULT_EARN_RATE', 1)) || 0;
+    return Number(this.config.get('LOYALTY_DEFAULT_EARN_RATE', 0)) || 0;
   }
 
   /**
@@ -180,10 +180,12 @@ export class LoyaltyEarnEngine {
       if (!inactiveSignupRule) {
         const envBonusRaw = this.config.get<string | number>('LOYALTY_SIGNUP_BONUS');
         const envBonus = typeof envBonusRaw === 'number' ? envBonusRaw : Number(envBonusRaw);
-        fallbackPoints = Number.isFinite(envBonus) && envBonus > 0 ? envBonus : 100;
-        this.logger.warn(
-          `No SIGNUP earn rule configured; awarding fallback ${fallbackPoints} pts for auto-enroll user ${userId}`,
-        );
+        fallbackPoints = Number.isFinite(envBonus) && envBonus > 0 ? envBonus : 0;
+        if (fallbackPoints > 0) {
+          this.logger.warn(
+            `No SIGNUP earn rule configured; awarding env fallback ${fallbackPoints} pts for auto-enroll user ${userId}`,
+          );
+        }
       }
     }
 

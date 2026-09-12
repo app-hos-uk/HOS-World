@@ -418,10 +418,12 @@ export class LoyaltyService implements OnModuleInit {
       if (!inactiveSignupRule) {
         const envBonusRaw = this.config.get<string | number>('LOYALTY_SIGNUP_BONUS');
         const envBonus = typeof envBonusRaw === 'number' ? envBonusRaw : Number(envBonusRaw);
-        fallbackPoints = Number.isFinite(envBonus) && envBonus > 0 ? envBonus : 100;
-        this.logger.warn(
-          `No SIGNUP earn rule configured; awarding fallback ${fallbackPoints} pts for user ${userId}`,
-        );
+        fallbackPoints = Number.isFinite(envBonus) && envBonus > 0 ? envBonus : 0;
+        if (fallbackPoints > 0) {
+          this.logger.warn(
+            `No SIGNUP earn rule configured; awarding env fallback ${fallbackPoints} pts for user ${userId}`,
+          );
+        }
       }
     }
 
@@ -1059,11 +1061,15 @@ export class LoyaltyService implements OnModuleInit {
     const rule = await this.prisma.loyaltyEarnRule.findFirst({
       where: { action: 'CHECK_IN', isActive: true },
     });
-    const pts = rule?.pointsAmount ?? 15;
+    if (!rule) {
+      this.logger.warn('CHECK_IN earn rule missing or inactive; awarding 0');
+      throw new BadRequestException('Check-in rewards are not currently available');
+    }
+    const pts = rule.pointsAmount;
 
     const dayStart = new Date();
     dayStart.setHours(0, 0, 0, 0);
-    const maxDay = rule?.maxPerDay ?? 1;
+    const maxDay = rule.maxPerDay ?? 0; // 0 = unlimited
 
     await this.prisma.$transaction(async (tx) => {
       // Lock first so two taps of the same button cannot both pass the cap check.

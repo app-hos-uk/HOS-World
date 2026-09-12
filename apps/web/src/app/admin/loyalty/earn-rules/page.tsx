@@ -11,12 +11,48 @@ import {
   validateOptionalDescriptiveText,
 } from '@/lib/formFieldValidation';
 
+type EarnRuleForm = {
+  action: string;
+  pointsAmount: number;
+  pointsType: 'FIXED' | 'PER_CURRENCY_UNIT';
+  name: string;
+  isActive: boolean;
+  multiplierStack: boolean;
+  maxPerDay: string;
+  maxPerMonth: string;
+  maxPerUser: string;
+};
+
+const EMPTY_FORM: EarnRuleForm = {
+  action: '',
+  pointsAmount: 0,
+  pointsType: 'FIXED',
+  name: '',
+  isActive: true,
+  multiplierStack: true,
+  maxPerDay: '',
+  maxPerMonth: '',
+  maxPerUser: '',
+};
+
+function formatPointsType(type?: string | null): string {
+  if (type === 'PER_CURRENCY_UNIT') return 'Per $';
+  return 'Fixed';
+}
+
+function parseOptionalInt(value: string): number | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const n = parseInt(trimmed, 10);
+  return Number.isFinite(n) && n >= 0 ? n : undefined;
+}
+
 export default function AdminLoyaltyEarnRulesPage() {
   const [rules, setRules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
-  const [form, setForm] = useState({ action: '', pointsAmount: 0, name: '', isActive: true });
+  const [form, setForm] = useState<EarnRuleForm>(EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState<{ action?: string; name?: string }>({});
   const [saving, setSaving] = useState(false);
   const toast = useToast();
@@ -43,7 +79,7 @@ export default function AdminLoyaltyEarnRulesPage() {
   useEffect(() => { load(); }, [load]);
 
   const resetForm = () => {
-    setForm({ action: '', pointsAmount: 0, name: '', isActive: true });
+    setForm(EMPTY_FORM);
     setEditing(null);
     setShowForm(false);
   };
@@ -53,8 +89,13 @@ export default function AdminLoyaltyEarnRulesPage() {
     setForm({
       action: rule.action || '',
       pointsAmount: rule.pointsAmount ?? rule.pointsAwarded ?? 0,
+      pointsType: rule.pointsType === 'PER_CURRENCY_UNIT' ? 'PER_CURRENCY_UNIT' : 'FIXED',
       name: rule.name ?? rule.description ?? '',
       isActive: rule.isActive ?? true,
+      multiplierStack: rule.multiplierStack ?? true,
+      maxPerDay: rule.maxPerDay != null ? String(rule.maxPerDay) : '',
+      maxPerMonth: rule.maxPerMonth != null ? String(rule.maxPerMonth) : '',
+      maxPerUser: rule.maxPerUser != null ? String(rule.maxPerUser) : '',
     });
     setShowForm(true);
   };
@@ -72,7 +113,17 @@ export default function AdminLoyaltyEarnRulesPage() {
       toast.error(actionErr || nameErr || 'Please fix the form fields');
       return;
     }
-    const payload = { ...form, action, name };
+    const payload = {
+      action,
+      name,
+      pointsAmount: form.pointsAmount,
+      pointsType: form.pointsType,
+      isActive: form.isActive,
+      multiplierStack: form.multiplierStack,
+      maxPerDay: parseOptionalInt(form.maxPerDay),
+      maxPerMonth: parseOptionalInt(form.maxPerMonth),
+      maxPerUser: parseOptionalInt(form.maxPerUser),
+    };
     setSaving(true);
     try {
       if (editing) {
@@ -131,8 +182,33 @@ export default function AdminLoyaltyEarnRulesPage() {
                 {fieldErrors.action && <p className="mt-1 text-sm text-red-400" role="alert">{fieldErrors.action}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Points Awarded</label>
-                <input type="number" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.pointsAmount} onChange={(e) => setForm({ ...form, pointsAmount: parseInt(e.target.value) || 0 })} />
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Points Type</label>
+                <select
+                  className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary border-hos-border focus:outline-none"
+                  value={form.pointsType}
+                  onChange={(e) => setForm({ ...form, pointsType: e.target.value as EarnRuleForm['pointsType'] })}
+                >
+                  <option value="FIXED">Fixed (flat points per action)</option>
+                  <option value="PER_CURRENCY_UNIT">Per currency unit (e.g. points per $ spent)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">
+                  {form.pointsType === 'PER_CURRENCY_UNIT' ? 'Points per currency unit' : 'Points awarded'}
+                </label>
+                <input type="number" min={0} className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.pointsAmount} onChange={(e) => setForm({ ...form, pointsAmount: parseInt(e.target.value, 10) || 0 })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Max per day (optional)</label>
+                <input type="number" min={0} className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="Unlimited" value={form.maxPerDay} onChange={(e) => setForm({ ...form, maxPerDay: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Max per month (optional)</label>
+                <input type="number" min={0} className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="Unlimited" value={form.maxPerMonth} onChange={(e) => setForm({ ...form, maxPerMonth: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Max per user (optional)</label>
+                <input type="number" min={0} className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="Unlimited" value={form.maxPerUser} onChange={(e) => setForm({ ...form, maxPerUser: e.target.value })} />
               </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
@@ -141,6 +217,10 @@ export default function AdminLoyaltyEarnRulesPage() {
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="isActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded" />
                 <label htmlFor="isActive" className="text-sm font-medium text-hos-text-secondary">Active</label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="multiplierStack" checked={form.multiplierStack} onChange={(e) => setForm({ ...form, multiplierStack: e.target.checked })} className="rounded" />
+                <label htmlFor="multiplierStack" className="text-sm font-medium text-hos-text-secondary">Apply tier multiplier</label>
               </div>
             </div>
             <div className="flex gap-2">
@@ -162,6 +242,7 @@ export default function AdminLoyaltyEarnRulesPage() {
               <thead className="bg-hos-bg-secondary border-b">
                 <tr>
                   <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Action</th>
+                  <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Type</th>
                   <th className="text-right px-4 py-3 font-medium text-hos-text-secondary">Points</th>
                   <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Description</th>
                   <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Status</th>
@@ -172,6 +253,7 @@ export default function AdminLoyaltyEarnRulesPage() {
                 {rules.map((rule) => (
                   <tr key={rule.id} className="hover:bg-hos-bg-tertiary">
                     <td className="px-4 py-3 font-medium text-hos-text-secondary">{rule.action}</td>
+                    <td className="px-4 py-3 text-hos-text-secondary">{formatPointsType(rule.pointsType)}</td>
                     <td className="text-right px-4 py-3">{rule.pointsAmount ?? rule.pointsAwarded}</td>
                     <td className="px-4 py-3 text-hos-text-secondary">{rule.name ?? rule.description ?? '—'}</td>
                     <td className="px-4 py-3">

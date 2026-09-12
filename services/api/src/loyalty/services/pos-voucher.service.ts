@@ -860,7 +860,11 @@ export class PosVoucherService {
     }
     const { settings } = await this.loyaltySettings.getResolved();
     const fallback = settings.defaultRedeemValue;
-    return Number.isFinite(fallback) && fallback > 0 ? fallback : 0.01;
+    if (!Number.isFinite(fallback) || fallback <= 0) {
+      this.logger.warn('defaultRedeemValue not configured; using bootstrap default (0.01)');
+      return 0.01;
+    }
+    return fallback;
   }
 
   /**

@@ -176,7 +176,14 @@ describe('LoyaltyJobsService birthday bonus', () => {
       lockMembership: jest.fn().mockResolvedValue(undefined),
     };
     const prisma: any = {
-      loyaltyEarnRule: { findUnique: jest.fn().mockResolvedValue(null) },
+      loyaltyEarnRule: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'rule-birthday',
+          action: 'BIRTHDAY',
+          pointsAmount: 200,
+          isActive: true,
+        }),
+      },
       loyaltyTransaction: {
         findMany: jest.fn().mockResolvedValue([]),
         count: jest.fn().mockResolvedValue(opts.alreadyAwardedThisYear),

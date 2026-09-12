@@ -85,6 +85,15 @@ describe('LoyaltyListener', () => {
         referrer: {},
       };
     });
+    prisma.loyaltyEarnRule.findFirst.mockImplementation(async (args: any) => {
+      if (args?.where?.action === 'REFERRAL_REFEREE') {
+        return { id: 'rule-referee', action: 'REFERRAL_REFEREE', pointsAmount: 100, isActive: true };
+      }
+      if (args?.where?.action === 'REFERRAL_REFERRER') {
+        return { id: 'rule-referrer', action: 'REFERRAL_REFERRER', pointsAmount: 200, isActive: true };
+      }
+      return null;
+    });
     await listener.onUserRegistered('u1', 'HOS-TEST-AB');
     expect(prisma.$transaction).toHaveBeenCalled();
     expect(wallet.applyDelta).toHaveBeenCalled();
@@ -303,21 +312,15 @@ describe('LoyaltyListener', () => {
     expect(wallet.applyDelta).not.toHaveBeenCalled();
   });
 
-  it('onSocialShare still awards when no rule row was ever seeded', async () => {
+  it('onSocialShare awards nothing when no rule row was ever seeded', async () => {
     const { listener, prisma, wallet } = makeMocks();
     prisma.loyaltyMembership.findUnique.mockResolvedValue({ id: 'm1' });
     prisma.loyaltyEarnRule.findFirst.mockResolvedValue(null);
 
     const n = await listener.onSocialShare('u1', 'whatsapp');
 
-    expect(n).toBe(10);
-    expect(wallet.applyDelta).toHaveBeenCalledWith(
-      expect.anything(),
-      'm1',
-      10,
-      LoyaltyTxType.EARN,
-      expect.objectContaining({ source: 'SOCIAL_SHARE' }),
-    );
+    expect(n).toBe(0);
+    expect(wallet.applyDelta).not.toHaveBeenCalled();
   });
 
   it('onSocialShare respects maxPerDay', async () => {

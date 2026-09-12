@@ -29,8 +29,6 @@ import {
 
 export type BurnChannel = 'MARKETPLACE_CHECKOUT' | 'HOS_OUTLET_POS';
 
-const DEFAULT_WELCOME_MIN_PURCHASE = 85;
-
 @Injectable()
 export class LoyaltyBurnEngine {
   private readonly logger = new Logger(LoyaltyBurnEngine.name);
@@ -376,7 +374,7 @@ export class LoyaltyBurnEngine {
       }
     }
 
-    let fallback = DEFAULT_WELCOME_MIN_PURCHASE;
+    let fallback = 85;
     if (this.loyaltySettings) {
       try {
         const { settings } = await this.loyaltySettings.getResolved();
@@ -386,7 +384,7 @@ export class LoyaltyBurnEngine {
           fallback = settings.campaignMinPurchaseThreshold;
         }
       } catch {
-        fallback = DEFAULT_WELCOME_MIN_PURCHASE;
+        this.logger.warn('Loyalty settings unavailable for welcome gate; using bootstrap default ($85)');
       }
     }
 

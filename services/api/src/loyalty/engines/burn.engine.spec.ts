@@ -706,6 +706,16 @@ describe('LoyaltyBurnEngine', () => {
   });
 
   describe('Welcome Reward purchase minimum', () => {
+    const mockLoyaltySettings = {
+      getResolved: jest.fn().mockResolvedValue({
+        settings: {
+          minRedemptionPoints: 100,
+          welcomeRewardMinPurchase: 85,
+          campaignMinPurchaseThreshold: 85,
+        },
+      }),
+    };
+
     it('rejects welcome-reward redemption below the $85 threshold', async () => {
       const mockFindUnique = jest
         .fn()
@@ -751,6 +761,7 @@ describe('LoyaltyBurnEngine', () => {
         { applyDelta: jest.fn() } as any,
         mockConfig as any,
         mockFeatureFlags as any,
+        mockLoyaltySettings as any,
       );
 
       await expect(
@@ -815,6 +826,7 @@ describe('LoyaltyBurnEngine', () => {
         mockWallet as any,
         mockConfig as any,
         mockFeatureFlags as any,
+        mockLoyaltySettings as any,
       );
 
       const result = await engine.processRedemption({
@@ -863,6 +875,7 @@ describe('LoyaltyBurnEngine', () => {
         { applyDelta: jest.fn() } as any,
         mockConfig as any,
         mockFeatureFlags as any,
+        mockLoyaltySettings as any,
       );
 
       await expect(

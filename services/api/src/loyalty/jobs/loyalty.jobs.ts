@@ -144,11 +144,11 @@ export class LoyaltyJobsService implements OnModuleInit {
         this.logger.log('Birthday bonus skipped (BIRTHDAY earn rule inactive)');
         return;
       }
-      const envPtsRaw = this.config.get<string | number>('LOYALTY_BIRTHDAY_BONUS', 200);
-      const envPts = typeof envPtsRaw === 'number' ? envPtsRaw : Number(envPtsRaw);
-      const pts = Number(
-        bonusRule?.pointsAmount ?? (Number.isFinite(envPts) && envPts > 0 ? envPts : 200),
-      );
+      if (!bonusRule) {
+        this.logger.warn('BIRTHDAY earn rule missing; skipping bonus');
+        return;
+      }
+      const pts = bonusRule.pointsAmount;
       if (!Number.isFinite(pts) || pts <= 0) {
         this.logger.log('Birthday bonus skipped (points resolved to 0)');
         return;
@@ -236,11 +236,11 @@ export class LoyaltyJobsService implements OnModuleInit {
         this.logger.log('Anniversary bonus skipped (ANNIVERSARY earn rule inactive)');
         return;
       }
-      const envPtsRaw = this.config.get<string | number>('LOYALTY_ANNIVERSARY_BONUS', 150);
-      const envPts = typeof envPtsRaw === 'number' ? envPtsRaw : Number(envPtsRaw);
-      const pts = Number(
-        bonusRule?.pointsAmount ?? (Number.isFinite(envPts) && envPts > 0 ? envPts : 150),
-      );
+      if (!bonusRule) {
+        this.logger.warn('ANNIVERSARY earn rule missing; skipping bonus');
+        return;
+      }
+      const pts = bonusRule.pointsAmount;
       if (!Number.isFinite(pts) || pts <= 0) {
         this.logger.log('Anniversary bonus skipped (points resolved to 0)');
         return;
