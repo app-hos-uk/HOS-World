@@ -833,6 +833,7 @@ describe('LoyaltyEarnEngine', () => {
             country: 'US',
             currencyPreference: 'USD',
             birthday: null,
+            emailVerified: true,
           }),
         },
         loyaltyMembership: {
