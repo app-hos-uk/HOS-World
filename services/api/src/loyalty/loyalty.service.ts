@@ -211,6 +211,7 @@ export class LoyaltyService implements OnModuleInit {
         where: { userId },
         include: { tier: true },
       });
+      await this.linkUnattributedPosSalesForUser(userId);
       return membership ? { ...membership, referralStatus } : membership;
     }
 
@@ -274,6 +275,8 @@ export class LoyaltyService implements OnModuleInit {
       });
     }
 
+    await this.linkUnattributedPosSalesForUser(userId);
+
     const ref = dto?.referralCode?.trim();
     let referralStatus: 'applied' | 'already_applied' | 'not_applied' | undefined;
     if (ref) {
@@ -305,6 +308,55 @@ export class LoyaltyService implements OnModuleInit {
       include: { tier: true },
     });
     return refreshed ? { ...refreshed, referralStatus } : refreshed;
+  }
+
+  /**
+   * Attach till sales that were imported without a HOS user (email match) so
+   * in-store history appears under My Orders after join / enroll.
+   */
+  private async linkUnattributedPosSalesForUser(userId: string): Promise<void> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { email: true },
+      });
+      const email = user?.email?.trim();
+      if (!email) return;
+
+      const sales = await this.prisma.pOSSale.findMany({
+        where: {
+          customerId: null,
+          customerEmail: { equals: email, mode: 'insensitive' },
+        },
+        select: { id: true, loyaltyPointsEarned: true, status: true },
+        take: 200,
+      });
+      if (!sales.length) return;
+
+      await this.prisma.pOSSale.updateMany({
+        where: { id: { in: sales.map((s) => s.id) }, customerId: null },
+        data: { customerId: userId },
+      });
+
+      for (const sale of sales) {
+        if (sale.loyaltyPointsEarned !== 0 || sale.status === 'VOIDED') continue;
+        try {
+          await this.earn.processPosSale(sale.id);
+        } catch (e) {
+          this.logger.warn(
+            `Loyalty earn after enroll-link for POS sale ${sale.id}: ${
+              e instanceof Error ? e.message : 'unknown'
+            }`,
+          );
+        }
+      }
+    } catch (e) {
+      this.logger.warn(
+        `POS sale attach on enroll failed for ${userId}: ${
+          e instanceof Error ? e.message : 'unknown'
+        }`,
+      );
+    }
   }
 
   /**

@@ -166,8 +166,10 @@ export default function AdminLoyaltySettingsPage() {
           <section className="space-y-3 p-4 rounded-lg border border-hos-border bg-hos-bg-secondary">
             <h2 className="text-lg text-hos-gold font-display">Enchanted Circle campaign</h2>
             <p className="text-xs text-hos-text-muted font-ui">
-              Qualifying threshold and bonus rate for the current loyalty campaign (used on the
-              campaign performance dashboard and welcome-reward redemption).
+              Qualifying threshold and bonus rate for Enchanted Circle earn. Purchases above the
+              threshold earn bonus points using (amount − threshold) × bonus rate × points per
+              currency unit, in addition to the default earn rate. The same values gate welcome-reward
+              redemption and the campaign performance dashboard.
             </p>
             <label className="block text-sm text-hos-text-secondary font-ui">
               Minimum purchase threshold ({getCurrencySymbol(currency)})

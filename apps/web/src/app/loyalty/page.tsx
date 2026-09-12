@@ -221,6 +221,8 @@ export default function LoyaltyDashboardPage() {
                   { href: '/quiz', label: 'Quizzes' },
                   { href: '/loyalty/rewards', label: 'Rewards' },
                   { href: '/loyalty/redeem-in-store', label: 'Redeem in store' },
+                  { href: '/orders', label: 'My orders' },
+                  { href: '/purchases', label: 'Purchase history' },
                   { href: '/loyalty/history', label: 'Points History', highlight: true },
                   { href: '/loyalty/referral', label: 'Referrals' },
                   { href: '/loyalty/ambassador', label: 'Ambassadors', highlight: true },

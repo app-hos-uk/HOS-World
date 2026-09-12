@@ -93,6 +93,7 @@ describe('LoyaltyService', () => {
     },
     pOSSale: {
       findMany: jest.fn(),
+      updateMany: jest.fn(),
     },
     loyaltyPosVoucher: {
       findMany: jest.fn(),
@@ -113,6 +114,7 @@ describe('LoyaltyService', () => {
 
   const mockEarn = {
     processOrderComplete: jest.fn(),
+    processPosSale: jest.fn(),
   };
 
   const mockTiers = {

@@ -56,6 +56,10 @@ interface Order {
   estimatedDelivery?: string | Date;
   estimatedDeliveryAt?: string | Date;
   deliveredAt?: string | Date;
+  channel?: 'online' | 'in-store';
+  storeName?: string | null;
+  loyaltyPointsEarned?: number;
+  paidWithLoyaltyVoucher?: boolean;
 }
 
 type SortOption = 'newest' | 'oldest' | 'highest' | 'lowest';
@@ -68,6 +72,50 @@ const SORT_LABELS: Record<SortOption, string> = {
 };
 
 const ORDERS_PER_PAGE = 10;
+
+/** Keep stats cards and status filters on the same status sets. */
+const DELIVERED_STATUSES = ['delivered', 'completed', 'processed', 'paid'];
+const CANCELLED_STATUSES = ['cancelled', 'refunded', 'voided'];
+
+function parsePurchaseHistoryItems(res: { data?: unknown } | null): Array<Record<string, any>> {
+  const data = res?.data as { items?: unknown[] } | unknown[] | null | undefined;
+  if (Array.isArray(data)) return data as Array<Record<string, any>>;
+  if (data && Array.isArray((data as { items?: unknown[] }).items)) {
+    return (data as { items: Array<Record<string, any>> }).items;
+  }
+  return [];
+}
+
+function mapInStorePurchaseToOrder(row: Record<string, any>): Order {
+  const items = Array.isArray(row.items)
+    ? row.items.map((item: Record<string, any>, index: number) => ({
+        id: item.id || `${row.id}-${index}`,
+        productId: item.product?.id || '',
+        quantity: Number(item.quantity) || 1,
+        price: Number(item.price) || 0,
+        product: {
+          id: item.product?.id || '',
+          name: item.name || item.product?.name || 'Item',
+          images: item.product?.images,
+        },
+      }))
+    : [];
+  const status = String(row.status || 'COMPLETED');
+  return {
+    id: row.id,
+    orderNumber: row.orderNumber || undefined,
+    status,
+    paymentStatus: 'PAID',
+    total: Number(row.total) || 0,
+    currency: row.currency,
+    createdAt: row.date,
+    items,
+    channel: 'in-store',
+    storeName: row.storeName ?? null,
+    loyaltyPointsEarned: Number(row.pointsEarned) || 0,
+    paidWithLoyaltyVoucher: Boolean(row.paidWithLoyaltyVoucher),
+  };
+}
 
 /**
  * Active fulfillment statuses where Track is useful even before a tracking code
@@ -113,12 +161,43 @@ export default function OrdersPage() {
         if (response?.data) {
           const pageData = Array.isArray(response.data) ? response.data : [];
           allOrders.push(...pageData);
-          const pagination = (response as any).pagination;
-          hasMore = pagination ? page < pagination.totalPages : pageData.length === limit;
-          page++;
+          const pagination = (response as { pagination?: { totalPages?: number } }).pagination;
+          const totalPages = Number(pagination?.totalPages) || 0;
+          page += 1;
+          // After increment, `page` is the next page to fetch; include the last page with `<=`.
+          hasMore = totalPages > 0 ? page <= totalPages : pageData.length === limit;
         } else {
           hasMore = false;
         }
+      }
+
+      try {
+        const inStore: Array<Record<string, any>> = [];
+        let histPage = 1;
+        let histMore = true;
+        while (histMore) {
+          const historyRes = await apiClient.getPurchaseHistory({
+            page: histPage,
+            limit: 50,
+            type: 'in-store',
+          });
+          const pageRows = parsePurchaseHistoryItems(historyRes).filter(
+            (row) => row?.type === 'in-store' && row?.id,
+          );
+          inStore.push(...pageRows);
+          const pagination = (historyRes as { pagination?: { totalPages?: number } }).pagination;
+          const totalPages = Number(pagination?.totalPages) || 0;
+          histPage += 1;
+          histMore = totalPages > 0 ? histPage <= totalPages : pageRows.length === 50;
+          if (histPage > 20) break;
+        }
+        const onlineIds = new Set(allOrders.map((o) => o.id));
+        for (const row of inStore) {
+          if (onlineIds.has(row.id)) continue;
+          allOrders.push(mapInStorePurchaseToOrder(row));
+        }
+      } catch {
+        // Loyalty purchase-history is customer-only; admins still see online orders.
       }
 
       allOrders.sort((a: Order, b: Order) => 
@@ -138,33 +217,39 @@ export default function OrdersPage() {
   const isUnpaidOrder = (order: Order) =>
     !order.paymentStatus || order.paymentStatus.toUpperCase() !== 'PAID';
 
+  const isInStoreOrder = (order: Order) => order.channel === 'in-store';
+
   const stats = useMemo(() => {
     return {
       total: orders.length,
-      pending: orders.filter(o => normalizeStatus(o.status) === 'pending').length,
-      processing: orders.filter(o => ['confirmed', 'processing'].includes(normalizeStatus(o.status))).length,
-      shipped: orders.filter(o => normalizeStatus(o.status) === 'shipped').length,
-      delivered: orders.filter(o => ['delivered', 'completed'].includes(normalizeStatus(o.status))).length,
-      cancelled: orders.filter(o => ['cancelled', 'refunded'].includes(normalizeStatus(o.status))).length,
+      pending: orders.filter(o => !isInStoreOrder(o) && normalizeStatus(o.status) === 'pending').length,
+      processing: orders.filter(o => !isInStoreOrder(o) && ['confirmed', 'processing'].includes(normalizeStatus(o.status))).length,
+      shipped: orders.filter(o => !isInStoreOrder(o) && normalizeStatus(o.status) === 'shipped').length,
+      delivered: orders.filter(o => DELIVERED_STATUSES.includes(normalizeStatus(o.status))).length,
+      cancelled: orders.filter(o => CANCELLED_STATUSES.includes(normalizeStatus(o.status))).length,
+      inStore: orders.filter(o => isInStoreOrder(o)).length,
     };
   }, [orders]);
 
   const statusFilteredOrders = useMemo(() => {
     if (!statusFilter) return orders;
 
+    if (statusFilter === 'IN_STORE') {
+      return orders.filter(o => isInStoreOrder(o));
+    }
     if (statusFilter === 'PROCESSING') {
       return orders.filter(o => ['confirmed', 'processing'].includes(normalizeStatus(o.status)));
     }
     if (statusFilter === 'DELIVERED') {
-      return orders.filter(o => ['delivered', 'completed'].includes(normalizeStatus(o.status)));
+      return orders.filter(o => DELIVERED_STATUSES.includes(normalizeStatus(o.status)));
     }
     if (statusFilter === 'CANCELLED') {
-      return orders.filter(o => ['cancelled', 'refunded'].includes(normalizeStatus(o.status)));
+      return orders.filter(o => CANCELLED_STATUSES.includes(normalizeStatus(o.status)));
     }
     if (statusFilter === 'UNPAID') {
       return orders.filter(
         o =>
-          isUnpaidOrder(o) && !['cancelled', 'refunded'].includes(normalizeStatus(o.status)),
+          isUnpaidOrder(o) && !CANCELLED_STATUSES.includes(normalizeStatus(o.status)),
       );
     }
     if (statusFilter === 'REFUNDED') {
@@ -334,9 +419,12 @@ export default function OrdersPage() {
       case 'fulfilled':
       case 'shipped': return 'bg-hos-gold/20 text-hos-gold';
       case 'delivered':
-      case 'completed': return 'bg-green-500/15 text-green-300';
+      case 'completed':
+      case 'processed':
+      case 'paid': return 'bg-green-500/15 text-green-300';
       case 'cancelled':
-      case 'refunded': return 'bg-red-500/15 text-red-300';
+      case 'refunded':
+      case 'voided': return 'bg-red-500/15 text-red-300';
       default: return 'bg-hos-bg-tertiary text-hos-text-secondary';
     }
   };
@@ -360,11 +448,11 @@ export default function OrdersPage() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">My Orders</h1>
-            <p className="text-hos-text-secondary mt-1">Track and manage your orders</p>
+            <p className="text-hos-text-secondary mt-1">Track online orders and in-store purchases</p>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 mb-6">
             <button
               onClick={() => setStatusFilter('')}
               className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-all ${
@@ -419,6 +507,15 @@ export default function OrdersPage() {
               <h3 className="text-xs font-medium text-hos-text-muted uppercase">Cancelled</h3>
               <p className="text-2xl font-bold text-red-400 mt-1">{stats.cancelled}</p>
             </button>
+            <button
+              onClick={() => setStatusFilter('IN_STORE')}
+              className={`bg-hos-bg-secondary rounded-lg shadow p-4 text-left transition-all ${
+                statusFilter === 'IN_STORE' ? 'ring-2 ring-hos-gold/50' : 'hover:shadow-md'
+              }`}
+            >
+              <h3 className="text-xs font-medium text-hos-text-muted uppercase">In-store</h3>
+              <p className="text-2xl font-bold text-hos-gold mt-1">{stats.inStore}</p>
+            </button>
           </div>
 
           {/* Search, filter and sort */}
@@ -455,6 +552,7 @@ export default function OrdersPage() {
                   <option value="CANCELLED">Cancelled</option>
                   <option value="UNPAID">Pending Payment</option>
                   <option value="REFUNDED">Refunded</option>
+                  <option value="IN_STORE">In-store</option>
                 </select>
               </div>
               <div>
@@ -486,7 +584,9 @@ export default function OrdersPage() {
             <div className="bg-hos-bg-secondary rounded-lg shadow p-8 text-center">
               <div className="text-6xl mb-4">📦</div>
               <p className="text-hos-text-secondary mb-4">
-                {orders.length === 0 ? "You haven't placed any orders yet" : "No orders match your filter"}
+                {orders.length === 0
+                  ? "You haven't placed any online or in-store orders yet"
+                  : "No orders match your filter"}
               </p>
               {orders.length === 0 && (
                 <Link
@@ -508,18 +608,25 @@ export default function OrdersPage() {
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div className="min-w-0">
                         <h3 className="text-lg font-semibold text-hos-text-secondary">
-                          Order #{order.orderNumber || order.id.slice(0, 8)}
+                          {isInStoreOrder(order)
+                            ? order.storeName || 'In-store purchase'
+                            : `Order #${order.orderNumber || order.id.slice(0, 8)}`}
                         </h3>
                         {/* Badges sit on their own row so spacing stays uniform
                             regardless of order-number length. */}
                         <div className="flex items-center gap-2 flex-wrap mt-2">
+                          {isInStoreOrder(order) && (
+                            <span className="px-3 py-1 text-xs font-medium rounded-full bg-hos-gold/20 text-hos-gold">
+                              In-store
+                            </span>
+                          )}
                           <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
                             {order.status}
                           </span>
-                          {getPaymentBadge(order)}
+                          {!isInStoreOrder(order) && getPaymentBadge(order)}
                         </div>
                         <p className="text-sm text-hos-text-muted mt-2">
-                          Placed on {formatDate(order.createdAt, { day: 'numeric',
+                          {isInStoreOrder(order) ? 'Purchased on' : 'Placed on'} {formatDate(order.createdAt, { day: 'numeric',
                             month: 'long',
                             year: 'numeric', })}
                         </p>
@@ -565,12 +672,18 @@ export default function OrdersPage() {
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
-                            <Link
-                              href={`/products/${item.productId}`}
-                              className="block truncate font-medium text-hos-text-secondary hover:text-hos-gold"
-                            >
-                              {item.product?.name || 'Product'}
-                            </Link>
+                            {item.productId ? (
+                              <Link
+                                href={`/products/${item.productId}`}
+                                className="block truncate font-medium text-hos-text-secondary hover:text-hos-gold"
+                              >
+                                {item.product?.name || 'Product'}
+                              </Link>
+                            ) : (
+                              <p className="truncate font-medium text-hos-text-secondary">
+                                {item.product?.name || 'Product'}
+                              </p>
+                            )}
                             <p className="text-sm text-hos-text-muted">Qty: {item.quantity}</p>
                           </div>
                           <p className="shrink-0 text-sm font-medium text-hos-text-secondary">
@@ -596,7 +709,8 @@ export default function OrdersPage() {
                       View Details
                     </button>
                     {isUnpaidOrder(order) &&
-                      !['cancelled', 'refunded'].includes(normalizeStatus(order.status)) && (
+                      !isInStoreOrder(order) &&
+                      !CANCELLED_STATUSES.includes(normalizeStatus(order.status)) && (
                       <Link
                         href={`/payment?orderId=${order.id}`}
                         className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium text-sm"
@@ -604,7 +718,7 @@ export default function OrdersPage() {
                         Complete Payment
                       </Link>
                     )}
-                    {hasInvoice(order) && (
+                    {hasInvoice(order) && !isInStoreOrder(order) && (
                       <button
                         type="button"
                         onClick={async () => {
@@ -625,7 +739,7 @@ export default function OrdersPage() {
                         Download Invoice
                       </button>
                     )}
-                    {canTrackOrder(order) && (
+                    {canTrackOrder(order) && !isInStoreOrder(order) && (
                       <Link
                         href={`/track-order?orderNumber=${order.orderNumber || order.id}`}
                         className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
@@ -633,9 +747,17 @@ export default function OrdersPage() {
                         Track Order
                       </Link>
                     )}
-                    {normalizeStatus(order.status) === 'delivered' && (
+                    {normalizeStatus(order.status) === 'delivered' && !isInStoreOrder(order) && (
                       <Link
                         href={`/returns?orderId=${order.id}`}
+                        className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
+                      >
+                        Request Return
+                      </Link>
+                    )}
+                    {isInStoreOrder(order) && (
+                      <Link
+                        href={`/returns?posSaleId=${order.id}`}
                         className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
                       >
                         Request Return
@@ -694,10 +816,12 @@ export default function OrdersPage() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h2 id="customer-order-modal-title" className="text-xl font-bold text-hos-text-secondary">
-                      Order #{selectedOrder.orderNumber || selectedOrder.id.slice(0, 8)}
+                      {isInStoreOrder(selectedOrder)
+                        ? selectedOrder.storeName || 'In-store purchase'
+                        : `Order #${selectedOrder.orderNumber || selectedOrder.id.slice(0, 8)}`}
                     </h2>
                     <p className="text-sm text-hos-text-muted mt-1">
-                      Placed on {formatDateTime(selectedOrder.createdAt)}
+                      {isInStoreOrder(selectedOrder) ? 'Purchased on' : 'Placed on'} {formatDateTime(selectedOrder.createdAt)}
                     </p>
                   </div>
                   <button
@@ -723,7 +847,7 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Tracking Info */}
-                {canTrackOrder(selectedOrder) && (
+                {canTrackOrder(selectedOrder) && !isInStoreOrder(selectedOrder) && (
                   <div className="bg-hos-gold/10 rounded-lg p-4 space-y-2">
                     <h3 className="font-medium text-hos-text-secondary mb-2">Tracking Information</h3>
                     {selectedOrder.carrier && (
@@ -784,8 +908,18 @@ export default function OrdersPage() {
 
                 {/* Shipping Address */}
                 <div className="bg-hos-bg-secondary rounded-lg p-4">
-                  <h3 className="font-medium text-hos-text-secondary mb-2">Shipping Address</h3>
-                  {selectedOrder.shippingAddress ? (
+                  <h3 className="font-medium text-hos-text-secondary mb-2">
+                    {isInStoreOrder(selectedOrder) ? 'Store' : 'Shipping Address'}
+                  </h3>
+                  {isInStoreOrder(selectedOrder) ? (
+                    <p className="text-sm text-hos-text-secondary">
+                      {selectedOrder.storeName || 'In-store purchase'}
+                      {typeof selectedOrder.loyaltyPointsEarned === 'number' &&
+                      selectedOrder.loyaltyPointsEarned > 0
+                        ? ` · +${selectedOrder.loyaltyPointsEarned} points earned`
+                        : ''}
+                    </p>
+                  ) : selectedOrder.shippingAddress ? (
                     <p className="text-sm text-hos-text-secondary">
                       {selectedOrder.shippingAddress.street}<br />
                       {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.postalCode}<br />
@@ -820,12 +954,18 @@ export default function OrdersPage() {
                             </div>
                           )}
                           <div className="flex-1">
-                            <Link
-                              href={`/products/${item.productId}`}
-                              className="font-medium text-hos-text-secondary hover:text-hos-gold"
-                            >
-                              {item.product?.name || 'Product'}
-                            </Link>
+                            {item.productId ? (
+                              <Link
+                                href={`/products/${item.productId}`}
+                                className="font-medium text-hos-text-secondary hover:text-hos-gold"
+                              >
+                                {item.product?.name || 'Product'}
+                              </Link>
+                            ) : (
+                              <p className="font-medium text-hos-text-secondary">
+                                {item.product?.name || 'Product'}
+                              </p>
+                            )}
                             <p className="text-sm text-hos-text-muted">Qty: {item.quantity}</p>
                           </div>
                           <p className="font-medium text-hos-text-secondary">
@@ -874,15 +1014,25 @@ export default function OrdersPage() {
               </div>
 
               <div className="p-6 border-t bg-hos-bg-secondary flex gap-3">
-                <Link
-                  href={`/orders/${selectedOrder.id}`}
-                  className="flex-1 px-4 py-2 border border-hos-border-accent text-hos-gold-hover rounded-lg hover:bg-hos-gold/10 text-center font-medium"
-                >
-                  View Full Details
-                </Link>
-                {normalizeStatus(selectedOrder.status) === 'delivered' && (
+                {!isInStoreOrder(selectedOrder) && (
+                  <Link
+                    href={`/orders/${selectedOrder.id}`}
+                    className="flex-1 px-4 py-2 border border-hos-border-accent text-hos-gold-hover rounded-lg hover:bg-hos-gold/10 text-center font-medium"
+                  >
+                    View Full Details
+                  </Link>
+                )}
+                {normalizeStatus(selectedOrder.status) === 'delivered' && !isInStoreOrder(selectedOrder) && (
                   <Link
                     href={`/returns?orderId=${selectedOrder.id}`}
+                    className="flex-1 px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-center font-medium"
+                  >
+                    Request Return
+                  </Link>
+                )}
+                {isInStoreOrder(selectedOrder) && (
+                  <Link
+                    href={`/returns?posSaleId=${selectedOrder.id}`}
                     className="flex-1 px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-center font-medium"
                   >
                     Request Return

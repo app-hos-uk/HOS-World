@@ -365,6 +365,128 @@ describe('LoyaltyEarnEngine', () => {
       );
     });
 
+    it('awards Settings threshold bonus when no live % campaign exists', async () => {
+      const mockConfig = {
+        get: jest.fn().mockImplementation((key: string, defaultVal?: any) => {
+          if (key === 'LOYALTY_ENABLED') return 'true';
+          if (key === 'LOYALTY_DEFAULT_EARN_RATE') return 1;
+          if (key === 'HOS_SELLER_ID') return '';
+          return defaultVal;
+        }),
+      };
+      const membership = {
+        id: 'm1',
+        userId: 'u1',
+        tier: { multiplier: { toNumber: () => 1 }, level: 1 },
+        regionCode: 'US',
+      };
+      const mockWallet = { applyDelta: jest.fn().mockResolvedValue({ applied: true }) };
+      const mockPrisma = {
+        pOSSale: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'sale-settings',
+            customerId: 'u1',
+            storeId: 'store-1',
+            externalSaleId: 'ext-s',
+            loyaltyPointsEarned: 0,
+            items: [
+              {
+                product: {
+                  id: 'p1',
+                  sellerId: 's1',
+                  isPlatformOwned: false,
+                  seller: { id: 's1', loyaltyEnabled: true, loyaltyEarnRate: null },
+                  fandom: null,
+                  brand: null,
+                  categoryId: null,
+                  name: 'Robe',
+                },
+                unitPrice: 185,
+                quantity: 1,
+              },
+            ],
+            store: {},
+          }),
+          update: jest.fn(),
+        },
+        loyaltyMembership: {
+          findUnique: jest.fn().mockResolvedValue(membership),
+          update: jest.fn(),
+        },
+        loyaltyEarnRule: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'rule-purchase',
+            action: 'PURCHASE',
+            isActive: true,
+            pointsType: 'PER_CURRENCY_UNIT',
+            pointsAmount: 1,
+            multiplierStack: true,
+          }),
+        },
+        vendorProduct: { findFirst: jest.fn().mockResolvedValue(null) },
+        user: { findUnique: jest.fn().mockResolvedValue({ id: 'u1', country: 'US' }) },
+        loyaltyReferral: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
+        partnerReferralConversion: { findFirst: jest.fn().mockResolvedValue(null) },
+        $transaction: jest.fn(async (fn: (tx: any) => Promise<any>) =>
+          fn({
+            loyaltyMembership: { update: jest.fn() },
+            pOSSale: { update: jest.fn() },
+          }),
+        ),
+      };
+      const mockCampaigns = {
+        getActiveForContext: jest.fn().mockResolvedValue([]),
+        applyCampaignsToBasePoints: jest.fn().mockReturnValue({
+          points: 185,
+          campaignId: undefined,
+          mult: 1,
+          bonus: 0,
+        }),
+      };
+      const mockTiers = { recalculateTier: jest.fn() };
+      const mockLoyaltySettings = {
+        getResolved: jest.fn().mockResolvedValue({
+          settings: {
+            campaignMinPurchaseThreshold: 85,
+            campaignBonusEarnRate: 0.2,
+            campaignBonusPointsPerDollar: 100,
+          },
+        }),
+      };
+
+      const engine = new LoyaltyEarnEngine(
+        mockPrisma as any,
+        mockConfig as any,
+        mockFeatureFlags as any,
+        mockWallet as any,
+        mockCampaigns as any,
+        mockTiers as any,
+        mockBrandPartnerships as any,
+        mockProductCampaigns as any,
+        mockRegion as any,
+        mockLoyaltySettings as any,
+      );
+      await engine.processPosSale('sale-settings');
+
+      expect(mockWallet.applyDelta).toHaveBeenCalledWith(
+        expect.anything(),
+        'm1',
+        2000,
+        'EARN',
+        expect.objectContaining({
+          source: 'CAMPAIGN_THRESHOLD_BONUS',
+          campaignId: 'settings:enchanted-circle',
+        }),
+      );
+      expect(mockWallet.applyDelta).toHaveBeenCalledWith(
+        expect.anything(),
+        'm1',
+        185,
+        'EARN',
+        expect.objectContaining({ source: 'POS_PURCHASE' }),
+      );
+    });
+
     it('falls back to total-based earn when products are unmapped', async () => {
       const mockConfig = {
         get: jest.fn().mockImplementation((key: string, defaultVal?: any) => {

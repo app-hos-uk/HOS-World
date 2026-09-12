@@ -16,7 +16,9 @@ import { LoyaltySettingsService } from '../services/loyalty-settings.service';
 import {
   computeQualifyingSubtotal as sumQualifyingSubtotal,
   computeThresholdBonusPoints as sumThresholdBonusPoints,
+  mergeProgrammeThresholdCampaign,
   type QualifyingLineInput,
+  type ThresholdBonusRow,
   type ThresholdCampaignInput,
 } from '../qualifying-amount';
 import { resolveSignupCampaignAward } from '../signup-bonus';
@@ -271,14 +273,27 @@ export class LoyaltyEarnEngine {
     qualifyingSubtotal: Decimal,
     activeCampaigns: ThresholdCampaignInput[],
     pointsPerDollar = 100,
-  ): { points: number; breakdown: Array<{ campaignId: string; points: number }> } {
+  ): { points: number; breakdown: ThresholdBonusRow[] } {
     return sumThresholdBonusPoints(qualifyingSubtotal, activeCampaigns, { pointsPerDollar });
+  }
+
+  /** Settings campaign rates apply when no live % of-qualifying Bonus Campaign exists. */
+  private async resolveThresholdCampaigns(
+    activeCampaigns: ThresholdCampaignInput[],
+  ): Promise<ThresholdCampaignInput[]> {
+    if (!this.loyaltySettings) return activeCampaigns;
+    try {
+      const { settings } = await this.loyaltySettings.getResolved();
+      return mergeProgrammeThresholdCampaign(activeCampaigns, settings);
+    } catch {
+      return activeCampaigns;
+    }
   }
 
   private async applyCampaignThresholdBonuses(
     tx: Prisma.TransactionClient,
     membershipId: string,
-    bonuses: Array<{ campaignId: string; points: number }>,
+    bonuses: ThresholdBonusRow[],
     common: {
       sourceId: string;
       channel: string;
@@ -301,11 +316,15 @@ export class LoyaltyEarnEngine {
           channel: common.channel,
           storeId: common.storeId ?? null,
           campaignId: bonus.campaignId,
-          description: 'Campaign bonus: spend over threshold',
+          description: bonus.description,
           metadata: {
             ...(common.orderNumber ? { orderNumber: common.orderNumber } : {}),
             ...(common.externalSaleId ? { externalSaleId: common.externalSaleId } : {}),
             campaignId: bonus.campaignId,
+            threshold: bonus.threshold,
+            earnRate: bonus.earnRate,
+            pointsPerDollar: bonus.pointsPerDollar,
+            qualifyingSubtotal: bonus.qualifyingSubtotal,
           } as Prisma.InputJsonValue,
           idempotencyKey: `earn:CAMPAIGN_THRESHOLD_BONUS:${common.sourceId}:${bonus.campaignId}`,
         },
@@ -759,7 +778,8 @@ export class LoyaltyEarnEngine {
     const platformRegion = await this.region.getRegion();
     const region = membership.regionCode || order.user?.country || platformRegion.country;
     const activeCampaigns = await this.campaigns.getActiveForContext(region, 'WEB');
-    const thresholdBonus = this.computeThresholdBonusPoints(qualifyingSubtotal, activeCampaigns);
+    const thresholdCampaigns = await this.resolveThresholdCampaigns(activeCampaigns);
+    const thresholdBonus = this.computeThresholdBonusPoints(qualifyingSubtotal, thresholdCampaigns);
 
     if (basePoints.lte(0) && thresholdBonus.points <= 0) {
       if (skippedDisabledSeller > 0) {
@@ -900,6 +920,9 @@ export class LoyaltyEarnEngine {
               metadata: {
                 orderNumber: order.orderNumber,
                 sellerIds,
+                qualifyingSubtotal: qualifyingSubtotal.toNumber(),
+                basePoints: afterCampaignPoints,
+                tierMultiplier: tierMult,
               } as Prisma.InputJsonValue,
               idempotencyKey: `earn:PURCHASE:${order.id}:${campaignId || 'base'}`,
             },
@@ -1111,7 +1134,8 @@ export class LoyaltyEarnEngine {
       'HOS_OUTLET_POS',
       sale.storeId,
     );
-    const thresholdBonus = this.computeThresholdBonusPoints(qualifyingSubtotal, activeCampaigns);
+    const thresholdCampaigns = await this.resolveThresholdCampaigns(activeCampaigns);
+    const thresholdBonus = this.computeThresholdBonusPoints(qualifyingSubtotal, thresholdCampaigns);
 
     if (basePoints.lte(0) && thresholdBonus.points <= 0) {
       if (skippedDisabledSeller > 0) {
@@ -1247,6 +1271,9 @@ export class LoyaltyEarnEngine {
               metadata: {
                 externalSaleId: sale.externalSaleId,
                 sellerIds,
+                qualifyingSubtotal: qualifyingSubtotal.toNumber(),
+                basePoints: afterCampaignPoints,
+                tierMultiplier: tierMult,
               } as Prisma.InputJsonValue,
               idempotencyKey: `earn:POS_PURCHASE:${sale.id}:${campaignId || 'base'}`,
             },

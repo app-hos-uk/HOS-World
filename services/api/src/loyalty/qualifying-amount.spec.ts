@@ -5,6 +5,8 @@ import {
   isGiftCardLine,
   isSignupSizedWelcomeBurn,
   isWelcomeRewardOption,
+  mergeProgrammeThresholdCampaign,
+  PROGRAMME_THRESHOLD_CAMPAIGN_ID,
 } from './qualifying-amount';
 
 describe('qualifying-amount', () => {
@@ -47,7 +49,9 @@ describe('qualifying-amount', () => {
         },
       ]);
       expect(points).toBe(2000);
-      expect(breakdown).toEqual([{ campaignId: 'camp-1', points: 2000 }]);
+      expect(breakdown).toEqual([
+        expect.objectContaining({ campaignId: 'camp-1', points: 2000, threshold: 85, earnRate: 0.2 }),
+      ]);
     });
 
     it('awards nothing at or below the threshold', () => {
@@ -59,6 +63,36 @@ describe('qualifying-amount', () => {
         },
       ]);
       expect(points).toBe(0);
+    });
+  });
+
+  describe('mergeProgrammeThresholdCampaign', () => {
+    const settings = {
+      campaignMinPurchaseThreshold: 85,
+      campaignBonusEarnRate: 0.2,
+      campaignBonusPointsPerDollar: 100,
+    };
+
+    it('injects Settings rates when no live % campaign exists', () => {
+      const merged = mergeProgrammeThresholdCampaign([], settings);
+      expect(merged).toEqual([
+        {
+          id: PROGRAMME_THRESHOLD_CAMPAIGN_ID,
+          type: 'PERCENTAGE_OF_QUALIFYING',
+          conditions: { threshold: 85, earnRate: 0.2, pointsPerDollar: 100 },
+        },
+      ]);
+    });
+
+    it('does not double-count when a Bonus Campaign already defines the bonus', () => {
+      const live = [
+        {
+          id: 'camp-live',
+          type: 'PERCENTAGE_OF_QUALIFYING',
+          conditions: { threshold: 85, earnRate: 0.2, pointsPerDollar: 100 },
+        },
+      ];
+      expect(mergeProgrammeThresholdCampaign(live, settings)).toBe(live);
     });
   });
 

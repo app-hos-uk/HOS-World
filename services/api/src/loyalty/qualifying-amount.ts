@@ -72,6 +72,51 @@ export function isPercentageOfQualifyingCampaign(campaign: ThresholdCampaignInpu
   );
 }
 
+/** Stable id when Loyalty Settings supply the Enchanted Circle threshold bonus. */
+export const PROGRAMME_THRESHOLD_CAMPAIGN_ID = 'settings:enchanted-circle';
+
+export type ProgrammeThresholdSettings = {
+  campaignMinPurchaseThreshold?: number;
+  campaignBonusEarnRate?: number;
+  campaignBonusPointsPerDollar?: number;
+};
+
+/**
+ * Admin Settings campaign rates apply to earn when no live % of-qualifying
+ * Bonus Campaign is already in the active set (avoids double-counting).
+ */
+export function mergeProgrammeThresholdCampaign(
+  campaigns: ThresholdCampaignInput[],
+  settings?: ProgrammeThresholdSettings | null,
+): ThresholdCampaignInput[] {
+  if (!settings) return campaigns;
+  if ((campaigns ?? []).some(isPercentageOfQualifyingCampaign)) return campaigns;
+  const threshold = Number(settings.campaignMinPurchaseThreshold ?? 0);
+  const earnRate = Number(settings.campaignBonusEarnRate ?? 0);
+  const pointsPerDollar = Number(settings.campaignBonusPointsPerDollar ?? 0);
+  if (!Number.isFinite(earnRate) || earnRate <= 0) return campaigns;
+  if (!Number.isFinite(pointsPerDollar) || pointsPerDollar <= 0) return campaigns;
+  if (!Number.isFinite(threshold) || threshold < 0) return campaigns;
+  return [
+    ...(campaigns ?? []),
+    {
+      id: PROGRAMME_THRESHOLD_CAMPAIGN_ID,
+      type: 'PERCENTAGE_OF_QUALIFYING',
+      conditions: { threshold, earnRate, pointsPerDollar },
+    },
+  ];
+}
+
+export type ThresholdBonusRow = {
+  campaignId: string;
+  points: number;
+  description: string;
+  threshold: number;
+  earnRate: number;
+  pointsPerDollar: number;
+  qualifyingSubtotal: number;
+};
+
 /**
  * Bonus points for spend over a campaign threshold.
  * bonus = (qualifyingSubtotal - threshold) * earnRate * pointsPerDollar
@@ -81,9 +126,10 @@ export function computeThresholdBonusPoints(
   qualifyingSubtotal: Decimal,
   campaigns: ThresholdCampaignInput[],
   defaults?: { pointsPerDollar?: number },
-): { points: number; breakdown: Array<{ campaignId: string; points: number }> } {
-  const breakdown: Array<{ campaignId: string; points: number }> = [];
+): { points: number; breakdown: ThresholdBonusRow[] } {
+  const breakdown: ThresholdBonusRow[] = [];
   const defaultPpd = defaults?.pointsPerDollar && defaults.pointsPerDollar > 0 ? defaults.pointsPerDollar : 100;
+  const qualifying = qualifyingSubtotal.toNumber();
 
   for (const campaign of campaigns) {
     if (!isPercentageOfQualifyingCampaign(campaign)) continue;
@@ -101,7 +147,17 @@ export function computeThresholdBonusPoints(
       .mul(pointsPerDollar)
       .toDecimalPlaces(0, Decimal.ROUND_HALF_UP)
       .toNumber();
-    if (pts > 0) breakdown.push({ campaignId: campaign.id, points: pts });
+    if (pts > 0) {
+      breakdown.push({
+        campaignId: campaign.id,
+        points: pts,
+        threshold,
+        earnRate,
+        pointsPerDollar,
+        qualifyingSubtotal: qualifying,
+        description: `Campaign bonus: (${qualifying.toFixed(2)} − ${threshold}) × ${earnRate} × ${pointsPerDollar} pts/$`,
+      });
+    }
   }
 
   return {
