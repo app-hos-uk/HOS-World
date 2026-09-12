@@ -162,11 +162,11 @@ export class LoyaltyReversalService {
         customerId: true,
         totalAmount: true,
         loyaltyPointsEarned: true,
+        loyaltyPointsRedeemed: true,
         storeId: true,
       },
     });
     if (!posSale?.customerId) return;
-    if (posSale.loyaltyPointsEarned === 0) return;
 
     const membership = await this.prisma.loyaltyMembership.findUnique({
       where: { userId: posSale.customerId },
@@ -174,18 +174,24 @@ export class LoyaltyReversalService {
     if (!membership) return;
 
     const { settings } = await this.settings.getResolved();
-    if (!settings.clawEarnOnReturn) return;
 
     const saleTotal = Number(posSale.totalAmount);
     const share = saleTotal > 0 ? Math.min(1, Math.max(0, params.refundAmount / saleTotal)) : 0;
     if (share <= 0) return;
 
-    const targetClaw = Math.round(posSale.loyaltyPointsEarned * share);
-    if (targetClaw <= 0) return;
+    const targetClaw =
+      settings.clawEarnOnReturn && posSale.loyaltyPointsEarned > 0
+        ? Math.round(posSale.loyaltyPointsEarned * share)
+        : 0;
+
+    if (targetClaw <= 0 && !(settings.restoreBurnOnReturn && posSale.loyaltyPointsRedeemed > 0)) {
+      return;
+    }
 
     try {
       let clawAmount = 0;
       let applied = false;
+      if (targetClaw > 0) {
       await this.prisma.$transaction(async (tx) => {
         await this.wallet.lockMembership(tx, membership.id);
         const locked = await tx.loyaltyMembership.findUnique({ where: { id: membership.id } });
@@ -235,13 +241,45 @@ export class LoyaltyReversalService {
           data: { loyaltyPointsEarned: { decrement: clawAmount } },
         });
       });
+      }
 
       if (applied) {
         await this.tiers.recalculateTier(membership.id);
       }
+
+      if (settings.restoreBurnOnReturn && posSale.loyaltyPointsRedeemed > 0) {
+        const targetBurnRestore = Math.round(posSale.loyaltyPointsRedeemed * share);
+        if (targetBurnRestore > 0) {
+          const prior = await this.prisma.loyaltyTransaction.findMany({
+            where: {
+              membershipId: membership.id,
+              sourceId: params.returnId,
+              source: 'POS_RETURN_RESTORE_BURN',
+            },
+            select: { points: true },
+          });
+          const alreadyRestored = prior.reduce((s, t) => s + Math.max(0, t.points), 0);
+          const burnRestore = Math.max(0, targetBurnRestore - alreadyRestored);
+          if (burnRestore > 0) {
+            await this.applyRestoreBurn(posSale.customerId, burnRestore, {
+              source: 'POS_RETURN_RESTORE_BURN',
+              sourceId: params.returnId,
+              description: `Restore voucher points for in-store return ${params.returnId}`,
+              idempotencyKey: `restore:POS_RETURN_BURN:${params.returnId}:${targetBurnRestore}`,
+              metadata: {
+                posSaleId: posSale.id,
+                share,
+                refundAmount: params.refundAmount,
+                targetPoints: targetBurnRestore,
+              },
+            });
+            await this.tiers.recalculateTier(membership.id);
+          }
+        }
+      }
     } catch (e) {
       this.logger.warn(
-        `POS return earn clawback failed for ${posSale.customerId}: ${(e as Error).message}`,
+        `POS return loyalty adjustment failed for ${posSale.customerId}: ${(e as Error).message}`,
       );
     }
   }

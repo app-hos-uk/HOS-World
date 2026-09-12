@@ -556,7 +556,8 @@ export class ShippingWorkflowService {
       reference1: order.hosOrderNumber || order.invoiceNumber || order.id,
       customsInfo,
     });
-    const labelUrl = label.labels?.[0]?.url ?? label.trackingUrl;
+    const labelPdfUrl = label.labels?.[0]?.url ?? null;
+    const carrierTrackingUrl = label.trackingUrl || null;
     const carrierCost = Number(label.rate || 0);
 
     await this.prisma.shipmentGroup.update({
@@ -564,7 +565,8 @@ export class ShippingWorkflowService {
       data: {
         status: 'LABEL_CREATED',
         trackingCode: label.trackingNumber,
-        labelUrl,
+        labelUrl: labelPdfUrl,
+        trackingUrl: carrierTrackingUrl,
         carrierName: String(label.metadata?.carrier || label.providerName),
         carrierService: label.serviceName,
         carrierCost: new Decimal(carrierCost.toFixed(2)),
@@ -585,7 +587,8 @@ export class ShippingWorkflowService {
         status: allLabeled ? 'LABEL_CREATED' : order.status,
         totalCarrierCost: new Decimal(totalCarrier.toFixed(2)),
         trackingCode: label.trackingNumber,
-        labelUrl,
+        labelUrl: labelPdfUrl,
+        trackingUrl: carrierTrackingUrl,
       },
     });
 
@@ -777,7 +780,7 @@ export class ShippingWorkflowService {
         destination: this.formatDest(group.destinationSnapshot),
         carrier: group.carrierName || 'Carrier',
         trackingCode: group.trackingCode || '',
-        trackingUrl: group.labelUrl || '',
+        trackingUrl: group.trackingUrl || group.labelUrl || '',
         items: group.items.map((i) => `${i.name} ×${i.quantity}`).join(', '),
       };
       if (order.claimEmail) {
@@ -863,6 +866,61 @@ export class ShippingWorkflowService {
     return { items, pagination: { page, limit, total } };
   }
 
+  async listForCustomer(
+    userId: string,
+    opts?: { page?: number; limit?: number },
+  ) {
+    const page = Math.max(1, opts?.page || 1);
+    const limit = Math.min(100, Math.max(1, opts?.limit || 20));
+    const where = { userId };
+    const [rows, total] = await Promise.all([
+      this.prisma.storeShipmentRequest.findMany({
+        where,
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          store: { select: { name: true } },
+          groups: { include: { items: true }, orderBy: { createdAt: 'asc' } },
+        },
+      }),
+      this.prisma.storeShipmentRequest.count({ where }),
+    ]);
+
+    const items = rows.map((row) => {
+      const group = row.groups.find((g) => g.trackingCode || g.trackingUrl) || row.groups[0];
+      return {
+        id: row.id,
+        hosOrderNumber: row.hosOrderNumber,
+        invoiceNumber: row.invoiceNumber,
+        status: row.status,
+        storeName: row.store?.name,
+        createdAt: row.createdAt,
+        trackingCode: group?.trackingCode || row.trackingCode,
+        trackingUrl: group?.trackingUrl || row.trackingUrl,
+        labelUrl: group?.labelUrl || row.labelUrl,
+        carrierName: group?.carrierName,
+        currency: row.currency,
+        total: Number(row.totalCustomerCharge || 0),
+        items: (group?.items || []).map((i) => ({
+          id: i.id,
+          name: i.name,
+          quantity: i.quantity,
+        })),
+      };
+    });
+
+    return {
+      items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
+    };
+  }
+
   async getProgress(
     shipmentId: string,
     actor: { userId?: string; role?: string },
@@ -914,11 +972,18 @@ export class ShippingWorkflowService {
       });
     }
 
+    const trackedGroup =
+      order.groups.find((g) => g.trackingCode || g.trackingUrl) || order.groups[0];
+
     return {
       id: order.id,
       hosOrderNumber: order.hosOrderNumber,
       invoiceNumber: order.invoiceNumber,
       status: order.status,
+      trackingCode: trackedGroup?.trackingCode || order.trackingCode,
+      trackingUrl: trackedGroup?.trackingUrl || order.trackingUrl,
+      labelUrl: trackedGroup?.labelUrl || order.labelUrl,
+      carrierName: trackedGroup?.carrierName,
       nextAction: this.nextAction(order),
       store: order.store,
       claimEmail: order.claimEmail,

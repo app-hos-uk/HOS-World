@@ -33,10 +33,12 @@ import { FeatureFlagsModule } from '../config/feature-flags.module';
 import { PosModule } from '../pos/pos.module';
 import { ActivityModule } from '../activity/activity.module';
 import { PartnerReferralsModule } from '../partner-referrals/partner-referrals.module';
+import { ReturnPoliciesModule } from '../return-policies/return-policies.module';
 
 @Module({
   imports: [
     DatabaseModule,
+    ReturnPoliciesModule,
     QueueModule,
     ConfigModule,
     FeatureFlagsModule,

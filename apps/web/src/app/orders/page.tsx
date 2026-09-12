@@ -56,10 +56,14 @@ interface Order {
   estimatedDelivery?: string | Date;
   estimatedDeliveryAt?: string | Date;
   deliveredAt?: string | Date;
-  channel?: 'online' | 'in-store';
+  channel?: 'online' | 'in-store' | 'ship-from-store';
   storeName?: string | null;
+  hosOrderNumber?: string;
+  progressPath?: string;
   loyaltyPointsEarned?: number;
   paidWithLoyaltyVoucher?: boolean;
+  returnEligible?: boolean;
+  returnBlockReason?: string | null;
 }
 
 type SortOption = 'newest' | 'oldest' | 'highest' | 'lowest';
@@ -84,6 +88,35 @@ function parsePurchaseHistoryItems(res: { data?: unknown } | null): Array<Record
     return (data as { items: Array<Record<string, any>> }).items;
   }
   return [];
+}
+
+function mapStoreShipmentToOrder(row: Record<string, any>): Order {
+  const items = Array.isArray(row.items)
+    ? row.items.map((item: Record<string, any>, index: number) => ({
+        id: item.id || `${row.id}-${index}`,
+        productId: '',
+        quantity: Number(item.quantity) || 1,
+        price: 0,
+        product: { id: '', name: item.name || 'Item' },
+      }))
+    : [];
+  return {
+    id: row.id,
+    orderNumber: row.hosOrderNumber || row.invoiceNumber || undefined,
+    hosOrderNumber: row.hosOrderNumber || undefined,
+    status: String(row.status || 'NEW'),
+    paymentStatus: 'PAID',
+    total: Number(row.total) || 0,
+    currency: row.currency,
+    createdAt: row.createdAt,
+    items,
+    channel: 'ship-from-store',
+    storeName: row.storeName ?? null,
+    trackingCode: row.trackingCode || undefined,
+    carrier: row.carrierName || undefined,
+    trackingUrl: row.trackingUrl || undefined,
+    progressPath: `/ship/request/${row.id}`,
+  };
 }
 
 function mapInStorePurchaseToOrder(row: Record<string, any>): Order {
@@ -114,6 +147,8 @@ function mapInStorePurchaseToOrder(row: Record<string, any>): Order {
     storeName: row.storeName ?? null,
     loyaltyPointsEarned: Number(row.pointsEarned) || 0,
     paidWithLoyaltyVoucher: Boolean(row.paidWithLoyaltyVoucher),
+    returnEligible: Boolean(row.returnEligible),
+    returnBlockReason: row.returnBlockReason ?? null,
   };
 }
 
@@ -200,6 +235,31 @@ export default function OrdersPage() {
         // Loyalty purchase-history is customer-only; admins still see online orders.
       }
 
+      try {
+        let shipPage = 1;
+        let shipMore = true;
+        while (shipMore) {
+          const shipRes = await apiClient.listMyStoreShipments({ page: shipPage, limit: 50 });
+          const payload = shipRes?.data as { items?: unknown[]; pagination?: { totalPages?: number } } | unknown[];
+          const pageRows = Array.isArray(payload)
+            ? payload
+            : Array.isArray(payload?.items)
+              ? payload.items
+              : [];
+          for (const row of pageRows as Record<string, any>[]) {
+            if (row?.id) allOrders.push(mapStoreShipmentToOrder(row));
+          }
+          const totalPages = Number(
+            !Array.isArray(payload) ? payload?.pagination?.totalPages : 0,
+          ) || 0;
+          shipPage += 1;
+          shipMore = totalPages > 0 ? shipPage <= totalPages : pageRows.length === 50;
+          if (shipPage > 20) break;
+        }
+      } catch {
+        // Store shipments require customer auth.
+      }
+
       allOrders.sort((a: Order, b: Order) => 
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
@@ -218,6 +278,7 @@ export default function OrdersPage() {
     !order.paymentStatus || order.paymentStatus.toUpperCase() !== 'PAID';
 
   const isInStoreOrder = (order: Order) => order.channel === 'in-store';
+  const isStoreShipment = (order: Order) => order.channel === 'ship-from-store';
 
   const stats = useMemo(() => {
     return {
@@ -739,7 +800,7 @@ export default function OrdersPage() {
                         Download Invoice
                       </button>
                     )}
-                    {canTrackOrder(order) && !isInStoreOrder(order) && (
+                    {canTrackOrder(order) && !isInStoreOrder(order) && !isStoreShipment(order) && (
                       <Link
                         href={`/track-order?orderNumber=${order.orderNumber || order.id}`}
                         className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
@@ -747,7 +808,25 @@ export default function OrdersPage() {
                         Track Order
                       </Link>
                     )}
-                    {normalizeStatus(order.status) === 'delivered' && !isInStoreOrder(order) && (
+                    {isStoreShipment(order) && order.progressPath && (
+                      <Link
+                        href={order.progressPath}
+                        className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
+                      >
+                        Shipment details
+                      </Link>
+                    )}
+                    {isStoreShipment(order) && order.trackingUrl && (
+                      <a
+                        href={order.trackingUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
+                      >
+                        Track shipment
+                      </a>
+                    )}
+                    {normalizeStatus(order.status) === 'delivered' && !isInStoreOrder(order) && !isStoreShipment(order) && (
                       <Link
                         href={`/returns?orderId=${order.id}`}
                         className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
@@ -755,13 +834,16 @@ export default function OrdersPage() {
                         Request Return
                       </Link>
                     )}
-                    {isInStoreOrder(order) && (
+                    {isInStoreOrder(order) && order.returnEligible && (
                       <Link
                         href={`/returns?posSaleId=${order.id}`}
                         className="px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary transition-colors font-medium text-sm"
                       >
                         Request Return
                       </Link>
+                    )}
+                    {isInStoreOrder(order) && !order.returnEligible && order.returnBlockReason && (
+                      <p className="text-xs text-hos-text-muted max-w-xs">{order.returnBlockReason}</p>
                     )}
                   </div>
                 </div>
@@ -1022,7 +1104,7 @@ export default function OrdersPage() {
                     View Full Details
                   </Link>
                 )}
-                {normalizeStatus(selectedOrder.status) === 'delivered' && !isInStoreOrder(selectedOrder) && (
+                {normalizeStatus(selectedOrder.status) === 'delivered' && !isInStoreOrder(selectedOrder) && !isStoreShipment(selectedOrder) && (
                   <Link
                     href={`/returns?orderId=${selectedOrder.id}`}
                     className="flex-1 px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-center font-medium"
@@ -1030,7 +1112,7 @@ export default function OrdersPage() {
                     Request Return
                   </Link>
                 )}
-                {isInStoreOrder(selectedOrder) && (
+                {isInStoreOrder(selectedOrder) && selectedOrder.returnEligible && (
                   <Link
                     href={`/returns?posSaleId=${selectedOrder.id}`}
                     className="flex-1 px-4 py-2 border border-hos-border text-hos-text-secondary rounded-lg hover:bg-hos-bg-tertiary text-center font-medium"

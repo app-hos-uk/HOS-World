@@ -1,5 +1,6 @@
 import { Decimal } from '@prisma/client/runtime/library';
 import {
+  campaignEarnRateToFraction,
   computeQualifyingSubtotal,
   computeThresholdBonusPoints,
   isGiftCardLine,
@@ -64,6 +65,35 @@ describe('qualifying-amount', () => {
       ]);
       expect(points).toBe(0);
     });
+
+    it('treats a percentage earnRate of 20 the same as 0.2', () => {
+      const { points } = computeThresholdBonusPoints(new Decimal(198.9), [
+        {
+          id: 'camp-1',
+          type: 'PERCENTAGE_OF_QUALIFYING',
+          conditions: { threshold: 85, earnRate: 20, pointsPerDollar: 100 },
+        },
+      ]);
+      expect(points).toBe(2278);
+    });
+  });
+
+  describe('campaignEarnRateToFraction', () => {
+    it('keeps documented fractions', () => {
+      expect(campaignEarnRateToFraction(0.2)).toBe(0.2);
+    });
+
+    it('converts percentages above 1', () => {
+      expect(campaignEarnRateToFraction(20)).toBe(0.2);
+    });
+
+    it('replaces a copied default earn rate of 1 with 20%', () => {
+      expect(campaignEarnRateToFraction(1, { treatOneAsProgrammeDefault: true })).toBe(0.2);
+    });
+
+    it('leaves an explicit 100% campaign rate as 1', () => {
+      expect(campaignEarnRateToFraction(1)).toBe(1);
+    });
   });
 
   describe('mergeProgrammeThresholdCampaign', () => {
@@ -93,6 +123,16 @@ describe('qualifying-amount', () => {
         },
       ];
       expect(mergeProgrammeThresholdCampaign(live, settings)).toBe(live);
+    });
+
+    it('does not inject a 100% bonus when settings earn rate is 1', () => {
+      const merged = mergeProgrammeThresholdCampaign([], {
+        ...settings,
+        campaignBonusEarnRate: 1,
+      });
+      expect(merged[0]?.conditions).toEqual(
+        expect.objectContaining({ earnRate: 0.2, pointsPerDollar: 100 }),
+      );
     });
   });
 

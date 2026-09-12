@@ -18,6 +18,12 @@ import { InventoryService } from '../inventory/inventory.service';
 import { OrdersService } from '../orders/orders.service';
 import { ReturnPoliciesService } from '../return-policies/return-policies.service';
 import { LoyaltyReversalService } from '../loyalty/services/loyalty-reversal.service';
+import {
+  buildReturnItemsTableHtml,
+  buildReturnNotifyPlainBody,
+  type ReturnNotifyLine,
+  type ReturnNotifyPayload,
+} from './return-notify.util';
 
 interface ReturnTimelineStep {
   step: string;
@@ -312,49 +318,11 @@ export class ReturnsService {
       })
       .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
-    if (this.notificationsService) {
-      this.notificationsService
-        .sendNotificationToUser(
-          userId,
-          'RETURN_REQUESTED',
-          'Return request received',
-          `Your return request for order ${order.orderNumber || order.id} has been submitted and is pending review.`,
-          { returnId: returnRequest.id, orderId: order.id },
-        )
-        .catch((e) => this.logger.warn(`Return notification failed: ${(e as Error).message}`));
-
-      if (order.sellerId) {
-        const seller = await this.prisma.seller.findUnique({
-          where: { id: order.sellerId },
-          select: { userId: true },
-        });
-        if (seller?.userId) {
-          this.notificationsService
-            .sendNotificationToUser(
-              seller.userId,
-              'RETURN_REQUESTED',
-              'New return request',
-              `A customer has requested a return for order ${order.orderNumber || order.id}. Please review it in your returns dashboard.`,
-              { returnId: returnRequest.id, orderId: order.id },
-            )
-            .catch((e) =>
-              this.logger.warn(`Seller return notification failed: ${(e as Error).message}`),
-            );
-        }
-      }
-
-      this.notificationsService
-        .sendNotificationToRole(
-          'ADMIN',
-          'RETURN_REQUESTED',
-          'New return request',
-          `A return has been requested for order ${order.orderNumber || order.id}. Review pending in the returns management queue.`,
-          { returnId: returnRequest.id, orderId: order.id },
-        )
-        .catch((e) =>
-          this.logger.warn(`Admin return notification failed: ${(e as Error).message}`),
-        );
-    }
+    await this.notifyReturnRequested({
+      returnRequest,
+      userId,
+      order,
+    }).catch((e) => this.logger.warn(`Return notification failed: ${(e as Error).message}`));
 
     return this.mapToReturnType(returnRequest);
   }
@@ -503,49 +471,11 @@ export class ReturnsService {
       })
       .catch((e) => this.logger.warn(`Activity log failed: ${(e as Error).message}`));
 
-    if (this.notificationsService) {
-      this.notificationsService
-        .sendNotificationToUser(
-          userId,
-          'RETURN_REQUESTED',
-          'Return request received',
-          `Your return request for in-store sale ${saleLabel} has been submitted and is pending review.`,
-          { returnId: returnRequest.id, posSaleId: sale.id },
-        )
-        .catch((e) => this.logger.warn(`Return notification failed: ${(e as Error).message}`));
-
-      if (sale.store?.sellerId) {
-        const seller = await this.prisma.seller.findUnique({
-          where: { id: sale.store.sellerId },
-          select: { userId: true },
-        });
-        if (seller?.userId) {
-          this.notificationsService
-            .sendNotificationToUser(
-              seller.userId,
-              'RETURN_REQUESTED',
-              'New return request',
-              `A customer has requested a return for in-store sale ${saleLabel}. Please review it in your returns dashboard.`,
-              { returnId: returnRequest.id, posSaleId: sale.id },
-            )
-            .catch((e) =>
-              this.logger.warn(`Seller return notification failed: ${(e as Error).message}`),
-            );
-        }
-      }
-
-      this.notificationsService
-        .sendNotificationToRole(
-          'ADMIN',
-          'RETURN_REQUESTED',
-          'New return request',
-          `A return has been requested for in-store sale ${saleLabel}. Review pending in the returns management queue.`,
-          { returnId: returnRequest.id, posSaleId: sale.id },
-        )
-        .catch((e) =>
-          this.logger.warn(`Admin return notification failed: ${(e as Error).message}`),
-        );
-    }
+    await this.notifyReturnRequested({
+      returnRequest,
+      userId,
+      posSale: sale,
+    }).catch((e) => this.logger.warn(`Return notification failed: ${(e as Error).message}`));
 
     return this.mapToReturnType(returnRequest);
   }
@@ -1672,6 +1602,184 @@ export class ReturnsService {
       },
     ];
     return steps;
+  }
+
+  private buildReturnNotifyLines(
+    returnRequest: any,
+    order?: any,
+    posSale?: any,
+  ): ReturnNotifyLine[] {
+    const currency = order?.currency || posSale?.currency;
+    const returnItems = returnRequest.items || [];
+    if (returnItems.length > 0) {
+      return returnItems.map((ri: any) => ({
+        name:
+          ri.orderItem?.product?.name ||
+          ri.posSaleItem?.product?.name ||
+          ri.posSaleItem?.name ||
+          'Item',
+        quantity: ri.quantity || 1,
+        unitPrice:
+          ri.orderItem?.price != null
+            ? Number(ri.orderItem.price)
+            : ri.posSaleItem?.unitPrice != null
+              ? Number(ri.posSaleItem.unitPrice)
+              : undefined,
+        currency,
+      }));
+    }
+    if (posSale?.items?.length) {
+      return posSale.items.map((item: any) => ({
+        name: item.name || item.product?.name || 'Item',
+        quantity: item.quantity || 1,
+        unitPrice: item.unitPrice != null ? Number(item.unitPrice) : undefined,
+        currency,
+      }));
+    }
+    if (order?.items?.length) {
+      return order.items.map((item: any) => ({
+        name: item.product?.name || 'Item',
+        quantity: item.quantity || 1,
+        unitPrice: item.price != null ? Number(item.price) : undefined,
+        currency,
+      }));
+    }
+    return [];
+  }
+
+  private buildReturnNotifyPayload(
+    returnRequest: any,
+    order?: any,
+    posSale?: any,
+  ): ReturnNotifyPayload {
+    const isInStore = Boolean(returnRequest.posSaleId || posSale);
+    const sourceLabel = isInStore
+      ? posSale?.externalInvoice ||
+        posSale?.externalSaleId ||
+        `In-store sale ${returnRequest.posSaleId?.slice(0, 8) || ''}`
+      : `Order #${order?.orderNumber || returnRequest.orderId}`;
+    const refundMethod = returnRequest.refundMethod || (isInStore ? 'IN_STORE' : undefined);
+    return {
+      sourceLabel,
+      storeName: posSale?.store?.name,
+      reason: returnRequest.reason,
+      notes: returnRequest.notes || undefined,
+      refundMethod,
+      items: this.buildReturnNotifyLines(returnRequest, order, posSale),
+      isInStore,
+    };
+  }
+
+  private refundMethodLabel(refundMethod?: string, isInStore?: boolean): string {
+    if (refundMethod === 'IN_STORE' || isInStore) return 'In-store refund at till';
+    if (refundMethod) return refundMethod.replace(/_/g, ' ');
+    return 'Original payment method';
+  }
+
+  private async notifyReturnRequested(params: {
+    returnRequest: any;
+    userId: string;
+    order?: any;
+    posSale?: any;
+  }): Promise<void> {
+    if (!this.notificationsService) return;
+
+    const { returnRequest, userId, order, posSale } = params;
+    const payload = this.buildReturnNotifyPayload(returnRequest, order, posSale);
+    const currency = order?.currency || posSale?.currency;
+    const itemsTableHtml = buildReturnItemsTableHtml(payload.items, currency);
+    const refundLabel = this.refundMethodLabel(payload.refundMethod, payload.isInStore);
+    const metadata = {
+      returnId: returnRequest.id,
+      orderId: returnRequest.orderId,
+      posSaleId: returnRequest.posSaleId,
+      reason: returnRequest.reason,
+      items: payload.items,
+    };
+
+    const customer = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    if (customer?.email) {
+      await this.notificationsService.sendReturnRequestedEmail({
+        email: customer.email,
+        userId,
+        sourceLabel: payload.sourceLabel,
+        storeName: payload.storeName,
+        reason: payload.reason,
+        notes: payload.notes,
+        refundMethodLabel: refundLabel,
+        itemsTableHtml,
+        audienceHint:
+          'We received your return request and will review it shortly. You can track progress in Returns & Refunds.',
+        metadata,
+      });
+    }
+
+    const sellerId = order?.sellerId || posSale?.store?.sellerId;
+    if (sellerId) {
+      const seller = await this.prisma.seller.findUnique({
+        where: { id: sellerId },
+        select: { userId: true, user: { select: { email: true } } },
+      });
+      if (seller?.userId && seller.user?.email) {
+        await this.notificationsService.sendReturnRequestedEmail({
+          email: seller.user.email,
+          userId: seller.userId,
+          sourceLabel: payload.sourceLabel,
+          storeName: payload.storeName,
+          reason: payload.reason,
+          notes: payload.notes,
+          refundMethodLabel: refundLabel,
+          itemsTableHtml,
+          audienceHint: 'A customer has submitted a return request. Please review it in your returns dashboard.',
+          metadata,
+        });
+      }
+    }
+
+    const storeId = posSale?.storeId || posSale?.store?.id;
+    if (storeId) {
+      await this.notificationsService.sendNotificationToStoreStaff(
+        storeId,
+        'RETURN_REQUESTED',
+        'New in-store return request',
+        buildReturnNotifyPlainBody(payload),
+        metadata,
+        {
+          sourceLabel: payload.sourceLabel,
+          storeName: payload.storeName,
+          reason: payload.reason,
+          notes: payload.notes,
+          refundMethodLabel: refundLabel,
+          itemsTableHtml,
+          audienceHint:
+            'A customer requested an in-store return. Review in the seller returns queue and prepare for in-store refund after approval.',
+        },
+      );
+    }
+
+    const admins = await this.prisma.user.findMany({
+      where: { role: 'ADMIN' },
+      select: { id: true, email: true },
+    });
+    await Promise.all(
+      admins.map((admin) =>
+        this.notificationsService!.sendReturnRequestedEmail({
+          email: admin.email,
+          userId: admin.id,
+          sourceLabel: payload.sourceLabel,
+          storeName: payload.storeName,
+          reason: payload.reason,
+          notes: payload.notes,
+          refundMethodLabel: refundLabel,
+          itemsTableHtml,
+          audienceHint: 'A new return request is pending review in the admin returns queue.',
+          metadata,
+        }),
+      ),
+    );
   }
 
   private returnSourceLabel(returnRequest: any): string {

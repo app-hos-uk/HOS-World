@@ -121,6 +121,20 @@ describe('LoyaltySettingsService caching', () => {
     expect(settings.campaignBonusPointsPerDollar).toBe(100);
   });
 
+  it('normalizes a copied default earn rate of 1 to 20% campaign bonus', async () => {
+    const prisma = createPrisma({ value: { campaignBonusEarnRate: 1 } });
+    const service = createService(prisma, undefined, 0);
+    const { settings } = await service.getResolved();
+    expect(settings.campaignBonusEarnRate).toBe(0.2);
+  });
+
+  it('normalizes a percentage campaign bonus of 20 to 0.2', async () => {
+    const prisma = createPrisma({ value: { campaignBonusEarnRate: 20 } });
+    const service = createService(prisma, undefined, 0);
+    const { settings } = await service.getResolved();
+    expect(settings.campaignBonusEarnRate).toBe(0.2);
+  });
+
   it('does not cache env fallbacks when the database read fails', async () => {
     const prisma = createPrisma(null);
     prisma.config.findFirst.mockRejectedValue(new Error('db down'));

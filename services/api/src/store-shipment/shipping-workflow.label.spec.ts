@@ -77,17 +77,35 @@ function makeService() {
       findMany: jest.fn(),
       update: jest.fn(),
     },
-    storeShipmentRequest: { update: jest.fn() },
+    storeShipmentRequest: {
+      update: jest.fn(),
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'ship-1',
+        storeId: 'store-1',
+        status: 'PACKED',
+        currency: 'USD',
+        groups: [],
+        posSale: { items: [] },
+        user: null,
+      }),
+    },
   };
+  const boxSizes = {
+    list: jest.fn().mockResolvedValue([]),
+    pricesForCountry: jest.fn().mockResolvedValue({ tier: 'default', prices: [] }),
+    recommendName: jest.fn().mockReturnValue('Medium'),
+    normalizeCountry: jest.fn().mockReturnValue('US'),
+  };
+  const featureFlags = { isEnabled: jest.fn().mockReturnValue(false) };
   const service = new ShippingWorkflowService(
     prisma,
-    {} as any,
+    boxSizes as any,
     {} as any,
     courierFactory as any,
     {} as any,
     {} as any,
     { get: jest.fn() } as any,
-    {} as any,
+    featureFlags as any,
     {} as any,
   );
   return { service, prisma, courierFactory, group };
@@ -115,6 +133,33 @@ describe('ShippingWorkflowService label rates', () => {
       /Select a carrier/,
     );
     expect(courierFactory.createShipment).not.toHaveBeenCalled();
+  });
+
+  it('stores carrier tracking URL separately from the label PDF', async () => {
+    const { service, prisma, courierFactory } = makeService();
+    courierFactory.createShipment.mockResolvedValue({
+      trackingNumber: '1Z999',
+      trackingUrl: 'https://carrier.example/track/1Z999',
+      labels: [{ url: 'https://shippo.example/label.pdf' }],
+      rate: 12.5,
+      serviceCode: 'ups_ground',
+      serviceName: 'UPS Ground',
+      providerName: 'Shippo',
+      metadata: { carrier: 'UPS' },
+    });
+    prisma.shipmentGroup.findMany.mockResolvedValue([{ id: 'g1', status: 'PACKED', carrierCost: 0 }]);
+
+    await service.generateLabel('g1', staff, { serviceCode: 'ups_ground' });
+
+    expect(prisma.shipmentGroup.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          labelUrl: 'https://shippo.example/label.pdf',
+          trackingUrl: 'https://carrier.example/track/1Z999',
+          trackingCode: '1Z999',
+        }),
+      }),
+    );
   });
 
   it('requires packed weight before quoting', async () => {

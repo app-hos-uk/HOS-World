@@ -42,6 +42,7 @@ type Group = {
   recipientName?: string;
   trackingCode?: string | null;
   carrierName?: string | null;
+  trackingUrl?: string | null;
   labelUrl?: string | null;
   items: Array<{ id: string; name: string; quantity: number }>;
 };
@@ -60,6 +61,10 @@ type Progress = {
   onlinePaymentEnabled?: boolean;
   invoiceItems?: InvoiceItem[];
   groups?: Group[];
+  trackingCode?: string | null;
+  trackingUrl?: string | null;
+  labelUrl?: string | null;
+  carrierName?: string | null;
   user?: { firstName?: string; lastName?: string; phone?: string; email?: string };
 };
 
@@ -425,11 +430,19 @@ function ShipRequestInner() {
               {g.trackingCode && (
                 <p className="text-emerald-300">
                   {g.carrierName} {g.trackingCode}
+                  {g.trackingUrl ? (
+                    <>
+                      {' '}
+                      <a href={g.trackingUrl} className="underline" target="_blank" rel="noreferrer">
+                        Track shipment
+                      </a>
+                    </>
+                  ) : null}
                   {g.labelUrl ? (
                     <>
                       {' '}
-                      <a href={g.labelUrl} className="underline" target="_blank" rel="noreferrer">
-                        track
+                      <a href={g.labelUrl} className="underline text-stone-400" target="_blank" rel="noreferrer">
+                        Label PDF
                       </a>
                     </>
                   ) : null}

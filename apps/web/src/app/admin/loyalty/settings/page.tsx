@@ -183,16 +183,31 @@ export default function AdminLoyaltySettingsPage() {
               />
             </label>
             <label className="block text-sm text-hos-text-secondary font-ui">
-              Bonus earn rate (fraction, 0.20 = 20%)
+              Bonus rate (% of spend above threshold)
               <input
                 type="number"
-                step="0.01"
+                step="1"
                 min="0"
+                max="100"
                 className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
-                value={form.campaignBonusEarnRate}
-                onChange={(e) => set('campaignBonusEarnRate', Number(e.target.value))}
+                value={Number((form.campaignBonusEarnRate * 100).toFixed(2))}
+                onChange={(e) => set('campaignBonusEarnRate', Number(e.target.value) / 100)}
               />
             </label>
+            <p className="text-xs text-hos-text-muted font-ui">
+              Example: $198.90 spend → ({(198.9).toFixed(2)} − {form.campaignMinPurchaseThreshold}) ×{' '}
+              {Number((form.campaignBonusEarnRate * 100).toFixed(0))}% ×{' '}
+              {form.campaignBonusPointsPerDollar} pts/$ ={' '}
+              {Math.max(
+                0,
+                Math.round(
+                  (198.9 - form.campaignMinPurchaseThreshold) *
+                    form.campaignBonusEarnRate *
+                    form.campaignBonusPointsPerDollar,
+                ),
+              )}{' '}
+              bonus points.
+            </p>
             <label className="block text-sm text-hos-text-secondary font-ui">
               Bonus points per {getCurrencySymbol(currency)}
               <input

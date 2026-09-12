@@ -307,8 +307,8 @@ export default function AdminLoyaltyCampaignsPage() {
                     <p className="mt-1 text-xs text-hos-text-muted">Welcome Reward and bonus both require at least this merchandise total.</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Bonus rate (0.20 = 20%)</label>
-                    <input type="number" min={0} step="0.01" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border" value={form.earnRate} onChange={(e) => setForm({ ...form, earnRate: Number(e.target.value) })} />
+                    <label className="block text-sm font-medium text-hos-text-secondary mb-1">Bonus rate (% of spend above threshold)</label>
+                    <input type="number" min={0} max={100} step="1" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border" value={Number((form.earnRate * 100).toFixed(2))} onChange={(e) => setForm({ ...form, earnRate: Number(e.target.value) / 100 })} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-hos-text-secondary mb-1">Points per currency unit of bonus</label>

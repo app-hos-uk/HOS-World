@@ -50,6 +50,9 @@ describe('OrdersService - Phase 1 Tests', () => {
     cancellationRequest: {
       findMany: jest.fn().mockResolvedValue([]),
     },
+    storeShipmentRequest: {
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
     vendorProduct: {
       findFirst: jest.fn().mockResolvedValue(null),
       findMany: jest.fn().mockResolvedValue([]),

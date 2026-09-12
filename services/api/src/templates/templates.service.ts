@@ -54,7 +54,7 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
     channel: 'EMAIL',
     subject: 'Your Order Has Shipped - {{orderNumber}}',
     description: 'Sent when a shipment is dispatched.',
-    variables: ['orderNumber', 'customerName', 'trackingCode', 'carrier'],
+    variables: ['orderNumber', 'customerName', 'trackingCode', 'carrier', 'trackingUrl', 'trackingLinkHtml'],
     body: `<!DOCTYPE html>
 <html><head><style>
   body{font-family:Arial,sans-serif;line-height:1.6;color:#333}
@@ -62,6 +62,7 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
   .header{background:#4299e1;color:#fff;padding:20px;text-align:center}
   .content{padding:20px;background:#f7fafc}
   .tracking{background:#edf2f7;padding:15px;border-radius:4px;margin:20px 0}
+  .cta{display:inline-block;padding:12px 24px;background:#4299e1;color:#fff;text-decoration:none;border-radius:6px;margin:16px 0}
   .footer{text-align:center;padding:20px;color:#718096;font-size:12px}
 </style></head><body>
 <div class="container">
@@ -70,7 +71,7 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
     <h2>Great news, {{customerName}}!</h2>
     <p>Your order <strong>{{orderNumber}}</strong> has been shipped via {{carrier}}.</p>
     <div class="tracking"><strong>Tracking Code:</strong> {{trackingCode}}</div>
-    <p>You can track your order using the tracking code above.</p>
+    {{trackingLinkHtml}}
   </div>
   <div class="footer"><p>House of Spells Marketplace</p></div>
 </div></body></html>`,
@@ -319,6 +320,46 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
     <p>If you no longer wish to receive these emails, you can <a href="{{unsubscribeUrl}}">unsubscribe here</a>.</p>
   </div>
   <div class="footer"><p>House of Spells Marketplace</p></div>
+</div></body></html>`,
+  },
+  {
+    slug: 'return_requested',
+    channel: 'EMAIL',
+    subject: 'Return request — {{sourceLabel}}',
+    description: 'Sent when a customer submits an online or in-store return request.',
+    variables: [
+      'sourceLabel',
+      'storeNameHtml',
+      'reason',
+      'notesHtml',
+      'refundMethodLabel',
+      'itemsTable',
+      'audienceHint',
+    ],
+    body: `<!DOCTYPE html>
+<html><head><style>
+  body{font-family:Arial,sans-serif;line-height:1.6;color:#333}
+  .container{max-width:600px;margin:0 auto;padding:20px}
+  .header{background:#553c9a;color:#fff;padding:20px;text-align:center}
+  .content{padding:20px;background:#f7fafc}
+  .meta{margin:12px 0;padding:12px;background:#edf2f7;border-radius:4px}
+  .footer{text-align:center;padding:20px;color:#718096;font-size:12px}
+</style></head><body>
+<div class="container">
+  <div class="header"><h1>Return request</h1></div>
+  <div class="content">
+    <p>{{audienceHint}}</p>
+    <div class="meta">
+      <p><strong>Source:</strong> {{sourceLabel}}</p>
+      {{storeNameHtml}}
+      <p><strong>Reason:</strong> {{reason}}</p>
+      {{notesHtml}}
+      <p><strong>Refund:</strong> {{refundMethodLabel}}</p>
+    </div>
+    <h3 style="margin-top:16px">Items</h3>
+    {{itemsTable}}
+  </div>
+  <div class="footer"><p>House of Spells</p></div>
 </div></body></html>`,
   },
   {

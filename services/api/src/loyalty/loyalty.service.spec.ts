@@ -15,6 +15,7 @@ import { LoyaltyListener } from './listeners/loyalty.listener';
 import { LoyaltySettingsService } from './services/loyalty-settings.service';
 import { LoyaltyCampaignService } from './services/campaign.service';
 import { PlatformRegionService } from '../config/platform-region.service';
+import { ReturnPoliciesService } from '../return-policies/return-policies.service';
 
 describe('LoyaltyService', () => {
   let service: LoyaltyService;
@@ -95,6 +96,9 @@ describe('LoyaltyService', () => {
       findMany: jest.fn(),
       updateMany: jest.fn(),
     },
+    returnRequest: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
     loyaltyPosVoucher: {
       findMany: jest.fn(),
     },
@@ -164,6 +168,10 @@ describe('LoyaltyService', () => {
     applyCampaignsToBasePoints: jest.fn().mockReturnValue({ points: 0, mult: 1, bonus: 0 }),
   };
 
+  const mockReturnPolicies = {
+    getApplicablePolicy: jest.fn().mockResolvedValue(null),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -182,6 +190,7 @@ describe('LoyaltyService', () => {
         { provide: LoyaltySettingsService, useValue: mockLoyaltySettings },
         { provide: PlatformRegionService, useValue: mockRegion },
         { provide: LoyaltyCampaignService, useValue: mockCampaigns },
+        { provide: ReturnPoliciesService, useValue: mockReturnPolicies },
       ],
     }).compile();
 

@@ -396,6 +396,94 @@ export class NotificationsService implements OnModuleInit {
     this.logger.log(`Store shipment tracking email queued for ${data.email}`);
   }
 
+  async sendReturnRequestedEmail(data: {
+    email: string;
+    userId?: string;
+    sourceLabel: string;
+    storeName?: string;
+    reason: string;
+    notes?: string;
+    refundMethodLabel: string;
+    itemsTableHtml: string;
+    audienceHint: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<void> {
+    if (!data.email) return;
+    const rendered = await this.templatesService.render('return_requested', {
+      sourceLabel: data.sourceLabel,
+      storeNameHtml: data.storeName
+        ? `<p><strong>Store:</strong> ${escapeHtml(data.storeName)}</p>`
+        : '',
+      reason: data.reason,
+      notesHtml: data.notes ? `<p><strong>Notes:</strong> ${escapeHtml(data.notes)}</p>` : '',
+      refundMethodLabel: data.refundMethodLabel,
+      itemsTable: data.itemsTableHtml,
+      audienceHint: data.audienceHint,
+    });
+
+    if (data.userId) {
+      const notification = await this.prisma.notification.create({
+        data: {
+          userId: data.userId,
+          type: 'RETURN_REQUESTED',
+          subject: rendered.subject,
+          content: `${data.audienceHint}\n${data.sourceLabel}`,
+          email: data.email,
+          status: 'PENDING',
+          metadata: data.metadata ? (data.metadata as any) : undefined,
+        },
+      });
+      await this.queueNotification(data.email, rendered.subject, rendered.body, notification.id);
+    } else {
+      await this.queueNotification(data.email, rendered.subject, rendered.body);
+    }
+  }
+
+  async sendNotificationToStoreStaff(
+    storeId: string,
+    type: NotificationType | string,
+    subject: string,
+    content: string,
+    metadata?: Record<string, unknown>,
+    emailExtras?: {
+      sourceLabel: string;
+      storeName?: string;
+      reason: string;
+      notes?: string;
+      refundMethodLabel: string;
+      itemsTableHtml: string;
+      audienceHint: string;
+    },
+  ): Promise<void> {
+    const staff = await this.prisma.user.findMany({
+      where: { role: 'STORE_STAFF', storeId },
+      select: { id: true, email: true },
+    });
+    if (!staff.length) {
+      this.logger.warn(`No STORE_STAFF users for store ${storeId}`);
+      return;
+    }
+    await Promise.all(
+      staff.map((user) => {
+        if (emailExtras) {
+          return this.sendReturnRequestedEmail({
+            email: user.email,
+            userId: user.id,
+            sourceLabel: emailExtras.sourceLabel,
+            storeName: emailExtras.storeName,
+            reason: emailExtras.reason,
+            notes: emailExtras.notes,
+            refundMethodLabel: emailExtras.refundMethodLabel,
+            itemsTableHtml: emailExtras.itemsTableHtml,
+            audienceHint: emailExtras.audienceHint,
+            metadata,
+          });
+        }
+        return this.sendNotificationToUser(user.id, type, subject, content, metadata);
+      }),
+    );
+  }
+
   async sendFoundingMemberConfirmation(
     email: string,
     data: { firstName: string },
@@ -571,11 +659,16 @@ export class NotificationsService implements OnModuleInit {
     const customerName =
       [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || 'Customer';
 
+    const trackingUrl = order.trackingUrl?.trim() || '';
     const rendered = await this.templatesService.render('order_shipped', {
       orderNumber: order.orderNumber,
       customerName,
       trackingCode,
       carrier,
+      trackingUrl,
+      trackingLinkHtml: trackingUrl
+        ? `<p><a class="cta" href="${trackingUrl}">Track your shipment</a></p>`
+        : '<p>You can track your order using the tracking code above.</p>',
     });
 
     const notification = await this.prisma.notification.create({

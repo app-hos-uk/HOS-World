@@ -4408,6 +4408,7 @@ model StoreShipmentRequest {
   selectedCarrier       String?
   selectedService       String?
   trackingCode          String?
+  trackingUrl           String?
   labelUrl              String?
   shippingCost          Decimal?  @db.Decimal(10, 2)
   shippingSlipUrl       String?
@@ -4514,6 +4515,7 @@ model ShipmentGroup {
   actualHeightCm       Decimal? @db.Decimal(10, 2)
   shippoTransactionId  String?
   trackingCode         String?
+  trackingUrl          String?
   labelUrl             String?
   carrierName          String?
   carrierService       String?

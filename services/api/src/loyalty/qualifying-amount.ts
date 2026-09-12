@@ -75,6 +75,31 @@ export function isPercentageOfQualifyingCampaign(campaign: ThresholdCampaignInpu
 /** Stable id when Loyalty Settings supply the Enchanted Circle threshold bonus. */
 export const PROGRAMME_THRESHOLD_CAMPAIGN_ID = 'settings:enchanted-circle';
 
+/** Programme default: 20% of qualifying spend above the threshold. */
+export const DEFAULT_CAMPAIGN_BONUS_EARN_RATE = 0.2;
+
+/**
+ * Convert an admin-entered bonus rate to a 0–1 fraction of spend above threshold.
+ *
+ * Accepts the documented fraction (`0.20` = 20%) and a percentage (`20` = 20%).
+ * When `treatOneAsProgrammeDefault` is set, a bare `1` is the default earn
+ * rate (1 pt/$) copied into Enchanted Circle settings — that awarded 100% of
+ * spend above the threshold — and is replaced with the 20% programme default.
+ */
+export function campaignEarnRateToFraction(
+  raw: unknown,
+  options?: { treatOneAsProgrammeDefault?: boolean; fallback?: number },
+): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  if (options?.treatOneAsProgrammeDefault && n === 1) {
+    return options.fallback ?? DEFAULT_CAMPAIGN_BONUS_EARN_RATE;
+  }
+  const fraction = n > 1 ? n / 100 : n;
+  if (!Number.isFinite(fraction) || fraction <= 0) return 0;
+  return Math.min(1, fraction);
+}
+
 export type ProgrammeThresholdSettings = {
   campaignMinPurchaseThreshold?: number;
   campaignBonusEarnRate?: number;
@@ -92,7 +117,9 @@ export function mergeProgrammeThresholdCampaign(
   if (!settings) return campaigns;
   if ((campaigns ?? []).some(isPercentageOfQualifyingCampaign)) return campaigns;
   const threshold = Number(settings.campaignMinPurchaseThreshold ?? 0);
-  const earnRate = Number(settings.campaignBonusEarnRate ?? 0);
+  const earnRate = campaignEarnRateToFraction(settings.campaignBonusEarnRate, {
+    treatOneAsProgrammeDefault: true,
+  });
   const pointsPerDollar = Number(settings.campaignBonusPointsPerDollar ?? 0);
   if (!Number.isFinite(earnRate) || earnRate <= 0) return campaigns;
   if (!Number.isFinite(pointsPerDollar) || pointsPerDollar <= 0) return campaigns;
@@ -135,7 +162,7 @@ export function computeThresholdBonusPoints(
     if (!isPercentageOfQualifyingCampaign(campaign)) continue;
     const conditions = asRecord(campaign.conditions);
     const threshold = Number(conditions.threshold ?? 0);
-    const earnRate = Number(conditions.earnRate ?? 0);
+    const earnRate = campaignEarnRateToFraction(conditions.earnRate);
     const pointsPerDollar = Number(conditions.pointsPerDollar ?? defaultPpd);
     if (!Number.isFinite(threshold) || !Number.isFinite(earnRate) || earnRate <= 0) continue;
     if (!Number.isFinite(pointsPerDollar) || pointsPerDollar <= 0) continue;

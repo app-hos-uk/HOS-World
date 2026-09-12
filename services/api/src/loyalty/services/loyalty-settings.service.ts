@@ -7,6 +7,7 @@ import { PrismaService } from '../../database/prisma.service';
 import { isTruthy } from '../../common/utils/config';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 import { isPosRuntimeEnabled } from '../../pos/pos-enabled';
+import { campaignEarnRateToFraction, DEFAULT_CAMPAIGN_BONUS_EARN_RATE } from '../qualifying-amount';
 
 export const LOYALTY_SETTINGS_CONFIG_KEY = 'LOYALTY_PROGRAMME_SETTINGS';
 export const LOYALTY_SETTINGS_CACHE_KEY = 'loyalty:settings:resolved';
@@ -122,9 +123,9 @@ export class LoyaltySettingsService {
         0,
         num(this.config.get('LOYALTY_CAMPAIGN_MIN_PURCHASE_THRESHOLD'), 85),
       ),
-      campaignBonusEarnRate: Math.max(
-        0,
-        num(this.config.get('LOYALTY_CAMPAIGN_BONUS_EARN_RATE'), 0.2),
+      campaignBonusEarnRate: campaignEarnRateToFraction(
+        this.config.get('LOYALTY_CAMPAIGN_BONUS_EARN_RATE') ?? DEFAULT_CAMPAIGN_BONUS_EARN_RATE,
+        { treatOneAsProgrammeDefault: true },
       ),
       campaignBonusPointsPerDollar: Math.max(
         0,
@@ -175,9 +176,9 @@ export class LoyaltySettingsService {
           base.campaignMinPurchaseThreshold ?? base.welcomeRewardMinPurchase,
         ),
       ),
-      campaignBonusEarnRate: Math.max(
-        0,
-        num(partial.campaignBonusEarnRate, base.campaignBonusEarnRate),
+      campaignBonusEarnRate: campaignEarnRateToFraction(
+        partial.campaignBonusEarnRate ?? base.campaignBonusEarnRate,
+        { treatOneAsProgrammeDefault: true },
       ),
       campaignBonusPointsPerDollar: Math.max(
         0,
