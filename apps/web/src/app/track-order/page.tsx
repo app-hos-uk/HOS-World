@@ -115,22 +115,26 @@ function TrackOrderContent() {
       const response = await apiClient.trackOrderByNumber(numberToSearch);
       if (response?.data) {
         const raw = response.data as unknown as {
+          type?: string;
           orderNumber: string;
           status: string;
-          total: number;
+          total?: number;
           currency?: string;
           createdAt: string | Date;
           trackingCode?: string;
           carrier?: string;
           trackingUrl?: string;
           estimatedDelivery?: string | Date;
+          progressPath?: string;
+          storeName?: string;
           items?: Array<{ quantity: number; productName?: string }>;
         };
+        const isStoreShipment = raw.type === 'store-shipment';
         setOrder({
           id: raw.orderNumber,
           orderNumber: raw.orderNumber,
           status: raw.status,
-          total: raw.total,
+          total: raw.total ?? 0,
           currency: raw.currency,
           createdAt: raw.createdAt,
           trackingCode: raw.trackingCode,
@@ -145,7 +149,7 @@ function TrackOrderContent() {
           })),
         });
 
-        if (raw.trackingCode) {
+        if (raw.trackingCode && !isStoreShipment) {
           try {
             const trackingRes = await apiClient.getPublicLiveTracking(numberToSearch);
             const events = Array.isArray(trackingRes?.data?.events) ? trackingRes.data.events : [];

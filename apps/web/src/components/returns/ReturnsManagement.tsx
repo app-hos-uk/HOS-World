@@ -12,12 +12,20 @@ import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
 
 interface ReturnRow {
   id: string;
-  orderId: string;
+  orderId?: string;
+  posSaleId?: string;
   reason: string;
   status: string;
   refundAmount?: number;
+  refundMethod?: string;
   createdAt: string;
   order?: { orderNumber?: string; total?: number; currency?: string };
+  posSale?: {
+    externalInvoice?: string;
+    total?: number;
+    currency?: string;
+    store?: { name?: string };
+  };
 }
 
 interface ReturnsManagementProps {
@@ -105,13 +113,40 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
     }
   };
 
+  const isPosReturn = (row: ReturnRow) => Boolean(row.posSaleId);
+
+  const returnSourceLabel = (row: ReturnRow) => {
+    if (row.posSaleId) {
+      const store = row.posSale?.store?.name;
+      const inv = row.posSale?.externalInvoice;
+      if (store && inv) return `${store} · ${inv}`;
+      if (store) return store;
+      if (inv) return inv;
+      return `In-store · ${row.posSaleId.slice(0, 8)}`;
+    }
+    return row.order?.orderNumber ? `#${row.order.orderNumber}` : row.orderId?.slice(0, 8) || '—';
+  };
+
+  const rowCurrency = (row: ReturnRow) =>
+    row.order?.currency || row.posSale?.currency || DEFAULT_CURRENCY;
+
   const handleApprove = (row: ReturnRow) => {
+    const pos = isPosReturn(row);
     setConfirmDialog({
-      title: 'Approve this return and process the refund?',
+      title: pos
+        ? 'Approve this in-store return?'
+        : 'Approve this return and process the payment refund?',
+      description: pos
+        ? 'The customer will be asked to bring items back to the store. Process the cash/card refund at the till when complete.'
+        : 'This will initiate a refund to the customer’s original payment method.',
       confirmLabel: 'Approve',
       onConfirm: async () => {
         setConfirmDialog(null);
-        await updateStatus(row, 'APPROVED', 'Return approved and refund initiated');
+        await updateStatus(
+          row,
+          'APPROVED',
+          pos ? 'In-store return approved' : 'Return approved and refund initiated',
+        );
       },
     });
   };
@@ -180,7 +215,7 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
           <table className="min-w-full divide-y divide-hos-border">
             <thead>
               <tr className="text-left text-xs uppercase text-hos-text-muted">
-                <th className="px-4 py-3">Order</th>
+                <th className="px-4 py-3">Source</th>
                 <th className="px-4 py-3">Reason</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Refund</th>
@@ -192,7 +227,10 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
               {filtered.map((row) => (
                 <tr key={row.id} className="text-sm">
                   <td className="px-4 py-3 whitespace-nowrap">
-                    #{row.order?.orderNumber || row.orderId.slice(0, 8)}
+                    <span>{returnSourceLabel(row)}</span>
+                    {isPosReturn(row) && (
+                      <span className="ml-1 text-xs text-amber-400">In-store</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 max-w-xs truncate" title={row.reason}>
                     {row.reason}
@@ -208,10 +246,12 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     {row.refundAmount != null
-                      ? formatPrice(row.refundAmount, row.order?.currency || DEFAULT_CURRENCY)
+                      ? formatPrice(row.refundAmount, rowCurrency(row))
                       : row.order?.total != null
-                        ? formatPrice(Number(row.order.total), row.order?.currency || DEFAULT_CURRENCY)
-                        : '—'}
+                        ? formatPrice(Number(row.order.total), rowCurrency(row))
+                        : row.posSale?.total != null
+                          ? formatPrice(Number(row.posSale.total), rowCurrency(row))
+                          : '—'}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-hos-text-muted">
                     {formatDate(row.createdAt)}
@@ -307,6 +347,7 @@ export function ReturnsManagement({ mode }: ReturnsManagementProps) {
                         </button>
                       )}
                       {mode === 'admin' &&
+                        !isPosReturn(row) &&
                         [
                           'approved',
                           'awaiting_customer_return',

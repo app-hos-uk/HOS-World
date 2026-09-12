@@ -51,6 +51,8 @@ interface PosPurchase {
   currency: string;
   status: string;
   items: PosPurchaseItem[];
+  returnEligible?: boolean;
+  returnBlockReason?: string | null;
 }
 
 interface ReturnRequest {
@@ -106,6 +108,7 @@ function ReturnsContent() {
     reason: '',
     notes: '',
     selectedItems: [] as string[],
+    itemQuantities: {} as Record<string, number>,
   });
 
   useEffect(() => {
@@ -139,9 +142,26 @@ function ReturnsContent() {
       const returnsResponse = await apiClient
         .getReturns()
         .catch(() => ({ data: [] as any[] } as any));
-      const historyResponse = await apiClient
-        .getPurchaseHistory({ limit: 100, type: 'in-store' })
-        .catch(() => ({ data: { items: [] } } as any));
+      const posHistory: any[] = [];
+      let histPage = 1;
+      let histMore = true;
+      while (histMore) {
+        const historyResponse = await apiClient
+          .getPurchaseHistory({ page: histPage, limit: 50, type: 'in-store' })
+          .catch(() => ({ data: { items: [] } } as any));
+        const historyPayload = historyResponse?.data;
+        const pageItems: any[] = Array.isArray(historyPayload)
+          ? historyPayload
+          : Array.isArray(historyPayload?.items)
+            ? historyPayload.items
+            : [];
+        posHistory.push(...pageItems.filter((row: any) => row?.type === 'in-store' && row?.id));
+        const pagination = (historyResponse as { pagination?: { totalPages?: number } }).pagination;
+        const totalPages = Number(pagination?.totalPages) || 0;
+        histPage += 1;
+        histMore = totalPages > 0 ? histPage <= totalPages : pageItems.length === 50;
+        if (histPage > 20) break;
+      }
 
       const rawOrders: any[] = Array.isArray(ordersResponse?.data) ? ordersResponse.data : [];
       const normalizedOrders: Order[] = rawOrders.map((o: any) => {
@@ -174,15 +194,7 @@ function ReturnsContent() {
       });
       setOrders(normalizedOrders);
 
-      const historyPayload = historyResponse?.data;
-      const historyItems: any[] = Array.isArray(historyPayload)
-        ? historyPayload
-        : Array.isArray(historyPayload?.items)
-          ? historyPayload.items
-          : [];
-      const posRows: PosPurchase[] = historyItems
-        .filter((row: any) => row?.type === 'in-store' && row?.id)
-        .map((row: any) => ({
+      const posRows: PosPurchase[] = posHistory.map((row: any) => ({
           id: row.id,
           type: 'in-store' as const,
           date: typeof row.date === 'string' ? row.date : new Date(row.date).toISOString(),
@@ -190,6 +202,8 @@ function ReturnsContent() {
           total: Number(row.total) || 0,
           currency: row.currency || DEFAULT_CURRENCY,
           status: row.status || 'COMPLETED',
+          returnEligible: Boolean(row.returnEligible),
+          returnBlockReason: row.returnBlockReason ?? null,
           items: Array.isArray(row.items)
             ? row.items.map((item: any) => ({
                 id: item.id,
@@ -220,6 +234,7 @@ function ReturnsContent() {
       reason: '',
       notes: '',
       selectedItems: [],
+      itemQuantities: {},
     });
     setShowCreateModal(true);
   };
@@ -232,6 +247,7 @@ function ReturnsContent() {
       reason: '',
       notes: '',
       selectedItems: [],
+      itemQuantities: {},
     });
     setShowCreateModal(true);
   };
@@ -258,11 +274,15 @@ function ReturnsContent() {
             returnForm.selectedItems.length > 0
               ? sourceItems
                   .filter((item) => item.id && returnForm.selectedItems.includes(item.id))
-                  .map((item) => ({
-                    ...(isPos ? { posSaleItemId: item.id } : { orderItemId: item.id }),
-                    quantity: Math.max(1, Number(item.quantity) || 1),
-                    reason: returnForm.reason,
-                  }))
+                  .map((item) => {
+                    const maxQty = Math.max(1, Number(item.quantity) || 1);
+                    const qty = returnForm.itemQuantities[item.id!] ?? maxQty;
+                    return {
+                      ...(isPos ? { posSaleItemId: item.id } : { orderItemId: item.id }),
+                      quantity: Math.min(Math.max(1, qty), maxQty),
+                      reason: returnForm.reason,
+                    };
+                  })
               : undefined,
         }),
         {
@@ -317,10 +337,7 @@ function ReturnsContent() {
     return s === 'delivered';
   };
 
-  const canReturnPosSale = (sale: PosPurchase) => {
-    const s = (sale.status || '').toUpperCase();
-    return s !== 'CANCELLED' && s !== 'VOIDED' && s !== 'VOID';
-  };
+  const canReturnPosSale = (sale: PosPurchase) => sale.returnEligible === true;
 
   const returnSourceLabel = (returnRequest: ReturnRequest) => {
     if (returnRequest.posSaleId) {
@@ -501,14 +518,16 @@ function ReturnsContent() {
                     ))}
                   </div>
 
-                  {canReturnPosSale(sale) && (
+                  {canReturnPosSale(sale) ? (
                     <button
                       onClick={() => handleCreatePosReturn(sale)}
                       className="w-full sm:w-auto px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover transition-colors font-medium"
                     >
                       Request Return
                     </button>
-                  )}
+                  ) : sale.returnBlockReason ? (
+                    <p className="text-xs text-hos-text-muted">{sale.returnBlockReason}</p>
+                  ) : null}
                 </div>
                 ))}
               </>
@@ -601,7 +620,7 @@ function ReturnsContent() {
               <h2 className="text-xl font-bold mb-4 font-primary text-hos-gold">Request Return</h2>
               <p className="text-sm text-hos-text-secondary mb-4 font-secondary">
                 {selected.kind === 'pos'
-                  ? selected.sale.storeName || 'In-store purchase'
+                  ? `${selected.sale.storeName || 'In-store purchase'} — refund will be processed in store after approval.`
                   : `Order #${selected.order.orderNumber}`}
               </p>
 
@@ -623,11 +642,19 @@ function ReturnsContent() {
                       const price = isOrderItem
                         ? (item as Order['items'][number]).price
                         : (item as PosPurchaseItem).price;
+                      const maxQty = Math.max(1, Number(item.quantity) || 1);
+                      const isSelected = !!item.id && returnForm.selectedItems.includes(item.id);
+                      const lineQty = item.id
+                        ? returnForm.itemQuantities[item.id] ?? maxQty
+                        : maxQty;
                       return (
-                      <label key={itemId} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-hos-bg-tertiary cursor-pointer">
+                      <div
+                        key={itemId}
+                        className="flex items-center gap-3 p-3 border rounded-lg hover:bg-hos-bg-tertiary"
+                      >
                         <input
                           type="checkbox"
-                          checked={!!item.id && returnForm.selectedItems.includes(item.id)}
+                          checked={isSelected}
                           disabled={!item.id}
                           onChange={(e) => {
                             if (!item.id) return;
@@ -635,11 +662,18 @@ function ReturnsContent() {
                               setReturnForm({
                                 ...returnForm,
                                 selectedItems: [...returnForm.selectedItems, item.id],
+                                itemQuantities: {
+                                  ...returnForm.itemQuantities,
+                                  [item.id]: maxQty,
+                                },
                               });
                             } else {
+                              const nextQty = { ...returnForm.itemQuantities };
+                              delete nextQty[item.id];
                               setReturnForm({
                                 ...returnForm,
                                 selectedItems: returnForm.selectedItems.filter((id) => id !== item.id),
+                                itemQuantities: nextQty,
                               });
                             }
                           }}
@@ -652,13 +686,38 @@ function ReturnsContent() {
                           height={48}
                           className="object-cover rounded-md"
                         />
-                        <div className="flex-grow">
+                        <div className="flex-grow min-w-0">
                           <p className="font-medium text-hos-text-secondary">{name}</p>
                           <p className="text-sm text-hos-text-muted font-secondary">
-                            Qty: {item.quantity} × {formatPrice(price, selectedCurrency || DEFAULT_CURRENCY)}
+                            Purchased: {maxQty} × {formatPrice(price, selectedCurrency || DEFAULT_CURRENCY)}
                           </p>
                         </div>
-                      </label>
+                        {isSelected && item.id && maxQty > 1 && (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <label className="text-xs text-hos-text-muted sr-only">Return qty</label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={maxQty}
+                              value={lineQty}
+                              onChange={(e) => {
+                                const n = Math.min(
+                                  maxQty,
+                                  Math.max(1, parseInt(e.target.value, 10) || 1),
+                                );
+                                setReturnForm({
+                                  ...returnForm,
+                                  itemQuantities: {
+                                    ...returnForm.itemQuantities,
+                                    [item.id!]: n,
+                                  },
+                                });
+                              }}
+                              className="w-16 px-2 py-1 text-sm border border-hos-border rounded bg-hos-bg-secondary"
+                            />
+                          </div>
+                        )}
+                      </div>
                       );
                     })}
                   </div>

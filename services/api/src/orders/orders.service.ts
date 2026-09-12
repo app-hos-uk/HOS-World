@@ -1810,10 +1810,45 @@ export class OrdersService {
     });
 
     if (!order) {
+      const trimmed = orderNumber.trim();
+      const storeShipment = await this.prisma.storeShipmentRequest.findFirst({
+        where: {
+          OR: [
+            { hosOrderNumber: { equals: trimmed, mode: 'insensitive' } },
+            { invoiceNumber: { equals: trimmed, mode: 'insensitive' } },
+          ],
+        },
+        include: {
+          store: { select: { name: true } },
+          groups: { include: { items: true }, orderBy: { createdAt: 'asc' } },
+        },
+      });
+      if (storeShipment) {
+        const group =
+          storeShipment.groups.find((g) => g.trackingCode || g.trackingUrl) ||
+          storeShipment.groups[0];
+        return {
+          type: 'store-shipment',
+          orderNumber: storeShipment.hosOrderNumber || storeShipment.invoiceNumber || trimmed,
+          status: storeShipment.status,
+          createdAt: storeShipment.createdAt,
+          updatedAt: storeShipment.updatedAt,
+          trackingCode: group?.trackingCode || storeShipment.trackingCode || undefined,
+          carrier: group?.carrierName || undefined,
+          trackingUrl: group?.trackingUrl || storeShipment.trackingUrl || undefined,
+          storeName: storeShipment.store?.name,
+          progressPath: `/ship/request/${storeShipment.id}`,
+          items: (group?.items || []).map((item) => ({
+            quantity: item.quantity,
+            productName: item.name,
+          })),
+        };
+      }
       throw new NotFoundException('Order not found');
     }
 
     return {
+      type: 'online-order',
       orderNumber: order.orderNumber,
       status: order.status,
       paymentStatus: order.paymentStatus,

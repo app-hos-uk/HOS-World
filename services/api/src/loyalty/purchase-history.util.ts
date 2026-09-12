@@ -20,6 +20,9 @@ export type PurchaseHistoryItem = {
   pointsEarned: number;
   status: string;
   paidWithLoyaltyVoucher?: boolean;
+  /** Whether the customer can start a return from the portal (mirrors returns API rules). */
+  returnEligible?: boolean;
+  returnBlockReason?: string | null;
 };
 
 export type LoyaltyVoucherHint = {
@@ -175,6 +178,71 @@ export function salePaidWithLoyaltyVoucher(
 }
 
 const CANCELLED_STATUSES = new Set(['CANCELLED', 'CANCELED', 'REFUNDED', 'REJECTED', 'VOIDED', 'VOID']);
+
+export const POS_RETURNABLE_SALE_STATUSES = ['PROCESSED', 'IMPORTED'] as const;
+
+export function computePosReturnEligibility(params: {
+  rawStatus: string;
+  customerFacingStatus: string;
+  saleDate: Date;
+  hasActiveReturn: boolean;
+  returnWindowDays?: number;
+  isReturnable?: boolean;
+}): { returnEligible: boolean; returnBlockReason: string | null } {
+  const returnWindowDays = params.returnWindowDays ?? 30;
+  const isReturnable = params.isReturnable ?? true;
+  const raw = (params.rawStatus || '').toUpperCase();
+
+  if (params.customerFacingStatus === 'CANCELLED') {
+    return { returnEligible: false, returnBlockReason: 'This purchase was cancelled or voided.' };
+  }
+  if (
+    !POS_RETURNABLE_SALE_STATUSES.includes(
+      raw as (typeof POS_RETURNABLE_SALE_STATUSES)[number],
+    )
+  ) {
+    return {
+      returnEligible: false,
+      returnBlockReason: 'Purchase is still processing and cannot be returned yet.',
+    };
+  }
+  if (params.hasActiveReturn) {
+    return {
+      returnEligible: false,
+      returnBlockReason: 'A return request is already open for this purchase.',
+    };
+  }
+  if (!isReturnable) {
+    return { returnEligible: false, returnBlockReason: 'This product is not returnable.' };
+  }
+  const daysSince = Math.floor(
+    (Date.now() - params.saleDate.getTime()) / (1000 * 60 * 60 * 24),
+  );
+  if (daysSince > returnWindowDays) {
+    return {
+      returnEligible: false,
+      returnBlockReason: `Return window expired (${returnWindowDays} days from purchase).`,
+    };
+  }
+  return { returnEligible: true, returnBlockReason: null };
+}
+
+export function computeOnlineReturnEligibility(status: string): {
+  returnEligible: boolean;
+  returnBlockReason: string | null;
+} {
+  const s = (status || '').toUpperCase();
+  if (s === 'DELIVERED') {
+    return { returnEligible: true, returnBlockReason: null };
+  }
+  if (s === 'CANCELLED' || s === 'REFUNDED') {
+    return { returnEligible: false, returnBlockReason: 'This order was cancelled or refunded.' };
+  }
+  return {
+    returnEligible: false,
+    returnBlockReason: 'Returns are available after delivery.',
+  };
+}
 
 export function customerFacingPosStatus(status: string, rawPayload?: unknown): string {
   const s = (status || '').toUpperCase();

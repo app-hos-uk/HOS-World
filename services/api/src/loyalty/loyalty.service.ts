@@ -39,11 +39,14 @@ import { LoyaltyCampaignService } from './services/campaign.service';
 import { resolveSignupCampaignAward } from './signup-bonus';
 import {
   countsTowardSpend,
+  computeOnlineReturnEligibility,
+  computePosReturnEligibility,
   mapOnlineOrder,
   mapPosSale,
   type LoyaltyVoucherHint,
   type PurchaseHistoryItem,
 } from './purchase-history.util';
+import { ReturnPoliciesService } from '../return-policies/return-policies.service';
 
 /** Prefer Prisma `meta.message` — Error.message is often just "Raw query failed. Code: `42883`." */
 function prismaErrorDetail(err: unknown): string {
@@ -75,6 +78,7 @@ export class LoyaltyService implements OnModuleInit {
     private loyaltySettings: LoyaltySettingsService,
     private region: PlatformRegionService,
     private campaigns: LoyaltyCampaignService,
+    private returnPolicies: ReturnPoliciesService,
     @Optional()
     @Inject(forwardRef(() => MarketingEventBus))
     private marketingBus?: MarketingEventBus,
@@ -704,6 +708,8 @@ export class LoyaltyService implements OnModuleInit {
     const limit = Math.min(100, Math.max(1, query.limit || 20));
     const typeFilter = (query.type || '').trim().toLowerCase();
 
+    await this.linkUnattributedPosSalesForUser(userId);
+
     const [orders, posSales, membership] = await Promise.all([
       this.prisma.order.findMany({
         where: { userId, deletedAt: null, parentOrderId: null },
@@ -739,7 +745,7 @@ export class LoyaltyService implements OnModuleInit {
           rawPayload: true,
           storeId: true,
           externalInvoice: true,
-          store: { select: { name: true } },
+          store: { select: { name: true, sellerId: true } },
           items: {
             select: {
               id: true,
@@ -750,6 +756,8 @@ export class LoyaltyService implements OnModuleInit {
                 select: {
                   id: true,
                   name: true,
+                  sellerId: true,
+                  categoryId: true,
                   images: { take: 1, orderBy: { order: 'asc' }, select: { url: true } },
                 },
               },
@@ -779,10 +787,63 @@ export class LoyaltyService implements OnModuleInit {
         })
       : [];
 
-    let unified: PurchaseHistoryItem[] = [
-      ...orders.map(mapOnlineOrder),
-      ...posSales.map((sale) => mapPosSale(sale, vouchers)),
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const activePosReturns = await this.prisma.returnRequest.findMany({
+      where: {
+        posSaleId: { in: posSales.map((s) => s.id) },
+        status: {
+          in: [
+            'PENDING',
+            'APPROVED',
+            'PROCESSING',
+            'AWAITING_CUSTOMER_RETURN',
+            'ITEM_RECEIVED',
+            'REFUND_PENDING',
+          ],
+        },
+      },
+      select: { posSaleId: true },
+    });
+    const activePosReturnIds = new Set(
+      activePosReturns.map((r) => r.posSaleId).filter(Boolean) as string[],
+    );
+
+    const onlineRows: PurchaseHistoryItem[] = orders.map((order) => {
+      const row = mapOnlineOrder(order);
+      const elig = computeOnlineReturnEligibility(order.status);
+      return { ...row, ...elig };
+    });
+
+    const posRows: PurchaseHistoryItem[] = [];
+    for (const sale of posSales) {
+      const row = mapPosSale(sale, vouchers);
+      const firstProduct = sale.items[0]?.product;
+      let returnWindowDays = 30;
+      let isReturnable = true;
+      if (this.returnPolicies && firstProduct?.id) {
+        const policy = await this.returnPolicies.getApplicablePolicy(
+          firstProduct.id,
+          firstProduct.sellerId || sale.store?.sellerId || undefined,
+          firstProduct.categoryId || undefined,
+        );
+        if (policy) {
+          returnWindowDays = policy.returnWindowDays ?? 30;
+          isReturnable = policy.isReturnable ?? true;
+        }
+      }
+      const elig = computePosReturnEligibility({
+        rawStatus: sale.status,
+        customerFacingStatus: row.status,
+        saleDate: sale.saleDate,
+        hasActiveReturn: activePosReturnIds.has(sale.id),
+        returnWindowDays,
+        isReturnable,
+      });
+      posRows.push({ ...row, ...elig });
+    }
+
+    let unified: PurchaseHistoryItem[] = [...onlineRows, ...posRows].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+    );
 
     if (typeFilter === 'in-store' || typeFilter === 'pos' || typeFilter === 'hos_outlet_pos') {
       unified = unified.filter((row) => row.type === 'in-store');

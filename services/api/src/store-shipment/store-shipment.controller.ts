@@ -334,6 +334,21 @@ export class StoreShipmentController {
   }
 
   @RequireAccess({ permission: 'shipments.verify', scope: 'SELF' })
+  @Get('mine')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('CUSTOMER')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Customer: list store shipments linked to this account' })
+  async listMine(
+    @Req() req: { user: { id: string } },
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.workflow.listForCustomer(req.user.id, { page, limit });
+    return { data, message: 'OK' };
+  }
+
+  @RequireAccess({ permission: 'shipments.verify', scope: 'SELF' })
   @Post(':id/attach-login')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CUSTOMER')

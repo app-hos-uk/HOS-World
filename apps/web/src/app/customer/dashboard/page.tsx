@@ -52,6 +52,12 @@ interface DashboardOrder {
   currency?: string;
   createdAt: string | Date;
   items?: any[];
+  channel?: 'online' | 'ship-from-store';
+  storeName?: string | null;
+  trackingCode?: string;
+  trackingUrl?: string;
+  carrier?: string;
+  progressPath?: string;
 }
 
 type TabType = 'overview' | 'orders' | 'analytics' | 'activity';
@@ -138,6 +144,7 @@ export default function CustomerDashboardPage() {
         loyaltyProgressRes,
         recommendationsRes,
         purchaseHistoryRes,
+        storeShipmentsRes,
       ] = await Promise.allSettled([
         withTimeout(apiClient.getOrders().catch(() => ({ data: [] }))),
         withTimeout(apiClient.getWishlist({ limit: 8 }).catch(() => ({ data: [] }))),
@@ -147,6 +154,7 @@ export default function CustomerDashboardPage() {
         withTimeout(apiClient.getLoyaltyTierProgress().catch(() => null)),
         withTimeout(apiClient.getAIRecommendations().catch(() => null)),
         withTimeout(apiClient.getPurchaseHistory({ page: 1, limit: 20 }).catch(() => null)),
+        withTimeout(apiClient.listMyStoreShipments({ page: 1, limit: 10 }).catch(() => null)),
       ]);
 
       const ordersResult = ordersResponse.status === 'fulfilled' ? ordersResponse.value : { data: [] };
@@ -159,7 +167,32 @@ export default function CustomerDashboardPage() {
       const purchaseHistory_data = purchaseHistoryRes.status === 'fulfilled' ? purchaseHistoryRes.value : null;
 
       const orders: DashboardOrder[] = Array.isArray(ordersResult?.data) ? ordersResult.data : [];
-      setAllOrders(orders);
+      const storeShipPayload =
+        storeShipmentsRes.status === 'fulfilled' ? storeShipmentsRes.value?.data : null;
+      const storeShipRows: DashboardOrder[] = Array.isArray(storeShipPayload)
+        ? storeShipPayload
+        : Array.isArray((storeShipPayload as { items?: unknown[] })?.items)
+          ? ((storeShipPayload as { items: Record<string, unknown>[] }).items)
+          : [];
+      const storeOrders: DashboardOrder[] = storeShipRows.map((row: Record<string, unknown>) => ({
+        id: String(row.id),
+        orderNumber: (row.hosOrderNumber || row.invoiceNumber) as string | undefined,
+        status: String(row.status || 'NEW'),
+        paymentStatus: 'PAID',
+        total: Number(row.total) || 0,
+        currency: row.currency as string | undefined,
+        createdAt: String(row.createdAt || new Date().toISOString()),
+        channel: 'ship-from-store',
+        storeName: (row.storeName as string | null) ?? null,
+        trackingCode: row.trackingCode as string | undefined,
+        trackingUrl: row.trackingUrl as string | undefined,
+        carrier: row.carrierName as string | undefined,
+        progressPath: `/ship/request/${row.id}`,
+      }));
+      const mergedOrders = [...orders, ...storeOrders].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+      setAllOrders(mergedOrders);
 
       const purchasePayload = purchaseHistory_data?.data as
         | {
@@ -290,7 +323,7 @@ export default function CustomerDashboardPage() {
         inStoreCount,
       });
 
-      setRecentOrders(orders.slice(0, 5));
+      setRecentOrders(mergedOrders.slice(0, 5));
     } catch (err: any) {
       console.error('Error fetching dashboard data:', err);
       setError(err.message || 'Failed to load dashboard');
@@ -1018,33 +1051,56 @@ export default function CustomerDashboardPage() {
                     </div>
                   ) : (
                     allOrders.slice(0, 10).map((order) => (
-                      <Link
+                      <div
                         key={order.id}
-                        href={`/orders/${order.id}`}
                         className="flex items-center justify-between p-4 hover:bg-hos-bg-tertiary transition-colors"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-hos-gold/20 flex items-center justify-center text-lg">
-                            {navIcon('package', 'w-5 h-5')}
+                        <Link
+                          href={
+                            order.channel === 'ship-from-store'
+                              ? order.progressPath || '/orders'
+                              : `/orders/${order.id}`
+                          }
+                          className="flex items-center gap-4 flex-1 min-w-0"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-hos-gold/20 flex items-center justify-center text-lg shrink-0">
+                            {navIcon(order.channel === 'ship-from-store' ? 'truck' : 'package', 'w-5 h-5')}
                           </div>
-                          <div>
-                            <p className="font-medium text-hos-text-secondary">
-                              Order #{order.orderNumber || order.id.slice(0, 8)}
+                          <div className="min-w-0">
+                            <p className="font-medium text-hos-text-secondary truncate">
+                              {order.channel === 'ship-from-store'
+                                ? `Ship from store · ${order.orderNumber || order.id.slice(0, 8)}`
+                                : `Order #${order.orderNumber || order.id.slice(0, 8)}`}
                             </p>
                             <p className="text-sm text-hos-text-muted">
-                              {formatDateShared(order.createdAt, { day: 'numeric',
+                              {formatDateShared(order.createdAt, {
+                                day: 'numeric',
                                 month: 'short',
-                                year: 'numeric', })}
+                                year: 'numeric',
+                              })}
+                              {order.trackingCode ? ` · ${order.carrier || 'Carrier'} ${order.trackingCode}` : ''}
                             </p>
                           </div>
-                        </div>
-                        <div className="text-right">
+                        </Link>
+                        <div className="text-right shrink-0 ml-3">
                           <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                             {order.status}
                           </span>
-                          <p className="text-sm font-semibold text-hos-text-secondary mt-1">{formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}</p>
+                          <p className="text-sm font-semibold text-hos-text-secondary mt-1">
+                            {formatPrice(order.total, order.currency || DEFAULT_CURRENCY)}
+                          </p>
+                          {order.trackingUrl && (
+                            <a
+                              href={order.trackingUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-xs text-hos-gold hover:text-hos-gold-hover mt-1 inline-block"
+                            >
+                              Track shipment
+                            </a>
+                          )}
                         </div>
-                      </Link>
+                      </div>
                     ))
                   )}
                 </div>

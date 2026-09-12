@@ -3044,6 +3044,14 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>(`/store-shipment/${shipmentId}/progress`);
   }
 
+  async listMyStoreShipments(params?: { page?: number; limit?: number }) {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const q = qs.toString();
+    return this.request<ApiResponse<unknown>>(`/store-shipment/mine${q ? `?${q}` : ''}`);
+  }
+
   async updateStoreShipmentProfile(
     shipmentId: string,
     body: { firstName?: string; lastName?: string; phone?: string },

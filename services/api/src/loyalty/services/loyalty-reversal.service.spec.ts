@@ -38,6 +38,7 @@ describe('LoyaltyReversalService', () => {
           customerId: userId,
           totalAmount: 100,
           loyaltyPointsEarned: 80,
+          loyaltyPointsRedeemed: 0,
           storeId: 'store-1',
         }),
         update: jest.fn(),
@@ -224,13 +225,14 @@ describe('LoyaltyReversalService', () => {
       );
     });
 
-    it('does nothing when the sale earned no points', async () => {
+    it('does nothing when the sale earned no points and none were redeemed', async () => {
       const { service, applyDelta, prisma } = build({});
       prisma.pOSSale.findUnique.mockResolvedValue({
         id: 'sale-1',
         customerId: userId,
         totalAmount: 100,
         loyaltyPointsEarned: 0,
+        loyaltyPointsRedeemed: 0,
         storeId: 'store-1',
       });
 
@@ -241,6 +243,33 @@ describe('LoyaltyReversalService', () => {
       });
 
       expect(applyDelta).not.toHaveBeenCalled();
+    });
+
+    it('restores burned voucher points on a full in-store return', async () => {
+      const { service, applyDelta, prisma } = build({});
+      prisma.pOSSale.findUnique.mockResolvedValue({
+        id: 'sale-1',
+        customerId: userId,
+        totalAmount: 100,
+        loyaltyPointsEarned: 0,
+        loyaltyPointsRedeemed: 200,
+        storeId: 'store-1',
+      });
+      prisma.loyaltyTransaction.findMany.mockResolvedValue([]);
+
+      await service.onPosReturnCompleted({
+        returnId: 'ret-pos-2',
+        posSaleId: 'sale-1',
+        refundAmount: 100,
+      });
+
+      expect(applyDelta).toHaveBeenCalledWith(
+        expect.anything(),
+        membershipId,
+        200,
+        'ADJUST',
+        expect.objectContaining({ source: 'POS_RETURN_RESTORE_BURN' }),
+      );
     });
 
     it('respects the clawEarnOnReturn policy flag', async () => {

@@ -3,6 +3,7 @@ import {
   salePaidWithLoyaltyVoucher,
   customerFacingPosStatus,
   countsTowardSpend,
+  computePosReturnEligibility,
   mapOnlineOrder,
   mapPosSale,
 } from './purchase-history.util';
@@ -99,6 +100,45 @@ describe('purchase-history.util', () => {
     it('includes delivered online and completed in-store', () => {
       expect(countsTowardSpend({ type: 'online', status: 'DELIVERED' })).toBe(true);
       expect(countsTowardSpend({ type: 'in-store', status: 'COMPLETED' })).toBe(true);
+    });
+  });
+
+  describe('computePosReturnEligibility', () => {
+    const saleDate = new Date(Date.now() - 5 * 86400000);
+
+    it('allows processed sales within window', () => {
+      expect(
+        computePosReturnEligibility({
+          rawStatus: 'PROCESSED',
+          customerFacingStatus: 'COMPLETED',
+          saleDate,
+          hasActiveReturn: false,
+        }).returnEligible,
+      ).toBe(true);
+    });
+
+    it('blocks when return window expired', () => {
+      const old = new Date(Date.now() - 40 * 86400000);
+      expect(
+        computePosReturnEligibility({
+          rawStatus: 'PROCESSED',
+          customerFacingStatus: 'COMPLETED',
+          saleDate: old,
+          hasActiveReturn: false,
+          returnWindowDays: 30,
+        }).returnEligible,
+      ).toBe(false);
+    });
+
+    it('blocks active return', () => {
+      expect(
+        computePosReturnEligibility({
+          rawStatus: 'IMPORTED',
+          customerFacingStatus: 'COMPLETED',
+          saleDate,
+          hasActiveReturn: true,
+        }).returnBlockReason,
+      ).toMatch(/already open/i);
     });
   });
 
