@@ -110,6 +110,8 @@ export class PosVoucherService {
     points: number;
     ttlExpiresAt?: Date | null;
     qrPayload?: string;
+    type?: string;
+    promoCode?: string;
   }> {
     await this.assertVoucherEnabled();
 
@@ -410,6 +412,10 @@ export class PosVoucherService {
     currency: string;
     status: string;
     points: number;
+    type?: string;
+    promoCode?: string;
+    ttlExpiresAt?: Date | null;
+    qrPayload?: string;
   }> {
     await this.assertVoucherEnabled();
 
