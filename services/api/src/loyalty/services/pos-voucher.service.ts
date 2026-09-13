@@ -1157,12 +1157,21 @@ export class PosVoucherService {
       }
     }
 
-    this.setBudget(adapter, VOID_BUDGET_MS);
-    try {
-      await adapter.voidGiftCard(voucher.cardNumber);
-    } catch (e) {
-      this.logger.warn(`voidGiftCard on cancel failed for ${voucher.id}: ${(e as Error).message}`);
-      throw new BadRequestException('Could not void gift card in Lightspeed — voucher not cancelled');
+    if (funding.state !== 'NOT_FUNDED') {
+      this.setBudget(adapter, VOID_BUDGET_MS);
+      try {
+        await adapter.voidGiftCard(voucher.cardNumber);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'unknown';
+        const isNotFound = /404\b/.test(msg);
+        if (!isNotFound) {
+          this.logger.warn(`voidGiftCard on cancel failed for ${voucher.id}: ${msg}`);
+          throw new BadRequestException('Could not void gift card in Lightspeed — voucher not cancelled');
+        }
+        this.logger.log(`Gift card ${voucher.cardNumber} not found in Lightspeed (404) — proceeding with cancel`);
+      }
+    } else {
+      this.logger.log(`Gift card ${voucher.cardNumber} not funded in Lightspeed — skipping void, proceeding with cancel`);
     }
 
     let pointsRestored = false;
