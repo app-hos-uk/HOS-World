@@ -150,7 +150,13 @@ export default function LoyaltyDashboardPage() {
     try {
       await apiClient.cancelPosVoucher(voucherId, 'Customer cancelled');
       toast.success('Voucher cancelled and points restored');
-      await load();
+      const [membershipRes] = await Promise.allSettled([
+        apiClient.getLoyaltyMembership(),
+        loadVouchers(voucherPage),
+      ]);
+      if (membershipRes.status === 'fulfilled') {
+        setMembership(membershipRes.value?.data ?? null);
+      }
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Cancel failed');
     } finally {
