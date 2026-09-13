@@ -812,7 +812,9 @@ describe('LightspeedAdapter', () => {
         'POST',
         '/promotions',
         expect.objectContaining({
+          status: 'active',
           use_promo_code: true,
+          set_promo_code: true,
           loyalty_multiplier: 0,
           action: { type: 'basic_fixed_discount', value: 5 },
           add_promo_code: [{ code: 'HOS-LYL-ABC12345', limit: 1 }],

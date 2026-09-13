@@ -761,10 +761,12 @@ export class LightspeedAdapter implements POSAdapter {
   async createPromotion(payload: POSPromotionCreatePayload): Promise<POSPromotion> {
     const body: Record<string, unknown> = {
       name: payload.name,
+      status: 'active',
       start_time: payload.startTime,
       end_time: payload.endTime,
       channels: payload.channels ?? ['Register'],
       use_promo_code: true,
+      set_promo_code: true,
       add_promo_code: [
         { code: payload.promoCode, limit: payload.promoCodeLimit ?? 1 },
       ],
