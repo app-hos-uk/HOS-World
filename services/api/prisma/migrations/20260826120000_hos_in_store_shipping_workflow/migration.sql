@@ -1,5 +1,33 @@
 -- HoS in-store shipping workflow: box sizes, shipment groups, order numbers.
 
+-- Ensure base table exists (created later in 20261020… but ALTER needs it now).
+CREATE TABLE IF NOT EXISTS "store_shipment_requests" (
+  "id" TEXT NOT NULL,
+  "status" TEXT NOT NULL DEFAULT 'DRAFT',
+  "storeId" TEXT NOT NULL,
+  "userId" TEXT,
+  "posSaleId" TEXT,
+  "posExternalSaleId" TEXT,
+  "invoiceNumber" TEXT,
+  "claimEmail" TEXT,
+  "claimTokenHash" TEXT,
+  "claimTokenExpiresAt" TIMESTAMP(3),
+  "destinationAddressId" TEXT,
+  "shippingAmount" DECIMAL(10,2),
+  "currency" TEXT NOT NULL DEFAULT 'USD',
+  "stripePaymentIntentId" TEXT,
+  "selectedCarrier" TEXT,
+  "selectedService" TEXT,
+  "trackingCode" TEXT,
+  "labelUrl" TEXT,
+  "shippingCost" DECIMAL(10,2),
+  "customsSnapshot" JSONB,
+  "metadata" JSONB,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "store_shipment_requests_pkey" PRIMARY KEY ("id")
+);
+
 ALTER TABLE "store_shipment_requests" ALTER COLUMN "status" SET DEFAULT 'NEW';
 
 ALTER TABLE "store_shipment_requests" ADD COLUMN IF NOT EXISTS "hosOrderNumber" TEXT;
