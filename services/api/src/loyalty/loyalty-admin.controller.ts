@@ -545,7 +545,7 @@ export class LoyaltyAdminController {
   @ApiOperation({
     summary: 'Manager cancel an unused ISSUED voucher (Flow A5)',
     description:
-      'Voids the Lightspeed gift card, reverses the points burn, and marks the voucher REVERSED.',
+      'Voids the Lightspeed gift card or archives the promotion, reverses the points burn, and marks the voucher REVERSED.',
   })
   async cancelPosVoucher(
     @Param('id', ParseUUIDPipe) id: string,
@@ -564,9 +564,9 @@ export class LoyaltyAdminController {
   @Post('pos-vouchers/:id/retry')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({
-    summary: 'Retry issuing the POS gift card for a FAILED/PENDING voucher',
+    summary: 'Retry issuing the POS gift card or promo code for a FAILED/PENDING voucher',
     description:
-      'Re-attempts the Lightspeed gift-card issuance for an existing voucher, re-debiting the points if the burn was reversed. Safe to call repeatedly — an already ISSUED voucher is returned unchanged.',
+      'Re-attempts the Lightspeed gift-card or promotion issuance for an existing voucher, re-debiting the points if the burn was reversed. Routes to the correct service based on voucher type. Safe to call repeatedly — an already ISSUED voucher is returned unchanged.',
   })
   async retryPosVoucher(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
     const data = await this.posVouchers.retryFailedVoucher(id);
@@ -593,6 +593,12 @@ export class LoyaltyAdminController {
     const metadata = (voucher.metadata as Record<string, unknown>) ?? {};
     delete metadata.lightspeedPermission;
     delete metadata.failedAt;
+    delete metadata.lastError;
+
+    const promoFields: Record<string, unknown> = {};
+    if (voucher.type === 'PROMO_CODE') {
+      promoFields.externalPromotionId = null;
+    }
 
     const cleanedMetadata: Prisma.InputJsonValue | undefined =
       Object.keys(metadata).length > 0
@@ -605,6 +611,7 @@ export class LoyaltyAdminController {
         storeId: body.storeId,
         currency: store.currency || voucher.currency,
         metadata: cleanedMetadata,
+        ...promoFields,
       },
     });
     return { data, message: 'Voucher reassigned' };

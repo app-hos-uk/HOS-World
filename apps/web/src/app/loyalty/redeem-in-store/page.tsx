@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
+import { CustomerQr } from '@/components/CustomerQr';
 
 type VoucherResult = {
   voucherId: string;
@@ -157,7 +158,15 @@ export default function RedeemInStorePage() {
             <p className="text-lg font-medium text-amber-400">Expires in {countdown}</p>
           )}
           {result.qrPayload && (
-            <p className="text-xs text-hos-text-muted break-all">QR payload: {result.qrPayload}</p>
+            <div className="flex flex-col items-center pt-2">
+              <CustomerQr
+                value={result.qrPayload}
+                size={160}
+                alt={result.type === 'PROMO_CODE' ? 'Promo code QR' : 'Gift card voucher QR'}
+                showValue={false}
+                className="flex flex-col items-center"
+              />
+            </div>
           )}
           <button
             type="button"

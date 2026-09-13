@@ -1071,6 +1071,7 @@ export class PosVoucherService {
       currency: voucher.currency,
       status: voucher.status,
       points,
+      type: 'GIFT_CARD' as const,
       ttlExpiresAt: voucher.ttlExpiresAt ?? null,
       qrPayload,
     };

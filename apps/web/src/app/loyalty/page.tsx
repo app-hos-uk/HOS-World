@@ -44,7 +44,7 @@ function voucherStatusClass(status: string): string {
 }
 
 function canCancelVoucher(status: string): boolean {
-  return status === 'ISSUED' || status === 'PENDING';
+  return status === 'ISSUED';
 }
 
 export default function LoyaltyDashboardPage() {

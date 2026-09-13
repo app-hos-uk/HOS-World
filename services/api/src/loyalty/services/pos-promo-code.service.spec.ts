@@ -82,6 +82,7 @@ describe('PosPromoCodeService', () => {
           jest.fn().mockImplementation(({ where }: any) =>
             Promise.resolve(where?.redemptionId ? null : { ...voucherRow }),
           ),
+        findFirst: jest.fn().mockResolvedValue(null),
         findMany: jest.fn().mockResolvedValue([]),
       },
       loyaltyTransaction: { findUnique: jest.fn().mockResolvedValue(null) },
@@ -132,6 +133,8 @@ describe('PosPromoCodeService', () => {
     };
     const platformRegion: any = { getCurrency: jest.fn().mockResolvedValue('GBP') };
 
+    const metrics: any = { incrementCounter: jest.fn() };
+
     const svc = new PosPromoCodeService(
       prisma,
       config,
@@ -142,6 +145,7 @@ describe('PosPromoCodeService', () => {
       encryption,
       loyaltySettings,
       platformRegion,
+      metrics,
     );
     return { svc, adapter, prisma, burn, wallet };
   }

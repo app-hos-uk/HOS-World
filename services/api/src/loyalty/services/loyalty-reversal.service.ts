@@ -179,10 +179,22 @@ export class LoyaltyReversalService {
     const share = saleTotal > 0 ? Math.min(1, Math.max(0, params.refundAmount / saleTotal)) : 0;
     if (share <= 0) return;
 
-    const targetClaw =
-      settings.clawEarnOnReturn && posSale.loyaltyPointsEarned > 0
-        ? Math.round(posSale.loyaltyPointsEarned * share)
+    const priorClawTxs = await this.prisma.loyaltyTransaction.findMany({
+      where: {
+        membershipId: membership.id,
+        source: 'POS_RETURN_REFUND',
+        metadata: { path: ['posSaleId'], equals: posSale.id },
+      },
+      select: { points: true },
+    });
+    const alreadyClawed = priorClawTxs.reduce((s, t) => s + Math.abs(t.points), 0);
+    const originalEarned = posSale.loyaltyPointsEarned + alreadyClawed;
+
+    const rawClaw =
+      settings.clawEarnOnReturn && originalEarned > 0
+        ? Math.round(originalEarned * share)
         : 0;
+    const targetClaw = Math.max(0, Math.min(rawClaw, originalEarned - alreadyClawed));
 
     if (targetClaw <= 0 && !(settings.restoreBurnOnReturn && posSale.loyaltyPointsRedeemed > 0)) {
       return;

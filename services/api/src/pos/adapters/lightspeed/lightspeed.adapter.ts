@@ -830,6 +830,7 @@ export class LightspeedAdapter implements POSAdapter {
       id: String(r.id ?? ''),
       code: String(r.code ?? ''),
       limit: Number(r.limit ?? 0),
+      redeemed: r.redeemed != null ? Number(r.redeemed) : undefined,
     }));
   }
 
@@ -843,6 +844,7 @@ export class LightspeedAdapter implements POSAdapter {
             id: String(rec.id ?? ''),
             code: String(rec.code ?? ''),
             limit: Number(rec.limit ?? 0),
+            redeemed: rec.redeemed != null ? Number(rec.redeemed) : undefined,
           };
         })
       : undefined;

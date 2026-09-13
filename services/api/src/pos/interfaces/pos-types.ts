@@ -151,6 +151,7 @@ export type POSPromotionPromoCode = {
   id: string;
   code: string;
   limit: number;
+  redeemed?: number;
 };
 
 export type POSPromotion = {

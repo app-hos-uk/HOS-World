@@ -292,9 +292,7 @@ export function isReturnSale(
 export function isClosedSale(sale: Pick<POSSale, 'state'>): boolean {
   const s = (sale.state || '').toLowerCase();
   if (!s) return true; // legacy payloads without state — import (poller + webhook closed path)
-  return (
-    s === 'closed' || s === 'completed' || s === 'complete' || s === 'CLOSED' || s === 'COMPLETED'
-  );
+  return s === 'closed' || s === 'completed' || s === 'complete';
 }
 
 export function isVoidedSale(sale: Pick<POSSale, 'state'>): boolean {

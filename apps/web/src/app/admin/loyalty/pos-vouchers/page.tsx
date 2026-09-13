@@ -39,7 +39,8 @@ function flatten(v: Voucher) {
     store: v.store?.name || v.storeId,
     amount: Number(v.amount).toFixed(2),
     currency: v.currency,
-    cardNumber: v.cardNumber || '',
+    type: v.type === 'PROMO_CODE' ? 'Promo' : 'Gift card',
+    cardOrCode: v.type === 'PROMO_CODE' ? (v.promoCode || v.cardNumber || '') : (v.cardNumber || ''),
     status: v.status,
     externalTransactionId: v.externalTransactionId || '',
     clientId: v.clientId || '',
@@ -85,11 +86,14 @@ export default function AdminLoyaltyPosVouchersPage() {
       setRetryingId(voucher.id);
       try {
         const res = await apiClient.adminRetryLoyaltyPosVoucher(voucher.id);
-        const issued = (res?.data as { status?: string } | undefined)?.status;
+        const data = res?.data as { status?: string; type?: string } | undefined;
+        const isPromo = voucher.type === 'PROMO_CODE' || data?.type === 'PROMO_CODE';
         toast.success(
-          issued === 'ISSUED'
-            ? 'Gift card issued — points are now settled at the till'
-            : `Retry finished with status ${issued || 'unknown'}`,
+          data?.status === 'ISSUED'
+            ? isPromo
+              ? 'Promo code issued — points are now settled at the till'
+              : 'Gift card issued — points are now settled at the till'
+            : `Retry finished with status ${data?.status || 'unknown'}`,
         );
         await load();
       } catch (e: any) {
@@ -103,7 +107,10 @@ export default function AdminLoyaltyPosVouchersPage() {
 
   const cancelVoucher = useCallback(
     async (voucher: Voucher) => {
-      if (!window.confirm('Void this voucher in Lightspeed and restore member points?')) return;
+      const confirmMsg = voucher.type === 'PROMO_CODE'
+        ? 'Archive this promo code in Lightspeed and restore member points?'
+        : 'Void this gift card in Lightspeed and restore member points?';
+      if (!window.confirm(confirmMsg)) return;
       setCancellingId(voucher.id);
       try {
         await apiClient.adminCancelLoyaltyPosVoucher(voucher.id, 'admin_void');
@@ -143,7 +150,8 @@ export default function AdminLoyaltyPosVouchersPage() {
       { key: 'store', header: 'Store' },
       { key: 'amount', header: 'Amount' },
       { key: 'currency', header: 'Currency' },
-      { key: 'cardNumber', header: 'Card Number' },
+      { key: 'type', header: 'Type' },
+      { key: 'cardOrCode', header: 'Card / Code' },
       { key: 'status', header: 'Status' },
       { key: 'externalTransactionId', header: 'Lightspeed Txn' },
       { key: 'clientId', header: 'Client ID' },
@@ -158,8 +166,8 @@ export default function AdminLoyaltyPosVouchersPage() {
         <div>
           <h1 className="text-2xl font-bold text-hos-text-primary">POS Vouchers</h1>
           <p className="text-hos-text-secondary mt-1 text-sm font-ui">
-            Points redeemed in-store as Lightspeed gift cards (HOS ledger of record). Failed
-            issuances can be retried here — points are re-debited only if the burn was reversed.
+            Points redeemed in-store as Lightspeed gift cards or promo codes (HOS ledger of record).
+            Failed issuances can be retried here — points are re-debited only if the burn was reversed.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -274,7 +282,7 @@ export default function AdminLoyaltyPosVouchersPage() {
               ))}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-3 py-8 text-center text-hos-text-secondary">
+                  <td colSpan={8} className="px-3 py-8 text-center text-hos-text-secondary">
                     No vouchers found
                   </td>
                 </tr>

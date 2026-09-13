@@ -21,6 +21,7 @@ import { LoyaltySettingsService } from './loyalty-settings.service';
 import { RedeemForVoucherDto } from '../dto/redeem-for-voucher.dto';
 import { FeatureFlagsService } from '../../config/feature-flags.service';
 import { PlatformRegionService } from '../../config/platform-region.service';
+import { MetricsService } from '../../monitoring/metrics.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 
 const VOUCHER_TTL_HOURS = 4;
@@ -62,6 +63,7 @@ export class PosPromoCodeService {
     private encryption: EncryptionService,
     private loyaltySettings: LoyaltySettingsService,
     private platformRegion: PlatformRegionService,
+    private metrics: MetricsService,
   ) {}
 
   async assertPromoCodeEnabled(): Promise<void> {
@@ -81,6 +83,19 @@ export class PosPromoCodeService {
       suffix += PROMO_CODE_ALPHABET[bytes[i] % PROMO_CODE_ALPHABET.length];
     }
     return `HOS-LYL-${suffix}`;
+  }
+
+  private async generateUniquePromoCode(maxAttempts = 5): Promise<string> {
+    for (let i = 0; i < maxAttempts; i++) {
+      const code = this.generatePromoCode();
+      const existing = await this.prisma.loyaltyPosVoucher.findFirst({
+        where: { promoCode: code },
+        select: { id: true },
+      });
+      if (!existing) return code;
+      this.logger.warn(`Promo code collision on ${code}, retrying (attempt ${i + 1})`);
+    }
+    throw new ServiceUnavailableException('Could not generate a unique promo code — please retry');
   }
 
   async redeemForPromoCode(
@@ -194,15 +209,24 @@ export class PosPromoCodeService {
     }
     if (voucher.redemption.status === 'REVERSED') {
       await this.redebit(voucher.membershipId, voucher.redemption.pointsSpent, voucher.redemptionId, voucher.storeId);
-      await this.prisma.loyaltyPosVoucher.update({
-        where: { id: voucher.id },
-        data: { status: 'PENDING' },
-      });
-    } else if (voucher.status === 'FAILED') {
       await this.prisma.loyaltyPosVoucher.updateMany({
-        where: { id: voucher.id, status: 'FAILED' },
+        where: { id: voucher.id, status: { in: ['FAILED', 'PENDING'] } },
         data: { status: 'PENDING' },
       });
+    } else {
+      const claimed = await this.prisma.loyaltyPosVoucher.updateMany({
+        where: { id: voucher.id, status: { in: ['FAILED', 'PENDING'] } },
+        data: { status: 'PENDING' },
+      });
+      if (claimed.count === 0) {
+        const latest = await this.prisma.loyaltyPosVoucher.findUnique({
+          where: { id: voucher.id },
+          include: { redemption: true },
+        });
+        if (latest?.status === 'ISSUED') {
+          return this.toResult(latest, latest.redemption.pointsSpent);
+        }
+      }
     }
     return this.issuePromotionForVoucher(voucher.id, voucher.store.posConnection);
   }
@@ -254,7 +278,28 @@ export class PosPromoCodeService {
     }
     if (voucher.externalPromotionId) {
       const adapter = await this.buildAdapter(conn, ARCHIVE_BUDGET_MS);
-      this.assertPromotions(adapter);
+      this.assertPromotions(adapter, true);
+
+      if (typeof adapter.getPromotionPromoCodes === 'function') {
+        try {
+          const codes = await adapter.getPromotionPromoCodes!(voucher.externalPromotionId);
+          const ours = codes.find(
+            (c) => c.code === (voucher.promoCode || voucher.cardNumber),
+          );
+          const isUsed = ours && typeof ours.redeemed === 'number' && ours.redeemed > 0;
+          if (isUsed) {
+            throw new BadRequestException(
+              'Promo code has already been used at the till and cannot be cancelled',
+            );
+          }
+        } catch (e) {
+          if (e instanceof BadRequestException) throw e;
+          this.logger.warn(
+            `Promo usage check failed for ${voucher.id}: ${(e as Error).message} — proceeding with cancel`,
+          );
+        }
+      }
+
       try {
         await adapter.archivePromotion!(voucher.externalPromotionId);
       } catch (e) {
@@ -291,9 +336,11 @@ export class PosPromoCodeService {
           ...(voucher.metadata as object),
           cancelReason: params.reason?.slice(0, 200) ?? 'user_cancelled',
           cancelledBy: params.actorUserId,
+          ...(pointsRestored ? {} : { pointsRestoreFailed: true }),
         } as Prisma.InputJsonValue,
       },
     });
+    this.metrics.incrementCounter('loyalty_pos_voucher_cancelled_total');
     return { status: 'REVERSED', pointsRestored };
   }
 
@@ -318,6 +365,32 @@ export class PosPromoCodeService {
         const conn = voucher.store.posConnection;
         if (conn?.isActive && conn.credentials && voucher.externalPromotionId) {
           const adapter = await this.buildAdapter(conn, ARCHIVE_BUDGET_MS);
+
+          if (typeof adapter.getPromotionPromoCodes === 'function') {
+            try {
+              const codes = await adapter.getPromotionPromoCodes(voucher.externalPromotionId);
+              const ours = codes.find(
+                (c) => c.code === (voucher.promoCode || voucher.cardNumber),
+              );
+              const isUsed = ours && typeof ours.redeemed === 'number' && ours.redeemed > 0;
+              if (isUsed) {
+                await this.prisma.loyaltyPosVoucher.update({
+                  where: { id: voucher.id },
+                  data: { status: 'RECONCILED' },
+                });
+                this.logger.log(
+                  `TTL promo ${voucher.id} was used at the till — marked RECONCILED, points NOT restored`,
+                );
+                continue;
+              }
+            } catch (e) {
+              this.logger.warn(
+                `TTL promo usage check failed for ${voucher.id}: ${(e as Error).message} — skipping expire`,
+              );
+              continue;
+            }
+          }
+
           if (typeof adapter.archivePromotion === 'function') {
             try {
               await adapter.archivePromotion(voucher.externalPromotionId);
@@ -340,7 +413,12 @@ export class PosPromoCodeService {
           data: {
             status: 'REVERSED',
             reversedAt: now,
-            metadata: { autoExpired: true } as Prisma.InputJsonValue,
+            metadata: {
+              ...(voucher.metadata && typeof voucher.metadata === 'object' && !Array.isArray(voucher.metadata)
+                ? voucher.metadata as Record<string, unknown>
+                : {}),
+              autoExpired: true,
+            } as Prisma.InputJsonValue,
           },
         });
         count++;
@@ -361,7 +439,7 @@ export class PosPromoCodeService {
     reverseBurnOnCreateFailure?: { points: number };
     audit?: { staffUserId?: string; issuedByUserId?: string; terminalId?: string };
   }): Promise<PosPromoCodeResult> {
-    const promoCode = this.generatePromoCode();
+    const promoCode = await this.generateUniquePromoCode();
     const ttlExpiresAt = new Date(Date.now() + VOUCHER_TTL_HOURS * 60 * 60 * 1000);
     let voucher;
     try {
@@ -474,6 +552,7 @@ export class PosPromoCodeService {
           metadata: { lastError: msg.slice(0, 500) } as Prisma.InputJsonValue,
         },
       });
+      this.metrics.incrementCounter('loyalty_pos_voucher_failed_total');
       let restored = false;
       try {
         await this.reverseBurn(
@@ -507,6 +586,7 @@ export class PosPromoCodeService {
         },
         include: { redemption: true },
       });
+      this.metrics.incrementCounter('loyalty_pos_voucher_issued_total');
       return this.toResult(updated, updated.redemption.pointsSpent);
     } catch (persistErr) {
       const msg = persistErr instanceof Error ? persistErr.message : 'Failed to record promotion';
@@ -536,9 +616,12 @@ export class PosPromoCodeService {
     return d.toISOString().replace(/\.\d{3}Z$/, '');
   }
 
-  private assertPromotions(adapter: POSAdapter): void {
+  private assertPromotions(adapter: POSAdapter, requireArchive = false): void {
     if (typeof adapter.createPromotion !== 'function') {
       throw new BadRequestException('POS provider does not support Lightspeed promotions');
+    }
+    if (requireArchive && typeof adapter.archivePromotion !== 'function') {
+      throw new BadRequestException('POS provider does not support archiving promotions');
     }
   }
 

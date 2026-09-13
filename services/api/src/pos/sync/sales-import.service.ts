@@ -628,7 +628,7 @@ export class PosSalesImportService {
     const existingReturn = await this.prisma.returnRequest.findFirst({
       where: {
         posSaleId: original.id,
-        reason: { contains: parsed.externalId },
+        reason: { equals: `Auto-detected from Lightspeed return sale ${parsed.externalId}` },
       },
       select: { id: true },
     });
