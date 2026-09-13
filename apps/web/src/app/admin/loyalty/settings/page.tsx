@@ -245,55 +245,62 @@ export default function AdminLoyaltySettingsPage() {
           </section>
 
           <section className="space-y-3 p-4 rounded-lg border border-hos-border bg-hos-bg-secondary">
-            <h2 className="text-lg text-hos-gold font-display">POS vouchers</h2>
-            <label className="flex items-center gap-2 text-sm text-hos-text-secondary font-ui">
-              <input
-                type="checkbox"
-                checked={form.posVoucherEnabled}
-                onChange={(e) => set('posVoucherEnabled', e.target.checked)}
-              />
-              Enable POS points redemption
-            </label>
+            <h2 className="text-lg text-hos-gold font-display">POS in-store redemption</h2>
             <label className="block text-sm text-hos-text-secondary font-ui">
-              In-store redemption method
+              In-store points redemption method
               <select
                 className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
-                value={form.posRedemptionMethod ?? 'GIFT_CARD'}
-                onChange={(e) =>
-                  set(
-                    'posRedemptionMethod',
-                    e.target.value === 'PROMO_CODE' ? 'PROMO_CODE' : 'GIFT_CARD',
-                  )
+                value={
+                  !form.posVoucherEnabled
+                    ? 'DISABLED'
+                    : form.posRedemptionMethod === 'PROMO_CODE'
+                      ? 'PROMO_CODE'
+                      : 'GIFT_CARD'
                 }
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === 'DISABLED') {
+                    set('posVoucherEnabled', false);
+                  } else {
+                    set('posVoucherEnabled', true);
+                    set('posRedemptionMethod', v === 'PROMO_CODE' ? 'PROMO_CODE' : 'GIFT_CARD');
+                  }
+                }}
               >
+                <option value="DISABLED">Disabled — no in-store points redemption</option>
                 <option value="GIFT_CARD">Lightspeed gift card</option>
                 <option value="PROMO_CODE">Lightspeed promo code (one-time discount)</option>
               </select>
             </label>
-            <p className="text-xs text-hos-text-muted font-ui">
-              Promo codes apply as a till discount (not a payment), so returns claw earned points
-              against the original sale without mixing gift-card refunds.
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block text-sm text-hos-text-secondary font-ui">
-                Min amount
-                <input
-                  type="number"
-                  className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
-                  value={form.posVoucherMinAmount}
-                  onChange={(e) => set('posVoucherMinAmount', Number(e.target.value))}
-                />
-              </label>
-              <label className="block text-sm text-hos-text-secondary font-ui">
-                Max amount
-                <input
-                  type="number"
-                  className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
-                  value={form.posVoucherMaxAmount}
-                  onChange={(e) => set('posVoucherMaxAmount', Number(e.target.value))}
-                />
-              </label>
-            </div>
+            {form.posVoucherEnabled && (
+              <p className="text-xs text-hos-text-muted font-ui">
+                {form.posRedemptionMethod === 'PROMO_CODE'
+                  ? 'Promo codes apply as a till discount (not a payment), so returns claw earned points against the original sale without mixing gift-card refunds.'
+                  : 'Gift cards are issued as payment instruments via the Lightspeed Gift Cards API.'}
+              </p>
+            )}
+            {form.posVoucherEnabled && (
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block text-sm text-hos-text-secondary font-ui">
+                  Min amount
+                  <input
+                    type="number"
+                    className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
+                    value={form.posVoucherMinAmount}
+                    onChange={(e) => set('posVoucherMinAmount', Number(e.target.value))}
+                  />
+                </label>
+                <label className="block text-sm text-hos-text-secondary font-ui">
+                  Max amount
+                  <input
+                    type="number"
+                    className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
+                    value={form.posVoucherMaxAmount}
+                    onChange={(e) => set('posVoucherMaxAmount', Number(e.target.value))}
+                  />
+                </label>
+              </div>
+            )}
           </section>
 
           <section className="space-y-3 p-4 rounded-lg border border-hos-border bg-hos-bg-secondary">
