@@ -73,6 +73,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en-US">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `if(typeof process==='undefined'){window.process={env:{}}}` }} />
+      </head>
       <body className={`${cormorant.variable} ${inter.variable} storefront-theme antialiased`}>
         <GoogleTags />
         <Suspense fallback={null}>
