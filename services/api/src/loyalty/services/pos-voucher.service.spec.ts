@@ -18,6 +18,8 @@ describe('PosVoucherService', () => {
     voucherFindUnique?: jest.Mock;
     configGet?: (key: string, def?: unknown) => unknown;
     applyDelta?: jest.Mock;
+    posRedemptionMethod?: 'GIFT_CARD' | 'PROMO_CODE';
+    promoCodes?: any;
   }) {
     const adapter = {
       authenticate: jest.fn().mockResolvedValue(undefined),
@@ -151,6 +153,7 @@ describe('PosVoucherService', () => {
       getResolved: jest.fn().mockResolvedValue({
         settings: {
           posVoucherEnabled,
+          posRedemptionMethod: overrides.posRedemptionMethod ?? 'GIFT_CARD',
           defaultRedeemValue: 0.01,
           posVoucherMinAmount: Number(
             (overrides.configGet?.('POS_GIFT_CARD_MIN_AMOUNT', 1) as number) ?? 1,
@@ -189,9 +192,10 @@ describe('PosVoucherService', () => {
       platformRegion,
       externalGiftCards,
       otp,
+      overrides.promoCodes,
     );
 
-    return { svc, adapter, prisma, burn, wallet, voucherRow, metrics, loyaltySettings };
+    return { svc, adapter, prisma, burn, wallet, voucherRow, metrics, loyaltySettings, otp };
   }
 
   it('generates 12+ alphanumeric non-sequential card numbers', () => {
@@ -766,5 +770,51 @@ describe('PosVoucherService', () => {
       expect(result.status).toBe('ISSUED');
       expect(result.cardNumber).toBe('ABCD2345EFGH');
     });
+  });
+
+  it('retries promo-code vouchers via the promo-code service', async () => {
+    const retryFailedPromoCode = jest.fn().mockResolvedValue({
+      voucherId: 'voucher-1',
+      type: 'PROMO_CODE',
+      status: 'ISSUED',
+    });
+    const voucherFindUnique = jest.fn().mockResolvedValue({
+      id: 'voucher-1',
+      storeId,
+      type: 'PROMO_CODE',
+      status: 'FAILED',
+      redemption: { pointsSpent: 500, status: 'COMPLETED' },
+      store: { posConnection: { isActive: true } },
+    });
+    const { svc, adapter } = build({
+      voucherFindUnique,
+      promoCodes: { retryFailedPromoCode },
+    });
+
+    const result = await svc.retryFailedVoucher('voucher-1');
+
+    expect(retryFailedPromoCode).toHaveBeenCalledWith('voucher-1', undefined);
+    expect(adapter.createGiftCard).not.toHaveBeenCalled();
+    expect(result.type).toBe('PROMO_CODE');
+  });
+
+  it('requires staff OTP before issuing a promo code', async () => {
+    const redeemForPromoCode = jest.fn().mockResolvedValue({ type: 'PROMO_CODE', status: 'ISSUED' });
+    const { svc, otp } = build({
+      posRedemptionMethod: 'PROMO_CODE',
+      promoCodes: { redeemForPromoCode },
+    });
+
+    await svc.redeemForVoucher(
+      { points: 500, storeId, membershipId, idempotencyKey, terminalId: 'till-1' },
+      { staffAssisted: true, staffUserId: 'staff-1' },
+    );
+
+    expect(otp.assertStaffOtpVerified).toHaveBeenCalledWith({
+      membershipId,
+      storeId,
+      staffUserId: 'staff-1',
+    });
+    expect(redeemForPromoCode).toHaveBeenCalled();
   });
 });

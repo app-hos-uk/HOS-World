@@ -72,8 +72,11 @@ export class LightspeedApiClient {
     return true;
   }
 
-  private baseUrl(): string {
+  private baseUrl(apiVersion?: string): string {
     const p = this.creds.domainPrefix.replace(/\/$/, '');
+    if (apiVersion && apiVersion !== '2.0') {
+      return `https://${p}.retail.lightspeed.app/api/${apiVersion}`;
+    }
     return `https://${p}.vendhq.com/api/2.0`;
   }
 
@@ -110,6 +113,7 @@ export class LightspeedApiClient {
     method: string,
     path: string,
     body?: unknown,
+    options?: { apiVersion?: string },
   ): Promise<{ data: T; status: number }> {
     let attempt = 0;
     let lastErr: Error | null = null;
@@ -130,7 +134,7 @@ export class LightspeedApiClient {
         throw new Error('Lightspeed: no access token');
       }
 
-      const url = `${this.baseUrl()}${path.startsWith('/') ? path : `/${path}`}`;
+      const url = `${this.baseUrl(options?.apiVersion)}${path.startsWith('/') ? path : `/${path}`}`;
       const headers: Record<string, string> = {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',

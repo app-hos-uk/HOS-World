@@ -9,6 +9,9 @@ import type {
   POSGiftCardCreatePayload,
   POSGiftCardTransaction,
   POSGiftCardTransactionPayload,
+  POSPromotion,
+  POSPromotionCreatePayload,
+  POSPromotionPromoCode,
 } from './pos-types';
 
 export interface POSAdapter {
@@ -80,4 +83,17 @@ export interface POSAdapter {
 
   /** Void a gift card (Lightspeed DELETE /gift_cards/by_number/{number}). */
   voidGiftCard(number: string): Promise<POSGiftCard>;
+
+  /**
+   * Create a one-time Lightspeed promotion + promo code (Promotions API 2026-04).
+   * Requires `promotions:write`. Optional: providers without promotions omit it.
+   */
+  createPromotion?(payload: POSPromotionCreatePayload): Promise<POSPromotion>;
+
+  getPromotion?(promotionId: string): Promise<POSPromotion | null>;
+
+  /** Archive a promotion (PUT status=archived). */
+  archivePromotion?(promotionId: string): Promise<POSPromotion>;
+
+  getPromotionPromoCodes?(promotionId: string): Promise<POSPromotionPromoCode[]>;
 }

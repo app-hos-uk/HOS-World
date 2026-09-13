@@ -17,6 +17,8 @@ type Voucher = {
   membershipId: string;
   storeId: string;
   cardNumber?: string | null;
+  promoCode?: string | null;
+  type?: string;
   amount: number | string;
   currency: string;
   status: string;
@@ -197,7 +199,8 @@ export default function AdminLoyaltyPosVouchersPage() {
                 <th className="px-3 py-2">Member</th>
                 <th className="px-3 py-2">Store</th>
                 <th className="px-3 py-2">Amount</th>
-                <th className="px-3 py-2">Card</th>
+                <th className="px-3 py-2">Type</th>
+                <th className="px-3 py-2">Card / code</th>
                 <th className="px-3 py-2">Status</th>
                 <th className="px-3 py-2 text-right">Action</th>
               </tr>
@@ -215,8 +218,13 @@ export default function AdminLoyaltyPosVouchersPage() {
                   <td className="px-3 py-2 font-ui">
                     {formatMoney(Number(v.amount), v.currency)}
                   </td>
+                  <td className="px-3 py-2 font-ui text-xs">{v.type === 'PROMO_CODE' ? 'Promo' : 'Gift card'}</td>
                   <td className="px-3 py-2 font-ui text-xs">
-                    {v.cardNumber ? `****${String(v.cardNumber).slice(-4)}` : '—'}
+                    {v.type === 'PROMO_CODE'
+                      ? v.promoCode || v.cardNumber || '—'
+                      : v.cardNumber
+                        ? `****${String(v.cardNumber).slice(-4)}`
+                        : '—'}
                   </td>
                   <td className="px-3 py-2 font-ui text-xs">
                     <span

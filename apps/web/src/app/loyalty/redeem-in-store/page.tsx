@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/useToast';
 type VoucherResult = {
   voucherId: string;
   cardNumber: string;
+  promoCode?: string;
+  type?: string;
   amount: number;
   currency: string;
   status: string;
@@ -137,13 +139,20 @@ export default function RedeemInStorePage() {
         </div>
       ) : (
         <div className="rounded-lg border border-hos-border p-6 bg-hos-bg-secondary text-center space-y-4">
-          <p className="text-sm uppercase tracking-wide text-hos-text-muted">Gift card number</p>
+          <p className="text-sm uppercase tracking-wide text-hos-text-muted">
+            {result.type === 'PROMO_CODE' ? 'Promo code for the till' : 'Gift card number'}
+          </p>
           <p className="text-2xl font-mono font-bold tracking-widest text-hos-gold break-all">
-            {result.cardNumber}
+            {result.promoCode || result.cardNumber}
           </p>
           <p className="text-hos-text-secondary">
             {result.currency} {result.amount.toFixed(2)} · {result.points} points burned
           </p>
+          {result.type === 'PROMO_CODE' && (
+            <p className="text-xs text-hos-text-muted">
+              Staff should enter this as a discount code on the sale, not as a payment.
+            </p>
+          )}
           {countdown && (
             <p className="text-lg font-medium text-amber-400">Expires in {countdown}</p>
           )}

@@ -22,6 +22,7 @@ export type LoyaltyProgrammeSettings = {
   cardPrefix: string;
   redemptionAtCheckout: boolean;
   posVoucherEnabled: boolean;
+  posRedemptionMethod: 'GIFT_CARD' | 'PROMO_CODE';
   posVoucherMinAmount: number;
   posVoucherMaxAmount: number;
   giftCardCatalogAmounts: string;
@@ -109,6 +110,9 @@ export class LoyaltySettingsService {
         this.config.get<string>('LOYALTY_REDEMPTION_AT_CHECKOUT') ?? 'true',
       ),
       posVoucherEnabled: isTruthy(this.config.get<string>('LOYALTY_POS_VOUCHER_ENABLED')),
+      posRedemptionMethod: this.normalizeRedemptionMethod(
+        this.config.get<string>('LOYALTY_POS_REDEMPTION_METHOD'),
+      ),
       posVoucherMinAmount: num(this.config.get('POS_GIFT_CARD_MIN_AMOUNT'), 1),
       posVoucherMaxAmount: num(this.config.get('POS_GIFT_CARD_MAX_AMOUNT'), 500),
       giftCardCatalogAmounts:
@@ -159,6 +163,9 @@ export class LoyaltySettingsService {
       cardPrefix: String(partial.cardPrefix ?? base.cardPrefix).slice(0, 16) || 'HOS',
       redemptionAtCheckout: bool(partial.redemptionAtCheckout, base.redemptionAtCheckout),
       posVoucherEnabled: bool(partial.posVoucherEnabled, base.posVoucherEnabled),
+      posRedemptionMethod: this.normalizeRedemptionMethod(
+        partial.posRedemptionMethod ?? base.posRedemptionMethod,
+      ),
       posVoucherMinAmount: num(partial.posVoucherMinAmount, base.posVoucherMinAmount),
       posVoucherMaxAmount: num(partial.posVoucherMaxAmount, base.posVoucherMaxAmount),
       giftCardCatalogAmounts: String(partial.giftCardCatalogAmounts ?? base.giftCardCatalogAmounts),
@@ -310,5 +317,9 @@ export class LoyaltySettingsService {
       .split(',')
       .map((s) => Number(s.trim()))
       .filter((n) => Number.isFinite(n) && n > 0);
+  }
+
+  private normalizeRedemptionMethod(raw: unknown): 'GIFT_CARD' | 'PROMO_CODE' {
+    return String(raw ?? '').toUpperCase() === 'PROMO_CODE' ? 'PROMO_CODE' : 'GIFT_CARD';
   }
 }

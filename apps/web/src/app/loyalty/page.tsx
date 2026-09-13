@@ -14,6 +14,8 @@ import { clearPendingReferral, getPendingReferralCode } from '@/lib/referralAttr
 type PosVoucherRow = {
   id: string;
   cardNumber: string;
+  promoCode?: string | null;
+  type?: string;
   amount: number;
   currency: string;
   status: string;
@@ -332,7 +334,7 @@ export default function LoyaltyDashboardPage() {
                   <p className="font-secondary text-stone-500 text-sm">Loading vouchers…</p>
                 ) : vouchers.length === 0 ? (
                   <p className="font-secondary text-stone-500 text-sm">
-                    No vouchers yet. Redeem points in store to receive a gift card number.
+                    No vouchers yet. Redeem points in store to receive a till code.
                   </p>
                 ) : (
                   <>
@@ -340,7 +342,7 @@ export default function LoyaltyDashboardPage() {
                       <table className="w-full text-sm font-secondary">
                         <thead className="bg-stone-950/60 text-stone-400">
                           <tr>
-                            <th className="px-3 py-2 text-left">Gift card number</th>
+                            <th className="px-3 py-2 text-left">Till code</th>
                             <th className="px-3 py-2 text-left">Amount</th>
                             <th className="px-3 py-2 text-left">Status</th>
                             <th className="px-3 py-2 text-left hidden sm:table-cell">Store</th>
@@ -352,7 +354,10 @@ export default function LoyaltyDashboardPage() {
                           {vouchers.map((v) => (
                             <tr key={v.id} className="border-t border-stone-800 text-stone-200">
                               <td className="px-3 py-2 font-mono text-xs text-amber-100 break-all">
-                                {v.cardNumber}
+                                {v.promoCode || v.cardNumber}
+                                {v.type === 'PROMO_CODE' && (
+                                  <span className="ml-2 text-stone-500 font-sans">promo</span>
+                                )}
                               </td>
                               <td className="px-3 py-2 tabular-nums whitespace-nowrap">
                                 {v.currency} {Number(v.amount).toFixed(2)}

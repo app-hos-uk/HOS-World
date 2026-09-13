@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import type {
   LightspeedCredentials,
@@ -10,9 +10,10 @@ import { LoyaltyEarnEngine } from '../../loyalty/engines/earn.engine';
 import { POSAdapterFactory } from '../pos-adapter.factory';
 import { EncryptionService } from '../../integrations/encryption.service';
 import { Decimal } from '@prisma/client/runtime/library';
-import { isClosedSale, isVoidedSale } from '../adapters/lightspeed/lightspeed.mapper';
+import { isClosedSale, isReturnSale, isVoidedSale } from '../adapters/lightspeed/lightspeed.mapper';
 import { LightspeedAdapter } from '../adapters/lightspeed/lightspeed.adapter';
 import { normalizePhoneToE164 } from '../../common/utils/phone-normalize';
+import { LoyaltyReversalService } from '../../loyalty/services/loyalty-reversal.service';
 
 type ConnectionSettings = {
   lastSaleVersion?: number;
@@ -85,6 +86,9 @@ export class PosSalesImportService {
     private earnEngine: LoyaltyEarnEngine,
     private factory: POSAdapterFactory,
     private encryption: EncryptionService,
+    @Optional()
+    @Inject(forwardRef(() => LoyaltyReversalService))
+    private loyaltyReversal?: LoyaltyReversalService,
   ) {}
 
   /**
@@ -388,6 +392,16 @@ export class PosSalesImportService {
       return { id: '', duplicate: false, skipped: true };
     }
 
+    if (isReturnSale(parsed)) {
+      if (!isClosedSale(parsed)) {
+        this.logger.debug(
+          `Skipping non-closed POS return ${parsed.externalId} state=${parsed.state ?? 'unknown'}`,
+        );
+        return { id: '', duplicate: false, skipped: true };
+      }
+      return this.importReturnSale(storeId, provider, parsed);
+    }
+
     if (!isClosedSale(parsed)) {
       this.logger.debug(
         `Skipping non-closed POS sale ${parsed.externalId} state=${parsed.state ?? 'unknown'}`,
@@ -434,6 +448,7 @@ export class PosSalesImportService {
           );
         }
       }
+      await this.catchUpReturnClawbacks(provider, parsed.externalId);
       return { id: existing.id, duplicate: true };
     }
 
@@ -475,7 +490,179 @@ export class PosSalesImportService {
       );
     }
 
+    await this.catchUpReturnClawbacks(provider, parsed.externalId);
+
     return { id: sale.id, duplicate: false };
+  }
+
+  /**
+   * Lightspeed return sales are closed with a negative total and/or `return_for`.
+   * Persist them as status RETURN (never earn) and claw earned points on the original sale.
+   */
+  private async importReturnSale(
+    storeId: string,
+    provider: string,
+    parsed: ParsedSale,
+  ): Promise<{ id: string; duplicate: boolean; skipped?: boolean }> {
+    const existing = await this.prisma.pOSSale.findUnique({
+      where: {
+        provider_externalSaleId: {
+          provider,
+          externalSaleId: parsed.externalId,
+        },
+      },
+    });
+
+    let returnSaleId = existing?.id ?? '';
+    if (!existing) {
+      const customerEmail: string | null = parsed.customer?.email ?? null;
+      const customerId = await this.resolveCustomerId(storeId, provider, parsed);
+      let itemCreates: Awaited<ReturnType<typeof this.buildSaleItemCreates>> = [];
+      try {
+        if (parsed.items.length) {
+          itemCreates = await this.buildSaleItemCreates(storeId, provider, parsed);
+        }
+      } catch (e) {
+        this.logger.warn(
+          `POS return ${parsed.externalId} line items skipped: ${(e as Error).message}`,
+        );
+      }
+
+      const sale = await this.prisma.pOSSale.create({
+        data: {
+          storeId,
+          externalSaleId: parsed.externalId,
+          externalInvoice: parsed.invoiceNumber,
+          provider,
+          saleDate: parsed.saleDate,
+          customerId,
+          customerEmail,
+          totalAmount: new Decimal(parsed.totalAmount),
+          currency: parsed.currency,
+          taxAmount: new Decimal(parsed.taxAmount),
+          discountAmount: new Decimal(parsed.discountAmount),
+          status: 'RETURN',
+          returnForExternalSaleId: parsed.returnForSaleId ?? null,
+          rawPayload: parsed.rawPayload as object,
+          items: itemCreates.length ? { create: itemCreates } : undefined,
+        },
+      });
+      returnSaleId = sale.id;
+    } else if (existing.status !== 'RETURN') {
+      await this.prisma.pOSSale.update({
+        where: { id: existing.id },
+        data: {
+          status: 'RETURN',
+          returnForExternalSaleId: parsed.returnForSaleId ?? existing.returnForExternalSaleId,
+          rawPayload: parsed.rawPayload as object,
+        },
+      });
+    }
+
+    await this.clawbackOriginalFromReturn(provider, parsed, returnSaleId);
+    return { id: returnSaleId, duplicate: Boolean(existing) };
+  }
+
+  /** If a return arrived before the original sale, claw back once the original is imported. */
+  private async catchUpReturnClawbacks(provider: string, originalExternalId: string): Promise<void> {
+    const extId = originalExternalId.trim();
+    if (!extId) return;
+    const pending = await this.prisma.pOSSale.findMany({
+      where: { provider, status: 'RETURN', returnForExternalSaleId: extId },
+      select: { id: true, externalSaleId: true, totalAmount: true },
+    });
+    for (const row of pending) {
+      await this.clawbackOriginalFromReturn(
+        provider,
+        {
+          externalId: row.externalSaleId,
+          returnForSaleId: extId,
+          totalAmount: Number(row.totalAmount),
+        } as ParsedSale,
+        row.id,
+      );
+    }
+  }
+
+  private async clawbackOriginalFromReturn(
+    provider: string,
+    parsed: ParsedSale,
+    returnSaleId: string,
+  ): Promise<void> {
+    const originalExternalId = parsed.returnForSaleId?.trim();
+    if (!originalExternalId) {
+      this.logger.warn(
+        `POS return ${parsed.externalId} has no return_for — saved as RETURN without earn clawback`,
+      );
+      return;
+    }
+
+    const original = await this.prisma.pOSSale.findUnique({
+      where: {
+        provider_externalSaleId: {
+          provider,
+          externalSaleId: originalExternalId,
+        },
+      },
+      select: {
+        id: true,
+        customerId: true,
+        loyaltyPointsEarned: true,
+        totalAmount: true,
+      },
+    });
+    if (!original) {
+      this.logger.warn(
+        `POS return ${parsed.externalId} original sale ${originalExternalId} not yet imported — clawback deferred`,
+      );
+      return;
+    }
+    if (!original.customerId || original.loyaltyPointsEarned <= 0) return;
+    if (!this.loyaltyReversal) {
+      this.logger.warn(
+        `POS return ${parsed.externalId}: LoyaltyReversalService unavailable — earn clawback skipped`,
+      );
+      return;
+    }
+
+    const existingReturn = await this.prisma.returnRequest.findFirst({
+      where: {
+        posSaleId: original.id,
+        reason: { contains: parsed.externalId },
+      },
+      select: { id: true },
+    });
+
+    const refundAmount = Math.abs(Number(parsed.totalAmount));
+    if (refundAmount <= 0) return;
+
+    let returnRequestId = existingReturn?.id;
+    if (!returnRequestId) {
+      const created = await this.prisma.returnRequest.create({
+        data: {
+          posSaleId: original.id,
+          userId: original.customerId,
+          reason: `Auto-detected from Lightspeed return sale ${parsed.externalId}`,
+          status: 'COMPLETED',
+          refundMethod: 'IN_STORE',
+          refundAmount: new Decimal(refundAmount.toFixed(2)),
+          processedAt: new Date(),
+        },
+      });
+      returnRequestId = created.id;
+    }
+
+    try {
+      await this.loyaltyReversal.onPosReturnCompleted({
+        returnId: returnRequestId,
+        posSaleId: original.id,
+        refundAmount,
+      });
+    } catch (e) {
+      this.logger.warn(
+        `POS return ${returnSaleId} earn clawback failed for original ${original.id}: ${(e as Error).message}`,
+      );
+    }
   }
 
   private async buildSaleItemCreates(storeId: string, provider: string, parsed: ParsedSale) {

@@ -265,8 +265,27 @@ export function mapSaleFromVend(
     currency: String(payload.currency ?? defaultCurrency),
     state,
     version,
+    returnForSaleId: resolveReturnForSaleId(payload),
     rawPayload: payload,
   };
+}
+
+function resolveReturnForSaleId(payload: Record<string, unknown>): string | undefined {
+  const nested = asRecord(payload.return_for);
+  const scalar =
+    typeof payload.return_for === 'string' || typeof payload.return_for === 'number'
+      ? payload.return_for
+      : undefined;
+  return firstNonEmptyString(payload.return_for_id, scalar, nested?.id, nested?.sale_id);
+}
+
+/** Lightspeed return sale: linked original (`return_for`) or a negative goods total. */
+export function isReturnSale(
+  sale: Pick<POSSale, 'totalAmount' | 'returnForSaleId'>,
+): boolean {
+  if (sale.returnForSaleId) return true;
+  const total = Number(sale.totalAmount);
+  return Number.isFinite(total) && total < 0;
 }
 
 /** Closed / completed sales only — parked, onaccount, voided must not earn or decrement stock. */

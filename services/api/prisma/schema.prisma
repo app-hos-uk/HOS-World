@@ -3856,7 +3856,7 @@ model LoyaltyRedemption {
   @@map("loyalty_redemptions")
 }
 
-/// Points burned at HOS outlet POS, issued as a Lightspeed gift card.
+/// Points burned at HOS outlet POS, issued as a Lightspeed gift card or promo code.
 /// One row per redemption; retries reuse the same clientId (= redemptionId) in place — never mint a second clientId.
 model LoyaltyPosVoucher {
   id                    String            @id @default(uuid())
@@ -3866,11 +3866,17 @@ model LoyaltyPosVoucher {
   redemption            LoyaltyRedemption @relation(fields: [redemptionId], references: [id], onDelete: Cascade)
   storeId               String
   store                 Store             @relation(fields: [storeId], references: [id], onDelete: Restrict)
+  /// GIFT_CARD (Lightspeed gift card) or PROMO_CODE (Lightspeed Promotions API).
+  type                  String            @default("GIFT_CARD")
   cardNumber            String
+  /// One-time Lightspeed promo code when type = PROMO_CODE (also stored in cardNumber).
+  promoCode             String?
   amount                Decimal           @db.Decimal(10, 2)
   currency              String            @default("USD")
   /// Lightspeed gift card transaction client_id — stable idempotency key (set once to redemptionId).
   clientId              String            @unique
+  /// Lightspeed promotion id when type = PROMO_CODE.
+  externalPromotionId  String?
   externalTransactionId String?
   status                String            @default("PENDING") // PENDING | ISSUED | FAILED | REVERSED | RECONCILED
   issuedAt              DateTime?
@@ -3896,6 +3902,9 @@ model LoyaltyPosVoucher {
   @@index([status])
   @@index([ttlExpiresAt])
   @@index([externalTransactionId])
+  @@index([type])
+  @@index([promoCode])
+  @@index([externalPromotionId])
   @@map("loyalty_pos_vouchers")
 }
 
@@ -4350,6 +4359,8 @@ model POSSale {
   discountAmount        Decimal       @default(0) @db.Decimal(10, 2)
   loyaltyPointsEarned   Int           @default(0)
   loyaltyPointsRedeemed Int           @default(0)
+  /// Lightspeed `return_for` — original sale id when this row is a return sale.
+  returnForExternalSaleId String?
   items                 POSSaleItem[]
   returnRequests        ReturnRequest[]
   status                String        @default("IMPORTED")
@@ -4367,6 +4378,7 @@ model POSSale {
   @@index([externalInvoice])
   @@index([saleDate])
   @@index([marketId])
+  @@index([returnForExternalSaleId])
   @@map("pos_sales")
 }
 

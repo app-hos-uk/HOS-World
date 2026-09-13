@@ -76,7 +76,7 @@ export class PosGiftCardReconService {
     }
 
     const vouchers = (await this.prisma.loyaltyPosVoucher.findMany({
-      where: { status: 'ISSUED' },
+      where: { status: 'ISSUED', type: { not: 'PROMO_CODE' } },
       select: {
         id: true,
         clientId: true,

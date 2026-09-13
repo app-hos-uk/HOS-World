@@ -272,5 +272,40 @@ describe('lightspeed.mapper', () => {
       );
       expect(sale.customer?.email).toBe('nested@example.com');
     });
+
+    it('extracts return_for as returnForSaleId', () => {
+      const sale = M.mapSaleFromVend(
+        {
+          id: 'ret-1',
+          return_for: 'orig-sale-9',
+          totals: { total_price: -40 },
+          line_items: [
+            { product_id: 'p1', name: 'Wand', quantity: -1, price: 40, price_total: -40 },
+          ],
+        },
+        'o1',
+      );
+      expect(sale.returnForSaleId).toBe('orig-sale-9');
+      expect(sale.totalAmount).toBe(-40);
+      expect(M.isReturnSale(sale)).toBe(true);
+    });
+
+    it('extracts nested return_for.id', () => {
+      const sale = M.mapSaleFromVend(
+        { id: 'ret-2', return_for: { id: 'orig-nested' }, totals: { total_price: -10 }, line_items: [] },
+        'o1',
+      );
+      expect(sale.returnForSaleId).toBe('orig-nested');
+    });
+  });
+
+  describe('isReturnSale', () => {
+    it('is true for a negative total without return_for', () => {
+      expect(M.isReturnSale({ totalAmount: -12, returnForSaleId: undefined })).toBe(true);
+    });
+
+    it('is false for a normal sale', () => {
+      expect(M.isReturnSale({ totalAmount: 12, returnForSaleId: undefined })).toBe(false);
+    });
   });
 });

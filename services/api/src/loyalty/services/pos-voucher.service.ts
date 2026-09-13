@@ -4,6 +4,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -26,6 +27,7 @@ import { MetricsService } from '../../monitoring/metrics.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 import { PosExternalGiftCardService } from './pos-external-gift-card.service';
 import { PosVoucherOtpService } from './pos-voucher-otp.service';
+import { PosPromoCodeService } from './pos-promo-code.service';
 
 const CARD_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const CARD_LENGTH = 12;
@@ -71,6 +73,7 @@ export class PosVoucherService {
     private platformRegion: PlatformRegionService,
     private externalGiftCards: PosExternalGiftCardService,
     private otp: PosVoucherOtpService,
+    @Optional() private promoCodes?: PosPromoCodeService,
   ) {}
 
   async assertVoucherEnabled(): Promise<void> {
@@ -109,6 +112,48 @@ export class PosVoucherService {
     qrPayload?: string;
   }> {
     await this.assertVoucherEnabled();
+
+    if (dto.voucherId && this.promoCodes) {
+      const existing = await this.prisma.loyaltyPosVoucher.findUnique({
+        where: { id: dto.voucherId },
+        select: { type: true },
+      });
+      if (existing?.type === 'PROMO_CODE') {
+        return this.promoCodes.retryFailedPromoCode(dto.voucherId, dto.storeId);
+      }
+    }
+
+    const { settings } = await this.loyaltySettings.getResolved();
+    // New redemptions follow the setting; retries stay on the original voucher type.
+    if (settings.posRedemptionMethod === 'PROMO_CODE' && !dto.voucherId) {
+      if (!this.promoCodes) {
+        throw new ServiceUnavailableException('POS promo-code redemption is not configured');
+      }
+      if (ctx.staffAssisted) {
+        const membershipId = await this.resolveMembershipId(dto);
+        if (!ctx.staffUserId) {
+          throw new BadRequestException('staffUserId is required for staff-assisted redemption');
+        }
+        if (!dto.terminalId?.trim()) {
+          throw new BadRequestException('terminalId is required for staff-assisted redemption');
+        }
+        if (dto.otpCode) {
+          await this.otp.verifyOtp({
+            membershipId,
+            storeId: dto.storeId,
+            staffUserId: ctx.staffUserId,
+            code: dto.otpCode,
+          });
+        } else {
+          await this.otp.assertStaffOtpVerified({
+            membershipId,
+            storeId: dto.storeId,
+            staffUserId: ctx.staffUserId,
+          });
+        }
+      }
+      return this.promoCodes.redeemForPromoCode(dto, ctx);
+    }
 
     if (dto.voucherId) {
       return this.retryFailedVoucher(dto.voucherId, dto.storeId);
@@ -380,6 +425,12 @@ export class PosVoucherService {
     // staff probe whether a voucher id (or a guessed idempotency key) exists at another store.
     if (expectedStoreId && voucher.storeId !== expectedStoreId) {
       throw new NotFoundException('Voucher not found');
+    }
+    if (voucher.type === 'PROMO_CODE') {
+      if (!this.promoCodes) {
+        throw new ServiceUnavailableException('POS promo-code redemption is not configured');
+      }
+      return this.promoCodes.retryFailedPromoCode(voucherId, expectedStoreId);
     }
     if (voucher.status === 'ISSUED') {
       return this.toResult(voucher, voucher.redemption.pointsSpent);
@@ -1040,6 +1091,12 @@ export class PosVoucherService {
       },
     });
     if (!voucher) throw new NotFoundException('Voucher not found');
+    if (voucher.type === 'PROMO_CODE') {
+      if (!this.promoCodes) {
+        throw new ServiceUnavailableException('POS promo-code redemption is not configured');
+      }
+      return this.promoCodes.cancelPromoCode(params);
+    }
     if (voucher.status !== 'ISSUED') {
       throw new BadRequestException(`Cannot cancel voucher in status ${voucher.status}`);
     }
@@ -1142,6 +1199,7 @@ export class PosVoucherService {
     const expired = await this.prisma.loyaltyPosVoucher.findMany({
       where: {
         status: 'ISSUED',
+        type: { not: 'PROMO_CODE' },
         ttlExpiresAt: { lte: now },
       },
       include: {
@@ -1204,7 +1262,8 @@ export class PosVoucherService {
         this.logger.warn(`TTL expire failed for ${voucher.id}: ${(e as Error).message}`);
       }
     }
-    return count;
+    const promoExpired = this.promoCodes ? await this.promoCodes.expireUnusedPromoCodes() : 0;
+    return count + promoExpired;
   }
 
   async listActiveVouchersForUser(userId: string) {
@@ -1220,12 +1279,17 @@ export class PosVoucherService {
     });
     return rows.map((v) => ({
       id: v.id,
-      cardNumber: v.cardNumber,
+      cardNumber: v.promoCode || v.cardNumber,
+      promoCode: v.promoCode,
+      type: v.type,
       amount: Number(v.amount),
       currency: v.currency,
       status: v.status,
       ttlExpiresAt: v.ttlExpiresAt,
-      qrPayload: `hos-voucher:${v.cardNumber}:${v.id}`,
+      qrPayload:
+        v.type === 'PROMO_CODE'
+          ? `hos-promo:${v.promoCode || v.cardNumber}:${v.id}`
+          : `hos-voucher:${v.cardNumber}:${v.id}`,
     }));
   }
 
@@ -1236,6 +1300,8 @@ export class PosVoucherService {
     items: Array<{
       id: string;
       cardNumber: string;
+      promoCode: string | null;
+      type: string;
       amount: number;
       currency: string;
       status: string;
@@ -1270,7 +1336,9 @@ export class PosVoucherService {
     return {
       items: rows.map((v) => ({
         id: v.id,
-        cardNumber: v.cardNumber,
+        cardNumber: v.promoCode || v.cardNumber,
+        promoCode: v.promoCode,
+        type: v.type,
         amount: Number(v.amount),
         currency: v.currency,
         status: v.status,
@@ -1279,7 +1347,10 @@ export class PosVoucherService {
         expiresAt: v.expiresAt,
         ttlExpiresAt: v.ttlExpiresAt,
         storeName: v.store?.name || 'Store',
-        qrPayload: `hos-voucher:${v.cardNumber}:${v.id}`,
+        qrPayload:
+          v.type === 'PROMO_CODE'
+            ? `hos-promo:${v.promoCode || v.cardNumber}:${v.id}`
+            : `hos-voucher:${v.cardNumber}:${v.id}`,
       })),
       total,
       page,

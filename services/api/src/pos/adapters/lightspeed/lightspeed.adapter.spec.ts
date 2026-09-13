@@ -793,5 +793,33 @@ describe('LightspeedAdapter', () => {
       await adapter.reverseGiftCardTransaction('tx-r');
       expect(request).toHaveBeenCalledWith('DELETE', '/gift_cards/transactions/tx-r');
     });
+
+    it('createPromotion POSTs /promotions on the 2026-04 API', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request.mockResolvedValueOnce({
+        status: 201,
+        data: { data: { id: 'promo-1', name: 'HOS Loyalty – GBP 5.00', status: 'active' } },
+      });
+      const promo = await adapter.createPromotion({
+        name: 'HOS Loyalty – GBP 5.00',
+        startTime: '2026-09-13T15:00:00',
+        endTime: '2026-09-13T19:00:00',
+        promoCode: 'HOS-LYL-ABC12345',
+        discountValue: 5,
+      });
+      expect(request).toHaveBeenCalledWith(
+        'POST',
+        '/promotions',
+        expect.objectContaining({
+          use_promo_code: true,
+          loyalty_multiplier: 0,
+          action: { type: 'basic_fixed_discount', value: 5 },
+          add_promo_code: [{ code: 'HOS-LYL-ABC12345', limit: 1 }],
+        }),
+        { apiVersion: '2026-04' },
+      );
+      expect(promo.id).toBe('promo-1');
+    });
   });
 });

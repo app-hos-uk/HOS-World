@@ -74,6 +74,8 @@ export interface POSSale {
   state?: string;
   /** Lightspeed object version for cursor pagination. */
   version?: number;
+  /** Lightspeed `return_for` — original sale id when this payload is a return. */
+  returnForSaleId?: string;
   rawPayload?: unknown;
 }
 
@@ -129,4 +131,31 @@ export type POSGiftCard = {
   status?: string;
   expiresAt?: string | null;
   transactions?: POSGiftCardTransaction[];
+};
+
+export type POSPromotionCreatePayload = {
+  name: string;
+  description?: string;
+  startTime: string;
+  endTime: string;
+  outletIds?: string[];
+  channels?: string[];
+  promoCode: string;
+  promoCodeLimit?: number;
+  discountType?: 'basic_fixed_discount' | 'basic_percent_discount';
+  discountValue: number;
+  loyaltyMultiplier?: number;
+};
+
+export type POSPromotionPromoCode = {
+  id: string;
+  code: string;
+  limit: number;
+};
+
+export type POSPromotion = {
+  id: string;
+  name: string;
+  status: string;
+  promoCodes?: POSPromotionPromoCode[];
 };

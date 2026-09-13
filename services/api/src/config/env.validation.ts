@@ -26,6 +26,8 @@ interface EnvSchema {
   LOYALTY_MIN_REDEMPTION_POINTS?: string;
   /** Gate staff POS points→Lightspeed gift card voucher issuance. */
   LOYALTY_POS_VOUCHER_ENABLED?: string;
+  /** GIFT_CARD (default) or PROMO_CODE for in-store loyalty redemption. */
+  LOYALTY_POS_REDEMPTION_METHOD?: string;
   LOYALTY_CARD_PREFIX?: string;
   LOYALTY_POINTS_EXPIRY_MONTHS?: string;
   LOYALTY_REDEMPTION_AT_CHECKOUT?: string;

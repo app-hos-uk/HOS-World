@@ -33,6 +33,10 @@ function makeMocks() {
       findFirst: jest.fn(),
       update: jest.fn().mockResolvedValue({}),
     },
+    returnRequest: {
+      findFirst: jest.fn().mockResolvedValue(null),
+      create: jest.fn().mockResolvedValue({ id: 'ret-req-1' }),
+    },
   };
   const inventorySync: any = {
     applyPosSaleToInventory: jest.fn(),
@@ -177,6 +181,119 @@ describe('PosSalesImportService', () => {
       const result = await service.importParsedSale('s1', 'lightspeed', parked);
       expect(result.skipped).toBe(true);
       expect(prisma.pOSSale.create).not.toHaveBeenCalled();
+    });
+
+    it('imports a Lightspeed return and claws earned points on the original sale', async () => {
+      const loyaltyReversal = { onPosReturnCompleted: jest.fn().mockResolvedValue(undefined) };
+      const { service, prisma, earnEngine, inventorySync } = makeMocks();
+      (service as any).loyaltyReversal = loyaltyReversal;
+      prisma.pOSSale.findUnique
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 'orig-hos',
+          customerId: 'user-1',
+          loyaltyPointsEarned: 100,
+          totalAmount: 100,
+        });
+      prisma.pOSSale.create.mockResolvedValue({ id: 'return-sale-1' });
+      prisma.externalEntityMapping.findFirst.mockResolvedValue(null);
+      prisma.product.findFirst.mockResolvedValue(null);
+
+      const returned = {
+        ...mockParsedSale,
+        externalId: 'ret-ext-1',
+        totalAmount: -40,
+        returnForSaleId: 'ext-sale-1',
+        items: [
+          {
+            externalProductId: 'ext-p1',
+            sku: 'SKU-1',
+            name: 'Item 1',
+            quantity: -1,
+            unitPrice: 40,
+            totalPrice: -40,
+            taxAmount: 0,
+          },
+        ],
+      };
+
+      const result = await service.importParsedSale('s1', 'lightspeed', returned);
+
+      expect(result.duplicate).toBe(false);
+      expect(result.id).toBe('return-sale-1');
+      expect(prisma.pOSSale.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'RETURN',
+            returnForExternalSaleId: 'ext-sale-1',
+            externalSaleId: 'ret-ext-1',
+          }),
+        }),
+      );
+      expect(earnEngine.processPosSale).not.toHaveBeenCalled();
+      expect(inventorySync.applyPosSaleToInventory).not.toHaveBeenCalled();
+      expect(prisma.returnRequest.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            posSaleId: 'orig-hos',
+            userId: 'user-1',
+            status: 'COMPLETED',
+          }),
+        }),
+      );
+      expect(loyaltyReversal.onPosReturnCompleted).toHaveBeenCalledWith({
+        returnId: 'ret-req-1',
+        posSaleId: 'orig-hos',
+        refundAmount: 40,
+      });
+    });
+
+    it('does not earn on a return sale with no original link', async () => {
+      const { service, prisma, earnEngine } = makeMocks();
+      prisma.pOSSale.findUnique.mockResolvedValue(null);
+      prisma.pOSSale.create.mockResolvedValue({ id: 'return-orphan' });
+      const returned = { ...mockParsedSale, totalAmount: -25, returnForSaleId: undefined };
+      const result = await service.importParsedSale('s1', 'lightspeed', returned);
+      expect(result.id).toBe('return-orphan');
+      expect(earnEngine.processPosSale).not.toHaveBeenCalled();
+      expect(prisma.returnRequest.create).not.toHaveBeenCalled();
+    });
+
+    it('claws a pending return once the original sale is imported later', async () => {
+      const loyaltyReversal = { onPosReturnCompleted: jest.fn().mockResolvedValue(undefined) };
+      const { service, prisma } = makeMocks();
+      (service as any).loyaltyReversal = loyaltyReversal;
+      prisma.pOSSale.findUnique
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 'orig-hos',
+          customerId: 'user-1',
+          loyaltyPointsEarned: 100,
+          totalAmount: 100,
+        });
+      prisma.pOSSale.create.mockResolvedValue({ id: 'orig-hos' });
+      prisma.pOSSale.findMany.mockResolvedValue([
+        { id: 'return-sale-1', externalSaleId: 'ret-ext-1', totalAmount: -40 },
+      ]);
+      prisma.externalEntityMapping.findFirst.mockResolvedValue(null);
+      prisma.product.findFirst.mockResolvedValue(null);
+
+      await service.importParsedSale('s1', 'lightspeed', mockParsedSale);
+
+      expect(prisma.pOSSale.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            provider: 'lightspeed',
+            status: 'RETURN',
+            returnForExternalSaleId: mockParsedSale.externalId,
+          },
+        }),
+      );
+      expect(loyaltyReversal.onPosReturnCompleted).toHaveBeenCalledWith({
+        returnId: 'ret-req-1',
+        posSaleId: 'orig-hos',
+        refundAmount: 40,
+      });
     });
 
     it('marks existing sale VOIDED when void webhook arrives', async () => {

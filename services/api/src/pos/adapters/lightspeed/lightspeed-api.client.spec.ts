@@ -64,6 +64,23 @@ describe('LightspeedApiClient', () => {
     );
   });
 
+  it('builds the 2026-04 promotions API URL', async () => {
+    const { client } = createClient();
+    globalThis.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      headers: new Map(),
+      json: async () => ({ data: { id: 'p1' } }),
+    });
+    const r = await drainAndCollect(
+      client.request('POST', '/promotions', { name: 'x' }, { apiVersion: '2026-04' }),
+    );
+    expect(r.error).toBeUndefined();
+    expect((globalThis.fetch as jest.Mock).mock.calls[0][0]).toBe(
+      'https://testshop.retail.lightspeed.app/api/2026-04/promotions',
+    );
+  });
+
   it('sets Authorization header with bearer token', async () => {
     const { client } = createClient();
     globalThis.fetch = jest.fn().mockResolvedValue({

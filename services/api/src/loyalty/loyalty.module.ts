@@ -13,6 +13,7 @@ import { LoyaltyCampaignService } from './services/campaign.service';
 import { LoyaltyReferralService } from './services/referral.service';
 import { LoyaltyEventService } from './services/loyalty-event.service';
 import { PosVoucherService } from './services/pos-voucher.service';
+import { PosPromoCodeService } from './services/pos-promo-code.service';
 import { PosVoucherOtpService } from './services/pos-voucher-otp.service';
 import { PosExternalGiftCardService } from './services/pos-external-gift-card.service';
 import { LoyaltySettingsService } from './services/loyalty-settings.service';
@@ -76,6 +77,7 @@ import { ReturnPoliciesModule } from '../return-policies/return-policies.module'
     LoyaltyEarnEngine,
     LoyaltyService,
     PosVoucherService,
+    PosPromoCodeService,
     PosVoucherOtpService,
     PosExternalGiftCardService,
     LoyaltyJobsService,
@@ -91,6 +93,7 @@ import { ReturnPoliciesModule } from '../return-policies/return-policies.module'
     LoyaltyTierEngine,
     FandomProfileService,
     PosVoucherService,
+    PosPromoCodeService,
     LoyaltySettingsService,
     LoyaltyReversalService,
     PosExternalGiftCardService,

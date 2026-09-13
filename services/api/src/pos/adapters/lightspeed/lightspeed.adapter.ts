@@ -8,6 +8,9 @@ import type {
   POSGiftCardCreatePayload,
   POSGiftCardTransaction,
   POSGiftCardTransactionPayload,
+  POSPromotion,
+  POSPromotionCreatePayload,
+  POSPromotionPromoCode,
   POSOutlet,
   POSProductPayload,
   POSSale,
@@ -741,6 +744,114 @@ export class LightspeedAdapter implements POSAdapter {
       `/gift_cards/by_number/${encoded}`,
     );
     return this.mapGiftCard(data?.data ?? (data as unknown as Record<string, unknown>));
+  }
+
+  /**
+   * Promotions API lives on Lightspeed X-Series 2026-04 (`promotions:write`).
+   * @see https://x-series-api.lightspeedhq.com/v2026.04/docs/promotions
+   */
+  private promotionsRequest<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+  ): Promise<{ data: T; status: number }> {
+    return this.client.request<T>(method, path, body, { apiVersion: '2026-04' });
+  }
+
+  async createPromotion(payload: POSPromotionCreatePayload): Promise<POSPromotion> {
+    const body: Record<string, unknown> = {
+      name: payload.name,
+      start_time: payload.startTime,
+      end_time: payload.endTime,
+      channels: payload.channels ?? ['Register'],
+      use_promo_code: true,
+      add_promo_code: [
+        { code: payload.promoCode, limit: payload.promoCodeLimit ?? 1 },
+      ],
+      condition: { type: 'product_set', quantity: 1, include: [], exclude: [] },
+      action: {
+        type: payload.discountType ?? 'basic_fixed_discount',
+        value: payload.discountValue,
+      },
+      loyalty_multiplier: payload.loyaltyMultiplier ?? 0,
+    };
+    if (payload.description) body.description = payload.description;
+    if (payload.outletIds?.length) body.outlet_ids = payload.outletIds;
+
+    const { data } = await this.promotionsRequest<{ data?: Record<string, unknown> }>(
+      'POST',
+      '/promotions',
+      body,
+    );
+    return this.mapPromotion(data?.data ?? (data as unknown as Record<string, unknown>));
+  }
+
+  async getPromotion(promotionId: string): Promise<POSPromotion | null> {
+    const id = promotionId.trim();
+    if (!id) return null;
+    try {
+      const { data } = await this.promotionsRequest<{ data?: Record<string, unknown> }>(
+        'GET',
+        `/promotions/${encodeURIComponent(id)}`,
+      );
+      const row = data?.data ?? (data as unknown as Record<string, unknown>);
+      if (!row || typeof row !== 'object') return null;
+      return this.mapPromotion(row);
+    } catch (e) {
+      if (this.isNotFound(e)) return null;
+      throw e;
+    }
+  }
+
+  async archivePromotion(promotionId: string): Promise<POSPromotion> {
+    const encoded = encodeURIComponent(promotionId);
+    const { data } = await this.promotionsRequest<{ data?: Record<string, unknown> }>(
+      'GET',
+      `/promotions/${encoded}`,
+    );
+    const row = data?.data ?? (data as unknown as Record<string, unknown>);
+    if (!row || typeof row !== 'object' || !row.id) {
+      throw new Error(`Lightspeed promotion ${promotionId} not found`);
+    }
+    const { data: updated } = await this.promotionsRequest<{ data?: Record<string, unknown> }>(
+      'PUT',
+      `/promotions/${encoded}`,
+      { ...row, status: 'archived' },
+    );
+    return this.mapPromotion(updated?.data ?? (updated as unknown as Record<string, unknown>));
+  }
+
+  async getPromotionPromoCodes(promotionId: string): Promise<POSPromotionPromoCode[]> {
+    const { data } = await this.promotionsRequest<{
+      data?: Array<Record<string, unknown>>;
+    }>('GET', `/promotions/${encodeURIComponent(promotionId)}/promocodes`);
+    const rows = Array.isArray(data?.data) ? data.data : [];
+    return rows.map((r) => ({
+      id: String(r.id ?? ''),
+      code: String(r.code ?? ''),
+      limit: Number(r.limit ?? 0),
+    }));
+  }
+
+  private mapPromotion(row: Record<string, unknown> | undefined | null): POSPromotion {
+    const r = row && typeof row === 'object' ? row : {};
+    const codesRaw = r.promo_codes ?? r.add_promo_code ?? r.promo_code_summary;
+    const promoCodes = Array.isArray(codesRaw)
+      ? codesRaw.map((c) => {
+          const rec = c && typeof c === 'object' ? (c as Record<string, unknown>) : {};
+          return {
+            id: String(rec.id ?? ''),
+            code: String(rec.code ?? ''),
+            limit: Number(rec.limit ?? 0),
+          };
+        })
+      : undefined;
+    return {
+      id: String(r.id ?? ''),
+      name: String(r.name ?? ''),
+      status: String(r.status ?? ''),
+      promoCodes,
+    };
   }
 
   private mapGiftCard(row: Record<string, unknown> | undefined | null): POSGiftCard {

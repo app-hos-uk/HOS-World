@@ -15,6 +15,7 @@ type Settings = {
   cardPrefix: string;
   redemptionAtCheckout: boolean;
   posVoucherEnabled: boolean;
+  posRedemptionMethod: 'GIFT_CARD' | 'PROMO_CODE';
   posVoucherMinAmount: number;
   posVoucherMaxAmount: number;
   giftCardCatalogAmounts: string;
@@ -60,6 +61,8 @@ export default function AdminLoyaltySettingsPage() {
       if (payload?.settings) {
         setForm({
           ...payload.settings,
+          posRedemptionMethod:
+            payload.settings.posRedemptionMethod === 'PROMO_CODE' ? 'PROMO_CODE' : 'GIFT_CARD',
           campaignMinPurchaseThreshold: Number(payload.settings.campaignMinPurchaseThreshold ?? 0),
           campaignBonusEarnRate: Number(payload.settings.campaignBonusEarnRate ?? 0),
           campaignBonusPointsPerDollar: Number(payload.settings.campaignBonusPointsPerDollar ?? 0),
@@ -249,8 +252,28 @@ export default function AdminLoyaltySettingsPage() {
                 checked={form.posVoucherEnabled}
                 onChange={(e) => set('posVoucherEnabled', e.target.checked)}
               />
-              Enable POS points → Lightspeed gift card vouchers
+              Enable POS points redemption
             </label>
+            <label className="block text-sm text-hos-text-secondary font-ui">
+              In-store redemption method
+              <select
+                className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
+                value={form.posRedemptionMethod ?? 'GIFT_CARD'}
+                onChange={(e) =>
+                  set(
+                    'posRedemptionMethod',
+                    e.target.value === 'PROMO_CODE' ? 'PROMO_CODE' : 'GIFT_CARD',
+                  )
+                }
+              >
+                <option value="GIFT_CARD">Lightspeed gift card</option>
+                <option value="PROMO_CODE">Lightspeed promo code (one-time discount)</option>
+              </select>
+            </label>
+            <p className="text-xs text-hos-text-muted font-ui">
+              Promo codes apply as a till discount (not a payment), so returns claw earned points
+              against the original sale without mixing gift-card refunds.
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <label className="block text-sm text-hos-text-secondary font-ui">
                 Min amount

@@ -47,6 +47,7 @@ export default function StoreLookupPage() {
     amount: number;
     currency: string;
     qrPayload?: string;
+    type?: string;
   } | null>(null);
   const [showEnroll, setShowEnroll] = useState(false);
 
@@ -168,16 +169,24 @@ export default function StoreLookupPage() {
         amount?: number;
         currency?: string;
         qrPayload?: string;
+        type?: string;
+        promoCode?: string;
       };
-      if (data?.cardNumber) {
+      const code = data?.promoCode || data?.cardNumber;
+      if (code) {
         setLastVoucher({
-          cardNumber: data.cardNumber,
+          cardNumber: code,
           amount: data.amount ?? 0,
           currency: data.currency ?? DEFAULT_CURRENCY,
           qrPayload: data.qrPayload,
+          type: data.type,
         });
       }
-      toast.success('Voucher issued — show customer the card number');
+      toast.success(
+        data?.type === 'PROMO_CODE'
+          ? 'Promo code issued — enter it as a till discount, not a payment'
+          : 'Voucher issued — show customer the card number',
+      );
       setRedeemPoints('');
       setOtpCode('');
     } catch (e: unknown) {
@@ -185,7 +194,7 @@ export default function StoreLookupPage() {
       const isPermission = /permission|not authorized|403/i.test(msg);
       if (isPermission) {
         toast.error(
-          'The Lightspeed POS user does not have gift card permissions. Please contact your admin to update the Lightspeed user role.',
+          'The Lightspeed POS user does not have gift card or promotions permissions. Please contact your admin to update the Lightspeed user role.',
         );
       } else {
         toast.error(msg);
@@ -394,17 +403,24 @@ export default function StoreLookupPage() {
 
       {lastVoucher && (
         <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4 space-y-2">
-          <p className="text-sm font-medium text-emerald-300">Voucher ready for till</p>
+          <p className="text-sm font-medium text-emerald-300">
+            {lastVoucher.type === 'PROMO_CODE' ? 'Promo code ready for till' : 'Voucher ready for till'}
+          </p>
           <p className="font-mono text-xl tracking-widest">{lastVoucher.cardNumber}</p>
           <p className="text-sm text-hos-text-secondary">
             {lastVoucher.currency} {lastVoucher.amount.toFixed(2)}
           </p>
+          {lastVoucher.type === 'PROMO_CODE' && (
+            <p className="text-xs text-hos-text-muted">
+              Apply as a discount code on the sale. Do not take it as a payment.
+            </p>
+          )}
           {lastVoucher.qrPayload && (
             <div className="flex flex-col items-start pt-2">
               <CustomerQr
                 value={lastVoucher.qrPayload}
                 size={160}
-                alt="Gift card voucher QR"
+                alt={lastVoucher.type === 'PROMO_CODE' ? 'Promo code QR' : 'Gift card voucher QR'}
                 showValue={false}
                 className="flex flex-col items-start"
               />

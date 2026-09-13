@@ -220,7 +220,7 @@ export class LoyaltyController {
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @RequireAccess({ permission: 'loyalty.manage', scope: 'SELF' })
   @Roles('CUSTOMER')
-  @ApiOperation({ summary: 'Burn points and issue an in-store gift card voucher (Flow A1)' })
+  @ApiOperation({ summary: 'Burn points and issue an in-store gift card or promo code (Flow A1)' })
   async redeemInStore(
     @Request() req: { user: { id: string } },
     @Body() body: RedeemInStoreDto,
