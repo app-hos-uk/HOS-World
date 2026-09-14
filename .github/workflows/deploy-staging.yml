@@ -1,0 +1,128 @@
+name: Deploy Staging
+
+on:
+  # Deploy to staging after CI passes on develop (mirrors production deploy on master).
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [develop]
+  workflow_dispatch: # Manual re-deploy to staging (skips CI gate)
+
+jobs:
+  gate:
+    name: Verify CI passed
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - run: echo "CI passed or manual dispatch — proceeding to staging deploy."
+
+  verify-railway-token:
+    name: Verify RAILWAY_TOKEN secret
+    needs: [gate]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require GitHub secret RAILWAY_TOKEN
+        env:
+          T: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "$T" ]; then
+            echo "::error::Repository secret RAILWAY_TOKEN is missing."
+            echo "Use the same project-level Railway token as production deploy."
+            exit 1
+          fi
+          echo "RAILWAY_TOKEN is set."
+
+  deploy-api:
+    name: Deploy API to Railway (staging)
+    needs: [verify-railway-token]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli@4.42.1
+      - name: Deploy API
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up \
+            --service '@hos-marketplace/api' \
+            --environment staging \
+            --detach \
+            --ci
+
+  deploy-web:
+    name: Deploy Web to Railway (staging)
+    needs: [verify-railway-token]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli@4.42.1
+      - name: Deploy Web
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up \
+            --service '@hos-marketplace/web' \
+            --environment staging \
+            --detach \
+            --ci
+
+  smoke-test:
+    name: Post-Deploy Staging Smoke Test
+    runs-on: ubuntu-latest
+    needs: [deploy-api, deploy-web]
+    if: success()
+    steps:
+      - name: Require staging URL secrets
+        env:
+          API: ${{ secrets.STAGING_API_URL }}
+          WEB: ${{ secrets.STAGING_WEB_URL }}
+        run: |
+          if [ -z "$API" ] || [ -z "$WEB" ]; then
+            echo "::warning::STAGING_API_URL and/or STAGING_WEB_URL GitHub secrets are not set."
+            echo "Deploy succeeded; add secrets for automated smoke tests (see docs/STAGING_DEPLOYMENT_CHECKLIST.md)."
+            exit 0
+          fi
+          echo "STAGING_API_URL=$API"
+          echo "STAGING_WEB_URL=$WEB"
+
+      - name: Wait for deployment propagation
+        run: sleep 60
+
+      - name: API health check (liveness then full)
+        env:
+          BASE: ${{ secrets.STAGING_API_URL }}
+        run: |
+          if [ -z "$BASE" ]; then exit 0; fi
+          LIVE_OK=false
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            LIVE=$(curl -sS -o /dev/null -w "%{http_code}" "$BASE/api/health/live" || echo "000")
+            echo "Attempt $i — /api/health/live: $LIVE"
+            if [ "$LIVE" = "200" ]; then LIVE_OK=true; break; fi
+            sleep 10
+          done
+          if [ "$LIVE_OK" != "true" ]; then
+            echo "::error::Staging API liveness probe never returned 200"
+            exit 1
+          fi
+          STATUS=$(curl -sS -o /dev/null -w "%{http_code}" "$BASE/api/health" || echo "000")
+          echo "Staging API full health: $STATUS"
+          if [ "$STATUS" != "200" ] && [ "$STATUS" != "201" ]; then
+            echo "::error::Staging API health returned $STATUS"
+            exit 1
+          fi
+
+      - name: Web health check
+        env:
+          WEB: ${{ secrets.STAGING_WEB_URL }}
+        run: |
+          if [ -z "$WEB" ]; then exit 0; fi
+          STATUS=$(curl -sS -o /dev/null -w "%{http_code}" "$WEB/" || echo "000")
+          echo "Staging web health: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::Staging web health returned $STATUS"
+            exit 1
+          fi

@@ -33,6 +33,7 @@
     "db:seed-admin": "ts-node src/database/create-admin.ts",
     "db:seed-all-roles": "ts-node src/database/seed-all-roles.ts",
     "db:seed-loyalty": "ts-node prisma/seeds/loyalty-seed.ts",
+    "db:seed-staging": "pnpm db:seed-admin && pnpm db:seed-all-roles && pnpm db:seed-loyalty",
     "db:seed-pos": "ts-node prisma/seeds/pos-seed.ts",
     "db:seed-quiz": "ts-node prisma/seeds/quiz-seed.ts",
     "db:seed-journeys": "ts-node prisma/seeds/journey-seed.ts",

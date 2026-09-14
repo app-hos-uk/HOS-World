@@ -28,6 +28,23 @@ Watch paths are configured so each service only rebuilds when its files change:
 
 Push to `master` → only affected services rebuild.
 
+### Staging (develop branch)
+
+| Environment | Branch | Workflow |
+|-------------|--------|----------|
+| `staging` | `develop` | `.github/workflows/deploy-staging.yml` |
+| `production` | `master` | `.github/workflows/deploy.yml` |
+
+Setup: [`docs/STAGING_DEPLOYMENT_CHECKLIST.md`](STAGING_DEPLOYMENT_CHECKLIST.md) and [`scripts/railway/README.md`](../scripts/railway/README.md).
+
+Manual staging deploy:
+
+```bash
+railway environment link staging
+railway up --service '@hos-marketplace/api' --environment staging --detach
+railway up --service '@hos-marketplace/web' --environment staging --detach
+```
+
 ### Manual deploy via CLI
 
 ```bash
