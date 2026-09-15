@@ -28,6 +28,24 @@ import type {
 const DEFAULT_REQUEST_TIMEOUT_MS = 15000;
 
 /**
+ * Extended Error that preserves structured fields from API error responses
+ * (e.g. `code`, `email`, `status`) so callers can branch on them.
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code?: string;
+  readonly email?: string;
+
+  constructor(message: string, status: number, code?: string, email?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+    this.email = email;
+  }
+}
+
+/**
  * Issuing a POS voucher burns points and creates a gift card in Lightspeed over several
  * sequential provider calls, so it needs longer than the default. The server bounds its
  * own work below this, so a timeout here means the server really did stop.
@@ -221,11 +239,15 @@ export class ApiClient {
       // This preserves useful backend messages like "Invalid credentials" for /auth/login.
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
+        let errorCode: string | undefined;
+        let errorEmail: string | undefined;
         try {
           const errorData = await response.json();
           // Nest often returns `message` as string | string[]
           const msg = (errorData as any)?.message;
           errorMessage = Array.isArray(msg) ? msg.join(', ') : msg || errorMessage;
+          errorCode = (errorData as any)?.code;
+          errorEmail = (errorData as any)?.email;
           if (!(response.status === 401 && this.unauthorizedHandled)) {
             if (process.env.NODE_ENV === 'development') {
               console.error('API Error Response:', {
@@ -270,7 +292,7 @@ export class ApiClient {
           }
         }
 
-        throw new Error(errorMessage);
+        throw new ApiError(errorMessage, response.status, errorCode, errorEmail);
       }
 
       const data = await response.json();

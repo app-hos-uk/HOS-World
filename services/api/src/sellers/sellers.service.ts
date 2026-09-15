@@ -7,13 +7,16 @@ import {
   Inject,
   Optional,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { UpdateSellerDto } from './dto/update-seller.dto';
 import { SellerType, LogisticsOption, Prisma } from '@prisma/client';
 import { slugify } from '@hos-marketplace/utils';
 import { ActivityService } from '../activity/activity.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { TemplatesService } from '../templates/templates.service';
 import { normalizeCountryCode } from '../common/utils/country-code';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class SellersService {
@@ -22,8 +25,10 @@ export class SellersService {
 
   constructor(
     private prisma: PrismaService,
+    private configService: ConfigService,
     @Optional() private activityService?: ActivityService,
     @Optional() @Inject(NotificationsService) private notificationsService?: NotificationsService,
+    @Optional() private templatesService?: TemplatesService,
   ) {
     const key = process.env.ENCRYPTION_KEY;
     if (!key) {
@@ -602,12 +607,54 @@ export class SellersService {
         };
       });
 
+      // Send verification email (best-effort)
+      try {
+        await this.sendVerificationEmailForUser(result.userId);
+      } catch (err: unknown) {
+        this.logger.warn(
+          `Verification email failed for vendor applicant ${applicationData.email}: ${err instanceof Error ? err.message : 'unknown'}`,
+        );
+      }
+
       return result;
     } catch (error: unknown) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new BadRequestException('An account with this email already exists.');
       }
       throw error;
+    }
+  }
+
+  private async sendVerificationEmailForUser(userId: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.emailVerified) return;
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerifyToken: tokenHash,
+        emailVerifyTokenExpires: new Date(Date.now() + TOKEN_EXPIRY_MS),
+      },
+    });
+
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const verifyLink = `${frontendUrl}/auth/verify-email?token=${token}`;
+    const customerName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'there';
+
+    if (this.templatesService && this.notificationsService) {
+      const rendered = await this.templatesService.render('email_verification', {
+        customerName,
+        verifyLink,
+      });
+      const subject = rendered?.subject || 'Verify your email — House of Spells';
+      const html =
+        rendered?.body ||
+        `<p>Hi ${customerName},</p><p>Please verify your email by clicking <a href="${verifyLink}">here</a>.</p>`;
+      await this.notificationsService.queueNotification(user.email, subject, html);
     }
   }
 

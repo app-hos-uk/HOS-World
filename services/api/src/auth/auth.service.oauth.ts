@@ -118,6 +118,8 @@ export class AuthOAuthService {
           avatar: oauthData.avatar,
           password: null,
           role: 'CUSTOMER',
+          emailVerified: true,
+          emailVerifiedAt: new Date(),
           oAuthAccounts: {
             create: {
               provider: oauthData.provider,

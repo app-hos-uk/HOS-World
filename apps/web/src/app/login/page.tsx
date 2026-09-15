@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient, markLoginSuccess, mergeGuestCartAfterAuth, setFrontendSessionCookie } from '@/lib/api';
+import { ApiError } from '@hos-marketplace/api-client';
 import {
   clearPendingReferral,
   getPendingReferralCode,
@@ -13,7 +14,7 @@ import { CharacterSelector } from '@/components/CharacterSelector';
 import { FandomQuiz } from '@/components/FandomQuiz';
 import { CountrySelect } from '@/components/CountrySelect';
 import { COUNTRIES } from '@/lib/countries';
-import { getDirectApiBaseUrl } from '@/lib/apiBaseUrl';
+import { getDirectApiBaseUrl, getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 import { resolvePostAuthRedirect, resolvePostRegisterRedirect, getSafeReturnUrl, stashAuthReturnUrl } from '@/lib/authRedirect';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -46,6 +47,16 @@ function LoginPageInner() {
   const [resetSuccess, setResetSuccess] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const isRedirecting = useRef(false);
+  const [verificationPending, setVerificationPending] = useState<{ email: string; fromLogin?: boolean } | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
+  }, []);
 
   // Global Platform Registration Fields
   const [firstName, setFirstName] = useState('');
@@ -217,6 +228,37 @@ function LoginPageInner() {
     }
   }, []);
 
+  const startResendCooldown = useCallback(() => {
+    setResendCooldown(60);
+    if (cooldownRef.current) clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          if (cooldownRef.current) clearInterval(cooldownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  const handleResendVerification = useCallback(async (emailToResend: string) => {
+    setResendSuccess(false);
+    try {
+      const res = await fetch(`${getPublicApiBaseUrl()}/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'include',
+        body: JSON.stringify({ email: emailToResend }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setResendSuccess(true);
+      startResendCooldown();
+    } catch {
+      setError('Failed to resend verification email. Please try again.');
+    }
+  }, [startResendCooldown]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -264,6 +306,12 @@ function LoginPageInner() {
       await completeAuthNavigation(redirectPath);
     } catch (err: any) {
       console.error('[LOGIN] Login error:', err);
+      if (err instanceof ApiError && err.code === 'EMAIL_NOT_VERIFIED') {
+        setVerificationPending({ email: err.email || email, fromLogin: true });
+        setLoading(false);
+        isRedirecting.current = false;
+        return;
+      }
       const msg = err.message || '';
       let displayError: string;
       if (msg.toLowerCase().includes('too many requests') || msg.toLowerCase().includes('throttl')) {
@@ -364,6 +412,18 @@ function LoginPageInner() {
       if (!response || !response.data) {
         throw new Error('Invalid response from server');
       }
+
+      // Handle email verification flow — API returns requiresVerification
+      // instead of tokens when email verification is enforced.
+      const responseAny = response as any;
+      if (responseAny.requiresVerification || responseAny.data?.requiresVerification) {
+        const verifyEmail = responseAny.email || responseAny.data?.email || email;
+        setVerificationPending({ email: verifyEmail });
+        setLoading(false);
+        try { sessionStorage.removeItem('hos_invite_code'); } catch { /* ignore */ }
+        return;
+      }
+
       const { user } = response.data;
       if (!user) {
         throw new Error('Registration failed — no user profile returned');
@@ -578,8 +638,75 @@ function LoginPageInner() {
           </div>
         )}
 
+        {/* Email Verification Pending */}
+        {step === 'login' && verificationPending && (
+          <div className="bg-hos-bg-secondary rounded-xl shadow-lg p-6 sm:p-8">
+            <div className="text-center space-y-4">
+              {/* Email icon */}
+              <div className="w-16 h-16 bg-hos-gold/15 rounded-full flex items-center justify-center mx-auto">
+                <svg className="w-8 h-8 text-hos-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+
+              <h2 className="text-xl sm:text-2xl font-bold text-hos-text-primary">
+                {verificationPending.fromLogin ? 'Email Not Verified' : 'Account Created!'}
+              </h2>
+
+              <p className="text-hos-text-secondary text-sm sm:text-base">
+                {verificationPending.fromLogin
+                  ? 'Your email hasn\u2019t been verified yet. Please check your inbox and click the verification link.'
+                  : 'We\u2019ve sent a verification link to your email. Please click the link to activate your account.'}
+              </p>
+
+              <div className="inline-block rounded-lg bg-hos-bg px-4 py-2 border border-hos-border">
+                <p className="text-hos-gold font-medium text-sm break-all">{verificationPending.email}</p>
+              </div>
+
+              {resendSuccess && (
+                <div className="p-3 bg-green-500/15 text-green-400 rounded-lg text-sm">
+                  Verification email sent! Check your inbox.
+                </div>
+              )}
+
+              <div aria-live="polite" aria-atomic="true">
+                {error && (
+                  <div role="alert" className="p-3 bg-red-500/15 text-red-400 rounded-lg text-sm">
+                    {error}
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="button"
+                disabled={resendCooldown > 0}
+                onClick={() => void handleResendVerification(verificationPending.email)}
+                className="w-full bg-hos-gold text-[#1a1406] py-3 rounded-lg font-semibold hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {resendCooldown > 0
+                  ? `Resend in ${resendCooldown}s`
+                  : 'Resend Verification Email'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setVerificationPending(null);
+                  setError('');
+                  setResendSuccess(false);
+                  setResendCooldown(0);
+                  if (cooldownRef.current) clearInterval(cooldownRef.current);
+                }}
+                className="text-hos-gold hover:underline text-sm"
+              >
+                ← Back to Login
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Login/Register Form */}
-        {step === 'login' && (
+        {step === 'login' && !verificationPending && (
           <div className="bg-hos-bg-secondary rounded-xl shadow-lg p-6 sm:p-8">
             <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">
               {isLogin ? 'Welcome Back!' : 'Join the Magic'}

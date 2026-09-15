@@ -15,6 +15,7 @@ import { AdminSellersService } from './sellers.service';
 import { AdminProductsService } from './products.service';
 import { DatabaseModule } from '../database/database.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { TemplatesModule } from '../templates/templates.module';
 import { ProductsModule } from '../products/products.module';
 import { ReviewsModule } from '../reviews/reviews.module';
 import { FeatureFlagsModule } from '../config/feature-flags.module';
@@ -49,6 +50,7 @@ const migrationControllers =
     DatabaseModule,
     ConfigModule,
     NotificationsModule,
+    TemplatesModule,
     ProductsModule,
     FeatureFlagsModule,
     LoyaltyModule,

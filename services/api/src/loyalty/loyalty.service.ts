@@ -1247,6 +1247,8 @@ export class LoyaltyService implements OnModuleInit {
           phoneNormalized,
           country: countryHint,
           role: UserRole.CUSTOMER,
+          emailVerified: true,
+          emailVerifiedAt: new Date(),
         },
       });
     } else {

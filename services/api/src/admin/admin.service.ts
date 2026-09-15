@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException, Logger, Optional } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { CacheService } from '../cache/cache.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { TemplatesService } from '../templates/templates.service';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 import { isProtectedAdminEmail, isSuperAdminEmail } from '../config/protected-admin-emails';
 import { randomBytes } from 'crypto';
@@ -25,8 +29,11 @@ export class AdminService {
 
   constructor(
     private prisma: PrismaService,
+    private configService: ConfigService,
     private platformRegion: PlatformRegionService,
     private policy: PolicyService,
+    @Optional() private notificationsService?: NotificationsService,
+    @Optional() private templatesService?: TemplatesService,
     @Optional() private cache?: CacheService,
   ) {}
 
@@ -234,6 +241,15 @@ export class AdminService {
       });
     }
 
+    // Send verification email (best-effort)
+    try {
+      await this.sendVerificationEmailForUser(user.id);
+    } catch (err: unknown) {
+      this.logger.warn(
+        `Verification email failed for admin-created user ${user.email}: ${err instanceof Error ? err.message : 'unknown'}`,
+      );
+    }
+
     // Create influencer profile + storefront when role is INFLUENCER
     if (data.role === UserRole.INFLUENCER) {
       const displayName =
@@ -255,6 +271,39 @@ export class AdminService {
     }
 
     return user;
+  }
+
+  private async sendVerificationEmailForUser(userId: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.emailVerified) return;
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerifyToken: tokenHash,
+        emailVerifyTokenExpires: new Date(Date.now() + TOKEN_EXPIRY_MS),
+      },
+    });
+
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const verifyLink = `${frontendUrl}/auth/verify-email?token=${token}`;
+    const customerName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'there';
+
+    if (this.templatesService && this.notificationsService) {
+      const rendered = await this.templatesService.render('email_verification', {
+        customerName,
+        verifyLink,
+      });
+      const subject = rendered?.subject || 'Verify your email — House of Spells';
+      const html =
+        rendered?.body ||
+        `<p>Hi ${customerName},</p><p>Please verify your email by clicking <a href="${verifyLink}">here</a>.</p>`;
+      await this.notificationsService.queueNotification(user.email, subject, html);
+    }
   }
 
   private async generateUniqueReferralCode(prefix: string): Promise<string> {

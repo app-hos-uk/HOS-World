@@ -94,7 +94,9 @@ describe('Cart and Orders Integration Tests', () => {
         preferredCommunicationMethod: CommunicationMethod.EMAIL,
         gdprConsent: true,
       });
-      sellerUserId = sellerResult.user.id;
+      const sellerEmail = (sellerResult as any).email || `seller-${Date.now()}@example.com`;
+      const sellerUser = await prismaService.user.findUnique({ where: { email: sellerEmail } });
+      sellerUserId = sellerUser!.id;
 
       const product = await productsService.create(sellerUserId, {
         name: 'Cart Test Product',
@@ -106,8 +108,9 @@ describe('Cart and Orders Integration Tests', () => {
       });
       productId = product.id;
 
-      const customerResult = await authService.register({
-        email: `customer-${Date.now()}@example.com`,
+      const customerEmail = `customer-${Date.now()}@example.com`;
+      await authService.register({
+        email: customerEmail,
         password: 'Test123!@#',
         firstName: 'Customer',
         lastName: 'Test',
@@ -116,7 +119,8 @@ describe('Cart and Orders Integration Tests', () => {
         preferredCommunicationMethod: CommunicationMethod.EMAIL,
         gdprConsent: true,
       });
-      customerUserId = customerResult.user.id;
+      const customerUser = await prismaService.user.findUnique({ where: { email: customerEmail } });
+      customerUserId = customerUser!.id;
 
       const address = await prismaService.address.create({
         data: {

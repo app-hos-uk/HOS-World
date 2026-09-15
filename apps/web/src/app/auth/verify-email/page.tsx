@@ -91,7 +91,13 @@ function VerifyEmailContent() {
             </div>
             <h1 className="text-2xl font-display text-hos-text-secondary">Email Verified!</h1>
             <p className="text-hos-text-muted">{message}</p>
-            <p className="text-hos-text-muted text-sm">Redirecting to login...</p>
+            <Link
+              href="/login"
+              className="inline-block mt-2 px-6 py-2 bg-hos-gold text-hos-bg rounded-lg font-semibold hover:bg-hos-gold-hover transition-colors"
+            >
+              Log In to Your Account
+            </Link>
+            <p className="text-hos-text-muted text-sm">Redirecting automatically…</p>
           </div>
         )}
 

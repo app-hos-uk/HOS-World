@@ -110,25 +110,25 @@ describe('Authentication Integration Tests', () => {
           gdprConsent: true,
         });
 
-        expect(result).toHaveProperty('user');
-        expect(result).toHaveProperty('token');
-        expect(result.user.email).toBe(email);
-        expect(result.user.role).toBe('CUSTOMER');
+        // Registration now returns verification-required response instead of tokens
+        expect(result).toHaveProperty('requiresVerification');
+        expect((result as any).requiresVerification).toBe(true);
+        expect((result as any).email).toBe(email);
 
         // Verify user exists in database
         const user = await prismaService.user.findUnique({
-          where: { id: result.user.id },
+          where: { email },
         });
         expect(user).toBeDefined();
         expect(user?.email).toBe(email);
 
         // Verify customer profile created
         const customer = await prismaService.customer.findUnique({
-          where: { userId: result.user.id },
+          where: { userId: user!.id },
         });
         expect(customer).toBeDefined();
 
-        createdUserId = result.user.id;
+        createdUserId = user!.id;
       } catch (error: any) {
         if (isDbConnectionError(error)) {
           console.warn('⚠️ Skipping test: Database operation failed');
@@ -159,8 +159,8 @@ describe('Authentication Integration Tests', () => {
         });
 
         const user = await prismaService.user.findUnique({
-          where: { id: result.user.id },
-          select: { password: true },
+          where: { email },
+          select: { id: true, password: true },
         });
 
         expect(user?.password).not.toBe(password);
@@ -173,7 +173,7 @@ describe('Authentication Integration Tests', () => {
         // Cleanup
         await prismaService.user
           .delete({
-            where: { id: result.user.id },
+            where: { id: user!.id },
           })
           .catch(() => {});
       } catch (error: any) {
@@ -200,7 +200,7 @@ describe('Authentication Integration Tests', () => {
       testPassword = 'LoginTest123!';
 
       try {
-        const result = await authService.register({
+        await authService.register({
           email: testEmail,
           password: testPassword,
           firstName: 'Login',
@@ -211,7 +211,12 @@ describe('Authentication Integration Tests', () => {
           gdprConsent: true,
         });
 
-        testUserId = result.user.id;
+        // Mark user as email-verified so login tests work
+        const registeredUser = await prismaService.user.findUnique({ where: { email: testEmail } });
+        if (registeredUser) {
+          await prismaService.user.update({ where: { id: registeredUser.id }, data: { emailVerified: true, emailVerifiedAt: new Date() } });
+        }
+        testUserId = registeredUser!.id;
       } catch (error: any) {
         if (isDbConnectionError(error)) {
           console.warn('⚠️ Skipping login tests: Database operation failed');

@@ -207,6 +207,8 @@ export class InfluencerInvitationsService {
             firstName: userData.firstName,
             lastName: userData.lastName,
             role: 'INFLUENCER',
+            emailVerified: true,
+            emailVerifiedAt: new Date(),
           },
         });
       } else {

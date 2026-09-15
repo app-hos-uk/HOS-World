@@ -7,6 +7,7 @@ import { BrandLogo } from '@/components/BrandLogo';
 import { CustomerQr } from '@/components/CustomerQr';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient, markLoginSuccess, setFrontendSessionCookie } from '@/lib/api';
+import { getPublicApiBaseUrl } from '@/lib/apiBaseUrl';
 import { COUNTRIES } from '@/lib/countries';
 import { normalizeWhitespace, validateNameLike, validatePhoneMaxDigits } from '@/lib/formFieldValidation';
 import { formatMoney } from '@/lib/money';
@@ -190,6 +191,16 @@ function JoinPageInner() {
   const [fandomChallenge, setFandomChallenge] = useState<FandomChallenge | null>(null);
   const [fandomAnswer, setFandomAnswer] = useState<number | null>(null);
   const [challengeLoadFailed, setChallengeLoadFailed] = useState(false);
+  const [verificationPending, setVerificationPending] = useState<{ email: string } | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
+  }, []);
 
   const countryCode = getRegionConfig().country || 'US';
   const countryName = COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
@@ -221,6 +232,37 @@ function JoinPageInner() {
       setChallengeLoadFailed(true);
     }
   }, []);
+
+  const startResendCooldown = useCallback(() => {
+    setResendCooldown(60);
+    if (cooldownRef.current) clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          if (cooldownRef.current) clearInterval(cooldownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  const handleResendVerification = useCallback(async (emailToResend: string) => {
+    setResendSuccess(false);
+    try {
+      const res = await fetch(`${getPublicApiBaseUrl()}/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        credentials: 'include',
+        body: JSON.stringify({ email: emailToResend }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setResendSuccess(true);
+      startResendCooldown();
+    } catch {
+      setError('Failed to resend verification email. Please try again.');
+    }
+  }, [startResendCooldown]);
 
   useEffect(() => {
     if (!user) void loadFandomChallenge();
@@ -374,7 +416,7 @@ function JoinPageInner() {
 
     setSubmitting(true);
     try {
-      await apiClient.register({
+      const regResponse = await apiClient.register({
         email: em,
         password,
         role: 'customer',
@@ -397,6 +439,14 @@ function JoinPageInner() {
         ...(fandomChallenge ? { fandomChallengeToken: fandomChallenge.token } : {}),
         ...(fandomAnswer != null ? { fandomChallengeAnswer: fandomAnswer } : {}),
       });
+
+      // Handle email verification flow
+      const regAny = regResponse as any;
+      if (regAny?.requiresVerification || regAny?.data?.requiresVerification) {
+        setVerificationPending({ email: regAny.email || regAny.data?.email || em });
+        setSubmitting(false);
+        return;
+      }
 
       setFrontendSessionCookie();
       markLoginSuccess();
@@ -526,6 +576,50 @@ function JoinPageInner() {
             >
               Open my Enchanted Circle
             </Link>
+          </div>
+        ) : verificationPending ? (
+          <div className="flex flex-1 flex-col items-center text-center">
+            <div className="w-full rounded-2xl border border-amber-600/40 bg-gradient-to-b from-stone-900/90 to-stone-950 p-6 shadow-[0_0_40px_rgba(217,119,6,0.12)]">
+              {/* Email icon */}
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/15">
+                <svg className="h-8 w-8 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="font-primary text-2xl text-amber-100 sm:text-3xl">Check Your Email</p>
+              <p className="font-secondary mt-3 text-sm leading-relaxed text-stone-400">
+                We&apos;ve sent a verification link to <span className="font-medium text-amber-200">{verificationPending.email}</span>.
+                Please click the link to verify your account and complete your Enchanted Circle enrolment.
+              </p>
+
+              {resendSuccess && (
+                <div className="mt-4 rounded-lg border border-green-800/50 bg-green-950/40 p-3">
+                  <p className="font-secondary text-sm text-green-300">Verification email sent! Check your inbox.</p>
+                </div>
+              )}
+
+              {error && (
+                <div className="mt-4 rounded-lg border border-red-900/50 bg-red-950/40 p-3" role="alert">
+                  <p className="font-secondary text-sm text-red-200">{error}</p>
+                </div>
+              )}
+
+              <button
+                type="button"
+                disabled={resendCooldown > 0}
+                onClick={() => void handleResendVerification(verificationPending.email)}
+                className="mt-5 min-h-12 w-full rounded-lg bg-amber-500 px-4 py-3 text-base font-semibold text-stone-950 hover:bg-amber-400 disabled:opacity-60"
+              >
+                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Verification Email'}
+              </button>
+
+              <Link
+                href={loginHref}
+                className="font-secondary mt-4 inline-block text-sm text-amber-500/90 underline-offset-4 hover:text-amber-400 hover:underline"
+              >
+                Go to Login
+              </Link>
+            </div>
           </div>
         ) : showLoggedInEnroll ? (
           <div className="rounded-2xl border border-amber-700/30 bg-stone-900/60 p-6 text-center">

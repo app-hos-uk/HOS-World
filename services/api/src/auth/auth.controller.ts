@@ -158,7 +158,7 @@ export class AuthController {
     @Body() registerDto: RegisterDto,
     @Request() req: any,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<ApiResponse<AuthResponse>> {
+  ): Promise<ApiResponse<any>> {
     // Honeypot — bots that fill hidden fields get rejected silently
     if (registerDto.website) {
       throw new BadRequestException('Registration failed');
@@ -187,6 +187,12 @@ export class AuthController {
     const userAgent = req.headers['user-agent'];
 
     const result = await this.authService.register(registerDto, ipAddress, userAgent);
+    if ('requiresVerification' in result) {
+      return {
+        data: { requiresVerification: true, email: result.email },
+        message: result.message,
+      };
+    }
     setAuthCookies(res, result.token, result.refreshToken, this.configService);
     return {
       data: sanitizeAuthResponse(result),
@@ -429,6 +435,21 @@ export class AuthController {
   @SwaggerApiResponse({ status: 200, description: 'Verification email sent' })
   async sendVerificationEmail(@Request() req: any): Promise<ApiResponse<{ message: string }>> {
     const result = await this.authService.sendVerificationEmail(req.user.id);
+    return { data: result, message: result.message };
+  }
+
+  @Public()
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 3, ttl: 300000 } })
+  @ApiOperation({
+    summary: 'Resend verification email by email address',
+    description: 'Public endpoint for unverified users who cannot log in to request a new verification email.',
+  })
+  @ApiBody({ schema: { type: 'object', properties: { email: { type: 'string' } }, required: ['email'] } })
+  @SwaggerApiResponse({ status: 200, description: 'Verification email sent if applicable' })
+  async resendVerification(@Body('email') email: string): Promise<ApiResponse<{ message: string }>> {
+    const result = await this.authService.resendVerificationByEmail(email);
     return { data: result, message: result.message };
   }
 

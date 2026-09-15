@@ -83,7 +83,9 @@ describe('Products Integration Tests', () => {
         preferredCommunicationMethod: CommunicationMethod.EMAIL,
         gdprConsent: true,
       });
-      sellerUserId = sellerResult.user.id;
+      const sellerEmail = (sellerResult as any).email || `seller-integration-${Date.now()}@example.com`;
+      const sellerUser = await prismaService.user.findUnique({ where: { email: sellerEmail } });
+      sellerUserId = sellerUser!.id;
       const seller = await prismaService.seller.findUnique({
         where: { userId: sellerUserId },
       });

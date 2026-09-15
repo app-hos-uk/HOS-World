@@ -285,7 +285,7 @@ export class AuthService {
     registerDto: RegisterDto,
     ipAddress?: string,
     userAgent?: string,
-  ): Promise<AuthResponse> {
+  ): Promise<AuthResponse | { message: string; requiresVerification: true; email: string }> {
     registerDto.email = registerDto.email?.trim().toLowerCase();
 
     await this.assertRegistrationAllowed(
@@ -592,10 +592,7 @@ export class AuthService {
       this.logger.warn(`Failed to create tenant membership for user ${user.id}: ${error?.message}`);
     }
 
-    // Generate tokens
-    const tokens = await this.generateTokens(user);
-
-    // Best-effort verification email for new accounts
+    // Send verification email — user must verify before they can log in
     try {
       await this.sendVerificationEmail(user.id);
     } catch (err: unknown) {
@@ -605,9 +602,9 @@ export class AuthService {
     }
 
     return {
-      user: user as User,
-      token: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
+      message: 'Registration successful. Please check your email to verify your account.',
+      requiresVerification: true as const,
+      email: user.email,
     };
   }
 
@@ -832,7 +829,7 @@ export class AuthService {
     const currencyPreference =
       this.geolocationService.getCurrencyForCountry(countryCode) || PLATFORM_DEFAULT_CURRENCY;
 
-    // Create user
+    // Create user — email is pre-verified via the invitation link
     const user = await this.prisma.user.create({
       data: {
         email: registerDto.email,
@@ -848,6 +845,8 @@ export class AuthService {
         gdprConsent: registerDto.gdprConsent,
         gdprConsentDate: registerDto.gdprConsent ? new Date() : null,
         dataProcessingConsent: registerDto.dataProcessingConsent || {},
+        emailVerified: true,
+        emailVerifiedAt: new Date(),
       },
       select: {
         id: true,
@@ -958,6 +957,7 @@ export class AuthService {
           updatedAt: true,
           failedLoginAttempts: true,
           lockedUntil: true,
+          emailVerified: true,
         },
       });
 
@@ -1005,6 +1005,18 @@ export class AuthService {
         );
       }
 
+      // Block login for unverified email addresses
+      if (!user.emailVerified) {
+        try {
+          await this.sendVerificationEmail(user.id);
+        } catch {}
+        throw new ForbiddenException({
+          message: 'Please verify your email address before logging in. A verification email has been sent.',
+          code: 'EMAIL_NOT_VERIFIED',
+          email: user.email,
+        });
+      }
+
       // Reset failed login attempts and update lastLoginAt in a single query
       await this.prisma.user.update({
         where: { id: user.id },
@@ -1016,9 +1028,9 @@ export class AuthService {
         },
       });
 
-      // Remove password and lockout fields from response
+      // Remove password, lockout, and internal fields from response
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, failedLoginAttempts, lockedUntil, ...userWithoutPassword } = user;
+      const { password, failedLoginAttempts, lockedUntil, emailVerified: _ev, ...userWithoutPassword } = user;
 
       // Generate tokens
       const tokens = await this.generateTokens(userWithoutPassword);
@@ -1195,6 +1207,7 @@ export class AuthService {
         lockedUntil: true,
         resetToken: true,
         resetTokenExpiry: true,
+        emailVerified: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -1206,6 +1219,10 @@ export class AuthService {
 
     if (!user.isActive) {
       throw new UnauthorizedException('Account has been deactivated');
+    }
+
+    if (!user.emailVerified) {
+      throw new UnauthorizedException('Email not verified');
     }
 
     // Find and verify refresh token in DB
@@ -1272,6 +1289,7 @@ export class AuthService {
       lockedUntil,
       resetToken,
       resetTokenExpiry,
+      emailVerified: _emailVerified,
       ...userWithoutSensitive
     } = user as any;
     /* eslint-enable @typescript-eslint/no-unused-vars */
@@ -1609,6 +1627,18 @@ export class AuthService {
     }
 
     return { message: 'Verification email sent.' };
+  }
+
+  async resendVerificationByEmail(email: string): Promise<{ message: string }> {
+    if (!email) throw new BadRequestException('Email is required');
+    const user = await this.prisma.user.findFirst({
+      where: { email: email.trim().toLowerCase(), deletedAt: null },
+    });
+    if (!user || user.emailVerified) {
+      return { message: 'If an account with that email exists and is unverified, a verification email has been sent.' };
+    }
+    await this.sendVerificationEmail(user.id);
+    return { message: 'If an account with that email exists and is unverified, a verification email has been sent.' };
   }
 
   async verifyEmail(token: string): Promise<{ message: string }> {
