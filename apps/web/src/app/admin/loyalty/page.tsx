@@ -6,6 +6,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { navIcon } from '@/lib/navIcons';
+import { FeatureFlagBanner } from '@/components/admin/FeatureFlagBanner';
 
 export default function AdminLoyaltyDashboardPage() {
   const [data, setData] = useState<Record<string, unknown> | null>(null);
@@ -50,6 +51,16 @@ export default function AdminLoyaltyDashboardPage() {
               <div className="mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Loyalty Program Management</h1>
           <p className="text-hos-text-secondary mt-1">Manage tiers, earn rules, rewards, campaigns, and members</p>
+        </div>
+
+        <div className="mb-6">
+          <FeatureFlagBanner
+            flag="LOYALTY_PROGRAMME"
+            enabledLabel="Loyalty Programme Enabled"
+            disabledLabel="Loyalty Programme Disabled"
+            enabledDescription="The Enchanted Circle loyalty programme is live for all customers."
+            disabledDescription="The loyalty programme is turned off. Customers cannot earn or redeem points."
+          />
         </div>
 
         {loading ? (

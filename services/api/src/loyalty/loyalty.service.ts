@@ -522,7 +522,8 @@ export class LoyaltyService implements OnModuleInit {
 
   /**
    * Called after email verification to award the deferred SIGNUP bonus.
-   * Safe to call if the bonus was already awarded (idempotent).
+   * Also checks for a missing founding-member bonus so both are awarded
+   * together. Safe to call if bonuses were already awarded (idempotent).
    */
   async awardDeferredSignupBonus(userId: string): Promise<boolean> {
     const membership = await this.prisma.loyaltyMembership.findUnique({
@@ -531,11 +532,53 @@ export class LoyaltyService implements OnModuleInit {
     });
     if (!membership) return false;
 
-    return this.ensureSignupBonus(membership.id, userId, {
+    const signupAwarded = await this.ensureSignupBonus(membership.id, userId, {
       channel: membership.enrollmentChannel,
       regionCode: membership.regionCode,
       storeId: membership.enrollmentStoreId ?? undefined,
     });
+    const fmAwarded = await this.ensureFoundingMemberBonus(membership.id, userId);
+    return signupAwarded || fmAwarded;
+  }
+
+  /**
+   * Award the FOUNDING_MEMBER_BONUS once per membership if the user is a
+   * linked founding member. Safe to call repeatedly (idempotent).
+   */
+  private async ensureFoundingMemberBonus(
+    membershipId: string,
+    userId: string,
+  ): Promise<boolean> {
+    try {
+      const fm = await this.prisma.foundingMember.findUnique({
+        where: { userId },
+      });
+      if (!fm || fm.status !== 'LINKED') return false;
+
+      const existing = await this.prisma.loyaltyTransaction.findFirst({
+        where: { membershipId, source: 'FOUNDING_MEMBER_BONUS' },
+      });
+      if (existing) return false;
+
+      const bonusPoints =
+        parseInt(this.config.get<string>('FOUNDING_MEMBER_BONUS_POINTS', '500'), 10) || 0;
+      if (bonusPoints <= 0) return false;
+
+      await this.awardBonus(
+        membershipId,
+        bonusPoints,
+        'FOUNDING_MEMBER_BONUS',
+        'Founding member welcome bonus',
+        `bonus:FOUNDING_MEMBER_BONUS:${membershipId}`,
+      );
+      this.logger.log(`Founding member bonus (${bonusPoints} pts) awarded for user ${userId}`);
+      return true;
+    } catch (err: unknown) {
+      this.logger.warn(
+        `Founding member bonus check failed for user ${userId}: ${err instanceof Error ? err.message : 'unknown'}`,
+      );
+      return false;
+    }
   }
 
   async getMembership(userId: string) {
@@ -545,13 +588,14 @@ export class LoyaltyService implements OnModuleInit {
       where: { userId },
       include: { tier: true },
     });
-    // Repair missing joining / profile bonuses for members enrolled before reliability fixes
+    // Repair missing joining / profile / founding-member bonuses for members enrolled before reliability fixes
     if (membership) {
       const awardedSignup = await this.ensureSignupBonus(membership.id, userId, {
         channel: membership.enrollmentChannel,
         regionCode: membership.regionCode,
         storeId: membership.enrollmentStoreId ?? undefined,
       });
+      const awardedFm = await this.ensureFoundingMemberBonus(membership.id, userId);
       let awardedProfile = 0;
       try {
         awardedProfile = await this.loyaltyListener.onProfileUpdated(userId);
@@ -560,7 +604,7 @@ export class LoyaltyService implements OnModuleInit {
           `Profile-complete bonus repair failed for ${userId}: ${profileErr instanceof Error ? profileErr.message : 'unknown'}`,
         );
       }
-      if (awardedSignup || awardedProfile > 0) {
+      if (awardedSignup || awardedFm || awardedProfile > 0) {
         return this.prisma.loyaltyMembership.findUnique({
           where: { userId },
           include: { tier: true },

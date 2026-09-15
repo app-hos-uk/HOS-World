@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useDateTime } from '@/hooks/useDateTime';
 import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
+import { FeatureFlagBanner } from '@/components/admin/FeatureFlagBanner';
 
 export default function AdminBrandPartnershipsPage() {
   const { formatDate } = useDateTime();
@@ -72,6 +73,15 @@ export default function AdminBrandPartnershipsPage() {
                 Dashboard →
               </Link>
             </div>
+          </div>
+          <div className="mb-4">
+            <FeatureFlagBanner
+              flag="BRAND_PARTNERSHIPS"
+              enabledLabel="Brand Partnerships Enabled"
+              disabledLabel="Brand Partnerships Disabled"
+              enabledDescription="Brand partnership tools and co-branded campaigns are active."
+              disabledDescription="Brand partnership features are turned off across the platform."
+            />
           </div>
           <div className="flex flex-wrap gap-2 mb-4">
             <input

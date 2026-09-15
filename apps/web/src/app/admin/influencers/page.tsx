@@ -6,6 +6,7 @@ import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { RouteGuard } from '@/components/RouteGuard';
 import { useMoney } from '@/hooks/useMoney';
+import { FeatureFlagBanner } from '@/components/admin/FeatureFlagBanner';
 
 const api = apiClient as any;
 
@@ -110,6 +111,14 @@ export default function AdminInfluencersPage() {
             Invite Influencer
           </Link>
         </div>
+
+        <FeatureFlagBanner
+          flag="INFLUENCER_STOREFRONTS"
+          enabledLabel="Influencer Storefronts Enabled"
+          disabledLabel="Influencer Storefronts Disabled"
+          enabledDescription="Influencers can create public storefronts and earn affiliate commissions."
+          disabledDescription="Influencer storefront features are turned off."
+        />
 
         {/* Filters */}
         <div className="bg-hos-bg-secondary rounded-lg shadow-sm p-4">

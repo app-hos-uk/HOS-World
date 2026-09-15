@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { FeatureFlagBanner } from '@/components/admin/FeatureFlagBanner';
 
 export default function AdminPosDashboardPage() {
   const toast = useToast();
@@ -36,6 +37,14 @@ export default function AdminPosDashboardPage() {
               Connect Lightspeed (Vend) outlets, sync catalogue stock, and import in-store sales.
             </p>
           </div>
+
+          <FeatureFlagBanner
+            flag="POS_INTEGRATION"
+            enabledLabel="POS Integration Enabled"
+            disabledLabel="POS Integration Disabled"
+            enabledDescription="Lightspeed (Vend) connections are active. Also requires POS_ENABLED=true env var."
+            disabledDescription="POS integration is turned off. Enable the feature flag and set POS_ENABLED=true to activate."
+          />
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-lg border border-hos-border bg-hos-bg-secondary p-4 shadow-sm">

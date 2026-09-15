@@ -5,6 +5,7 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { useDateTime } from '@/hooks/useDateTime';
+import { FeatureFlagBanner } from '@/components/admin/FeatureFlagBanner';
 
 interface CurrencyData {
   supported: string[];
@@ -73,6 +74,14 @@ export default function AdminCurrenciesPage() {
             {refreshing ? 'Refreshing...' : 'Refresh Rates'}
           </button>
         </div>
+
+        <FeatureFlagBanner
+          flag="MULTI_CURRENCY"
+          enabledLabel="Multi-Currency Enabled"
+          disabledLabel="Multi-Currency Disabled"
+          enabledDescription="Customers can browse and pay in multiple currencies."
+          disabledDescription="Multi-currency support is turned off. All transactions use the default currency."
+        />
 
         {loading ? (
           <div className="flex items-center justify-center py-20">

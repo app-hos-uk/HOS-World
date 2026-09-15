@@ -522,10 +522,8 @@ export class AuthService {
               membership = await this.loyaltyService.enroll(user.id);
             }
             if (membership) {
-              const bonusPoints = parseInt(
-                this.configService.get<string>('FOUNDING_MEMBER_BONUS_POINTS', '500'),
-                10,
-              );
+              const bonusPoints =
+                parseInt(this.configService.get<string>('FOUNDING_MEMBER_BONUS_POINTS', '500'), 10) || 0;
               if (bonusPoints > 0) {
                 const existingBonus = await this.prisma.loyaltyTransaction.findFirst({
                   where: { membershipId: membership.id, source: 'FOUNDING_MEMBER_BONUS' },

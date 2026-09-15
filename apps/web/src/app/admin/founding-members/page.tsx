@@ -12,6 +12,7 @@ import {
   rowsToMembers,
   type ParsedFoundingMember,
 } from '@/lib/foundingMemberImport';
+import { FeatureFlagBanner } from '@/components/admin/FeatureFlagBanner';
 import {
   normalizeWhitespace,
   validateNameLike,
@@ -365,6 +366,14 @@ export default function AdminFoundingMembersPage() {
               Bulk Import CSV / Excel
             </button>
           </div>
+
+          <FeatureFlagBanner
+            flag="FOUNDING_MEMBERS"
+            enabledLabel="Public Registration Open"
+            disabledLabel="Public Registration Closed"
+            enabledDescription="New founding members can sign up via the public landing page."
+            disabledDescription="The public registration form is disabled. Admin imports and manual adds still work."
+          />
 
           {stats && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

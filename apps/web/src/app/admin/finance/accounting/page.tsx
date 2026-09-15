@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { FeatureFlagBanner } from '@/components/admin/FeatureFlagBanner';
 
 type CoaMapping = {
   onlineRevenue: string;
@@ -207,6 +208,14 @@ export default function AccountingAdminPage() {
             Three-way recon →
           </Link>
         </div>
+
+        <FeatureFlagBanner
+          flag="ACCOUNTING_XERO"
+          enabledLabel="Xero Accounting Export Enabled"
+          disabledLabel="Xero Accounting Export Disabled"
+          enabledDescription="Daily journals are exported to Xero. Also requires ACCOUNTING_ENABLED=true env var."
+          disabledDescription="Xero export is turned off. Loyalty and gift cards continue to work independently."
+        />
 
         <div className="rounded-lg border border-amber-700/40 bg-amber-950/20 px-4 py-3 text-sm text-amber-100/90">
           Loyalty and gift cards work with Xero off. Enable this export only when finance wants daily journals

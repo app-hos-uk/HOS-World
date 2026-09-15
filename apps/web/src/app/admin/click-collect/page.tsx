@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { FeatureFlagBanner } from '@/components/admin/FeatureFlagBanner';
 
 export default function AdminClickCollectListPage() {
   const toast = useToast();
@@ -42,6 +43,15 @@ export default function AdminClickCollectListPage() {
     <RouteGuard allowedRoles={['ADMIN']}>
               <div className="p-6 max-w-6xl mx-auto">
           <h1 className="text-2xl font-semibold text-hos-text-secondary mb-4">Click &amp; collect</h1>
+          <div className="mb-4">
+            <FeatureFlagBanner
+              flag="CLICK_COLLECT"
+              enabledLabel="Click & Collect Enabled"
+              disabledLabel="Click & Collect Disabled"
+              enabledDescription="Customers can choose click & collect at checkout for physical stores."
+              disabledDescription="Click & collect option is hidden from checkout."
+            />
+          </div>
           <div className="flex flex-wrap gap-2 mb-4">
             <input
               className="border rounded px-2 py-1 text-sm bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
