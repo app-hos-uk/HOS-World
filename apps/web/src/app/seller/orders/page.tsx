@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
@@ -129,6 +129,8 @@ export default function SellerOrdersPage() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debounceRef = useRef<NodeJS.Timeout>();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState('');
@@ -289,7 +291,11 @@ export default function SellerOrdersPage() {
     }
   }, []);
 
-  // Fetch all orders once on mount for stats calculation
+  useEffect(() => {
+    debounceRef.current = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [searchTerm]);
+
   useEffect(() => {
     fetchAllOrders();
     fetchCancellationRequests();
@@ -352,10 +358,9 @@ export default function SellerOrdersPage() {
     };
   }, [allOrders]);
 
-  // Filter orders by search
   const filteredOrders = useMemo(() => {
-    if (!searchTerm) return orders;
-    const search = searchTerm.toLowerCase();
+    if (!debouncedSearch) return orders;
+    const search = debouncedSearch.toLowerCase();
     return orders.filter(order => 
       order.id.toLowerCase().includes(search) ||
       order.orderNumber?.toLowerCase().includes(search) ||
@@ -365,7 +370,7 @@ export default function SellerOrdersPage() {
       order.customer?.email?.toLowerCase().includes(search) ||
       order.customer?.name?.toLowerCase().includes(search)
     );
-  }, [orders, searchTerm]);
+  }, [orders, debouncedSearch]);
 
   const openOrderDetails = async (order: Order) => {
     setSelectedOrder(order);

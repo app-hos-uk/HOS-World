@@ -567,7 +567,6 @@ export class AdminService {
   }
 
   async deleteUser(userId: string) {
-    // Prevent deleting admin users
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -576,18 +575,25 @@ export class AdminService {
       throw new NotFoundException('User not found');
     }
 
-    // Protect hard-protected admin accounts from deletion (even if role is changed somehow).
+    if (user.deletedAt) {
+      throw new BadRequestException('User is already deleted');
+    }
+
     if (isProtectedAdminEmail(user.email)) {
       throw new BadRequestException('Cannot delete a protected admin user');
     }
 
     if (user.role === 'ADMIN') {
-      throw new BadRequestException('Cannot delete admin users');
+      throw new BadRequestException(
+        'Cannot delete an admin user. Remove the ADMIN role first if deletion is intended.',
+      );
     }
-
-    // Delete user (cascade will handle related records)
-    await this.prisma.user.delete({
+    await this.prisma.user.update({
       where: { id: userId },
+      data: {
+        deletedAt: new Date(),
+        isActive: false,
+      },
     });
 
     return { message: 'User deleted successfully' };

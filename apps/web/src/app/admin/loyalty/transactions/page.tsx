@@ -46,7 +46,8 @@ export default function AdminLoyaltyTransactionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast, page, type, from, to]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, type, from, to]);
 
   useEffect(() => {
     load();
@@ -74,7 +75,8 @@ export default function AdminLoyaltyTransactionsPage() {
       );
     }
     return all.map(flattenLedgerRow);
-  }, [type, from, to, toast, formatCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type, from, to, formatCount]);
 
   const exportRows = useMemo(() => transactions.map(flattenLedgerRow), [transactions]);
 

@@ -28,7 +28,8 @@ export default function AdminLoyaltyLiabilityPage() {
     } finally {
       setLoading(false);
     }
-  }, [from, to, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [from, to]);
 
   useEffect(() => {
     load();

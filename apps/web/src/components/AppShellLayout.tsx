@@ -61,13 +61,14 @@ export function AppShellLayout({
   headerLink,
   logoutDescription = 'You will need to sign in again to access this dashboard.',
 }: AppShellLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const pathname = usePathname();
+  const prevPathnameRef = useRef(pathname);
   const router = useRouter();
   const { logout, user, impersonatedRole } = useAuth();
   const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -190,6 +191,36 @@ export function AppShellLayout({
       // ignore storage errors
     }
   }, [persistSidebarScroll]);
+
+  // Close sidebar on mobile when navigating to a new page
+  useEffect(() => {
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname;
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      }
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [sidebarOpen]);
+
+  // Lock body scroll when the mobile sidebar overlay is visible
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const isMobile = window.innerWidth < 1024;
+    if (sidebarOpen && isMobile) {
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = ''; };
+    }
+  }, [sidebarOpen]);
 
   // Reset search state on navigation
   useEffect(() => {
@@ -324,6 +355,9 @@ export function AppShellLayout({
 
   return (
     <div className="dashboard-theme min-h-screen bg-hos-bg-secondary font-inter">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[60] focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-hos-gold focus:text-[#1a1406] focus:rounded-lg focus:text-sm focus:font-medium">
+        Skip to content
+      </a>
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-hos-bg-secondary border-r border-hos-border transition-transform duration-300 shadow-sm ${
@@ -681,6 +715,7 @@ export function AppShellLayout({
         ) : null}
 
         <main
+          id="main-content"
           className={`p-4 sm:p-6 lg:p-8 text-hos-text-secondary ${
             breadcrumbs === 'admin'
               ? 'bg-hos-bg-secondary/30 min-h-[calc(100vh-7rem)] overflow-x-auto'

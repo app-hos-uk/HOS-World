@@ -1564,14 +1564,9 @@ export class LoyaltyService implements OnModuleInit {
       if (isProtectedAdminEmail(user.email)) {
         throw new BadRequestException('Cannot delete a protected admin user');
       }
-      if (user.role === UserRole.ADMIN) {
-        throw new BadRequestException('Cannot delete admin users');
-      }
-      // Orders (and similar) block hard user deletes — fail fast with a clear message.
-      const orderCount = await this.prisma.order.count({ where: { userId } });
-      if (orderCount > 0) {
+      if (user.role === 'ADMIN') {
         throw new BadRequestException(
-          `Cannot delete user account: ${orderCount} order(s) still exist. Uncheck “Also delete user” to remove only the loyalty membership, or delete the user from Admin → Users after clearing related records.`,
+          'Cannot delete an admin user via loyalty membership removal. Remove the ADMIN role first.',
         );
       }
     }
@@ -1589,9 +1584,8 @@ export class LoyaltyService implements OnModuleInit {
         await tx.loyaltyMembership.delete({
           where: { id: membership.id },
         });
-        // Keep user delete in the same transaction so a FK failure rolls membership back too.
         if (deleteUser) {
-          await tx.user.delete({ where: { id: userId } });
+          await tx.user.update({ where: { id: userId }, data: { deletedAt: new Date(), isActive: false } });
         }
       });
     } catch (err: unknown) {

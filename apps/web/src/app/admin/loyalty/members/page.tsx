@@ -101,7 +101,8 @@ export default function AdminLoyaltyMembersPage() {
         }
       }
     },
-    [activeQuery, currentPage, toast],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeQuery, currentPage],
   );
 
   useEffect(() => {

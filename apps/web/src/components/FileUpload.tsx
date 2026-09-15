@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useId } from 'react';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import Image from 'next/image';
@@ -23,6 +23,7 @@ export function FileUpload({
   folder = 'uploads',
 }: FileUploadProps) {
   const toast = useToast();
+  const inputId = useId();
   const [uploading, setUploading] = useState(false);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -90,10 +91,10 @@ export function FileUpload({
           onChange={handleFileChange}
           disabled={uploading}
           className="hidden"
-          id="file-upload"
+          id={inputId}
         />
         <label
-          htmlFor="file-upload"
+          htmlFor={inputId}
           className={`inline-block px-6 py-3 border-2 border-dashed border-hos-border rounded-lg cursor-pointer hover:border-hos-gold transition-colors ${
             uploading ? 'opacity-50 cursor-not-allowed' : ''
           }`}

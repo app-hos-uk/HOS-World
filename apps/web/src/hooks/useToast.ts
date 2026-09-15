@@ -25,7 +25,7 @@ const toastMethods = {
       duration: 4000,
       icon: navIcon('info', 'w-5 h-5'),
       style: {
-        border: '1px solid #6366f1',
+        border: '1px solid var(--color-accent-gold, #6366f1)',
       },
       ...options,
     });
@@ -35,7 +35,7 @@ const toastMethods = {
       duration: 5000,
       icon: navIcon('alert', 'w-5 h-5'),
       style: {
-        border: '1px solid #f59e0b',
+        border: '1px solid var(--warning-500, #f59e0b)',
       },
       ...options,
     });

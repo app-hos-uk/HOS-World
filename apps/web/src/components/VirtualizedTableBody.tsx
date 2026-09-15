@@ -83,6 +83,7 @@ export function VirtualizedTableBody({
 
   return (
     <tbody
+      role="rowgroup"
       style={{
         height: `${totalSize}px`,
         position: 'relative',

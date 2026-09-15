@@ -127,6 +127,17 @@ export function Header() {
     pathname?.startsWith('/finance/') ||
     pathname?.startsWith('/cms/');
 
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isMobileMenuOpen]);
+
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
@@ -482,7 +493,7 @@ export function Header() {
 
       {/* Mobile Menu (shown below lg for customers, below md for staff) */}
       {isMobileMenuOpen && (
-        <nav className={`${showCustomerNav ? 'lg:hidden' : 'md:hidden'} border-t border-hos-border bg-hos-bg`} role="navigation" aria-label="Mobile navigation">
+        <nav className={`${showCustomerNav ? 'lg:hidden' : 'md:hidden'} border-t border-hos-border bg-hos-bg`} role="dialog" aria-modal="true" aria-label="Mobile navigation">
           <div className="max-w-7xl mx-auto px-4 py-3 space-y-1" role="menu">
             {showCustomerNav && (
               <>

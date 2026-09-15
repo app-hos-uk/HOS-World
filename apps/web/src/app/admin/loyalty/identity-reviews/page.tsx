@@ -32,7 +32,8 @@ export default function AdminIdentityReviewsPage() {
     } finally {
       setLoading(false);
     }
-  }, [status, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
 
   useEffect(() => {
     load();

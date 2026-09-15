@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
@@ -136,6 +136,8 @@ function AdminOrdersContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debounceRef = useRef<NodeJS.Timeout>();
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -245,8 +247,13 @@ function AdminOrdersContent() {
   };
 
   useEffect(() => {
+    debounceRef.current = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [searchTerm]);
+
+  useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, dateRange.start, dateRange.end]);
+  }, [debouncedSearch, statusFilter, dateRange.start, dateRange.end]);
 
   const handleStatusChange = (orderId: string, newStatus: string, orderNumber?: string, currentStatus?: string) => {
     if (newStatus === currentStatus) return;
@@ -281,12 +288,10 @@ function AdminOrdersContent() {
     setShowDetailsModal(true);
   };
 
-  // Filter orders
   const filteredOrders = orders.filter((order) => {
-    // Search filter
-    const searchLower = searchTerm.toLowerCase();
+    const searchLower = debouncedSearch.toLowerCase();
     const matchesSearch =
-      !searchTerm ||
+      !debouncedSearch ||
       order.id.toLowerCase().includes(searchLower) ||
       order.orderNumber?.toLowerCase().includes(searchLower) ||
       order.user?.email?.toLowerCase().includes(searchLower) ||
@@ -618,7 +623,7 @@ function AdminOrdersContent() {
                               value={order.status}
                               onChange={(e) => handleStatusChange(order.id, e.target.value, order.orderNumber || order.id.substring(0, 8), order.status)}
                               disabled={updatingOrderId !== null}
-                              className={`text-xs font-semibold rounded-full px-2 py-1 border-0 cursor-pointer ${
+                              className={`text-xs font-semibold rounded-full px-2 py-1 border border-transparent cursor-pointer hover:border-hos-border-accent hover:underline transition-colors ${
                                 STATUS_COLORS[order.status] || 'bg-hos-bg-tertiary text-hos-text-secondary'
                               } ${updatingOrderId !== null ? 'opacity-50' : ''}`}
                             >
@@ -685,9 +690,15 @@ function AdminOrdersContent() {
 
           {/* Status Change Confirmation Dialog */}
           {confirmDialog && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6">
-                <h3 className="text-lg font-bold text-hos-text-secondary mb-2">Confirm Status Change</h3>
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="confirm-status-modal-title"
+              onKeyDown={(e) => e.key === 'Escape' && setConfirmDialog(null)}
+            >
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+                <h3 id="confirm-status-modal-title" className="text-lg font-bold text-hos-text-secondary mb-2">Confirm Status Change</h3>
                 <p className="text-sm text-hos-text-secondary mb-4">
                   Are you sure you want to change the status of order{' '}
                   <span className="font-semibold">#{confirmDialog.orderNumber}</span> from{' '}
@@ -790,7 +801,7 @@ function AdminOrdersContent() {
                           value={selectedOrder.status}
                           onChange={(e) => handleStatusChange(selectedOrder.id, e.target.value, selectedOrder.orderNumber || selectedOrder.id.substring(0, 8), selectedOrder.status)}
                           disabled={updatingOrderId !== null}
-                          className={`text-sm font-semibold rounded-full px-3 py-1 border-0 ${
+                          className={`text-sm font-semibold rounded-full px-3 py-1 border border-transparent cursor-pointer hover:border-hos-border-accent hover:underline transition-colors ${
                             STATUS_COLORS[selectedOrder.status] || 'bg-hos-bg-tertiary text-hos-text-secondary'
                           } ${updatingOrderId !== null ? 'opacity-50' : ''}`}
                         >

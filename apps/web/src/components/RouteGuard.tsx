@@ -74,8 +74,9 @@ export function RouteGuard({
   if (loading) {
     return (
       <div className="min-h-screen bg-hos-bg-secondary flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center" role="status" aria-live="polite">
           <div className="animate-spin rounded-full h-10 w-10 border-2 border-hos-border border-t-hos-gold mx-auto"></div>
+          <span className="sr-only">Loading, please wait...</span>
         </div>
       </div>
     );

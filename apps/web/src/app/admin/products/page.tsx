@@ -1171,8 +1171,16 @@ function AdminProductsContent() {
                 {filteredProducts.length === 0 ? (
                   <tbody className="bg-hos-bg-secondary divide-y divide-hos-border">
                     <tr>
-                      <td colSpan={7} className="px-6 py-8 text-center text-hos-text-muted">
-                        No products found
+                      <td colSpan={7} className="px-6 py-12 text-center">
+                        <div className={products.length > 0 ? 'admin-empty-filtered' : ''}>
+                          <span className="text-4xl block mb-2" aria-hidden>📦</span>
+                          <p className="text-sm font-medium text-hos-text-secondary">
+                            {products.length > 0 ? 'No products match your filters' : 'No products found'}
+                          </p>
+                          {products.length > 0 && (
+                            <p className="mt-1 text-xs text-hos-text-muted">Try adjusting your search, status, or category filters.</p>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   </tbody>

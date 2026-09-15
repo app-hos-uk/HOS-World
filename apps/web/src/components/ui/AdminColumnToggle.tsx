@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 export type AdminColumnDef = {
   id: string;
@@ -75,6 +75,15 @@ interface AdminColumnToggleProps {
 
 export function AdminColumnToggle({ columns, visibleIds, onToggle, onReset }: AdminColumnToggleProps) {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [open]);
 
   return (
     <div className="relative">

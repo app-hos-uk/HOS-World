@@ -42,7 +42,7 @@ export function BarcodeScanner({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <div className="bg-hos-bg-secondary rounded-lg p-4 w-full max-w-md space-y-3">
         <p className="text-sm text-hos-text">Point the camera at the receipt barcode</p>
         <div id="hos-barcode-reader" className="overflow-hidden rounded" />

@@ -718,8 +718,8 @@ table td.text-left,
 }
 
 .admin-stat-card-active {
-  ring-width: 2px;
-  --tw-ring-color: rgba(201, 162, 39, 0.5);
+  outline: 2px solid rgba(201, 162, 39, 0.5);
+  outline-offset: -2px;
 }
 
 .admin-stat-card-urgent {

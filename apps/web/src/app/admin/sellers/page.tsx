@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { SafeImage } from '@/components/SafeImage';
 import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -102,6 +102,14 @@ export default function AdminSellersPage() {
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value);
+    clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => setDebouncedSearchTerm(value), 300);
+  }, []);
+  useEffect(() => () => clearTimeout(searchTimerRef.current), []);
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<'name' | 'date' | 'products' | 'revenue'>('date');
@@ -277,9 +285,9 @@ export default function AdminSellersPage() {
   const filteredSellers = useMemo(() => {
     let filtered = [...sellers];
 
-    // Search
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
+    // Search (uses debounced value to avoid filtering on every keystroke)
+    if (debouncedSearchTerm) {
+      const term = debouncedSearchTerm.toLowerCase();
       filtered = filtered.filter(seller =>
         seller.email.toLowerCase().includes(term) ||
         seller.storeName?.toLowerCase().includes(term) ||
@@ -326,7 +334,7 @@ export default function AdminSellersPage() {
     });
 
     return filtered;
-  }, [sellers, searchTerm, typeFilter, statusFilter, sortBy, sortOrder]);
+  }, [sellers, debouncedSearchTerm, typeFilter, statusFilter, sortBy, sortOrder]);
 
   // Chart data
   const sellerTypeData = useMemo(() => {
@@ -386,18 +394,33 @@ export default function AdminSellersPage() {
     });
   };
 
-  const handleToggleStatus = async (seller: Seller) => {
-    const sellerId = (seller as any).sellerId || seller.id;
-    try {
-      setActionLoading(true);
-      await apiClient.put(`/admin/sellers/${sellerId}/suspend`, {});
-      toast.success(seller.isActive !== false ? 'Seller suspended successfully' : 'Seller activated successfully');
-      fetchSellers();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update seller status');
-    } finally {
-      setActionLoading(false);
-    }
+  const handleToggleStatus = (seller: Seller) => {
+    const isSuspending = seller.isActive !== false;
+    const displayName = seller.storeName || seller.email || 'this seller';
+    setConfirmDialog({
+      title: isSuspending
+        ? `Suspend "${displayName}"?`
+        : `Activate "${displayName}"?`,
+      description: isSuspending
+        ? 'The seller will lose access to their store and all listings will be hidden until reactivated.'
+        : 'The seller will regain access to their store and listings will become visible again.',
+      tone: isSuspending ? 'danger' : 'default',
+      confirmLabel: isSuspending ? 'Suspend' : 'Activate',
+      onConfirm: async () => {
+        setConfirmDialog(null);
+        const sellerId = (seller as any).sellerId || seller.id;
+        try {
+          setActionLoading(true);
+          await apiClient.put(`/admin/sellers/${sellerId}/suspend`, {});
+          toast.success(isSuspending ? 'Seller suspended successfully' : 'Seller activated successfully');
+          fetchSellers();
+        } catch (err: any) {
+          toast.error(err.message || 'Failed to update seller status');
+        } finally {
+          setActionLoading(false);
+        }
+      },
+    });
   };
 
   const getRoleBadge = (role: string) => {
@@ -625,7 +648,7 @@ export default function AdminSellersPage() {
                     <input
                       type="text"
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={(e) => handleSearchChange(e.target.value)}
                       placeholder="Store name, email..."
                       className="w-full px-4 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none focus:border-hos-gold"
                     />
@@ -941,11 +964,17 @@ export default function AdminSellersPage() {
 
           {/* Invite Form Modal */}
           {showInviteForm && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="invite-seller-modal-title"
+              onKeyDown={(e) => e.key === 'Escape' && setShowInviteForm(false)}
+            >
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
-                    <h2 className="text-xl font-bold">Invite New Seller</h2>
+                    <h2 id="invite-seller-modal-title" className="text-xl font-bold">Invite New Seller</h2>
                     <button onClick={() => setShowInviteForm(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
                   <form onSubmit={handleInviteSeller} className="space-y-4">
@@ -1010,11 +1039,17 @@ export default function AdminSellersPage() {
 
           {/* Seller Detail Modal */}
           {showDetailModal && selectedSeller && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="seller-detail-modal-title"
+              onKeyDown={(e) => e.key === 'Escape' && setShowDetailModal(false)}
+            >
               <div className="bg-hos-bg-secondary rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-6">
-                    <h2 className="text-2xl font-bold">Seller Details</h2>
+                    <h2 id="seller-detail-modal-title" className="text-2xl font-bold">Seller Details</h2>
                     <button onClick={() => setShowDetailModal(false)} className="text-hos-text-muted hover:text-hos-text-secondary text-2xl">×</button>
                   </div>
 

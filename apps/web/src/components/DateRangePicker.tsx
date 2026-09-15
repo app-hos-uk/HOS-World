@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   format,
   subDays,
@@ -47,7 +47,28 @@ export function DateRangePicker({
   disallowFutureDates = true,
 }: DateRangePickerProps) {
   const [showPresets, setShowPresets] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const todayMax = format(new Date(), 'yyyy-MM-dd');
+
+  useEffect(() => {
+    if (!showPresets) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowPresets(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showPresets]);
+
+  useEffect(() => {
+    if (!showPresets) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowPresets(false);
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [showPresets]);
 
   const presets = [
     { label: 'Today', getRange: () => ({ startDate: new Date(), endDate: new Date() }) },
@@ -107,7 +128,7 @@ export function DateRangePicker({
   };
 
   return (
-    <div className="space-y-2">
+    <div ref={containerRef} className="space-y-2">
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-hos-text-secondary">Start Date:</label>

@@ -45,7 +45,8 @@ export default function AdminLoyaltyMemberLedgerPage() {
     } finally {
       setLoading(false);
     }
-  }, [userId, type, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, type]);
 
   useEffect(() => {
     load();

@@ -33,7 +33,7 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div className="min-h-[400px] flex items-center justify-center p-8 bg-hos-bg">
+        <div role="alert" className="min-h-[400px] flex items-center justify-center p-8 bg-hos-bg">
           <div className="max-w-md w-full bg-hos-bg-secondary border border-hos-border rounded-xl shadow-sm p-8 text-center">
             <div className="text-5xl mb-4">⚠️</div>
             <h2 className="text-xl font-bold text-hos-text-secondary mb-2">

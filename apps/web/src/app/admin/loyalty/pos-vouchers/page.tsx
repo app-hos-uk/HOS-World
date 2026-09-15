@@ -75,7 +75,8 @@ export default function AdminLoyaltyPosVouchersPage() {
     } finally {
       setLoading(false);
     }
-  }, [status, page, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, page]);
 
   useEffect(() => {
     load();
@@ -102,7 +103,8 @@ export default function AdminLoyaltyPosVouchersPage() {
         setRetryingId(null);
       }
     },
-    [load, toast],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [load],
   );
 
   const cancelVoucher = useCallback(
@@ -122,7 +124,8 @@ export default function AdminLoyaltyPosVouchersPage() {
         setCancellingId(null);
       }
     },
-    [load, toast],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [load],
   );
 
   const fetchAllForExport = useCallback(async () => {

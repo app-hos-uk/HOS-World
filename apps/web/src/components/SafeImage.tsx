@@ -51,6 +51,8 @@ export function SafeImage({
   if (!src || mode === 'failed') {
     return (
       <div
+        role="img"
+        aria-label={alt || 'Image'}
         className={`flex items-center justify-center bg-hos-bg-tertiary text-hos-text-muted ${className}`}
         style={placeholderStyle}
       >

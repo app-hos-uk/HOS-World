@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { AppShellLayout } from '@/components/AppShellLayout';
 import { apiClient } from '@/lib/api';
@@ -48,6 +48,8 @@ export default function SellerProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debounceRef = useRef<NodeJS.Timeout>();
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('newest');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -62,6 +64,11 @@ export default function SellerProductsPage() {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    debounceRef.current = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [searchTerm]);
 
   const fetchProducts = async () => {
     try {
@@ -128,9 +135,8 @@ export default function SellerProductsPage() {
   const filteredProducts = useMemo(() => {
     let result = [...productRows];
 
-    // Apply search filter
-    if (searchTerm) {
-      const search = searchTerm.toLowerCase();
+    if (debouncedSearch) {
+      const search = debouncedSearch.toLowerCase();
       result = result.filter(p => 
         p.name.toLowerCase().includes(search) ||
         p.slug?.toLowerCase().includes(search) ||
@@ -176,7 +182,7 @@ export default function SellerProductsPage() {
     }
 
     return result;
-  }, [productRows, searchTerm, statusFilter, sortBy]);
+  }, [productRows, debouncedSearch, statusFilter, sortBy]);
 
   const getStatusColor = (status: string, stock: number) => {
     if (stock <= 0) return 'bg-red-500/15 text-red-300';

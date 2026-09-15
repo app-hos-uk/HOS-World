@@ -1012,26 +1012,78 @@ export default function AdminUsersPage() {
                 </table>
               </div>
               {showPagination && (
-                <div className="flex items-center justify-between px-4 py-3 border-t border-hos-border text-sm bg-hos-bg-secondary/80">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-hos-border text-sm bg-hos-bg-secondary/80">
                   <span className="text-hos-text-muted">
-                    Page {currentPage} of {totalPages} ({totalUsers} matching)
+                    Showing {Math.min((currentPage - 1) * PAGE_SIZE + 1, totalUsers)}–{Math.min(currentPage * PAGE_SIZE, totalUsers)} of {totalUsers}
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      disabled={currentPage <= 1}
+                      onClick={() => fetchUsers(1)}
+                      className="admin-pagination-btn"
+                      title="First page"
+                    >
+                      &laquo;
+                    </button>
                     <button
                       type="button"
                       disabled={currentPage <= 1}
                       onClick={() => fetchUsers(currentPage - 1)}
                       className="admin-pagination-btn"
+                      title="Previous page"
                     >
-                      Previous
+                      &lsaquo;
                     </button>
+                    {(() => {
+                      const pages: (number | 'ellipsis')[] = [];
+                      if (totalPages <= 7) {
+                        for (let i = 1; i <= totalPages; i++) pages.push(i);
+                      } else {
+                        pages.push(1);
+                        if (currentPage > 3) pages.push('ellipsis');
+                        const start = Math.max(2, currentPage - 1);
+                        const end = Math.min(totalPages - 1, currentPage + 1);
+                        for (let i = start; i <= end; i++) pages.push(i);
+                        if (currentPage < totalPages - 2) pages.push('ellipsis');
+                        pages.push(totalPages);
+                      }
+                      return pages.map((p, idx) =>
+                        p === 'ellipsis' ? (
+                          <span key={`e${idx}`} className="px-1 text-hos-text-muted select-none">&hellip;</span>
+                        ) : (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => fetchUsers(p)}
+                            className={`min-w-[2rem] px-2 py-1 rounded text-sm font-medium transition-colors ${
+                              p === currentPage
+                                ? 'bg-hos-gold text-[#1a1406]'
+                                : 'text-hos-text-secondary hover:bg-hos-bg-tertiary'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        )
+                      );
+                    })()}
                     <button
                       type="button"
                       disabled={currentPage >= totalPages}
                       onClick={() => fetchUsers(currentPage + 1)}
-                      className="admin-pagination-btn admin-pagination-btn-primary"
+                      className="admin-pagination-btn"
+                      title="Next page"
                     >
-                      Next
+                      &rsaquo;
+                    </button>
+                    <button
+                      type="button"
+                      disabled={currentPage >= totalPages}
+                      onClick={() => fetchUsers(totalPages)}
+                      className="admin-pagination-btn"
+                      title="Last page"
+                    >
+                      &raquo;
                     </button>
                   </div>
                 </div>
@@ -1042,7 +1094,7 @@ export default function AdminUsersPage() {
           {/* User Detail Modal */}
           {showDetailModal && selectedUser && (
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
               role="dialog"
               aria-modal="true"
               aria-labelledby="user-detail-modal-title"
@@ -1135,13 +1187,13 @@ export default function AdminUsersPage() {
           {/* Edit Modal */}
           {showEditModal && selectedUser && (
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
               role="dialog"
               aria-modal="true"
               aria-labelledby="edit-user-modal-title"
               onKeyDown={(e) => e.key === 'Escape' && setShowEditModal(false)}
             >
-              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 id="edit-user-modal-title" className="text-2xl font-bold">Edit User</h2>
@@ -1231,7 +1283,7 @@ export default function AdminUsersPage() {
           {/* Create Modal */}
           {showCreateModal && (
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
               role="dialog"
               aria-modal="true"
               aria-labelledby="create-user-modal-title"
@@ -1466,13 +1518,13 @@ export default function AdminUsersPage() {
           {/* Delete Modal */}
           {showDeleteModal && selectedUser && (
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
               role="dialog"
               aria-modal="true"
               aria-labelledby="delete-user-modal-title"
               onKeyDown={(e) => e.key === 'Escape' && setShowDeleteModal(false)}
             >
-              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <h2 id="delete-user-modal-title" className="text-2xl font-bold mb-4">Delete User</h2>
                   <p className="text-hos-text-secondary mb-6">
@@ -1500,13 +1552,13 @@ export default function AdminUsersPage() {
           {/* Reset Password Modal */}
           {showResetPasswordModal && selectedUser && (
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
               role="dialog"
               aria-modal="true"
               aria-labelledby="reset-password-modal-title"
               onKeyDown={(e) => e.key === 'Escape' && setShowResetPasswordModal(false)}
             >
-              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full">
+              <div className="bg-hos-bg-secondary rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h2 id="reset-password-modal-title" className="text-2xl font-bold">Reset Password</h2>

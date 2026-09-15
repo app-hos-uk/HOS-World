@@ -59,7 +59,8 @@ export default function AdminLoyaltyCampaignsPage() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
@@ -89,7 +90,8 @@ export default function AdminLoyaltyCampaignsPage() {
         }
       })
       .catch(() => {});
-  }, [toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const resetForm = () => {
     setForm({

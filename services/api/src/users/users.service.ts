@@ -272,9 +272,9 @@ export class UsersService {
       throw new BadRequestException('This account is protected and cannot be deleted');
     }
 
-    // Delete user (cascading deletes will handle related records)
-    await this.prisma.user.delete({
+    await this.prisma.user.update({
       where: { id: userId },
+      data: { deletedAt: new Date(), isActive: false },
     });
   }
 

@@ -62,19 +62,53 @@ export function ConfirmDialog({
     setInputValue(inputDefaultValue);
   }, [open, inputDefaultValue]);
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!open) return;
-    if (isPrompt) {
-      (inputMultiline ? textareaRef : inputRef).current?.focus();
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const focusable = dialog.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+
+    if (first) {
+      first.focus();
     } else {
-      confirmRef.current?.focus();
+      dialog.setAttribute('tabindex', '-1');
+      dialog.focus();
     }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !busy) onCancel();
+
+    const trapFocus = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (!busy) onCancel();
+        return;
+      }
+      if (e.key !== 'Tab' || focusable.length === 0) return;
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, busy, onCancel, isPrompt, inputMultiline]);
+
+    document.addEventListener('keydown', trapFocus);
+    return () => {
+      document.removeEventListener('keydown', trapFocus);
+      previouslyFocused?.focus();
+    };
+  }, [open, busy, onCancel]);
 
   if (!open) return null;
 
@@ -96,6 +130,7 @@ export function ConfirmDialog({
       }}
     >
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}

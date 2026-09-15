@@ -24,7 +24,7 @@ export function CountrySelect({
   onChange,
   required = false,
   disabled = false,
-  className = '',
+  className = 'w-full px-3 py-2.5 text-sm bg-hos-bg-secondary border border-hos-border-input rounded-lg focus:border-hos-gold focus:ring-2 focus:ring-hos-gold/20 outline-none transition-all',
   placeholder = 'Select country',
 }: CountrySelectProps) {
   return (
