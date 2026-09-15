@@ -627,7 +627,6 @@ export class InventoryService {
 
     // Use transaction to ensure atomicity
     const result = await this.prisma.$transaction(async (tx) => {
-      // Deduct from source warehouse
       const sourceLocation = await tx.inventoryLocation.findUnique({
         where: {
           warehouseId_productId: {
@@ -637,17 +636,22 @@ export class InventoryService {
         },
       });
 
-      if (!sourceLocation || sourceLocation.quantity < transfer.quantity) {
-        throw new BadRequestException('Insufficient stock in source warehouse');
+      if (!sourceLocation) {
+        throw new BadRequestException('Product not found in source warehouse');
       }
 
-      // Update source location
-      await tx.inventoryLocation.update({
-        where: { id: sourceLocation.id },
+      const decremented = await tx.inventoryLocation.updateMany({
+        where: {
+          id: sourceLocation.id,
+          quantity: { gte: transfer.quantity },
+        },
         data: {
           quantity: { decrement: transfer.quantity },
         },
       });
+      if (decremented.count === 0) {
+        throw new BadRequestException('Insufficient stock in source warehouse');
+      }
 
       // Create or update destination location
       await tx.inventoryLocation.upsert({
@@ -755,19 +759,24 @@ export class InventoryService {
       throw new BadRequestException('Product ID does not match inventory location');
     }
 
-    // For OUT movements, check available stock
-    if (createDto.movementType === 'OUT' && createDto.quantity > 0) {
-      const available = location.quantity - (location.reserved || 0);
-      if (available < createDto.quantity) {
-        throw new BadRequestException(
-          `Insufficient stock. Available: ${available}, Requested: ${createDto.quantity}`,
-        );
-      }
-    }
-
-    // Use transaction to update location and create movement
     const result = await this.prisma.$transaction(async (tx) => {
-      // Update inventory location quantity
+      if (createDto.movementType === 'OUT' && createDto.quantity > 0) {
+        await tx.$executeRaw(
+          Prisma.sql`SELECT 1 FROM inventory_locations WHERE id = ${createDto.inventoryLocationId} FOR UPDATE`,
+        );
+
+        const currentLocation = await tx.inventoryLocation.findUnique({
+          where: { id: createDto.inventoryLocationId },
+        });
+
+        const available = (currentLocation?.quantity ?? 0) - (currentLocation?.reserved ?? 0);
+        if (available < createDto.quantity) {
+          throw new BadRequestException(
+            `Insufficient stock. Available: ${available}, Requested: ${createDto.quantity}`,
+          );
+        }
+      }
+
       const quantityChange =
         createDto.movementType === 'IN' ? createDto.quantity : -createDto.quantity;
 

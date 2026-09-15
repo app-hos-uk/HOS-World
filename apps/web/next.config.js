@@ -32,10 +32,8 @@ const nextConfig = {
       { protocol: 'https', hostname: 'res.cloudinary.com', pathname: '/**' },
       { protocol: 'https', hostname: 'cdn.shopify.com', pathname: '/**' },
       { protocol: 'https', hostname: '*.amazonaws.com', pathname: '/**' },
-      { protocol: 'https', hostname: 'hos-marketplaceweb-production.up.railway.app', pathname: '/**' },
       { protocol: 'https', hostname: 'join.houseofspells.com', pathname: '/**' },
       { protocol: 'https', hostname: 'hos-world-web.vercel.app', pathname: '/**' },
-      { protocol: 'https', hostname: 'picsum.photos', pathname: '/**' },
       ...(process.env.NODE_ENV !== 'production'
         ? [
             { protocol: 'http', hostname: 'localhost', pathname: '/**' },
@@ -49,6 +47,12 @@ const nextConfig = {
   },
   typescript: {
     ignoreBuildErrors: false,
+  },
+  compiler: {
+    removeConsole:
+      process.env.NODE_ENV === 'production'
+        ? { exclude: ['error', 'warn'] }
+        : false,
   },
   productionBrowserSourceMaps: false,
   async redirects() {
@@ -80,25 +84,8 @@ const nextConfig = {
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains; preload',
           },
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net",
-              "style-src 'self' 'unsafe-inline'",
-              // Leaflet renders OpenStreetMap raster tiles and loads its default marker
-              // icons from cdnjs; both must be allowed or the address-book map stays blank.
-              "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://images.unsplash.com https://images.pexels.com https://lh3.googleusercontent.com https://hos-world-web.vercel.app https://*.up.railway.app https://cdn.shopify.com https://www.facebook.com https://picsum.photos https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.openstreetmap.de https://cdnjs.cloudflare.com",
-              // All fonts are self-hosted (next/font/local + @fontsource); no Google origins.
-              "font-src 'self' data:",
-              "connect-src 'self' https://*.houseofspells.com https://*.up.railway.app https://api.stripe.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://graph.facebook.com wss://*.houseofspells.com https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.openstreetmap.de https://nominatim.openstreetmap.org",
-              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
-              "object-src 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-              "upgrade-insecure-requests",
-            ].join('; '),
-          },
+          // CSP is now set per-request in middleware.ts with a unique nonce
+          // (replaces the static 'unsafe-inline' that was here before).
         ],
       },
     ];

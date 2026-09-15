@@ -620,34 +620,52 @@ export class TransactionsService implements OnModuleInit {
    * the transaction-creation logic was added to markPaymentAsPaid.
    */
   async backfillFromOrders(): Promise<{ created: number; skipped: number }> {
-    const existingOrderIds = await this.prisma.transaction.findMany({
-      where: { type: 'PAYMENT', orderId: { not: null } },
-      select: { orderId: true },
-    });
-    const existingSet = new Set(existingOrderIds.map((t) => t.orderId));
+    const existingSet = new Set<string | null>();
+    let txCursor: string | undefined;
+    while (true) {
+      const batch = await this.prisma.transaction.findMany({
+        where: { type: 'PAYMENT', orderId: { not: null } },
+        select: { orderId: true, id: true },
+        take: 500,
+        ...(txCursor ? { skip: 1, cursor: { id: txCursor } } : {}),
+        orderBy: { id: 'asc' },
+      });
+      for (const t of batch) existingSet.add(t.orderId);
+      if (batch.length < 500) break;
+      txCursor = batch[batch.length - 1].id;
+    }
 
-    const paidOrders = await this.prisma.order.findMany({
-      where: {
-        paymentStatus: 'PAID',
-        parentOrderId: null,
-        deletedAt: null,
-      },
-      select: {
-        id: true,
-        userId: true,
-        sellerId: true,
-        orderNumber: true,
-        total: true,
-        currency: true,
-        createdAt: true,
-        payments: {
-          where: { status: 'PAID' },
-          select: { stripePaymentId: true, amount: true, currency: true },
-          take: 1,
+    const paidOrders: Array<any> = [];
+    let orderCursor: string | undefined;
+    while (true) {
+      const batch = await this.prisma.order.findMany({
+        where: {
+          paymentStatus: 'PAID',
+          parentOrderId: null,
+          deletedAt: null,
         },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        select: {
+          id: true,
+          userId: true,
+          sellerId: true,
+          orderNumber: true,
+          total: true,
+          currency: true,
+          createdAt: true,
+          payments: {
+            where: { status: 'PAID' },
+            select: { stripePaymentId: true, amount: true, currency: true },
+            take: 1,
+          },
+        },
+        take: 500,
+        ...(orderCursor ? { skip: 1, cursor: { id: orderCursor } } : {}),
+        orderBy: { id: 'asc' },
+      });
+      paidOrders.push(...batch);
+      if (batch.length < 500) break;
+      orderCursor = batch[batch.length - 1].id;
+    }
 
     let created = 0;
     let skipped = 0;

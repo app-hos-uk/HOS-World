@@ -56,33 +56,40 @@ function AdminStoreNewContent() {
   useEffect(() => {
     const lsError = searchParams.get('ls_error');
     if (lsError) {
-      toast.error(`Lightspeed: ${lsError}`);
+      toast.error(`Lightspeed: ${lsError.replace(/[<>&"']/g, '')}`);
       window.history.replaceState({}, '', window.location.pathname);
     }
 
-    const hash = typeof window !== 'undefined' ? window.location.hash.slice(1) : '';
-    if (hash) {
-      const fp = new URLSearchParams(hash);
-      const lsDomain = fp.get('ls_domain');
-      const lsAccess = fp.get('ls_access_token');
-      const lsRefresh = fp.get('ls_refresh_token');
-      if (lsDomain && lsAccess) {
-        setDomainPrefix(lsDomain);
-        setAccessToken(lsAccess);
-        if (lsRefresh) setRefreshToken(lsRefresh);
-        const savedCreds = sessionStorage.getItem('ls_oauth_creds');
-        if (savedCreds) {
-          try {
-            const { cid, csec } = JSON.parse(savedCreds);
-            if (cid) setClientId(cid);
-            if (csec) setClientSecret(csec);
-          } catch { /* ignore */ }
-          sessionStorage.removeItem('ls_oauth_creds');
-        }
-        setOauthConnected(true);
-        toast.success('Lightspeed connected — tokens received');
-        window.history.replaceState({}, '', window.location.pathname);
-      }
+    const lsSession = searchParams.get('ls_session');
+    if (lsSession) {
+      window.history.replaceState({}, '', window.location.pathname);
+      const apiBase = getDirectApiBaseUrl();
+      fetch(`${apiBase}/pos/lightspeed/session/${encodeURIComponent(lsSession)}`, {
+        credentials: 'include',
+      })
+        .then(async (r) => {
+          if (!r.ok) throw new Error((await r.json().catch(() => ({}))).message || r.statusText);
+          return r.json() as Promise<{
+            domainPrefix: string;
+            accessToken: string;
+            refreshToken: string;
+            clientId: string;
+            clientSecret: string;
+          }>;
+        })
+        .then((data) => {
+          setDomainPrefix(data.domainPrefix);
+          setAccessToken(data.accessToken);
+          setRefreshToken(data.refreshToken);
+          if (data.clientId) setClientId(data.clientId);
+          if (data.clientSecret) setClientSecret(data.clientSecret);
+          setOauthConnected(true);
+          toast.success('Lightspeed connected — tokens received');
+        })
+        .catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : 'Failed to retrieve Lightspeed session';
+          toast.error(`Lightspeed: ${msg}`);
+        });
     }
   }, [searchParams, toast]);
 
@@ -122,10 +129,6 @@ function AdminStoreNewContent() {
       toast.error('Client ID is required — enter it or configure LIGHTSPEED_CLIENT_ID on the server');
       return;
     }
-    sessionStorage.setItem(
-      'ls_oauth_creds',
-      JSON.stringify({ cid: oauthClientId, csec: clientSecret.trim() }),
-    );
     const redirectUri = oauthConfig?.redirectUri || `${getDirectApiBaseUrl()}/pos/lightspeed/callback`;
     const state = btoa(JSON.stringify({ domainPrefix: domainPrefix.trim() }));
     const scopes = [

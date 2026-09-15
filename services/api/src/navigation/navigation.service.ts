@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { CacheService } from '../cache/cache.service';
 
 interface CreateNavigationItemDto {
   group: string;
@@ -22,14 +23,26 @@ interface UpdateNavigationItemDto {
 @Injectable()
 export class NavigationService {
   private readonly logger = new Logger(NavigationService.name);
+  private static readonly NAV_CACHE_PREFIX = 'navigation:group:';
+  private static readonly NAV_CACHE_TTL = 300;
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Optional() private cache?: CacheService,
+  ) {}
 
   async findByGroup(group: string) {
-    return this.prisma.navigationItem.findMany({
+    const cacheKey = `${NavigationService.NAV_CACHE_PREFIX}${group}`;
+    const cached = await this.cache?.get<any[]>(cacheKey);
+    if (cached) return cached;
+
+    const result = await this.prisma.navigationItem.findMany({
       where: { group, isActive: true },
       orderBy: { order: 'asc' },
     });
+
+    await this.cache?.set(cacheKey, result, NavigationService.NAV_CACHE_TTL);
+    return result;
   }
 
   async findAll() {
@@ -45,7 +58,7 @@ export class NavigationService {
   }
 
   async create(dto: CreateNavigationItemDto) {
-    return this.prisma.navigationItem.create({
+    const result = await this.prisma.navigationItem.create({
       data: {
         group: dto.group,
         label: dto.label,
@@ -55,18 +68,36 @@ export class NavigationService {
         external: dto.external ?? false,
       },
     });
+    await this.invalidateNavCache(dto.group);
+    return result;
   }
 
   async update(id: string, dto: UpdateNavigationItemDto) {
-    await this.findOne(id);
-    return this.prisma.navigationItem.update({
+    const existing = await this.findOne(id);
+    const result = await this.prisma.navigationItem.update({
       where: { id },
       data: dto,
     });
+    await this.invalidateNavCache(existing.group);
+    if (dto.group && dto.group !== existing.group) {
+      await this.invalidateNavCache(dto.group);
+    }
+    return result;
   }
 
   async remove(id: string) {
-    await this.findOne(id);
-    return this.prisma.navigationItem.delete({ where: { id } });
+    const existing = await this.findOne(id);
+    const result = await this.prisma.navigationItem.delete({ where: { id } });
+    await this.invalidateNavCache(existing.group);
+    return result;
+  }
+
+  private async invalidateNavCache(group?: string) {
+    if (!this.cache) return;
+    if (group) {
+      await this.cache.del(`${NavigationService.NAV_CACHE_PREFIX}${group}`);
+    } else {
+      await this.cache.delPattern(`${NavigationService.NAV_CACHE_PREFIX}*`);
+    }
   }
 }

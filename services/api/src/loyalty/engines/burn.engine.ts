@@ -289,10 +289,13 @@ export class LoyaltyBurnEngine {
       });
 
       if (option && option.stock != null) {
-        await tx.loyaltyRedemptionOption.update({
-          where: { id: option.id },
+        const stockDecremented = await tx.loyaltyRedemptionOption.updateMany({
+          where: { id: option.id, stock: { gte: 1 } },
           data: { stock: { decrement: 1 } },
         });
+        if (stockDecremented.count === 0) {
+          throw new BadRequestException('Reward is out of stock');
+        }
       }
 
       // In-store burn: only stamp POSSale when caller supplies a concrete sale link.

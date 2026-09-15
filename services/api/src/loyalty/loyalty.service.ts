@@ -91,6 +91,7 @@ export class LoyaltyService implements OnModuleInit {
     try {
       const options = await this.prisma.loyaltyRedemptionOption.findMany({
         where: { name: { startsWith: '£' } },
+        take: 1000,
       });
       if (options.length > 0) {
         for (const opt of options) {
@@ -715,6 +716,8 @@ export class LoyaltyService implements OnModuleInit {
     const [orders, posSales, membership] = await Promise.all([
       this.prisma.order.findMany({
         where: { userId, deletedAt: null, parentOrderId: null },
+        take: 500,
+        orderBy: { createdAt: 'desc' },
         select: {
           id: true,
           orderNumber: true,
@@ -736,6 +739,7 @@ export class LoyaltyService implements OnModuleInit {
       }),
       this.prisma.pOSSale.findMany({
         where: { customerId: userId },
+        take: 500,
         select: {
           id: true,
           saleDate: true,
@@ -779,6 +783,7 @@ export class LoyaltyService implements OnModuleInit {
             membershipId: membership.id,
             status: { in: ['ISSUED', 'RECONCILED'] },
           },
+          take: 200,
           select: {
             cardNumber: true,
             storeId: true,
@@ -803,6 +808,7 @@ export class LoyaltyService implements OnModuleInit {
           ],
         },
       },
+      take: 500,
       select: { posSaleId: true },
     });
     const activePosReturnIds = new Set(
@@ -939,6 +945,7 @@ export class LoyaltyService implements OnModuleInit {
     return this.prisma.loyaltyRedemptionOption.findMany({
       where,
       orderBy: { pointsCost: 'asc' },
+      take: 200,
     });
   }
 
@@ -1410,6 +1417,7 @@ export class LoyaltyService implements OnModuleInit {
       this.prisma.loyaltyMembership.count(),
       this.prisma.loyaltyTier.findMany({
         where: { isActive: true },
+        take: 100,
         include: { _count: { select: { members: true } } },
       }),
       this.prisma.loyaltyTransaction.aggregate({

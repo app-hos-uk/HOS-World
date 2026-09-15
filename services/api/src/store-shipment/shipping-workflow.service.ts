@@ -72,9 +72,7 @@ export class ShippingWorkflowService {
     return {
       shipmentId: row.id,
       hosOrderNumber: row.hosOrderNumber,
-      invoiceNumber: row.invoiceNumber,
       status: row.status,
-      storeId: row.storeId,
       storeName: row.store.name,
     };
   }

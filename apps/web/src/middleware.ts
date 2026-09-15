@@ -154,6 +154,28 @@ export async function middleware(request: NextRequest) {
   const previewCookie = request.cookies.get(SHOP_PREVIEW_COOKIE)?.value;
   const hasPreview = hasShopPreviewAccess(previewCookie, previewParam, previewSecret);
 
+  // --- CSP nonce (unique per request) ---
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const cspHeader = [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : ''}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://images.unsplash.com https://images.pexels.com https://lh3.googleusercontent.com https://hos-world-web.vercel.app https://cdn.shopify.com https://www.facebook.com https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.openstreetmap.de https://cdnjs.cloudflare.com",
+    "font-src 'self' data:",
+    "connect-src 'self' https://*.houseofspells.com https://api.stripe.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://graph.facebook.com wss://*.houseofspells.com https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.openstreetmap.de https://nominatim.openstreetmap.org",
+    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "upgrade-insecure-requests",
+  ].join('; ');
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+  const addCsp = (res: NextResponse): NextResponse => {
+    res.headers.set('Content-Security-Policy', cspHeader);
+    return res;
+  };
+
   // --- Shop preview unlock / revoke ---
   // Testers: /shop?preview=<SHOP_PREVIEW_SECRET>
   // Revoke:  /coming-soon?preview=off  (or any path with preview=off)
@@ -167,7 +189,7 @@ export async function middleware(request: NextRequest) {
     }
     const res = NextResponse.redirect(clean);
     clearPreviewCookie(res);
-    return res;
+    return addCsp(res);
   }
 
   // Valid ?preview= on a non-shop URL → send testers to /shop (keep query).
@@ -194,7 +216,7 @@ export async function middleware(request: NextRequest) {
     shopUrl.pathname = '/shop';
     const res = NextResponse.redirect(shopUrl);
     setPreviewCookie(res, previewSecret);
-    return res;
+    return addCsp(res);
   }
 
   // In-store QR landing is public so customers can join without an account.
@@ -210,10 +232,9 @@ export async function middleware(request: NextRequest) {
   const shopPublic = needsShopGate ? await isShopPublic() : isShopPubliclyEnabled();
 
   if (isProtected) {
-    const isLoggedIn = request.cookies.get('is_logged_in')?.value === 'true';
     const hasAuthToken = !!request.cookies.get('access_token')?.value ||
       !!request.cookies.get('refresh_token')?.value;
-    const isAuthenticated = hasAuthToken || isLoggedIn;
+    const isAuthenticated = hasAuthToken;
 
     if (!isAuthenticated) {
       // Soft-launch: unauthenticated hits on gated commerce routes go to
@@ -222,13 +243,13 @@ export async function middleware(request: NextRequest) {
         const comingSoon = request.nextUrl.clone();
         comingSoon.pathname = '/coming-soon';
         comingSoon.search = '';
-        return NextResponse.redirect(comingSoon);
+        return addCsp(NextResponse.redirect(comingSoon));
       }
 
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = '/login';
       loginUrl.searchParams.set('returnUrl', pathname + request.nextUrl.search);
-      return NextResponse.redirect(loginUrl);
+      return addCsp(NextResponse.redirect(loginUrl));
     }
   }
 
@@ -239,7 +260,7 @@ export async function middleware(request: NextRequest) {
     const comingSoon = request.nextUrl.clone();
     comingSoon.pathname = '/coming-soon';
     comingSoon.search = '';
-    return NextResponse.redirect(comingSoon);
+    return addCsp(NextResponse.redirect(comingSoon));
   }
 
   // Attach preview cookie whenever the secret matches (query or existing cookie
@@ -251,7 +272,7 @@ export async function middleware(request: NextRequest) {
 
   const withPreviewCookie = (res: NextResponse): NextResponse => {
     if (attachPreviewCookie && previewSecret) setPreviewCookie(res, previewSecret);
-    return res;
+    return addCsp(res);
   };
 
   // --- Referral attribution (/ref/HOS-… or /ref/PARTNER-…) ---
@@ -259,7 +280,7 @@ export async function middleware(request: NextRequest) {
   const loyaltyRefMatch = pathname.match(/^\/ref\/([^/]+)\/?$/);
   if (loyaltyRefMatch) {
     const code = decodeURIComponent(loyaltyRefMatch[1] || '').trim();
-    const res = withPreviewCookie(NextResponse.next());
+    const res = withPreviewCookie(NextResponse.next({ request: { headers: requestHeaders } }));
     if (code && isValidProgramReferralCode(code)) {
       res.cookies.set({
         name: LOYALTY_REF_COOKIE,
@@ -296,11 +317,11 @@ export async function middleware(request: NextRequest) {
 
   // --- Subdomain Routing ---
   if (BYPASS_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
-    return withPreviewCookie(NextResponse.next());
+    return withPreviewCookie(NextResponse.next({ request: { headers: requestHeaders } }));
   }
 
   if (!hostname) {
-    return withPreviewCookie(NextResponse.next());
+    return withPreviewCookie(NextResponse.next({ request: { headers: requestHeaders } }));
   }
 
   let subdomain: string | null = null;
@@ -328,19 +349,19 @@ export async function middleware(request: NextRequest) {
       url.pathname = '/loyalty/join';
       return withPreviewCookie(NextResponse.redirect(url));
     }
-    return withPreviewCookie(NextResponse.next());
+    return withPreviewCookie(NextResponse.next({ request: { headers: requestHeaders } }));
   }
 
   if (subdomain && subdomain !== 'www' && subdomain !== 'api') {
     if (pathname === '/' || pathname === '') {
       const url = request.nextUrl.clone();
       url.pathname = `/sellers/${subdomain}`;
-      return withPreviewCookie(NextResponse.rewrite(url));
+      return withPreviewCookie(NextResponse.rewrite(url, { request: { headers: requestHeaders } }));
     }
-    return withPreviewCookie(NextResponse.next());
+    return withPreviewCookie(NextResponse.next({ request: { headers: requestHeaders } }));
   }
 
-  return withPreviewCookie(NextResponse.next());
+  return withPreviewCookie(NextResponse.next({ request: { headers: requestHeaders } }));
 }
 
 export const config = {

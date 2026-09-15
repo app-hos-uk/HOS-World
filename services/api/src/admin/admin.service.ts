@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger, Optional } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { CacheService } from '../cache/cache.service';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 import { isProtectedAdminEmail, isSuperAdminEmail } from '../config/protected-admin-emails';
@@ -18,11 +19,15 @@ import {
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
+  private static readonly CONFIG_ALL_KEY = 'platform:config:all';
+  private static readonly CONFIG_KEY_PREFIX = 'platform:config:';
+  private static readonly CONFIG_CACHE_TTL = 300;
 
   constructor(
     private prisma: PrismaService,
     private platformRegion: PlatformRegionService,
     private policy: PolicyService,
+    @Optional() private cache?: CacheService,
   ) {}
 
   async getUserStats() {
@@ -322,6 +327,7 @@ export class AdminService {
     const roles = await this.prisma.permissionRole.findMany({
       select: { name: true },
       orderBy: { name: 'asc' },
+      take: 200,
     });
     return roles.map((r) => r.name);
   }
@@ -639,10 +645,17 @@ export class AdminService {
   // ---------------------------------------------------------------------------
 
   private async getPlatformConfig(key: string): Promise<any | undefined> {
+    const cacheKey = `${AdminService.CONFIG_KEY_PREFIX}${key}`;
+    const cached = await this.cache?.get<{ v: any }>(cacheKey);
+    if (cached !== undefined) return cached === null ? undefined : cached.v;
+
     const row = await this.prisma.config.findFirst({
       where: { level: 'PLATFORM', levelId: 'PLATFORM', key },
     });
-    return row?.value;
+    const value = row?.value;
+
+    await this.cache?.set(cacheKey, value !== undefined ? { v: value } : null, AdminService.CONFIG_CACHE_TTL);
+    return value;
   }
 
   private async setPlatformConfig(key: string, value: any): Promise<void> {
@@ -663,6 +676,18 @@ export class AdminService {
         });
       }
     });
+
+    await this.invalidatePlatformConfigCache(key);
+  }
+
+  private async invalidatePlatformConfigCache(key?: string) {
+    if (!this.cache) return;
+    await this.cache.del(AdminService.CONFIG_ALL_KEY);
+    if (key) {
+      await this.cache.del(`${AdminService.CONFIG_KEY_PREFIX}${key}`);
+    } else {
+      await this.cache.delPattern(`${AdminService.CONFIG_KEY_PREFIX}*`);
+    }
   }
 
   /**
@@ -723,9 +748,13 @@ export class AdminService {
       ),
     };
 
+    const cachedAll = await this.cache?.get<Record<string, any>>(AdminService.CONFIG_ALL_KEY);
+    if (cachedAll) return { ...envDefaults, ...cachedAll };
+
     try {
       const rows = await this.prisma.config.findMany({
         where: { level: 'PLATFORM', levelId: 'PLATFORM' },
+        take: 500,
       });
 
       const dbOverrides: Record<string, any> = {};
@@ -737,6 +766,7 @@ export class AdminService {
         }
       }
 
+      await this.cache?.set(AdminService.CONFIG_ALL_KEY, dbOverrides, AdminService.CONFIG_CACHE_TTL);
       return { ...envDefaults, ...dbOverrides };
     } catch {
       return envDefaults;

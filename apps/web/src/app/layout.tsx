@@ -15,6 +15,7 @@ import { Toaster } from '@/components/Toaster';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ReferralCapture } from '@/components/ReferralCapture';
 import { Suspense } from 'react';
+import { headers } from 'next/headers';
 import { getSiteUrl } from '@/lib/siteUrls';
 import { fetchServerSiteSettings } from '@/lib/fetchServerSiteSettings';
 import { brandDisplayName } from '@/lib/siteSettingsDefaults';
@@ -66,20 +67,22 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const nonce = (await headers()).get('x-nonce') ?? '';
+
   return (
     <html lang="en-US">
       <head>
-        <script dangerouslySetInnerHTML={{ __html: `if(typeof process==='undefined'){window.process={env:{}}}` }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: `if(typeof process==='undefined'){window.process={env:{}}}` }} />
       </head>
       <body className={`${cormorant.variable} ${inter.variable} storefront-theme antialiased`}>
-        <GoogleTags />
+        <GoogleTags nonce={nonce} />
         <Suspense fallback={null}>
-          <MetaPixel />
+          <MetaPixel nonce={nonce} />
         </Suspense>
         <ConditionalSiteStructuredData />
         <QueryProvider>

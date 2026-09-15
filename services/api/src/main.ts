@@ -1,3 +1,6 @@
+import { initTracing, shutdownTracing } from './telemetry/tracing';
+initTracing();
+
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -10,7 +13,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import compression = require('compression');
 import * as cookieParser from 'cookie-parser';
-import { randomUUID } from 'crypto';
+import { randomUUID, timingSafeEqual } from 'crypto';
 import * as Sentry from '@sentry/node';
 import { createBullBoard } from '@bull-board/api';
 import { ExpressAdapter } from '@bull-board/express';
@@ -20,6 +23,11 @@ import IORedis from 'ioredis';
 
 // Initialize logger
 const logger = new Logger();
+
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 // Bull board resources (kept at module scope so we can close them on shutdown)
 let bullServerAdapter: any = null;
@@ -54,8 +62,9 @@ function validateEnvironment() {
     process.exit(1);
   }
 
-  // Warn about weak JWT secrets
-  if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
+  if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)) {
+    throw new Error('JWT_SECRET must be at least 32 characters in production');
+  } else if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
     logger.warn(
       'JWT_SECRET is too short (minimum 32 characters recommended)',
       'Environment Validation',
@@ -467,8 +476,10 @@ async function bootstrap() {
             return res.status(401).send('Authentication required');
           }
           const decoded = Buffer.from(authHeader.slice(6), 'base64').toString();
-          const [user, pass] = decoded.split(':');
-          if (user === swaggerUser && pass === swaggerPass) {
+          const colonIdx = decoded.indexOf(':');
+          const user = colonIdx >= 0 ? decoded.slice(0, colonIdx) : decoded;
+          const pass = colonIdx >= 0 ? decoded.slice(colonIdx + 1) : '';
+          if (safeCompare(user, swaggerUser) && safeCompare(pass, swaggerPass)) {
             return next();
           }
           res.setHeader('WWW-Authenticate', 'Basic realm="API Docs"');
@@ -585,6 +596,7 @@ async function bootstrap() {
         logger.error('Error closing Nest application', err);
       }
       await shutdownBullBoard();
+      await shutdownTracing().catch(() => {});
       process.exit(0);
     };
 

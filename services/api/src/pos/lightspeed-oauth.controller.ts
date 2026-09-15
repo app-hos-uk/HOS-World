@@ -1,8 +1,10 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
+import { Controller, Get, NotFoundException, Param, Query, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
+import { randomUUID } from 'crypto';
 import { Public } from '../common/decorators/public.decorator';
+import { RedisService } from '../cache/redis.service';
 
 /**
  * Handles the Lightspeed Retail (X-Series) OAuth authorization-code flow.
@@ -11,8 +13,10 @@ import { Public } from '../common/decorators/public.decorator';
  *  1. Frontend builds the Lightspeed authorize URL using NEXT_PUBLIC_LIGHTSPEED_CLIENT_ID
  *     and redirects the admin there.
  *  2. Lightspeed redirects back to GET /api/pos/lightspeed/callback with ?code=…&state=…
- *  3. This controller exchanges the code for tokens and redirects the admin back to
- *     the store creation form with tokens in the URL fragment.
+ *  3. This controller exchanges the code for tokens, stores them in Redis behind a
+ *     one-time session key, and redirects to the frontend with only that key in a query param.
+ *  4. Frontend calls GET /api/pos/lightspeed/session/:sessionId (authenticated) to retrieve
+ *     the tokens. The Redis key is deleted after retrieval.
  */
 
 /**
@@ -24,6 +28,9 @@ import { Public } from '../common/decorators/public.decorator';
 const DOMAIN_PREFIX_RE = /^[a-z0-9][a-z0-9-]{0,62}$/i;
 const LIGHTSPEED_TOKEN_HOST_SUFFIX = '.retail.lightspeed.app';
 
+const LS_SESSION_PREFIX = 'ls_oauth_session:';
+const LS_SESSION_TTL = 300; // 5 minutes
+
 @ApiTags('lightspeed-oauth')
 @Controller('pos/lightspeed')
 export class LightspeedOAuthController {
@@ -31,7 +38,10 @@ export class LightspeedOAuthController {
   private readonly clientSecret: string;
   private readonly frontendUrl: string;
 
-  constructor(private config: ConfigService) {
+  constructor(
+    private config: ConfigService,
+    private redis: RedisService,
+  ) {
     this.clientId = config.get('LIGHTSPEED_CLIENT_ID', '');
     this.clientSecret = config.get('LIGHTSPEED_CLIENT_SECRET', '');
     this.frontendUrl =
@@ -146,16 +156,44 @@ export class LightspeedOAuthController {
         domain_prefix?: string;
       };
 
-      const fragment = new URLSearchParams({
-        ls_domain: domainPrefix,
-        ls_access_token: tokens.access_token,
-        ls_refresh_token: tokens.refresh_token || '',
+      const sessionId = randomUUID();
+      const sessionData = JSON.stringify({
+        domainPrefix,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token || '',
+        clientId: this.clientId,
+        clientSecret: this.clientSecret,
       });
 
-      res.redirect(`${frontendCallback}#${fragment.toString()}`);
+      await this.redis.set(`${LS_SESSION_PREFIX}${sessionId}`, sessionData, LS_SESSION_TTL);
+
+      res.redirect(`${frontendCallback}?ls_session=${sessionId}`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Token exchange failed';
       res.redirect(`${frontendCallback}?ls_error=${encodeURIComponent(msg)}`);
     }
+  }
+
+  /** One-time retrieval of OAuth tokens stored during the callback redirect. */
+  @Get('session/:sessionId')
+  @ApiOperation({ summary: 'Retrieve Lightspeed OAuth tokens by session ID (one-time use)' })
+  async getSession(
+    @Param('sessionId') sessionId: string,
+  ): Promise<{
+    domainPrefix: string;
+    accessToken: string;
+    refreshToken: string;
+    clientId: string;
+    clientSecret: string;
+  }> {
+    const key = `${LS_SESSION_PREFIX}${sessionId}`;
+    const raw = await this.redis.get(key);
+    if (!raw) {
+      throw new NotFoundException('Session expired or already consumed');
+    }
+
+    await this.redis.del(key);
+
+    return JSON.parse(raw);
   }
 }

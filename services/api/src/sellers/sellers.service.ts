@@ -912,6 +912,7 @@ export class SellersService {
     const documents = await this.prisma.sellerVerificationDocument.findMany({
       where: { sellerId: seller.id },
       orderBy: { createdAt: 'desc' },
+      take: 200,
     });
     return this.attachReviewers(documents);
   }

@@ -39,6 +39,25 @@ export function FileUpload({
       return;
     }
 
+    const allowedTypes = accept ? accept.split(',').map(t => t.trim()) : [];
+    if (allowedTypes.length > 0) {
+      const invalidFiles = Array.from(files).filter(file => {
+        return !allowedTypes.some(type => {
+          if (type.endsWith('/*')) {
+            return file.type.startsWith(type.replace('/*', '/'));
+          }
+          if (type.startsWith('.')) {
+            return file.name.toLowerCase().endsWith(type);
+          }
+          return file.type === type;
+        });
+      });
+      if (invalidFiles.length > 0) {
+        toast.error('Some files have invalid file types');
+        return;
+      }
+    }
+
     try {
       setUploading(true);
 

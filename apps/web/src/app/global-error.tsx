@@ -33,9 +33,6 @@ export default function GlobalError({
             <p style={{ color: '#6b7280', margin: '1rem 0' }}>
               An unexpected error occurred. Please try again or return to the homepage.
             </p>
-            {error.digest && (
-              <p style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Error ID: {error.digest}</p>
-            )}
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1.5rem' }}>
               <button
                 onClick={reset}

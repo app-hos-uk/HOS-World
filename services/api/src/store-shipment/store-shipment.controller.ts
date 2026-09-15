@@ -77,7 +77,7 @@ export class StoreShipmentController {
   }
 
   @Public()
-  @Throttle({ default: { limit: 15, ttl: 60000 } })
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Get('lookup')
   @ApiOperation({ summary: 'Customer: find a shipping order by HOS number, invoice, or email' })
   async lookup(

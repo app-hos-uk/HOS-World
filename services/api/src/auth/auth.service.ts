@@ -1178,10 +1178,26 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired token');
     }
 
-    // Find user
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      include: { permissionRole: true },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+        avatar: true,
+        permissionRoleId: true,
+        tokenVersion: true,
+        password: true,
+        failedLoginAttempts: true,
+        lockedUntil: true,
+        resetToken: true,
+        resetTokenExpiry: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     if (!user) {

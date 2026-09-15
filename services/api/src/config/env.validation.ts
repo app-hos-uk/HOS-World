@@ -139,10 +139,14 @@ export function validateEnvironmentVariables(
     }
   }
 
-  if (config.JWT_SECRET && String(config.JWT_SECRET).length < 32) {
+  if (config.NODE_ENV === 'production' && (!config.JWT_SECRET || String(config.JWT_SECRET).length < 32)) {
+    errors.push('JWT_SECRET must be at least 32 characters in production');
+  } else if (config.JWT_SECRET && String(config.JWT_SECRET).length < 32) {
     warnings.push('JWT_SECRET should be at least 32 characters');
   }
-  if (config.JWT_REFRESH_SECRET && String(config.JWT_REFRESH_SECRET).length < 32) {
+  if (config.NODE_ENV === 'production' && (!config.JWT_REFRESH_SECRET || String(config.JWT_REFRESH_SECRET).length < 32)) {
+    errors.push('JWT_REFRESH_SECRET must be at least 32 characters in production');
+  } else if (config.JWT_REFRESH_SECRET && String(config.JWT_REFRESH_SECRET).length < 32) {
     warnings.push('JWT_REFRESH_SECRET should be at least 32 characters');
   }
 

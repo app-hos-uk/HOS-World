@@ -13,19 +13,19 @@ datasource db {
 
 // User model
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String? // Optional for OAuth users
-  firstName String?
-  lastName  String?
-  phone     String?
+  id              String   @id @default(uuid())
+  email           String   @unique
+  password        String? // Optional for OAuth users
+  firstName       String?
+  lastName        String?
+  phone           String?
   /// E.164 normalised mobile for cross-platform identity matching (not unique — families share numbers).
   phoneNormalized String?
-  role      UserRole @default(CUSTOMER)
-  isActive  Boolean  @default(true)
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role            UserRole @default(CUSTOMER)
+  isActive        Boolean  @default(true)
+  avatar          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   // Email verification
   emailVerified           Boolean   @default(false)
@@ -59,36 +59,36 @@ model User {
   roleAssignments UserRoleAssignment[]
 
   // Relations
-  addresses             Address[]
-  orders                Order[]
-  cart                  Cart?                  @relation(fields: [cartId], references: [id])
-  sellerProfile         Seller?
-  customerProfile       Customer?
-  loyaltyPoints         Int                    @default(0)
-  refreshTokens         RefreshToken[]
-  themePreference       String?
-  reviews               ProductReview[]
-  wishlistItems         WishlistItem[]
-  returnRequests        ReturnRequest[]
-  invitedSellers        SellerInvitation[]     @relation("InvitedBy")
-  activityLogs          ActivityLog[]
-  transactions          Transaction[]          @relation("CustomerTransactions")
-  transactionAuditLogs  TransactionAuditLog[]  @relation("TransactionAuditLogs")
-  reconciliationRuns        ReconciliationRun[]   @relation("ReconciliationRuns")
-  reconciliationResolutions ReconciliationItem[]  @relation("ReconciliationItemResolver")
+  addresses                 Address[]
+  orders                    Order[]
+  cart                      Cart?                  @relation(fields: [cartId], references: [id])
+  sellerProfile             Seller?
+  customerProfile           Customer?
+  loyaltyPoints             Int                    @default(0)
+  refreshTokens             RefreshToken[]
+  themePreference           String?
+  reviews                   ProductReview[]
+  wishlistItems             WishlistItem[]
+  returnRequests            ReturnRequest[]
+  invitedSellers            SellerInvitation[]     @relation("InvitedBy")
+  activityLogs              ActivityLog[]
+  transactions              Transaction[]          @relation("CustomerTransactions")
+  transactionAuditLogs      TransactionAuditLog[]  @relation("TransactionAuditLogs")
+  reconciliationRuns        ReconciliationRun[]    @relation("ReconciliationRuns")
+  reconciliationResolutions ReconciliationItem[]   @relation("ReconciliationItemResolver")
   customerDisputes          Dispute[]              @relation("CustomerDisputes")
-  supportTickets        SupportTicket[]        @relation("UserTickets")
-  assignedTickets       SupportTicket[]        @relation("AssignedTickets")
-  ticketMessages        TicketMessage[]        @relation("TicketMessages")
-  whatsappConversations WhatsAppConversation[]
-  cartId                String?
+  supportTickets            SupportTicket[]        @relation("UserTickets")
+  assignedTickets           SupportTicket[]        @relation("AssignedTickets")
+  ticketMessages            TicketMessage[]        @relation("TicketMessages")
+  whatsappConversations     WhatsAppConversation[]
+  cartId                    String?
 
   // Phase 6: Fandom Experience Relations
   characterAvatarId  String?
-  characterAvatar    Character?   @relation("CharacterAvatar", fields: [characterAvatarId], references: [id])
-  favoriteFandoms    String[]     @default([])
-  gamificationPoints Int          @default(0)
-  level              Int          @default(1)
+  characterAvatar    Character?          @relation("CharacterAvatar", fields: [characterAvatarId], references: [id])
+  favoriteFandoms    String[]            @default([])
+  gamificationPoints Int                 @default(0)
+  level              Int                 @default(1)
   aiPreferences      Json?
   aiChats            AIChat[]
   userBadges         UserBadge[]
@@ -144,9 +144,9 @@ model User {
   influencerInvitations InfluencerInvitation[] @relation("InfluencerInvitedBy")
 
   // Enchanted Circle loyalty
-  loyaltyMembership LoyaltyMembership?
-  posVouchersStaff  LoyaltyPosVoucher[] @relation("PosVoucherStaff")
-  posVouchersIssued LoyaltyPosVoucher[] @relation("PosVoucherIssuedBy")
+  loyaltyMembership     LoyaltyMembership?
+  posVouchersStaff      LoyaltyPosVoucher[]    @relation("PosVoucherStaff")
+  posVouchersIssued     LoyaltyPosVoucher[]    @relation("PosVoucherIssuedBy")
   storeShipmentRequests StoreShipmentRequest[]
 
   // Account Lockout
@@ -161,10 +161,10 @@ model User {
   newsletterSubscriptions NewsletterSubscription[]
 
   // Phase 4: marketing automation
-  lastLoginAt           DateTime?
-  journeyEnrollments    JourneyEnrollment[]
-  messageLogs           MessageLog[]
-  pushSubscriptions     PushSubscription[]
+  lastLoginAt        DateTime?
+  journeyEnrollments JourneyEnrollment[]
+  messageLogs        MessageLog[]
+  pushSubscriptions  PushSubscription[]
 
   // Phase 5: events & experiences
   eventRsvps       EventRSVP[]
@@ -186,14 +186,16 @@ model User {
   // Soft delete
   deletedAt DateTime?
 
-  cancellationRequests       CancellationRequest[] @relation("CancellationRequestedBy")
-  cancellationSellerReviews  CancellationRequest[] @relation("CancellationSellerReviewer")
+  cancellationRequests         CancellationRequest[] @relation("CancellationRequestedBy")
+  cancellationSellerReviews    CancellationRequest[] @relation("CancellationSellerReviewer")
   cancellationFinanceReviews   CancellationRequest[] @relation("CancellationFinanceReviewer")
-  cancellationResolutions    CancellationRequest[] @relation("CancellationResolver")
-  closedFinancialPeriods     FinancialPeriod[]     @relation("FinancialPeriodCloser")
+  cancellationResolutions      CancellationRequest[] @relation("CancellationResolver")
+  closedFinancialPeriods       FinancialPeriod[]     @relation("FinancialPeriodCloser")
   identityMatchReviewsResolved IdentityMatchReview[] @relation("IdentityMatchReviewResolver")
 
   @@index([deletedAt])
+  @@index([email, deletedAt])
+  @@index([role, deletedAt])
   @@index([phoneNormalized])
   @@index([storeId])
   @@index([homeMarketId])
@@ -233,22 +235,22 @@ model Market {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  stores                 Store[]
-  orders                 Order[]
-  payments               Payment[]
-  transactions           Transaction[]
-  settlements            Settlement[]
-  carts                  Cart[]
-  giftCards              GiftCard[]
-  returnRequests         ReturnRequest[]
-  cancellationRequests   CancellationRequest[]
-  disputes               Dispute[]
-  posSales               POSSale[]
-  storeShipmentRequests  StoreShipmentRequest[]
-  vendorLedgerEntries    VendorLedgerEntry[]
-  sellerMarkets          SellerMarket[]
-  productMarkets         ProductMarket[]
-  homeUsers              User[]                 @relation("UserHomeMarket")
+  stores                Store[]
+  orders                Order[]
+  payments              Payment[]
+  transactions          Transaction[]
+  settlements           Settlement[]
+  carts                 Cart[]
+  giftCards             GiftCard[]
+  returnRequests        ReturnRequest[]
+  cancellationRequests  CancellationRequest[]
+  disputes              Dispute[]
+  posSales              POSSale[]
+  storeShipmentRequests StoreShipmentRequest[]
+  vendorLedgerEntries   VendorLedgerEntry[]
+  sellerMarkets         SellerMarket[]
+  productMarkets        ProductMarket[]
+  homeUsers             User[]                 @relation("UserHomeMarket")
 
   @@index([isActive])
   @@index([isDefault])
@@ -365,25 +367,25 @@ model Store {
   marketId String?
   market   Market? @relation(fields: [marketId], references: [id], onDelete: SetNull)
 
-  name         String  @default("Store")
-  code         String  @unique
-  storeType    String  @default("STANDARD") // FLAGSHIP, STANDARD, POP_UP, CONCESSION
-  address      String?
-  city         String?
-  state        String?
-  country      String  @default("US")
-  countryCode  String? // ISO 3166-1 alpha-2 code
-  postalCode   String?
-  latitude     Float?
-  longitude    Float?
-  timezone     String  @default("America/New_York")
-  currency     String  @default("USD")
-  contactEmail String?
-  contactPhone String?
-  managerName  String?
+  name           String    @default("Store")
+  code           String    @unique
+  storeType      String    @default("STANDARD") // FLAGSHIP, STANDARD, POP_UP, CONCESSION
+  address        String?
+  city           String?
+  state          String?
+  country        String    @default("US")
+  countryCode    String? // ISO 3166-1 alpha-2 code
+  postalCode     String?
+  latitude       Float?
+  longitude      Float?
+  timezone       String    @default("America/New_York")
+  currency       String    @default("USD")
+  contactEmail   String?
+  contactPhone   String?
+  managerName    String?
   operatingHours Json?
-  isActive     Boolean  @default(true)
-  openedAt     DateTime?
+  isActive       Boolean   @default(true)
+  openedAt       DateTime?
 
   externalStoreId String?
 
@@ -393,15 +395,15 @@ model Store {
   posSales        POSSale[]
   events          Event[]
 
-  defaultRegionCode  String   @default("US")
-  loyaltyRedeemValue Decimal  @default(0.01) @db.Decimal(8, 6)
+  defaultRegionCode  String  @default("US")
+  loyaltyRedeemValue Decimal @default(0.01) @db.Decimal(8, 6)
 
-  clickCollectOrders   ClickCollectOrder[]
-  onboardingChecklist  StoreOnboardingChecklist?
-  loyaltyPosVouchers   LoyaltyPosVoucher[]
-  storeStaff             User[]                  @relation("StoreStaff")
-  storeShipmentRequests  StoreShipmentRequest[]
-  boxSizes               BoxSize[]
+  clickCollectOrders    ClickCollectOrder[]
+  onboardingChecklist   StoreOnboardingChecklist?
+  loyaltyPosVouchers    LoyaltyPosVoucher[]
+  storeStaff            User[]                    @relation("StoreStaff")
+  storeShipmentRequests StoreShipmentRequest[]
+  boxSizes              BoxSize[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -508,18 +510,18 @@ model Seller {
   updatedAt              DateTime        @updatedAt
 
   // Vendor management fields
-  vendorStatus           VendorStatus    @default(PENDING)
-  commissionRate         Decimal         @default(0.10) @db.Decimal(5, 4)
-  monthlySubscriptionFee Decimal?        @db.Decimal(10, 2)
+  vendorStatus           VendorStatus @default(PENDING)
+  commissionRate         Decimal      @default(0.10) @db.Decimal(5, 4)
+  monthlySubscriptionFee Decimal?     @db.Decimal(10, 2)
   subscriptionPlan       String?
   subscriptionExpiresAt  DateTime?
-  applicationNotes       String?         @db.Text
+  applicationNotes       String?      @db.Text
   approvedAt             DateTime?
   approvedBy             String?
 
   // Stripe Connect
-  stripeConnectAccountId String?  @unique
-  stripeConnectOnboarded Boolean  @default(false)
+  stripeConnectAccountId      String? @unique
+  stripeConnectOnboarded      Boolean @default(false)
   stripeConnectPayoutsEnabled Boolean @default(false)
 
   // Business compliance fields
@@ -562,9 +564,9 @@ model Seller {
   vendorLedgerEntries   VendorLedgerEntry[]
   verificationDocuments SellerVerificationDocument[]
 
-  stores           Store[]
-  posConnections   POSConnection[]
-  marketListings   SellerMarket[]
+  stores         Store[]
+  posConnections POSConnection[]
+  marketListings SellerMarket[]
 
   loyaltyEnabled      Boolean  @default(true)
   loyaltyEarnRate     Decimal? @db.Decimal(5, 4)
@@ -580,18 +582,18 @@ model Seller {
 }
 
 model SellerVerificationDocument {
-  id           String                  @id @default(uuid())
+  id           String                @id @default(uuid())
   sellerId     String
-  seller       Seller                  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  seller       Seller                @relation(fields: [sellerId], references: [id], onDelete: Cascade)
   documentType String
   fileUrl      String
   fileName     String?
-  status       VerificationDocStatus   @default(PENDING)
+  status       VerificationDocStatus @default(PENDING)
   reviewedBy   String?
   reviewedAt   DateTime?
-  reviewNotes  String?                 @db.Text
-  createdAt    DateTime                @default(now())
-  updatedAt    DateTime                @updatedAt
+  reviewNotes  String?               @db.Text
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
 
   @@index([sellerId])
   @@index([status])
@@ -654,61 +656,61 @@ model SellerThemeSettings {
 
 // Product model
 model Product {
-  id              String        @id @default(uuid())
-  sellerId        String?
-  seller          Seller?       @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  isPlatformOwned Boolean       @default(false)
-  name            String
-  description     String        @db.Text
-  shortDescription String?     @db.Text
-  slug            String
-  sku             String?
-  barcode         String?
-  ean             String?
-  price           Decimal       @db.Decimal(10, 2)
-  tradePrice      Decimal?      @db.Decimal(10, 2)
-  rrp             Decimal?      @db.Decimal(10, 2)
-  currency        String        @default("USD")
-  taxRate         Decimal       @default(0) @db.Decimal(5, 4)
-  stock           Int           @default(0)
-  fandom          String?
-  brand           String? // Brand label for influencer commission matching (optional)
-  category        String? // Keep for backward compatibility during migration
-  tags            String[] // Keep for backward compatibility during migration
-  categoryId      String? // New: relation to Category
-  status          ProductStatus @default(DRAFT)
-  productType     ProductType   @default(SIMPLE) // SIMPLE, VARIANT, BUNDLED
-  parentProductId String? // For variant products, reference to parent
-  parentProduct   Product?      @relation("ProductVariants", fields: [parentProductId], references: [id], onDelete: Cascade)
-  variantProducts Product[]     @relation("ProductVariants") // Child variants
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id               String        @id @default(uuid())
+  sellerId         String?
+  seller           Seller?       @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  isPlatformOwned  Boolean       @default(false)
+  name             String
+  description      String        @db.Text
+  shortDescription String?       @db.Text
+  slug             String
+  sku              String?
+  barcode          String?
+  ean              String?
+  price            Decimal       @db.Decimal(10, 2)
+  tradePrice       Decimal?      @db.Decimal(10, 2)
+  rrp              Decimal?      @db.Decimal(10, 2)
+  currency         String        @default("USD")
+  taxRate          Decimal       @default(0) @db.Decimal(5, 4)
+  stock            Int           @default(0)
+  fandom           String?
+  brand            String? // Brand label for influencer commission matching (optional)
+  category         String? // Keep for backward compatibility during migration
+  tags             String[] // Keep for backward compatibility during migration
+  categoryId       String? // New: relation to Category
+  status           ProductStatus @default(DRAFT)
+  productType      ProductType   @default(SIMPLE) // SIMPLE, VARIANT, BUNDLED
+  parentProductId  String? // For variant products, reference to parent
+  parentProduct    Product?      @relation("ProductVariants", fields: [parentProductId], references: [id], onDelete: Cascade)
+  variantProducts  Product[]     @relation("ProductVariants") // Child variants
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
 
   // Relations
-  images             ProductImage[]
-  variations         ProductVariation[]
-  cartItems          CartItem[]
-  orderItems         OrderItem[]
-  reviews            ProductReview[]
-  wishlistItems      WishlistItem[]
-  discrepancies      Discrepancy[]
-  averageRating      Float?
-  reviewCount        Int                     @default(0)
-  submission         ProductSubmission?
-  pricing            ProductPricing?
-  duplicateProducts  DuplicateProduct[]
-  categoryRelation   Category?               @relation(fields: [categoryId], references: [id])
-  tagsRelation       ProductTag[]
-  attributes         ProductAttribute[]
-  inventoryLocations InventoryLocation[]
-  stockTransfers     StockTransfer[]
-  stockMovements     StockMovement[]
-  taxClassId         String?
-  taxClass           TaxClass?               @relation(fields: [taxClassId], references: [id], onDelete: SetNull)
-  returnPolicies     ReturnPolicy[]
-  bundleItems        ProductBundleItem[]     @relation("ProductBundles")
-  bundledIn          ProductBundleItem[]     @relation("ProductBundledIn")
-  volumePricing      VolumePricing[]
+  images                    ProductImage[]
+  variations                ProductVariation[]
+  cartItems                 CartItem[]
+  orderItems                OrderItem[]
+  reviews                   ProductReview[]
+  wishlistItems             WishlistItem[]
+  discrepancies             Discrepancy[]
+  averageRating             Float?
+  reviewCount               Int                        @default(0)
+  submission                ProductSubmission?
+  pricing                   ProductPricing?
+  duplicateProducts         DuplicateProduct[]
+  categoryRelation          Category?                  @relation(fields: [categoryId], references: [id])
+  tagsRelation              ProductTag[]
+  attributes                ProductAttribute[]
+  inventoryLocations        InventoryLocation[]
+  stockTransfers            StockTransfer[]
+  stockMovements            StockMovement[]
+  taxClassId                String?
+  taxClass                  TaxClass?                  @relation(fields: [taxClassId], references: [id], onDelete: SetNull)
+  returnPolicies            ReturnPolicy[]
+  bundleItems               ProductBundleItem[]        @relation("ProductBundles")
+  bundledIn                 ProductBundleItem[]        @relation("ProductBundledIn")
+  volumePricing             VolumePricing[]
   influencerLinks           InfluencerProductLink[]
   vendorProducts            VendorProduct[]
   influencerCommissionRules InfluencerCommissionRule[]
@@ -717,7 +719,7 @@ model Product {
   skuCustomsAttributes      SkuCustomsAttribute[]
   ugcSubmissions            UGCSubmission[]
   views                     ProductView[]
-  viewCount                 Int                     @default(0)
+  viewCount                 Int                        @default(0)
   productMarkets            ProductMarket[]
 
   // SEO
@@ -743,6 +745,7 @@ model Product {
   @@index([barcode])
   @@index([ean])
   @@index([categoryId])
+  @@index([categoryId, status])
   @@index([fandom])
   @@index([status, createdAt])
   @@index([status, categoryId, createdAt])
@@ -783,11 +786,11 @@ enum ProductType {
 
 // Vendor Status for onboarding/approval workflow
 enum VendorStatus {
-  PENDING    // Application submitted, awaiting review
-  APPROVED   // Approved to sell
-  ACTIVE     // Actively selling
-  SUSPENDED  // Temporarily suspended
-  REJECTED   // Application rejected
+  PENDING // Application submitted, awaiting review
+  APPROVED // Approved to sell
+  ACTIVE // Actively selling
+  SUSPENDED // Temporarily suspended
+  REJECTED // Application rejected
   DEACTIVATED
 }
 
@@ -812,27 +815,27 @@ model VendorProduct {
   status    VendorProductStatus @default(DRAFT)
 
   // Vendor-specific pricing
-  vendorPrice    Decimal   @db.Decimal(10, 2)
-  vendorCurrency String    @default("USD")
-  platformPrice  Decimal?  @db.Decimal(10, 2) // Final selling price set by platform
-  costPrice      Decimal?  @db.Decimal(10, 2) // Vendor's cost price
-  marginPercent  Decimal?  @db.Decimal(5, 4)
+  vendorPrice    Decimal  @db.Decimal(10, 2)
+  vendorCurrency String   @default("USD")
+  platformPrice  Decimal? @db.Decimal(10, 2) // Final selling price set by platform
+  costPrice      Decimal? @db.Decimal(10, 2) // Vendor's cost price
+  marginPercent  Decimal? @db.Decimal(5, 4)
 
   // Vendor-specific stock
-  vendorStock         Int     @default(0)
-  lowStockThreshold   Int     @default(5)
-  allowBackorder      Boolean @default(false)
+  vendorStock       Int     @default(0)
+  lowStockThreshold Int     @default(5)
+  allowBackorder    Boolean @default(false)
 
   // Fulfillment
   fulfillmentMethod String? // VENDOR_SHIPS, HOS_FULFILLS, DROPSHIP
   leadTimeDays      Int     @default(3)
 
   // Approval workflow
-  submittedAt  DateTime?
-  approvedAt   DateTime?
-  approvedBy   String?
-  rejectedAt   DateTime?
-  rejectionReason String? @db.Text
+  submittedAt     DateTime?
+  approvedAt      DateTime?
+  approvedBy      String?
+  rejectedAt      DateTime?
+  rejectionReason String?   @db.Text
 
   // Tracking
   totalUnitsSold Int     @default(0)
@@ -851,11 +854,11 @@ model VendorProduct {
 
 // Ledger entry types
 enum LedgerEntryType {
-  SALE             // Revenue from order
-  COMMISSION       // Platform commission deducted
-  REFUND           // Refund to customer
-  PAYOUT           // Payout to vendor
-  ADJUSTMENT       // Manual adjustment
+  SALE // Revenue from order
+  COMMISSION // Platform commission deducted
+  REFUND // Refund to customer
+  PAYOUT // Payout to vendor
+  ADJUSTMENT // Manual adjustment
   SUBSCRIPTION_FEE // Monthly subscription charge
   CHARGEBACK
 }
@@ -873,7 +876,7 @@ model VendorLedgerEntry {
   balance     Decimal         @db.Decimal(10, 2) // Running balance after this entry
   description String?         @db.Text
   metadata    Json?
-  referenceId String?         // External reference (Stripe transfer ID, etc.)
+  referenceId String? // External reference (Stripe transfer ID, etc.)
   marketId    String?
   market      Market?         @relation(fields: [marketId], references: [id], onDelete: SetNull)
   createdAt   DateTime        @default(now())
@@ -958,32 +961,32 @@ model VolumePricing {
 
 // Cart model
 model Cart {
-  id String     @id @default(uuid())
-  userId         String?    @unique
-  guestSessionId String?    @unique
-  items          CartItem[]
-  total      Decimal    @default(0) @db.Decimal(10, 2)
-  subtotal   Decimal    @default(0) @db.Decimal(10, 2)
-  tax        Decimal    @default(0) @db.Decimal(10, 2)
-  discount   Decimal    @default(0) @db.Decimal(10, 2) // Total discount amount
-  shipping   Decimal    @default(0) @db.Decimal(10, 2) // Shipping cost
-  currency   String     @default("USD")
-  couponCode String? // Applied coupon code
-  coupon     Coupon?    @relation(fields: [couponCode], references: [code], onDelete: SetNull)
-  abandonedEmailSentAt DateTime? // Last time abandoned-cart recovery email was sent
-  promotionFreeShipping  Boolean   @default(false) // True when an active promotion grants free shipping
+  id                    String     @id @default(uuid())
+  userId                String?    @unique
+  guestSessionId        String?    @unique
+  items                 CartItem[]
+  total                 Decimal    @default(0) @db.Decimal(10, 2)
+  subtotal              Decimal    @default(0) @db.Decimal(10, 2)
+  tax                   Decimal    @default(0) @db.Decimal(10, 2)
+  discount              Decimal    @default(0) @db.Decimal(10, 2) // Total discount amount
+  shipping              Decimal    @default(0) @db.Decimal(10, 2) // Shipping cost
+  currency              String     @default("USD")
+  couponCode            String? // Applied coupon code
+  coupon                Coupon?    @relation(fields: [couponCode], references: [code], onDelete: SetNull)
+  abandonedEmailSentAt  DateTime? // Last time abandoned-cart recovery email was sent
+  promotionFreeShipping Boolean    @default(false) // True when an active promotion grants free shipping
 
-  pendingLoyaltyPoints    Int?
-  pendingLoyaltyOptionId  String?
-  loyaltyDiscountAmount   Decimal @default(0) @db.Decimal(10, 2)
-  checkoutLockedAt        DateTime?
+  pendingLoyaltyPoints   Int?
+  pendingLoyaltyOptionId String?
+  loyaltyDiscountAmount  Decimal   @default(0) @db.Decimal(10, 2)
+  checkoutLockedAt       DateTime?
 
-  marketId   String?
-  market     Market?    @relation(fields: [marketId], references: [id], onDelete: SetNull)
+  marketId String?
+  market   Market? @relation(fields: [marketId], references: [id], onDelete: SetNull)
 
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  users      User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
 
   @@index([marketId])
   @@map("carts")
@@ -1029,8 +1032,8 @@ model Address {
   updatedAt            DateTime @updatedAt
 
   // Relations for orders
-  shippingOrders Order[] @relation("ShippingAddress")
-  billingOrders  Order[] @relation("BillingAddress")
+  shippingOrders Order[]                @relation("ShippingAddress")
+  billingOrders  Order[]                @relation("BillingAddress")
   storeShipments StoreShipmentRequest[]
 
   @@index([userId])
@@ -1042,39 +1045,39 @@ model Address {
 
 // Order model
 model Order {
-  id                String        @id @default(uuid())
-  userId            String
-  user              User          @relation(fields: [userId], references: [id])
-  sellerId          String?
-  seller            Seller?       @relation(fields: [sellerId], references: [id])
-  orderNumber       String        @unique
-  items             OrderItem[]
-  subtotal          Decimal       @db.Decimal(10, 2)
-  tax               Decimal       @db.Decimal(10, 2)
-  total             Decimal       @db.Decimal(10, 2)
-  shippingAmount    Decimal       @default(0) @db.Decimal(10, 2)
-  shippingCost      Decimal?      @db.Decimal(10, 2)
-  shippingLabelUrl  String?
-  discountAmount    Decimal       @default(0) @db.Decimal(10, 2)
-  currency          String        @default("USD")
-  status            OrderStatus   @default(PENDING)
-  shippingAddressId String
-  shippingAddress   Address       @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-  billingAddressId  String
-  billingAddress    Address       @relation("BillingAddress", fields: [billingAddressId], references: [id])
-  paymentMethod     String?
-  paymentStatus     PaymentStatus @default(PENDING)
-  trackingCode      String?
-  carrier           String?
-  trackingUrl       String?
+  id                  String        @id @default(uuid())
+  userId              String
+  user                User          @relation(fields: [userId], references: [id])
+  sellerId            String?
+  seller              Seller?       @relation(fields: [sellerId], references: [id])
+  orderNumber         String        @unique
+  items               OrderItem[]
+  subtotal            Decimal       @db.Decimal(10, 2)
+  tax                 Decimal       @db.Decimal(10, 2)
+  total               Decimal       @db.Decimal(10, 2)
+  shippingAmount      Decimal       @default(0) @db.Decimal(10, 2)
+  shippingCost        Decimal?      @db.Decimal(10, 2)
+  shippingLabelUrl    String?
+  discountAmount      Decimal       @default(0) @db.Decimal(10, 2)
+  currency            String        @default("USD")
+  status              OrderStatus   @default(PENDING)
+  shippingAddressId   String
+  shippingAddress     Address       @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  billingAddressId    String
+  billingAddress      Address       @relation("BillingAddress", fields: [billingAddressId], references: [id])
+  paymentMethod       String?
+  paymentStatus       PaymentStatus @default(PENDING)
+  trackingCode        String?
+  carrier             String?
+  trackingUrl         String?
   estimatedDeliveryAt DateTime?
-  deliveredAt       DateTime?
+  deliveredAt         DateTime?
 
   // Parent/child order support for multi-vendor checkout
-  parentOrderId    String?
-  parentOrder      Order?   @relation("OrderChildren", fields: [parentOrderId], references: [id], onDelete: SetNull)
-  childOrders      Order[]  @relation("OrderChildren")
-  rejectionReason  String?  @db.Text
+  parentOrderId   String?
+  parentOrder     Order?  @relation("OrderChildren", fields: [parentOrderId], references: [id], onDelete: SetNull)
+  childOrders     Order[] @relation("OrderChildren")
+  rejectionReason String? @db.Text
 
   // Stripe Connect payment splitting
   stripePaymentIntentId String?
@@ -1119,8 +1122,8 @@ model Order {
   /// Spend counted toward campaign thresholds after excluding gift-card lines.
   qualifyingSubtotal       Decimal? @db.Decimal(10, 2)
 
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   idempotencyKey String?
 
@@ -1136,6 +1139,9 @@ model Order {
   @@index([status])
   @@index([userId])
   @@index([sellerId])
+  @@index([sellerId, status])
+  @@index([userId, status])
+  @@index([status, createdAt])
   @@index([marketId])
   @@index([paymentStatus])
   @@index([createdAt])
@@ -1145,16 +1151,16 @@ model Order {
 }
 
 model GiftDetails {
-  id                 String  @id @default(uuid())
-  orderId            String  @unique
-  order              Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  recipientName      String
-  recipientEmail     String?
-  recipientPhone     String?
-  giftMessage        String? @db.Text
-  giftWrapping       Boolean @default(false)
-  hidePrice          Boolean @default(true)
-  senderName         String?
+  id             String  @id @default(uuid())
+  orderId        String  @unique
+  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  recipientName  String
+  recipientEmail String?
+  recipientPhone String?
+  giftMessage    String? @db.Text
+  giftWrapping   Boolean @default(false)
+  hidePrice      Boolean @default(true)
+  senderName     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1164,8 +1170,8 @@ model GiftDetails {
 
 enum OrderStatus {
   PENDING
-  ACCEPTED       // Vendor accepted the child order
-  REJECTED       // Vendor rejected the child order
+  ACCEPTED // Vendor accepted the child order
+  REJECTED // Vendor rejected the child order
   CONFIRMED
   PROCESSING
   FULFILLED
@@ -1188,33 +1194,33 @@ enum CancellationStatus {
 }
 
 model CancellationRequest {
-  id              String             @id @default(uuid())
-  orderId         String
-  order           Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  requestedById   String
-  requestedBy     User               @relation("CancellationRequestedBy", fields: [requestedById], references: [id])
-  reason          String?            @db.Text
-  status          CancellationStatus @default(PENDING_SELLER)
-  previousStatus  OrderStatus
+  id             String             @id @default(uuid())
+  orderId        String
+  order          Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  requestedById  String
+  requestedBy    User               @relation("CancellationRequestedBy", fields: [requestedById], references: [id])
+  reason         String?            @db.Text
+  status         CancellationStatus @default(PENDING_SELLER)
+  previousStatus OrderStatus
 
-  sellerReviewedById  String?
-  sellerReviewedBy    User?         @relation("CancellationSellerReviewer", fields: [sellerReviewedById], references: [id])
-  sellerReviewedAt    DateTime?
-  sellerNotes         String?       @db.Text
+  sellerReviewedById String?
+  sellerReviewedBy   User?     @relation("CancellationSellerReviewer", fields: [sellerReviewedById], references: [id])
+  sellerReviewedAt   DateTime?
+  sellerNotes        String?   @db.Text
 
   financeReviewedById String?
-  financeReviewedBy   User?         @relation("CancellationFinanceReviewer", fields: [financeReviewedById], references: [id])
+  financeReviewedBy   User?     @relation("CancellationFinanceReviewer", fields: [financeReviewedById], references: [id])
   financeReviewedAt   DateTime?
-  financeNotes        String?       @db.Text
+  financeNotes        String?   @db.Text
 
-  escalatedAt         DateTime?
-  escalationReason    String?       @db.Text
-  resolvedById        String?
-  resolvedBy          User?         @relation("CancellationResolver", fields: [resolvedById], references: [id])
-  resolvedAt          DateTime?
-  adminNotes          String?       @db.Text
+  escalatedAt      DateTime?
+  escalationReason String?   @db.Text
+  resolvedById     String?
+  resolvedBy       User?     @relation("CancellationResolver", fields: [resolvedById], references: [id])
+  resolvedAt       DateTime?
+  adminNotes       String?   @db.Text
 
-  autoApproved        Boolean       @default(false)
+  autoApproved Boolean @default(false)
 
   marketId String?
   market   Market? @relation(fields: [marketId], references: [id], onDelete: SetNull)
@@ -1355,11 +1361,11 @@ model ReturnRequest {
   refundAmount   Decimal?      @db.Decimal(10, 2)
   refundMethod   String?
   notes          String?       @db.Text
-  trackingNumber String?       // Tracking number for return shipment
-  carrier        String?       // Shipping carrier (UPS, FedEx, etc.)
-  shippedAt      DateTime?     // When the customer shipped the return
-  receivedAt     DateTime?     // When the return was received
-  inspectedAt    DateTime?     // When the return was inspected
+  trackingNumber String? // Tracking number for return shipment
+  carrier        String? // Shipping carrier (UPS, FedEx, etc.)
+  shippedAt      DateTime? // When the customer shipped the return
+  receivedAt     DateTime? // When the return was received
+  inspectedAt    DateTime? // When the return was inspected
   processedAt    DateTime?
   items          ReturnItem[] // Item-level returns
   transactions   Transaction[]
@@ -1622,8 +1628,8 @@ model ProductSubmission {
   publishedAt           DateTime?
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
-  crossSellerGroupId    String?                 // Set by duplicate grouping (cron or on-demand) for reporting
-  pricingData           Json?                   // Structured pricing data set by finance (basePrice, hosMargin, finalPrice, visibilityLevel)
+  crossSellerGroupId    String? // Set by duplicate grouping (cron or on-demand) for reporting
+  pricingData           Json? // Structured pricing data set by finance (basePrice, hosMargin, finalPrice, visibilityLevel)
   version               Int                     @default(1) // Optimistic concurrency control
 
   // Relations
@@ -1844,10 +1850,10 @@ model Fandom {
   createdAt   DateTime @default(now())
 
   // Relations
-  characters Character[]
-  quests     Quest[]
-  quizzes    FandomQuiz[]
-  events     Event[]
+  characters     Character[]
+  quests         Quest[]
+  quizzes        FandomQuiz[]
+  events         Event[]
   ugcSubmissions UGCSubmission[]
 
   @@map("fandoms")
@@ -1988,19 +1994,19 @@ model SharedItem {
 }
 
 model FandomQuiz {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   fandomId     String
-  fandom       Fandom   @relation(fields: [fandomId], references: [id], onDelete: Restrict)
+  fandom       Fandom    @relation(fields: [fandomId], references: [id], onDelete: Restrict)
   title        String
-  description  String?  @db.Text
+  description  String?   @db.Text
   questions    Json
-  pointsReward Int      @default(25)
-  difficulty   String   @default("EASY")
-  isActive     Boolean  @default(true)
+  pointsReward Int       @default(25)
+  difficulty   String    @default("EASY")
+  isActive     Boolean   @default(true)
   startsAt     DateTime?
   endsAt       DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   attempts FandomQuizAttempt[]
 
@@ -2040,36 +2046,36 @@ model CurrencyExchangeRate {
 
 // Gift Card model
 model GiftCard {
-  id            String                @id @default(uuid())
-  code          String                @unique
-  userId        String? // Owner (null if not yet assigned)
-  user          User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
-  type          String                @default("digital") // 'digital' or 'physical'
-  amount        Decimal               @db.Decimal(10, 2)
-  balance       Decimal               @db.Decimal(10, 2) // Remaining balance (display cache for EXTERNAL)
-  currency      String                @default("USD")
-  status        String                @default("ACTIVE") // 'ACTIVE', 'REDEEMED', 'EXPIRED', 'CANCELLED'
+  id                    String                @id @default(uuid())
+  code                  String                @unique
+  userId                String? // Owner (null if not yet assigned)
+  user                  User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type                  String                @default("digital") // 'digital' or 'physical'
+  amount                Decimal               @db.Decimal(10, 2)
+  balance               Decimal               @db.Decimal(10, 2) // Remaining balance (display cache for EXTERNAL)
+  currency              String                @default("USD")
+  status                String                @default("ACTIVE") // 'ACTIVE', 'REDEEMED', 'EXPIRED', 'CANCELLED'
   /// HOS = native ledger; POS_VOUCHER = pointer to Lightspeed gift card
-  source        String                @default("HOS")
+  source                String                @default("HOS")
   /// INTERNAL = HOS balance; EXTERNAL = Lightspeed is authoritative
-  balanceSource String                @default("INTERNAL")
-  posVoucherId  String?               @unique
-  posVoucher    LoyaltyPosVoucher?    @relation(fields: [posVoucherId], references: [id], onDelete: SetNull)
+  balanceSource         String                @default("INTERNAL")
+  posVoucherId          String?               @unique
+  posVoucher            LoyaltyPosVoucher?    @relation(fields: [posVoucherId], references: [id], onDelete: SetNull)
   /// Lightspeed gift card transaction client_id for online REDEEMING idempotency
-  externalClientId        String?
-  externalTransactionId   String?
-  metadata      Json?
-  issuedToEmail String?
-  issuedToName  String?
-  expiresAt     DateTime?
-  message       String?               @db.Text
-  purchasedAt   DateTime              @default(now())
-  redeemedAt    DateTime?
-  transactions  GiftCardTransaction[]
-  marketId      String?
-  market        Market?               @relation(fields: [marketId], references: [id], onDelete: SetNull)
-  createdAt     DateTime              @default(now())
-  updatedAt     DateTime              @updatedAt
+  externalClientId      String?
+  externalTransactionId String?
+  metadata              Json?
+  issuedToEmail         String?
+  issuedToName          String?
+  expiresAt             DateTime?
+  message               String?               @db.Text
+  purchasedAt           DateTime              @default(now())
+  redeemedAt            DateTime?
+  transactions          GiftCardTransaction[]
+  marketId              String?
+  market                Market?               @relation(fields: [marketId], references: [id], onDelete: SetNull)
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 
   @@index([code])
   @@index([userId])
@@ -2169,35 +2175,37 @@ model ActivityLog {
 
 // Transaction model
 model Transaction {
-  id            String            @id @default(uuid())
+  id            String                @id @default(uuid())
   type          TransactionType
-  amount        Decimal           @db.Decimal(10, 2)
-  currency      String            @default("USD")
-  status        TransactionStatus @default(PENDING)
+  amount        Decimal               @db.Decimal(10, 2)
+  currency      String                @default("USD")
+  status        TransactionStatus     @default(PENDING)
   sellerId      String?
-  seller        Seller?           @relation(fields: [sellerId], references: [id])
+  seller        Seller?               @relation(fields: [sellerId], references: [id])
   customerId    String?
-  customer      User?             @relation("CustomerTransactions", fields: [customerId], references: [id])
+  customer      User?                 @relation("CustomerTransactions", fields: [customerId], references: [id])
   orderId       String?
-  order         Order?            @relation(fields: [orderId], references: [id])
+  order         Order?                @relation(fields: [orderId], references: [id])
   settlementId  String?
-  settlement    Settlement?       @relation(fields: [settlementId], references: [id])
+  settlement    Settlement?           @relation(fields: [settlementId], references: [id])
   returnId      String?
-  returnRequest ReturnRequest?    @relation(fields: [returnId], references: [id])
-  description   String?           @db.Text
+  returnRequest ReturnRequest?        @relation(fields: [returnId], references: [id])
+  description   String?               @db.Text
   metadata      Json?
   marketId      String?
-  market        Market?           @relation(fields: [marketId], references: [id], onDelete: SetNull)
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
+  market        Market?               @relation(fields: [marketId], references: [id], onDelete: SetNull)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
   auditLogs     TransactionAuditLog[]
   disputes      Dispute[]
 
   @@index([sellerId])
   @@index([customerId])
+  @@index([customerId, createdAt])
   @@index([orderId])
   @@index([settlementId])
   @@index([type])
+  @@index([type, createdAt])
   @@index([status])
   @@index([createdAt])
   @@index([marketId])
@@ -2236,22 +2244,22 @@ model TransactionAuditLog {
 }
 
 model ReconciliationRun {
-  id              String                @id @default(uuid())
-  status          ReconciliationStatus  @default(RUNNING)
+  id              String               @id @default(uuid())
+  status          ReconciliationStatus @default(RUNNING)
   periodStart     DateTime
   periodEnd       DateTime
-  totalMatched    Int                   @default(0)
-  totalMismatched Int                   @default(0)
-  totalMissing    Int                   @default(0)
-  totalExtra      Int                   @default(0)
-  notes           String?               @db.Text
+  totalMatched    Int                  @default(0)
+  totalMismatched Int                  @default(0)
+  totalMissing    Int                  @default(0)
+  totalExtra      Int                  @default(0)
+  notes           String?              @db.Text
   startedById     String?
-  startedBy       User?                 @relation("ReconciliationRuns", fields: [startedById], references: [id], onDelete: SetNull)
+  startedBy       User?                @relation("ReconciliationRuns", fields: [startedById], references: [id], onDelete: SetNull)
   completedAt     DateTime?
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
-  items           ReconciliationItem[]
+  items ReconciliationItem[]
 
   @@index([status])
   @@index([createdAt])
@@ -2259,22 +2267,22 @@ model ReconciliationRun {
 }
 
 model ReconciliationItem {
-  id                String              @id @default(uuid())
+  id                String                   @id @default(uuid())
   runId             String
-  run               ReconciliationRun   @relation(fields: [runId], references: [id], onDelete: Cascade)
+  run               ReconciliationRun        @relation(fields: [runId], references: [id], onDelete: Cascade)
   type              ReconciliationItemType
   transactionId     String?
   stripeChargeId    String?
-  internalAmount    Decimal?            @db.Decimal(10, 2)
-  stripeAmount      Decimal?            @db.Decimal(10, 2)
+  internalAmount    Decimal?                 @db.Decimal(10, 2)
+  stripeAmount      Decimal?                 @db.Decimal(10, 2)
   currency          String?
-  discrepancyAmount Decimal?            @db.Decimal(10, 2)
+  discrepancyAmount Decimal?                 @db.Decimal(10, 2)
   status            ReconciliationItemStatus @default(UNRESOLVED)
   resolvedById      String?
-  resolvedBy        User?               @relation("ReconciliationItemResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolvedBy        User?                    @relation("ReconciliationItemResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
   resolvedAt        DateTime?
-  resolution        String?             @db.Text
-  createdAt         DateTime            @default(now())
+  resolution        String?                  @db.Text
+  createdAt         DateTime                 @default(now())
 
   @@index([runId])
   @@index([status])
@@ -2282,30 +2290,30 @@ model ReconciliationItem {
 }
 
 model Dispute {
-  id                  String        @id @default(uuid())
-  stripeDisputeId     String?       @unique
-  orderId             String?
-  order               Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  transactionId       String?
-  transaction         Transaction?  @relation(fields: [transactionId], references: [id], onDelete: SetNull)
-  sellerId            String?
-  seller              Seller?       @relation(fields: [sellerId], references: [id], onDelete: SetNull)
-  customerId          String?
-  customer            User?         @relation("CustomerDisputes", fields: [customerId], references: [id], onDelete: SetNull)
-  amount              Decimal       @db.Decimal(10, 2)
-  currency            String        @default("USD")
-  reason              String?
-  status              DisputeStatus @default(OPEN)
-  evidenceDeadline    DateTime?
-  evidenceSubmitted   Boolean       @default(false)
-  outcome             String?
-  notes               String?       @db.Text
-  metadata            Json?
-  marketId            String?
-  market              Market?       @relation(fields: [marketId], references: [id], onDelete: SetNull)
-  resolvedAt          DateTime?
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  id                String        @id @default(uuid())
+  stripeDisputeId   String?       @unique
+  orderId           String?
+  order             Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  transactionId     String?
+  transaction       Transaction?  @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  sellerId          String?
+  seller            Seller?       @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  customerId        String?
+  customer          User?         @relation("CustomerDisputes", fields: [customerId], references: [id], onDelete: SetNull)
+  amount            Decimal       @db.Decimal(10, 2)
+  currency          String        @default("USD")
+  reason            String?
+  status            DisputeStatus @default(OPEN)
+  evidenceDeadline  DateTime?
+  evidenceSubmitted Boolean       @default(false)
+  outcome           String?
+  notes             String?       @db.Text
+  metadata          Json?
+  marketId          String?
+  market            Market?       @relation(fields: [marketId], references: [id], onDelete: SetNull)
+  resolvedAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   @@index([status])
   @@index([sellerId])
@@ -2612,24 +2620,24 @@ enum MessageStatus {
 
 // Category Model (3-level hierarchy)
 model Category {
-  id          String      @id @default(uuid())
-  name        String
-  slug        String      @unique
-  parentId    String?
-  parent      Category?   @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children    Category[]  @relation("CategoryHierarchy")
-  level       Int // 0 = Fandom (top-level), 1 = category, 2 = sub-category
-  path        String // Full path: "/clothing/t-shirts/graphic-tees"
-  description String?     @db.Text
-  image       String?
-  order       Int         @default(0)
-  isActive    Boolean     @default(true)
-  products    Product[]
-  attributes  Attribute[] // Category-specific attributes
+  id                        String                     @id @default(uuid())
+  name                      String
+  slug                      String                     @unique
+  parentId                  String?
+  parent                    Category?                  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children                  Category[]                 @relation("CategoryHierarchy")
+  level                     Int // 0 = Fandom (top-level), 1 = category, 2 = sub-category
+  path                      String // Full path: "/clothing/t-shirts/graphic-tees"
+  description               String?                    @db.Text
+  image                     String?
+  order                     Int                        @default(0)
+  isActive                  Boolean                    @default(true)
+  products                  Product[]
+  attributes                Attribute[] // Category-specific attributes
   influencerCommissionRules InfluencerCommissionRule[]
-  departments Department[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  departments               Department[]
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
 
   @@index([parentId])
   @@index([level])
@@ -2708,21 +2716,21 @@ model ProductAttribute {
 
 // Department Model (storefront browsing sections)
 model Department {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
-  slug        String   @unique
-  description String?  @db.Text
-  meta        String?  // Subtitle shown above the title (e.g. "2.4k+ listings · props & figures")
-  ctaText     String?  // Call-to-action label (e.g. "Shop collectibles")
-  ctaUrl      String   // Link target (e.g. "/products?category=collectibles")
-  iconSvg     String?  @db.Text // SVG markup for the department icon
-  image       String?  // Optional banner/card image URL
-  order       Int      @default(0)
-  isActive    Boolean  @default(true)
-  categoryId  String?  // Optional link to a taxonomy Category
+  slug        String    @unique
+  description String?   @db.Text
+  meta        String? // Subtitle shown above the title (e.g. "2.4k+ listings · props & figures")
+  ctaText     String? // Call-to-action label (e.g. "Shop collectibles")
+  ctaUrl      String // Link target (e.g. "/products?category=collectibles")
+  iconSvg     String?   @db.Text // SVG markup for the department icon
+  image       String? // Optional banner/card image URL
+  order       Int       @default(0)
+  isActive    Boolean   @default(true)
+  categoryId  String? // Optional link to a taxonomy Category
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([isActive, order])
   @@map("departments")
@@ -2731,7 +2739,7 @@ model Department {
 // Navigation Menu Items (admin-managed storefront nav, footer links)
 model NavigationItem {
   id        String   @id @default(uuid())
-  group     String   // e.g. "header_primary", "header_more", "footer_shop", "footer_policy"
+  group     String // e.g. "header_primary", "header_more", "footer_shop", "footer_policy"
   label     String
   href      String
   order     Int      @default(0)
@@ -2764,7 +2772,7 @@ model Testimonial {
 // Platform-wide key-value settings (feature flags, config overrides)
 model PlatformSetting {
   id        String   @id @default(uuid())
-  category  String   // e.g. "feature_flag", "site", "social"
+  category  String // e.g. "feature_flag", "site", "social"
   key       String
   value     String   @db.Text
   createdAt DateTime @default(now())
@@ -2819,26 +2827,26 @@ model ProductTag {
 
 // Promotion model
 model Promotion {
-  id          String          @id @default(uuid())
-  name        String
-  description String?         @db.Text
-  type        PromotionType
-  status      PromotionStatus @default(ACTIVE)
-  priority    Int             @default(0) // Higher priority = applied first
-  startDate   DateTime
-  endDate     DateTime?
-  conditions  Json // Rule conditions (cart value, product attributes, customer group, etc.)
-  actions     Json // Discount actions (percentage, fixed, free shipping, etc.)
-  isStackable Boolean         @default(false)
-  usageLimit  Int? // Total usage limit
-  usageCount  Int             @default(0)
-  userUsageLimit Int? // Per-customer usage limit (e.g. 1 = one use per customer)
-  sellerId    String? // If null, platform-wide promotion
-  seller      Seller?         @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  coupons     Coupon[]
+  id              String           @id @default(uuid())
+  name            String
+  description     String?          @db.Text
+  type            PromotionType
+  status          PromotionStatus  @default(ACTIVE)
+  priority        Int              @default(0) // Higher priority = applied first
+  startDate       DateTime
+  endDate         DateTime?
+  conditions      Json // Rule conditions (cart value, product attributes, customer group, etc.)
+  actions         Json // Discount actions (percentage, fixed, free shipping, etc.)
+  isStackable     Boolean          @default(false)
+  usageLimit      Int? // Total usage limit
+  usageCount      Int              @default(0)
+  userUsageLimit  Int? // Per-customer usage limit (e.g. 1 = one use per customer)
+  sellerId        String? // If null, platform-wide promotion
+  seller          Seller?          @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  coupons         Coupon[]
   promotionUsages PromotionUsage[]
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
   @@index([status])
   @@index([startDate, endDate])
@@ -3380,10 +3388,10 @@ model Influencer {
   totalCommission  Decimal @default(0) @db.Decimal(10, 2)
 
   // Relations
-  storefront   InfluencerStorefront?
-  referrals    Referral[]
-  commissions  InfluencerCommission[]
-  payouts      InfluencerPayout[]
+  storefront      InfluencerStorefront?
+  referrals       Referral[]
+  commissions     InfluencerCommission[]
+  payouts         InfluencerPayout[]
   campaigns       InfluencerCampaign[]
   productLinks    InfluencerProductLink[]
   commissionRules InfluencerCommissionRule[]
@@ -3659,8 +3667,8 @@ model NewsletterSubscription {
   userId         String?
   user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   status         String    @default("subscribed") // subscribed, unsubscribed
-  source         String?   @default("website")   // website, checkout, api
-  tags           Json?     // segmentation e.g. { role: "customer", fandom: "hp" }
+  source         String?   @default("website") // website, checkout, api
+  tags           Json? // segmentation e.g. { role: "customer", fandom: "hp" }
   subscribedAt   DateTime  @default(now())
   unsubscribedAt DateTime?
   createdAt      DateTime  @default(now())
@@ -3675,75 +3683,75 @@ model NewsletterSubscription {
 // === ENCHANTED CIRCLE — Loyalty (Phase 1) ===
 
 model LoyaltyTier {
-  id               String   @id @default(uuid())
-  name             String   @unique
-  slug             String   @unique
-  level            Int      @unique
+  id               String              @id @default(uuid())
+  name             String              @unique
+  slug             String              @unique
+  level            Int                 @unique
   pointsThreshold  Int
-  multiplier       Decimal  @db.Decimal(3, 2)
-  spendWeight      Decimal  @default(0.50) @db.Decimal(3, 2)
-  frequencyWeight  Decimal  @default(0.25) @db.Decimal(3, 2)
-  engagementWeight Decimal  @default(0.25) @db.Decimal(3, 2)
+  multiplier       Decimal             @db.Decimal(3, 2)
+  spendWeight      Decimal             @default(0.50) @db.Decimal(3, 2)
+  frequencyWeight  Decimal             @default(0.25) @db.Decimal(3, 2)
+  engagementWeight Decimal             @default(0.25) @db.Decimal(3, 2)
   benefits         Json
   icon             String?
   color            String?
-  inviteOnly       Boolean  @default(false)
+  inviteOnly       Boolean             @default(false)
   maxMembers       Int?
-  isActive         Boolean  @default(true)
+  isActive         Boolean             @default(true)
   members          LoyaltyMembership[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
   @@map("loyalty_tiers")
 }
 
 model LoyaltyMembership {
-  id                  String   @id @default(uuid())
-  userId              String   @unique
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                  String               @id @default(uuid())
+  userId              String               @unique
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   tierId              String
-  tier                LoyaltyTier @relation(fields: [tierId], references: [id])
-  totalPointsEarned   Int      @default(0)
-  currentBalance      Int      @default(0)
-  totalPointsRedeemed Int      @default(0)
-  compositeScore      Decimal  @default(0) @db.Decimal(10, 2)
-  totalSpend          Decimal  @default(0) @db.Decimal(10, 2)
-  purchaseCount       Int      @default(0)
-  engagementCount     Int      @default(0)
+  tier                LoyaltyTier          @relation(fields: [tierId], references: [id])
+  totalPointsEarned   Int                  @default(0)
+  currentBalance      Int                  @default(0)
+  totalPointsRedeemed Int                  @default(0)
+  compositeScore      Decimal              @default(0) @db.Decimal(10, 2)
+  totalSpend          Decimal              @default(0) @db.Decimal(10, 2)
+  purchaseCount       Int                  @default(0)
+  engagementCount     Int                  @default(0)
   tierExpiresAt       DateTime?
-  cardNumber          String?  @unique
-  enrolledAt          DateTime @default(now())
-  enrollmentChannel   String   @default("WEB")
+  cardNumber          String?              @unique
+  enrolledAt          DateTime             @default(now())
+  enrollmentChannel   String               @default("WEB")
   enrollmentStoreId   String?
-  preferredCurrency   String   @default("USD")
-  regionCode          String   @default("US")
+  preferredCurrency   String               @default("USD")
+  regionCode          String               @default("US")
   fandomProfile       Json?
-  optInEmail          Boolean  @default(true)
-  optInSms            Boolean  @default(false)
-  optInWhatsApp       Boolean  @default(false)
-  optInPush           Boolean  @default(false)
+  optInEmail          Boolean              @default(true)
+  optInSms            Boolean              @default(false)
+  optInWhatsApp       Boolean              @default(false)
+  optInPush           Boolean              @default(false)
   birthday            DateTime?
   lastActivityAt      DateTime?
   transactions        LoyaltyTransaction[]
   redemptions         LoyaltyRedemption[]
   posVouchers         LoyaltyPosVoucher[]
-  referralsGiven      LoyaltyReferral[] @relation("LoyaltyReferrer")
-  referralsReceived   LoyaltyReferral[] @relation("LoyaltyReferee")
+  referralsGiven      LoyaltyReferral[]    @relation("LoyaltyReferrer")
+  referralsReceived   LoyaltyReferral[]    @relation("LoyaltyReferee")
   ambassadorProfile   AmbassadorProfile?
 
-  clvScore            Decimal?  @db.Decimal(10, 2)
-  clvUpdatedAt        DateTime?
-  predictedChurnRisk  Decimal?  @db.Decimal(5, 4)
-  firstPurchaseAt     DateTime?
-  lastPurchaseAt      DateTime?
-  avgOrderValue       Decimal?  @db.Decimal(10, 2)
-  purchaseFrequency   Decimal?  @db.Decimal(6, 4)
+  clvScore           Decimal?  @db.Decimal(10, 2)
+  clvUpdatedAt       DateTime?
+  predictedChurnRisk Decimal?  @db.Decimal(5, 4)
+  firstPurchaseAt    DateTime?
+  lastPurchaseAt     DateTime?
+  avgOrderValue      Decimal?  @db.Decimal(10, 2)
+  purchaseFrequency  Decimal?  @db.Decimal(6, 4)
 
   partnerReferralLinkId String?
   partnerReferralLink   ReferralPartnerLink? @relation(fields: [partnerReferralLinkId], references: [id], onDelete: SetNull)
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tierId])
   @@index([cardNumber])
@@ -3753,26 +3761,26 @@ model LoyaltyMembership {
 }
 
 model LoyaltyTransaction {
-  id              String            @id @default(uuid())
-  membershipId    String
-  membership      LoyaltyMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
-  type            LoyaltyTxType
-  points          Int
-  balanceBefore   Int
-  balanceAfter    Int
-  source          String
-  sourceId        String?
+  id             String            @id @default(uuid())
+  membershipId   String
+  membership     LoyaltyMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  type           LoyaltyTxType
+  points         Int
+  balanceBefore  Int
+  balanceAfter   Int
+  source         String
+  sourceId       String?
   /// Application + DB idempotency key (unique when set). Prefer this over racey pre-checks.
-  idempotencyKey  String?           @unique
-  channel         String
-  storeId         String?
-  sellerId        String?
-  description     String?
-  earnRuleId      String?
-  campaignId      String?
-  expiresAt       DateTime?
-  metadata        Json?
-  createdAt       DateTime @default(now())
+  idempotencyKey String?           @unique
+  channel        String
+  storeId        String?
+  sellerId       String?
+  description    String?
+  earnRuleId     String?
+  campaignId     String?
+  expiresAt      DateTime?
+  metadata       Json?
+  createdAt      DateTime          @default(now())
 
   @@index([membershipId])
   @@index([type])
@@ -3815,40 +3823,40 @@ model LoyaltyEarnRule {
 }
 
 model LoyaltyRedemptionOption {
-  id           String    @id @default(uuid())
-  name         String
-  type         String
-  pointsCost   Int
-  value        Decimal?  @db.Decimal(10, 2)
-  description  String?   @db.Text
-  image        String?
-  stock        Int?
-  regionCodes  String[]  @default([])
-  channels     String[]  @default([])
-  isActive     Boolean   @default(true)
-  startsAt     DateTime?
-  endsAt       DateTime?
-  redemptions  LoyaltyRedemption[]
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id          String              @id @default(uuid())
+  name        String
+  type        String
+  pointsCost  Int
+  value       Decimal?            @db.Decimal(10, 2)
+  description String?             @db.Text
+  image       String?
+  stock       Int?
+  regionCodes String[]            @default([])
+  channels    String[]            @default([])
+  isActive    Boolean             @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  redemptions LoyaltyRedemption[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
 
   @@map("loyalty_redemption_options")
 }
 
 model LoyaltyRedemption {
-  id           String                 @id @default(uuid())
+  id           String                  @id @default(uuid())
   membershipId String
-  membership   LoyaltyMembership      @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  membership   LoyaltyMembership       @relation(fields: [membershipId], references: [id], onDelete: Cascade)
   optionId     String
   option       LoyaltyRedemptionOption @relation(fields: [optionId], references: [id])
   pointsSpent  Int
-  status       String                 @default("COMPLETED")
+  status       String                  @default("COMPLETED")
   couponCode   String?
   channel      String
   storeId      String?
   orderId      String?
   metadata     Json?
-  createdAt    DateTime               @default(now())
+  createdAt    DateTime                @default(now())
   posVoucher   LoyaltyPosVoucher?
 
   @@index([membershipId])
@@ -3876,7 +3884,7 @@ model LoyaltyPosVoucher {
   /// Lightspeed gift card transaction client_id — stable idempotency key (set once to redemptionId).
   clientId              String            @unique
   /// Lightspeed promotion id when type = PROMO_CODE.
-  externalPromotionId  String?
+  externalPromotionId   String?
   externalTransactionId String?
   status                String            @default("PENDING") // PENDING | ISSUED | FAILED | REVERSED | RECONCILED
   issuedAt              DateTime?
@@ -3910,15 +3918,15 @@ model LoyaltyPosVoucher {
 
 /// Short-lived OTP challenge for staff-assisted POS voucher redemption (A2).
 model LoyaltyPosRedeemOtp {
-  id           String   @id @default(uuid())
+  id           String    @id @default(uuid())
   membershipId String
   storeId      String
   staffUserId  String
   codeHash     String
-  attempts     Int      @default(0)
+  attempts     Int       @default(0)
   expiresAt    DateTime
   verifiedAt   DateTime?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime  @default(now())
 
   @@index([membershipId, storeId])
   @@index([expiresAt])
@@ -3947,32 +3955,32 @@ model LoyaltyReferral {
 // === Phase 7: Ambassador programme ===
 
 model AmbassadorProfile {
-  id                   String   @id @default(uuid())
-  userId               String   @unique
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  membershipId         String   @unique
-  membership           LoyaltyMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
-  status               String   @default("ACTIVE")
-  tier                 String   @default("ADVOCATE")
-  referralCode         String   @unique
-  displayName          String?
-  bio                  String?  @db.Text
-  profileImage         String?
-  socialLinks          Json?
-  totalReferralSignups Int      @default(0)
-  totalReferralRevenue Decimal  @default(0) @db.Decimal(10, 2)
-  totalUgcSubmissions  Int      @default(0)
-  totalUgcApproved     Int      @default(0)
-  totalPointsEarnedAsAmb Int    @default(0)
-  commissionAsPoints   Boolean  @default(true)
-  commissionPointsRate Decimal @default(1.5) @db.Decimal(3, 2)
-  unlockedAt           DateTime @default(now())
-  lastActiveAt         DateTime?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                     String            @id @default(uuid())
+  userId                 String            @unique
+  user                   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  membershipId           String            @unique
+  membership             LoyaltyMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  status                 String            @default("ACTIVE")
+  tier                   String            @default("ADVOCATE")
+  referralCode           String            @unique
+  displayName            String?
+  bio                    String?           @db.Text
+  profileImage           String?
+  socialLinks            Json?
+  totalReferralSignups   Int               @default(0)
+  totalReferralRevenue   Decimal           @default(0) @db.Decimal(10, 2)
+  totalUgcSubmissions    Int               @default(0)
+  totalUgcApproved       Int               @default(0)
+  totalPointsEarnedAsAmb Int               @default(0)
+  commissionAsPoints     Boolean           @default(true)
+  commissionPointsRate   Decimal           @default(1.5) @db.Decimal(3, 2)
+  unlockedAt             DateTime          @default(now())
+  lastActiveAt           DateTime?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
 
-  ugcSubmissions   UGCSubmission[]
-  achievements     AmbassadorAchievement[]
+  ugcSubmissions UGCSubmission[]
+  achievements   AmbassadorAchievement[]
 
   @@index([status])
   @@index([tier])
@@ -4031,22 +4039,22 @@ model AmbassadorAchievement {
 }
 
 model LoyaltyBonusCampaign {
-  id           String    @id @default(uuid())
+  id           String   @id @default(uuid())
   name         String
-  description  String?   @db.Text
+  description  String?  @db.Text
   type         String
-  multiplier   Decimal?  @db.Decimal(3, 2)
+  multiplier   Decimal? @db.Decimal(3, 2)
   bonusPoints  Int?
   conditions   Json?
-  regionCodes  String[]  @default([])
-  channelCodes String[]  @default([])
+  regionCodes  String[] @default([])
+  channelCodes String[] @default([])
   /// Empty = global (all stores). When set, campaign applies only to these store IDs.
-  storeIds     String[]  @default([])
-  isActive     Boolean   @default(true)
+  storeIds     String[] @default([])
+  isActive     Boolean  @default(true)
   startsAt     DateTime
   endsAt       DateTime
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   brandCampaignId String?        @unique
   brandCampaign   BrandCampaign? @relation(fields: [brandCampaignId], references: [id], onDelete: SetNull)
@@ -4158,49 +4166,49 @@ model ReferralPartner {
   contractEnd        DateTime?
   metadata           Json?
 
-  links              ReferralPartnerLink[]
-  conversions        PartnerReferralConversion[]
+  links       ReferralPartnerLink[]
+  conversions PartnerReferralConversion[]
 
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([status])
   @@map("referral_partners")
 }
 
 model ReferralPartnerLink {
-  id                  String    @id @default(uuid())
-  partnerId           String
-  partner             ReferralPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  code                String    @unique
-  name                String
-  targetUrl           String    @default("/register")
-  utmSource           String
-  utmMedium           String    @default("referral")
-  utmCampaign         String?
-  utmContent          String?
-  utmTerm             String?
+  id          String          @id @default(uuid())
+  partnerId   String
+  partner     ReferralPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  code        String          @unique
+  name        String
+  targetUrl   String          @default("/register")
+  utmSource   String
+  utmMedium   String          @default("referral")
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
 
-  signupBonusPoints   Int       @default(0)
-  pointsMultiplier    Decimal?  @db.Decimal(3, 2)
+  signupBonusPoints   Int      @default(0)
+  pointsMultiplier    Decimal? @db.Decimal(3, 2)
   multiplierDays      Int?
   couponCode          String?
-  discountPercent     Decimal?  @db.Decimal(5, 2)
-  discountFixedAmount Decimal?  @db.Decimal(10, 2)
+  discountPercent     Decimal? @db.Decimal(5, 2)
+  discountFixedAmount Decimal? @db.Decimal(10, 2)
   maxRedemptions      Int?
 
-  isActive            Boolean   @default(true)
-  expiresAt           DateTime?
+  isActive  Boolean   @default(true)
+  expiresAt DateTime?
 
-  totalClicks         Int       @default(0)
-  totalRegistrations  Int       @default(0)
-  totalConversions    Int       @default(0)
+  totalClicks        Int @default(0)
+  totalRegistrations Int @default(0)
+  totalConversions   Int @default(0)
 
-  conversions         PartnerReferralConversion[]
-  memberships         LoyaltyMembership[]
+  conversions PartnerReferralConversion[]
+  memberships LoyaltyMembership[]
 
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([partnerId])
   @@index([code])
@@ -4208,32 +4216,32 @@ model ReferralPartnerLink {
 }
 
 model PartnerReferralConversion {
-  id                  String    @id @default(uuid())
+  id                  String              @id @default(uuid())
   partnerId           String
-  partner             ReferralPartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partner             ReferralPartner     @relation(fields: [partnerId], references: [id], onDelete: Cascade)
   linkId              String
   link                ReferralPartnerLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
   userId              String
-  user                User      @relation(fields: [userId], references: [id])
+  user                User                @relation(fields: [userId], references: [id])
   utmSource           String?
   utmMedium           String?
   utmCampaign         String?
   utmContent          String?
   utmTerm             String?
-  signupBonusAwarded  Int       @default(0)
-  multiplierApplied   Boolean   @default(false)
+  signupBonusAwarded  Int                 @default(0)
+  multiplierApplied   Boolean             @default(false)
   multiplierExpiresAt DateTime?
   couponApplied       String?
   firstOrderId        String?
-  firstOrderTotal     Decimal?  @db.Decimal(10, 2)
+  firstOrderTotal     Decimal?            @db.Decimal(10, 2)
   convertedAt         DateTime?
   landingPage         String?
 
-  createdAt           DateTime  @default(now())
+  createdAt DateTime @default(now())
 
+  @@unique([userId])
   @@index([partnerId])
   @@index([linkId])
-  @@unique([userId])
   @@map("partner_referral_conversions")
 }
 
@@ -4247,9 +4255,9 @@ model LoyaltyAnalyticsSnapshot {
   pointsRedeemed       Int      @default(0)
   pointsExpired        Int      @default(0)
   pointsLiability      Int      @default(0)
-  totalRevenueLoyalty   Decimal  @default(0) @db.Decimal(12, 2)
-  totalOrdersLoyalty    Int      @default(0)
-  avgOrderValueLoyalty  Decimal  @default(0) @db.Decimal(10, 2)
+  totalRevenueLoyalty  Decimal  @default(0) @db.Decimal(12, 2)
+  totalOrdersLoyalty   Int      @default(0)
+  avgOrderValueLoyalty Decimal  @default(0) @db.Decimal(10, 2)
   brandFundedPoints    Int      @default(0)
   campaignPointsIssued Int      @default(0)
   webOrders            Int      @default(0)
@@ -4344,32 +4352,32 @@ model POSConnection {
 }
 
 model POSSale {
-  id                    String        @id @default(uuid())
-  storeId               String
-  store                 Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  externalSaleId        String
-  externalInvoice       String?
-  provider              String
-  saleDate              DateTime
-  customerId            String?
-  customerEmail         String?
-  totalAmount           Decimal       @db.Decimal(10, 2)
-  currency              String        @default("USD")
-  taxAmount             Decimal       @default(0) @db.Decimal(10, 2)
-  discountAmount        Decimal       @default(0) @db.Decimal(10, 2)
-  loyaltyPointsEarned   Int           @default(0)
-  loyaltyPointsRedeemed Int           @default(0)
+  id                      String                 @id @default(uuid())
+  storeId                 String
+  store                   Store                  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  externalSaleId          String
+  externalInvoice         String?
+  provider                String
+  saleDate                DateTime
+  customerId              String?
+  customerEmail           String?
+  totalAmount             Decimal                @db.Decimal(10, 2)
+  currency                String                 @default("USD")
+  taxAmount               Decimal                @default(0) @db.Decimal(10, 2)
+  discountAmount          Decimal                @default(0) @db.Decimal(10, 2)
+  loyaltyPointsEarned     Int                    @default(0)
+  loyaltyPointsRedeemed   Int                    @default(0)
   /// Lightspeed `return_for` — original sale id when this row is a return sale.
   returnForExternalSaleId String?
-  items                 POSSaleItem[]
-  returnRequests        ReturnRequest[]
-  status                String        @default("IMPORTED")
-  rawPayload            Json?
-  importedAt            DateTime      @default(now())
-  processedAt           DateTime?
-  storeShipmentRequests StoreShipmentRequest[]
-  marketId              String?
-  market                Market?       @relation(fields: [marketId], references: [id], onDelete: SetNull)
+  items                   POSSaleItem[]
+  returnRequests          ReturnRequest[]
+  status                  String                 @default("IMPORTED")
+  rawPayload              Json?
+  importedAt              DateTime               @default(now())
+  processedAt             DateTime?
+  storeShipmentRequests   StoreShipmentRequest[]
+  marketId                String?
+  market                  Market?                @relation(fields: [marketId], references: [id], onDelete: SetNull)
 
   @@unique([provider, externalSaleId])
   @@index([storeId])
@@ -4384,56 +4392,58 @@ model POSSale {
 
 /// Post-purchase ship-from-store. Shipping-only billing; goods sale stays in Lightspeed.
 model StoreShipmentRequest {
-  id                    String    @id @default(uuid())
-  status                String    @default("NEW")
+  id                    String          @id @default(uuid())
+  status                String          @default("NEW")
   // NEW | CUSTOMER_DETAILS_REQUIRED | AWAITING_PAYMENT | PAID | SENT_TO_LOGISTICS | PACKING | PACKED
   // | LABEL_CREATED | READY_FOR_PICKUP | HANDED_TO_CARRIER | IN_TRANSIT | DELIVERED
   // | ADDRESS_ISSUE | ITEM_MISSING | PAYMENT_ISSUE | SHIPPING_HOLD | RETURNED_TO_STORE
   // | LOST_CARRIER_ISSUE | CANCELLED | BLOCKED
   // Legacy: DRAFT | PENDING_ENRICHMENT | QUOTED | LABEL_PURCHASED
   storeId               String
-  store                 Store     @relation(fields: [storeId], references: [id], onDelete: Restrict)
+  store                 Store           @relation(fields: [storeId], references: [id], onDelete: Restrict)
   userId                String?
-  user                  User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user                  User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
   posSaleId             String?
-  posSale               POSSale?  @relation(fields: [posSaleId], references: [id], onDelete: SetNull)
+  posSale               POSSale?        @relation(fields: [posSaleId], references: [id], onDelete: SetNull)
   posExternalSaleId     String?
   invoiceNumber         String?
-  hosOrderNumber        String?   @unique
-  qrAccessCode          String?   @unique
+  hosOrderNumber        String?         @unique
+  qrAccessCode          String?         @unique
   customerName          String?
   customerPhone         String?
   claimEmail            String?
-  claimTokenHash        String?   @unique
+  claimTokenHash        String?         @unique
   claimTokenExpiresAt   DateTime?
   destinationAddressId  String?
-  destinationAddress    Address?  @relation(fields: [destinationAddressId], references: [id], onDelete: SetNull)
+  destinationAddress    Address?        @relation(fields: [destinationAddressId], references: [id], onDelete: SetNull)
   selectedItems         Json?
-  shippingAmount        Decimal?  @db.Decimal(10, 2)
-  totalCustomerCharge   Decimal?  @db.Decimal(10, 2)
-  totalCarrierCost      Decimal?  @db.Decimal(10, 2)
-  totalPackagingCost    Decimal?  @db.Decimal(10, 2)
-  currency              String    @default("USD")
+  shippingAmount        Decimal?        @db.Decimal(10, 2)
+  totalCustomerCharge   Decimal?        @db.Decimal(10, 2)
+  totalCarrierCost      Decimal?        @db.Decimal(10, 2)
+  totalPackagingCost    Decimal?        @db.Decimal(10, 2)
+  currency              String          @default("USD")
   stripePaymentIntentId String?
-  /** Counter tender: CASH | CARD | OTHER. Set when staff confirm payment (not Lightspeed / Stripe). */
+  /**
+   * Counter tender: CASH | CARD | OTHER. Set when staff confirm payment (not Lightspeed / Stripe).
+   */
   paymentMethod         String?
   selectedCarrier       String?
   selectedService       String?
   trackingCode          String?
   trackingUrl           String?
   labelUrl              String?
-  shippingCost          Decimal?  @db.Decimal(10, 2)
+  shippingCost          Decimal?        @db.Decimal(10, 2)
   shippingSlipUrl       String?
-  specialInstructions   String?   @db.Text
+  specialInstructions   String?         @db.Text
   receivedByEmployee    String?
   receivedAt            DateTime?
   customsSnapshot       Json?
   metadata              Json?
   marketId              String?
-  market                Market?   @relation(fields: [marketId], references: [id], onDelete: SetNull)
+  market                Market?         @relation(fields: [marketId], references: [id], onDelete: SetNull)
   groups                ShipmentGroup[]
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 
   @@index([storeId])
   @@index([userId])
@@ -4449,23 +4459,23 @@ model StoreShipmentRequest {
 }
 
 model BoxSize {
-  id             String   @id @default(uuid())
-  storeId        String?
-  store          Store?   @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  name           String
-  label          String
-  lengthCm       Decimal  @db.Decimal(10, 2)
-  widthCm        Decimal  @db.Decimal(10, 2)
-  heightCm       Decimal  @db.Decimal(10, 2)
-  customerPrice  Decimal  @db.Decimal(10, 2)
-  packagingCost  Decimal  @default(0) @db.Decimal(10, 2)
-  currency       String   @default("USD")
-  isActive       Boolean  @default(true)
-  sortOrder      Int      @default(0)
-  groups         ShipmentGroup[]
-  rates          BoxSizeRate[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            String          @id @default(uuid())
+  storeId       String?
+  store         Store?          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name          String
+  label         String
+  lengthCm      Decimal         @db.Decimal(10, 2)
+  widthCm       Decimal         @db.Decimal(10, 2)
+  heightCm      Decimal         @db.Decimal(10, 2)
+  customerPrice Decimal         @db.Decimal(10, 2)
+  packagingCost Decimal         @default(0) @db.Decimal(10, 2)
+  currency      String          @default("USD")
+  isActive      Boolean         @default(true)
+  sortOrder     Int             @default(0)
+  groups        ShipmentGroup[]
+  rates         BoxSizeRate[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   @@index([storeId])
   @@index([isActive])
@@ -4508,7 +4518,7 @@ model BoxSizeRate {
 }
 
 model ShipmentGroup {
-  id                   String   @id @default(uuid())
+  id                   String               @id @default(uuid())
   shippingOrderId      String
   shippingOrder        StoreShipmentRequest @relation(fields: [shippingOrderId], references: [id], onDelete: Cascade)
   destinationAddressId String?
@@ -4517,29 +4527,29 @@ model ShipmentGroup {
   recipientEmail       String?
   recipientPhone       String?
   boxSizeId            String?
-  boxSize              BoxSize? @relation(fields: [boxSizeId], references: [id], onDelete: SetNull)
+  boxSize              BoxSize?             @relation(fields: [boxSizeId], references: [id], onDelete: SetNull)
   boxSizeName          String?
-  customerPrice        Decimal? @db.Decimal(10, 2)
-  packagingCost        Decimal? @db.Decimal(10, 2)
-  actualWeightKg       Decimal? @db.Decimal(10, 3)
-  actualLengthCm       Decimal? @db.Decimal(10, 2)
-  actualWidthCm        Decimal? @db.Decimal(10, 2)
-  actualHeightCm       Decimal? @db.Decimal(10, 2)
+  customerPrice        Decimal?             @db.Decimal(10, 2)
+  packagingCost        Decimal?             @db.Decimal(10, 2)
+  actualWeightKg       Decimal?             @db.Decimal(10, 3)
+  actualLengthCm       Decimal?             @db.Decimal(10, 2)
+  actualWidthCm        Decimal?             @db.Decimal(10, 2)
+  actualHeightCm       Decimal?             @db.Decimal(10, 2)
   shippoTransactionId  String?
   trackingCode         String?
   trackingUrl          String?
   labelUrl             String?
   carrierName          String?
   carrierService       String?
-  carrierCost          Decimal? @db.Decimal(10, 2)
-  status               String   @default("PENDING")
+  carrierCost          Decimal?             @db.Decimal(10, 2)
+  status               String               @default("PENDING")
   packedBy             String?
   packedAt             DateTime?
   labelCreatedAt       DateTime?
   handedToCarrierAt    DateTime?
   items                ShipmentGroupItem[]
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
 
   @@index([shippingOrderId])
   @@index([status])
@@ -4587,18 +4597,18 @@ model SkuCustomsAttribute {
 }
 
 model POSSaleItem {
-  id                String   @id @default(uuid())
+  id                String       @id @default(uuid())
   saleId            String
-  sale              POSSale  @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  sale              POSSale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
   productId         String?
-  product           Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  product           Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
   externalProductId String?
   sku               String?
   name              String
   quantity          Int
-  unitPrice         Decimal  @db.Decimal(10, 2)
-  totalPrice        Decimal  @db.Decimal(10, 2)
-  taxAmount         Decimal  @default(0) @db.Decimal(10, 2)
+  unitPrice         Decimal      @db.Decimal(10, 2)
+  totalPrice        Decimal      @db.Decimal(10, 2)
+  taxAmount         Decimal      @default(0) @db.Decimal(10, 2)
   returnItems       ReturnItem[]
 
   @@index([saleId])
@@ -4661,18 +4671,18 @@ model IdentityMatchReview {
 
 /// Transactional outbox for HOS → Xero daily summary journals (never POSSale-derived amounts).
 model LedgerOutboxEntry {
-  id              String    @id @default(uuid())
-  entryType       String // ONLINE_SALES | REFUNDS | POINTS_LIABILITY | GC_BRIDGE_RECLASS | HOS_GIFT_CARDS
-  periodDate      DateTime  @db.Date
-  idempotencyKey  String    @unique
-  payload         Json
-  status          String    @default("PENDING") // PENDING | POSTING | POSTED | FAILED | DEAD
-  attempts        Int       @default(0)
-  lastError       String?   @db.Text
-  xeroJournalId   String?
-  postedAt        DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String    @id @default(uuid())
+  entryType      String // ONLINE_SALES | REFUNDS | POINTS_LIABILITY | GC_BRIDGE_RECLASS | HOS_GIFT_CARDS
+  periodDate     DateTime  @db.Date
+  idempotencyKey String    @unique
+  payload        Json
+  status         String    @default("PENDING") // PENDING | POSTING | POSTED | FAILED | DEAD
+  attempts       Int       @default(0)
+  lastError      String?   @db.Text
+  xeroJournalId  String?
+  postedAt       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@index([status, createdAt])
   @@index([entryType, periodDate])
@@ -4682,20 +4692,20 @@ model LedgerOutboxEntry {
 // === Phase 4 — Marketing automation ===
 
 model MarketingJourney {
-  id                 String   @id @default(uuid())
-  slug               String   @unique
-  name               String
-  description        String?  @db.Text
-  triggerEvent       String
-  triggerConditions  Json?
-  steps              Json
-  isActive           Boolean  @default(true)
-  regionCodes        String[] @default([])
-  channelCodes       String[] @default([])
-  segmentId          String?
-  segment            AudienceSegment? @relation(fields: [segmentId], references: [id], onDelete: SetNull)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                String           @id @default(uuid())
+  slug              String           @unique
+  name              String
+  description       String?          @db.Text
+  triggerEvent      String
+  triggerConditions Json?
+  steps             Json
+  isActive          Boolean          @default(true)
+  regionCodes       String[]         @default([])
+  channelCodes      String[]         @default([])
+  segmentId         String?
+  segment           AudienceSegment? @relation(fields: [segmentId], references: [id], onDelete: SetNull)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
   enrollments JourneyEnrollment[]
 
@@ -4747,14 +4757,14 @@ model SegmentMembership {
 }
 
 model JourneyEnrollment {
-  id          String   @id @default(uuid())
+  id          String           @id @default(uuid())
   journeyId   String
   journey     MarketingJourney @relation(fields: [journeyId], references: [id], onDelete: Cascade)
   userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  currentStep Int      @default(0)
-  status      String   @default("ACTIVE")
-  startedAt   DateTime @default(now())
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStep Int              @default(0)
+  status      String           @default("ACTIVE")
+  startedAt   DateTime         @default(now())
   completedAt DateTime?
   lastStepAt  DateTime?
   nextStepAt  DateTime?
@@ -4767,23 +4777,23 @@ model JourneyEnrollment {
 }
 
 model MessageLog {
-  id            String    @id @default(uuid())
-  userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  channel       String
-  templateSlug  String?
-  subject       String?
-  status        String    @default("QUEUED")
-  journeyId     String?
-  enrollmentId  String?
-  providerRef   String?
-  error         String?   @db.Text
-  sentAt        DateTime?
-  deliveredAt   DateTime?
-  openedAt      DateTime?
-  clickedAt     DateTime?
-  metadata      Json?
-  createdAt     DateTime  @default(now())
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel      String
+  templateSlug String?
+  subject      String?
+  status       String    @default("QUEUED")
+  journeyId    String?
+  enrollmentId String?
+  providerRef  String?
+  error        String?   @db.Text
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  openedAt     DateTime?
+  clickedAt    DateTime?
+  metadata     Json?
+  createdAt    DateTime  @default(now())
 
   @@index([userId])
   @@index([channel, status])
@@ -4811,13 +4821,13 @@ model PushSubscription {
 // === Phase 5 — Event & experience management ===
 
 model Event {
-  id               String    @id @default(uuid())
+  id               String  @id @default(uuid())
   title            String
-  slug             String    @unique
-  description      String?   @db.Text
+  slug             String  @unique
+  description      String? @db.Text
   shortDescription String?
-  type             String    @default("IN_STORE")
-  status           String    @default("DRAFT")
+  type             String  @default("IN_STORE")
+  status           String  @default("DRAFT")
   imageUrl         String?
   bannerUrl        String?
 
@@ -4850,7 +4860,7 @@ model Event {
   tags     String[] @default([])
 
   hostName String?
-  hostBio  String?  @db.Text
+  hostBio  String? @db.Text
   agenda   Json?
   metadata Json?
 
@@ -4911,24 +4921,24 @@ model EventAttendance {
 }
 
 model ClickCollectOrder {
-  id              String    @id @default(uuid())
-  orderId         String    @unique
-  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  storeId         String
-  store           Store     @relation(fields: [storeId], references: [id])
-  status          String    @default("PENDING")
-  estimatedReady  DateTime?
-  readyAt         DateTime?
-  collectedAt     DateTime?
-  collectedBy     String?
-  notifiedAt      DateTime?
-  reminderNotifiedAt DateTime?
-  expiresAt       DateTime?
-  notes           String?   @db.Text
+  id                    String    @id @default(uuid())
+  orderId               String    @unique
+  order                 Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  storeId               String
+  store                 Store     @relation(fields: [storeId], references: [id])
+  status                String    @default("PENDING")
+  estimatedReady        DateTime?
+  readyAt               DateTime?
+  collectedAt           DateTime?
+  collectedBy           String?
+  notifiedAt            DateTime?
+  reminderNotifiedAt    DateTime?
+  expiresAt             DateTime?
+  notes                 String?   @db.Text
   /// True once C&C loyalty bonus has been credited (initial earn or deferred after payment).
-  ccLoyaltyBonusApplied Boolean @default(false)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  ccLoyaltyBonusApplied Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@index([storeId])
   @@index([status])
@@ -4937,25 +4947,25 @@ model ClickCollectOrder {
 }
 
 model ProductCampaign {
-  id               String    @id @default(uuid())
+  id               String   @id @default(uuid())
   name             String
-  slug             String    @unique
-  description      String?   @db.Text
-  type             String    @default("BONUS_POINTS")
-  status           String    @default("DRAFT")
+  slug             String   @unique
+  description      String?  @db.Text
+  type             String   @default("BONUS_POINTS")
+  status           String   @default("DRAFT")
   startsAt         DateTime
   endsAt           DateTime
-  productIds       String[]  @default([])
-  categoryIds      String[]  @default([])
-  fandomFilter     String[]  @default([])
+  productIds       String[] @default([])
+  categoryIds      String[] @default([])
+  fandomFilter     String[] @default([])
   bonusPoints      Int?
-  minTierLevel     Int       @default(0)
-  regionCodes      String[]  @default([])
+  minTierLevel     Int      @default(0)
+  regionCodes      String[] @default([])
   maxRedemptions   Int?
-  totalRedemptions Int       @default(0)
+  totalRedemptions Int      @default(0)
   metadata         Json?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@index([status])
   @@index([startsAt, endsAt])
@@ -4977,25 +4987,25 @@ model StoreOnboardingChecklist {
 }
 
 model FoundingMember {
-  id               String   @id @default(uuid())
-  email            String   @unique
-  firstName        String
-  lastName         String?
-  phone            String?
-  country          String?
-  countryCode      String? // ISO 3166-1 alpha-2 code
-  fandoms          String[] @default([])
-  otherFranchises  String?
-  source           String?
-  spendBracket     String?
-  status           String   @default("REGISTERED")
-  userId           String?  @unique
-  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  referralSource   String?
-  metadata         Json?
-  registeredAt     DateTime @default(now())
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String   @id @default(uuid())
+  email           String   @unique
+  firstName       String
+  lastName        String?
+  phone           String?
+  country         String?
+  countryCode     String? // ISO 3166-1 alpha-2 code
+  fandoms         String[] @default([])
+  otherFranchises String?
+  source          String?
+  spendBracket    String?
+  status          String   @default("REGISTERED")
+  userId          String?  @unique
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  referralSource  String?
+  metadata        Json?
+  registeredAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([email])
   @@index([status])
@@ -5077,8 +5087,8 @@ model GalleryAlbum {
   description String?        @db.Text
   eventDate   DateTime?
   location    String?
-  countryCode String?        // ISO-style region slug, e.g. us, uk, ae
-  outletSlug  String?        // Outlet/venue slug, e.g. times-square, stratford
+  countryCode String? // ISO-style region slug, e.g. us, uk, ae
+  outletSlug  String? // Outlet/venue slug, e.g. times-square, stratford
   coverUrl    String?
   order       Int            @default(0)
   isActive    Boolean        @default(true)

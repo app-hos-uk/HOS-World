@@ -13,7 +13,13 @@ import {
 import { isMetaPixelEnabled, META_PIXEL_ID } from '@/lib/analytics/meta-pixel';
 import { trackMetaPageView } from '@/lib/analytics/meta-events';
 
-export function MetaPixel() {
+/**
+ * SRI is not practical for the Meta Pixel SDK (connect.facebook.net/en_US/fbevents.js)
+ * because Facebook updates the file in-place without versioned URLs.  The nonce-based
+ * CSP with 'strict-dynamic' covers this: only the nonced bootstrap script can inject
+ * the SDK, and any script it loads inherits trust.
+ */
+export function MetaPixel({ nonce }: { nonce?: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const lastTrackedPath = useRef<string | null>(null);
@@ -79,7 +85,7 @@ export function MetaPixel() {
 
   return (
     <>
-      <Script id="meta-pixel-base" strategy="afterInteractive">
+      <Script id="meta-pixel-base" strategy="afterInteractive" nonce={nonce}>
         {`
 !function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?

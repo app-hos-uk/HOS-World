@@ -19,8 +19,13 @@ gtag('consent', 'default', {
  * Loads Google Tag Manager and/or GA4 (gtag.js).
  * When GTM is configured, use it as the container for GA4 + Ads pixels.
  * When only GA_MEASUREMENT_ID is set, loads gtag.js directly.
+ *
+ * SRI (Subresource Integrity) is intentionally omitted for GTM/GA scripts:
+ * their content changes on every container publish, so a fixed hash would
+ * break the load.  The nonce-based CSP with 'strict-dynamic' provides the
+ * security layer instead.
  */
-export function GoogleTags() {
+export function GoogleTags({ nonce }: { nonce: string }) {
   const hasGtm = Boolean(GTM_ID);
   const hasGa = Boolean(GA_MEASUREMENT_ID);
 
@@ -28,13 +33,13 @@ export function GoogleTags() {
 
   return (
     <>
-      <Script id="google-consent-defaults" strategy="beforeInteractive">
+      <Script id="google-consent-defaults" strategy="beforeInteractive" nonce={nonce}>
         {CONSENT_DEFAULTS_SCRIPT}
       </Script>
 
       {hasGtm ? (
         <>
-          <Script id="google-tag-manager" strategy="afterInteractive">
+          <Script id="google-tag-manager" strategy="afterInteractive" nonce={nonce}>
             {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
@@ -58,8 +63,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
             strategy="afterInteractive"
+            nonce={nonce}
           />
-          <Script id="google-analytics-config" strategy="afterInteractive">
+          <Script id="google-analytics-config" strategy="afterInteractive" nonce={nonce}>
             {`
 window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}

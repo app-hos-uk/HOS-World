@@ -457,6 +457,7 @@ export class NotificationsService implements OnModuleInit {
   ): Promise<void> {
     const staff = await this.prisma.user.findMany({
       where: { role: 'STORE_STAFF', storeId },
+      take: 200,
       select: { id: true, email: true },
     });
     if (!staff.length) {
@@ -493,13 +494,9 @@ export class NotificationsService implements OnModuleInit {
       email,
     });
 
-    const sent = await this.sendEmail(email, rendered.subject, rendered.body);
-    if (sent) {
-      this.logger.log(`Founding member confirmation sent to ${email}`);
-    } else {
-      this.logger.warn(`Founding member confirmation could not be sent to ${email}`);
-    }
-    return sent;
+    await this.queueNotification(email, rendered.subject, rendered.body);
+    this.logger.log(`Founding member confirmation queued for ${email}`);
+    return true;
   }
 
   async sendFoundingMemberAccountInvitation(
@@ -846,6 +843,7 @@ export class NotificationsService implements OnModuleInit {
     try {
       const users = await this.prisma.user.findMany({
         where: { role: role as any },
+        take: 1000,
         select: { id: true, email: true },
       });
 

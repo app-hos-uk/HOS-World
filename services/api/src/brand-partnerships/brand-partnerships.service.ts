@@ -389,6 +389,7 @@ export class BrandPartnershipsService {
         startsAt: { lte: now },
         endsAt: { gte: now },
       },
+      take: 500,
       include: { partnership: true },
     });
     let n = 0;
@@ -415,6 +416,7 @@ export class BrandPartnershipsService {
     let completed = 0;
     const expired = await this.prisma.brandCampaign.findMany({
       where: { status: 'ACTIVE', endsAt: { lt: now } },
+      take: 500,
     });
     for (const c of expired) {
       await this.completeCampaign(c.id);
@@ -427,6 +429,7 @@ export class BrandPartnershipsService {
         status: 'ACTIVE',
         endsAt: { gt: now, lt: soonEnd },
       },
+      take: 500,
     });
     let endingNotified = 0;
     for (const c of soon) {
@@ -480,6 +483,7 @@ export class BrandPartnershipsService {
 
     const active = await this.prisma.brandCampaign.findMany({
       where: { partnershipId: p.id, status: 'ACTIVE' },
+      take: 200,
     });
     for (const row of active) {
       const u = await this.prisma.brandCampaign.update({
@@ -531,6 +535,7 @@ export class BrandPartnershipsService {
           contractEnd: { gte: now },
         },
       },
+      take: 200,
       include: { partnership: true },
     });
 
@@ -690,6 +695,7 @@ export class BrandPartnershipsService {
           contractEnd: { gte: now },
         },
       },
+      take: 200,
       include: { partnership: { select: { id: true, name: true, slug: true, logoUrl: true } } },
       orderBy: { startsAt: 'desc' },
     });
@@ -775,6 +781,7 @@ export class BrandPartnershipsService {
     const p = await this.getPartnership(id);
     const redemptions = await this.prisma.brandCampaignRedemption.findMany({
       where: { campaign: { partnershipId: id } },
+      take: 10000,
       select: { createdAt: true, pointsAwarded: true, orderTotal: true, orderId: true },
     });
 
@@ -826,6 +833,7 @@ export class BrandPartnershipsService {
     const c = await this.getCampaign(id);
     const redemptions = await this.prisma.brandCampaignRedemption.findMany({
       where: { campaignId: id },
+      take: 10000,
       select: { createdAt: true, pointsAwarded: true, orderId: true },
     });
 
@@ -852,6 +860,7 @@ export class BrandPartnershipsService {
 
       const items = await this.prisma.orderItem.findMany({
         where: { orderId: { in: orderIds } },
+        take: 10000,
         select: { orderId: true, productId: true, quantity: true, price: true },
       });
 
@@ -876,6 +885,7 @@ export class BrandPartnershipsService {
     const pids = [...topProductsMap.keys()];
     const prodRows = await this.prisma.product.findMany({
       where: { id: { in: pids } },
+      take: 500,
       select: { id: true, name: true },
     });
     const nameById = new Map(prodRows.map((r) => [r.id, r.name]));
@@ -932,6 +942,7 @@ export class BrandPartnershipsService {
 
     const budgetRows = await this.prisma.brandPartnership.findMany({
       where: { totalBudget: { gt: 0 } },
+      take: 500,
       select: { totalBudget: true, spentBudget: true },
     });
     let utilSum = 0;

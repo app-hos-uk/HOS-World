@@ -38,12 +38,8 @@ export default function CheckoutError({
         </h1>
 
         <p className="text-hos-text-secondary font-[family-name:var(--font-body)]">
-          {error.message || 'Something went wrong during checkout. Your payment has not been processed.'}
+          Something went wrong during checkout. Your payment has not been processed. Please try again or contact support.
         </p>
-
-        {error.digest && (
-          <p className="text-xs text-hos-text-muted">Error ID: {error.digest}</p>
-        )}
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
           <button

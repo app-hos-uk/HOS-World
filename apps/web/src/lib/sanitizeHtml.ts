@@ -61,13 +61,26 @@ export function sanitizeBlogHtml(html: string): string {
     allowedAttributes: {
       a: ['href', 'title', 'target', 'rel'],
       img: ['src', 'alt', 'width', 'height', 'loading'],
-      iframe: ['src', 'width', 'height', 'frameborder', 'allowfullscreen'],
+      iframe: ['src', 'width', 'height', 'frameborder', 'allowfullscreen', 'sandbox', 'loading', 'referrerpolicy'],
       video: ['src', 'controls', 'width', 'height'],
       source: ['src', 'type'],
       '*': ['class', 'id'],
     },
     allowedSchemes: ['http', 'https', 'mailto'],
     allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
+    transformTags: {
+      'iframe': (tagName: string, attribs: Record<string, string>) => {
+        return {
+          tagName,
+          attribs: {
+            ...attribs,
+            sandbox: 'allow-scripts allow-same-origin',
+            loading: 'lazy',
+            referrerpolicy: 'no-referrer',
+          },
+        };
+      },
+    },
   });
 }
 

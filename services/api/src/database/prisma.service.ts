@@ -3,6 +3,7 @@ import { Prisma, PrismaClient } from '@prisma/client';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { marketScopeExtension } from './prisma-market-scope';
+import { softDeleteExtension } from './prisma-soft-delete';
 
 const execAsync = promisify(exec);
 
@@ -34,7 +35,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     super({
       datasourceUrl: buildDatasourceUrl(),
     });
-    this.scoped = this.$extends(marketScopeExtension) as never;
+    this.scoped = this.$extends(softDeleteExtension).$extends(marketScopeExtension) as never;
     this.routeThroughScopedClient();
   }
 

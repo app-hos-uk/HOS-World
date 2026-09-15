@@ -41,10 +41,6 @@ export default function GlobalError({
           An unexpected error occurred. Please try again.
         </p>
 
-        {error.digest && (
-          <p className="text-xs text-hos-text-muted">Error ID: {error.digest}</p>
-        )}
-
         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
           <button
             onClick={reset}

@@ -1,14 +1,16 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { OrdersService } from './orders.service';
+import { PrismaService } from '../database/prisma.service';
 import { RedisService } from '../cache/redis.service';
 
+const RETENTION_DAYS = 90;
+
 @Injectable()
-export class OrdersSchedulerService {
-  private readonly logger = new Logger(OrdersSchedulerService.name);
+export class ProductViewSchedulerService {
+  private readonly logger = new Logger(ProductViewSchedulerService.name);
 
   constructor(
-    private readonly ordersService: OrdersService,
+    private readonly prisma: PrismaService,
     @Optional() private redisService?: RedisService,
   ) {}
 
@@ -35,14 +37,19 @@ export class OrdersSchedulerService {
     }
   }
 
-  @Cron('*/15 * * * *')
-  async expireStaleUnpaidOrders(): Promise<void> {
-    await this.runWithLock('cron:expire-unpaid-orders', 600, async () => {
-      try {
-        await this.ordersService.expireUnpaidOrders();
-      } catch (err) {
-        this.logger.warn(`Unpaid order expiry job failed: ${(err as Error).message}`);
-      }
+  @Cron('0 4 * * *')
+  async cleanupOldProductViews(): Promise<void> {
+    await this.runWithLock('cron:product-view-cleanup', 600, async () => {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - RETENTION_DAYS);
+
+      const deleted = await this.prisma.productView.deleteMany({
+        where: { createdAt: { lt: cutoff } },
+      });
+
+      this.logger.log(
+        `ProductView cleanup: removed ${deleted.count} records older than ${RETENTION_DAYS} days`,
+      );
     });
   }
 }

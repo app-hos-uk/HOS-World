@@ -12,8 +12,7 @@ export function setAuthCookies(
   configService: ConfigService,
 ) {
   const isProduction = configService.get<string>('NODE_ENV') === 'production';
-  const _frontendUrl = configService.get<string>('FRONTEND_URL') || '';
-  const sameSite = isProduction ? ('none' as const) : ('lax' as const);
+  const sameSite = 'lax' as const;
 
   const accessMaxAge = parseMaxAge(configService.get<string>('JWT_EXPIRES_IN') || '15m');
   const refreshMaxAge = parseMaxAge(configService.get<string>('REFRESH_TOKEN_TTL') || '30d');
@@ -47,7 +46,7 @@ export function setAuthCookies(
 
 export function clearAuthCookies(res: Response, configService: ConfigService) {
   const isProduction = configService.get<string>('NODE_ENV') === 'production';
-  const sameSite = isProduction ? ('none' as const) : ('lax' as const);
+  const sameSite = 'lax' as const;
 
   const cookieOptions = {
     httpOnly: true,

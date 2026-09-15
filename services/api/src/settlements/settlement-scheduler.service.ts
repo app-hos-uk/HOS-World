@@ -1,22 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../database/prisma.service';
 import { SettlementsService } from './settlements.service';
+import { RedisService } from '../cache/redis.service';
 
-/**
- * Settlement Scheduler Service
- *
- * Provides automated settlement processing capabilities.
- * Can be triggered by:
- * 1. Manual API call (admin-only endpoint)
- * 2. External cron job calling the API endpoint
- * 3. NestJS @Cron decorator (if @nestjs/schedule is installed)
- *
- * To enable NestJS built-in scheduling:
- * 1. Install: npm install @nestjs/schedule
- * 2. Add ScheduleModule.forRoot() to AppModule
- * 3. Uncomment the @Cron decorators below
- */
 @Injectable()
 export class SettlementSchedulerService {
   private readonly logger = new Logger(SettlementSchedulerService.name);
@@ -25,7 +12,31 @@ export class SettlementSchedulerService {
   constructor(
     private prisma: PrismaService,
     private settlementsService: SettlementsService,
+    @Optional() private redisService?: RedisService,
   ) {}
+
+  private async runWithLock(lockKey: string, ttlSeconds: number, fn: () => Promise<void>) {
+    if (!this.redisService?.isRedisConnected()) {
+      await fn();
+      return;
+    }
+    let acquired = false;
+    try {
+      acquired = await this.redisService.setNX(lockKey, '1', ttlSeconds);
+    } catch {
+      await fn();
+      return;
+    }
+    if (!acquired) {
+      this.logger.debug(`Skipping ${lockKey} — another instance holds the lock`);
+      return;
+    }
+    try {
+      await fn();
+    } finally {
+      await this.redisService.del(lockKey).catch(() => {});
+    }
+  }
 
   /**
    * Create settlements for all active sellers for the previous week
@@ -37,16 +48,18 @@ export class SettlementSchedulerService {
     failed: number;
     errors: string[];
   }> {
-    if (this.isProcessing) {
-      this.logger.warn('Settlement creation already in progress, skipping...');
-      return { created: 0, failed: 0, errors: ['Already processing'] };
-    }
-
-    this.isProcessing = true;
     const results = { created: 0, failed: 0, errors: [] as string[] };
+    await this.runWithLock('cron:weekly-settlements', 600, async () => {
+      if (this.isProcessing) {
+        this.logger.warn('Settlement creation already in progress, skipping...');
+        results.errors.push('Already processing');
+        return;
+      }
 
-    try {
-      this.logger.log('Starting weekly settlement creation...');
+      this.isProcessing = true;
+
+      try {
+        this.logger.log('Starting weekly settlement creation...');
 
       // Calculate previous week's date range: [Monday 00:00:00 → next Monday 00:00:00)
       const now = new Date();
@@ -89,6 +102,7 @@ export class SettlementSchedulerService {
             },
           },
         },
+        take: 1000,
         select: {
           id: true,
           storeName: true,
@@ -154,10 +168,11 @@ export class SettlementSchedulerService {
       this.logger.log(
         `Settlement creation complete: ${results.created} created, ${results.failed} failed`,
       );
-      return results;
-    } finally {
-      this.isProcessing = false;
-    }
+      } finally {
+        this.isProcessing = false;
+      }
+    });
+    return results;
   }
 
   /**
@@ -166,52 +181,55 @@ export class SettlementSchedulerService {
    */
   @Cron('0 * * * *')
   async cleanupExpiredReservations(): Promise<{ cleaned: number }> {
-    try {
-      this.logger.log('Cleaning up expired stock reservations...');
+    const out = { cleaned: 0 };
+    await this.runWithLock('cron:cleanup-reservations', 300, async () => {
+      try {
+        this.logger.log('Cleaning up expired stock reservations...');
 
-      const result = await this.prisma.stockReservation.updateMany({
-        where: {
-          status: 'ACTIVE',
-          expiresAt: {
-            lt: new Date(),
-          },
-        },
-        data: {
-          status: 'EXPIRED',
-        },
-      });
-
-      // Update reserved counts on inventory locations
-      const expiredReservations = await this.prisma.stockReservation.findMany({
-        where: {
-          status: 'EXPIRED',
-          updatedAt: {
-            gte: new Date(Date.now() - 60 * 60 * 1000), // Last hour
-          },
-        },
-        select: {
-          inventoryLocationId: true,
-          quantity: true,
-        },
-      });
-
-      for (const reservation of expiredReservations) {
-        await this.prisma.inventoryLocation.update({
-          where: { id: reservation.inventoryLocationId },
-          data: {
-            reserved: {
-              decrement: reservation.quantity,
+        const updateResult = await this.prisma.stockReservation.updateMany({
+          where: {
+            status: 'ACTIVE',
+            expiresAt: {
+              lt: new Date(),
             },
           },
+          data: {
+            status: 'EXPIRED',
+          },
         });
-      }
 
-      this.logger.log(`Cleaned up ${result.count} expired reservations`);
-      return { cleaned: result.count };
-    } catch (error: any) {
-      this.logger.error(`Failed to cleanup reservations: ${error.message}`);
-      return { cleaned: 0 };
-    }
+        const expiredReservations = await this.prisma.stockReservation.findMany({
+          where: {
+            status: 'EXPIRED',
+            updatedAt: {
+              gte: new Date(Date.now() - 60 * 60 * 1000),
+            },
+          },
+          take: 5000,
+          select: {
+            inventoryLocationId: true,
+            quantity: true,
+          },
+        });
+
+        for (const reservation of expiredReservations) {
+          await this.prisma.inventoryLocation.update({
+            where: { id: reservation.inventoryLocationId },
+            data: {
+              reserved: {
+                decrement: reservation.quantity,
+              },
+            },
+          });
+        }
+
+        this.logger.log(`Cleaned up ${updateResult.count} expired reservations`);
+        out.cleaned = updateResult.count;
+      } catch (error: any) {
+        this.logger.error(`Failed to cleanup reservations: ${error.message}`);
+      }
+    });
+    return out;
   }
 
   /**
@@ -220,42 +238,45 @@ export class SettlementSchedulerService {
    */
   @Cron('0 9 * * *')
   async sendSettlementReminders(): Promise<{ sent: number }> {
-    try {
-      this.logger.log('Checking for pending settlement reminders...');
+    const out = { sent: 0 };
+    await this.runWithLock('cron:settlement-reminders', 300, async () => {
+      try {
+        this.logger.log('Checking for pending settlement reminders...');
 
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      const pendingSettlements = await this.prisma.settlement.findMany({
-        where: {
-          status: 'PENDING',
-          createdAt: {
-            lt: sevenDaysAgo,
-          },
-        },
-        include: {
-          seller: {
-            select: {
-              storeName: true,
-              userId: true,
+        const pendingSettlements = await this.prisma.settlement.findMany({
+          where: {
+            status: 'PENDING',
+            createdAt: {
+              lt: sevenDaysAgo,
             },
           },
-        },
-      });
+          take: 500,
+          include: {
+            seller: {
+              select: {
+                storeName: true,
+                userId: true,
+              },
+            },
+          },
+        });
 
-      // Log reminders (in production, would send emails)
-      for (const settlement of pendingSettlements) {
-        this.logger.warn(
-          `Pending settlement reminder: ${settlement.seller.storeName} - $${Number(settlement.netAmount).toFixed(2)} (created ${settlement.createdAt.toISOString()})`,
-        );
+        for (const settlement of pendingSettlements) {
+          this.logger.warn(
+            `Pending settlement reminder: ${settlement.seller.storeName} - $${Number(settlement.netAmount).toFixed(2)} (created ${settlement.createdAt.toISOString()})`,
+          );
+        }
+
+        this.logger.log(`Found ${pendingSettlements.length} settlements needing attention`);
+        out.sent = pendingSettlements.length;
+      } catch (error: any) {
+        this.logger.error(`Failed to send reminders: ${error.message}`);
       }
-
-      this.logger.log(`Found ${pendingSettlements.length} settlements needing attention`);
-      return { sent: pendingSettlements.length };
-    } catch (error: any) {
-      this.logger.error(`Failed to send reminders: ${error.message}`);
-      return { sent: 0 };
-    }
+    });
+    return out;
   }
 
   /**

@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { CacheService } from '../cache/cache.service';
 
 export interface AnalyticsFilters {
   startDate?: Date;
@@ -50,9 +51,33 @@ export interface InventoryMetrics {
   averageDaysInStock: number;
 }
 
+const ANALYTICS_CACHE_TTL = 300_000; // 5 minutes in ms (cache-manager uses ms)
+
 @Injectable()
 export class AnalyticsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Optional() private cacheService?: CacheService,
+  ) {}
+
+  private cacheKey(prefix: string, filters: AnalyticsFilters): string {
+    const s = filters.startDate?.toISOString() ?? 'none';
+    const e = filters.endDate?.toISOString() ?? 'none';
+    const seller = filters.sellerId ?? 'all';
+    return `analytics:${prefix}:${s}:${e}:${seller}`;
+  }
+
+  private async withCache<T>(key: string, ttl: number, fn: () => Promise<T>): Promise<T> {
+    if (this.cacheService) {
+      const cached = await this.cacheService.get<T>(key);
+      if (cached !== undefined && cached !== null) return cached;
+    }
+    const result = await fn();
+    if (this.cacheService) {
+      await this.cacheService.set(key, result, ttl).catch(() => {});
+    }
+    return result;
+  }
 
   /**
    * Resolve the Seller record id for a given user id. Used to scope analytics to the
@@ -81,6 +106,12 @@ export class AnalyticsService {
       growth: { revenue: number; orders: number };
     };
   }> {
+    return this.withCache(this.cacheKey('sales', filters), ANALYTICS_CACHE_TTL, () =>
+      this._getSalesTrends(filters),
+    );
+  }
+
+  private async _getSalesTrends(filters: AnalyticsFilters) {
     const { startDate, endDate, period = 'monthly', compareWithPrevious } = filters;
 
     // Calculate date range
@@ -149,6 +180,12 @@ export class AnalyticsService {
    * Get customer analytics including retention and LTV
    */
   async getCustomerMetrics(filters: AnalyticsFilters): Promise<CustomerMetrics> {
+    return this.withCache(this.cacheKey('customers', filters), ANALYTICS_CACHE_TTL, () =>
+      this._getCustomerMetrics(filters),
+    );
+  }
+
+  private async _getCustomerMetrics(filters: AnalyticsFilters): Promise<CustomerMetrics> {
     const { startDate, endDate } = filters;
 
     // Customer model has no createdAt; filter by related User.createdAt.
@@ -286,6 +323,16 @@ export class AnalyticsService {
    * Get product performance metrics
    */
   async getProductPerformance(
+    filters: AnalyticsFilters,
+    limit: number = 20,
+  ): Promise<ProductPerformance[]> {
+    const key = `${this.cacheKey('products', filters)}:${limit}`;
+    return this.withCache(key, ANALYTICS_CACHE_TTL, () =>
+      this._getProductPerformance(filters, limit),
+    );
+  }
+
+  private async _getProductPerformance(
     filters: AnalyticsFilters,
     limit: number = 20,
   ): Promise<ProductPerformance[]> {
@@ -492,6 +539,17 @@ export class AnalyticsService {
    * Get revenue growth rate (MoM, YoY)
    */
   async getRevenueGrowth(
+    currentStart: Date,
+    currentEnd: Date,
+    comparisonType: 'month' | 'year',
+  ): Promise<{ current: number; previous: number; growth: number }> {
+    const key = `analytics:revenue:${currentStart.toISOString()}:${currentEnd.toISOString()}:${comparisonType}`;
+    return this.withCache(key, ANALYTICS_CACHE_TTL, () =>
+      this._getRevenueGrowth(currentStart, currentEnd, comparisonType),
+    );
+  }
+
+  private async _getRevenueGrowth(
     currentStart: Date,
     currentEnd: Date,
     comparisonType: 'month' | 'year',

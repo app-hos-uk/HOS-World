@@ -54,6 +54,7 @@ export class SettlementsService {
         },
         OR: [{ platformFeeAmount: null }, { platformFeeAmount: { lte: 0 } }],
       },
+      take: 5000,
       include: {
         items: true,
       },
@@ -299,6 +300,7 @@ export class SettlementsService {
         // the platform took an application_fee and routed funds to the vendor at payment time).
         const settlementOrders = await this.prisma.orderSettlement.findMany({
           where: { settlementId: id },
+          take: 1000,
           include: {
             order: {
               select: {

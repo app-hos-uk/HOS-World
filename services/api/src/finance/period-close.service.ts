@@ -31,6 +31,7 @@ export class PeriodCloseService {
     return this.prisma.financialPeriod.findMany({
       where,
       orderBy: [{ year: 'desc' }, { month: 'desc' }],
+      take: 200,
       include: { closedBy: { select: { email: true, firstName: true, lastName: true } } },
     });
   }

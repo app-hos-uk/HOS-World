@@ -443,6 +443,7 @@ export class DashboardService {
 
     const fulfillmentCenters = await this.prisma.fulfillmentCenter.findMany({
       where: { isActive: true },
+      take: 100,
       include: {
         shipments: {
           where: {

@@ -57,11 +57,12 @@ export class GeminiService {
       }
 
       const response = await fetch(
-        `${this.baseUrl}/models/gemini-pro:generateContent?key=${this.apiKey}`,
+        `${this.baseUrl}/models/gemini-pro:generateContent`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
           },
           body: JSON.stringify(requestBody),
         },
@@ -117,11 +118,12 @@ Return only a JSON array of 5 product category keywords, like: ["Wand", "Robe", 
       };
 
       const response = await fetch(
-        `${this.baseUrl}/models/gemini-pro:generateContent?key=${this.apiKey}`,
+        `${this.baseUrl}/models/gemini-pro:generateContent`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
           },
           body: JSON.stringify(requestBody),
         },
@@ -179,11 +181,12 @@ Return JSON with: {"interests": [], "preferredPriceRange": {}, "preferredFandoms
       };
 
       const response = await fetch(
-        `${this.baseUrl}/models/gemini-pro:generateContent?key=${this.apiKey}`,
+        `${this.baseUrl}/models/gemini-pro:generateContent`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
           },
           body: JSON.stringify(requestBody),
         },
@@ -237,11 +240,12 @@ Make it exciting, engaging, and fandom-focused. Keep it concise (2-3 sentences).
       };
 
       const response = await fetch(
-        `${this.baseUrl}/models/gemini-pro:generateContent?key=${this.apiKey}`,
+        `${this.baseUrl}/models/gemini-pro:generateContent`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
           },
           body: JSON.stringify(requestBody),
         },

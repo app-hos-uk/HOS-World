@@ -8,7 +8,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
 import { getSeedAdminPassword, getSeedTestPassword } from '../config/seed-password';
-import { randomBytes } from 'crypto';
+import { randomBytes, timingSafeEqual } from 'crypto';
 
 const teamUsers = [
   {
@@ -63,10 +63,8 @@ export class CreateTeamUsersController {
     private configService: ConfigService,
   ) {}
 
-  /** Reject ALL seed requests in production. In dev: require DEV_SEED_SECRET header. */
   private guardSeedSecret(req: { headers?: Record<string, string | string[] | undefined> }) {
-    const isProd = this.configService.get('NODE_ENV') === 'production';
-    if (isProd) {
+    if (process.env.NODE_ENV === 'production') {
       throw new ForbiddenException('Seed endpoints are disabled in production');
     }
     const expected = this.configService.get<string>('DEV_SEED_SECRET')?.trim();
@@ -75,7 +73,7 @@ export class CreateTeamUsersController {
     }
     const provided = req.headers?.['x-dev-seed-secret'];
     const value = Array.isArray(provided) ? provided[0] : provided;
-    if (value !== expected) {
+    if (!value || value.length !== expected.length || !timingSafeEqual(Buffer.from(value), Buffer.from(expected))) {
       throw new ForbiddenException('Invalid seed secret');
     }
   }

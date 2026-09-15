@@ -23,7 +23,12 @@ describe('LightspeedOAuthController — callback token endpoint', () => {
 
   beforeEach(() => {
     const config: any = { get: jest.fn((key: string, fallback = '') => CONFIG[key] ?? fallback) };
-    controller = new LightspeedOAuthController(config);
+    const redis: any = {
+      set: jest.fn().mockResolvedValue(undefined),
+      get: jest.fn().mockResolvedValue(null),
+      del: jest.fn().mockResolvedValue(undefined),
+    };
+    controller = new LightspeedOAuthController(config, redis);
     res = { redirect: jest.fn() };
 
     fetchMock = jest.fn().mockResolvedValue({

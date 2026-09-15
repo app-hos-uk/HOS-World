@@ -88,7 +88,7 @@ export class LoyaltyWalletService {
 
     await tx.loyaltyMembership.update({
       where: { id: membershipId },
-      data: { currentBalance: balanceAfter },
+      data: { currentBalance: { increment: delta } },
     });
 
     try {
@@ -121,7 +121,7 @@ export class LoyaltyWalletService {
         // Unique race: restore balance and return the winning row (no-op credit/debit).
         await tx.loyaltyMembership.update({
           where: { id: membershipId },
-          data: { currentBalance: balanceBefore },
+          data: { currentBalance: { increment: -delta } },
         });
         const existing = await tx.loyaltyTransaction.findUnique({
           where: { idempotencyKey },

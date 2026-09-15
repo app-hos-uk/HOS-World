@@ -97,7 +97,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (normalizedUser.role === 'ADMIN' && typeof window !== 'undefined') {
             const stored = localStorage.getItem('admin_impersonated_role');
             if (stored && isValidUserRole(stored)) {
-              setImpersonatedRole(stored as UserRole);
+              try {
+                const acRes = await apiClient.getAccessControlMe();
+                const isAdmin = acRes?.data?.isGlobalAdmin || acRes?.data?.permissions?.includes('*');
+                if (isAdmin) {
+                  setImpersonatedRole(stored as UserRole);
+                } else {
+                  localStorage.removeItem('admin_impersonated_role');
+                  setImpersonatedRole(null);
+                }
+              } catch {
+                localStorage.removeItem('admin_impersonated_role');
+                setImpersonatedRole(null);
+              }
             } else if (stored) {
               localStorage.removeItem('admin_impersonated_role');
             }

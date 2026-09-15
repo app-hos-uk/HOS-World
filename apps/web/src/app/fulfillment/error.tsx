@@ -38,12 +38,8 @@ export default function FulfillmentError({
         </h1>
 
         <p className="text-hos-text-secondary">
-          {error.message || 'Something went wrong loading fulfillment data.'}
+          Something went wrong. Please try again or contact support if the issue persists.
         </p>
-
-        {error.digest && (
-          <p className="text-xs text-hos-text-muted">Error ID: {error.digest}</p>
-        )}
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
           <button

@@ -94,7 +94,10 @@ export class CategoriesService {
   }
 
   async findAll() {
-    return this.prisma.category.findMany({
+    const cached = await this.cache.get<any[]>(CategoriesService.FIND_ALL_CACHE_KEY);
+    if (cached) return cached;
+
+    const result = await this.prisma.category.findMany({
       where: { isActive: true },
       include: {
         parent: true,
@@ -114,14 +117,26 @@ export class CategoriesService {
       },
       orderBy: [{ level: 'asc' }, { order: 'asc' }, { name: 'asc' }],
     });
+
+    await this.cache.set(
+      CategoriesService.FIND_ALL_CACHE_KEY,
+      result,
+      CategoriesService.FIND_ALL_CACHE_TTL,
+    );
+    return result;
   }
 
   private static readonly TREE_CACHE_KEY = 'categories:tree';
   private static readonly TREE_CACHE_TTL = 60;
+  private static readonly FIND_ALL_CACHE_KEY = 'categories:findAll';
+  private static readonly FIND_ALL_CACHE_TTL = 120;
   private readonly logger = new Logger(CategoriesService.name);
 
   private async invalidateCategoryTreeCache() {
-    await this.cache.del(CategoriesService.TREE_CACHE_KEY).catch(() => {});
+    await Promise.all([
+      this.cache.del(CategoriesService.TREE_CACHE_KEY).catch(() => {}),
+      this.cache.del(CategoriesService.FIND_ALL_CACHE_KEY).catch(() => {}),
+    ]);
   }
 
   async getCategoryTree() {

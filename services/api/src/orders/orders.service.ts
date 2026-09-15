@@ -104,6 +104,7 @@ export class OrdersService {
       },
       select: { orderId: true, previousStatus: true },
       orderBy: { createdAt: 'desc' },
+      take: 1000,
     });
     for (const request of requests) {
       // Newest request wins; older rows for the same order are superseded.
@@ -128,6 +129,7 @@ export class OrdersService {
         }),
         this.prisma.order.findMany({
           where: { parentOrderId },
+          take: 100,
           select: {
             id: true,
             status: true,
@@ -309,6 +311,7 @@ export class OrdersService {
 
     const redemptions = await this.prisma.giftCardTransaction.findMany({
       where: { orderId, type: 'REDEMPTION' },
+      take: 100,
       include: { giftCard: true },
     });
 
@@ -439,14 +442,16 @@ export class OrdersService {
     const msg = sellerMessages[status];
     if (!msg) return;
 
+    const sellers = await this.prisma.seller.findMany({
+      where: { id: { in: [...sellerIds] } },
+      select: { id: true, userId: true },
+    });
+    const sellerUserMap = new Map(sellers.map((s) => [s.id, s.userId]));
     for (const sellerId of sellerIds) {
-      const seller = await this.prisma.seller.findUnique({
-        where: { id: sellerId },
-        select: { userId: true },
-      });
-      if (!seller?.userId) continue;
+      const userId = sellerUserMap.get(sellerId);
+      if (!userId) continue;
       await this.notificationsService.sendNotificationToUser(
-        seller.userId,
+        userId,
         'NEW_ORDER',
         msg.subject,
         msg.body,
@@ -655,6 +660,7 @@ export class OrdersService {
           productId: { in: productIds },
           status: 'ACTIVE' as any,
         },
+        take: 500,
         select: { productId: true, sellerId: true, vendorStock: true },
       });
 
@@ -699,6 +705,7 @@ export class OrdersService {
       if (sellerIds.length > 0) {
         const sellers = await this.prisma.seller.findMany({
           where: { id: { in: sellerIds } },
+          take: 500,
           select: { id: true, commissionRate: true },
         });
         for (const s of sellers) sellersMap.set(s.id, s);
@@ -905,6 +912,7 @@ export class OrdersService {
           const allProductIds = vendorGroups.flatMap((g) => g.items.map((i) => i.productId));
           const stockRows = await tx.product.findMany({
             where: { id: { in: allProductIds } },
+            take: 500,
             select: { id: true, stock: true, name: true },
           });
           const stockMap = new Map(stockRows.map((r) => [r.id, r]));
@@ -1451,6 +1459,7 @@ export class OrdersService {
       const rules = await this.prisma.influencerCommissionRule.findMany({
         where: { influencerId: influencer.id, isActive: true },
         orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }],
+        take: 200,
       });
 
       let totalCommission = new Decimal(0);
@@ -1564,6 +1573,7 @@ export class OrdersService {
   async reverseInfluencerAttribution(orderId: string): Promise<void> {
     const commissions = await this.prisma.influencerCommission.findMany({
       where: { orderId },
+      take: 200,
       include: { referral: true },
     });
 
@@ -1573,11 +1583,37 @@ export class OrdersService {
 
     let reversedCount = 0;
 
-    for (const comm of commissions) {
-      if (comm.status === 'CANCELLED') {
-        continue;
-      }
+    const activeCommissions = commissions.filter((c) => c.status !== 'CANCELLED');
+    if (activeCommissions.length === 0) return;
 
+    const approvedCommissions = activeCommissions.filter(
+      (c) => c.status === 'APPROVED' && c.payoutId == null,
+    );
+
+    const influencerIds = [...new Set(approvedCommissions.map((c) => c.influencerId))];
+    const campaignIds = [
+      ...new Set(
+        approvedCommissions
+          .map((c) => {
+            const meta = c.metadata as { campaignId?: string } | null;
+            return meta?.campaignId ?? c.referral?.campaignId ?? null;
+          })
+          .filter((id): id is string => id != null),
+      ),
+    ];
+
+    const [influencers, campaigns] = await Promise.all([
+      influencerIds.length > 0
+        ? this.prisma.influencer.findMany({ where: { id: { in: influencerIds } } })
+        : Promise.resolve([]),
+      campaignIds.length > 0
+        ? this.prisma.influencerCampaign.findMany({ where: { id: { in: campaignIds } } })
+        : Promise.resolve([]),
+    ]);
+    const influencerMap = new Map(influencers.map((i) => [i.id, i]));
+    const campaignMap = new Map(campaigns.map((c) => [c.id, c]));
+
+    for (const comm of activeCommissions) {
       const isPaidOut = comm.status === 'PAID' || comm.payoutId != null;
 
       if (isPaidOut) {
@@ -1593,9 +1629,7 @@ export class OrdersService {
       }
 
       if (comm.status === 'APPROVED') {
-        const influencer = await this.prisma.influencer.findUnique({
-          where: { id: comm.influencerId },
-        });
+        const influencer = influencerMap.get(comm.influencerId);
         if (influencer) {
           await this.prisma.influencer.update({
             where: { id: comm.influencerId },
@@ -1611,6 +1645,15 @@ export class OrdersService {
               ),
             },
           });
+          influencer.totalConversions = Math.max(0, influencer.totalConversions - 1);
+          influencer.totalSalesAmount = Decimal.max(
+            new Decimal(0),
+            influencer.totalSalesAmount.sub(comm.orderTotal),
+          ) as any;
+          influencer.totalCommission = Decimal.max(
+            new Decimal(0),
+            influencer.totalCommission.sub(comm.amount),
+          ) as any;
         }
 
         const meta = comm.metadata as {
@@ -1623,9 +1666,7 @@ export class OrdersService {
             ? new Decimal(meta.campaignAttributedSales)
             : comm.orderTotal;
 
-          const campaign = await this.prisma.influencerCampaign.findUnique({
-            where: { id: campaignId },
-          });
+          const campaign = campaignMap.get(campaignId);
           if (campaign) {
             await this.prisma.influencerCampaign.update({
               where: { id: campaignId },
@@ -1634,6 +1675,11 @@ export class OrdersService {
                 totalSales: Decimal.max(new Decimal(0), campaign.totalSales.sub(campaignSales)),
               },
             });
+            campaign.totalConversions = Math.max(0, campaign.totalConversions - 1);
+            campaign.totalSales = Decimal.max(
+              new Decimal(0),
+              campaign.totalSales.sub(campaignSales),
+            ) as any;
           }
         }
       }
@@ -2134,27 +2180,32 @@ export class OrdersService {
       // so sellers (who see child orders) get the updated status.
       if (role === 'ADMIN' && !order.parentOrderId) {
         const childOrders = (order as any).childOrders || [];
+        const validChildren: typeof childOrders = [];
         for (const child of childOrders) {
           try {
             this.validateStatusTransition(child.status || previousStatus, normalizedStatus);
-            await this.prisma.order.update({
-              where: { id: child.id },
-              data: {
-                status: normalizedStatus as PrismaOrderStatus,
-                ...(normalizedStatus === 'DELIVERED' ? { deliveredAt: new Date() } : {}),
-              },
-            });
-            await this.prisma.orderNote.create({
-              data: {
-                orderId: child.id,
-                content: `Status cascaded from parent: ${previousStatus} → ${normalizedStatus}`,
-                internal: true,
-                createdBy: userId,
-              },
-            });
+            validChildren.push(child);
           } catch (cascadeErr) {
             this.logger.warn(`Could not cascade status to child order ${child.id}: ${cascadeErr}`);
           }
+        }
+        if (validChildren.length > 0) {
+          const validChildIds = validChildren.map((c: any) => c.id);
+          await this.prisma.order.updateMany({
+            where: { id: { in: validChildIds } },
+            data: {
+              status: normalizedStatus as PrismaOrderStatus,
+              ...(normalizedStatus === 'DELIVERED' ? { deliveredAt: new Date() } : {}),
+            },
+          });
+          await this.prisma.orderNote.createMany({
+            data: validChildIds.map((childId: string) => ({
+              orderId: childId,
+              content: `Status cascaded from parent: ${previousStatus} → ${normalizedStatus}`,
+              internal: true,
+              createdBy: userId,
+            })),
+          });
         }
       }
 
@@ -2316,6 +2367,7 @@ export class OrdersService {
   private async syncParentOrderStatus(parentOrderId: string): Promise<void> {
     const siblings = await this.prisma.order.findMany({
       where: { parentOrderId },
+      take: 100,
       select: { status: true },
     });
     if (siblings.length === 0) return;
@@ -2557,6 +2609,7 @@ export class OrdersService {
 
     const giftCardRedemptions = await this.prisma.giftCardTransaction.findMany({
       where: { orderId: order.id, type: 'REDEMPTION' },
+      take: 100,
       select: { amount: true },
     });
     const giftCardTotal = giftCardRedemptions.reduce(
@@ -2771,11 +2824,18 @@ export class OrdersService {
     let itemsAdded = 0;
     let itemsUpdated = 0;
 
+    const productIds = order.items.map((i) => i.productId);
+    const [products, existingCartItems] = await Promise.all([
+      this.prisma.product.findMany({ where: { id: { in: productIds } } }),
+      this.prisma.cartItem.findMany({
+        where: { cartId: cart.id, productId: { in: productIds } },
+      }),
+    ]);
+    const productMap = new Map(products.map((p) => [p.id, p]));
+    const cartItemMap = new Map(existingCartItems.map((ci) => [ci.productId, ci]));
+
     for (const item of order.items) {
-      // Check if product still exists and has stock
-      const product = await this.prisma.product.findUnique({
-        where: { id: item.productId },
-      });
+      const product = productMap.get(item.productId);
 
       if (!product) {
         this.logger.warn(`Product ${item.productId} no longer exists, skipping reorder`);
@@ -2787,19 +2847,11 @@ export class OrdersService {
         continue;
       }
 
-      // Determine quantity to add (limited by available stock)
       const quantityToAdd = Math.min(item.quantity, product.stock);
 
-      // Check if item already exists in cart
-      const existingCartItem = await this.prisma.cartItem.findFirst({
-        where: {
-          cartId: cart.id,
-          productId: item.productId,
-        },
-      });
+      const existingCartItem = cartItemMap.get(item.productId);
 
       if (existingCartItem) {
-        // Update quantity of existing cart item
         const newQuantity = Math.min(existingCartItem.quantity + quantityToAdd, product.stock);
         await this.prisma.cartItem.update({
           where: { id: existingCartItem.id },
@@ -2827,6 +2879,7 @@ export class OrdersService {
       // Fallback: manual calculation without tax (should not happen in production)
       const cartItems = await this.prisma.cartItem.findMany({
         where: { cartId: cart.id },
+        take: 200,
       });
 
       const subtotal = cartItems.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);

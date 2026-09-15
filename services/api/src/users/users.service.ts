@@ -355,6 +355,7 @@ export class UsersService {
       orderBy: {
         earnedAt: 'desc',
       },
+      take: 200,
     });
 
     return userBadges.map((ub) => ({
@@ -375,6 +376,7 @@ export class UsersService {
       orderBy: {
         createdAt: 'desc',
       },
+      take: 200,
     });
 
     return collections.map((c) => ({
