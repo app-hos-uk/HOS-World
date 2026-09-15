@@ -244,6 +244,7 @@ function LoginPageInner() {
 
   const handleResendVerification = useCallback(async (emailToResend: string) => {
     setResendSuccess(false);
+    setError('');
     try {
       const res = await fetch(`${getPublicApiBaseUrl()}/auth/resend-verification`, {
         method: 'POST',

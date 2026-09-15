@@ -249,6 +249,7 @@ function JoinPageInner() {
 
   const handleResendVerification = useCallback(async (emailToResend: string) => {
     setResendSuccess(false);
+    setError(null);
     try {
       const res = await fetch(`${getPublicApiBaseUrl()}/auth/resend-verification`, {
         method: 'POST',
