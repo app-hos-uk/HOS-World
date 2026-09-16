@@ -258,6 +258,7 @@ describe('AuthService', () => {
         password: hashedPassword,
         role: 'CUSTOMER',
         isActive: true,
+        emailVerified: true,
         failedLoginAttempts: 0,
         lockedUntil: null,
         firstName: 'Test',
@@ -578,6 +579,7 @@ describe('AuthService', () => {
         lastName: 'User',
         role: 'CUSTOMER',
         isActive: true,
+        emailVerified: true,
         failedLoginAttempts: 3,
         lockedUntil: null,
       });
@@ -617,6 +619,7 @@ describe('AuthService', () => {
         lastName: 'User',
         role: 'CUSTOMER',
         isActive: true,
+        emailVerified: true,
         failedLoginAttempts: 5,
         lockedUntil: pastDate,
       });
@@ -636,6 +639,31 @@ describe('AuthService', () => {
       const result = await service.login({ email: 'test@example.com', password: 'correct' });
 
       expect(result).toHaveProperty('token');
+    });
+
+    it('should throw ForbiddenException with EMAIL_NOT_VERIFIED when email is unverified', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'user-id',
+        email: 'test@example.com',
+        password: 'hashed',
+        isActive: true,
+        emailVerified: false,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      jest.spyOn(service as any, 'sendVerificationEmail').mockResolvedValue(undefined);
+
+      try {
+        await service.login({ email: 'test@example.com', password: 'correct' });
+        fail('expected ForbiddenException');
+      } catch (err: unknown) {
+        expect(err).toBeInstanceOf(ForbiddenException);
+        expect((err as ForbiddenException).getResponse()).toMatchObject({
+          code: 'EMAIL_NOT_VERIFIED',
+          email: 'test@example.com',
+        });
+      }
     });
   });
 

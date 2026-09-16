@@ -5,6 +5,7 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  HttpException,
   Logger,
   forwardRef,
   Inject,
@@ -1038,11 +1039,14 @@ export class AuthService {
         token: tokens.accessToken,
         refreshToken: tokens.refreshToken,
       };
-    } catch (error: any) {
-      if (error instanceof UnauthorizedException) {
+    } catch (error: unknown) {
+      // Preserve intentional HTTP errors (invalid credentials, unverified email, deactivated, etc.)
+      if (error instanceof HttpException) {
         throw error;
       }
-      this.logger.error(`Login error: ${error?.message}`);
+      this.logger.error(
+        `Login error: ${error instanceof Error ? error.message : 'unknown'}`,
+      );
       throw new UnauthorizedException('Authentication failed. Please try again.');
     }
   }
