@@ -29,6 +29,7 @@ import { LoyaltyService } from '../loyalty/loyalty.service';
 import { slugify } from '@hos-marketplace/utils';
 import type { User, AuthResponse } from '@hos-marketplace/shared-types';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
+import { isProtectedAdminEmail } from '../config/protected-admin-emails';
 import { normalizeCountryCode } from '../common/utils/country-code';
 
 @Injectable()
@@ -1004,8 +1005,8 @@ export class AuthService {
         );
       }
 
-      // Block login for unverified email addresses
-      if (!user.emailVerified) {
+      // Block login for unverified email addresses (protected admins are exempt)
+      if (!user.emailVerified && !isProtectedAdminEmail(user.email) && user.role !== 'ADMIN') {
         try {
           await this.sendVerificationEmail(user.id);
         } catch {}
@@ -1223,7 +1224,7 @@ export class AuthService {
       throw new UnauthorizedException('Account has been deactivated');
     }
 
-    if (!user.emailVerified) {
+    if (!user.emailVerified && !isProtectedAdminEmail(user.email) && user.role !== 'ADMIN') {
       throw new UnauthorizedException('Email not verified');
     }
 

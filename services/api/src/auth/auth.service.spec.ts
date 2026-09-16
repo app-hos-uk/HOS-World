@@ -646,6 +646,7 @@ describe('AuthService', () => {
         id: 'user-id',
         email: 'test@example.com',
         password: 'hashed',
+        role: 'CUSTOMER',
         isActive: true,
         emailVerified: false,
         failedLoginAttempts: 0,
@@ -664,6 +665,40 @@ describe('AuthService', () => {
           email: 'test@example.com',
         });
       }
+    });
+
+    it('should allow login for protected admin emails without email verification', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'admin-id',
+        email: 'app@houseofspells.co.uk',
+        password: 'hashed',
+        firstName: 'App',
+        lastName: 'Admin',
+        role: 'ADMIN',
+        isActive: true,
+        emailVerified: false,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      });
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-refresh');
+      mockPrismaService.user.update.mockResolvedValue({});
+      mockPrismaService.refreshToken.findMany.mockResolvedValue([]);
+      mockPrismaService.refreshToken.create.mockResolvedValue({});
+      mockJwtService.sign.mockReturnValue('token');
+      mockConfigService.get.mockImplementation((key: string, defaultValue?: any) => {
+        if (key === 'JWT_REFRESH_SECRET') return 'test-refresh-secret';
+        if (key === 'REFRESH_TOKEN_TTL') return '30d';
+        if (key === 'JWT_EXPIRES_IN') return '15m';
+        return defaultValue;
+      });
+
+      const result = await service.login({
+        email: 'app@houseofspells.co.uk',
+        password: 'correct',
+      });
+
+      expect(result).toHaveProperty('token');
     });
   });
 
