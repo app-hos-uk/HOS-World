@@ -36,6 +36,7 @@ import { ActivityModule } from '../activity/activity.module';
 import { PartnerReferralsModule } from '../partner-referrals/partner-referrals.module';
 import { ReturnPoliciesModule } from '../return-policies/return-policies.module';
 import { MessagingModule } from '../messaging/messaging.module';
+import { TemplatesModule } from '../templates/templates.module';
 import { LoyaltyMemberEmailService } from './services/loyalty-member-email.service';
 
 @Module({
@@ -48,6 +49,7 @@ import { LoyaltyMemberEmailService } from './services/loyalty-member-email.servi
     ActivityModule,
     NotificationsModule,
     MessagingModule,
+    TemplatesModule,
     forwardRef(() => PosModule),
     forwardRef(() => JourneyModule),
     forwardRef(() => AmbassadorModule),
