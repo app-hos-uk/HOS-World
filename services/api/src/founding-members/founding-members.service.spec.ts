@@ -113,6 +113,7 @@ describe('FoundingMembersService import deduplication', () => {
         service.adminCreate({
           email: 'user@example.com',
           firstName: 'Existing',
+          fandoms: [],
         }),
       ).rejects.toBeInstanceOf(ConflictException);
     });
