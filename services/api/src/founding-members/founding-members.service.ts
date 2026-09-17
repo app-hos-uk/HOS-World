@@ -16,7 +16,12 @@ export interface FoundingMemberImportResult {
   createdEmails: string[];
 }
 
-export type FoundingMemberPreviewStatus = 'ready' | 'duplicate' | 'duplicate_in_file' | 'invalid';
+export type FoundingMemberPreviewStatus =
+  | 'ready'
+  | 'duplicate'
+  | 'duplicate_in_file'
+  | 'existing_user'
+  | 'invalid';
 
 export interface FoundingMemberPreviewRow {
   row: number;
@@ -32,6 +37,7 @@ export interface FoundingMemberPreviewResult {
   ready: number;
   duplicate: number;
   duplicateInFile: number;
+  existingUser: number;
   invalid: number;
   rows: FoundingMemberPreviewRow[];
 }
@@ -55,13 +61,7 @@ export class FoundingMembersService {
       throw new BadRequestException('Please provide a valid email address.');
     }
 
-    const existing = await this.prisma.foundingMember.findUnique({
-      where: { email: dto.email.toLowerCase().trim() },
-    });
-
-    if (existing) {
-      throw new ConflictException('This email is already registered as a founding member.');
-    }
+    await this.assertEmailAvailable(dto.email.toLowerCase().trim());
 
     return this.createMember(dto, metadata, options);
   }
@@ -70,13 +70,7 @@ export class FoundingMembersService {
     dto: CreateFoundingMemberDto,
     options?: { sendConfirmationEmail?: boolean; metadata?: Record<string, unknown> },
   ) {
-    const existing = await this.prisma.foundingMember.findUnique({
-      where: { email: dto.email.toLowerCase().trim() },
-    });
-
-    if (existing) {
-      throw new ConflictException('This email is already registered as a founding member.');
-    }
+    await this.assertEmailAvailable(dto.email.toLowerCase().trim());
 
     return this.createMember(
       dto,
@@ -106,39 +100,58 @@ export class FoundingMembersService {
       createdEmails: [],
     };
 
+    const skipDuplicates = options?.skipDuplicates !== false;
+    const classified = await this.classifyImportRows(rows, {
+      defaultSource: options?.defaultSource,
+    });
+
+    const readyRows: Array<{ rowNum: number; email: string; row: ImportFoundingMemberRowDto }> = [];
+
+    for (const item of classified) {
+      if (item.status === 'ready') {
+        readyRows.push({ rowNum: item.row, email: item.email, row: rows[item.row - 1] });
+        continue;
+      }
+
+      if (
+        skipDuplicates &&
+        (item.status === 'duplicate' ||
+          item.status === 'duplicate_in_file' ||
+          item.status === 'existing_user')
+      ) {
+        result.skipped++;
+        continue;
+      }
+
+      result.failed++;
+      result.errors.push({
+        row: item.row,
+        email: item.email,
+        message: item.message || item.status,
+      });
+    }
+
     const BATCH_SIZE = 50;
 
-    for (let batchStart = 0; batchStart < rows.length; batchStart += BATCH_SIZE) {
-      const batch = rows.slice(batchStart, batchStart + BATCH_SIZE);
+    for (let batchStart = 0; batchStart < readyRows.length; batchStart += BATCH_SIZE) {
+      const batch = readyRows.slice(batchStart, batchStart + BATCH_SIZE);
       const batchResults = await Promise.allSettled(
-        batch.map(async (row, batchIndex) => {
-          const i = batchStart + batchIndex;
-          const rowNum = i + 1;
-          const email = row.email?.toLowerCase().trim();
-
-          if (!email || !row.firstName?.trim()) {
-            return {
-              status: 'failed' as const,
-              row: rowNum,
-              email: email || '(missing)',
-              message: 'Email and first name are required',
-            };
-          }
-
-          const existing = await this.prisma.foundingMember.findUnique({ where: { email } });
-          if (existing) {
-            if (options?.skipDuplicates !== false) {
-              return { status: 'skipped' as const };
-            }
-            return {
-              status: 'failed' as const,
-              row: rowNum,
-              email,
-              message: 'Email already registered',
-            };
-          }
-
+        batch.map(async ({ rowNum, email, row }) => {
           try {
+            // Re-check immediately before insert to close races with concurrent imports
+            const conflict = await this.findEmailConflict(email);
+            if (conflict) {
+              if (skipDuplicates) {
+                return { status: 'skipped' as const };
+              }
+              return {
+                status: 'failed' as const,
+                row: rowNum,
+                email,
+                message: conflict.message,
+              };
+            }
+
             const member = await this.createMember(
               {
                 email: row.email,
@@ -163,6 +176,19 @@ export class FoundingMembersService {
             );
             return { status: 'created' as const, email: member.email };
           } catch (err: unknown) {
+            // Unique constraint race on founding_members.email
+            if (
+              err instanceof Prisma.PrismaClientKnownRequestError &&
+              err.code === 'P2002'
+            ) {
+              if (skipDuplicates) return { status: 'skipped' as const };
+              return {
+                status: 'failed' as const,
+                row: rowNum,
+                email,
+                message: 'Email already registered as a founding member',
+              };
+            }
             return {
               status: 'failed' as const,
               row: rowNum,
@@ -204,10 +230,10 @@ export class FoundingMembersService {
         }
       }
 
-      const processed = Math.min(batchStart + BATCH_SIZE, rows.length);
-      if (processed % 100 === 0 || processed === rows.length) {
+      const processed = Math.min(batchStart + BATCH_SIZE, readyRows.length);
+      if (processed % 100 === 0 || processed === readyRows.length) {
         this.logger.log(
-          `Import progress: ${processed}/${rows.length} (${result.created} created, ${result.skipped} skipped, ${result.failed} failed)`,
+          `Import progress: ${processed}/${readyRows.length} ready rows (${result.created} created, ${result.skipped} skipped, ${result.failed} failed)`,
         );
       }
     }
@@ -311,15 +337,49 @@ export class FoundingMembersService {
     rows: ImportFoundingMemberRowDto[],
     options?: { defaultSource?: string },
   ): Promise<FoundingMemberPreviewResult> {
+    const classified = await this.classifyImportRows(rows, options);
+
     const result: FoundingMemberPreviewResult = {
       total: rows.length,
       ready: 0,
       duplicate: 0,
       duplicateInFile: 0,
+      existingUser: 0,
       invalid: 0,
-      rows: [],
+      rows: classified,
     };
 
+    for (const row of classified) {
+      switch (row.status) {
+        case 'ready':
+          result.ready++;
+          break;
+        case 'duplicate':
+          result.duplicate++;
+          break;
+        case 'duplicate_in_file':
+          result.duplicateInFile++;
+          break;
+        case 'existing_user':
+          result.existingUser++;
+          break;
+        case 'invalid':
+          result.invalid++;
+          break;
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Classify every import row once — shared by preview (dry-run) and bulkImport
+   * so both paths apply the same duplicate / existing-user rules.
+   */
+  private async classifyImportRows(
+    rows: ImportFoundingMemberRowDto[],
+    options?: { defaultSource?: string },
+  ): Promise<FoundingMemberPreviewRow[]> {
     const emailsInFile = new Map<string, number>();
     const normalizedRows = rows.map((row, index) => {
       const email = row.email?.toLowerCase().trim() || '';
@@ -329,25 +389,25 @@ export class FoundingMembersService {
       return { row, index, email };
     });
 
-    const candidateEmails = normalizedRows
-      .map((r) => r.email)
-      .filter((email) => email && this.isValidEmail(email));
+    const candidateEmails = [
+      ...new Set(
+        normalizedRows
+          .map((r) => r.email)
+          .filter((email) => email && this.isValidEmail(email)),
+      ),
+    ];
 
-    const existingMembers = candidateEmails.length
-      ? await this.prisma.foundingMember.findMany({
-          where: { email: { in: candidateEmails } },
-          select: { email: true },
-        })
-      : [];
-    const existingSet = new Set(existingMembers.map((m) => m.email));
+    const { foundingMemberEmails, userEmails } =
+      await this.loadExistingEmailSets(candidateEmails);
+
+    const classified: FoundingMemberPreviewRow[] = [];
 
     for (const { row, index, email } of normalizedRows) {
       const rowNum = index + 1;
       const firstName = row.firstName?.trim() || '';
 
       if (!email || !firstName) {
-        result.invalid++;
-        result.rows.push({
+        classified.push({
           row: rowNum,
           email: email || '(missing)',
           firstName,
@@ -359,8 +419,7 @@ export class FoundingMembersService {
       }
 
       if (!this.isValidEmail(email)) {
-        result.invalid++;
-        result.rows.push({
+        classified.push({
           row: rowNum,
           email,
           firstName,
@@ -372,8 +431,7 @@ export class FoundingMembersService {
       }
 
       if ((emailsInFile.get(email) || 0) > 1) {
-        result.duplicateInFile++;
-        result.rows.push({
+        classified.push({
           row: rowNum,
           email,
           firstName,
@@ -384,9 +442,8 @@ export class FoundingMembersService {
         continue;
       }
 
-      if (existingSet.has(email)) {
-        result.duplicate++;
-        result.rows.push({
+      if (foundingMemberEmails.has(email)) {
+        classified.push({
           row: rowNum,
           email,
           firstName,
@@ -397,9 +454,20 @@ export class FoundingMembersService {
         continue;
       }
 
+      if (userEmails.has(email)) {
+        classified.push({
+          row: rowNum,
+          email,
+          firstName,
+          lastName: row.lastName,
+          status: 'existing_user',
+          message: 'Already has a platform account — skipped to avoid user duplication',
+        });
+        continue;
+      }
+
       if (row.registeredAt && Number.isNaN(Date.parse(row.registeredAt))) {
-        result.invalid++;
-        result.rows.push({
+        classified.push({
           row: rowNum,
           email,
           firstName,
@@ -410,8 +478,7 @@ export class FoundingMembersService {
         continue;
       }
 
-      result.ready++;
-      result.rows.push({
+      classified.push({
         row: rowNum,
         email,
         firstName,
@@ -421,7 +488,75 @@ export class FoundingMembersService {
       });
     }
 
-    return result;
+    return classified;
+  }
+
+  private async loadExistingEmailSets(emails: string[]): Promise<{
+    foundingMemberEmails: Set<string>;
+    userEmails: Set<string>;
+  }> {
+    if (emails.length === 0) {
+      return { foundingMemberEmails: new Set(), userEmails: new Set() };
+    }
+
+    const [existingMembers, existingUsers] = await Promise.all([
+      this.prisma.foundingMember.findMany({
+        where: { email: { in: emails } },
+        select: { email: true },
+      }),
+      this.prisma.user.findMany({
+        where: { email: { in: emails }, deletedAt: null },
+        select: { email: true },
+      }),
+    ]);
+
+    return {
+      foundingMemberEmails: new Set(
+        existingMembers.map((m) => m.email.toLowerCase().trim()),
+      ),
+      userEmails: new Set(existingUsers.map((u) => u.email.toLowerCase().trim())),
+    };
+  }
+
+  private async findEmailConflict(
+    email: string,
+  ): Promise<{ kind: 'founding_member' | 'user'; message: string } | null> {
+    const normalized = email.toLowerCase().trim();
+    const [existingMember, existingUser] = await Promise.all([
+      this.prisma.foundingMember.findUnique({
+        where: { email: normalized },
+        select: { id: true },
+      }),
+      this.prisma.user.findFirst({
+        where: { email: normalized, deletedAt: null },
+        select: { id: true },
+      }),
+    ]);
+
+    if (existingMember) {
+      return {
+        kind: 'founding_member',
+        message: 'Already registered in founding members list',
+      };
+    }
+    if (existingUser) {
+      return {
+        kind: 'user',
+        message: 'Already has a platform account — skipped to avoid user duplication',
+      };
+    }
+    return null;
+  }
+
+  private async assertEmailAvailable(email: string): Promise<void> {
+    const conflict = await this.findEmailConflict(email);
+    if (!conflict) return;
+    if (conflict.kind === 'founding_member') {
+      throw new ConflictException('This email is already registered as a founding member.');
+    }
+    throw new ConflictException(
+      'This email already has a platform account. Link the existing user instead of creating a duplicate.',
+    );
   }
 
   private isValidEmail(email: string): boolean {

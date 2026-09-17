@@ -49,7 +49,7 @@ interface PreviewRow {
   email: string;
   firstName: string;
   lastName?: string;
-  status: 'ready' | 'duplicate' | 'duplicate_in_file' | 'invalid';
+  status: 'ready' | 'duplicate' | 'duplicate_in_file' | 'existing_user' | 'invalid';
   message?: string;
 }
 
@@ -58,6 +58,7 @@ interface PreviewResult {
   ready: number;
   duplicate: number;
   duplicateInFile: number;
+  existingUser: number;
   invalid: number;
   rows: PreviewRow[];
 }
@@ -66,8 +67,9 @@ type Tab = 'list' | 'import' | 'add';
 
 const STATUS_LABELS: Record<PreviewRow['status'], string> = {
   ready: 'Ready',
-  duplicate: 'Already exists',
+  duplicate: 'Already founding member',
   duplicate_in_file: 'Duplicate in file',
+  existing_user: 'Existing platform user',
   invalid: 'Invalid',
 };
 
@@ -75,6 +77,7 @@ const STATUS_COLORS: Record<PreviewRow['status'], string> = {
   ready: 'bg-green-500/15 text-green-300',
   duplicate: 'bg-amber-500/15 text-amber-300',
   duplicate_in_file: 'bg-orange-500/15 text-orange-300',
+  existing_user: 'bg-blue-500/15 text-blue-300',
   invalid: 'bg-red-500/15 text-red-300',
 };
 
@@ -648,7 +651,7 @@ export default function AdminFoundingMembersPage() {
 
                 <label className="flex items-center gap-2 text-sm text-hos-text-secondary">
                   <input type="checkbox" checked={skipDuplicates} onChange={(e) => setSkipDuplicates(e.target.checked)} />
-                  Skip duplicate emails on import (recommended)
+                  Skip duplicate emails on import (founding members, existing platform users, and in-file duplicates)
                 </label>
 
                 <label className="flex items-center gap-2 text-sm text-hos-text-secondary">
@@ -692,7 +695,7 @@ export default function AdminFoundingMembersPage() {
                   <div className="px-5 py-4 border-b border-hos-border">
                     <h3 className="text-sm font-semibold text-hos-text-secondary">Import preview</h3>
                     <p className="text-xs text-hos-text-muted mt-1">
-                      {preview.ready} ready · {preview.duplicate} already exist · {preview.duplicateInFile} duplicate in file · {preview.invalid} invalid · {preview.total} total
+                      {preview.ready} ready · {preview.duplicate} founding members · {preview.existingUser ?? 0} existing users · {preview.duplicateInFile} duplicate in file · {preview.invalid} invalid · {preview.total} total
                     </p>
                   </div>
                   <div className="overflow-x-auto max-h-[420px] overflow-y-auto">

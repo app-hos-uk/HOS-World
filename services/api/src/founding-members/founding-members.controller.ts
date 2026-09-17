@@ -87,7 +87,7 @@ export class FoundingMembersController {
 
     return {
       data: preview,
-      message: `Preview: ${preview.ready} ready, ${preview.duplicate} duplicates, ${preview.duplicateInFile} in-file duplicates, ${preview.invalid} invalid`,
+      message: `Preview: ${preview.ready} ready, ${preview.duplicate} founding-member duplicates, ${preview.existingUser} existing users, ${preview.duplicateInFile} in-file duplicates, ${preview.invalid} invalid`,
     };
   }
 
