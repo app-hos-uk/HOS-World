@@ -46,7 +46,7 @@ describe('FoundingMembersService import deduplication', () => {
     service = new FoundingMembersService(
       prisma as unknown as PrismaService,
       notifications as unknown as NotificationsService,
-      { get: jest.fn((key: string) => (key === 'FRONTEND_URL' ? 'https://shop.houseofspells.com' : undefined)) } as unknown as ConfigService,
+      { get: jest.fn((key: string) => (key === 'FRONTEND_URL' ? 'http://localhost:3000' : undefined)) } as unknown as ConfigService,
     );
   });
 
