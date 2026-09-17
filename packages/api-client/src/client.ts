@@ -1890,11 +1890,13 @@ export class ApiClient {
     q?: string;
     page?: number;
     limit?: number;
+    includeDeactivated?: boolean;
   }): Promise<ApiResponse<unknown>> {
     const qs = new URLSearchParams();
     if (params?.q?.trim()) qs.set('q', params.q.trim());
     if (params?.page != null) qs.set('page', String(params.page));
     if (params?.limit != null) qs.set('limit', String(params.limit));
+    if (params?.includeDeactivated) qs.set('includeDeactivated', 'true');
     const query = qs.toString();
     return this.request<ApiResponse<unknown>>(`/admin/loyalty/members${query ? `?${query}` : ''}`);
   }
@@ -1913,6 +1915,22 @@ export class ApiClient {
     });
   }
 
+  async adminDeactivateLoyaltyMember(
+    userId: string,
+    reason?: string,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/members/${userId}/deactivate`, {
+      method: 'PATCH',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  async adminReactivateLoyaltyMember(userId: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/members/${userId}/reactivate`, {
+      method: 'PATCH',
+    });
+  }
+
   async adminLoyaltySendMemberEmail(body: {
     templateSlug: string;
     subject?: string;
@@ -1927,6 +1945,7 @@ export class ApiClient {
       sent: number;
       failed: number;
       skippedConsent: number;
+      skippedDeactivated: number;
       errors: string[];
     }>
   > {
@@ -8348,17 +8367,32 @@ export class ApiClient {
     page?: number;
     limit?: number;
     search?: string;
+    includeDeactivated?: boolean;
   }): Promise<ApiResponse<any>> {
     const query = new URLSearchParams();
     if (params?.page) query.set('page', String(params.page));
     if (params?.limit) query.set('limit', String(params.limit));
     if (params?.search) query.set('search', params.search);
+    if (params?.includeDeactivated) query.set('includeDeactivated', 'true');
     const qs = query.toString();
     return this.request<ApiResponse<any>>(`/founding-members${qs ? `?${qs}` : ''}`);
   }
 
   async getFoundingMemberStats(): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/founding-members/stats');
+  }
+
+  async deactivateFoundingMember(id: string, reason?: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/founding-members/${id}/deactivate`, {
+      method: 'PATCH',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  async reactivateFoundingMember(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/founding-members/${id}/reactivate`, {
+      method: 'PATCH',
+    });
   }
 
   async previewFoundingMembersImport(data: {

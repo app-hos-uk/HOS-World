@@ -19,6 +19,7 @@ export type LoyaltyMemberEmailSendResult = {
   sent: number;
   failed: number;
   skippedConsent: number;
+  skippedDeactivated: number;
   errors: string[];
 };
 
@@ -52,6 +53,7 @@ export class LoyaltyMemberEmailService {
   buildMemberSearchWhere(
     search?: string,
     onlyUnverified?: boolean,
+    opts?: { status?: 'ACTIVE' | 'DEACTIVATED' | null },
   ): Prisma.LoyaltyMembershipWhereInput | undefined {
     const term = search?.trim() || '';
     const parts = term.split(/\s+/).filter(Boolean);
@@ -83,15 +85,14 @@ export class LoyaltyMemberEmailService {
         }
       : undefined;
 
-    if (onlyUnverified) {
-      const unverified = { user: { emailVerified: false } };
-      if (searchWhere) {
-        return { AND: [searchWhere, unverified] };
-      }
-      return unverified;
-    }
-
-    return searchWhere;
+    const status = opts?.status === undefined ? 'ACTIVE' : opts.status;
+    const filters: Prisma.LoyaltyMembershipWhereInput[] = [];
+    if (searchWhere) filters.push(searchWhere);
+    if (onlyUnverified) filters.push({ user: { emailVerified: false } });
+    if (status) filters.push({ status });
+    if (filters.length === 0) return undefined;
+    if (filters.length === 1) return filters[0];
+    return { AND: filters };
   }
 
   async resolveRecipients(params: LoyaltyMemberEmailSendParams): Promise<LoyaltyMemberEmailRecipient[]> {
@@ -101,18 +102,18 @@ export class LoyaltyMemberEmailService {
     if (ids.length > 0) {
       const rows = await this.prisma.loyaltyMembership.findMany({
         where: { userId: { in: ids } },
-        select: this.recipientSelect(),
+        select: { ...this.recipientSelect(), status: true },
       });
-      if (rows.length < ids.length) {
-        const found = new Set(rows.map((r) => r.userId));
-        const missing = ids.filter((id) => !found.has(id));
-        if (missing.length) {
-          throw new BadRequestException(
-            `No loyalty membership found for: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? '…' : ''}`,
-          );
-        }
+      const found = new Set(rows.map((r) => r.userId));
+      const missing = ids.filter((id) => !found.has(id));
+      if (missing.length) {
+        throw new BadRequestException(
+          `No loyalty membership found for: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? '…' : ''}`,
+        );
       }
-      return rows.map((r) => this.toRecipient(r));
+      return rows
+        .filter((r) => r.status === 'ACTIVE')
+        .map((r) => this.toRecipient(r));
     }
 
     if (!params.sendToAll) {
@@ -148,8 +149,21 @@ export class LoyaltyMemberEmailService {
       sent: 0,
       failed: 0,
       skippedConsent: 0,
+      skippedDeactivated: 0,
       errors: [],
     };
+
+    if (params.memberIds?.length) {
+      result.skippedDeactivated = await this.prisma.loyaltyMembership.count({
+        where: { userId: { in: params.memberIds }, status: 'DEACTIVATED' },
+      });
+    } else if (params.sendToAll) {
+      result.skippedDeactivated = await this.prisma.loyaltyMembership.count({
+        where: this.buildMemberSearchWhere(params.search, params.onlyUnverified, {
+          status: 'DEACTIVATED',
+        }),
+      });
+    }
 
     if (recipients.length === 0) {
       return result;

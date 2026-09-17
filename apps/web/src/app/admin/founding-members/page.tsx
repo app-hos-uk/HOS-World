@@ -126,19 +126,36 @@ export default function AdminFoundingMembersPage() {
   const [manualMessage, setManualMessage] = useState<string | null>(null);
 
   const [confirmationLoading, setConfirmationLoading] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
+  const [confirmationResult, setConfirmationResult] = useState<{
+    sent: number;
+    failed: number;
+    skipped: number;
+    skippedDeactivated?: number;
+  } | null>(null);
 
   const [invitationLoading, setInvitationLoading] = useState(false);
-  const [invitationResult, setInvitationResult] = useState<{ sent: number; failed: number; skipped: number } | null>(null);
+  const [invitationResult, setInvitationResult] = useState<{
+    sent: number;
+    failed: number;
+    skipped: number;
+    skippedDeactivated?: number;
+  } | null>(null);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [includeDeactivated, setIncludeDeactivated] = useState(false);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [listRes, statsRes] = await Promise.all([
-        apiClient.getFoundingMembers({ page, limit: 25, search: search || undefined }),
+        apiClient.getFoundingMembers({
+          page,
+          limit: 25,
+          search: search || undefined,
+          includeDeactivated,
+        }),
         apiClient.getFoundingMemberStats(),
       ]);
       const listData = listRes.data as {
@@ -156,7 +173,7 @@ export default function AdminFoundingMembersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, search, includeDeactivated]);
 
   useEffect(() => {
     fetchMembers();
@@ -334,6 +351,36 @@ export default function AdminFoundingMembersPage() {
     }
   };
 
+  const handleToggleMemberStatus = async (member: FoundingMember) => {
+    const isDeactivated = member.status === 'DEACTIVATED';
+    let reason: string | undefined;
+    if (!isDeactivated) {
+      const reasonInput = window.prompt(`Reason for deactivating ${member.email} (optional):`);
+      if (reasonInput === null) return; // Cancelled
+      reason = reasonInput.trim() || undefined;
+    }
+
+    setStatusUpdatingId(member.id);
+    setError(null);
+    try {
+      if (isDeactivated) {
+        await apiClient.reactivateFoundingMember(member.id);
+      } else {
+        await apiClient.deactivateFoundingMember(member.id, reason);
+      }
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(member.id);
+        return next;
+      });
+      await fetchMembers();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update member status');
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  };
+
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -439,12 +486,20 @@ export default function AdminFoundingMembersPage() {
             )}
             {confirmationResult && (
               <span className="text-sm text-hos-text-muted">
-                Confirmations: {confirmationResult.sent} sent, {confirmationResult.failed} failed, {confirmationResult.skipped} already sent
+                Confirmations: {confirmationResult.sent} sent, {confirmationResult.failed} failed,{' '}
+                {confirmationResult.skipped} already sent
+                {(confirmationResult.skippedDeactivated ?? 0) > 0
+                  ? `, ${confirmationResult.skippedDeactivated} deactivated`
+                  : ''}
               </span>
             )}
             {invitationResult && (
               <span className="text-sm text-hos-text-muted">
-                Invitations: {invitationResult.sent} sent, {invitationResult.failed} failed, {invitationResult.skipped} already invited
+                Invitations: {invitationResult.sent} sent, {invitationResult.failed} failed,{' '}
+                {invitationResult.skipped} already invited
+                {(invitationResult.skippedDeactivated ?? 0) > 0
+                  ? `, ${invitationResult.skippedDeactivated} deactivated`
+                  : ''}
               </span>
             )}
           </div>
@@ -489,7 +544,7 @@ export default function AdminFoundingMembersPage() {
 
           {tab === 'list' && (
             <>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 items-center">
                 <input
                   type="search"
                   placeholder="Search by name or email…"
@@ -500,6 +555,18 @@ export default function AdminFoundingMembersPage() {
                   }}
                   className="rounded-lg border border-hos-border px-3 py-2 text-sm focus:border-hos-gold focus:outline-none focus:ring-1 focus:ring-hos-gold/50"
                 />
+                <label className="flex items-center gap-2 text-sm text-hos-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={includeDeactivated}
+                    onChange={(e) => {
+                      setIncludeDeactivated(e.target.checked);
+                      setPage(1);
+                    }}
+                    className="rounded border-hos-border accent-hos-gold"
+                  />
+                  Show deactivated
+                </label>
               </div>
 
               <div className="overflow-hidden rounded-lg border border-hos-border bg-hos-bg-secondary">
@@ -526,6 +593,7 @@ export default function AdminFoundingMembersPage() {
                           <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">Source</th>
                           <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">Registered</th>
                           <th className="px-4 py-3 text-left text-xs font-medium uppercase text-hos-text-muted">Status</th>
+                          <th className="px-4 py-3 text-right text-xs font-medium uppercase text-hos-text-muted">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-hos-border">
@@ -550,12 +618,27 @@ export default function AdminFoundingMembersPage() {
                             <td className="px-4 py-3 text-sm text-hos-text-muted">{formatDate(m.registeredAt)}</td>
                             <td className="px-4 py-3">
                               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                m.status === 'DEACTIVATED' ? 'bg-red-500/15 text-red-300' :
                                 m.status === 'INVITED' ? 'bg-blue-500/15 text-blue-300' :
                                 m.status === 'LINKED' ? 'bg-green-500/15 text-green-300' :
                                 'bg-amber-500/15 text-amber-300'
                               }`}>
                                 {m.status.toLowerCase()}
                               </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                type="button"
+                                disabled={statusUpdatingId === m.id}
+                                onClick={() => void handleToggleMemberStatus(m)}
+                                className="text-sm font-medium text-amber-400 hover:text-amber-300 disabled:opacity-50"
+                              >
+                                {statusUpdatingId === m.id
+                                  ? '…'
+                                  : m.status === 'DEACTIVATED'
+                                    ? 'Reactivate'
+                                    : 'Deactivate'}
+                              </button>
                             </td>
                           </tr>
                         ))}

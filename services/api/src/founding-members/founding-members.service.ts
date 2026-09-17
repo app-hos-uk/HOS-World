@@ -1,4 +1,10 @@
-import { Injectable, ConflictException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  BadRequestException,
+  NotFoundException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
@@ -248,21 +254,28 @@ export class FoundingMembersService {
   async sendConfirmationToAll(options?: {
     onlyUnsent?: boolean;
     batchSize?: number;
-  }): Promise<{ sent: number; failed: number; skipped: number }> {
+  }): Promise<{ sent: number; failed: number; skipped: number; skippedDeactivated: number }> {
     const batchSize = options?.batchSize ?? 50;
     const onlyUnsent = options?.onlyUnsent ?? true;
-    const result = { sent: 0, failed: 0, skipped: 0 };
+    const result = { sent: 0, failed: 0, skipped: 0, skippedDeactivated: 0 };
+
+    // Exclude deactivated at the DB so they never enter the send pipeline.
+    result.skippedDeactivated = await this.prisma.foundingMember.count({
+      where: { status: 'DEACTIVATED' },
+    });
 
     const members = await this.prisma.foundingMember.findMany({
+      where: { status: { not: 'DEACTIVATED' } },
       orderBy: { registeredAt: 'asc' },
-      select: { id: true, email: true, firstName: true, metadata: true },
+      select: { id: true, email: true, firstName: true, metadata: true, status: true },
     });
 
     const toSend = onlyUnsent
       ? members.filter((member) => !this.hasConfirmationEmailSent(member.metadata))
       : members;
 
-    result.skipped = members.length - toSend.length;
+    // `skipped` = already-sent confirmations only (not deactivated).
+    result.skipped = onlyUnsent ? members.length - toSend.length : 0;
 
     for (let batchStart = 0; batchStart < toSend.length; batchStart += batchSize) {
       const batch = toSend.slice(batchStart, batchStart + batchSize);
@@ -321,13 +334,13 @@ export class FoundingMembersService {
       const processed = Math.min(batchStart + batchSize, toSend.length);
       if (processed % 100 === 0 || processed === toSend.length) {
         this.logger.log(
-          `Confirmation email progress: ${processed}/${toSend.length} (${result.sent} sent, ${result.failed} failed, ${result.skipped} skipped)`,
+          `Confirmation email progress: ${processed}/${toSend.length} (${result.sent} sent, ${result.failed} failed, ${result.skipped} already sent, ${result.skippedDeactivated} deactivated)`,
         );
       }
     }
 
     this.logger.log(
-      `Founding member confirmations: ${result.sent} sent, ${result.failed} failed, ${result.skipped} skipped`,
+      `Founding member confirmations: ${result.sent} sent, ${result.failed} failed, ${result.skipped} already sent, ${result.skippedDeactivated} deactivated`,
     );
 
     return result;
@@ -642,23 +655,34 @@ export class FoundingMembersService {
     onlyUnsent?: boolean;
     batchSize?: number;
     memberIds?: string[];
-  }): Promise<{ sent: number; failed: number; skipped: number }> {
+  }): Promise<{ sent: number; failed: number; skipped: number; skippedDeactivated: number }> {
     const batchSize = options?.batchSize ?? 50;
     const onlyUnsent = options?.onlyUnsent ?? true;
-    const result = { sent: 0, failed: 0, skipped: 0 };
+    const result = { sent: 0, failed: 0, skipped: 0, skippedDeactivated: 0 };
 
     const frontendUrl = (
       this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000'
     ).replace(/\/$/, '');
     const registerLink = `${frontendUrl}/register?invite=founding`;
 
-    const where: any = { userId: null };
-    if (options?.memberIds?.length) {
-      where.id = { in: options.memberIds };
-    }
-    if (onlyUnsent) {
-      where.status = { not: 'INVITED' };
-    }
+    const idFilter = options?.memberIds?.length
+      ? { id: { in: options.memberIds } }
+      : undefined;
+
+    // Report deactivated matches separately so callers know requested IDs were dropped.
+    result.skippedDeactivated = await this.prisma.foundingMember.count({
+      where: {
+        userId: null,
+        status: 'DEACTIVATED',
+        ...idFilter,
+      },
+    });
+
+    const where: Prisma.FoundingMemberWhereInput = {
+      userId: null,
+      status: onlyUnsent ? { notIn: ['INVITED', 'DEACTIVATED'] } : { not: 'DEACTIVATED' },
+      ...idFilter,
+    };
 
     const members = await this.prisma.foundingMember.findMany({
       where,
@@ -667,11 +691,12 @@ export class FoundingMembersService {
     });
 
     if (onlyUnsent) {
+      // Already-invited only — deactivated counted above.
       result.skipped = await this.prisma.foundingMember.count({
         where: {
           userId: null,
           status: 'INVITED',
-          ...(options?.memberIds?.length ? { id: { in: options.memberIds } } : {}),
+          ...idFilter,
         },
       });
     }
@@ -730,13 +755,13 @@ export class FoundingMembersService {
       const processed = Math.min(batchStart + batchSize, members.length);
       if (processed % 100 === 0 || processed === members.length) {
         this.logger.log(
-          `Account invitation progress: ${processed}/${members.length} (${result.sent} sent, ${result.failed} failed, ${result.skipped} skipped)`,
+          `Account invitation progress: ${processed}/${members.length} (${result.sent} sent, ${result.failed} failed, ${result.skipped} already invited, ${result.skippedDeactivated} deactivated)`,
         );
       }
     }
 
     this.logger.log(
-      `Account invitations: ${result.sent} sent, ${result.failed} failed, ${result.skipped} skipped`,
+      `Account invitations: ${result.sent} sent, ${result.failed} failed, ${result.skipped} already invited, ${result.skippedDeactivated} deactivated`,
     );
 
     return result;
@@ -759,9 +784,60 @@ export class FoundingMembersService {
   async linkToUser(email: string, userId: string) {
     const member = await this.findByEmail(email);
     if (!member) return null;
+    if (member.status === 'DEACTIVATED') {
+      throw new BadRequestException('This founding member registration is deactivated.');
+    }
     return this.prisma.foundingMember.update({
       where: { id: member.id },
       data: { userId, status: 'LINKED' },
+    });
+  }
+
+  async deactivateMember(id: string, reason?: string) {
+    const member = await this.prisma.foundingMember.findUnique({ where: { id } });
+    if (!member) throw new NotFoundException('Founding member not found');
+    if (member.status === 'DEACTIVATED') {
+      throw new BadRequestException('Founding member is already deactivated');
+    }
+
+    return this.prisma.foundingMember.update({
+      where: { id },
+      data: {
+        status: 'DEACTIVATED',
+        metadata: this.mergeMetadata(member.metadata, {
+          deactivatedAt: new Date().toISOString(),
+          deactivatedFromStatus: member.status,
+          deactivationReason: reason?.trim() || null,
+        }),
+      },
+    });
+  }
+
+  async reactivateMember(id: string) {
+    const member = await this.prisma.foundingMember.findUnique({ where: { id } });
+    if (!member) throw new NotFoundException('Founding member not found');
+    if (member.status !== 'DEACTIVATED') {
+      throw new BadRequestException('Founding member is not deactivated');
+    }
+
+    const meta =
+      member.metadata && typeof member.metadata === 'object' && !Array.isArray(member.metadata)
+        ? { ...(member.metadata as Record<string, unknown>) }
+        : {};
+    const restoredStatus =
+      typeof meta.deactivatedFromStatus === 'string' && meta.deactivatedFromStatus !== 'DEACTIVATED'
+        ? meta.deactivatedFromStatus
+        : 'REGISTERED';
+    delete meta.deactivatedAt;
+    delete meta.deactivatedFromStatus;
+    delete meta.deactivationReason;
+
+    return this.prisma.foundingMember.update({
+      where: { id },
+      data: {
+        status: restoredStatus,
+        metadata: meta as Prisma.InputJsonValue,
+      },
     });
   }
 
@@ -783,9 +859,9 @@ export class FoundingMembersService {
     };
   }
 
-  async findAll(page = 1, limit = 50, search?: string) {
+  async findAll(page = 1, limit = 50, search?: string, includeDeactivated = false) {
     const skip = (page - 1) * limit;
-    const where = search
+    const searchWhere = search
       ? {
           OR: [
             { email: { contains: search, mode: 'insensitive' as const } },
@@ -794,6 +870,11 @@ export class FoundingMembersService {
           ],
         }
       : undefined;
+    const statusFilter = includeDeactivated ? undefined : { status: { not: 'DEACTIVATED' as const } };
+    const where =
+      searchWhere && statusFilter
+        ? { AND: [searchWhere, statusFilter] }
+        : searchWhere ?? statusFilter;
 
     const [items, total] = await Promise.all([
       this.prisma.foundingMember.findMany({

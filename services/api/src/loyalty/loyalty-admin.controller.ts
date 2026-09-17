@@ -42,6 +42,7 @@ import {
 } from './services/loyalty-settings.service';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { AdminLoyaltySendMemberEmailDto } from './dto/send-member-email.dto';
+import { DeactivateMemberDto } from './dto/member-status.dto';
 import { LoyaltyMemberEmailService } from './services/loyalty-member-email.service';
 
 @ApiTags('admin-loyalty')
@@ -244,20 +245,24 @@ export class LoyaltyAdminController {
     @Query('q') q?: string,
     @Query('page') pageRaw?: string,
     @Query('limit') limitRaw?: string,
+    @Query('includeDeactivated') includeDeactivatedRaw?: string,
   ): Promise<ApiResponse<unknown>> {
     const page = Math.max(1, parseInt(pageRaw || '1', 10) || 1);
     // Allow larger batches for CSV/Excel export; UI list uses ~25.
     const limit = Math.min(5000, Math.max(1, parseInt(limitRaw || '25', 10) || 25));
+    const includeDeactivated =
+      includeDeactivatedRaw === '1' ||
+      includeDeactivatedRaw === 'true' ||
+      includeDeactivatedRaw === 'yes';
     const term = q?.trim() || '';
     const parts = term.split(/\s+/).filter(Boolean);
-    const where = term
+    const searchWhere = term
       ? {
           OR: [
             { user: { email: { contains: term, mode: 'insensitive' as const } } },
             { user: { firstName: { contains: term, mode: 'insensitive' as const } } },
             { user: { lastName: { contains: term, mode: 'insensitive' as const } } },
             { cardNumber: { contains: term, mode: 'insensitive' as const } },
-            // Support "First Last" queries across separate name columns
             ...(parts.length >= 2
               ? [
                   {
@@ -278,6 +283,11 @@ export class LoyaltyAdminController {
           ],
         }
       : undefined;
+    const statusFilter = includeDeactivated ? undefined : { status: 'ACTIVE' as const };
+    const where =
+      searchWhere && statusFilter
+        ? { AND: [searchWhere, statusFilter] }
+        : searchWhere ?? statusFilter;
 
     const [total, data] = await Promise.all([
       this.prisma.loyaltyMembership.count({ where }),
@@ -292,6 +302,9 @@ export class LoyaltyAdminController {
           currentBalance: true,
           totalPointsEarned: true,
           enrolledAt: true,
+          status: true,
+          deactivatedAt: true,
+          deactivationReason: true,
           user: { select: { id: true, email: true, firstName: true, lastName: true } },
           tier: { select: { id: true, name: true, level: true } },
         },
@@ -330,6 +343,27 @@ export class LoyaltyAdminController {
       data,
       message: dto.dryRun ? 'Dry run complete' : 'Send complete',
     };
+  }
+
+  @Patch('members/:userId/deactivate')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
+  @ApiOperation({ summary: 'Deactivate a loyalty member (keeps history, blocks earn/redeem)' })
+  async deactivateMember(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() dto: DeactivateMemberDto,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.loyalty.adminDeactivateMember(userId, dto.reason);
+    return { data, message: 'Member deactivated' };
+  }
+
+  @Patch('members/:userId/reactivate')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
+  @ApiOperation({ summary: 'Reactivate a deactivated loyalty member' })
+  async reactivateMember(
+    @Param('userId', ParseUUIDPipe) userId: string,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.loyalty.adminReactivateMember(userId);
+    return { data, message: 'Member reactivated' };
   }
 
   @Get('members/:userId')

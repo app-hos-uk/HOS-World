@@ -80,6 +80,9 @@ export class LoyaltyWalletService {
     if (!membership) {
       throw new NotFoundException('Loyalty membership not found');
     }
+    if (membership.status === 'DEACTIVATED' && fields.source !== 'ADMIN') {
+      throw new BadRequestException('Loyalty membership is deactivated');
+    }
     const balanceBefore = membership.currentBalance;
     const balanceAfter = balanceBefore + delta;
     if (balanceAfter < 0) {

@@ -163,6 +163,11 @@ export class LoyaltyService implements OnModuleInit {
 
     // Idempotent: already enrolled → still apply referral + repair missing bonuses.
     if (existing) {
+      if (existing.status === 'DEACTIVATED') {
+        throw new BadRequestException(
+          'This loyalty membership is deactivated. Ask an admin to reactivate it before enrolling again.',
+        );
+      }
       if (dto?.enrollmentChannel && dto.enrollmentChannel !== existing.enrollmentChannel) {
         const existingSignup = await this.prisma.loyaltyTransaction.findFirst({
           where: { membershipId: existing.id, source: 'SIGNUP', type: LoyaltyTxType.BONUS },
@@ -589,7 +594,7 @@ export class LoyaltyService implements OnModuleInit {
       include: { tier: true },
     });
     // Repair missing joining / profile / founding-member bonuses for members enrolled before reliability fixes
-    if (membership) {
+    if (membership && membership.status !== 'DEACTIVATED') {
       const awardedSignup = await this.ensureSignupBonus(membership.id, userId, {
         channel: membership.enrollmentChannel,
         regionCode: membership.regionCode,
@@ -1594,6 +1599,68 @@ export class LoyaltyService implements OnModuleInit {
       );
     }
     return this.getMembership(userId);
+  }
+
+  async adminDeactivateMember(
+    userId: string,
+    reason?: string,
+  ): Promise<{ userId: string; status: string; deactivatedAt: Date }> {
+    this.assertEnabled();
+    const membership = await this.prisma.loyaltyMembership.findUnique({
+      where: { userId },
+      include: { user: { select: { email: true } } },
+    });
+    if (!membership) throw new NotFoundException('Member not found');
+    if (membership.status === 'DEACTIVATED') {
+      throw new BadRequestException('Member is already deactivated');
+    }
+
+    const updated = await this.prisma.loyaltyMembership.update({
+      where: { id: membership.id },
+      data: {
+        status: 'DEACTIVATED',
+        deactivatedAt: new Date(),
+        deactivationReason: reason?.trim() || null,
+      },
+      select: { userId: true, status: true, deactivatedAt: true },
+    });
+
+    this.logger.warn(
+      `Admin deactivated loyalty membership for ${membership.user?.email || userId}` +
+        (reason?.trim() ? `: ${reason.trim()}` : ''),
+    );
+    return {
+      userId: updated.userId,
+      status: updated.status,
+      deactivatedAt: updated.deactivatedAt!,
+    };
+  }
+
+  async adminReactivateMember(userId: string): Promise<{ userId: string; status: string }> {
+    this.assertEnabled();
+    const membership = await this.prisma.loyaltyMembership.findUnique({
+      where: { userId },
+      include: { user: { select: { email: true } } },
+    });
+    if (!membership) throw new NotFoundException('Member not found');
+    if (membership.status !== 'DEACTIVATED') {
+      throw new BadRequestException('Member is not deactivated');
+    }
+
+    const updated = await this.prisma.loyaltyMembership.update({
+      where: { id: membership.id },
+      data: {
+        status: 'ACTIVE',
+        deactivatedAt: null,
+        deactivationReason: null,
+      },
+      select: { userId: true, status: true },
+    });
+
+    this.logger.warn(
+      `Admin reactivated loyalty membership for ${membership.user?.email || userId}`,
+    );
+    return updated;
   }
 
   /**

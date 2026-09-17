@@ -212,6 +212,11 @@ export class AuthService {
     if (this.foundingMembersService) {
       const fm = await this.foundingMembersService.findByEmail(email);
       if (fm) {
+        if (fm.status === 'DEACTIVATED') {
+          throw new ForbiddenException(
+            'This founding member registration has been deactivated. Contact support if you believe this is an error.',
+          );
+        }
         if (fm.status === 'LINKED') {
           throw new ConflictException(
             'This founding member email has already been used to create an account. Please log in instead.',

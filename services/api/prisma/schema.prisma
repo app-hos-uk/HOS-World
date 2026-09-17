@@ -3750,6 +3750,11 @@ model LoyaltyMembership {
   partnerReferralLinkId String?
   partnerReferralLink   ReferralPartnerLink? @relation(fields: [partnerReferralLinkId], references: [id], onDelete: SetNull)
 
+  /// ACTIVE | DEACTIVATED — deactivated members keep history but cannot earn/redeem.
+  status              String    @default("ACTIVE")
+  deactivatedAt       DateTime?
+  deactivationReason  String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -3757,6 +3762,7 @@ model LoyaltyMembership {
   @@index([cardNumber])
   @@index([totalPointsEarned])
   @@index([compositeScore])
+  @@index([status])
   @@map("loyalty_memberships")
 }
 

@@ -2,13 +2,16 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Body,
   Query,
+  Param,
   Request,
   HttpCode,
   HttpStatus,
   UseGuards,
   ForbiddenException,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -20,6 +23,7 @@ import { FoundingMembersService } from './founding-members.service';
 import { CreateFoundingMemberDto } from './dto/create-founding-member.dto';
 import { ImportFoundingMembersDto } from './dto/import-founding-members.dto';
 import { AdminCreateFoundingMemberDto } from './dto/admin-create-founding-member.dto';
+import { DeactivateFoundingMemberDto } from './dto/member-status.dto';
 import { FOUNDING_MEMBER_ADMIN_ROLES } from './founding-members.roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
@@ -148,7 +152,7 @@ export class FoundingMembersController {
     });
     return {
       data: result,
-      message: `Sent ${result.sent} emails, ${result.failed} failed, ${result.skipped} skipped`,
+      message: `Sent ${result.sent} emails, ${result.failed} failed, ${result.skipped} already sent, ${result.skippedDeactivated} deactivated`,
     };
   }
 
@@ -170,7 +174,7 @@ export class FoundingMembersController {
     });
     return {
       data: result,
-      message: `Sent ${result.sent} invitations, ${result.failed} failed, ${result.skipped} skipped`,
+      message: `Sent ${result.sent} invitations, ${result.failed} failed, ${result.skipped} already invited, ${result.skippedDeactivated} deactivated`,
     };
   }
 
@@ -183,13 +187,44 @@ export class FoundingMembersController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
+    @Query('includeDeactivated') includeDeactivatedRaw?: string,
   ) {
+    const includeDeactivated =
+      includeDeactivatedRaw === '1' ||
+      includeDeactivatedRaw === 'true' ||
+      includeDeactivatedRaw === 'yes';
     return {
       data: await this.foundingMembersService.findAll(
         parseInt(page || '1', 10),
         parseInt(limit || '50', 10),
         search?.trim() || undefined,
+        includeDeactivated,
       ),
     };
+  }
+
+  @RequireAccess({ permission: 'users.edit', scope: 'MARKET' })
+  @Patch(':id/deactivate')
+  @Roles(...FOUNDING_MEMBER_ADMIN_ROLES)
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Deactivate a founding member (keeps record, blocks registration)' })
+  async deactivate(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: DeactivateFoundingMemberDto,
+  ) {
+    const data = await this.foundingMembersService.deactivateMember(id, dto.reason);
+    return { data, message: 'Founding member deactivated' };
+  }
+
+  @RequireAccess({ permission: 'users.edit', scope: 'MARKET' })
+  @Patch(':id/reactivate')
+  @Roles(...FOUNDING_MEMBER_ADMIN_ROLES)
+  @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Reactivate a deactivated founding member' })
+  async reactivate(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.foundingMembersService.reactivateMember(id);
+    return { data, message: 'Founding member reactivated' };
   }
 }

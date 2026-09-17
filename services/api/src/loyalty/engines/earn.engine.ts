@@ -62,7 +62,10 @@ export class LoyaltyEarnEngine {
       where: { userId },
       include: { tier: true },
     });
-    if (existing) return existing;
+    if (existing) {
+      if (existing.status === 'DEACTIVATED') return null;
+      return existing;
+    }
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.role !== UserRole.CUSTOMER) return null;

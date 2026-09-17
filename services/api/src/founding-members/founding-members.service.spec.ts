@@ -12,13 +12,17 @@ describe('FoundingMembersService import deduplication', () => {
       findUnique: jest.Mock;
       create: jest.Mock;
       count: jest.Mock;
+      update: jest.Mock;
     };
     user: {
       findMany: jest.Mock;
       findFirst: jest.Mock;
     };
   };
-  let notifications: { sendFoundingMemberConfirmation: jest.Mock };
+  let notifications: {
+    sendFoundingMemberConfirmation: jest.Mock;
+    sendFoundingMemberAccountInvitation: jest.Mock;
+  };
 
   beforeEach(() => {
     prisma = {
@@ -27,6 +31,7 @@ describe('FoundingMembersService import deduplication', () => {
         findUnique: jest.fn(),
         create: jest.fn(),
         count: jest.fn(),
+        update: jest.fn(),
       },
       user: {
         findMany: jest.fn(),
@@ -35,12 +40,13 @@ describe('FoundingMembersService import deduplication', () => {
     };
     notifications = {
       sendFoundingMemberConfirmation: jest.fn().mockResolvedValue(false),
+      sendFoundingMemberAccountInvitation: jest.fn().mockResolvedValue(undefined),
     };
 
     service = new FoundingMembersService(
       prisma as unknown as PrismaService,
       notifications as unknown as NotificationsService,
-      { get: jest.fn() } as unknown as ConfigService,
+      { get: jest.fn((key: string) => (key === 'FRONTEND_URL' ? 'https://shop.houseofspells.com' : undefined)) } as unknown as ConfigService,
     );
   });
 
@@ -116,6 +122,78 @@ describe('FoundingMembersService import deduplication', () => {
           fandoms: [],
         }),
       ).rejects.toBeInstanceOf(ConflictException);
+    });
+  });
+
+  describe('sendConfirmationToAll', () => {
+    it('excludes deactivated at query time and counts skipped reasons separately', async () => {
+      prisma.foundingMember.count.mockResolvedValueOnce(2); // deactivated
+      prisma.foundingMember.findMany.mockResolvedValue([
+        {
+          id: 'a1',
+          email: 'new@example.com',
+          firstName: 'New',
+          metadata: null,
+          status: 'REGISTERED',
+        },
+        {
+          id: 'a2',
+          email: 'sent@example.com',
+          firstName: 'Sent',
+          metadata: { confirmationEmailSentAt: '2026-01-01T00:00:00.000Z' },
+          status: 'REGISTERED',
+        },
+      ]);
+      notifications.sendFoundingMemberConfirmation.mockResolvedValue(true);
+      prisma.foundingMember.update.mockResolvedValue({});
+
+      const result = await service.sendConfirmationToAll({ onlyUnsent: true });
+
+      expect(prisma.foundingMember.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { status: { not: 'DEACTIVATED' } },
+        }),
+      );
+      expect(result.skippedDeactivated).toBe(2);
+      expect(result.skipped).toBe(1);
+      expect(result.sent).toBe(1);
+      expect(notifications.sendFoundingMemberConfirmation).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('sendAccountInvitations', () => {
+    it('counts deactivated selected members in skippedDeactivated', async () => {
+      prisma.foundingMember.count
+        .mockResolvedValueOnce(1) // deactivated among selected
+        .mockResolvedValueOnce(0); // already invited
+      prisma.foundingMember.findMany.mockResolvedValue([
+        {
+          id: 'active-1',
+          email: 'active@example.com',
+          firstName: 'Active',
+          metadata: null,
+          status: 'REGISTERED',
+        },
+      ]);
+      prisma.foundingMember.update.mockResolvedValue({});
+
+      const result = await service.sendAccountInvitations({
+        onlyUnsent: true,
+        memberIds: ['active-1', 'deactivated-1'],
+      });
+
+      expect(prisma.foundingMember.count).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'DEACTIVATED',
+            id: { in: ['active-1', 'deactivated-1'] },
+          }),
+        }),
+      );
+      expect(result.skippedDeactivated).toBe(1);
+      expect(result.skipped).toBe(0);
+      expect(result.sent).toBe(1);
     });
   });
 });

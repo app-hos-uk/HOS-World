@@ -43,12 +43,16 @@ type SendEmailResult = {
   sent: number;
   failed: number;
   skippedConsent: number;
+  skippedDeactivated?: number;
   errors: string[];
 };
 
 type LoyaltyMember = {
   id?: string;
   userId: string;
+  status?: string | null;
+  deactivatedAt?: string | null;
+  deactivationReason?: string | null;
   cardNumber?: string | null;
   currentBalance?: number | null;
   pointsBalance?: number | null;
@@ -89,6 +93,8 @@ export default function AdminLoyaltyMembersPage() {
   const [dryRun, setDryRun] = useState(true);
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<SendEmailResult | null>(null);
+  const [includeDeactivated, setIncludeDeactivated] = useState(false);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const toast = useToast();
   const loadSeq = useRef(0);
 
@@ -103,6 +109,7 @@ export default function AdminLoyaltyMembersPage() {
           q: q || undefined,
           page: requestedPage,
           limit: PAGE_SIZE,
+          includeDeactivated,
         });
         if (seq !== loadSeq.current) return;
 
@@ -119,6 +126,7 @@ export default function AdminLoyaltyMembersPage() {
             q: q || undefined,
             page: nextTotalPages,
             limit: PAGE_SIZE,
+            includeDeactivated,
           });
           if (seq !== loadSeq.current) return;
           const clampedRows = Array.isArray(clamped?.data)
@@ -147,13 +155,13 @@ export default function AdminLoyaltyMembersPage() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeQuery, currentPage],
+    [activeQuery, currentPage, includeDeactivated],
   );
 
   useEffect(() => {
     void load({ page: currentPage, q: activeQuery });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reload on page/query only
-  }, [currentPage, activeQuery]);
+  }, [currentPage, activeQuery, includeDeactivated]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,6 +278,39 @@ export default function AdminLoyaltyMembersPage() {
       toast.error(err.message || 'Failed to adjust points');
     } finally {
       setAdjusting(false);
+    }
+  };
+
+  const handleToggleMemberStatus = async (member: LoyaltyMember) => {
+    const userId = member.userId;
+    const isDeactivated = member.status === 'DEACTIVATED';
+    const label = member.user?.email || userId;
+    let reason: string | undefined;
+    if (!isDeactivated) {
+      const reasonInput = window.prompt(`Reason for deactivating ${label} (optional):`);
+      if (reasonInput === null) return; // Cancelled
+      reason = reasonInput.trim() || undefined;
+    }
+
+    setStatusUpdatingId(userId);
+    try {
+      if (isDeactivated) {
+        await apiClient.adminReactivateLoyaltyMember(userId);
+        toast.success('Member reactivated');
+      } else {
+        await apiClient.adminDeactivateLoyaltyMember(userId, reason);
+        toast.success('Member deactivated');
+      }
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
+      await load({ q: activeQuery, page: currentPage });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update member status');
+    } finally {
+      setStatusUpdatingId(null);
     }
   };
 
@@ -458,13 +499,24 @@ export default function AdminLoyaltyMembersPage() {
         )}
       </div>
 
-      <form onSubmit={handleSearch} className="flex gap-2 mb-6">
+      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2 mb-6">
         <input
           className="flex-1 border rounded-lg px-4 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border"
           placeholder="Search by email, name, or card number..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        <label className="flex items-center gap-2 text-sm text-hos-text-secondary px-2 whitespace-nowrap">
+          <input
+            type="checkbox"
+            checked={includeDeactivated}
+            onChange={(e) => {
+              setIncludeDeactivated(e.target.checked);
+              setCurrentPage(1);
+            }}
+          />
+          Show deactivated
+        </label>
         <button
           type="submit"
           className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover text-sm font-medium"
@@ -541,6 +593,7 @@ export default function AdminLoyaltyMembersPage() {
                   </th>
                   <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Member</th>
                   <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Card #</th>
+                  <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Status</th>
                   <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Tier</th>
                   <th className="text-right px-4 py-3 font-medium text-hos-text-secondary">Points</th>
                   <th className="text-right px-4 py-3 font-medium text-hos-text-secondary">Lifetime</th>
@@ -569,6 +622,17 @@ export default function AdminLoyaltyMembersPage() {
                     </td>
                     <td className="px-4 py-3 text-hos-text-secondary font-mono text-xs">
                       {m.cardNumber || '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                          m.status === 'DEACTIVATED'
+                            ? 'bg-red-500/15 text-red-300'
+                            : 'bg-green-500/15 text-green-300'
+                        }`}
+                      >
+                        {m.status === 'DEACTIVATED' ? 'deactivated' : 'active'}
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-hos-gold/20 text-hos-gold-hover">
@@ -601,6 +665,18 @@ export default function AdminLoyaltyMembersPage() {
                           className="text-hos-gold hover:text-hos-gold-hover font-medium"
                         >
                           Adjust
+                        </button>
+                        <button
+                          type="button"
+                          disabled={statusUpdatingId === m.userId}
+                          onClick={() => void handleToggleMemberStatus(m)}
+                          className="text-amber-400 hover:text-amber-300 font-medium disabled:opacity-50"
+                        >
+                          {statusUpdatingId === m.userId
+                            ? '…'
+                            : m.status === 'DEACTIVATED'
+                              ? 'Reactivate'
+                              : 'Deactivate'}
                         </button>
                         <button
                           type="button"

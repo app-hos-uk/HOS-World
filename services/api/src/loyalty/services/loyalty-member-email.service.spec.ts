@@ -41,18 +41,24 @@ describe('LoyaltyMemberEmailService', () => {
       config as unknown as ConfigService,
     );
     templates.getTemplate.mockResolvedValue({ slug: 'loyalty_announcement', channel: 'EMAIL' });
+    prisma.loyaltyMembership.count.mockResolvedValue(0);
+  });
+
+  const activeMember = (overrides: Record<string, unknown>) => ({
+    status: 'ACTIVE',
+    ...overrides,
   });
 
   describe('resolveRecipients', () => {
     it('resolves members by user id', async () => {
       prisma.loyaltyMembership.findMany.mockResolvedValue([
-        {
+        activeMember({
           userId: 'u1',
           cardNumber: 'HOS-001',
           currentBalance: 500,
           user: { email: 'a@example.com', firstName: 'Ada' },
           tier: { name: 'Spellcaster' },
-        },
+        }),
       ]);
 
       const recipients = await service.resolveRecipients({
@@ -111,6 +117,7 @@ describe('LoyaltyMemberEmailService', () => {
                 ]),
               }),
               { user: { emailVerified: false } },
+              { status: 'ACTIVE' },
             ]),
           }),
         }),
@@ -121,20 +128,20 @@ describe('LoyaltyMemberEmailService', () => {
   describe('sendMemberEmails', () => {
     it('counts skipped consent on dry run', async () => {
       prisma.loyaltyMembership.findMany.mockResolvedValue([
-        {
+        activeMember({
           userId: 'u1',
           cardNumber: null,
           currentBalance: 100,
           user: { email: 'ok@example.com', firstName: 'Ok' },
           tier: { name: 'Spellcaster' },
-        },
-        {
+        }),
+        activeMember({
           userId: 'u2',
           cardNumber: null,
           currentBalance: 50,
           user: { email: 'no@example.com', firstName: 'No' },
           tier: { name: 'Spellcaster' },
-        },
+        }),
       ]);
       messaging.canSendMarketing.mockImplementation(async (userId: string) => userId === 'u1');
 
@@ -149,6 +156,7 @@ describe('LoyaltyMemberEmailService', () => {
         sent: 1,
         failed: 0,
         skippedConsent: 1,
+        skippedDeactivated: 0,
         errors: [],
       });
       expect(messaging.send).not.toHaveBeenCalled();
@@ -156,27 +164,27 @@ describe('LoyaltyMemberEmailService', () => {
 
     it('counts sent, failed, and skipped consent on live send', async () => {
       prisma.loyaltyMembership.findMany.mockResolvedValue([
-        {
+        activeMember({
           userId: 'u1',
           cardNumber: 'HOS-1',
           currentBalance: 100,
           user: { email: 'sent@example.com', firstName: 'Sent' },
           tier: { name: 'Spellcaster' },
-        },
-        {
+        }),
+        activeMember({
           userId: 'u2',
           cardNumber: 'HOS-2',
           currentBalance: 50,
           user: { email: 'skip@example.com', firstName: 'Skip' },
           tier: { name: 'Spellcaster' },
-        },
-        {
+        }),
+        activeMember({
           userId: 'u3',
           cardNumber: 'HOS-3',
           currentBalance: 25,
           user: { email: 'fail@example.com', firstName: 'Fail' },
           tier: { name: 'Spellcaster' },
-        },
+        }),
       ]);
       messaging.send.mockImplementation(async ({ userId }: { userId: string }) => {
         if (userId === 'u1') return { success: true };
@@ -194,6 +202,38 @@ describe('LoyaltyMemberEmailService', () => {
       expect(result.skippedConsent).toBe(1);
       expect(result.failed).toBe(1);
       expect(result.errors[0]).toContain('fail@example.com');
+    });
+
+    it('counts deactivated members for sendToAll', async () => {
+      prisma.loyaltyMembership.count
+        .mockResolvedValueOnce(1) // active recipients under cap
+        .mockResolvedValueOnce(3); // deactivated matching filter
+      prisma.loyaltyMembership.findMany.mockResolvedValue([
+        activeMember({
+          userId: 'u1',
+          cardNumber: null,
+          currentBalance: 10,
+          user: { email: 'a@example.com', firstName: 'A' },
+          tier: { name: 'Spellcaster' },
+        }),
+      ]);
+      messaging.canSendMarketing.mockResolvedValue(true);
+
+      const result = await service.sendMemberEmails({
+        templateSlug: 'loyalty_announcement',
+        sendToAll: true,
+        dryRun: true,
+      });
+
+      expect(prisma.loyaltyMembership.count).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          where: { status: 'DEACTIVATED' },
+        }),
+      );
+      expect(result.skippedDeactivated).toBe(3);
+      expect(result.targeted).toBe(1);
+      expect(result.sent).toBe(1);
     });
   });
 });
