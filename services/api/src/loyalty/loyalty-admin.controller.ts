@@ -41,6 +41,8 @@ import {
   LoyaltySettingsService,
 } from './services/loyalty-settings.service';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
+import { AdminLoyaltySendMemberEmailDto } from './dto/send-member-email.dto';
+import { LoyaltyMemberEmailService } from './services/loyalty-member-email.service';
 
 @ApiTags('admin-loyalty')
 @ApiBearerAuth('JWT-auth')
@@ -56,6 +58,7 @@ export class LoyaltyAdminController {
     private posVouchers: PosVoucherService,
     private tierEngine: LoyaltyTierEngine,
     private queue: QueueService,
+    private memberEmail: LoyaltyMemberEmailService,
   ) {}
 
   @Get('dashboard')
@@ -305,6 +308,27 @@ export class LoyaltyAdminController {
         total,
         totalPages: Math.max(1, Math.ceil(total / limit)),
       },
+    };
+  }
+
+  @Post('members/send-email')
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
+  @ApiOperation({ summary: 'Send a template email to loyalty members (consent-aware)' })
+  async sendMemberEmail(
+    @Body() dto: AdminLoyaltySendMemberEmailDto,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.memberEmail.sendMemberEmails({
+      templateSlug: dto.templateSlug,
+      subject: dto.subject,
+      memberIds: dto.memberIds,
+      sendToAll: dto.sendToAll,
+      search: dto.search,
+      onlyUnverified: dto.onlyUnverified,
+      dryRun: dto.dryRun,
+    });
+    return {
+      data,
+      message: dto.dryRun ? 'Dry run complete' : 'Send complete',
     };
   }
 

@@ -1913,6 +1913,29 @@ export class ApiClient {
     });
   }
 
+  async adminLoyaltySendMemberEmail(body: {
+    templateSlug: string;
+    subject?: string;
+    memberIds?: string[];
+    sendToAll?: boolean;
+    search?: string;
+    onlyUnverified?: boolean;
+    dryRun?: boolean;
+  }): Promise<
+    ApiResponse<{
+      targeted: number;
+      sent: number;
+      failed: number;
+      skippedConsent: number;
+      errors: string[];
+    }>
+  > {
+    return this.request(`/admin/loyalty/members/send-email`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
   async adminAdjustLoyaltyPoints(userId: string, pointsDelta: number, reason: string): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>('/admin/loyalty/adjust', {
       method: 'POST',

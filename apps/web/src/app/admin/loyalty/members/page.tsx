@@ -11,6 +11,41 @@ import { useDateTime } from '@/hooks/useDateTime';
 const PAGE_SIZE = 25;
 const EXPORT_PAGE_SIZE = 5000;
 
+const LOYALTY_JOURNEY_EMAIL_SLUGS = [
+  'welcome_loyalty',
+  'welcome_explore',
+  'welcome_first_purchase',
+  'post_purchase_thankyou',
+  'post_purchase_review',
+  'tier_upgrade_congrats',
+  'tier_upgrade_benefits',
+  'birthday_greeting',
+  'birthday_reminder',
+  'abandoned_cart_reminder',
+  'abandoned_cart_incentive',
+  'abandoned_cart_final',
+  'winback_miss_you',
+  'winback_incentive',
+  'winback_final',
+  'points_expiry_30d',
+  'points_expiry_14d',
+  'points_expiry_final',
+] as const;
+
+type EmailTemplateOption = {
+  slug: string;
+  subject?: string;
+  description?: string;
+};
+
+type SendEmailResult = {
+  targeted: number;
+  sent: number;
+  failed: number;
+  skippedConsent: number;
+  errors: string[];
+};
+
 type LoyaltyMember = {
   id?: string;
   userId: string;
@@ -44,6 +79,16 @@ export default function AdminLoyaltyMembersPage() {
   const [memberToDelete, setMemberToDelete] = useState<LoyaltyMember | null>(null);
   const [alsoDeleteUser, setAlsoDeleteUser] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sendModal, setSendModal] = useState<'selected' | 'all' | null>(null);
+  const [emailTemplates, setEmailTemplates] = useState<EmailTemplateOption[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [templateSlug, setTemplateSlug] = useState('');
+  const [subjectOverride, setSubjectOverride] = useState('');
+  const [onlyUnverified, setOnlyUnverified] = useState(false);
+  const [dryRun, setDryRun] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState<SendEmailResult | null>(null);
   const toast = useToast();
   const loadSeq = useRef(0);
 
@@ -258,13 +303,121 @@ export default function AdminLoyaltyMembersPage() {
   const showingFrom = total === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
   const showingTo = Math.min(safePage * PAGE_SIZE, total);
 
+  const loadEmailTemplates = useCallback(async () => {
+    setTemplatesLoading(true);
+    try {
+      const res = await apiClient.getTemplates('EMAIL');
+      const rows = Array.isArray(res?.data) ? (res.data as EmailTemplateOption[]) : [];
+      const loyalty = rows.filter(
+        (t) =>
+          t.slug.startsWith('loyalty_') ||
+          (LOYALTY_JOURNEY_EMAIL_SLUGS as readonly string[]).includes(t.slug),
+      );
+      setEmailTemplates(loyalty);
+      if (loyalty.length > 0) {
+        setTemplateSlug((prev) => prev || loyalty[0].slug);
+      }
+    } catch {
+      setEmailTemplates([]);
+    } finally {
+      setTemplatesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (sendModal) {
+      void loadEmailTemplates();
+    }
+  }, [sendModal, loadEmailTemplates]);
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === members.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(members.map((m) => m.userId)));
+    }
+  };
+
+  const toggleSelect = (userId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+  };
+
+  const openSendModal = (mode: 'selected' | 'all') => {
+    setSendResult(null);
+    setSubjectOverride('');
+    setDryRun(true);
+    setOnlyUnverified(false);
+    setSendModal(mode);
+  };
+
+  const closeSendModal = () => {
+    if (sending) return;
+    setSendModal(null);
+  };
+
+  const handleSendEmail = async () => {
+    if (!templateSlug) {
+      toast.error('Choose an email template');
+      return;
+    }
+    if (sendModal === 'selected' && selectedIds.size === 0) {
+      toast.error('Select at least one member');
+      return;
+    }
+
+    setSending(true);
+    setSendResult(null);
+    try {
+      const res = await apiClient.adminLoyaltySendMemberEmail({
+        templateSlug,
+        subject: subjectOverride.trim() || undefined,
+        memberIds: sendModal === 'selected' ? Array.from(selectedIds) : undefined,
+        sendToAll: sendModal === 'all',
+        search: sendModal === 'all' ? activeQuery || undefined : undefined,
+        onlyUnverified: sendModal === 'all' ? onlyUnverified : undefined,
+        dryRun,
+      });
+      const data = res.data as SendEmailResult;
+      setSendResult(data);
+      if (dryRun) {
+        toast.success(
+          `Dry run: ${data.sent} would send, ${data.skippedConsent} skipped (consent), ${data.failed} failed`,
+        );
+      } else {
+        toast.success(
+          `Sent ${data.sent} — ${data.skippedConsent} skipped (consent), ${data.failed} failed`,
+        );
+        setSelectedIds(new Set());
+        setSendModal(null);
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send email');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const sendTargetLabel =
+    sendModal === 'selected'
+      ? `${selectedIds.size} selected member${selectedIds.size === 1 ? '' : 's'}`
+      : `all ${total.toLocaleString()} member${total === 1 ? '' : 's'} matching the current filter`;
+
   return (
     <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
       <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-hos-text-secondary">Loyalty Members</h1>
           <p className="text-hos-text-secondary mt-1">
-            Enchanted Circle members — points, tiers, and adjustments.{' '}
+            Enchanted Circle members — points, tiers, and adjustments. Customize email copy in{' '}
+            <Link href="/admin/templates" className="text-hos-gold hover:text-hos-gold-hover underline">
+              Notification Templates
+            </Link>
+            .{' '}
             <Link href="/admin/founding-members" className="text-hos-gold hover:text-hos-gold-hover underline">
               Looking for Founding Members?
             </Link>
@@ -277,6 +430,32 @@ export default function AdminLoyaltyMembersPage() {
           resolveData={fetchAllForExport}
           showJson={false}
         />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <button
+          type="button"
+          onClick={() => openSendModal('all')}
+          disabled={total === 0}
+          className="px-4 py-2 border border-hos-gold text-hos-gold rounded-lg text-sm font-medium hover:bg-hos-gold/10 disabled:opacity-50"
+        >
+          Send email to all matching filter
+        </button>
+        {selectedIds.size > 0 && (
+          <button
+            type="button"
+            onClick={() => openSendModal('selected')}
+            className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm font-medium hover:bg-hos-gold-hover"
+          >
+            Send email to selected ({selectedIds.size})
+          </button>
+        )}
+        {sendResult && !sendModal && (
+          <span className="text-sm text-hos-text-muted">
+            Last send: {sendResult.sent} sent, {sendResult.skippedConsent} skipped (consent),{' '}
+            {sendResult.failed} failed (of {sendResult.targeted})
+          </span>
+        )}
       </div>
 
       <form onSubmit={handleSearch} className="flex gap-2 mb-6">
@@ -352,6 +531,14 @@ export default function AdminLoyaltyMembersPage() {
             <table className="w-full text-sm">
               <thead className="bg-hos-bg-secondary border-b">
                 <tr>
+                  <th className="text-left px-4 py-3 font-medium text-hos-text-secondary w-10">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all on this page"
+                      checked={members.length > 0 && selectedIds.size === members.length}
+                      onChange={toggleSelectAll}
+                    />
+                  </th>
                   <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Member</th>
                   <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Card #</th>
                   <th className="text-left px-4 py-3 font-medium text-hos-text-secondary">Tier</th>
@@ -364,6 +551,14 @@ export default function AdminLoyaltyMembersPage() {
               <tbody className="divide-y">
                 {members.map((m) => (
                   <tr key={m.id || m.userId} className="hover:bg-hos-bg-tertiary">
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${m.user?.email || m.userId}`}
+                        checked={selectedIds.has(m.userId)}
+                        onChange={() => toggleSelect(m.userId)}
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div>
                         <p className="font-medium text-hos-text-secondary">
@@ -501,6 +696,126 @@ export default function AdminLoyaltyMembersPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {sendModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="send-loyalty-email-title"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' && !sending) closeSendModal();
+          }}
+        >
+          <div className="bg-hos-bg-secondary border border-hos-border rounded-lg max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+            <h2 id="send-loyalty-email-title" className="text-xl font-bold text-hos-text-secondary mb-2">
+              Send loyalty email
+            </h2>
+            <p className="text-sm text-hos-text-muted mb-4">
+              Target: <strong className="text-hos-text-secondary">{sendTargetLabel}</strong>. Sends respect
+              marketing consent and loyalty email opt-in.
+            </p>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Template</label>
+                {templatesLoading ? (
+                  <p className="text-sm text-hos-text-muted">Loading templates…</p>
+                ) : emailTemplates.length === 0 ? (
+                  <p className="text-sm text-red-400">No loyalty email templates found.</p>
+                ) : (
+                  <select
+                    className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary border-hos-border"
+                    value={templateSlug}
+                    onChange={(e) => setTemplateSlug(e.target.value)}
+                    disabled={sending}
+                  >
+                    {emailTemplates.map((t) => (
+                      <option key={t.slug} value={t.slug}>
+                        {t.slug}
+                        {t.description ? ` — ${t.description}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">
+                  Subject override (optional)
+                </label>
+                <input
+                  className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary border-hos-border"
+                  placeholder="Leave blank to use template default"
+                  value={subjectOverride}
+                  onChange={(e) => setSubjectOverride(e.target.value)}
+                  disabled={sending}
+                />
+              </div>
+
+              {sendModal === 'all' && (
+                <label className="flex items-start gap-2 text-sm text-hos-text-secondary cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={onlyUnverified}
+                    onChange={(e) => setOnlyUnverified(e.target.checked)}
+                    disabled={sending}
+                  />
+                  <span>Only unverified email addresses</span>
+                </label>
+              )}
+
+              <label className="flex items-start gap-2 text-sm text-hos-text-secondary cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={dryRun}
+                  onChange={(e) => setDryRun(e.target.checked)}
+                  disabled={sending}
+                />
+                <span>Dry run first (preview counts without sending)</span>
+              </label>
+            </div>
+
+            {sendResult && sendModal && (
+              <div className="mb-4 rounded-lg border border-hos-border bg-hos-bg-tertiary p-3 text-sm text-hos-text-secondary space-y-1">
+                <p>
+                  Targeted {sendResult.targeted}: {sendResult.sent}{' '}
+                  {dryRun ? 'would send' : 'sent'}, {sendResult.skippedConsent} skipped (consent),{' '}
+                  {sendResult.failed} failed
+                </p>
+                {sendResult.errors.length > 0 && (
+                  <ul className="list-disc pl-5 text-red-400">
+                    {sendResult.errors.slice(0, 5).map((err) => (
+                      <li key={err}>{err}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleSendEmail}
+                disabled={sending || !templateSlug || emailTemplates.length === 0}
+                className="flex-1 px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover disabled:opacity-50 text-sm font-medium"
+              >
+                {sending ? 'Processing…' : dryRun ? 'Run dry run' : 'Send now'}
+              </button>
+              <button
+                type="button"
+                onClick={closeSendModal}
+                disabled={sending}
+                className="px-4 py-2 border border-hos-border rounded-lg hover:bg-hos-bg-tertiary text-sm font-medium disabled:opacity-50"
+              >
+                {sendResult && dryRun ? 'Close' : 'Cancel'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

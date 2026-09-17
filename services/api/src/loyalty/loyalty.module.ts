@@ -35,6 +35,8 @@ import { PosModule } from '../pos/pos.module';
 import { ActivityModule } from '../activity/activity.module';
 import { PartnerReferralsModule } from '../partner-referrals/partner-referrals.module';
 import { ReturnPoliciesModule } from '../return-policies/return-policies.module';
+import { MessagingModule } from '../messaging/messaging.module';
+import { LoyaltyMemberEmailService } from './services/loyalty-member-email.service';
 
 @Module({
   imports: [
@@ -45,6 +47,7 @@ import { ReturnPoliciesModule } from '../return-policies/return-policies.module'
     FeatureFlagsModule,
     ActivityModule,
     NotificationsModule,
+    MessagingModule,
     forwardRef(() => PosModule),
     forwardRef(() => JourneyModule),
     forwardRef(() => AmbassadorModule),
@@ -84,6 +87,7 @@ import { ReturnPoliciesModule } from '../return-policies/return-policies.module'
     LoyaltyListener,
     LoyaltyStaffAuthGuard,
     FandomProfileService,
+    LoyaltyMemberEmailService,
   ],
   exports: [
     LoyaltyService,

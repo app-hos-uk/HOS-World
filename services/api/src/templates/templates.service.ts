@@ -613,6 +613,40 @@ const BUILT_IN_TEMPLATES: TemplateDefinition[] = [
     body: `<p>Last call: {{expiringPoints}} points expire in 4 days.</p>`,
   },
 
+  // ─── Loyalty admin — manual member emails ─────────────────────────────
+  {
+    slug: 'loyalty_announcement',
+    channel: 'EMAIL',
+    subject: 'An Update from The Enchanted Circle',
+    description: 'General programme update for manual admin sends.',
+    variables: ['firstName', 'tierName', 'messageHtml', 'cardNumber'],
+    body: `<p>Hi {{firstName}},</p>{{messageHtml}}<p>Your tier: <strong>{{tierName}}</strong>. Card: {{cardNumber}}.</p>`,
+  },
+  {
+    slug: 'loyalty_welcome_manual',
+    channel: 'EMAIL',
+    subject: 'Welcome to The Enchanted Circle',
+    description: 'Manual welcome or re-welcome blast from the members admin.',
+    variables: ['firstName', 'tierName', 'pointsBalance', 'loginUrl'],
+    body: `<p>Hi {{firstName}}, welcome (back) to The Enchanted Circle!</p><p>You're {{tierName}} with <strong>{{pointsBalance}}</strong> points. <a href="{{loginUrl}}">View your wallet</a>.</p>`,
+  },
+  {
+    slug: 'loyalty_verify_reminder',
+    channel: 'EMAIL',
+    subject: 'Please Verify Your Email',
+    description: 'Reminder for unverified loyalty members to verify their email.',
+    variables: ['firstName', 'email', 'verifyHint'],
+    body: `<p>Hi {{firstName}}, please verify <strong>{{email}}</strong> to unlock your Enchanted Circle benefits.</p><p>{{verifyHint}}</p>`,
+  },
+  {
+    slug: 'loyalty_balance_update',
+    channel: 'EMAIL',
+    subject: 'Your Enchanted Circle Balance',
+    description: 'Points balance reminder for manual admin sends.',
+    variables: ['firstName', 'pointsBalance', 'tierName', 'cardNumber'],
+    body: `<p>Hi {{firstName}}, you have <strong>{{pointsBalance}}</strong> points as {{tierName}}.</p><p>Card number: {{cardNumber}}.</p>`,
+  },
+
   // ─── Phase 5 — Events & experiences ───────────────────────────────────
   {
     slug: 'event_rsvp_confirmation',
