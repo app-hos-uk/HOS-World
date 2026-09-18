@@ -17,8 +17,20 @@ RUN npm install --legacy-peer-deps
 COPY services/strapi/ ./
 
 # Build Strapi admin panel
+# Strapi's config/server.js validates APP_KEYS in production mode, so these
+# must be present during `strapi build`. Pass them as inline env vars to the
+# RUN command so they're available to the Node process but NOT persisted as
+# ENV in the final image (avoids baking secrets into Docker layers).
+ARG APP_KEYS
+ARG JWT_SECRET
+ARG ADMIN_JWT_SECRET
+ARG API_TOKEN_SALT
 ENV NODE_ENV=production
-RUN npm run build
+RUN APP_KEYS="$APP_KEYS" \
+    JWT_SECRET="$JWT_SECRET" \
+    ADMIN_JWT_SECRET="$ADMIN_JWT_SECRET" \
+    API_TOKEN_SALT="$API_TOKEN_SALT" \
+    npm run build
 
 # Create non-root user
 RUN addgroup -S strapi && adduser -S strapi -G strapi
