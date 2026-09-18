@@ -63,17 +63,25 @@ export class StorageService {
   private initializeS3Client() {
     const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
     const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
-    const region = this.configService.get<string>('AWS_REGION') || 'us-east-1';
+    const region = this.configService.get<string>('AWS_REGION') || 'auto';
+    const endpoint = this.configService.get<string>('AWS_S3_ENDPOINT');
 
     if (accessKeyId && secretAccessKey) {
-      this.s3Client = new S3Client({
+      const clientConfig: ConstructorParameters<typeof S3Client>[0] = {
         region,
         credentials: {
           accessKeyId,
           secretAccessKey,
         },
-      });
-      this.logger.log('S3 client initialized successfully');
+      };
+
+      if (endpoint) {
+        clientConfig.endpoint = endpoint;
+        clientConfig.forcePathStyle = true;
+      }
+
+      this.s3Client = new S3Client(clientConfig);
+      this.logger.log(`S3 client initialized successfully${endpoint ? ` (endpoint: ${endpoint})` : ''}`);
     } else {
       this.logger.warn('AWS credentials missing - S3 uploads will fail');
     }
@@ -197,23 +205,35 @@ export class StorageService {
     const contentType = file.mimetype || 'application/octet-stream';
 
     try {
-      // Use Upload for better handling of large files
+      const params: Record<string, any> = {
+        Bucket: bucket,
+        Key: key,
+        Body: file.buffer,
+        ContentType: contentType,
+      };
+
+      const endpoint = this.configService.get<string>('AWS_S3_ENDPOINT');
+      if (!endpoint) {
+        params.ACL = 'public-read';
+      }
+
       const upload = new Upload({
         client: this.s3Client,
-        params: {
-          Bucket: bucket,
-          Key: key,
-          Body: file.buffer,
-          ContentType: contentType,
-          ACL: 'public-read', // Make file publicly accessible
-        },
+        params,
       });
 
       const result = await upload.done();
 
-      // Construct public URL
-      const region = this.configService.get<string>('AWS_REGION') || 'us-east-1';
-      const url = result.Location || `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+      const publicUrl = this.configService.get<string>('AWS_S3_PUBLIC_URL');
+      let url: string;
+      if (publicUrl) {
+        url = `${publicUrl.replace(/\/$/, '')}/${key}`;
+      } else if (result.Location) {
+        url = result.Location;
+      } else {
+        const region = this.configService.get<string>('AWS_REGION') || 'us-east-1';
+        url = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+      }
 
       this.logger.log(`File uploaded to S3: ${key}`);
 
@@ -409,17 +429,17 @@ export class StorageService {
     }
 
     try {
-      // Extract key from URL
-      // URL format: https://bucket.s3.region.amazonaws.com/key or https://s3.region.amazonaws.com/bucket/key
       let key = url;
-      if (url.includes('.s3.') || url.includes('amazonaws.com')) {
+
+      const publicUrl = this.configService.get<string>('AWS_S3_PUBLIC_URL');
+      if (publicUrl && url.startsWith(publicUrl)) {
+        key = url.slice(publicUrl.replace(/\/$/, '').length + 1);
+      } else if (url.includes('.s3.') || url.includes('amazonaws.com') || url.includes('r2.cloudflarestorage.com') || url.includes('.r2.dev')) {
         const parts = url.split('/');
-        // Find the bucket name and get everything after it
         const bucketIndex = parts.findIndex((part) => part.includes(bucket));
         if (bucketIndex >= 0 && bucketIndex < parts.length - 1) {
           key = parts.slice(bucketIndex + 1).join('/');
         } else {
-          // Try alternative format
           const match = url.match(new RegExp(`${bucket}/(.+)$`));
           if (match) {
             key = match[1];
