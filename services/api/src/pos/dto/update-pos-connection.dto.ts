@@ -36,4 +36,8 @@ export class UpdatePosConnectionDto {
   @IsInt()
   @Min(5)
   syncIntervalMinutes?: number;
+
+  @IsOptional()
+  @IsObject()
+  settings?: Record<string, unknown>;
 }

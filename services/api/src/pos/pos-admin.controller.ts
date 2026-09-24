@@ -163,6 +163,15 @@ export class PosAdminController {
     if (dto.autoSyncInventory !== undefined) update.autoSyncInventory = dto.autoSyncInventory;
     if (dto.isActive !== undefined) update.isActive = dto.isActive;
     if (dto.syncIntervalMinutes !== undefined) update.syncIntervalMinutes = dto.syncIntervalMinutes;
+    if (dto.settings) {
+      const existing = await this.prisma.pOSConnection.findUnique({
+        where: { id },
+        select: { settings: true },
+      });
+      const current =
+        existing?.settings && typeof existing.settings === 'object' ? existing.settings : {};
+      update.settings = { ...(current as Record<string, unknown>), ...dto.settings };
+    }
 
     const data = await this.prisma.pOSConnection.update({
       where: { id },
