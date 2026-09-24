@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { sanitizeUploadFolder } from '../common/utils/sanitize-upload-folder';
 import * as fs from 'fs/promises';
 import { v2 as cloudinary } from 'cloudinary';
-import { S3Client, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, DeleteObjectCommand, GetObjectCommand, type PutObjectCommandInput } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Upload } from '@aws-sdk/lib-storage';
 
@@ -205,7 +205,7 @@ export class StorageService {
     const contentType = file.mimetype || 'application/octet-stream';
 
     try {
-      const params: Record<string, any> = {
+      const params: PutObjectCommandInput = {
         Bucket: bucket,
         Key: key,
         Body: file.buffer,

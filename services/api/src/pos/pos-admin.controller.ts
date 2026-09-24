@@ -168,8 +168,9 @@ export class PosAdminController {
         where: { id },
         select: { settings: true },
       });
+      const prev = existing?.settings;
       const current =
-        existing?.settings && typeof existing.settings === 'object' ? existing.settings : {};
+        prev && typeof prev === 'object' && !Array.isArray(prev) ? prev : {};
       update.settings = { ...(current as Record<string, unknown>), ...dto.settings };
     }
 
