@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { RouteGuard } from '@/components/RouteGuard';
@@ -12,6 +12,42 @@ import { useMoney } from '@/hooks/useMoney';
 import { useDateTime } from '@/hooks/useDateTime';
 
 const EXPORT_PAGE_SIZE = 200;
+
+type PosSaleItem = {
+  id?: string;
+  name?: string;
+  quantity: number;
+  unitPrice: number | string;
+  totalPrice: number | string;
+};
+
+type PosSale = {
+  id: string;
+  saleDate: string;
+  totalAmount: number | string;
+  currency?: string;
+  loyaltyPointsEarned?: number;
+  status: string;
+  store?: { name?: string; code?: string } | null;
+  items?: PosSaleItem[];
+};
+
+const SALE_STATUS_BADGE: Record<string, string> = {
+  IMPORTED: 'bg-blue-500/20 text-blue-300',
+  imported: 'bg-blue-500/20 text-blue-300',
+  matched: 'bg-emerald-500/20 text-emerald-300',
+  MATCHED: 'bg-emerald-500/20 text-emerald-300',
+  unmatched: 'bg-amber-500/20 text-amber-300',
+  UNMATCHED: 'bg-amber-500/20 text-amber-300',
+  VOIDED: 'bg-red-500/20 text-red-300',
+  error: 'bg-red-500/20 text-red-300',
+  ERROR: 'bg-red-500/20 text-red-300',
+};
+
+function num(value: number | string | null | undefined): number {
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
 
 export default function AdminLoyaltyMemberLedgerPage() {
   const { formatDate, formatDateTime } = useDateTime();
@@ -25,6 +61,12 @@ export default function AdminLoyaltyMemberLedgerPage() {
   const [type, setType] = useState('');
   const [adjustDelta, setAdjustDelta] = useState('0');
   const [adjustReason, setAdjustReason] = useState('');
+
+  const [sales, setSales] = useState<PosSale[]>([]);
+  const [salesTotal, setSalesTotal] = useState(0);
+  const [salesLoading, setSalesLoading] = useState(true);
+  const [salesError, setSalesError] = useState<string | null>(null);
+  const [expandedSaleId, setExpandedSaleId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!userId) return;
@@ -48,9 +90,46 @@ export default function AdminLoyaltyMemberLedgerPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, type]);
 
+  const loadPurchaseHistory = useCallback(async () => {
+    if (!userId) return;
+    try {
+      setSalesLoading(true);
+      setSalesError(null);
+      const res = await fetch(
+        `/api/proxy/admin/pos/sales?customerId=${encodeURIComponent(userId)}&limit=20`,
+        { headers: { 'X-Requested-With': 'XMLHttpRequest' } },
+      );
+      if (!res.ok) {
+        throw new Error(`Failed to load purchase history (${res.status})`);
+      }
+      const body = await res.json();
+      const payload = body?.data;
+      const items: PosSale[] = Array.isArray(payload?.items)
+        ? payload.items
+        : Array.isArray(payload)
+          ? payload
+          : [];
+      setSales(items);
+      setSalesTotal(
+        typeof payload?.total === 'number' ? payload.total : items.length,
+      );
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to load purchase history';
+      setSalesError(message);
+      setSales([]);
+      setSalesTotal(0);
+    } finally {
+      setSalesLoading(false);
+    }
+  }, [userId]);
+
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    void loadPurchaseHistory();
+  }, [loadPurchaseHistory]);
 
   const membershipId = instruments?.membership?.id as string | undefined;
 
@@ -73,6 +152,13 @@ export default function AdminLoyaltyMemberLedgerPage() {
   }, [membershipId, type]);
 
   const exportRows = useMemo(() => txs.map(flattenLedgerRow), [txs]);
+
+  const purchaseSummary = useMemo(() => {
+    const pageSpend = sales.reduce((sum, s) => sum + num(s.totalAmount), 0);
+    const totalTransactions = salesTotal || sales.length;
+    const avg = sales.length > 0 ? pageSpend / sales.length : 0;
+    return { pageSpend, totalTransactions, avg, isPartial: salesTotal > sales.length };
+  }, [sales, salesTotal]);
 
   const adjust = async () => {
     try {
@@ -205,6 +291,164 @@ export default function AdminLoyaltyMemberLedgerPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Purchase History */}
+          <div className="mt-8">
+            <h2 className="text-lg text-hos-gold font-display mb-3">Purchase History</h2>
+
+            {salesLoading ? (
+              <p className="text-hos-text-secondary text-sm font-ui">Loading purchase history…</p>
+            ) : salesError ? (
+              <div className="p-4 border border-hos-border rounded-lg bg-hos-bg-secondary">
+                <p className="text-red-300 text-sm font-ui">{salesError}</p>
+                <button
+                  type="button"
+                  onClick={() => void loadPurchaseHistory()}
+                  className="mt-2 text-sm text-hos-gold font-ui hover:underline"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : sales.length === 0 ? (
+              <div className="p-6 border border-hos-border rounded-lg bg-hos-bg-secondary text-center">
+                <p className="text-hos-text-secondary text-sm font-ui">
+                  No purchase history found
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                  <div className="p-3 border border-hos-border rounded bg-hos-bg-secondary">
+                    <p className="text-xs text-hos-text-secondary font-ui">
+                      {purchaseSummary.isPartial ? 'Spend (shown)' : 'Total Spend'}
+                    </p>
+                    <p className="text-lg text-hos-text-primary font-ui">
+                      {formatMoney(purchaseSummary.pageSpend)}
+                    </p>
+                  </div>
+                  <div className="p-3 border border-hos-border rounded bg-hos-bg-secondary">
+                    <p className="text-xs text-hos-text-secondary font-ui">Total Transactions</p>
+                    <p className="text-lg text-hos-text-primary font-ui">
+                      {purchaseSummary.totalTransactions}
+                    </p>
+                  </div>
+                  <div className="p-3 border border-hos-border rounded bg-hos-bg-secondary">
+                    <p className="text-xs text-hos-text-secondary font-ui">
+                      {purchaseSummary.isPartial ? 'Avg (shown)' : 'Avg Transaction Value'}
+                    </p>
+                    <p className="text-lg text-hos-text-primary font-ui">
+                      {formatMoney(purchaseSummary.avg)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto border border-hos-border rounded-lg">
+                  <table className="w-full text-sm">
+                    <thead className="bg-hos-bg-secondary text-hos-text-secondary font-ui">
+                      <tr>
+                        <th className="px-3 py-2 text-left w-8" />
+                        <th className="px-3 py-2 text-left">Date</th>
+                        <th className="px-3 py-2 text-left">Store</th>
+                        <th className="px-3 py-2 text-right">Amount</th>
+                        <th className="px-3 py-2 text-right">Items Count</th>
+                        <th className="px-3 py-2 text-right">Points Earned</th>
+                        <th className="px-3 py-2 text-left">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sales.map((sale) => {
+                        const expanded = expandedSaleId === sale.id;
+                        const itemCount = sale.items?.length ?? 0;
+                        return (
+                          <Fragment key={sale.id}>
+                            <tr
+                              className="border-t border-hos-border text-hos-text-primary cursor-pointer hover:bg-hos-bg-tertiary transition-colors"
+                              onClick={() =>
+                                setExpandedSaleId(expanded ? null : sale.id)
+                              }
+                            >
+                              <td className="px-3 py-2 text-hos-text-muted font-ui text-xs">
+                                {expanded ? '▾' : '▸'}
+                              </td>
+                              <td className="px-3 py-2 font-ui text-xs">
+                                {sale.saleDate ? formatDate(sale.saleDate) : '—'}
+                              </td>
+                              <td className="px-3 py-2 font-ui text-xs">
+                                {sale.store?.name || sale.store?.code || '—'}
+                              </td>
+                              <td className="px-3 py-2 font-ui text-right">
+                                {formatMoney(num(sale.totalAmount), sale.currency)}
+                              </td>
+                              <td className="px-3 py-2 font-ui text-right">{itemCount}</td>
+                              <td className="px-3 py-2 font-ui text-right">
+                                {sale.loyaltyPointsEarned && sale.loyaltyPointsEarned > 0
+                                  ? `+${sale.loyaltyPointsEarned}`
+                                  : '—'}
+                              </td>
+                              <td className="px-3 py-2">
+                                <span
+                                  className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                                    SALE_STATUS_BADGE[sale.status] ??
+                                    'bg-hos-bg-tertiary text-hos-text-muted'
+                                  }`}
+                                >
+                                  {sale.status}
+                                </span>
+                              </td>
+                            </tr>
+                            {expanded && (
+                              <tr>
+                                <td
+                                  colSpan={7}
+                                  className="px-6 py-3 bg-hos-bg-tertiary border-t border-hos-border"
+                                >
+                                  {sale.items && sale.items.length > 0 ? (
+                                    <table className="w-full text-sm">
+                                      <thead>
+                                        <tr className="text-hos-text-muted text-xs font-ui">
+                                          <th className="text-left py-1 pr-4">Name</th>
+                                          <th className="text-right py-1 pr-4">Qty</th>
+                                          <th className="text-right py-1 pr-4">Unit price</th>
+                                          <th className="text-right py-1">Total</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="text-hos-text-primary font-ui">
+                                        {sale.items.map((li, idx) => (
+                                          <tr
+                                            key={li.id ?? idx}
+                                            className="border-t border-hos-border/50"
+                                          >
+                                            <td className="py-1 pr-4">{li.name || '—'}</td>
+                                            <td className="py-1 pr-4 text-right">
+                                              {li.quantity}
+                                            </td>
+                                            <td className="py-1 pr-4 text-right">
+                                              {formatMoney(num(li.unitPrice), sale.currency)}
+                                            </td>
+                                            <td className="py-1 text-right">
+                                              {formatMoney(num(li.totalPrice), sale.currency)}
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  ) : (
+                                    <p className="text-hos-text-muted text-xs font-ui">
+                                      No line items available.
+                                    </p>
+                                  )}
+                                </td>
+                              </tr>
+                            )}
+                          </Fragment>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
           </div>
 
           {(instruments?.posVouchers || []).length > 0 && (

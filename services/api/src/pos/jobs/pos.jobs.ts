@@ -11,6 +11,7 @@ import { PosInventorySyncService } from '../sync/inventory-sync.service';
 import { PosSalesImportService } from '../sync/sales-import.service';
 import { PosCustomerSyncService } from '../sync/customer-sync.service';
 import { PosCustomerIdentityBackfillService } from '../sync/customer-identity-backfill.service';
+import { PosCustomerImportService } from '../sync/customer-import.service';
 import { PosGiftCardReconService } from '../sync/gift-card-recon.service';
 import type { POSSale as ParsedSale } from '../interfaces/pos-types';
 
@@ -26,6 +27,7 @@ export class PosJobsService implements OnModuleInit {
     private salesImport: PosSalesImportService,
     private customerSync: PosCustomerSyncService,
     private customerIdentityBackfill: PosCustomerIdentityBackfillService,
+    private customerImport: PosCustomerImportService,
     private giftCardRecon: PosGiftCardReconService,
     private config: ConfigService,
     private featureFlags: FeatureFlagsService,
@@ -95,6 +97,52 @@ export class PosJobsService implements OnModuleInit {
       },
     );
 
+    this.queue.registerProcessor(
+      JobType.POS_CUSTOMER_IMPORT,
+      async (job: Job<{ dryRun?: boolean; connectionId?: string }>) => {
+        // Default dry-run=true — live mutation requires an explicit dryRun:false payload.
+        const dryRun = job.data?.dryRun !== false;
+        const connectionId = job.data?.connectionId;
+        const summary = await this.customerImport.run({ dryRun, connectionId });
+        this.logger.log(`POS customer import: ${JSON.stringify(summary)}`);
+        return summary;
+      },
+    );
+
+    this.queue.registerProcessor(
+      JobType.POS_SALES_LINK_BACKFILL,
+      async (
+        job: Job<{
+          storeId?: string;
+          connectionId?: string;
+          dryRun?: boolean;
+          earnPoints?: boolean;
+        }>,
+      ) => {
+        // Default dryRun=true / earnPoints=false — live earn requires explicit earnPoints:true.
+        const dryRun = job.data?.dryRun !== false;
+        const earnPoints = job.data?.earnPoints === true;
+        let storeId = job.data?.storeId;
+        if (!storeId && job.data?.connectionId) {
+          const conn = await this.prisma.pOSConnection.findUnique({
+            where: { id: job.data.connectionId },
+            select: { storeId: true },
+          });
+          storeId = conn?.storeId;
+        }
+        if (!storeId) {
+          this.logger.warn('POS_SALES_LINK_BACKFILL missing storeId/connectionId');
+          return;
+        }
+        const summary = await this.salesImport.backfillSaleCustomerLinks(storeId, {
+          dryRun,
+          earnPoints,
+        });
+        this.logger.log(`POS sales link backfill: ${JSON.stringify(summary)}`);
+        return summary;
+      },
+    );
+
     this.queue.registerProcessor(JobType.POS_SALES_POLL, async (job: Job<{ storeId?: string }>) => {
       const where = job.data?.storeId
         ? { storeId: job.data.storeId, isActive: true }
@@ -137,6 +185,8 @@ export class PosJobsService implements OnModuleInit {
         {},
         this.config.get<string>('POS_GIFT_CARD_RECON_CRON', '0 */6 * * *'),
       );
+      // Daily incremental customer import (processor registered in Phase 1).
+      await this.queue.addRepeatable(JobType.POS_CUSTOMER_IMPORT, {}, '0 3 * * *');
       this.logger.log('POS cron jobs scheduled');
     } catch (e) {
       this.logger.warn(`POS cron schedule failed: ${(e as Error).message}`);

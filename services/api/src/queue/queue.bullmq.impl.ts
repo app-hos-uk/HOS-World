@@ -23,6 +23,8 @@ export enum JobType {
   POS_NIGHTLY_RECON = 'pos:nightly-reconciliation',
   POS_CUSTOMER_SYNC = 'pos:customer-sync',
   POS_CUSTOMER_IDENTITY_BACKFILL = 'pos:customer-identity-backfill',
+  POS_CUSTOMER_IMPORT = 'pos:customer-import',
+  POS_SALES_LINK_BACKFILL = 'pos:sales-link-backfill',
   POS_SALES_POLL = 'pos:sales-poll',
   POS_GIFT_CARD_RECON = 'pos:gift-card-reconciliation',
   ACCOUNTING_LEDGER_DRAIN = 'accounting:ledger-drain',

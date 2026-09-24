@@ -204,6 +204,8 @@ export class LightspeedAdapter implements POSAdapter {
     customers: Array<{
       id: string;
       email?: string;
+      first_name?: string;
+      last_name?: string;
       customer_code?: string;
       custom_field_1?: string;
       phone?: string;
@@ -225,6 +227,8 @@ export class LightspeedAdapter implements POSAdapter {
     const customers = rows.map((r) => ({
       id: String(r.id ?? ''),
       email: r.email ? String(r.email) : undefined,
+      first_name: r.first_name ? String(r.first_name) : undefined,
+      last_name: r.last_name ? String(r.last_name) : undefined,
       customer_code: r.customer_code != null ? String(r.customer_code) : undefined,
       custom_field_1: r.custom_field_1 != null ? String(r.custom_field_1) : undefined,
       phone: r.phone ? String(r.phone) : undefined,

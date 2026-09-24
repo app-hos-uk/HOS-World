@@ -49,6 +49,8 @@ describe('PosAdminController — credential updates', () => {
       unused(), // inventorySync
       unused(), // customerSync
       unused(), // customerIdentityBackfill
+      unused(), // customerImport
+      unused(), // salesImport
       unused(), // queue
       unused(), // discrepancies
       { resolvePlatformRetailSellerId: jest.fn() } as any,

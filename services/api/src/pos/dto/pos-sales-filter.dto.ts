@@ -7,6 +7,10 @@ export class PosSalesFilterDto {
   storeId?: string;
 
   @IsOptional()
+  @IsUUID()
+  customerId?: string;
+
+  @IsOptional()
   @IsString()
   status?: string;
 

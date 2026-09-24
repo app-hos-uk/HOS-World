@@ -98,12 +98,17 @@ export class PosSalesImportService {
    * 3. Card number from sale metadata (if present)
    * 4. Email (case-insensitive)
    * 5. phoneNormalized (exactly one user; ambiguous → IdentityMatchReview)
+   *
+   * Pass `persistSideEffects: false` for dry-run / historical link-only backfills so we
+   * do not upsert mappings, open reviews, or retro-earn on unattributed sales.
    */
   private async resolveCustomerId(
     storeId: string,
     provider: string,
     parsed: ParsedSale,
+    options?: { persistSideEffects?: boolean },
   ): Promise<string | null> {
+    const persistSideEffects = options?.persistSideEffects !== false;
     const externalId = parsed.customer?.externalId?.trim() || null;
 
     // 1. External customer id → mapping (any storeId / accountKey)
@@ -132,7 +137,9 @@ export class PosSalesImportService {
         select: { userId: true },
       });
       if (membership) {
-        await this.linkCustomerMappingIfNeeded(provider, membership.userId, externalId, storeId);
+        if (persistSideEffects) {
+          await this.linkCustomerMappingIfNeeded(provider, membership.userId, externalId, storeId);
+        }
         return membership.userId;
       }
     }
@@ -145,7 +152,9 @@ export class PosSalesImportService {
         select: { userId: true },
       });
       if (membership) {
-        await this.linkCustomerMappingIfNeeded(provider, membership.userId, externalId, storeId);
+        if (persistSideEffects) {
+          await this.linkCustomerMappingIfNeeded(provider, membership.userId, externalId, storeId);
+        }
         return membership.userId;
       }
     }
@@ -158,7 +167,9 @@ export class PosSalesImportService {
         select: { id: true },
       });
       if (user) {
-        await this.linkCustomerMappingIfNeeded(provider, user.id, externalId, storeId);
+        if (persistSideEffects) {
+          await this.linkCustomerMappingIfNeeded(provider, user.id, externalId, storeId);
+        }
         return user.id;
       }
     }
@@ -180,25 +191,191 @@ export class PosSalesImportService {
           take: 5,
         });
         if (users.length === 1) {
-          await this.linkCustomerMappingIfNeeded(provider, users[0].id, externalId, storeId);
+          if (persistSideEffects) {
+            await this.linkCustomerMappingIfNeeded(provider, users[0].id, externalId, storeId);
+          }
           return users[0].id;
         }
         if (users.length > 1) {
-          await this.ensureAmbiguousPhoneReview({
-            provider,
-            lightspeedCustomerId: externalId,
-            email,
-            phoneNormalized,
-            candidateUserIds: users.map((u) => u.id),
-            storeId,
-            externalSaleId: parsed.externalId,
-          });
+          if (persistSideEffects) {
+            await this.ensureAmbiguousPhoneReview({
+              provider,
+              lightspeedCustomerId: externalId,
+              email,
+              phoneNormalized,
+              candidateUserIds: users.map((u) => u.id),
+              storeId,
+              externalSaleId: parsed.externalId,
+            });
+          }
           return null;
         }
       }
     }
 
     return null;
+  }
+
+  /**
+   * Retroactively set `customerId` on imported POS sales that were stored without a HOS user.
+   * Defaults: dryRun=true (count only), earnPoints=false (never award loyalty on historical sales).
+   */
+  async backfillSaleCustomerLinks(
+    storeId: string,
+    options?: { dryRun?: boolean; earnPoints?: boolean },
+  ): Promise<{ total: number; linked: number; alreadyLinked: number; noMatch: number }> {
+    const dryRun = options?.dryRun !== false;
+    const earnPoints = options?.earnPoints === true;
+    const batchSize = 100;
+
+    const [total, alreadyLinked] = await Promise.all([
+      this.prisma.pOSSale.count({ where: { storeId, customerId: null } }),
+      this.prisma.pOSSale.count({ where: { storeId, customerId: { not: null } } }),
+    ]);
+
+    let linked = 0;
+    let noMatch = 0;
+    let processed = 0;
+    let lastId: string | undefined;
+
+    this.logger.log(
+      `Sale customer link backfill start store=${storeId} dryRun=${dryRun} earnPoints=${earnPoints} ` +
+        `unlinked=${total} alreadyLinked=${alreadyLinked}`,
+    );
+
+    while (true) {
+      const batch = await this.prisma.pOSSale.findMany({
+        where: {
+          storeId,
+          customerId: null,
+          ...(lastId ? { id: { gt: lastId } } : {}),
+        },
+        select: {
+          id: true,
+          provider: true,
+          externalSaleId: true,
+          customerEmail: true,
+          rawPayload: true,
+          loyaltyPointsEarned: true,
+          status: true,
+        },
+        orderBy: { id: 'asc' },
+        take: batchSize,
+      });
+      if (!batch.length) break;
+      lastId = batch[batch.length - 1].id;
+
+      for (const sale of batch) {
+        processed++;
+        try {
+          const parsed = this.toParsedSaleForIdentity(sale);
+          const customerId = await this.resolveCustomerId(storeId, sale.provider, parsed, {
+            persistSideEffects: false,
+          });
+
+          if (!customerId) {
+            noMatch++;
+          } else {
+            linked++;
+            if (!dryRun) {
+              await this.prisma.pOSSale.update({
+                where: { id: sale.id },
+                data: { customerId },
+              });
+              if (
+                earnPoints &&
+                sale.loyaltyPointsEarned === 0 &&
+                sale.status !== 'VOIDED' &&
+                sale.status !== 'RETURN'
+              ) {
+                try {
+                  await this.earnEngine.processPosSale(sale.id);
+                } catch (e) {
+                  this.logger.warn(
+                    `Loyalty earn after sale-link backfill for ${sale.id}: ${
+                      e instanceof Error ? e.message : 'unknown'
+                    }`,
+                  );
+                }
+              }
+            }
+          }
+        } catch (e) {
+          this.logger.warn(
+            `Sale customer link backfill failed for ${sale.id}: ${
+              e instanceof Error ? e.message : 'unknown'
+            }`,
+          );
+          noMatch++;
+        }
+
+        if (processed % 500 === 0) {
+          this.logger.log(
+            `Sale customer link backfill progress store=${storeId}: ${processed}/${total} ` +
+              `linked=${linked} noMatch=${noMatch}`,
+          );
+        }
+      }
+    }
+
+    this.logger.log(
+      `Sale customer link backfill done store=${storeId} dryRun=${dryRun} ` +
+        `total=${total} linked=${linked} alreadyLinked=${alreadyLinked} noMatch=${noMatch}`,
+    );
+
+    return { total, linked, alreadyLinked, noMatch };
+  }
+
+  /** Minimal ParsedSale for the identity ladder from a persisted POSSale row. */
+  private toParsedSaleForIdentity(sale: {
+    externalSaleId: string;
+    customerEmail: string | null;
+    rawPayload: unknown;
+  }): ParsedSale {
+    const raw = asRecord(sale.rawPayload);
+    const nested = raw ? asRecord(raw.customer) : null;
+    const contact = nested ? asRecord(nested.contact) : raw ? asRecord(raw.contact) : null;
+    const externalId = extractCustomerExternalId(sale.rawPayload) || undefined;
+    const email =
+      sale.customerEmail?.trim() ||
+      (typeof nested?.email === 'string' && nested.email.trim()
+        ? nested.email.trim()
+        : undefined) ||
+      (typeof nested?.email_address === 'string' && nested.email_address.trim()
+        ? nested.email_address.trim()
+        : undefined) ||
+      (typeof raw?.customer_email === 'string' && raw.customer_email.trim()
+        ? raw.customer_email.trim()
+        : undefined) ||
+      (typeof contact?.email === 'string' && contact.email.trim()
+        ? contact.email.trim()
+        : undefined);
+    const phone =
+      (typeof nested?.phone === 'string' && nested.phone.trim()
+        ? nested.phone.trim()
+        : undefined) ||
+      (typeof nested?.mobile === 'string' && nested.mobile.trim()
+        ? nested.mobile.trim()
+        : undefined) ||
+      (typeof contact?.phone === 'string' && contact.phone.trim()
+        ? contact.phone.trim()
+        : undefined) ||
+      (typeof contact?.mobile === 'string' && contact.mobile.trim()
+        ? contact.mobile.trim()
+        : undefined);
+
+    return {
+      externalId: sale.externalSaleId,
+      saleDate: new Date(0),
+      outletId: '',
+      items: [],
+      totalAmount: 0,
+      taxAmount: 0,
+      discountAmount: 0,
+      currency: 'USD',
+      customer: { email, phone, externalId },
+      rawPayload: sale.rawPayload,
+    };
   }
 
   private async ensureAmbiguousPhoneReview(params: {

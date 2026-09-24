@@ -26,6 +26,8 @@ import { PosProductSyncService } from './sync/product-sync.service';
 import { PosInventorySyncService } from './sync/inventory-sync.service';
 import { PosCustomerSyncService } from './sync/customer-sync.service';
 import { PosCustomerIdentityBackfillService } from './sync/customer-identity-backfill.service';
+import { PosCustomerImportService } from './sync/customer-import.service';
+import { PosSalesImportService } from './sync/sales-import.service';
 import { QueueService, JobType } from '../queue/queue.service';
 import { DiscrepanciesService } from '../discrepancies/discrepancies.service';
 import { PlatformSellerService } from '../stores/platform-seller.service';
@@ -45,6 +47,8 @@ export class PosAdminController {
     private inventorySync: PosInventorySyncService,
     private customerSync: PosCustomerSyncService,
     private customerIdentityBackfill: PosCustomerIdentityBackfillService,
+    private customerImport: PosCustomerImportService,
+    private salesImport: PosSalesImportService,
     private queue: QueueService,
     private discrepancies: DiscrepanciesService,
     private platformSeller: PlatformSellerService,
@@ -297,6 +301,79 @@ export class PosAdminController {
     return { data: { jobId, dryRun }, message: 'Queued' };
   }
 
+  /**
+   * Queue (or run) Lightspeed → HOS customer import for a connection.
+   * Creates Users + LoyaltyMemberships for Lightspeed customers with email,
+   * upserts ExternalEntityMapping, and stamps customer_code / custom_field_1.
+   * Body: `{ "dryRun": true }` logs/counts only; `{ "dryRun": false }` applies changes.
+   * Pass `?sync=true` to run inline instead of queueing.
+   */
+  @Post('connections/:id/import/customers')
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
+  async importCustomers(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { dryRun?: boolean },
+    @Query('sync') sync?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const conn = await this.prisma.pOSConnection.findUnique({ where: { id } });
+    if (!conn) return { data: null, message: 'Not found' };
+    // Default dryRun=true when omitted (safer).
+    const dryRun = body?.dryRun === undefined ? true : !!body.dryRun;
+
+    if (sync === 'true') {
+      const summary = await this.customerImport.run({
+        dryRun,
+        connectionId: id,
+      });
+      return { data: summary, message: dryRun ? 'Dry run complete' : 'Import complete' };
+    }
+
+    const jobId = await this.queue.addJob(JobType.POS_CUSTOMER_IMPORT, {
+      connectionId: id,
+      dryRun,
+    });
+    return { data: { jobId, dryRun }, message: 'Queued' };
+  }
+
+  /**
+   * Queue (or run) retroactive customerId linking on imported POS sales for a connection.
+   * Body defaults are safe: `{ "dryRun": true, "earnPoints": false }`.
+   * Pass `?sync=true` to run inline instead of queueing.
+   * Historical sales are link-only unless earnPoints is explicitly true.
+   */
+  @Post('connections/:id/backfill/sales-links')
+  @RequireAccess({ permission: 'stores.manage', scope: 'GLOBAL' })
+  async backfillSaleCustomerLinks(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { dryRun?: boolean; earnPoints?: boolean },
+    @Query('sync') sync?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const conn = await this.prisma.pOSConnection.findUnique({ where: { id } });
+    if (!conn) return { data: null, message: 'Not found' };
+    // Default dryRun=true / earnPoints=false when omitted (safer).
+    const dryRun = body?.dryRun === undefined ? true : !!body.dryRun;
+    const earnPoints = body?.earnPoints === true;
+
+    if (sync === 'true') {
+      const summary = await this.salesImport.backfillSaleCustomerLinks(conn.storeId, {
+        dryRun,
+        earnPoints,
+      });
+      return {
+        data: summary,
+        message: dryRun ? 'Dry run complete' : 'Backfill complete',
+      };
+    }
+
+    const jobId = await this.queue.addJob(JobType.POS_SALES_LINK_BACKFILL, {
+      storeId: conn.storeId,
+      connectionId: id,
+      dryRun,
+      earnPoints,
+    });
+    return { data: { jobId, storeId: conn.storeId, dryRun, earnPoints }, message: 'Queued' };
+  }
+
   @Get('sales')
   @RequireAccess({ permission: 'stores.view', scope: 'GLOBAL' })
   async sales(@Query() q: PosSalesFilterDto): Promise<ApiResponse<unknown>> {
@@ -304,6 +381,7 @@ export class PosAdminController {
     const limit = q.limit || 20;
     const where: Record<string, unknown> = {};
     if (q.storeId) where.storeId = q.storeId;
+    if (q.customerId) where.customerId = q.customerId;
     if (q.status) where.status = q.status;
     if (q.dateFrom || q.dateTo) {
       where.saleDate = {};

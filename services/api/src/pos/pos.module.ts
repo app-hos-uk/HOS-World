@@ -12,6 +12,7 @@ import { PosProductSyncService } from './sync/product-sync.service';
 import { PosInventorySyncService } from './sync/inventory-sync.service';
 import { PosCustomerSyncService } from './sync/customer-sync.service';
 import { PosCustomerIdentityBackfillService } from './sync/customer-identity-backfill.service';
+import { PosCustomerImportService } from './sync/customer-import.service';
 import { PosSalesImportService } from './sync/sales-import.service';
 import { PosGiftCardReconService } from './sync/gift-card-recon.service';
 import { PosWebhookController } from './webhooks/pos-webhook.controller';
@@ -37,6 +38,7 @@ import { PosJobsService } from './jobs/pos.jobs';
     PosInventorySyncService,
     PosCustomerSyncService,
     PosCustomerIdentityBackfillService,
+    PosCustomerImportService,
     PosSalesImportService,
     PosGiftCardReconService,
     PosJobsService,
