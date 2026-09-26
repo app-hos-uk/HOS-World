@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 export type TemplateChannel = 'EMAIL' | 'WHATSAPP' | 'SMS' | 'IN_APP' | 'PUSH';
@@ -1127,7 +1127,7 @@ export class TemplatesService {
             ? override.variables
             : (templates[idx]?.variables ?? []),
           description: override.description ?? templates[idx]?.description,
-          isCustomized: true,
+          isCustomized: idx >= 0,
         };
         if (idx >= 0) {
           templates[idx] = merged;
@@ -1215,6 +1215,12 @@ export class TemplatesService {
     updatedBy?: string;
   }) {
     const channel = data.channel ?? 'WHATSAPP';
+
+    if (data.name.startsWith('admin_campaign_')) {
+      throw new BadRequestException(
+        'The prefix "admin_campaign_" is reserved for internal campaign snapshots',
+      );
+    }
 
     if (channel === 'EMAIL') {
       return this.prisma.emailTemplate.upsert({
