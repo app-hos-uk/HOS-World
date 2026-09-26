@@ -817,9 +817,7 @@ export class AdminEmailService {
       nToday,
       nWeek,
       nMonth,
-      mSent30,
       mFailed30,
-      nSent30,
       nFailed30,
     ] = await Promise.all([
       this.prisma.messageLog.count({
@@ -867,21 +865,7 @@ export class AdminEmailService {
       this.prisma.messageLog.count({
         where: {
           channel: 'EMAIL',
-          status: 'SENT',
-          OR: [{ sentAt: { gte: monthAgo } }, { createdAt: { gte: monthAgo } }],
-        },
-      }),
-      this.prisma.messageLog.count({
-        where: {
-          channel: 'EMAIL',
           status: 'FAILED',
-          OR: [{ sentAt: { gte: monthAgo } }, { createdAt: { gte: monthAgo } }],
-        },
-      }),
-      this.prisma.notification.count({
-        where: {
-          status: 'SENT',
-          email: { not: null },
           OR: [{ sentAt: { gte: monthAgo } }, { createdAt: { gte: monthAgo } }],
         },
       }),
@@ -897,7 +881,7 @@ export class AdminEmailService {
     const sentToday = mToday + nToday;
     const sentWeek = mWeek + nWeek;
     const sentMonth = mMonth + nMonth;
-    const sent = mSent30 + nSent30;
+    const sent = mMonth + nMonth;
     const failed = mFailed30 + nFailed30;
     const denom = sent + failed;
     const deliveryRate = denom === 0 ? 0 : sent / denom;

@@ -259,6 +259,10 @@ export default function AdminTemplatesPage() {
       setCreateError('Slug must be lowercase letters, numbers, and underscores only.');
       return;
     }
+    if (slug.startsWith('admin_campaign_')) {
+      setCreateError('The prefix "admin_campaign_" is reserved for internal use.');
+      return;
+    }
     if (!createSubject.trim()) {
       setCreateError('Subject is required.');
       return;
