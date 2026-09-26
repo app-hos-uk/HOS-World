@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { apiClient } from '@/lib/api';
-import { sanitizeEmailPreviewHtml, wrapEmailPreviewDocument } from '@/lib/sanitizeHtml';
+import { wrapEmailPreviewDocument } from '@/lib/sanitizeHtml';
 import { TipTapEditor } from '@/components/cms/TipTapEditor';
 
 interface TemplateDefinition {
@@ -15,6 +15,7 @@ interface TemplateDefinition {
   variables: string[];
   description?: string;
   isCustomized?: boolean;
+  isBuiltIn?: boolean;
 }
 
 const CHANNEL_COLORS: Record<string, string> = {
@@ -30,6 +31,32 @@ const CHANNEL_ICONS: Record<string, string> = {
   SMS: '📱',
   IN_APP: '🔔',
 };
+
+const VAR_TOKEN_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
+const INSERTABLE_VARS = ['firstName', 'lastName', 'email'] as const;
+const SLUG_RE = /^[a-z0-9_]+$/;
+
+function extractVariables(...texts: string[]): string[] {
+  const found = new Set<string>();
+  for (const text of texts) {
+    const re = new RegExp(VAR_TOKEN_RE.source, 'g');
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(text)) !== null) {
+      found.add(match[1]);
+    }
+  }
+  return [...found];
+}
+
+function templateBadge(t: TemplateDefinition): { label: string; className: string } | null {
+  if (t.isBuiltIn === false) {
+    return { label: 'Custom', className: 'bg-hos-gold/15 text-hos-gold' };
+  }
+  if (t.isBuiltIn && t.isCustomized) {
+    return { label: 'Edited', className: 'bg-amber-500/15 text-amber-300' };
+  }
+  return null;
+}
 
 export default function AdminTemplatesPage() {
   const [templates, setTemplates] = useState<TemplateDefinition[]>([]);
@@ -55,6 +82,20 @@ export default function AdminTemplatesPage() {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const [showCreate, setShowCreate] = useState(false);
+  const [createSlug, setCreateSlug] = useState('');
+  const [createSubject, setCreateSubject] = useState('');
+  const [createDescription, setCreateDescription] = useState('');
+  const [createBody, setCreateBody] = useState('');
+  const [createEditorKey, setCreateEditorKey] = useState(0);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  const createVariables = useMemo(
+    () => extractVariables(createSubject, createBody),
+    [createSubject, createBody],
+  );
+
   // Always load every channel so the summary counts stay accurate; the channel
   // selection only narrows the list below.
   const fetchTemplates = useCallback(async () => {
@@ -67,7 +108,7 @@ export default function AdminTemplatesPage() {
     } finally {
       setLoading(false);
     }
-  }, [apiClient]);
+  }, []);
 
   useEffect(() => {
     fetchTemplates();
@@ -138,8 +179,12 @@ export default function AdminTemplatesPage() {
         prev.map((t) => (t.slug === updated.slug ? { ...t, ...updated } : t)),
       );
       await handlePreview(selectedTemplate.slug);
-    } catch {
-      setSaveError('Failed to save template. Please try again.');
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: string }).message)
+          : 'Failed to save template. Please try again.';
+      setSaveError(message);
     } finally {
       setSaveLoading(false);
     }
@@ -190,6 +235,81 @@ export default function AdminTemplatesPage() {
     }
   };
 
+  const resetCreateForm = () => {
+    setCreateSlug('');
+    setCreateSubject('');
+    setCreateDescription('');
+    setCreateBody('');
+    setCreateEditorKey((k) => k + 1);
+    setCreateError(null);
+  };
+
+  const insertCreateVariable = (name: string) => {
+    setCreateBody((prev) => `${prev || ''}${'{{' + name + '}}'}`);
+    setCreateEditorKey((k) => k + 1);
+  };
+
+  const handleCreateTemplate = async () => {
+    const slug = createSlug.trim();
+    if (!slug) {
+      setCreateError('Slug is required.');
+      return;
+    }
+    if (!SLUG_RE.test(slug)) {
+      setCreateError('Slug must be lowercase letters, numbers, and underscores only.');
+      return;
+    }
+    if (!createSubject.trim()) {
+      setCreateError('Subject is required.');
+      return;
+    }
+    if (!createBody.trim() || createBody.trim() === '<p></p>') {
+      setCreateError('Body is required.');
+      return;
+    }
+
+    setCreateLoading(true);
+    setCreateError(null);
+    try {
+      const res = await apiClient.createTemplate({
+        name: slug,
+        category: 'custom',
+        channel: 'EMAIL',
+        subject: createSubject,
+        content: createBody,
+        variables: createVariables,
+        description: createDescription.trim() || undefined,
+      });
+      const created = res.data as TemplateDefinition | undefined;
+      await fetchTemplates();
+      setShowCreate(false);
+      resetCreateForm();
+      if (created?.slug) {
+        await handleSelectTemplate({
+          ...created,
+          isBuiltIn: created.isBuiltIn ?? false,
+          channel: created.channel || 'EMAIL',
+          body: created.body || createBody,
+          variables: created.variables || createVariables,
+        });
+      } else {
+        const listRes = await apiClient.getTemplates('EMAIL');
+        const found = (listRes.data || []).find(
+          (t: TemplateDefinition) => t.slug === slug || t.slug === created?.slug,
+        );
+        if (found) await handleSelectTemplate(found);
+      }
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: string }).message)
+          : 'Failed to create template.';
+      setCreateError(message);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
   const channelCounts = templates.reduce(
     (acc, t) => {
       acc[t.channel] = (acc[t.channel] || 0) + 1;
@@ -204,15 +324,143 @@ export default function AdminTemplatesPage() {
 
   return (
     <RouteGuard allowedRoles={['ADMIN']}>
-          <div className="space-y-6">
+      <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">Notification Templates</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-hos-text-secondary">
+              Notification Templates
+            </h1>
             <p className="text-hos-text-secondary mt-1">
               Preview and customize email, WhatsApp, SMS, and in-app notification templates
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setShowCreate((v) => !v);
+              setCreateError(null);
+            }}
+            className="px-4 py-2 text-sm rounded-lg bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover"
+          >
+            {showCreate ? 'Cancel' : 'Create template'}
+          </button>
         </div>
+
+        {showCreate && (
+          <div className="bg-hos-bg-secondary rounded-xl border border-hos-border p-5 space-y-4">
+            <h2 className="text-lg font-semibold text-hos-text-secondary">Create email template</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-hos-text-muted mb-1">
+                  Slug <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={createSlug}
+                  onChange={(e) => setCreateSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                  placeholder="welcome_offer"
+                  className="w-full bg-hos-bg-secondary rounded-lg px-3 py-2 text-sm font-mono text-hos-text-secondary border border-hos-border focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
+                />
+                <p className="text-[11px] text-hos-text-muted mt-1">
+                  Lowercase letters, numbers, underscores
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-hos-text-muted mb-1">Channel</label>
+                <input
+                  type="text"
+                  value="EMAIL"
+                  disabled
+                  className="w-full bg-hos-bg-tertiary rounded-lg px-3 py-2 text-sm text-hos-text-muted border border-hos-border"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-hos-text-muted mb-1">
+                Subject <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="text"
+                value={createSubject}
+                onChange={(e) => setCreateSubject(e.target.value)}
+                placeholder="Hello {{firstName}}"
+                className="w-full bg-hos-bg-secondary rounded-lg px-3 py-2 text-sm text-hos-text-secondary border border-hos-border focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-hos-text-muted mb-1">Description</label>
+              <input
+                type="text"
+                value={createDescription}
+                onChange={(e) => setCreateDescription(e.target.value)}
+                placeholder="Optional description"
+                className="w-full bg-hos-bg-secondary rounded-lg px-3 py-2 text-sm text-hos-text-secondary border border-hos-border focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-hos-text-muted mb-1">
+                Body <span className="text-red-400">*</span>
+              </label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                <span className="text-xs text-hos-text-muted self-center">Insert:</span>
+                {INSERTABLE_VARS.map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => insertCreateVariable(v)}
+                    className="text-xs px-2 py-1 rounded-md font-mono bg-hos-gold/10 text-hos-gold hover:bg-hos-gold/20"
+                  >
+                    {'{{' + v + '}}'}
+                  </button>
+                ))}
+              </div>
+              <TipTapEditor
+                key={createEditorKey}
+                content={createBody}
+                onChange={setCreateBody}
+                placeholder="Write the email body. Use {{firstName}} for personalization."
+              />
+            </div>
+            {createVariables.length > 0 && (
+              <div>
+                <label className="block text-xs font-medium text-hos-text-muted mb-1">
+                  Detected variables
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {createVariables.map((v) => (
+                    <span
+                      key={v}
+                      className="text-xs bg-hos-gold/10 text-hos-gold px-2 py-1 rounded-md font-mono"
+                    >
+                      {'{{' + v + '}}'}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {createError && <p className="text-sm text-red-400">{createError}</p>}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleCreateTemplate}
+                disabled={createLoading}
+                className="px-4 py-2 text-sm rounded-lg bg-hos-gold text-[#1a1406] hover:bg-hos-gold-hover disabled:opacity-50"
+              >
+                {createLoading ? 'Saving...' : 'Save template'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCreate(false);
+                  resetCreateForm();
+                }}
+                className="px-4 py-2 text-sm rounded-lg border border-hos-border text-hos-text-secondary"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Channel stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -243,50 +491,55 @@ export default function AdminTemplatesPage() {
               <div className="text-center py-8 text-hos-text-muted">No templates found</div>
             ) : (
               <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
-                {visibleTemplates.map((t) => (
-                  <button
-                    key={t.slug}
-                    onClick={() => handleSelectTemplate(t)}
-                    className={`w-full text-left p-3 rounded-lg border transition-all ${
-                      selectedTemplate?.slug === t.slug
-                        ? 'border-hos-gold bg-hos-gold/10 shadow-sm'
-                        : 'border-hos-border bg-hos-bg-secondary hover:border-hos-border'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-sm text-hos-text-secondary">
-                        {t.slug.replace(/_/g, ' ')}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        {t.isCustomized && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300">
-                            Custom
+                {visibleTemplates.map((t) => {
+                  const badge = templateBadge(t);
+                  return (
+                    <button
+                      key={t.slug}
+                      onClick={() => handleSelectTemplate(t)}
+                      className={`w-full text-left p-3 rounded-lg border transition-all ${
+                        selectedTemplate?.slug === t.slug
+                          ? 'border-hos-gold bg-hos-gold/10 shadow-sm'
+                          : 'border-hos-border bg-hos-bg-secondary hover:border-hos-border'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium text-sm text-hos-text-secondary">
+                          {t.slug.replace(/_/g, ' ')}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          {badge && (
+                            <span
+                              className={`text-[10px] px-1.5 py-0.5 rounded-full ${badge.className}`}
+                            >
+                              {badge.label}
+                            </span>
+                          )}
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              CHANNEL_COLORS[t.channel]
+                            }`}
+                          >
+                            {t.channel}
                           </span>
-                        )}
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                            CHANNEL_COLORS[t.channel]
-                          }`}
-                        >
-                          {t.channel}
-                        </span>
+                        </div>
                       </div>
-                    </div>
-                    {t.description && (
-                      <p className="text-xs text-hos-text-muted line-clamp-2">{t.description}</p>
-                    )}
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {t.variables.map((v) => (
-                        <span
-                          key={v}
-                          className="text-[10px] bg-hos-bg-tertiary text-hos-text-secondary px-1.5 py-0.5 rounded"
-                        >
-                          {'{{' + v + '}}'}
-                        </span>
-                      ))}
-                    </div>
-                  </button>
-                ))}
+                      {t.description && (
+                        <p className="text-xs text-hos-text-muted line-clamp-2">{t.description}</p>
+                      )}
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {t.variables.map((v) => (
+                          <span
+                            key={v}
+                            className="text-[10px] bg-hos-bg-tertiary text-hos-text-secondary px-1.5 py-0.5 rounded"
+                          >
+                            {'{{' + v + '}}'}
+                          </span>
+                        ))}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -301,11 +554,16 @@ export default function AdminTemplatesPage() {
                       {selectedTemplate.slug.replace(/_/g, ' ')}
                     </h2>
                     <div className="flex items-center gap-2">
-                      {selectedTemplate.isCustomized && (
-                        <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-amber-500/15 text-amber-300">
-                          Customized
-                        </span>
-                      )}
+                      {(() => {
+                        const badge = templateBadge(selectedTemplate);
+                        return badge ? (
+                          <span
+                            className={`text-xs px-2.5 py-1 rounded-full font-medium ${badge.className}`}
+                          >
+                            {badge.label}
+                          </span>
+                        ) : null;
+                      })()}
                       <span
                         className={`text-xs px-2.5 py-1 rounded-full font-medium ${
                           CHANNEL_COLORS[selectedTemplate.channel]
@@ -346,27 +604,27 @@ export default function AdminTemplatesPage() {
                           </button>
                         </>
                       )}
-                      {selectedTemplate.isCustomized && !isEditing && (
-                        <button
-                          onClick={handleResetTemplate}
-                          disabled={saveLoading}
-                          className="px-3 py-1.5 text-sm rounded-lg border border-red-500/40 text-red-300 hover:bg-red-500/10 disabled:opacity-50"
-                        >
-                          Reset to Default
-                        </button>
-                      )}
+                      {selectedTemplate.isCustomized &&
+                        selectedTemplate.isBuiltIn !== false &&
+                        !isEditing && (
+                          <button
+                            onClick={handleResetTemplate}
+                            disabled={saveLoading}
+                            className="px-3 py-1.5 text-sm rounded-lg border border-red-500/40 text-red-300 hover:bg-red-500/10 disabled:opacity-50"
+                          >
+                            Reset to Default
+                          </button>
+                        )}
                     </div>
                   )}
 
-                  {saveMessage && (
-                    <p className="text-sm text-green-400 mb-3">{saveMessage}</p>
-                  )}
-                  {saveError && (
-                    <p className="text-sm text-red-400 mb-3">{saveError}</p>
-                  )}
+                  {saveMessage && <p className="text-sm text-green-400 mb-3">{saveMessage}</p>}
+                  {saveError && <p className="text-sm text-red-400 mb-3">{saveError}</p>}
 
                   {selectedTemplate.description && (
-                    <p className="text-sm text-hos-text-secondary mb-3">{selectedTemplate.description}</p>
+                    <p className="text-sm text-hos-text-secondary mb-3">
+                      {selectedTemplate.description}
+                    </p>
                   )}
 
                   {selectedTemplate.subject && (
@@ -420,9 +678,7 @@ export default function AdminTemplatesPage() {
                         <input
                           type="text"
                           value={testVars[v] || ''}
-                          onChange={(e) =>
-                            setTestVars({ ...testVars, [v]: e.target.value })
-                          }
+                          onChange={(e) => setTestVars({ ...testVars, [v]: e.target.value })}
                           placeholder={`Enter ${v}...`}
                           className="w-full px-3 py-1.5 border border-hos-border rounded-lg text-sm focus:ring-2 focus:ring-hos-gold/50 focus:border-hos-gold"
                         />
@@ -492,7 +748,10 @@ export default function AdminTemplatesPage() {
                 </div>
 
                 {/* Raw template body */}
-                <details className="bg-hos-bg-secondary rounded-xl border border-hos-border overflow-hidden" open={isEditing}>
+                <details
+                  className="bg-hos-bg-secondary rounded-xl border border-hos-border overflow-hidden"
+                  open={isEditing}
+                >
                   <summary className="px-5 py-3 cursor-pointer text-sm font-medium text-hos-text-secondary hover:bg-hos-bg-tertiary">
                     {isEditing ? 'Edit Template Body' : 'View Raw Template Source'}
                   </summary>
@@ -524,17 +783,17 @@ export default function AdminTemplatesPage() {
           </div>
         </div>
       </div>
-                {confirmDialog && (
-          <ConfirmDialog
-            open
-            title={confirmDialog.title}
-            description={confirmDialog.description}
-            tone={confirmDialog.tone}
-            confirmLabel={confirmDialog.confirmLabel}
-            onCancel={() => setConfirmDialog(null)}
-            onConfirm={confirmDialog.onConfirm}
-          />
-        )}
-</RouteGuard>
+      {confirmDialog && (
+        <ConfirmDialog
+          open
+          title={confirmDialog.title}
+          description={confirmDialog.description}
+          tone={confirmDialog.tone}
+          confirmLabel={confirmDialog.confirmLabel}
+          onCancel={() => setConfirmDialog(null)}
+          onConfirm={confirmDialog.onConfirm}
+        />
+      )}
+    </RouteGuard>
   );
 }

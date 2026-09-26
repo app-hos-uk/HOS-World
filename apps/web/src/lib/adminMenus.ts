@@ -109,6 +109,8 @@ export const menuItems: ShellMenuItem[] = [
       { title: 'Marketing Materials', href: '/admin/marketing', icon: navIcon('megaphone') },
       { title: 'Newsletter', href: '/admin/newsletter', icon: navIcon('mail') },
       { title: 'Message Logs', href: '/admin/messaging', icon: navIcon('mailOpen') },
+      { title: 'Compose Email', href: '/admin/email/compose', icon: navIcon('mail') },
+      { title: 'Mailbox', href: '/admin/email/mailbox', icon: navIcon('mailOpen') },
       { title: 'Delivery Dashboard', href: '/admin/notifications/delivery', icon: navIcon('radio') },
       { title: 'Segments', href: '/admin/segments', icon: navIcon('target') },
       { title: 'Product Campaigns', href: '/admin/product-campaigns', icon: navIcon('clipboard') },

@@ -2598,6 +2598,30 @@ model EmailTemplate {
   @@index([isActive])
 }
 
+model AdminEmailCampaign {
+  id             String    @id @default(uuid())
+  subject        String
+  bodyHtml       String    @db.Text
+  templateSlug   String?
+  audienceType   String
+  audienceQuery  Json?
+  recipientCount Int       @default(0)
+  sentCount      Int       @default(0)
+  failedCount    Int       @default(0)
+  skippedCount   Int       @default(0)
+  status         String    @default("DRAFT")
+  sentBy         String
+  error          String?   @db.Text
+  sentAt         DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([sentBy])
+  @@index([status])
+  @@index([createdAt])
+  @@map("admin_email_campaigns")
+}
+
 enum ConversationStatus {
   ACTIVE
   ARCHIVED

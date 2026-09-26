@@ -11,6 +11,7 @@ export interface TemplateDefinition {
   variables: string[];
   description?: string;
   isCustomized?: boolean;
+  isBuiltIn?: boolean;
 }
 
 /**
@@ -1082,6 +1083,24 @@ export class TemplatesService {
     }
 
     if (!builtIn) {
+      // Custom EmailTemplate rows (created via POST /templates) are not in BUILT_IN_TEMPLATES.
+      try {
+        const emailRow = await this.prisma.emailTemplate.findUnique({
+          where: { slug },
+        });
+        if (emailRow?.isActive) {
+          return {
+            slug: emailRow.slug,
+            channel: 'EMAIL',
+            subject: emailRow.subject ?? undefined,
+            body: emailRow.body,
+            variables: emailRow.variables,
+            description: emailRow.description ?? undefined,
+          };
+        }
+      } catch {
+        // Table may not exist yet
+      }
       throw new NotFoundException(`Template "${slug}" not found`);
     }
     return builtIn;
@@ -1142,10 +1161,19 @@ export class TemplatesService {
       // WhatsAppTemplate table may not exist yet
     }
 
+    // Campaign sends snapshot a private EmailTemplate (admin_campaign_<id>).
+    // Those rows are for rendering only and should not appear in the admin picker.
+    templates = templates.filter((t) => !t.slug.startsWith('admin_campaign_'));
+
     if (channel) {
       templates = templates.filter((t) => t.channel === channel);
     }
-    return templates;
+
+    const builtInSlugs = new Set(BUILT_IN_TEMPLATES.map((t) => t.slug));
+    return templates.map((t) => ({
+      ...t,
+      isBuiltIn: builtInSlugs.has(t.slug),
+    }));
   }
 
   /**
@@ -1288,14 +1316,12 @@ export class TemplatesService {
   }
 
   /**
-   * Reset an email template override back to the built-in default.
+   * Reset an email template override back to the built-in default,
+   * or delete a custom (non-built-in) EmailTemplate row entirely.
    */
   async resetEmailTemplate(slug: string): Promise<void> {
-    const builtIn = BUILT_IN_TEMPLATES.find((t) => t.slug === slug && t.channel === 'EMAIL');
-    if (!builtIn) {
-      throw new NotFoundException(`Built-in email template "${slug}" not found`);
-    }
-
+    // Built-in slug: delete override only (falls back to BUILT_IN_TEMPLATES).
+    // Custom slug: delete the EmailTemplate row (no built-in to fall back to).
     await this.prisma.emailTemplate.deleteMany({ where: { slug } });
   }
 

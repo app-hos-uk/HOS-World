@@ -106,6 +106,7 @@ export class MessagingService {
     subject?: string;
     journeyId?: string;
     enrollmentId?: string;
+    metadata?: Record<string, unknown>;
   }): Promise<SendResult> {
     let channel: MessagingChannel;
     if (!params.channel || params.channel === 'USER_PREFERRED') {
@@ -132,7 +133,7 @@ export class MessagingService {
         status: 'QUEUED',
         journeyId: params.journeyId,
         enrollmentId: params.enrollmentId,
-        metadata: { vars } as object,
+        metadata: { vars, ...(params.metadata ?? {}) } as object,
       },
     });
 

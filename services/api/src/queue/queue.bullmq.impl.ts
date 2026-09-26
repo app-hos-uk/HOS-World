@@ -33,6 +33,7 @@ export enum JobType {
   ABANDONED_CART_SCAN = 'marketing:abandoned-cart-scan',
   INACTIVITY_SCAN = 'marketing:inactivity-scan',
   MESSAGE_SEND = 'marketing:message-send',
+  ADMIN_EMAIL_CAMPAIGN = 'admin:email-campaign',
   MARKETING_POINTS_EXPIRY_WARNING = 'marketing:points-expiry-warning',
   EVENT_REMINDER = 'events:reminder',
   EVENT_ATTENDANCE_RECONCILE = 'events:attendance-reconcile',

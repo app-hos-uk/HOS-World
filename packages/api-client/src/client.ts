@@ -8362,6 +8362,80 @@ export class ApiClient {
     return this.request<ApiResponse<any>>(`/templates/${slug}/deactivate`, { method: 'PUT' });
   }
 
+  // ===== Admin Email Compose / Mailbox =====
+  async adminResolveEmailAudience(body: {
+    audienceType: 'INDIVIDUAL' | 'SEGMENT' | 'ALL';
+    userIds?: string[];
+    search?: string;
+    filters?: { role?: string; tierSlug?: string; regionCode?: string };
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/email/resolve-audience', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminSendEmailCampaign(body: {
+    audienceType: 'INDIVIDUAL' | 'SEGMENT' | 'ALL';
+    userIds?: string[];
+    search?: string;
+    filters?: { role?: string; tierSlug?: string; regionCode?: string };
+    templateSlug?: string;
+    subject: string;
+    bodyHtml: string;
+    dryRun?: boolean;
+  }): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/email/send', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminSearchEmailUsers(search?: string): Promise<ApiResponse<any>> {
+    const q = new URLSearchParams();
+    if (search) q.set('search', search);
+    const qs = q.toString();
+    return this.request<ApiResponse<any>>(`/admin/email/users${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetMailbox(params?: {
+    source?: string;
+    status?: string;
+    q?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const q = new URLSearchParams();
+    if (params?.source) q.set('source', params.source);
+    if (params?.status) q.set('status', params.status);
+    if (params?.q) q.set('q', params.q);
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<any>>(`/admin/email/mailbox${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetMailboxDetail(source: string, id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(
+      `/admin/email/mailbox/${encodeURIComponent(source)}/${encodeURIComponent(id)}`,
+    );
+  }
+
+  async adminGetEmailCampaigns(params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> {
+    const q = new URLSearchParams();
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<any>>(`/admin/email/campaigns${qs ? `?${qs}` : ''}`);
+  }
+
+  async adminGetEmailCampaign(id: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/email/campaigns/${encodeURIComponent(id)}`);
+  }
+
   // ===== Founding Members =====
   async getFoundingMembers(params?: {
     page?: number;

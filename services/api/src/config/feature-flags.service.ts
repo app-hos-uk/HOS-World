@@ -5,6 +5,7 @@ import { PrismaService } from '../database/prisma.service';
 export enum FeatureFlag {
   FOUNDING_MEMBERS = 'FOUNDING_MEMBERS',
   EMAIL_TEMPLATE_OVERRIDES = 'EMAIL_TEMPLATE_OVERRIDES',
+  ADMIN_EMAIL_COMPOSE = 'ADMIN_EMAIL_COMPOSE',
   LOYALTY_PROGRAMME = 'LOYALTY_PROGRAMME',
   AMBASSADOR_PROGRAMME = 'AMBASSADOR_PROGRAMME',
   BRAND_PARTNERSHIPS = 'BRAND_PARTNERSHIPS',
@@ -24,6 +25,7 @@ export enum FeatureFlag {
 const FLAG_DEFAULTS: Record<FeatureFlag, boolean> = {
   [FeatureFlag.FOUNDING_MEMBERS]: true,
   [FeatureFlag.EMAIL_TEMPLATE_OVERRIDES]: true,
+  [FeatureFlag.ADMIN_EMAIL_COMPOSE]: true,
   [FeatureFlag.LOYALTY_PROGRAMME]: true,
   [FeatureFlag.AMBASSADOR_PROGRAMME]: true,
   [FeatureFlag.BRAND_PARTNERSHIPS]: true,

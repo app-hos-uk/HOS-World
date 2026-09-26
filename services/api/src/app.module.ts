@@ -76,6 +76,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MonitoringInterceptor } from './monitoring/monitoring.interceptor';
 import { ActivityInterceptor } from './common/interceptors/activity.interceptor';
 import { TemplatesModule } from './templates/templates.module';
+import { EmailModule } from './email/email.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 import { QuizModule } from './quiz/quiz.module';
 import { ChannelsModule } from './channels/channels.module';
@@ -227,6 +228,7 @@ import { AccessControlModule } from './access-control/access-control.module';
     InvoicesModule,
     // Templates
     TemplatesModule,
+    EmailModule,
     LoyaltyModule,
     QuizModule,
     ChannelsModule,
