@@ -224,15 +224,18 @@ describe('AdminService', () => {
       const mockUser = {
         id: userId,
         email: 'user@example.com',
+        role: 'CUSTOMER',
+        deletedAt: null,
       };
 
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
-      mockPrismaService.user.delete.mockResolvedValue(mockUser);
+      mockPrismaService.user.update.mockResolvedValue(mockUser);
 
       await service.deleteUser(userId);
 
-      expect(mockPrismaService.user.delete).toHaveBeenCalledWith({
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
         where: { id: userId },
+        data: expect.objectContaining({ isActive: false }),
       });
     });
 

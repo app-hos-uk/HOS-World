@@ -82,7 +82,7 @@ describe('cookie.utils', () => {
     expect(res.cookie).toHaveBeenCalledWith(
       AUTH_COOKIE_NAME,
       'a',
-      expect.objectContaining({ secure: true, sameSite: 'none' }),
+      expect.objectContaining({ secure: true, sameSite: 'lax' }),
     );
   });
 });

@@ -17,9 +17,12 @@ function makeTx(opts: {
         userId: 'u1',
         currentBalance: balance,
       })),
-      update: jest.fn().mockImplementation(async (_args: { data: { currentBalance?: number } }) => {
-        if (typeof _args.data.currentBalance === 'number') {
-          balance = _args.data.currentBalance;
+      update: jest.fn().mockImplementation(async (_args: { data: { currentBalance?: number | { increment: number } } }) => {
+        const val = _args.data.currentBalance;
+        if (typeof val === 'number') {
+          balance = val;
+        } else if (val && typeof val === 'object' && 'increment' in val) {
+          balance += (val as { increment: number }).increment;
         }
       }),
     },

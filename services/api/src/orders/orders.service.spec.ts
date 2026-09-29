@@ -1458,9 +1458,10 @@ describe('OrdersService - Phase 1 Tests', () => {
       mockPrismaService.cart.findUnique.mockResolvedValue({ id: 'cart-id', userId });
       mockPrismaService.product.findUnique.mockResolvedValue(mockProduct);
       mockPrismaService.product.findMany.mockResolvedValue([{ id: 'p1', stock: 10, price: 20.0 }]);
-      mockPrismaService.cartItem.findFirst.mockResolvedValue({ id: 'ci-1', quantity: 2 });
+      mockPrismaService.cartItem.findMany
+        .mockResolvedValueOnce([{ id: 'ci-1', quantity: 2, productId: 'p1' }])
+        .mockResolvedValueOnce([{ price: 20, quantity: 5 }]);
       mockPrismaService.cartItem.update.mockResolvedValue({});
-      mockPrismaService.cartItem.findMany.mockResolvedValue([{ price: 20, quantity: 5 }]);
       mockPrismaService.cart.update.mockResolvedValue({});
 
       const result = await service.reorder(orderId, userId);
