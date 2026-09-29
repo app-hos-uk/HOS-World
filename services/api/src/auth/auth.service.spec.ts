@@ -248,8 +248,8 @@ describe('AuthService', () => {
       });
       expect(bcrypt.hash).toHaveBeenCalled();
       expect(mockPrismaService.user.create).toHaveBeenCalled();
-      expect(result.requiresVerification).toBe(true);
-      expect(result.email).toBe(registerDto.email);
+      expect((result as any).requiresVerification).toBe(true);
+      expect((result as any).email).toBe(registerDto.email);
     });
 
     it('should throw ConflictException if user already exists', async () => {
@@ -801,7 +801,7 @@ describe('AuthService', () => {
       const result = await service.register(dto);
 
       expect(mockPrismaService.seller.create).toHaveBeenCalled();
-      expect(result.requiresVerification).toBe(true);
+      expect((result as any).requiresVerification).toBe(true);
     });
   });
 
