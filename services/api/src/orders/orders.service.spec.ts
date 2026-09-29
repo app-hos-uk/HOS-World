@@ -35,6 +35,7 @@ describe('OrdersService - Phase 1 Tests', () => {
     },
     product: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       update: jest.fn(),
     },
     address: {
@@ -64,10 +65,12 @@ describe('OrdersService - Phase 1 Tests', () => {
     },
     influencer: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       update: jest.fn(),
     },
     influencerCampaign: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       update: jest.fn(),
     },
     giftCardTransaction: {
@@ -1429,6 +1432,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       mockPrismaService.cart.findUnique.mockResolvedValue(null);
       mockPrismaService.cart.create.mockResolvedValue({ id: 'new-cart', userId });
       mockPrismaService.product.findUnique.mockResolvedValue(mockProduct);
+      mockPrismaService.product.findMany.mockResolvedValue([{ id: 'p1', stock: 10, price: 25.0 }]);
       mockPrismaService.cartItem.findFirst.mockResolvedValue(null);
       mockPrismaService.cartItem.create.mockResolvedValue({});
       mockPrismaService.cartItem.findMany.mockResolvedValue([{ price: 25, quantity: 2 }]);
@@ -1453,6 +1457,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       });
       mockPrismaService.cart.findUnique.mockResolvedValue({ id: 'cart-id', userId });
       mockPrismaService.product.findUnique.mockResolvedValue(mockProduct);
+      mockPrismaService.product.findMany.mockResolvedValue([{ id: 'p1', stock: 10, price: 20.0 }]);
       mockPrismaService.cartItem.findFirst.mockResolvedValue({ id: 'ci-1', quantity: 2 });
       mockPrismaService.cartItem.update.mockResolvedValue({});
       mockPrismaService.cartItem.findMany.mockResolvedValue([{ price: 20, quantity: 5 }]);
@@ -1474,6 +1479,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       });
       mockPrismaService.cart.findUnique.mockResolvedValue({ id: 'cart-id', userId });
       mockPrismaService.product.findUnique.mockResolvedValue(null);
+      mockPrismaService.product.findMany.mockResolvedValue([]);
       mockPrismaService.cartItem.findMany.mockResolvedValue([]);
       mockPrismaService.cart.update.mockResolvedValue({});
 
@@ -1500,6 +1506,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       });
       mockPrismaService.cart.findUnique.mockResolvedValue({ id: 'cart-id', userId });
       mockPrismaService.product.findUnique.mockResolvedValue({ id: 'p-oos', stock: 0, price: 10 });
+      mockPrismaService.product.findMany.mockResolvedValue([{ id: 'p-oos', stock: 0, price: 10 }]);
       mockPrismaService.cartItem.findMany.mockResolvedValue([]);
       mockPrismaService.cart.update.mockResolvedValue({});
 
@@ -1576,6 +1583,15 @@ describe('OrdersService - Phase 1 Tests', () => {
         totalSalesAmount: new Decimal(500),
         totalCommission: new Decimal(50),
       });
+      mockPrismaService.influencer.findMany.mockResolvedValue([
+        {
+          id: 'inf-1',
+          totalConversions: 5,
+          totalSalesAmount: new Decimal(500),
+          totalCommission: new Decimal(50),
+        },
+      ]);
+      mockPrismaService.influencerCampaign.findMany.mockResolvedValue([]);
       mockPrismaService.influencer.update.mockResolvedValue({});
 
       await service.reverseInfluencerAttribution('order-1');

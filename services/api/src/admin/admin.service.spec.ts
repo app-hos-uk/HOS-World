@@ -1,9 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { PlatformRegionService } from '../config/platform-region.service';
 import { PolicyService } from '../access-control/policy.service';
 import { PrismaService } from '../database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { TemplatesService } from '../templates/templates.service';
+import { CacheService } from '../cache/cache.service';
 import { UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { BCRYPT_PASSWORD_ROUNDS } from '../config/bcrypt-cost';
@@ -76,6 +80,22 @@ describe('AdminService', () => {
         {
           provide: PolicyService,
           useValue: { invalidate: jest.fn() },
+        },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn((key, def) => def) },
+        },
+        {
+          provide: NotificationsService,
+          useValue: { sendNotificationToUser: jest.fn(), sendNotificationToRole: jest.fn() },
+        },
+        {
+          provide: TemplatesService,
+          useValue: { render: jest.fn() },
+        },
+        {
+          provide: CacheService,
+          useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() },
         },
       ],
     }).compile();

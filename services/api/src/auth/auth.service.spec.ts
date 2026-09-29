@@ -100,6 +100,12 @@ describe('AuthService', () => {
     storeShipmentRequest: {
       findFirst: jest.fn().mockResolvedValue(null),
     },
+    loyaltyMembership: {
+      findUnique: jest.fn().mockResolvedValue(null),
+    },
+    loyaltyTransaction: {
+      findFirst: jest.fn().mockResolvedValue(null),
+    },
   };
 
   const mockJwtService = {
@@ -125,6 +131,7 @@ describe('AuthService', () => {
   const mockNotificationsService = {
     sendNotificationToUser: jest.fn().mockResolvedValue(undefined),
     sendNotificationToRole: jest.fn().mockResolvedValue(undefined),
+    queueNotification: jest.fn().mockResolvedValue(undefined),
   };
 
   const mockTemplatesService = {
@@ -211,7 +218,15 @@ describe('AuthService', () => {
       };
 
       (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
-      mockPrismaService.user.findUnique.mockResolvedValue(null);
+      mockPrismaService.user.findUnique
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 'user-id',
+          email: 'test@example.com',
+          emailVerified: false,
+          firstName: 'Test',
+          lastName: 'User',
+        });
       mockPrismaService.user.create.mockResolvedValue(mockUser);
       mockPrismaService.user.update.mockResolvedValue(mockUser);
       mockPrismaService.refreshToken.findMany.mockResolvedValue([]);
@@ -233,8 +248,8 @@ describe('AuthService', () => {
       });
       expect(bcrypt.hash).toHaveBeenCalled();
       expect(mockPrismaService.user.create).toHaveBeenCalled();
-      expect(result).toHaveProperty('token');
-      expect(result).toHaveProperty('refreshToken');
+      expect(result.requiresVerification).toBe(true);
+      expect(result.email).toBe(registerDto.email);
     });
 
     it('should throw ConflictException if user already exists', async () => {
@@ -751,7 +766,15 @@ describe('AuthService', () => {
       };
 
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed');
-      mockPrismaService.user.findUnique.mockResolvedValue(null);
+      mockPrismaService.user.findUnique
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 'user-id',
+          email: dto.email,
+          emailVerified: false,
+          firstName: dto.firstName,
+          lastName: dto.lastName,
+        });
       mockPrismaService.user.create.mockResolvedValue({
         id: 'user-id',
         email: dto.email,
@@ -778,7 +801,7 @@ describe('AuthService', () => {
       const result = await service.register(dto);
 
       expect(mockPrismaService.seller.create).toHaveBeenCalled();
-      expect(result).toHaveProperty('token');
+      expect(result.requiresVerification).toBe(true);
     });
   });
 
