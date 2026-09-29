@@ -569,7 +569,7 @@ export class PosVoucherService {
         voucher.cardNumber,
         amount,
         voucher.clientId,
-        { currency: channelId ? voucher.currency : undefined, channelId },
+        { currency: voucher.currency, channelId },
       );
 
       const updated = await this.prisma.loyaltyPosVoucher.update({
@@ -833,12 +833,28 @@ export class PosVoucherService {
       currency: opts?.currency,
       channelId: opts?.channelId,
     });
+
+    // Verify the card is active and funded. The POST response may omit
+    // transactions or return a stale status, so re-fetch the card.
+    let card = created;
+    if (!created.transactions?.length || (created.status && created.status !== 'active')) {
+      const refetched = await adapter.getGiftCardByNumber(cardNumber);
+      if (refetched) card = refetched;
+    }
+
+    if (card.status && card.status !== 'active') {
+      throw new Error(
+        `Gift card created but status is "${card.status}" instead of "active". ` +
+          'The card may not be usable at the till.',
+      );
+    }
+
     // Prefer a transaction tagged with our clientId; ACTIVATION may not carry it.
-    const byClient = created.transactions?.find((t) => t.clientId === clientId);
-    const activation = created.transactions?.find((t) => t.type === 'ACTIVATION');
+    const byClient = card.transactions?.find((t) => t.clientId === clientId);
+    const activation = card.transactions?.find((t) => t.type === 'ACTIVATION');
     return {
-      externalTransactionId: byClient?.id || activation?.id || created.id,
-      expiresAt: created.expiresAt ? new Date(created.expiresAt) : null,
+      externalTransactionId: byClient?.id || activation?.id || card.id,
+      expiresAt: card.expiresAt ? new Date(card.expiresAt) : null,
     };
   }
 

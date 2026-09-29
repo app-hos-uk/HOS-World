@@ -143,7 +143,22 @@ export class StoreShipmentService {
       store,
     });
 
-    const saleEmail = this.normalizeEmail(confirmed.customerEmail);
+    let saleEmail = this.normalizeEmail(confirmed.customerEmail);
+
+    // confirmTillInvoice may miss the email when customer hydration fails
+    // silently or the local sale was imported before the email was added.
+    // Fall back to the richer resolveInvoiceCustomerEmail chain which does
+    // an additional live Lightspeed customer lookup.
+    if (!saleEmail) {
+      saleEmail = await this.resolveInvoiceCustomerEmail({
+        storeId,
+        invoiceNumber: invoice,
+        store,
+        posExternalSaleId: confirmed.externalId,
+        metadata: undefined,
+      });
+    }
+
     let email = enteredEmail;
     if (!email) {
       if (!saleEmail) {
@@ -368,7 +383,12 @@ export class StoreShipmentService {
         metadata: row.metadata,
       });
       const signedIn = this.normalizeEmail(userEmail);
-      emailMatchesInvoice = Boolean(saleEmail) && signedIn === saleEmail;
+      const claimEmail = this.normalizeEmail(row.claimEmail);
+      // Accept when the signed-in email matches either the Lightspeed sale
+      // customer OR the email the claim link was originally sent to.
+      emailMatchesInvoice =
+        (Boolean(saleEmail) && signedIn === saleEmail) ||
+        (Boolean(claimEmail) && signedIn === claimEmail);
     }
     return {
       shipmentId: row.id,
@@ -393,7 +413,17 @@ export class StoreShipmentService {
       posExternalSaleId: row.posExternalSaleId,
       metadata: row.metadata,
     });
-    this.assertEmailMatchesSaleCustomer(email, saleEmail, 'claim');
+    // Also accept the claim email: the customer received the magic link at
+    // this address, so it is a valid identity even when Lightspeed holds a
+    // different email for the same customer.
+    const claimEmail = this.normalizeEmail(row.claimEmail);
+    if (claimEmail && email === claimEmail) {
+      // Matches the email the claim was sent to — skip the stricter
+      // Lightspeed check to avoid blocking customers whose POS record
+      // has a different address.
+    } else {
+      this.assertEmailMatchesSaleCustomer(email, saleEmail, 'claim');
+    }
 
     await this.prisma.storeShipmentRequest.update({
       where: { id: row.id },
@@ -666,7 +696,13 @@ export class StoreShipmentService {
           posExternalSaleId: shipment.posExternalSaleId,
           metadata: shipment.metadata,
         });
-        this.assertEmailMatchesSaleCustomer(this.normalizeEmail(user?.email), saleEmail, 'claim');
+        const normalizedUserEmail = this.normalizeEmail(user?.email);
+        const claimEmail = this.normalizeEmail(shipment.claimEmail);
+        // Accept when the user email matches the claim email (the address the
+        // magic link was sent to), even if Lightspeed holds a different address.
+        if (!(claimEmail && normalizedUserEmail === claimEmail)) {
+          this.assertEmailMatchesSaleCustomer(normalizedUserEmail, saleEmail, 'claim');
+        }
         if (saleEmail) {
           await this.prisma.storeShipmentRequest.update({
             where: { id: shipmentId },

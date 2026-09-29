@@ -478,7 +478,7 @@ describe('StoreShipmentService.attachUserToClaim', () => {
     jest.clearAllMocks();
   });
 
-  it('does not continue shipping when the signed-in email is not the Lightspeed customer', async () => {
+  it('does not continue shipping when the signed-in email matches neither Lightspeed customer nor claim email', async () => {
     const { service, prisma, adapter } = makeService();
     prisma.storeShipmentRequest.findUnique.mockResolvedValue(claimRow);
     prisma.pOSSale.findFirst.mockResolvedValue(null);
@@ -488,9 +488,47 @@ describe('StoreShipmentService.attachUserToClaim', () => {
     });
 
     await expect(
-      service.attachUserToClaim('token', 'user-wrong', 'houseofspellsusa@gmail.com'),
+      service.attachUserToClaim('token', 'user-wrong', 'stranger@example.com'),
     ).rejects.toThrow(/does not match the customer on this Lightspeed sale/);
     expect(prisma.storeShipmentRequest.update).not.toHaveBeenCalled();
+  });
+
+  it('continues shipping when the signed-in email matches the claim email even if different from Lightspeed', async () => {
+    const { service, prisma, adapter, skuCustoms, salesImport } = makeService();
+    prisma.storeShipmentRequest.findUnique.mockResolvedValue({
+      ...claimRow,
+      userId: null,
+      posSale: null,
+    });
+    prisma.store.findUnique.mockResolvedValue(shipmentBase.store);
+    prisma.pOSSale.findFirst.mockResolvedValue(null);
+    prisma.user.findUnique.mockResolvedValue({ email: 'houseofspellsusa@gmail.com' });
+    adapter.getSaleById.mockResolvedValue({
+      ...closedRemoteSale,
+      customer: { email: 'buyer@example.com' },
+      items: [{ sku: 'WAND-1', name: 'Wand', quantity: 1, externalProductId: 'prod-1' }],
+    });
+    adapter.getSaleByInvoice.mockResolvedValue({
+      ...closedRemoteSale,
+      customer: { email: 'buyer@example.com' },
+      items: [{ sku: 'WAND-1', name: 'Wand', quantity: 1, externalProductId: 'prod-1' }],
+    });
+    salesImport.importParsedSale.mockResolvedValue({ id: 'pos-1', duplicate: false });
+    prisma.pOSSale.findUnique.mockResolvedValue({
+      id: 'pos-1',
+      status: 'PROCESSED',
+      externalSaleId: 'ls-sale',
+      items: [{ sku: 'WAND-1', productId: null, name: 'Wand', quantity: 1, externalProductId: 'prod-1' }],
+    });
+    skuCustoms.enrichSaleItems.mockResolvedValue({
+      allReady: false,
+      anyBlocked: false,
+      results: [{ sku: 'WAND-1', status: 'PENDING' }],
+    });
+
+    const result = await service.attachUserToClaim('token', 'user-1', 'houseofspellsusa@gmail.com');
+    expect(result).toMatchObject({ status: 'CUSTOMER_DETAILS_REQUIRED' });
+    expect(prisma.storeShipmentRequest.update).toHaveBeenCalled();
   });
 
   it('continues shipping when the signed-in email matches the Lightspeed customer', async () => {
@@ -549,7 +587,20 @@ describe('StoreShipmentService.getClaimContext', () => {
     jest.clearAllMocks();
   });
 
-  it('marks a signed-in email as not matching the Lightspeed customer', async () => {
+  it('marks a signed-in email as not matching when it differs from both Lightspeed customer and claim email', async () => {
+    const { service, prisma, adapter } = makeService();
+    prisma.storeShipmentRequest.findUnique.mockResolvedValue(claimRow);
+    prisma.pOSSale.findFirst.mockResolvedValue(null);
+    adapter.getSaleById.mockResolvedValue({
+      ...closedRemoteSale,
+      customer: { email: 'buyer@example.com' },
+    });
+
+    const result = await service.getClaimContext('token', 'stranger@example.com');
+    expect(result.emailMatchesInvoice).toBe(false);
+  });
+
+  it('marks a signed-in email as matching when it equals the claim email even if Lightspeed differs', async () => {
     const { service, prisma, adapter } = makeService();
     prisma.storeShipmentRequest.findUnique.mockResolvedValue(claimRow);
     prisma.pOSSale.findFirst.mockResolvedValue(null);
@@ -559,7 +610,7 @@ describe('StoreShipmentService.getClaimContext', () => {
     });
 
     const result = await service.getClaimContext('token', 'houseofspellsusa@gmail.com');
-    expect(result.emailMatchesInvoice).toBe(false);
+    expect(result.emailMatchesInvoice).toBe(true);
   });
 
   it('marks a signed-in email as matching the Lightspeed customer', async () => {
