@@ -21,6 +21,7 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { PrismaService } from '../database/prisma.service';
 import { JourneyService } from './journey.service';
 import { MessagingService } from '../messaging/messaging.service';
+import { CreateJourneyDto, UpdateJourneyDto } from './dto/journey.dto';
 
 @ApiTags('admin-journeys')
 @ApiBearerAuth('JWT-auth')
@@ -62,19 +63,7 @@ export class JourneyAdminController {
   @RequireAccess({ permission: 'marketing.create', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Create journey' })
   async create(
-    @Body()
-    body: {
-      slug: string;
-      name: string;
-      description?: string;
-      triggerEvent: string;
-      triggerConditions?: object;
-      steps: unknown[];
-      isActive?: boolean;
-      regionCodes?: string[];
-      channelCodes?: string[];
-      segmentId?: string | null;
-    },
+    @Body() body: CreateJourneyDto,
   ): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.marketingJourney.create({
       data: {
@@ -98,18 +87,7 @@ export class JourneyAdminController {
   @ApiOperation({ summary: 'Update journey' })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body()
-    body: Partial<{
-      name: string;
-      description: string;
-      triggerEvent: string;
-      triggerConditions: object;
-      steps: unknown[];
-      isActive: boolean;
-      regionCodes: string[];
-      channelCodes: string[];
-      segmentId: string | null;
-    }>,
+    @Body() body: UpdateJourneyDto,
   ): Promise<ApiResponse<unknown>> {
     const data = await this.prisma.marketingJourney.update({
       where: { id },

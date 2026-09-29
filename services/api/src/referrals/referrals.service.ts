@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 
 /** Same visitor + influencer, unconverted, within this window → refresh row, do not double-count clicks */
@@ -21,6 +21,10 @@ export class ReferralsService {
     campaignId?: string;
     utmParams?: Record<string, string>;
   }) {
+    if (!dto.visitorId) {
+      throw new BadRequestException('visitorId is required for referral tracking');
+    }
+
     const influencer = await this.prisma.influencer.findUnique({
       where: { referralCode: dto.referralCode },
     });

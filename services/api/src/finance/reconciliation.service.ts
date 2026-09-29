@@ -34,6 +34,16 @@ export class ReconciliationService {
       throw new BadRequestException('periodStart must be before periodEnd');
     }
 
+    const existingRun = await this.prisma.reconciliationRun.findFirst({
+      where: { status: 'RUNNING' },
+      select: { id: true, periodStart: true, periodEnd: true, createdAt: true },
+    });
+    if (existingRun) {
+      throw new BadRequestException(
+        `A reconciliation run is already in progress (ID: ${existingRun.id}, started ${existingRun.createdAt.toISOString()}). Please wait for it to complete.`,
+      );
+    }
+
     let run: { id: string };
     try {
       run = await this.prisma.reconciliationRun.create({

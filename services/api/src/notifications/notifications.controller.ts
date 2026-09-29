@@ -107,6 +107,19 @@ export class NotificationsController {
     };
   }
 
+  @Get('unread-count')
+  @RequireAccess({ permission: 'users.view', scope: 'SELF' })
+  @ApiOperation({
+    summary: 'Get unread notification count',
+    description: 'Returns the number of unread notifications for the authenticated user.',
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Unread count retrieved' })
+  @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
+  async getUnreadCount(@Request() req: any): Promise<ApiResponse<{ count: number }>> {
+    const count = await this.notificationsService.getUnreadCount(req.user.id);
+    return { data: { count }, message: 'Unread count retrieved' };
+  }
+
   @Get()
   @RequireAccess({ permission: 'users.view', scope: 'SELF' })
   @ApiOperation({

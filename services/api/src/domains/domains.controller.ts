@@ -8,6 +8,7 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -30,6 +31,14 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 export class DomainsController {
   constructor(private readonly domainsService: DomainsService) {}
 
+  private async assertSellerOwnership(sellerId: string, userId: string, role: string): Promise<void> {
+    if (role === 'ADMIN') return;
+    const seller = await this.domainsService.findSellerById(sellerId);
+    if (!seller || seller.userId !== userId) {
+      throw new ForbiddenException('You can only manage domains for your own store');
+    }
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
   @RequireAccess({ permission: 'sellers.operate', scope: 'SELF' })
@@ -47,7 +56,9 @@ export class DomainsController {
   @SwaggerApiResponse({ status: 404, description: 'Seller not found' })
   async getSellerDomains(
     @Param('sellerId', ParseUUIDPipe) sellerId: string,
+    @Request() req: any,
   ): Promise<ApiResponse<any>> {
+    await this.assertSellerOwnership(sellerId, req.user.id, req.user.role);
     const domains = await this.domainsService.getSellerDomains(sellerId);
     return {
       data: domains,
@@ -122,7 +133,9 @@ export class DomainsController {
   async createSubDomain(
     @Param('sellerId', ParseUUIDPipe) sellerId: string,
     @Body() createDto: CreateSubDomainDto,
+    @Request() req: any,
   ): Promise<ApiResponse<any>> {
+    await this.assertSellerOwnership(sellerId, req.user.id, req.user.role);
     const seller = await this.domainsService.createSubDomain(sellerId, createDto);
     return {
       data: seller,
@@ -170,7 +183,9 @@ export class DomainsController {
   @SwaggerApiResponse({ status: 404, description: 'Seller or subdomain not found' })
   async removeSubDomain(
     @Param('sellerId', ParseUUIDPipe) sellerId: string,
+    @Request() req: any,
   ): Promise<ApiResponse<any>> {
+    await this.assertSellerOwnership(sellerId, req.user.id, req.user.role);
     const seller = await this.domainsService.removeSubDomain(sellerId);
     return {
       data: seller,
@@ -215,7 +230,9 @@ export class DomainsController {
   @SwaggerApiResponse({ status: 404, description: 'Seller not found' })
   async getDNSConfiguration(
     @Param('sellerId', ParseUUIDPipe) sellerId: string,
+    @Request() req: any,
   ): Promise<ApiResponse<any>> {
+    await this.assertSellerOwnership(sellerId, req.user.id, req.user.role);
     const config = await this.domainsService.getDNSConfiguration(sellerId);
     return {
       data: config,

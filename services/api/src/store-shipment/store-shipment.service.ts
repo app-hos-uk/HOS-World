@@ -283,7 +283,7 @@ export class StoreShipmentService {
 
     const claimUrl = this.buildClaimUrl(token);
     const lookupUrl = this.buildLookupUrl(storeId);
-    this.logger.log(`Store shipment claim link for ${email}: ${claimUrl}`);
+    this.logger.log(`Store shipment claim link generated for ${email} (shipment ${shipment.id})`);
 
     let emailQueued = false;
     try {
@@ -427,7 +427,7 @@ export class StoreShipmentService {
 
     await this.prisma.storeShipmentRequest.update({
       where: { id: row.id },
-      data: { userId, claimEmail: email },
+      data: { userId, claimEmail: email, claimTokenHash: null },
     });
 
     await this.prisma.gDPRConsentLog.updateMany({
@@ -1030,10 +1030,14 @@ export class StoreShipmentService {
     }
 
     const fixed = Number(shipment.totalCustomerCharge || 0);
-    const amount = fixed > 0 ? fixed : Number(params.amount || 0);
-    if (!(amount > 0)) throw new BadRequestException('Shipping amount is missing');
-    const carrier = fixed > 0 ? 'HOS' : params.carrier || 'HOS';
-    const service = fixed > 0 ? 'FIXED_BOX' : params.service || 'standard';
+    if (fixed <= 0) {
+      throw new BadRequestException(
+        'Shipping quote has not been finalized. Staff must set box sizes before payment can proceed.',
+      );
+    }
+    const amount = fixed;
+    const carrier = 'HOS';
+    const service = 'FIXED_BOX';
 
     await this.paymentProvider.ensureAvailableProviders();
     if (!this.paymentProvider.isProviderAvailable('stripe')) {
@@ -1104,7 +1108,7 @@ export class StoreShipmentService {
         selectedCarrier: carrier,
         selectedService: service,
         stripePaymentIntentId: intent.paymentIntentId,
-        status: fixed > 0 ? 'AWAITING_PAYMENT' : 'QUOTED',
+        status: 'AWAITING_PAYMENT',
       },
     });
 

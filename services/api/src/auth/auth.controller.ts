@@ -164,19 +164,26 @@ export class AuthController {
       throw new BadRequestException('Registration failed');
     }
 
-    // Fandom challenge — required for customer registration via the web join flow.
-    // When the challenge API was unreachable the client sends neither field;
-    // only enforce validation when at least one field is present or when the
-    // strict env flag demands it even for missing challenges.
-    const challengeRequired =
-      this.configService.get<string>('FANDOM_CHALLENGE_REQUIRED') !== 'false';
-    const hasAnyChallengeData =
-      registerDto.fandomChallengeToken != null || registerDto.fandomChallengeAnswer != null;
-    if (challengeRequired && registerDto.role === 'customer' && hasAnyChallengeData) {
-      this.fandomChallenge.validate(
-        registerDto.fandomChallengeToken,
-        registerDto.fandomChallengeAnswer,
-      );
+    // Fandom challenge — required for the join.houseofspells.com registration flow.
+    // FANDOM_CHALLENGE_REQUIRED must be explicitly 'true' to enforce; when unset
+    // or 'false', challenges are validated only if the client sent them.
+    const challengeStrict =
+      this.configService.get<string>('FANDOM_CHALLENGE_REQUIRED') === 'true';
+    const hasChallengeFields =
+      !!registerDto.fandomChallengeToken || registerDto.fandomChallengeAnswer != null;
+
+    if (registerDto.role === 'customer') {
+      if (challengeStrict && !hasChallengeFields) {
+        throw new BadRequestException(
+          'Fandom challenge is required for registration. Please complete the challenge.',
+        );
+      }
+      if (hasChallengeFields) {
+        this.fandomChallenge.validate(
+          registerDto.fandomChallengeToken,
+          registerDto.fandomChallengeAnswer,
+        );
+      }
     }
 
     const ipAddress =
@@ -449,6 +456,9 @@ export class AuthController {
   @ApiBody({ schema: { type: 'object', properties: { email: { type: 'string' } }, required: ['email'] } })
   @SwaggerApiResponse({ status: 200, description: 'Verification email sent if applicable' })
   async resendVerification(@Body('email') email: string): Promise<ApiResponse<{ message: string }>> {
+    if (!email || typeof email !== 'string' || !email.includes('@') || email.length > 254) {
+      throw new BadRequestException('A valid email address is required');
+    }
     const result = await this.authService.resendVerificationByEmail(email);
     return { data: result, message: result.message };
   }

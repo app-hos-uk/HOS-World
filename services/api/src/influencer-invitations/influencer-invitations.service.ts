@@ -48,13 +48,25 @@ export class InfluencerInvitationsService {
    * Create and send an influencer invitation
    */
   async create(invitedBy: string, dto: CreateInfluencerInvitationDto) {
-    // Check if email already has a pending invitation
+    // Check if email already has a pending, non-expired invitation
     const existingInvitation = await this.prisma.influencerInvitation.findFirst({
       where: {
         email: dto.email.toLowerCase(),
         status: 'PENDING',
+        expiresAt: { gt: new Date() },
       },
     });
+
+    if (!existingInvitation) {
+      await this.prisma.influencerInvitation.updateMany({
+        where: {
+          email: dto.email.toLowerCase(),
+          status: 'PENDING',
+          expiresAt: { lt: new Date() },
+        },
+        data: { status: 'EXPIRED' },
+      });
+    }
 
     if (existingInvitation) {
       throw new ConflictException('An invitation is already pending for this email');

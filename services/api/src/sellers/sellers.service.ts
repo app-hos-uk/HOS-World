@@ -766,6 +766,12 @@ export class SellersService {
     });
     if (!seller) throw new NotFoundException('Seller not found');
 
+    if (seller.vendorStatus !== 'ACTIVE' && seller.vendorStatus !== 'APPROVED') {
+      throw new BadRequestException(
+        `Cannot suspend vendor with status ${seller.vendorStatus}. Only ACTIVE or APPROVED vendors can be suspended.`,
+      );
+    }
+
     return this.prisma.seller.update({
       where: { id: sellerId },
       data: {

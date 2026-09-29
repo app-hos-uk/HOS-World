@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
@@ -105,6 +106,7 @@ export default function AdminShippingRatesPage() {
   if (!matrix) return <p className="p-6 text-hos-text-muted">Loading rate matrix…</p>;
 
   return (
+    <RouteGuard allowedRoles={['ADMIN']}>
     <div className="p-6 space-y-8">
       <div>
         <h1 className="text-xl font-semibold">Fixed shipping rates</h1>
@@ -247,5 +249,6 @@ export default function AdminShippingRatesPage() {
         </p>
       </section>
     </div>
+    </RouteGuard>
   );
 }

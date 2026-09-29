@@ -201,7 +201,13 @@ export class FandomChallengeService {
   constructor(private config: ConfigService) {
     this.secret = config.get<string>('FANDOM_CHALLENGE_SECRET')
       || config.get<string>('JWT_SECRET')
-      || 'fandom-challenge-fallback-key';
+      || '';
+    if (!this.secret) {
+      if (config.get<string>('NODE_ENV') === 'production') {
+        throw new Error('FANDOM_CHALLENGE_SECRET or JWT_SECRET must be configured in production');
+      }
+      this.secret = 'dev-only-fandom-challenge-key';
+    }
   }
 
   generate(): FandomChallenge {

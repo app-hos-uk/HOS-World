@@ -116,24 +116,6 @@ export class KnowledgeBaseController {
   }
 
   @Public()
-  @Get('articles/:id')
-  @ApiOperation({
-    summary: 'Get article by ID',
-    description:
-      'Retrieves a specific knowledge base article by ID. Public endpoint, no authentication required.',
-  })
-  @ApiParam({ name: 'id', description: 'Article ID', type: String })
-  @SwaggerApiResponse({ status: 200, description: 'Article retrieved successfully' })
-  @SwaggerApiResponse({ status: 404, description: 'Article not found' })
-  async getArticleById(@Param('id') id: string): Promise<ApiResponse<any>> {
-    const article = await this.knowledgeBaseService.getArticleById(id);
-    return {
-      data: article,
-      message: 'Article retrieved successfully',
-    };
-  }
-
-  @Public()
   @Get('articles/slug/:slug')
   @ApiOperation({
     summary: 'Get article by slug',
@@ -145,6 +127,24 @@ export class KnowledgeBaseController {
   @SwaggerApiResponse({ status: 404, description: 'Article not found' })
   async getArticleBySlug(@Param('slug') slug: string): Promise<ApiResponse<any>> {
     const article = await this.knowledgeBaseService.getArticleBySlug(slug);
+    return {
+      data: article,
+      message: 'Article retrieved successfully',
+    };
+  }
+
+  @Public()
+  @Get('articles/:id')
+  @ApiOperation({
+    summary: 'Get article by ID',
+    description:
+      'Retrieves a specific knowledge base article by ID. Public endpoint, no authentication required.',
+  })
+  @ApiParam({ name: 'id', description: 'Article ID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Article retrieved successfully' })
+  @SwaggerApiResponse({ status: 404, description: 'Article not found' })
+  async getArticleById(@Param('id') id: string): Promise<ApiResponse<any>> {
+    const article = await this.knowledgeBaseService.getArticleById(id);
     return {
       data: article,
       message: 'Article retrieved successfully',

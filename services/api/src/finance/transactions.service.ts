@@ -4,9 +4,11 @@ import {
   NotFoundException,
   Logger,
   OnModuleInit,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CurrencyService } from '../currency/currency.service';
+import { PeriodCloseService } from './period-close.service';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 const ALLOWED_TRANSACTION_TYPES = ['PAYMENT', 'PAYOUT', 'REFUND', 'FEE', 'ADJUSTMENT'] as const;
@@ -19,6 +21,7 @@ export class TransactionsService implements OnModuleInit {
   constructor(
     private prisma: PrismaService,
     private currencyService: CurrencyService,
+    @Optional() private periodCloseService?: PeriodCloseService,
   ) {}
 
   async onModuleInit() {
@@ -45,7 +48,18 @@ export class TransactionsService implements OnModuleInit {
     description?: string;
     metadata?: any;
     status?: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+    createdAt?: Date | string;
   }) {
+    if (this.periodCloseService) {
+      const txDate = data.createdAt ? new Date(data.createdAt) : new Date();
+      const isClosed = await this.periodCloseService.isTransactionInClosedPeriod(txDate);
+      if (isClosed) {
+        throw new BadRequestException(
+          'Cannot create transactions in a closed accounting period. Reopen the period first.',
+        );
+      }
+    }
+
     if (!ALLOWED_TRANSACTION_TYPES.includes(data.type)) {
       throw new BadRequestException(
         `Invalid transaction type "${data.type}". Allowed: ${ALLOWED_TRANSACTION_TYPES.join(', ')}`,
@@ -345,6 +359,16 @@ export class TransactionsService implements OnModuleInit {
 
     if (!transaction) {
       throw new NotFoundException('Transaction not found');
+    }
+
+    if (this.periodCloseService) {
+      const txDate = transaction.createdAt ? new Date(transaction.createdAt) : new Date();
+      const isClosed = await this.periodCloseService.isTransactionInClosedPeriod(txDate);
+      if (isClosed) {
+        throw new BadRequestException(
+          'Cannot create transactions in a closed accounting period. Reopen the period first.',
+        );
+      }
     }
 
     const previousStatus = transaction.status;

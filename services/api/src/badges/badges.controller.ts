@@ -33,24 +33,6 @@ export class BadgesController {
     };
   }
 
-  @Public()
-  @RequireAccess({ permission: 'loyalty.manage', scope: 'MARKET' })
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Get badge by ID',
-    description: 'Retrieves a specific badge. Public endpoint.',
-  })
-  @ApiParam({ name: 'id', description: 'Badge ID', type: String })
-  @SwaggerApiResponse({ status: 200, description: 'Badge retrieved successfully' })
-  @SwaggerApiResponse({ status: 404, description: 'Badge not found' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
-    const badge = await this.badgesService.findOne(id);
-    return {
-      data: badge,
-      message: 'Badge retrieved successfully',
-    };
-  }
-
   @RequireAccess({ permission: 'loyalty.manage', scope: 'MARKET' })
   @Get('my-badges')
   @ApiBearerAuth('JWT-auth')
@@ -67,6 +49,24 @@ export class BadgesController {
     return {
       data: badges,
       message: 'User badges retrieved successfully',
+    };
+  }
+
+  @Public()
+  @RequireAccess({ permission: 'loyalty.manage', scope: 'MARKET' })
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get badge by ID',
+    description: 'Retrieves a specific badge. Public endpoint.',
+  })
+  @ApiParam({ name: 'id', description: 'Badge ID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Badge retrieved successfully' })
+  @SwaggerApiResponse({ status: 404, description: 'Badge not found' })
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
+    const badge = await this.badgesService.findOne(id);
+    return {
+      data: badge,
+      message: 'Badge retrieved successfully',
     };
   }
 }

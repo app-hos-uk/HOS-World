@@ -223,33 +223,18 @@ export class DigitalProductsService {
       throw new ForbiddenException('Maximum download limit reached');
     }
 
-    // Log the download
-    await this.prisma.activityLog.create({
-      data: {
-        user: { connect: { id: userId } },
-        action: 'DIGITAL_PRODUCT_DOWNLOAD',
-        entityType: 'Product',
-        entityId: product.productId,
-        description: `Downloaded digital product: ${product.name}`,
-        metadata: {
-          productId: product.productId,
-          orderId: product.orderId,
-          downloadNumber: product.downloadCount + 1,
-        },
-      },
-    });
-
     return {
       downloadUrl: `/api/digital-products/${id}/file`,
       fileName: product.fileName,
       expiresIn: 3600,
-      remainingDownloads: this.MAX_DOWNLOADS - product.downloadCount - 1,
+      remainingDownloads: this.MAX_DOWNLOADS - product.downloadCount,
     };
   }
 
   /**
    * Resolve a redirect URL for GET :id/file.
-   * Also increments the download counter so the endpoint cannot bypass limits.
+   * This is the only place download count is incremented, so the limit is
+   * enforced regardless of whether the caller went through POST /download first.
    */
   async getSignedFileRedirectUrl(compositeId: string, userId: string): Promise<string> {
     const digital = await this.getDigitalProduct(compositeId, userId);
@@ -266,7 +251,7 @@ export class DigitalProductsService {
         action: 'DIGITAL_PRODUCT_DOWNLOAD',
         entityType: 'Product',
         entityId: digital.productId,
-        description: `Downloaded digital product (file redirect): ${digital.name}`,
+        description: `Downloaded digital product: ${digital.name}`,
         metadata: {
           productId: digital.productId,
           orderId: digital.orderId,

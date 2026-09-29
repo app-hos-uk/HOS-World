@@ -418,8 +418,8 @@ export class LoyaltyAdminController {
 
   @Post('adjust')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
-  async adjust(@Body() body: AdminLoyaltyAdjustDto): Promise<ApiResponse<unknown>> {
-    const data = await this.loyalty.adminAdjustPoints(body.userId, body.pointsDelta, body.reason);
+  async adjust(@Body() body: AdminLoyaltyAdjustDto, @Request() req: any): Promise<ApiResponse<unknown>> {
+    const data = await this.loyalty.adminAdjustPoints(body.userId, body.pointsDelta, body.reason, req.user?.id);
     return { data, message: 'Adjusted' };
   }
 

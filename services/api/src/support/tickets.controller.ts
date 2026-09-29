@@ -25,6 +25,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
+import { CreateTicketDto, CreateTicketMessageDto } from './dto/ticket.dto';
 
 @ApiTags('support')
 @Controller('support/tickets')
@@ -71,20 +72,9 @@ export class TicketsController {
   @SwaggerApiResponse({ status: 400, description: 'Invalid request data' })
   @SwaggerApiResponse({ status: 401, description: 'Unauthorized' })
   async createTicket(
-    @Body()
-    body: {
-      userId?: string;
-      sellerId?: string;
-      orderId?: string;
-      subject: string;
-      category: string;
-      priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
-      initialMessage?: string;
-      description?: string;
-    },
+    @Body() body: CreateTicketDto,
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
-    // Never trust client-supplied userId; the ticket owner is always the authenticated user.
     const ticket = await this.ticketsService.createTicket(
       {
         sellerId: body.sellerId,
@@ -295,12 +285,7 @@ export class TicketsController {
   @SwaggerApiResponse({ status: 404, description: 'Ticket not found' })
   async addMessage(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body()
-    body: {
-      content: string;
-      isInternal?: boolean;
-      attachments?: any;
-    },
+    @Body() body: CreateTicketMessageDto,
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
     const message = await this.ticketsService.addMessage(

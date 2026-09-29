@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { DEFAULT_CURRENCY } from '@/lib/regionConfig';
@@ -50,6 +51,7 @@ export default function AdminBoxSizesPage() {
   }, []);
 
   return (
+    <RouteGuard allowedRoles={['ADMIN']}>
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-xl font-semibold">Box sizes</h1>
@@ -135,5 +137,6 @@ export default function AdminBoxSizesPage() {
         </table>
       </div>
     </div>
+    </RouteGuard>
   );
 }

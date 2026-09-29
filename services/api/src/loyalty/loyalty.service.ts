@@ -1537,7 +1537,7 @@ export class LoyaltyService implements OnModuleInit {
     await this.tiers.recalculateTier(membershipId);
   }
 
-  async adminAdjustPoints(userId: string, delta: number, reason?: string) {
+  async adminAdjustPoints(userId: string, delta: number, reason?: string, adminUserId?: string) {
     this.assertEnabled();
     if (!Number.isInteger(delta) || delta === 0) {
       throw new BadRequestException('pointsDelta must be a non-zero integer');
@@ -1545,13 +1545,18 @@ export class LoyaltyService implements OnModuleInit {
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) throw new NotFoundException('Loyalty membership not found');
 
+    const description = adminUserId
+      ? `${reason || 'Manual adjustment'} (by admin ${adminUserId})`
+      : reason || 'Manual adjustment';
+
     try {
       await this.prisma.$transaction(async (tx) => {
         const type = LoyaltyTxType.ADJUST;
         await this.wallet.applyDelta(tx, membership.id, delta, type, {
           source: 'ADMIN',
           channel: 'SYSTEM',
-          description: reason || 'Manual adjustment',
+          description,
+          metadata: adminUserId ? { adminUserId } : undefined,
         });
         if (delta > 0) {
           await tx.loyaltyMembership.update({

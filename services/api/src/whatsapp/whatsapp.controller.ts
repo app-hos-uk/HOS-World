@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Req,
   Headers,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -33,6 +34,8 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @ApiTags('whatsapp')
 @Controller('whatsapp')
 export class WhatsAppController {
+  private readonly logger = new Logger(WhatsAppController.name);
+
   constructor(
     private readonly whatsappService: WhatsAppService,
     private readonly configService: ConfigService,
@@ -101,9 +104,8 @@ export class WhatsAppController {
     // Fail closed: never accept unverified webhooks in production. If the auth token is not
     // configured we cannot verify the signature, so we must reject rather than trust the body.
     if (!authToken) {
-      if (isProduction) {
-        throw new UnauthorizedException('Webhook verification is not configured');
-      }
+      this.logger.warn('TWILIO_AUTH_TOKEN not configured — rejecting WhatsApp webhook');
+      throw new UnauthorizedException('Webhook verification is not configured');
     } else {
       if (!signature) {
         throw new UnauthorizedException('Missing Twilio signature');

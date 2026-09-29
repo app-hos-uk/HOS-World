@@ -41,6 +41,13 @@ export class CharactersService {
     return character;
   }
 
+  async findBySlug(slug: string) {
+    return this.prisma.character.findFirst({
+      where: { slug, isActive: true },
+      include: { fandom: true },
+    });
+  }
+
   async findByFandom(fandomSlug: string) {
     const fandom = await this.prisma.fandom.findUnique({
       where: { slug: fandomSlug },

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, NotFoundException } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -29,6 +29,25 @@ export class CharactersController {
     return {
       data: characters,
       message: 'Characters retrieved successfully',
+    };
+  }
+
+  @Public()
+  @Get('by-slug/:slug')
+  @ApiOperation({
+    summary: 'Get character by slug',
+    description:
+      'Retrieves a specific character by slug. Public endpoint, no authentication required.',
+  })
+  @ApiParam({ name: 'slug', description: 'Character slug', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Character retrieved successfully' })
+  @SwaggerApiResponse({ status: 404, description: 'Character not found' })
+  async findBySlug(@Param('slug') slug: string): Promise<ApiResponse<any>> {
+    const character = await this.charactersService.findBySlug(slug);
+    if (!character) throw new NotFoundException('Character not found');
+    return {
+      data: character,
+      message: 'Character retrieved successfully',
     };
   }
 

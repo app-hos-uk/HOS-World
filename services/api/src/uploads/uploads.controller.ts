@@ -419,14 +419,26 @@ export class UploadsController {
   @Get('*')
   @ApiOperation({
     summary: 'Serve uploaded file',
-    description: 'Serves an uploaded file. Supports nested folder paths. Public endpoint.',
+    description:
+      'Serves an uploaded file from an allowed public folder. Supports nested folder paths.',
   })
   @SwaggerApiResponse({ status: 200, description: 'File served successfully', type: 'file' })
+  @SwaggerApiResponse({ status: 403, description: 'Access denied to this resource' })
   @SwaggerApiResponse({ status: 404, description: 'File not found' })
   async serveFile(@Param() params: Record<string, string>, @Res() res: Response): Promise<void> {
     const relativePath = params['0'];
     if (!relativePath || relativePath.includes('..')) {
       throw new NotFoundException('File not found');
+    }
+
+    const ALLOWED_PREFIXES = [
+      'products/', 'banners/', 'avatars/', 'public/', 'reviews/',
+      'uploads/', 'gallery/', 'cms/', 'catalog/', 'marketing/',
+      'universes/', 'verification/', 'themes/', 'sellers/',
+    ];
+    const isAllowed = ALLOWED_PREFIXES.some((p) => relativePath.startsWith(p));
+    if (!isAllowed) {
+      throw new ForbiddenException('Access denied to this resource');
     }
 
     try {

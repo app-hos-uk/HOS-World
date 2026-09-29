@@ -12,6 +12,7 @@ import { CreateGiftCardDto } from './dto/create-gift-card.dto';
 import { RedeemGiftCardDto } from './dto/redeem-gift-card.dto';
 import { PlatformRegionService } from '../config/platform-region.service';
 import { PosExternalGiftCardService } from '../loyalty/services/pos-external-gift-card.service';
+import * as crypto from 'crypto';
 
 /** Matches codes from generateCode(): XXXX-XXXX-XXXX-XXXX, charset without I,O,0,1 */
 const GIFT_CARD_CODE_REGEX =
@@ -199,7 +200,7 @@ export class GiftCardsService {
     let code = '';
     for (let i = 0; i < 16; i++) {
       if (i > 0 && i % 4 === 0) code += '-';
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
+      code += chars.charAt(crypto.randomInt(chars.length));
     }
     return code;
   }
@@ -336,6 +337,7 @@ export class GiftCardsService {
     return {
       valid: true,
       balance,
+      hasBalance: balance > 0,
       currency: giftCard.currency,
       expiresAt: giftCard.expiresAt,
       source: giftCard.source ?? 'HOS',

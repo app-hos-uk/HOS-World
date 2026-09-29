@@ -32,23 +32,6 @@ export class QuestsController {
     };
   }
 
-  @Public()
-  @Get(':id')
-  @ApiOperation({
-    summary: 'Get quest by ID',
-    description: 'Retrieves a specific quest. Public endpoint.',
-  })
-  @ApiParam({ name: 'id', description: 'Quest ID', type: String })
-  @SwaggerApiResponse({ status: 200, description: 'Quest retrieved successfully' })
-  @SwaggerApiResponse({ status: 404, description: 'Quest not found' })
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
-    const quest = await this.questsService.findOne(id);
-    return {
-      data: quest,
-      message: 'Quest retrieved successfully',
-    };
-  }
-
   @Get('available')
   @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
@@ -100,6 +83,23 @@ export class QuestsController {
     return {
       data: quests,
       message: 'Completed quests retrieved successfully',
+    };
+  }
+
+  @Public()
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Get quest by ID',
+    description: 'Retrieves a specific quest. Public endpoint.',
+  })
+  @ApiParam({ name: 'id', description: 'Quest ID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Quest retrieved successfully' })
+  @SwaggerApiResponse({ status: 404, description: 'Quest not found' })
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any>> {
+    const quest = await this.questsService.findOne(id);
+    return {
+      data: quest,
+      message: 'Quest retrieved successfully',
     };
   }
 

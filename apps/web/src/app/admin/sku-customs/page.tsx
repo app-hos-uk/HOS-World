@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -38,6 +39,7 @@ export default function AdminSkuCustomsPage() {
   };
 
   return (
+    <RouteGuard allowedRoles={['ADMIN']}>
     <div className="p-6 space-y-4">
       <h1 className="text-xl font-semibold">SKU customs enrichment</h1>
       <p className="text-sm text-hos-text-muted">
@@ -97,5 +99,6 @@ export default function AdminSkuCustomsPage() {
         {rows.length === 0 && <p className="text-hos-text-muted">No pending SKUs</p>}
       </div>
     </div>
+    </RouteGuard>
   );
 }

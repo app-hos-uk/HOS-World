@@ -1328,6 +1328,15 @@ export class AuthService {
         revokedAt: new Date(),
       },
     });
+
+    try {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { tokenVersion: { increment: 1 } },
+      });
+    } catch (e) {
+      this.logger.warn(`Failed to bump tokenVersion for user ${userId}: ${(e as Error).message}`);
+    }
   }
 
   /**
@@ -1474,7 +1483,7 @@ export class AuthService {
       const rendered = await this.templatesService.render('password_reset', {
         customerName,
         resetLink,
-        expiresInMinutes: '1440',
+        expiresInMinutes: '60',
       });
       await this.notificationsService.queueNotification(
         user.email,

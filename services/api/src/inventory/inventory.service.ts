@@ -327,13 +327,21 @@ export class InventoryService {
         data: { status: 'CONFIRMED', orderId },
       });
 
-      await tx.inventoryLocation.update({
-        where: { id: reservation.inventoryLocationId },
+      const decremented = await tx.inventoryLocation.updateMany({
+        where: {
+          id: reservation.inventoryLocationId,
+          quantity: { gte: reservation.quantity },
+        },
         data: {
           quantity: { decrement: reservation.quantity },
           reserved: { decrement: reservation.quantity },
         },
       });
+      if (decremented.count === 0) {
+        throw new BadRequestException(
+          `Insufficient stock to confirm reservation. The inventory may have been adjusted.`,
+        );
+      }
 
       return reservation;
     });

@@ -11,6 +11,13 @@ import { AssignCustomDomainDto, CreateSubDomainDto } from './dto/assign-domain.d
 export class DomainsService {
   constructor(private prisma: PrismaService) {}
 
+  async findSellerById(sellerId: string) {
+    return this.prisma.seller.findUnique({
+      where: { id: sellerId },
+      select: { id: true, userId: true },
+    });
+  }
+
   async getSellerDomains(sellerId: string) {
     const seller = await this.prisma.seller.findUnique({
       where: { id: sellerId },

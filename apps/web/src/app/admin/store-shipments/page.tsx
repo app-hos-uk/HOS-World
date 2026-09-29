@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -32,6 +33,7 @@ export default function AdminStoreShipmentsPage() {
   }, [status]);
 
   return (
+    <RouteGuard allowedRoles={['ADMIN']}>
     <div className="p-6 space-y-4">
       <h1 className="text-xl font-semibold">Store shipments</h1>
       <div className="flex gap-2 items-center">
@@ -96,5 +98,6 @@ export default function AdminStoreShipmentsPage() {
         </div>
       )}
     </div>
+    </RouteGuard>
   );
 }

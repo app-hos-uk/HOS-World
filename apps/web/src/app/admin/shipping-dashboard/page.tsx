@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
@@ -55,6 +56,7 @@ export default function ShippingDashboardPage() {
   );
 
   return (
+    <RouteGuard allowedRoles={['ADMIN']}>
     <div className="p-6 space-y-8">
       <h1 className="text-xl font-semibold">In-store shipping dashboard</h1>
       <section className="space-y-3">
@@ -95,5 +97,6 @@ export default function ShippingDashboardPage() {
         </div>
       </section>
     </div>
+    </RouteGuard>
   );
 }

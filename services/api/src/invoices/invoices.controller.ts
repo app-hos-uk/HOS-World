@@ -65,7 +65,7 @@ export class InvoicesController {
     const role = req.user.role;
     const userId = req.user.id;
 
-    const ALLOWED_ROLES = ['ADMIN', 'CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER'];
+    const ALLOWED_ROLES = ['ADMIN', 'CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FINANCE'];
     if (!ALLOWED_ROLES.includes(role)) {
       throw new ForbiddenException('You do not have permission to download invoices');
     }

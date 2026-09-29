@@ -724,6 +724,12 @@ export class NotificationsService implements OnModuleInit {
     );
   }
 
+  async getUnreadCount(userId: string): Promise<number> {
+    return this.prisma.notification.count({
+      where: { userId, readAt: null },
+    });
+  }
+
   async getUserNotifications(
     userId: string,
     options?: { limit?: number; page?: number },

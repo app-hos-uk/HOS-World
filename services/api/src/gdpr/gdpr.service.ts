@@ -407,6 +407,13 @@ export class GDPRService {
     await this.prisma.userQuest.deleteMany({ where: { userId } });
     await this.prisma.wishlistItem.deleteMany({ where: { userId } });
 
+    // Delete additional PII-containing records
+    await this.prisma.productReview.deleteMany({ where: { userId } });
+    await this.prisma.notification.deleteMany({ where: { userId } });
+    await this.prisma.newsletterSubscription.deleteMany({ where: { userId } });
+    await this.prisma.ticketMessage.deleteMany({ where: { userId } });
+    await this.prisma.supportTicket.deleteMany({ where: { userId } });
+
     // Revoke all active sessions and OAuth credentials
     await this.prisma.refreshToken.deleteMany({ where: { userId } }).catch(() => {});
     await this.prisma.oAuthAccount.deleteMany({ where: { userId } }).catch(() => {});

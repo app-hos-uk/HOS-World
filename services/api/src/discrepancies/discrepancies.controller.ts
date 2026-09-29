@@ -163,7 +163,7 @@ export class DiscrepanciesController {
   }
 
   @Put(':id/resolve')
-  @RequireAccess({ permission: 'pricing.approve', scope: 'GLOBAL' })
+  @RequireAccess({ permission: 'inventory.manage', scope: 'GLOBAL' })
   @ApiOperation({
     summary: 'Resolve discrepancy (Admin only)',
     description: 'Marks a discrepancy as resolved with a resolution note. Admin access required.',

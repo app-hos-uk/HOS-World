@@ -58,4 +58,27 @@ export class FandomsService {
 
     return fandom;
   }
+
+  async create(data: { name: string; slug: string; description?: string; imageUrl?: string }) {
+    return this.prisma.fandom.create({ data });
+  }
+
+  async update(
+    id: string,
+    data: { name?: string; slug?: string; description?: string; imageUrl?: string },
+  ) {
+    const existing = await this.prisma.fandom.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Fandom not found');
+    }
+    return this.prisma.fandom.update({ where: { id }, data });
+  }
+
+  async remove(id: string) {
+    const existing = await this.prisma.fandom.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Fandom not found');
+    }
+    return this.prisma.fandom.delete({ where: { id } });
+  }
 }
