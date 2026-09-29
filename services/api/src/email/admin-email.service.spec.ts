@@ -204,6 +204,7 @@ describe('AdminEmailService', () => {
         queue as unknown as QueueService,
         flags as unknown as FeatureFlagsService,
         config as unknown as ConfigService,
+        { render: jest.fn() } as unknown as TemplatesService,
       );
 
       prisma.user.findMany.mockResolvedValue(
