@@ -13,6 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import { resolvePlatformFeeRate } from '../common/platform-config';
 import { PrismaService } from '../database/prisma.service';
 import { canAccessAllOrders } from '../common/constants/order-access.constants';
+import { isSellerRole, SELLER_ROLES, ORDER_STAFF_ROLES } from '../common/roles';
 import { ACTIVE_CANCELLATION_STATUSES } from '../common/constants/cancellation.constants';
 import { TaxService } from '../tax/tax.service';
 import { WarehouseRoutingService } from '../inventory/warehouse-routing.service';
@@ -221,7 +222,7 @@ export class OrdersService {
     }
   }
 
-  private static readonly SELLER_ROLES = new Set(['SELLER', 'B2C_SELLER', 'WHOLESALER']);
+  private static readonly SELLER_ROLE_SET = new Set<string>(SELLER_ROLES);
 
   /** Status changes that move an order into fulfillment — require successful payment first. */
   private static readonly FULFILLMENT_STATUSES = new Set([
@@ -238,7 +239,7 @@ export class OrdersService {
     role: string,
     context: { newStatus?: string; updatingShippingDetails?: boolean },
   ): void {
-    if (!OrdersService.SELLER_ROLES.has(role)) return;
+    if (!OrdersService.SELLER_ROLE_SET.has(role)) return;
     if (String(order.paymentStatus).toUpperCase() === 'PAID') return;
 
     const movingToFulfillment =
@@ -1721,7 +1722,7 @@ export class OrdersService {
     if (role === 'CUSTOMER') {
       where.userId = userId;
       where.parentOrderId = null;
-    } else if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
+    } else if (isSellerRole(role)) {
       const seller = await this.prisma.seller.findUnique({
         where: { userId },
       });
@@ -1980,7 +1981,7 @@ export class OrdersService {
       if (order.userId !== userId) {
         throw new ForbiddenException('You do not have permission to view this order');
       }
-    } else if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
+    } else if (isSellerRole(role)) {
       const seller = await this.prisma.seller.findUnique({
         where: { userId },
       });
@@ -1994,7 +1995,7 @@ export class OrdersService {
       throw new ForbiddenException('You do not have permission to view this order');
     }
 
-    const isSeller = role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER';
+    const isSeller = isSellerRole(role);
     const includeSeller = order.paymentStatus === 'PAID' || isSeller || role === 'ADMIN';
     return this.mapToOrderType(order, includeSeller, role);
   }
@@ -2018,7 +2019,7 @@ export class OrdersService {
     }
 
     // Check permissions - only seller roles or admin can update orders
-    if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
+    if (isSellerRole(role)) {
       const seller = await this.prisma.seller.findUnique({
         where: { userId },
       });
@@ -2047,9 +2048,9 @@ export class OrdersService {
       this.validateStatusTransition(order.status, normalizedStatus);
     }
 
-    const isSellerRole = OrdersService.SELLER_ROLES.has(role);
+    const callerIsSeller = OrdersService.SELLER_ROLE_SET.has(role);
     if (
-      isSellerRole &&
+      callerIsSeller &&
       normalizedStatus === 'SHIPPED' &&
       !updateOrderDto.trackingCode?.trim() &&
       !order.trackingCode?.trim()
@@ -2235,10 +2236,9 @@ export class OrdersService {
     }
 
     // Check permissions
-    const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
     const canAddNote =
       order.userId === userId ||
-      (sellerRoles.includes(role) &&
+      (isSellerRole(role) &&
         (await this.prisma.seller.findUnique({ where: { userId } }))?.id === order.sellerId) ||
       role === 'ADMIN';
 
@@ -2247,8 +2247,7 @@ export class OrdersService {
     }
 
     // Only staff and seller roles can mark notes as internal
-    const staffRoles = ['ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT'];
-    const isInternal = staffRoles.includes(role) ? addNoteDto.internal || false : false;
+    const isInternal = (ORDER_STAFF_ROLES as readonly string[]).includes(role) ? addNoteDto.internal || false : false;
 
     await this.prisma.orderNote.create({
       data: {
@@ -2295,7 +2294,7 @@ export class OrdersService {
     // Auto-confirm parent if all children are accepted
     await this.syncParentOrderStatus(order.parentOrderId);
 
-    return this.findOne(orderId, userId, 'SELLER');
+    return this.findOne(orderId, userId, 'B2C_SELLER');
   }
 
   /**
@@ -2356,7 +2355,7 @@ export class OrdersService {
     // Check if ALL siblings are now rejected → cancel parent
     await this.syncParentOrderStatus(order.parentOrderId);
 
-    return this.findOne(orderId, userId, 'SELLER');
+    return this.findOne(orderId, userId, 'B2C_SELLER');
   }
 
   /**
@@ -2468,7 +2467,7 @@ export class OrdersService {
       }
     }
 
-    if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
+    if (isSellerRole(role)) {
       const seller = await this.prisma.seller.findUnique({
         where: { userId },
       });
@@ -2486,7 +2485,7 @@ export class OrdersService {
 
     // Only CUSTOMER, seller roles, and ADMIN can cancel orders.
     // Other roles (FINANCE, FULFILLMENT, etc.) must not cancel directly.
-    const allowedCancelRoles = ['CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN'];
+    const allowedCancelRoles = ['CUSTOMER', 'ADMIN', ...SELLER_ROLES];
     if (!allowedCancelRoles.includes(role)) {
       throw new ForbiddenException('Your role does not have permission to cancel orders');
     }
@@ -2976,7 +2975,7 @@ export class OrdersService {
         order.loyaltyDiscountAmount != null ? Number(order.loyaltyDiscountAmount) : 0,
       loyaltyPointsRedeemed: order.loyaltyPointsRedeemed ?? 0,
       platformFeeAmount:
-        role === 'ADMIN' || role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER'
+        role === 'ADMIN' || isSellerRole(role)
           ? order.platformFeeAmount
             ? Number(order.platformFeeAmount)
             : undefined

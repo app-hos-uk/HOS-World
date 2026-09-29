@@ -21,6 +21,7 @@ import { EscalateCancellationDto } from './dto/escalate-cancellation.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 
 @ApiTags('cancellations')
@@ -91,7 +92,7 @@ export class CancellationsController {
 
   @Put(':id/seller-review')
   @UseGuards(RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles(...SELLER_ROLES)
   @RequireAccess({ permission: 'cancellations.review', scope: 'MARKET' })
   @ApiOperation({ summary: 'Seller approve or reject cancellation request' })
   async sellerReview(

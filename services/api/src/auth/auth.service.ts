@@ -328,12 +328,8 @@ export class AuthService {
     if (registerDto.role === 'wholesaler') {
       userRole = 'WHOLESALER';
       sellerType = 'WHOLESALER';
-    } else if (registerDto.role === 'b2c_seller') {
+    } else if (registerDto.role === 'b2c_seller' || registerDto.role === 'seller') {
       userRole = 'B2C_SELLER';
-      sellerType = 'B2C_SELLER';
-    } else if (registerDto.role === 'seller') {
-      // Legacy seller role - use sellerType from DTO or default to B2C_SELLER
-      userRole = 'SELLER';
       sellerType = registerDto.sellerType || 'B2C_SELLER';
     } else {
       userRole = registerDto.role.toUpperCase();

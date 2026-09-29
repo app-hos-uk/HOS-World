@@ -16,6 +16,7 @@ import { Transform, Type } from 'class-transformer';
 
 export enum RegisterRole {
   CUSTOMER = 'customer',
+  /** @deprecated Kept for backward-compatible clients. Maps to B2C_SELLER at registration. */
   SELLER = 'seller',
   WHOLESALER = 'wholesaler',
   B2C_SELLER = 'b2c_seller',

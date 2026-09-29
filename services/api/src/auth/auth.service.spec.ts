@@ -724,7 +724,7 @@ describe('AuthService', () => {
         password: 'Test123!',
         firstName: 'Seller',
         lastName: 'User',
-        role: RegisterRole.SELLER,
+        role: RegisterRole.B2C_SELLER,
         country: 'US',
         preferredCommunicationMethod: 'EMAIL' as any,
         gdprConsent: true,
@@ -758,7 +758,7 @@ describe('AuthService', () => {
         password: 'Test123!',
         firstName: 'Seller',
         lastName: 'User',
-        role: RegisterRole.SELLER,
+        role: RegisterRole.B2C_SELLER,
         storeName: 'My Store',
         country: 'US',
         preferredCommunicationMethod: 'EMAIL' as any,
@@ -778,7 +778,7 @@ describe('AuthService', () => {
       mockPrismaService.user.create.mockResolvedValue({
         id: 'user-id',
         email: dto.email,
-        role: 'SELLER',
+        role: 'B2C_SELLER',
         firstName: dto.firstName,
         lastName: dto.lastName,
       });

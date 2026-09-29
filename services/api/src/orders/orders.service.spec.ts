@@ -540,7 +540,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-id', userId: sellerId });
       mockPrismaService.order.update.mockResolvedValue(updatedOrder);
 
-      const result = await service.update(orderId, sellerId, 'SELLER', {
+      const result = await service.update(orderId, sellerId, 'B2C_SELLER', {
         status,
         trackingCode: 'TRACK123',
       });
@@ -559,7 +559,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-id', userId: sellerId });
 
       await expect(
-        service.update(orderId, sellerId, 'SELLER', { status: 'PROCESSING' }),
+        service.update(orderId, sellerId, 'B2C_SELLER', { status: 'PROCESSING' }),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -850,7 +850,7 @@ describe('OrdersService - Phase 1 Tests', () => {
         userId: 'seller-user',
       });
 
-      await expect(service.cancel(orderId, 'seller-user', 'SELLER')).rejects.toThrow(
+      await expect(service.cancel(orderId, 'seller-user', 'B2C_SELLER')).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -864,7 +864,7 @@ describe('OrdersService - Phase 1 Tests', () => {
     it('should return empty data for SELLER with no seller profile', async () => {
       mockPrismaService.seller.findUnique.mockResolvedValue(null);
 
-      const result = await service.findAll('user-id', 'SELLER');
+      const result = await service.findAll('user-id', 'B2C_SELLER');
 
       expect(result.data).toEqual([]);
       expect(result.pagination.total).toBe(0);
@@ -904,7 +904,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       mockPrismaService.order.findMany.mockResolvedValue([]);
       mockPrismaService.order.count.mockResolvedValue(0);
 
-      await service.findAll('seller-user', 'SELLER');
+      await service.findAll('seller-user', 'B2C_SELLER');
 
       expect(mockPrismaService.order.findMany).toHaveBeenCalled();
     });
@@ -965,7 +965,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       mockPrismaService.order.findUnique.mockResolvedValue(mockOrder);
       mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'my-seller' });
 
-      await expect(service.findOne('order-id', 'seller-user', 'SELLER')).rejects.toThrow(
+      await expect(service.findOne('order-id', 'seller-user', 'B2C_SELLER')).rejects.toThrow(
         ForbiddenException,
       );
     });
@@ -1030,7 +1030,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-id', userId: sellerId });
 
       await expect(
-        service.update(orderId, sellerId, 'SELLER', { status: 'CANCELLED' }),
+        service.update(orderId, sellerId, 'B2C_SELLER', { status: 'CANCELLED' }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -1046,7 +1046,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-id', userId: sellerId });
 
       await expect(
-        service.update(orderId, sellerId, 'SELLER', { status: 'PENDING' }),
+        service.update(orderId, sellerId, 'B2C_SELLER', { status: 'PENDING' }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -1063,7 +1063,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-id', userId: sellerId });
 
       await expect(
-        service.update(orderId, sellerId, 'SELLER', { status: 'SHIPPED' }),
+        service.update(orderId, sellerId, 'B2C_SELLER', { status: 'SHIPPED' }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -1079,7 +1079,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'seller-id', userId: sellerId });
 
       await expect(
-        service.update(orderId, sellerId, 'SELLER', { paymentStatus: 'REFUNDED' } as any),
+        service.update(orderId, sellerId, 'B2C_SELLER', { paymentStatus: 'REFUNDED' } as any),
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -1108,7 +1108,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       mockPrismaService.seller.findUnique.mockResolvedValue({ id: 'my-seller', userId: sellerId });
 
       await expect(
-        service.update(orderId, sellerId, 'SELLER', { status: 'PROCESSING' }),
+        service.update(orderId, sellerId, 'B2C_SELLER', { status: 'PROCESSING' }),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -1134,7 +1134,7 @@ describe('OrdersService - Phase 1 Tests', () => {
       });
       mockPrismaService.seller.findUnique.mockResolvedValue(null);
 
-      await expect(service.addNote(orderId, userId, 'SELLER', { content: 'note' })).rejects.toThrow(
+      await expect(service.addNote(orderId, userId, 'B2C_SELLER', { content: 'note' })).rejects.toThrow(
         ForbiddenException,
       );
     });

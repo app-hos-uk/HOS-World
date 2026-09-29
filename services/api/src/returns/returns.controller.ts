@@ -26,6 +26,7 @@ import { UpdateReturnStatusDto } from './dto/update-return-status.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
@@ -155,7 +156,7 @@ export class ReturnsController {
   }
 
   @UseGuards(RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @Put(':id/status')
   @RequireAccess({ permission: 'returns.manage', scope: 'MARKET' })
   @ApiOperation({

@@ -55,7 +55,6 @@ The platform supports 14 different roles. Each role determines what a person can
 |---|---|---|
 | **Customer** | A shopper / buyer | Browse products, place orders, join the loyalty program, write reviews, track orders, submit returns |
 | **Seller (B2C)** | An individual or small business selling products | List products for sale, manage orders from buyers, track earnings, customize their storefront |
-| **Seller (Legacy)** | An older seller account type | Same as B2C Seller — this role exists for backward compatibility |
 | **Wholesaler** | A business-to-business seller | Sell products in bulk, offer B2B pricing, manage wholesale orders |
 | **Admin** | A platform administrator | Full access to everything — user management, products, orders, finance, settings, reports |
 | **Influencer** | A content creator or affiliate partner | Generate product links, earn commissions on sales, manage a personal storefront |
@@ -679,6 +678,44 @@ The HOS Marketplace integrates with Lightspeed POS to keep online and in-store d
 | Loyalty points | Platform manages | POS calls the platform at checkout for earn/redeem |
 
 This means a customer's loyalty balance is always the same whether they check it online or in-store.
+
+---
+
+## Seller Types & Roles
+
+### UserRole (Access Control)
+
+| Role | Description |
+|------|-------------|
+| `B2C_SELLER` | Direct-to-consumer seller. Lists products on their own storefront, manages inventory, handles orders. Gets a subdomain (`{slug}.houseofspells.com`) and optionally a custom domain. |
+| `WHOLESALER` | B2B supply-chain seller. Submits products through an approval pipeline (Submit → Procurement → Fulfilment Centre → Catalog → Marketing → Finance → Published). Ships inventory to HOS fulfilment centre. |
+
+### SellerType (Business Logic)
+
+| Type | Description |
+|------|-------------|
+| `B2C_SELLER` | Direct-to-consumer — lists products, ships via own logistics or HOS logistics |
+| `WHOLESALER` | B2B — goes through product submission pipeline + fulfilment centre |
+| `PLATFORM_RETAIL` | Internal HOS retail (POS, loyalty) — zero commission, platform-funded loyalty |
+
+### Key Differences
+
+| Aspect | B2C Seller | Wholesaler |
+|--------|-----------|------------|
+| Product listing | Direct — create and publish products | Via submission pipeline with multi-stage approval |
+| Fulfilment | Own logistics or HOS logistics | Ships to HOS fulfilment centre |
+| Storefront | Own subdomain/custom domain | No direct storefront |
+| Dashboard | Standard seller dashboard | Wholesale-specific dashboard |
+| Settlement | Per-order with platform fee | Submission-based settlement |
+
+### Migration Note
+
+The legacy `SELLER` UserRole was deprecated and removed. All former `SELLER` users have been
+migrated to `B2C_SELLER`. Code now uses centralised role constants from `src/common/roles.ts`:
+
+- `SELLER_ROLES` — `['B2C_SELLER', 'WHOLESALER']`
+- `B2C_SELLER_ROLES` — `['B2C_SELLER']`
+- `isSellerRole(role)` — returns true for any seller variant
 
 ---
 

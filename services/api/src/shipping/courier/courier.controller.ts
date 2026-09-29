@@ -18,6 +18,7 @@ import {
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../../common/roles';
 import { Public } from '../../common/decorators/public.decorator';
 import { RequireAccess } from '../../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -51,7 +52,7 @@ export class CourierController {
 
   @RequireAccess({ permission: 'shipping.view', scope: 'MARKET' })
   @Post('rate/:provider')
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CUSTOMER')
+  @Roles('ADMIN', ...SELLER_ROLES, 'CUSTOMER')
   @ApiOperation({
     summary: 'Calculate shipping rate',
     description: 'Calculates shipping rate using a specific courier provider.',
@@ -101,7 +102,7 @@ export class CourierController {
 
   @RequireAccess({ permission: 'shipping.manage', scope: 'MARKET' })
   @Post('label/:provider')
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @ApiOperation({
     summary: 'Create shipping label',
     description: 'Creates a shipping label using a specific courier provider.',
@@ -171,7 +172,7 @@ export class CourierController {
 
   @RequireAccess({ permission: 'shipping.view', scope: 'MARKET' })
   @Post('validate-address/:provider')
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CUSTOMER')
+  @Roles('ADMIN', ...SELLER_ROLES, 'CUSTOMER')
   @ApiOperation({
     summary: 'Validate address',
     description: "Validates an address using the courier provider's address validation service.",

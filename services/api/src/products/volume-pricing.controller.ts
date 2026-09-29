@@ -21,13 +21,14 @@ import { CreateVolumePricingDto } from './dto/create-volume-pricing.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('products')
 @Controller('products')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+@Roles('ADMIN', ...SELLER_ROLES)
 @ApiBearerAuth('JWT-auth')
 export class VolumePricingController {
   constructor(private readonly volumePricingService: VolumePricingService) {}
@@ -76,7 +77,7 @@ export class VolumePricingController {
   }
 
   @Post(':productId/volume-pricing/calculate')
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'CUSTOMER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES, 'CUSTOMER')
   @RequireAccess({ permission: 'products.view', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Calculate price with volume pricing',

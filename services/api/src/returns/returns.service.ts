@@ -24,6 +24,7 @@ import {
   type ReturnNotifyLine,
   type ReturnNotifyPayload,
 } from './return-notify.util';
+import { isSellerRole, SELLER_ROLES } from '../common/roles';
 
 interface ReturnTimelineStep {
   step: string;
@@ -485,7 +486,7 @@ export class ReturnsService {
 
     if (role === 'CUSTOMER') {
       where.userId = userId;
-    } else if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
+    } else if (isSellerRole(role)) {
       const seller = await this.prisma.seller.findUnique({ where: { userId } });
       if (seller) {
         where.OR = [
@@ -580,7 +581,7 @@ export class ReturnsService {
     // Check permissions
     if (role === 'CUSTOMER' && returnRequest.userId !== userId) {
       throw new ForbiddenException('You do not have permission to view this return');
-    } else if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
+    } else if (isSellerRole(role)) {
       const seller = await this.prisma.seller.findUnique({ where: { userId } });
       if (returnRequest.posSaleId) {
         const storeSellerId = returnRequest.posSale?.store?.sellerId;
@@ -646,7 +647,7 @@ export class ReturnsService {
     }
 
     if (userId && role && role !== 'ADMIN') {
-      const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
+      const sellerRoles: readonly string[] = SELLER_ROLES;
       if (sellerRoles.includes(role)) {
         const seller = await this.prisma.seller.findUnique({ where: { userId } });
         if (returnRequest.posSaleId) {

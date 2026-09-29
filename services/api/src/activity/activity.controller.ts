@@ -11,6 +11,7 @@ import { ActivityService } from './activity.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
@@ -84,7 +85,7 @@ export class ActivityController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'WHOLESALER', 'B2C_SELLER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @Get('logs/:sellerId')
   @RequireAccess({ permission: 'system.analytics', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')

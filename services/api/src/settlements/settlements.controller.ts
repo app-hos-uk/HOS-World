@@ -26,6 +26,7 @@ import { CreateSettlementDto, ProcessSettlementDto } from './dto/create-settleme
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES, isSellerRole } from '../common/roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { SettlementStatus } from '@prisma/client';
@@ -63,7 +64,7 @@ export class SettlementsController {
     };
   }
 
-  @Roles('ADMIN', 'FINANCE', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', 'FINANCE', ...SELLER_ROLES)
   @Get()
   @RequireAccess({ permission: 'settlements.view', scope: 'MARKET' })
   @ApiOperation({
@@ -87,11 +88,7 @@ export class SettlementsController {
   ): Promise<ApiResponse<any[]>> {
     // Sellers can only see their own settlements
     let filterSellerId = sellerId;
-    if (
-      req.user.role === 'WHOLESALER' ||
-      req.user.role === 'B2C_SELLER' ||
-      req.user.role === 'SELLER'
-    ) {
+    if (isSellerRole(req.user.role)) {
       filterSellerId =
         (await this.settlementsService.getSellerIdByUserId(req.user.id)) || undefined;
     }
@@ -241,7 +238,7 @@ export class SettlementsController {
     };
   }
 
-  @Roles('ADMIN', 'FINANCE', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', 'FINANCE', ...SELLER_ROLES)
   @Get(':id')
   @ApiOperation({
     summary: 'Get settlement by ID',
@@ -259,8 +256,7 @@ export class SettlementsController {
   ): Promise<ApiResponse<any>> {
     const settlement = await this.settlementsService.findOne(id);
 
-    const sellerRoles = ['WHOLESALER', 'B2C_SELLER', 'SELLER'];
-    if (sellerRoles.includes(req.user.role)) {
+    if (isSellerRole(req.user.role)) {
       const callerSellerId = await this.settlementsService.getSellerIdByUserId(req.user.id);
       if (!callerSellerId || settlement.seller?.id !== callerSellerId) {
         throw new ForbiddenException('You do not have permission to view this settlement');

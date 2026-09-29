@@ -3,6 +3,7 @@ import { StripeConnectService } from './stripe-connect.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { B2C_SELLER_ROLES } from '../../common/roles';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 import { RequireAccess } from '../../access-control/decorators/require-access.decorator';
@@ -15,7 +16,7 @@ export class StripeConnectController {
   @RequireAccess({ permission: 'finance.manage', scope: 'MARKET' })
   @Post('account')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles(...B2C_SELLER_ROLES)
   async createAccount(@Request() req): Promise<ConnectResponse> {
     const result = await this.connectService.createConnectedAccount(req.user.id);
     return { data: result, message: 'Stripe Connect account created' };
@@ -24,7 +25,7 @@ export class StripeConnectController {
   @RequireAccess({ permission: 'finance.view', scope: 'MARKET' })
   @Get('onboarding')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles(...B2C_SELLER_ROLES)
   async getOnboardingLink(@Request() req): Promise<ConnectResponse> {
     const result = await this.connectService.getOnboardingLink(req.user.id);
     return { data: result, message: 'Onboarding link generated' };
@@ -33,7 +34,7 @@ export class StripeConnectController {
   @RequireAccess({ permission: 'finance.view', scope: 'MARKET' })
   @Get('status')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles(...B2C_SELLER_ROLES)
   async getStatus(@Request() req): Promise<ConnectResponse> {
     const result = await this.connectService.getAccountStatus(req.user.id);
     return { data: result, message: 'Account status retrieved' };
@@ -42,7 +43,7 @@ export class StripeConnectController {
   @RequireAccess({ permission: 'finance.view', scope: 'MARKET' })
   @Get('dashboard')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles(...B2C_SELLER_ROLES)
   async getDashboardLink(@Request() req): Promise<ConnectResponse> {
     const result = await this.connectService.getDashboardLink(req.user.id);
     return { data: result, message: 'Dashboard link generated' };

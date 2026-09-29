@@ -6,6 +6,7 @@ import { LoyaltyWalletService } from '../loyalty/services/wallet.service';
 import { LoyaltyTierEngine } from '../loyalty/engines/tier.engine';
 import { FeatureFlagsService } from '../config/feature-flags.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty/loyalty-enabled';
+import { SELLER_ROLES } from '../common/roles';
 
 export interface LeaderboardEntry {
   rank: number;
@@ -51,7 +52,7 @@ export class GamificationService {
     // Get users with their gamification stats ordered by loyalty points
     const users = await this.prisma.user.findMany({
       where: {
-        role: { in: ['CUSTOMER', 'B2C_SELLER', 'SELLER'] },
+        role: { in: ['CUSTOMER', ...SELLER_ROLES] },
       },
       select: {
         id: true,
@@ -112,7 +113,7 @@ export class GamificationService {
     // Get total participants
     const totalParticipants = await this.prisma.user.count({
       where: {
-        role: { in: ['CUSTOMER', 'B2C_SELLER', 'SELLER'] },
+        role: { in: ['CUSTOMER', ...SELLER_ROLES] },
       },
     });
 

@@ -11,6 +11,7 @@ import { CreateBundleDto } from './dto/create-bundle.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { Public } from '../common/decorators/public.decorator';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -23,7 +24,7 @@ export class BundleController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @RequireAccess({ permission: 'products.create', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Create bundle product',

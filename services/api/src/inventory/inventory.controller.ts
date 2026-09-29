@@ -29,6 +29,7 @@ import { CreateStockMovementDto } from './dto/create-stock-movement.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { Request } from '@nestjs/common';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -45,7 +46,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.manage', scope: 'MARKET' })
   @Post('warehouses')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create warehouse',
@@ -64,7 +65,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Get('warehouses')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
+  @Roles('ADMIN', ...SELLER_ROLES, 'FULFILLMENT')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get all warehouses',
@@ -91,7 +92,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Get('warehouses/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
+  @Roles('ADMIN', ...SELLER_ROLES, 'FULFILLMENT')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get warehouse by ID',
@@ -111,7 +112,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.manage', scope: 'MARKET' })
   @Post('locations')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
+  @Roles('ADMIN', ...SELLER_ROLES, 'FULFILLMENT')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create or update inventory location',
@@ -139,7 +140,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Get('products/:productId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
+  @Roles('ADMIN', ...SELLER_ROLES, 'FULFILLMENT')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get product inventory',
@@ -158,7 +159,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.manage', scope: 'MARKET' })
   @Post('reserve')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
+  @Roles('ADMIN', ...SELLER_ROLES, 'FULFILLMENT')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Reserve stock',
@@ -199,7 +200,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.manage', scope: 'MARKET' })
   @Post('reservations/:id/cancel')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
+  @Roles('ADMIN', ...SELLER_ROLES, 'FULFILLMENT')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Cancel reservation',
@@ -222,7 +223,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Get('alerts/low-stock')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FULFILLMENT')
+  @Roles('ADMIN', ...SELLER_ROLES, 'FULFILLMENT')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get low stock alerts',
@@ -296,7 +297,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.manage', scope: 'MARKET' })
   @Post('transfers')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', 'FULFILLMENT', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create stock transfer',
@@ -318,7 +319,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Get('transfers')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', 'FULFILLMENT', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get stock transfers',
@@ -380,7 +381,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.manage', scope: 'MARKET' })
   @Post('movements')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', 'FULFILLMENT', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Record stock movement',
@@ -401,7 +402,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Get('movements')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', 'FULFILLMENT', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get stock movement history',
@@ -452,7 +453,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Post('routing/nearest-warehouse')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', 'FULFILLMENT', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Find nearest warehouse with stock',
@@ -507,7 +508,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Post('routing/optimal-source')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', 'FULFILLMENT', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Find optimal fulfillment source',
@@ -582,7 +583,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.manage', scope: 'MARKET' })
   @Post('geocode/:addressId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', 'FULFILLMENT', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Geocode an address',
@@ -630,7 +631,7 @@ export class InventoryController {
   @RequireAccess({ permission: 'inventory.view', scope: 'MARKET' })
   @Get('locations')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'FULFILLMENT', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', 'FULFILLMENT', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get inventory locations',

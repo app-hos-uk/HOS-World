@@ -25,6 +25,7 @@ import { UpdateSellerDto } from './dto/update-seller.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { Public } from '../common/decorators/public.decorator';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -84,7 +85,7 @@ export class SellersController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @RequireAccess({ permission: 'sellers.view', scope: 'SELF' })
   @Get('me')
   @ApiBearerAuth('JWT-auth')
@@ -104,7 +105,7 @@ export class SellersController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   @Get('me/products')
   @ApiBearerAuth('JWT-auth')
@@ -125,7 +126,7 @@ export class SellersController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'ADMIN')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @RequireAccess({ permission: 'sellers.operate', scope: 'SELF' })
   @Put('me')
   @ApiBearerAuth('JWT-auth')
@@ -303,7 +304,7 @@ export class SellersController {
   // === Vendor Dashboard Endpoint ===
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles(...SELLER_ROLES)
   @RequireAccess({ permission: 'sellers.view', scope: 'SELF' })
   @Get('me/dashboard')
   async getMyDashboard(@Request() req): Promise<ApiResponse<any>> {
@@ -312,7 +313,7 @@ export class SellersController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @RequireAccess({ permission: 'sellers.operate', scope: 'SELF' })
   @Post('verification/documents')
   async submitVerificationDocument(
@@ -324,7 +325,7 @@ export class SellersController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN', 'FINANCE')
+  @Roles('ADMIN', ...SELLER_ROLES, 'FINANCE')
   @RequireAccess({ permission: 'sellers.view', scope: 'SELF' })
   @Get('verification/documents')
   async listVerificationDocuments(@Request() req: any): Promise<ApiResponse<any[]>> {

@@ -575,7 +575,7 @@ export class SellersService {
             password: hashedPassword,
             firstName: applicationData.firstName,
             lastName: applicationData.lastName,
-            role: 'SELLER',
+            role: 'B2C_SELLER',
             country: applicationData.country,
           },
         });

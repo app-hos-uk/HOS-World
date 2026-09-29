@@ -3,12 +3,12 @@
  * checks. Keep these pure so PolicyService and unit tests can share them.
  */
 
-export const SELLER_ROLES = new Set(['SELLER', 'B2C_SELLER', 'WHOLESALER']);
+import { SELLER_ROLES as SELLER_ROLES_ARRAY, isSellerRole } from '../../common/roles';
+
+export const SELLER_ROLES = new Set(SELLER_ROLES_ARRAY);
 export const STAFF_ORDER_ROLES = new Set(['ADMIN', 'FINANCE', 'FULFILLMENT', 'PROCUREMENT']);
 
-export function isSellerRole(role?: string | null): boolean {
-  return !!role && SELLER_ROLES.has(role.toUpperCase());
-}
+export { isSellerRole };
 
 export function canAccessAllOrders(role?: string | null): boolean {
   return !!role && STAFF_ORDER_ROLES.has(role.toUpperCase());

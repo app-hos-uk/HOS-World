@@ -77,7 +77,7 @@ describe('Products Integration Tests', () => {
         password: 'Test123!@#',
         firstName: 'Seller',
         lastName: 'Integration',
-        role: RegisterRole.SELLER,
+        role: RegisterRole.B2C_SELLER,
         storeName: `Test Store ${Date.now()}`,
         country: 'US',
         preferredCommunicationMethod: CommunicationMethod.EMAIL,

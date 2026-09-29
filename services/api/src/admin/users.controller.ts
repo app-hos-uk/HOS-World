@@ -88,7 +88,7 @@ export class AdminUsersController {
       const r = role.trim();
       if (r === 'SELLERS') {
         whereParts.push(
-          Prisma.sql`u.role IN ('SELLER'::"UserRole", 'B2C_SELLER'::"UserRole", 'WHOLESALER'::"UserRole")`,
+          Prisma.sql`u.role IN ('B2C_SELLER'::"UserRole", 'WHOLESALER'::"UserRole")`,
         );
       } else if (r === 'TEAM') {
         whereParts.push(
@@ -143,7 +143,6 @@ export class AdminUsersController {
             WHEN 'SALES' THEN 5.5
             WHEN 'CMS_EDITOR' THEN 6
             WHEN 'B2C_SELLER' THEN 7
-            WHEN 'SELLER' THEN 8
             WHEN 'WHOLESALER' THEN 9
             WHEN 'INFLUENCER' THEN 10
             WHEN 'CUSTOMER' THEN 11

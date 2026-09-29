@@ -441,12 +441,9 @@ model Config {
 
 enum UserRole {
   CUSTOMER
-  WHOLESALER
-  B2C_SELLER
-  // DEPRECATED: SELLER role is legacy and should be migrated to B2C_SELLER.
-  // Run `pnpm db:migrate-seller-role` to migrate existing users.
-  // After migration, update code to use B2C_SELLER only, then remove this value.
-  SELLER
+  WHOLESALER     // B2B supply-chain seller — products go through submission pipeline
+  B2C_SELLER     // Direct-to-consumer seller — lists products, manages own storefront
+  SELLER         // @deprecated — migrated to B2C_SELLER; kept until all rows are converted
   ADMIN
   INFLUENCER
   PROCUREMENT
@@ -1554,11 +1551,13 @@ enum NotificationStatus {
   BOUNCED
 }
 
-// New enums for workflow and seller types
+// SellerType controls business logic (submission pipeline, dashboard variant,
+// commission model).  UserRole controls access control.  They are usually in
+// sync but serve different purposes.
 enum SellerType {
-  WHOLESALER
-  B2C_SELLER
-  PLATFORM_RETAIL
+  WHOLESALER       // B2B — goes through product submission + fulfilment centre
+  B2C_SELLER       // Direct-to-consumer — lists products, ships own or HOS logistics
+  PLATFORM_RETAIL  // Internal HOS retail (POS, loyalty) — zero commission, platform-funded
 }
 
 enum ProductSubmissionStatus {

@@ -17,6 +17,7 @@ import { EscalateCancellationDto } from './dto/escalate-cancellation.dto';
 import { CancellationStatus, OrderStatus, Prisma } from '@prisma/client';
 import { canAccessAllOrders } from '../common/constants/order-access.constants';
 import { ACTIVE_CANCELLATION_STATUSES } from '../common/constants/cancellation.constants';
+import { isSellerRole } from '../common/roles';
 
 const DEFAULT_AUTO_APPROVAL_WINDOW_MINUTES = 30;
 
@@ -348,7 +349,7 @@ export class CancellationsService {
 
     if (role === 'CUSTOMER') {
       where.requestedById = userId;
-    } else if (['SELLER', 'B2C_SELLER', 'WHOLESALER'].includes(role)) {
+    } else if (isSellerRole(role)) {
       const seller = await this.prisma.seller.findUnique({ where: { userId } });
       if (!seller) {
         return { data: [], pagination: { page, limit, total: 0, totalPages: 0 } };
@@ -455,7 +456,7 @@ export class CancellationsService {
     if (role === 'CUSTOMER' && request.requestedById === userId) {
       return;
     }
-    if (['SELLER', 'B2C_SELLER', 'WHOLESALER'].includes(role)) {
+    if (isSellerRole(role)) {
       await this.assertSellerAccess(request.order, userId);
       return;
     }

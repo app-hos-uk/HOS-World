@@ -26,6 +26,7 @@ import { UpdateSubmissionDto } from './dto/update-submission.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import { ProductSubmissionStatus } from '@prisma/client';
@@ -34,7 +35,7 @@ import { ProductSubmissionStatus } from '@prisma/client';
 @ApiBearerAuth('JWT-auth')
 @Controller('submissions')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('WHOLESALER', 'B2C_SELLER', 'SELLER')
+@Roles(...SELLER_ROLES)
 export class SubmissionsController {
   constructor(private readonly submissionsService: SubmissionsService) {}
 

@@ -12,6 +12,7 @@ import { ReserveStockDto } from './dto/reserve-stock.dto';
 import { CreateStockTransferDto } from './dto/create-stock-transfer.dto';
 import { CreateStockMovementDto } from './dto/create-stock-movement.dto';
 import { Prisma } from '@prisma/client';
+import { isSellerRole } from '../common/roles';
 
 @Injectable()
 export class InventoryService {
@@ -59,9 +60,7 @@ export class InventoryService {
   async findAllWarehouses(includeInactive = false, userId?: string, role?: string) {
     const where: any = includeInactive ? {} : { isActive: true };
 
-    // Non-admin/non-fulfillment roles only see their own warehouses
-    const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-    if (userId && role && sellerRoles.includes(role)) {
+    if (userId && role && isSellerRole(role)) {
       const seller = await this.prisma.seller.findUnique({ where: { userId } });
       if (seller) {
         where.sellerId = seller.id;

@@ -14,6 +14,7 @@ import { DEFAULT_PLATFORM_FEE_RATE } from '../common/platform-config';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 import { PlatformRegionService } from '../config/platform-region.service';
 import { PolicyService } from '../access-control/policy.service';
+import { SELLER_ROLES } from '../common/roles';
 import {
   BUILT_IN_PERMISSION_ROLES,
   DEFAULT_ROLE_PERMISSIONS,
@@ -38,7 +39,7 @@ export class AdminService {
   ) {}
 
   async getUserStats() {
-    const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
+    const sellerRoles: readonly string[] = SELLER_ROLES;
     const teamRoles = [
       'PROCUREMENT',
       'FULFILLMENT',
@@ -109,9 +110,9 @@ export class AdminService {
     }
 
     // Basic guardrails for role-specific requirements
-    const sellerRoles: UserRole[] = [UserRole.SELLER, UserRole.B2C_SELLER, UserRole.WHOLESALER];
-    const isSellerRole = sellerRoles.includes(data.role);
-    if (isSellerRole && !data.storeName) {
+    const sellerRoles: UserRole[] = [UserRole.B2C_SELLER, UserRole.WHOLESALER];
+    const isSellerRoleCheck = sellerRoles.includes(data.role);
+    if (isSellerRoleCheck && !data.storeName) {
       throw new BadRequestException('storeName is required for seller roles');
     }
 
@@ -208,7 +209,7 @@ export class AdminService {
       });
     }
 
-    if (isSellerRole) {
+    if (isSellerRoleCheck) {
       const storeName = data.storeName!;
       const baseSlug = storeName
         .toLowerCase()
@@ -1100,7 +1101,7 @@ export class AdminService {
       this.prisma.product.count(),
       this.prisma.order.count(),
       this.prisma.productSubmission.count(),
-      this.prisma.user.count({ where: { role: { in: ['SELLER', 'B2C_SELLER', 'WHOLESALER'] } } }),
+      this.prisma.user.count({ where: { role: { in: [...SELLER_ROLES] } } }),
       this.prisma.user.count({ where: { role: 'CUSTOMER' } }),
       this.prisma.user.count(),
       this.prisma.productSubmission.groupBy({

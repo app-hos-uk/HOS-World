@@ -20,6 +20,7 @@ import { QueryVendorProductsDto } from './dto/query-vendor-products.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { B2C_SELLER_ROLES } from '../common/roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
@@ -33,7 +34,7 @@ export class VendorProductsController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles(...B2C_SELLER_ROLES)
   @RequireAccess({ permission: 'products.create', scope: 'MARKET' })
   async create(
     @Request() req,
@@ -45,7 +46,7 @@ export class VendorProductsController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles(...B2C_SELLER_ROLES)
   @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   async findMyListings(
     @Request() req,
@@ -57,7 +58,7 @@ export class VendorProductsController {
 
   @Get('me/stats')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles(...B2C_SELLER_ROLES)
   @RequireAccess({ permission: 'products.view', scope: 'SELF' })
   async getMyStats(@Request() req): Promise<VendorProductResponse> {
     const result = await this.vendorProductsService.getVendorStats(req.user.id);
@@ -66,7 +67,7 @@ export class VendorProductsController {
 
   @Post(':id/submit')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles(...B2C_SELLER_ROLES)
   @RequireAccess({ permission: 'products.edit', scope: 'MARKET' })
   @HttpCode(HttpStatus.OK)
   async submitForApproval(@Param('id') id: string, @Request() req): Promise<VendorProductResponse> {
@@ -76,7 +77,7 @@ export class VendorProductsController {
 
   @Post(':id/deactivate')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles(...B2C_SELLER_ROLES)
   @RequireAccess({ permission: 'products.edit', scope: 'MARKET' })
   @HttpCode(HttpStatus.OK)
   async deactivate(@Param('id') id: string, @Request() req): Promise<VendorProductResponse> {
@@ -86,7 +87,7 @@ export class VendorProductsController {
 
   @Put(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles(...B2C_SELLER_ROLES)
   @RequireAccess({ permission: 'products.edit', scope: 'MARKET' })
   async update(
     @Param('id') id: string,
@@ -99,7 +100,7 @@ export class VendorProductsController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles(...B2C_SELLER_ROLES)
   @RequireAccess({ permission: 'products.delete', scope: 'MARKET' })
   async delete(@Param('id') id: string, @Request() req): Promise<VendorProductResponse> {
     await this.vendorProductsService.delete(id, req.user.id);
@@ -119,7 +120,7 @@ export class VendorProductsController {
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'CATALOG', 'PROCUREMENT', 'SELLER', 'B2C_SELLER')
+  @Roles('ADMIN', 'CATALOG', 'PROCUREMENT', ...B2C_SELLER_ROLES)
   @RequireAccess({ permission: 'products.view', scope: 'MARKET' })
   async findOne(@Param('id') id: string, @Request() req): Promise<VendorProductResponse> {
     const result = await this.vendorProductsService.findOne(id, req.user.id, req.user.role);

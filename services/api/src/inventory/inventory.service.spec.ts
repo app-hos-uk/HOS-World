@@ -106,7 +106,7 @@ describe('InventoryService', () => {
         service.upsertInventoryLocation(
           { warehouseId: 'wh-1', productId: 'prod-1', quantity: 5 } as any,
           'user-1',
-          'SELLER',
+          'B2C_SELLER',
         ),
       ).rejects.toThrow(ForbiddenException);
     });
@@ -202,7 +202,7 @@ describe('InventoryService', () => {
       (mockPrisma as any).seller = { findUnique: jest.fn().mockResolvedValue({ id: 'seller-1' }) };
       mockPrisma.warehouse.findMany.mockResolvedValue([]);
 
-      await service.findAllWarehouses(false, 'user-1', 'SELLER');
+      await service.findAllWarehouses(false, 'user-1', 'B2C_SELLER');
 
       expect(mockPrisma.warehouse.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

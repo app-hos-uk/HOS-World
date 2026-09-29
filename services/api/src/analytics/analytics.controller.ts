@@ -21,6 +21,7 @@ import { AnalyticsService, AnalyticsFilters } from './analytics.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 import * as ExcelJS from 'exceljs';
@@ -30,7 +31,7 @@ import * as PDFDocument from 'pdfkit';
 @Controller('analytics')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth('JWT-auth')
-@Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+@Roles('ADMIN', ...SELLER_ROLES)
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 

@@ -12,13 +12,14 @@ import { CreateReturnPolicyDto } from './dto/create-return-policy.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('return-policies')
 @Controller('return-policies')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+@Roles('ADMIN', ...SELLER_ROLES)
 @ApiBearerAuth('JWT-auth')
 export class ReturnPoliciesController {
   constructor(private readonly returnPoliciesService: ReturnPoliciesService) {}

@@ -34,6 +34,7 @@ import { PrismaService } from '../database/prisma.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Public } from '../common/decorators/public.decorator';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
@@ -253,7 +254,7 @@ export class UploadsController {
   @RequireAccess({ permission: 'uploads.manage', scope: 'SELF' })
   @Post('single')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CMS_EDITOR', 'CUSTOMER')
+  @Roles('ADMIN', ...SELLER_ROLES, 'CMS_EDITOR', 'CUSTOMER')
   @UseInterceptors(
     FileInterceptor('file', {
       storage: createStorage(),
@@ -320,7 +321,7 @@ export class UploadsController {
   @RequireAccess({ permission: 'uploads.manage', scope: 'SELF' })
   @Post('multiple')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CMS_EDITOR')
+  @Roles('ADMIN', ...SELLER_ROLES, 'CMS_EDITOR')
   @UseInterceptors(
     FilesInterceptor('files', 10, {
       storage: createStorage(),
@@ -383,7 +384,7 @@ export class UploadsController {
   @RequireAccess({ permission: 'uploads.manage', scope: 'SELF' })
   @Get('cloudinary/signature')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get Cloudinary upload signature',
@@ -507,7 +508,7 @@ export class UploadsController {
   @RequireAccess({ permission: 'uploads.manage', scope: 'SELF' })
   @Delete(':url')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Delete uploaded file (Seller/Admin only)',

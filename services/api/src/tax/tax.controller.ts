@@ -15,6 +15,7 @@ import { CalculateTaxDto } from './dto/calculate-tax.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { Public } from '../common/decorators/public.decorator';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -46,7 +47,7 @@ export class TaxController {
 
   @Get('zones')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @RequireAccess({ permission: 'tax.view', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -67,7 +68,7 @@ export class TaxController {
 
   @Get('zones/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @RequireAccess({ permission: 'tax.view', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -147,7 +148,7 @@ export class TaxController {
 
   @Get('classes')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @RequireAccess({ permission: 'tax.view', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -165,7 +166,7 @@ export class TaxController {
 
   @Get('classes/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @RequireAccess({ permission: 'tax.view', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -227,7 +228,7 @@ export class TaxController {
 
   @Get('rates')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @RequireAccess({ permission: 'tax.view', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -260,7 +261,7 @@ export class TaxController {
 
   @Get('rates/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @RequireAccess({ permission: 'tax.view', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

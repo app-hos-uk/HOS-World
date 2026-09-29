@@ -159,7 +159,7 @@ export class CreateTeamUsersController {
         email: 'seller@hos.test',
         firstName: 'Seller',
         lastName: 'User',
-        role: UserRole.SELLER,
+        role: UserRole.B2C_SELLER,
         storeName: 'Test Seller Store',
       },
       {
@@ -207,7 +207,6 @@ export class CreateTeamUsersController {
 
           // Create or update seller profile if needed
           if (
-            userData.role === UserRole.SELLER ||
             userData.role === UserRole.B2C_SELLER ||
             userData.role === UserRole.WHOLESALER
           ) {
@@ -219,9 +218,7 @@ export class CreateTeamUsersController {
                   sellerType:
                     userData.role === UserRole.WHOLESALER
                       ? 'WHOLESALER'
-                      : userData.role === UserRole.B2C_SELLER
-                        ? 'B2C_SELLER'
-                        : 'B2C_SELLER',
+                      : 'B2C_SELLER',
                 },
               });
             } else {
@@ -237,9 +234,7 @@ export class CreateTeamUsersController {
                   sellerType:
                     userData.role === UserRole.WHOLESALER
                       ? 'WHOLESALER'
-                      : userData.role === UserRole.B2C_SELLER
-                        ? 'B2C_SELLER'
-                        : 'B2C_SELLER',
+                      : 'B2C_SELLER',
                   logisticsOption: 'HOS_LOGISTICS',
                 },
               });
@@ -261,7 +256,6 @@ export class CreateTeamUsersController {
 
           // Create seller profile if needed
           if (
-            userData.role === UserRole.SELLER ||
             userData.role === UserRole.B2C_SELLER ||
             userData.role === UserRole.WHOLESALER
           ) {
@@ -276,9 +270,7 @@ export class CreateTeamUsersController {
                 sellerType:
                   userData.role === UserRole.WHOLESALER
                     ? 'WHOLESALER'
-                    : userData.role === UserRole.B2C_SELLER
-                      ? 'B2C_SELLER'
-                      : 'B2C_SELLER',
+                    : 'B2C_SELLER',
                 logisticsOption: 'HOS_LOGISTICS',
               },
             });
@@ -524,7 +516,7 @@ export class CreateTeamUsersController {
         email: 'seller.test@hos.test',
         firstName: 'Test',
         lastName: 'Seller',
-        role: UserRole.SELLER,
+        role: UserRole.B2C_SELLER,
         storeName: 'Seller Test Store',
       },
       {
@@ -563,7 +555,7 @@ export class CreateTeamUsersController {
           });
 
           if (
-            (userData.role === UserRole.SELLER || userData.role === UserRole.WHOLESALER) &&
+            (userData.role === UserRole.B2C_SELLER || userData.role === UserRole.WHOLESALER) &&
             'storeName' in userData &&
             !existingUser.sellerProfile
           ) {
@@ -594,7 +586,7 @@ export class CreateTeamUsersController {
           });
 
           if (
-            (userData.role === UserRole.SELLER || userData.role === UserRole.WHOLESALER) &&
+            (userData.role === UserRole.B2C_SELLER || userData.role === UserRole.WHOLESALER) &&
             'storeName' in userData
           ) {
             const slug = userData.storeName!.toLowerCase().replace(/\s+/g, '-');

@@ -148,7 +148,7 @@ describe('AdminService', () => {
     it('should throw BadRequestException if seller role without storeName', async () => {
       const sellerData = {
         ...createUserData,
-        role: UserRole.SELLER,
+        role: UserRole.B2C_SELLER,
         storeName: undefined,
       };
 
@@ -288,7 +288,7 @@ describe('AdminService', () => {
       (mockPrismaService.user as any).groupBy = jest.fn().mockResolvedValue([
         { role: 'ADMIN', _count: 2 },
         { role: 'CUSTOMER', _count: 80 },
-        { role: 'SELLER', _count: 10 },
+        { role: 'B2C_SELLER', _count: 10 },
         { role: 'INFLUENCER', _count: 3 },
         { role: 'FULFILLMENT', _count: 5 },
       ]);

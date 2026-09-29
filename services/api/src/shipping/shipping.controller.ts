@@ -30,6 +30,7 @@ import { GetShippingOptionsDto } from './dto/get-shipping-options.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES, isSellerRole } from '../common/roles';
 import { Public } from '../common/decorators/public.decorator';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -43,7 +44,7 @@ export class ShippingController {
   @RequireAccess({ permission: 'shipping.manage', scope: 'MARKET' })
   @Post('methods')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create shipping method',
@@ -56,8 +57,7 @@ export class ShippingController {
     @Request() req: any,
     @Body() createDto: CreateShippingMethodDto,
   ): Promise<ApiResponse<any>> {
-    const sellerRoles = ['SELLER', 'B2C_SELLER', 'WHOLESALER'];
-    if (sellerRoles.includes(req.user.role)) {
+    if (isSellerRole(req.user.role)) {
       const seller = await this.shippingService.getSellerByUserId(req.user.id);
       if (!seller) {
         return { data: null, message: 'Seller profile not found' } as any;
@@ -130,7 +130,7 @@ export class ShippingController {
   @RequireAccess({ permission: 'shipping.manage', scope: 'MARKET' })
   @Put('methods/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update shipping method',
@@ -153,7 +153,7 @@ export class ShippingController {
   @RequireAccess({ permission: 'shipping.manage', scope: 'MARKET' })
   @Post('rules')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create shipping rule',
@@ -173,7 +173,7 @@ export class ShippingController {
   @RequireAccess({ permission: 'shipping.manage', scope: 'MARKET' })
   @Put('rules/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update shipping rule',
@@ -244,7 +244,7 @@ export class ShippingController {
   @RequireAccess({ permission: 'shipping.view', scope: 'MARKET' })
   @Get('carriers')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FINANCE')
+  @Roles('ADMIN', ...SELLER_ROLES, 'FINANCE')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'List active shipping carriers for manual tracking entry',

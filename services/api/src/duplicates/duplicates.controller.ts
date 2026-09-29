@@ -11,6 +11,7 @@ import { DuplicatesService } from './duplicates.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
@@ -130,7 +131,7 @@ export class DuplicatesController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('WHOLESALER', 'B2C_SELLER', 'SELLER', 'PROCUREMENT', 'ADMIN')
+  @Roles('ADMIN', 'PROCUREMENT', ...SELLER_ROLES)
   @Get('submission/:submissionId')
   @RequireAccess({ permission: 'submissions.review', scope: 'MARKET' })
   @ApiBearerAuth('JWT-auth')

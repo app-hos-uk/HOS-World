@@ -18,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { SELLER_ROLES, isSellerRole } from '../common/roles';
 import { InvoicesService } from './invoices.service';
 import { PrismaService } from '../database/prisma.service';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
@@ -65,7 +66,7 @@ export class InvoicesController {
     const role = req.user.role;
     const userId = req.user.id;
 
-    const ALLOWED_ROLES = ['ADMIN', 'CUSTOMER', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'FINANCE'];
+    const ALLOWED_ROLES = ['ADMIN', 'CUSTOMER', ...SELLER_ROLES, 'FINANCE'];
     if (!ALLOWED_ROLES.includes(role)) {
       throw new ForbiddenException('You do not have permission to download invoices');
     }
@@ -74,7 +75,7 @@ export class InvoicesController {
       throw new ForbiddenException('You can only download invoices for your own orders');
     }
 
-    if (role === 'SELLER' || role === 'B2C_SELLER' || role === 'WHOLESALER') {
+    if (isSellerRole(role)) {
       const seller = await this.prisma.seller.findUnique({
         where: { userId },
         select: { id: true },

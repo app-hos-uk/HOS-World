@@ -10,6 +10,7 @@ import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
@@ -21,7 +22,7 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('stats')
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @RequireAccess({ permission: 'system.analytics', scope: 'MARKET' })
   @ApiOperation({
     summary: 'Get dashboard statistics',

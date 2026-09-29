@@ -3,6 +3,7 @@ import { VendorLedgerService } from './vendor-ledger.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { B2C_SELLER_ROLES } from '../common/roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
@@ -14,7 +15,7 @@ export class VendorLedgerController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles(...B2C_SELLER_ROLES)
   @RequireAccess({ permission: 'settlements.view', scope: 'MARKET' })
   async getMyLedger(
     @Request() req,
@@ -46,7 +47,7 @@ export class VendorLedgerController {
 
   @Get('me/balance')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles(...B2C_SELLER_ROLES)
   @RequireAccess({ permission: 'settlements.view', scope: 'MARKET' })
   async getMyBalance(@Request() req): Promise<LedgerResponse> {
     const seller = await this.ledgerService['prisma'].seller.findUnique({
@@ -62,7 +63,7 @@ export class VendorLedgerController {
 
   @Get('me/summary')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER')
+  @Roles(...B2C_SELLER_ROLES)
   @RequireAccess({ permission: 'settlements.view', scope: 'MARKET' })
   async getMySummary(
     @Request() req,

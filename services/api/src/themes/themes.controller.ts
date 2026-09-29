@@ -32,6 +32,7 @@ import { UpdateCustomerThemePreferenceDto } from './dto/customer-theme-preferenc
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { Public } from '../common/decorators/public.decorator';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
@@ -160,7 +161,7 @@ export class ThemesController {
 
   // Seller Theme Customization
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles(...SELLER_ROLES)
   @RequireAccess({ permission: 'system.themes', scope: 'SELF' })
   @Get('seller/my-theme')
   @ApiBearerAuth('JWT-auth')

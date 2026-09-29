@@ -24,13 +24,14 @@ import { CreateWebhookDto } from './dto/create-webhook.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES, isSellerRole } from '../common/roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse } from '@hos-marketplace/shared-types';
 
 @ApiTags('webhooks')
 @Controller('webhooks')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+@Roles('ADMIN', ...SELLER_ROLES)
 @ApiBearerAuth('JWT-auth')
 export class WebhooksController {
   constructor(private readonly webhooksService: WebhooksService) {}
@@ -48,11 +49,7 @@ export class WebhooksController {
     @Request() req: any,
   ): Promise<ApiResponse<any>> {
     // If user is seller/wholesaler, automatically set sellerId from their profile
-    if (
-      req.user.role === 'SELLER' ||
-      req.user.role === 'B2C_SELLER' ||
-      req.user.role === 'WHOLESALER'
-    ) {
+    if (isSellerRole(req.user.role)) {
       const seller = await this.webhooksService['prisma'].seller.findUnique({
         where: { userId: req.user.id },
       });
@@ -79,11 +76,7 @@ export class WebhooksController {
   @SwaggerApiResponse({ status: 200, description: 'Webhooks retrieved successfully' })
   async findAll(@Request() req: any): Promise<ApiResponse<any[]>> {
     let sellerId: string | undefined;
-    if (
-      req.user.role === 'SELLER' ||
-      req.user.role === 'B2C_SELLER' ||
-      req.user.role === 'WHOLESALER'
-    ) {
+    if (isSellerRole(req.user.role)) {
       const seller = await this.webhooksService['prisma'].seller.findUnique({
         where: { userId: req.user.id },
       });

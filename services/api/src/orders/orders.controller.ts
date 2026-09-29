@@ -31,6 +31,7 @@ import { ShipOrderDto, GetOrderShippingRatesDto } from './dto/ship-order.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+import { SELLER_ROLES } from '../common/roles';
 import { Public } from '../common/decorators/public.decorator';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import type { ApiResponse, Order } from '@hos-marketplace/shared-types';
@@ -163,7 +164,7 @@ export class OrdersController {
   @RequireAccess({ permission: 'orders.manage', scope: 'MARKET' })
   @Put(':id')
   @UseGuards(RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER', 'ADMIN')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @ApiOperation({
     summary: 'Update order',
     description: 'Updates an order. Only sellers and admins can update orders',
@@ -213,7 +214,7 @@ export class OrdersController {
   @RequireAccess({ permission: 'orders.accept', scope: 'MARKET' })
   @Post(':id/accept')
   @UseGuards(RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles(...SELLER_ROLES)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Accept a vendor order',
@@ -234,7 +235,7 @@ export class OrdersController {
   @RequireAccess({ permission: 'orders.manage', scope: 'MARKET' })
   @Post(':id/reject')
   @UseGuards(RolesGuard)
-  @Roles('SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles(...SELLER_ROLES)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Reject a vendor order',
@@ -338,7 +339,7 @@ export class OrdersController {
   @RequireAccess({ permission: 'shipping.view', scope: 'MARKET' })
   @Get(':id/shipping-rates')
   @UseGuards(RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @ApiOperation({
     summary: 'Get carrier shipping rates for an order',
     description:
@@ -362,7 +363,7 @@ export class OrdersController {
   @RequireAccess({ permission: 'shipping.manage', scope: 'MARKET' })
   @Post(':id/ship')
   @UseGuards(RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER')
+  @Roles('ADMIN', ...SELLER_ROLES)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Purchase shipping label and ship order',
@@ -388,7 +389,7 @@ export class OrdersController {
   @RequireAccess({ permission: 'shipping.view', scope: 'SELF' })
   @Get(':id/shipment-tracking')
   @UseGuards(RolesGuard)
-  @Roles('ADMIN', 'SELLER', 'B2C_SELLER', 'WHOLESALER', 'CUSTOMER')
+  @Roles('ADMIN', ...SELLER_ROLES, 'CUSTOMER')
   @ApiOperation({
     summary: 'Track order shipment',
     description: 'Returns live carrier tracking events for the order tracking number.',

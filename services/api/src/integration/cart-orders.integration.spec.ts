@@ -88,7 +88,7 @@ describe('Cart and Orders Integration Tests', () => {
         password: 'Test123!@#',
         firstName: 'Seller',
         lastName: 'Test',
-        role: RegisterRole.SELLER,
+        role: RegisterRole.B2C_SELLER,
         storeName: `Store ${Date.now()}`,
         country: 'US',
         preferredCommunicationMethod: CommunicationMethod.EMAIL,
