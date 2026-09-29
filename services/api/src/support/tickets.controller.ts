@@ -81,7 +81,7 @@ export class TicketsController {
         orderId: body.orderId,
         subject: body.subject,
         category: body.category as any,
-        priority: body.priority,
+        priority: body.priority as any,
         initialMessage: body.initialMessage,
         description: body.description,
         userId: req.user?.id,

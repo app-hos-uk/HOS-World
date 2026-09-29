@@ -42,8 +42,9 @@ export class CharactersService {
   }
 
   async findBySlug(slug: string) {
+    const name = slug.replace(/-/g, ' ');
     return this.prisma.character.findFirst({
-      where: { slug, isActive: true },
+      where: { name: { equals: name, mode: 'insensitive' }, isActive: true },
       include: { fandom: true },
     });
   }
