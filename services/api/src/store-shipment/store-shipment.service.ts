@@ -516,17 +516,35 @@ export class StoreShipmentService {
     metadata?: unknown;
   }): Promise<string> {
     const snapshot = this.normalizeEmail(this.metadataCustomerEmail(params.metadata));
-    const local = await this.prisma.pOSSale.findFirst({
-      where: {
-        storeId: params.storeId,
-        OR: [
-          { externalInvoice: { equals: params.invoiceNumber, mode: 'insensitive' } },
-          { externalSaleId: params.invoiceNumber },
-          ...(params.posExternalSaleId ? [{ externalSaleId: params.posExternalSaleId }] : []),
-        ],
-      },
-      select: { customerEmail: true },
-    });
+    // Prefer matching by exact Lightspeed sale ID when available; fall back
+    // to invoice number. Order by most recent to avoid stale duplicates.
+    const local = params.posExternalSaleId
+      ? await this.prisma.pOSSale.findFirst({
+          where: { storeId: params.storeId, externalSaleId: params.posExternalSaleId },
+          select: { customerEmail: true },
+        }) ??
+        await this.prisma.pOSSale.findFirst({
+          where: {
+            storeId: params.storeId,
+            OR: [
+              { externalInvoice: { equals: params.invoiceNumber, mode: 'insensitive' } },
+              { externalSaleId: params.invoiceNumber },
+            ],
+          },
+          orderBy: { saleDate: 'desc' },
+          select: { customerEmail: true },
+        })
+      : await this.prisma.pOSSale.findFirst({
+          where: {
+            storeId: params.storeId,
+            OR: [
+              { externalInvoice: { equals: params.invoiceNumber, mode: 'insensitive' } },
+              { externalSaleId: params.invoiceNumber },
+            ],
+          },
+          orderBy: { saleDate: 'desc' },
+          select: { customerEmail: true },
+        });
     const localEmail = this.normalizeEmail(local?.customerEmail);
 
     const adapter = this.adapterFromStore(params.store, Date.now() + LIGHTSPEED_LOOKUP_BUDGET_MS);
@@ -551,6 +569,27 @@ export class StoreShipmentService {
         }
         const live = this.normalizeEmail(remote?.customer?.email);
         if (live) return live;
+
+        // Sale has a customer ID but hydration returned no email — try a
+        // direct customer lookup as a final fallback. This bypasses the
+        // hydrateSaleCustomer path which silently swallows timeouts.
+        const customerId = remote?.customer?.externalId?.trim();
+        if (customerId && adapter.lookupCustomer) {
+          try {
+            const customer = await adapter.lookupCustomer(customerId);
+            const directEmail = this.normalizeEmail(customer?.email);
+            if (directEmail) {
+              this.logger.log(
+                `Resolved email via direct customer lookup (${customerId}) after sale hydration missed it`,
+              );
+              return directEmail;
+            }
+          } catch (custErr) {
+            this.logger.warn(
+              `Direct customer lookup failed for ${customerId}: ${(custErr as Error).message}`,
+            );
+          }
+        }
       } catch (e) {
         this.logger.warn(
           `Invoice customer email lookup failed: ${(e as Error).message}`,
@@ -595,6 +634,7 @@ export class StoreShipmentService {
           { externalSaleId: invoice },
         ],
       },
+      orderBy: { saleDate: 'desc' },
     });
 
     let remote: POSSale | null = null;
@@ -638,6 +678,15 @@ export class StoreShipmentService {
     }
 
     if (remote) {
+      const email = remote.customer?.email || local?.customerEmail || undefined;
+      if (!email) {
+        this.logger.warn(
+          `confirmTillInvoice: no email found for invoice ${invoice} ` +
+            `(customerId=${remote.customer?.externalId || 'none'}, ` +
+            `hasCustomer=${Boolean(remote.customer)}, ` +
+            `localEmail=${local?.customerEmail || 'none'})`,
+        );
+      }
       return {
         externalId: remote.externalId,
         invoiceNumber: (remote.invoiceNumber || invoice).trim(),
@@ -645,7 +694,7 @@ export class StoreShipmentService {
         currency: remote.currency,
         saleDate: remote.saleDate,
         localSaleId: local?.externalSaleId === remote.externalId ? local.id : undefined,
-        customerEmail: remote.customer?.email || local?.customerEmail || undefined,
+        customerEmail: email,
       };
     }
 
@@ -716,6 +765,18 @@ export class StoreShipmentService {
     if (!invoice) throw new BadRequestException('Invoice number missing');
 
     let posSale = shipment.posSale;
+    // Prefer matching by the exact Lightspeed sale UUID stored on the
+    // shipment — invoice numbers can repeat across registers/resets,
+    // so a plain invoice lookup may return a different (older) sale.
+    if (!posSale && shipment.posExternalSaleId) {
+      posSale = await this.prisma.pOSSale.findFirst({
+        where: {
+          storeId: shipment.storeId,
+          externalSaleId: shipment.posExternalSaleId,
+        },
+        include: { items: true },
+      });
+    }
     if (!posSale) {
       posSale = await this.prisma.pOSSale.findFirst({
         where: {
@@ -725,6 +786,7 @@ export class StoreShipmentService {
             { externalSaleId: invoice },
           ],
         },
+        orderBy: { saleDate: 'desc' },
         include: { items: true },
       });
     }

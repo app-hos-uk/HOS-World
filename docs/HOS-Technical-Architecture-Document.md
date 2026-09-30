@@ -1206,14 +1206,13 @@ Registration is protected by a trivia-based CAPTCHA alternative:
 
 ### 6.5 RBAC System
 
-**14 Built-in Roles (UserRole enum):**
+**13 Built-in Roles (UserRole enum):**
 
 | Role | Description |
 |------|-------------|
 | `CUSTOMER` | Default registered user |
-| `WHOLESALER` | B2B buyer with trade pricing |
-| `B2C_SELLER` | Marketplace seller |
-| `SELLER` | (Deprecated) Legacy seller role |
+| `WHOLESALER` | B2B supply-chain seller — product submission pipeline |
+| `B2C_SELLER` | Direct-to-consumer seller — manages own storefront |
 | `ADMIN` | Platform administrator |
 | `INFLUENCER` | Influencer with storefront |
 | `PROCUREMENT` | Procurement staff |
@@ -1224,6 +1223,8 @@ Registration is protected by a trivia-based CAPTCHA alternative:
 | `CMS_EDITOR` | CMS content editor |
 | `SALES` | Sales team |
 | `STORE_STAFF` | Physical store employee |
+
+> The legacy `SELLER` UserRole was deprecated and migrated to `B2C_SELLER`. Centralised role constants are defined in `services/api/src/common/roles.ts` (`SELLER_ROLES`, `B2C_SELLER_ROLES`, `isSellerRole()`).
 
 **Custom Permission Roles (`PermissionRole`):**
 - DB-stored role definitions with JSON permission arrays

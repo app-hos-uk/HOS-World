@@ -475,7 +475,14 @@ export class LightspeedAdapter implements POSAdapter {
           phone,
         },
       };
-    } catch {
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'unknown';
+      // Log so silent failures are visible; callers fallback to local email.
+      if (typeof console !== 'undefined') {
+        console.warn(
+          `[LightspeedAdapter] hydrateSaleCustomer failed for customer ${customerId}: ${msg}`,
+        );
+      }
       return sale;
     }
   }

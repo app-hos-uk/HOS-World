@@ -831,7 +831,7 @@ Manages the seller ecosystem including B2C seller and wholesaler onboarding, app
 | Role | Capabilities |
 |------|-------------|
 | B2C_SELLER | Full seller operations, product management, order processing |
-| WHOLESALER | Bulk operations, B2B customer management |
+| WHOLESALER | Bulk product submission, wholesale operations, fulfilment centre shipping |
 | ADMIN | Seller oversight, application approval, commission management |
 
 ### Frontend Pages
@@ -1394,6 +1394,7 @@ Tracks product stock levels across online and physical store channels, manages s
 | ADMIN | Full inventory management, discrepancy resolution |
 | FULFILLMENT | View and update inventory levels |
 | B2C_SELLER | Manage own product stock |
+| WHOLESALER | Manage own product stock |
 
 ### Frontend Pages
 | Route | Description |
@@ -1748,7 +1749,7 @@ Implements fine-grained role-based access control (RBAC) with both static roles 
 **Active** — Core security module used across all endpoints.
 
 ### Key Features
-- **14 static user roles:** CUSTOMER, ADMIN, B2C_SELLER, WHOLESALER, SELLER (legacy), INFLUENCER, PROCUREMENT, FULFILLMENT, CATALOG, MARKETING, FINANCE, CMS_EDITOR, SALES, STORE_STAFF
+- **13 static user roles:** CUSTOMER, ADMIN, B2C_SELLER, WHOLESALER, INFLUENCER, PROCUREMENT, FULFILLMENT, CATALOG, MARKETING, FINANCE, CMS_EDITOR, SALES, STORE_STAFF
 - **Custom permission roles** — Fine-grained, DB-stored with JSON permission arrays
 - **85 granular permissions** across 14 categories (Products, Orders, Users, Sellers, Business Ops, Fulfillment, Finance, Marketing, Influencers, Loyalty, Stores, System)
 - **4 scope types:** GLOBAL, MARKET, TENANT, STORE (plus SELF for ownership checks)
@@ -1760,7 +1761,7 @@ Implements fine-grained role-based access control (RBAC) with both static roles 
 - **System actors:** `withSystemActor()` for background jobs/webhooks/cron
 - **Permission wildcard support:** `*` (all), `resource.*` (resource-level wildcard)
 - **Role assignment caching:** 15-second TTL with invalidation on changes
-- **Built-in default permissions** for all 14 static roles
+- **Built-in default permissions** for all 13 static roles
 
 ### User Roles
 | Role | Capabilities |
@@ -2137,6 +2138,7 @@ Provides platform-wide analytics dashboards, financial reports, user reports, pr
 | FINANCE | Financial reports |
 | MARKETING | Campaign and user analytics |
 | B2C_SELLER | Own seller analytics |
+| WHOLESALER | Own seller analytics |
 
 ### Frontend Pages
 | Route | Description |
@@ -2639,6 +2641,7 @@ Manages digital product listings, delivery, and download management for non-phys
 | CUSTOMER | Purchase and download digital products |
 | ADMIN | Manage digital products, upload files |
 | B2C_SELLER | List digital products |
+| WHOLESALER | List digital products |
 
 ### Frontend Pages
 | Route | Description |
@@ -2777,9 +2780,8 @@ All feature flags are managed via `FeatureFlagsService` (`services/api/src/confi
 | Role | Enum Value | Description | Primary Dashboard |
 |------|-----------|-------------|-------------------|
 | Customer | `CUSTOMER` | End-user / buyer | `/customer/dashboard` |
-| Wholesaler | `WHOLESALER` | B2B buyer with bulk ordering | `/wholesaler/dashboard` |
+| Wholesaler | `WHOLESALER` | B2B supply-chain seller — product submission pipeline and fulfilment centre operations | `/wholesaler/dashboard` |
 | B2C Seller | `B2C_SELLER` | Individual / business seller | `/seller/dashboard` |
-| Seller (Legacy) | `SELLER` | Deprecated — mapped to B2C_SELLER | `/seller/dashboard` |
 | Admin | `ADMIN` | Platform administrator (full access) | `/admin/dashboard` |
 | Influencer | `INFLUENCER` | Affiliate / content creator | `/influencer/dashboard` |
 | Procurement | `PROCUREMENT` | Procurement staff | `/procurement/dashboard` |
