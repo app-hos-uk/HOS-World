@@ -203,6 +203,8 @@ export class PartnerReferralsService {
           partnerId,
           code,
           name: dto.name.trim(),
+          // Stored for analytics; public /ref/[code] always sends sign-up through
+          // the fandom-gated /login?register=1 form regardless of this value.
           targetUrl: dto.targetUrl?.trim() || '/register',
           utmSource: dto.utmSource.trim(),
           utmMedium: dto.utmMedium?.trim() || 'referral',

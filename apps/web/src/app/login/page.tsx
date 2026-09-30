@@ -11,6 +11,7 @@ import {
   stashReferralFromQuery,
 } from '@/lib/referralAttribution';
 import { CharacterSelector } from '@/components/CharacterSelector';
+import { FandomChallengeWidget } from '@/components/FandomChallengeWidget';
 import { FandomQuiz } from '@/components/FandomQuiz';
 import { CountrySelect } from '@/components/CountrySelect';
 import { COUNTRIES } from '@/lib/countries';
@@ -19,6 +20,13 @@ import { resolvePostAuthRedirect, resolvePostRegisterRedirect, getSafeReturnUrl,
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { validatePhoneMaxDigits } from '@/lib/formFieldValidation';
+import {
+  fandomChallengeRegisterFields,
+  getFandomChallengeSubmitError,
+  isFandomChallengeExpired,
+  isRegisterSubmitBlockedByChallenge,
+  type FandomChallenge,
+} from '@/lib/fandomChallenge';
 
 /** Shared auth form field styles — inset wells, primary text, muted placeholders, Inter UI font */
 const AUTH_INPUT_CLASS =
@@ -75,6 +83,9 @@ function LoginPageInner() {
   const [currencyPreference, setCurrencyPreference] = useState('USD');
   const [inviteCode, setInviteCode] = useState('');
   const [pendingReferral, setPendingReferral] = useState<string | undefined>(undefined);
+  const [fandomChallenge, setFandomChallenge] = useState<FandomChallenge | null>(null);
+  const [fandomAnswer, setFandomAnswer] = useState<number | null>(null);
+  const [challengeLoadFailed, setChallengeLoadFailed] = useState(false);
   const requiresInviteCode = process.env.NEXT_PUBLIC_REGISTRATION_REQUIRES_INVITE === 'true';
   // Enchanted Circle (HOS-*) and partner (PARTNER-*) codes substitute for invite-only
   // registration. Influencer/other ?ref= values must not hide the invite field.
@@ -113,7 +124,7 @@ function LoginPageInner() {
     return () => { cancelled = true; };
   }, [isMounted, router, searchParams, loading]);
 
-  // Referral landing → /register?ref= → /login?register=1&ref= ; persist for loyalty enroll
+  // Referral landing → /login?register=1&ref=  (legacy /register still redirects here)
   useEffect(() => {
     if (!isMounted) return;
     const refParam = searchParams.get('ref');
@@ -206,6 +217,31 @@ function LoginPageInner() {
       setDetectingCountry(false);
     }
   };
+
+  const loadFandomChallenge = useCallback(async () => {
+    try {
+      const res = await apiClient.getFandomChallenge();
+      if (res?.data) {
+        setFandomChallenge(res.data);
+        setFandomAnswer(null);
+        setChallengeLoadFailed(false);
+      } else {
+        setFandomChallenge(null);
+        setFandomAnswer(null);
+        setChallengeLoadFailed(true);
+      }
+    } catch {
+      setFandomChallenge(null);
+      setFandomAnswer(null);
+      setChallengeLoadFailed(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isMounted && !isLogin) {
+      void loadFandomChallenge();
+    }
+  }, [isMounted, isLogin, loadFandomChallenge]);
 
   const handleCountryConfirm = () => {
     if (detectedCountry) {
@@ -371,6 +407,21 @@ function LoginPageInner() {
       return;
     }
 
+    const challengeError = getFandomChallengeSubmitError({
+      challenge: fandomChallenge,
+      answer: fandomAnswer,
+      loadFailed: challengeLoadFailed,
+    });
+    if (challengeError) {
+      if (fandomChallenge && isFandomChallengeExpired(fandomChallenge)) {
+        void loadFandomChallenge();
+        setFandomAnswer(null);
+      }
+      setError(challengeError);
+      setLoading(false);
+      return;
+    }
+
     try {
       // Determine role from form or default to customer
       const role = isLogin ? undefined : 'customer'; // For now, registration is customer only
@@ -409,6 +460,7 @@ function LoginPageInner() {
         dataProcessingConsent,
         ...(resolvedInvite ? { inviteCode: resolvedInvite } : {}),
         ...(loyaltyReferralCode ? { referralCode: loyaltyReferralCode } : {}),
+        ...fandomChallengeRegisterFields(fandomChallenge, fandomAnswer),
       });
       if (!response || !response.data) {
         throw new Error('Invalid response from server');
@@ -474,6 +526,10 @@ function LoginPageInner() {
         displayError = 'Too many registration attempts. Please wait a minute and try again.';
       } else {
         displayError = msg || 'Registration failed. Please try again.';
+      }
+      if (/fandom|true fan|challenge/i.test(msg)) {
+        void loadFandomChallenge();
+        setFandomAnswer(null);
       }
       setError(displayError);
       setLoading(false);
@@ -993,6 +1049,15 @@ function LoginPageInner() {
                     </select>
                   </div>
 
+                  <FandomChallengeWidget
+                    challenge={fandomChallenge}
+                    loadFailed={challengeLoadFailed}
+                    selectedIndex={fandomAnswer}
+                    onSelect={setFandomAnswer}
+                    onRefresh={() => void loadFandomChallenge()}
+                    disabled={loading}
+                  />
+
                   {/* Privacy notice acknowledgement and consent preferences */}
                   <div className="space-y-3 p-4 bg-hos-bg-secondary rounded-lg border border-hos-border">
                     <div className="p-3 bg-hos-gold/10 border border-hos-border-accent rounded-lg mb-2">
@@ -1079,7 +1144,7 @@ function LoginPageInner() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || (!isLogin && isRegisterSubmitBlockedByChallenge(fandomChallenge))}
                 className="w-full bg-hos-gold text-[#1a1406] py-3 rounded-lg font-semibold hover:bg-hos-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'Loading...' : isLogin ? 'Login' : 'Create Account'}

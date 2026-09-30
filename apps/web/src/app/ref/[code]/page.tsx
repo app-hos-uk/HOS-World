@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { isValidLoyaltyReferralCode, isValidPartnerReferralCode } from '@/lib/referralAttribution';
+import { isValidLoyaltyReferralCode, isValidPartnerReferralCode, programReferralSignupHref } from '@/lib/referralAttribution';
 import { getDirectApiBaseUrl } from '@/lib/apiBaseUrl';
 
 type PartnerLandingInfo = {
@@ -116,7 +116,7 @@ export default async function ReferralLandingPage({
           )}
           <div className="flex flex-wrap gap-3 justify-center mt-6">
             <Link
-              href={`/register?ref=${encodeURIComponent(code)}`}
+              href={programReferralSignupHref(code)}
               className="rounded-md bg-amber-600 px-5 py-2.5 text-stone-950 font-secondary font-medium hover:bg-amber-500"
             >
               Sign up now
@@ -133,7 +133,7 @@ export default async function ReferralLandingPage({
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link
-              href={`/register?ref=${encodeURIComponent(code)}`}
+              href={programReferralSignupHref(code)}
               className="rounded-md bg-amber-600 px-5 py-2.5 text-stone-950 font-secondary font-medium hover:bg-amber-500"
             >
               Sign up

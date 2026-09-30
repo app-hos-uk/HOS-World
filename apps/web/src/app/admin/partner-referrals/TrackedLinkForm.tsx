@@ -138,6 +138,10 @@ export function TrackedLinkForm({ submitting, onSubmit, onCancel, submitLabel = 
         <label className="block text-sm font-secondary">
           <span className="text-stone-300">Target URL</span>
           <input className={FIELD_CLASS} value={form.targetUrl} onChange={set('targetUrl')} />
+          <span className="mt-1 block text-xs text-stone-500">
+            Keep <code>/register</code> (default) so flyers land on the Join the Magic form with the required fandom challenge.
+            Changing this does not skip the challenge.
+          </span>
         </label>
       </section>
 

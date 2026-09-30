@@ -81,6 +81,11 @@ export function isValidProgramReferralCode(code: string): boolean {
   return isValidLoyaltyReferralCode(code) || isValidPartnerReferralCode(code);
 }
 
+/** Canonical customer signup for /ref/[code] landings (includes the required fandom challenge). */
+export function programReferralSignupHref(code: string): string {
+  return `/login?register=1&ref=${encodeURIComponent(code.trim())}`;
+}
+
 export function getStoredUtmParams(): Record<string, string> | undefined {
   if (typeof document === 'undefined') return undefined;
   try {
