@@ -393,6 +393,58 @@ describe('LightspeedAdapter', () => {
       });
     });
 
+    it('searches HOS22 and HOS-22 when staff type a digit-only invoice and picks the newest sale', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request
+        .mockResolvedValueOnce({
+          status: 200,
+          data: {
+            data: [
+              { id: 'old-sale', invoice_number: '22', sale_date: '2026-09-01T00:00:00Z' },
+            ],
+          },
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          data: {
+            data: [
+              { id: 'hos22-sale', invoice_number: 'HOS22', sale_date: '2026-10-01T00:13:00Z' },
+            ],
+          },
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          data: { data: [] },
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          data: {
+            data: {
+              id: 'hos22-sale',
+              invoice_number: 'HOS22',
+              state: 'closed',
+              line_items: [
+                { id: 'line-1', product_id: 'p-pencil', sku: 'PENCIL-1', name: 'Hufflepuff Pencil', quantity: 1, price: 2 },
+              ],
+            },
+          },
+        });
+
+      const sale = await adapter.getSaleByInvoice({
+        invoiceNumber: '22',
+        hydrateProducts: false,
+      });
+
+      expect(request.mock.calls[0][1]).toContain('invoice_number=22');
+      expect(request.mock.calls[1][1]).toContain('invoice_number=HOS22');
+      expect(request.mock.calls[2][1]).toContain('invoice_number=HOS-22');
+      expect(request.mock.calls[3][1]).toBe('/sales/hos22-sale');
+      expect(sale?.externalId).toBe('hos22-sale');
+      expect(sale?.invoiceNumber).toBe('HOS22');
+      expect(sale?.items[0].sku).toBe('PENCIL-1');
+    });
+
     it('skips product hydration when hydrateProducts is false', async () => {
       const adapter = new LightspeedAdapter(creds);
       const request = mockClientRequest(adapter);
