@@ -165,6 +165,31 @@ describe('PosSalesImportService', () => {
       );
     });
 
+    it('replaces line items whenever refreshItems is set, even if SKUs look complete', async () => {
+      const { service, prisma } = makeMocks();
+      prisma.pOSSale.findUnique.mockResolvedValue({
+        id: 'existing-1',
+        status: 'PROCESSED',
+        externalInvoice: 'INV-001',
+        items: [{ sku: 'WAND-1', name: 'Old name' }],
+      });
+      prisma.externalEntityMapping.findFirst.mockResolvedValue(null);
+      prisma.product.findFirst.mockResolvedValue(null);
+
+      await service.importParsedSale('s1', 'lightspeed', mockParsedSale, {
+        refreshItems: true,
+      });
+
+      expect(prisma.pOSSale.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'existing-1' },
+          data: expect.objectContaining({
+            items: expect.objectContaining({ deleteMany: {}, create: expect.any(Array) }),
+          }),
+        }),
+      );
+    });
+
     it('deduplicates by provider + externalSaleId', async () => {
       const { service, prisma } = makeMocks();
       prisma.pOSSale.findUnique.mockResolvedValue({ id: 'existing-1' });

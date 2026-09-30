@@ -529,28 +529,43 @@ export class LightspeedAdapter implements POSAdapter {
       }
     }
 
-    const qs = new URLSearchParams({ type: 'sales', invoice_number: target });
+    const qsQueries = this.invoiceSearchQueries(target);
+    const seenIds = new Set<string>();
+    const rows: Record<string, unknown>[] = [];
     try {
-      const { data } = await this.client.request<unknown>('GET', `/search?${qs.toString()}`);
-      const rows = this.unwrapSaleList(data);
-      const exact = rows.filter((r) => M.saleMatchesInvoice(r, target));
-      const candidates = exact.filter((r) =>
+      for (const q of qsQueries) {
+        const qs = new URLSearchParams({ type: 'sales', invoice_number: q });
+        try {
+          const { data } = await this.client.request<unknown>('GET', `/search?${qs.toString()}`);
+          for (const r of this.unwrapSaleList(data)) {
+            const id = r.id != null ? String(r.id) : '';
+            if (id) {
+              if (seenIds.has(id)) continue;
+              seenIds.add(id);
+            }
+            rows.push(r);
+          }
+        } catch (err) {
+          if (!this.isNotFound(err)) throw err;
+        }
+      }
+      const matching = rows.filter((r) => M.saleMatchesInvoice(r, target));
+      const candidates = matching.filter((r) =>
         this.searchRowCouldBeOutlet(
           params.outletId,
           r.outlet_id != null ? String(r.outlet_id) : '',
         ),
       );
       const verified = params.outletId
-        ? candidates.filter(
-            (r) => String(r.outlet_id ?? '').trim() === params.outletId,
-          )
+        ? candidates.filter((r) => String(r.outlet_id ?? '').trim() === params.outletId)
         : candidates;
-      const pick =
-        verified.length === 1
-          ? verified[0]
+      const pickPool =
+        verified.length > 0
+          ? verified
           : verified.length === 0 && candidates.length === 1
-            ? candidates[0]
-            : null;
+            ? candidates
+            : [];
+      const pick = M.pickSaleSearchHit(pickPool, target);
       const saleId = pick?.id != null ? String(pick.id) : '';
       if (saleId) {
         const full = await this.getSaleById(saleId, { hydrateProducts: hydrate });
@@ -567,6 +582,17 @@ export class LightspeedAdapter implements POSAdapter {
     }
 
     return null;
+  }
+
+  private invoiceSearchQueries(target: string): string[] {
+    const queries = [target];
+    const compact = M.normalizeInvoiceKey(target);
+    if (/^\d+$/.test(compact)) {
+      for (const alt of [`HOS${compact}`, `HOS-${compact}`]) {
+        if (!queries.some((q) => q.toLowerCase() === alt.toLowerCase())) queries.push(alt);
+      }
+    }
+    return queries;
   }
 
   /** Drop search hits known to belong to another outlet; keep unknown for full-sale checks. */

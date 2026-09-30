@@ -596,11 +596,7 @@ export class PosSalesImportService {
       include: { items: true },
     });
     if (existing) {
-      if (
-        options?.refreshItems &&
-        posSaleItemsNeedRefresh(existing.items ?? []) &&
-        parsed.items.length
-      ) {
+      if (options?.refreshItems && parsed.items.length) {
         const itemCreates = await this.buildSaleItemCreates(storeId, provider, parsed);
         await this.prisma.pOSSale.update({
           where: { id: existing.id },

@@ -153,12 +153,57 @@ function mapLineItem(li: Record<string, unknown>): POSSaleItem {
   };
 }
 
+export function normalizeInvoiceKey(value: string): string {
+  return value.trim().replace(/[^a-z0-9]/gi, '').toLowerCase();
+}
+
+/**
+ * Till staff often type "22" while Lightspeed prints "HOS22" / "HOS-22".
+ * Treat those as the same receipt when the extra characters are a letter prefix.
+ */
+export function invoicesEquivalent(a: string, b: string): boolean {
+  const x = normalizeInvoiceKey(a);
+  const y = normalizeInvoiceKey(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  const [shorter, longer] = x.length <= y.length ? [x, y] : [y, x];
+  if (!longer.endsWith(shorter)) return false;
+  const prefix = longer.slice(0, longer.length - shorter.length);
+  return /^[a-z]+$/.test(prefix) && /^\d+$/.test(shorter);
+}
+
 /** True when the staff-entered invoice/receipt matches this Lightspeed sale row. */
 export function saleMatchesInvoice(payload: Record<string, unknown>, invoiceNumber: string): boolean {
-  const target = invoiceNumber.trim().toLowerCase();
-  if (!target) return false;
+  if (!invoiceNumber.trim()) return false;
   const candidates = [payload.invoice_number, payload.receipt_number, payload.id, payload.sale_id];
-  return candidates.some((c) => c != null && String(c).trim().toLowerCase() === target);
+  return candidates.some((c) => c != null && invoicesEquivalent(String(c), invoiceNumber));
+}
+
+function saleSearchTime(row: Record<string, unknown>): number {
+  const raw = row.sale_date ?? row.created_at ?? row.updated_at ?? row.date;
+  const t = raw != null ? Date.parse(String(raw)) : NaN;
+  return Number.isFinite(t) ? t : 0;
+}
+
+/**
+ * Choose one search hit. Digit-only till input ("22") can match both an old
+ * invoice "22" and a newer "HOS22" — prefer the most recently dated sale.
+ */
+export function pickSaleSearchHit(
+  rows: Record<string, unknown>[],
+  invoiceNumber: string,
+): Record<string, unknown> | null {
+  const matching = rows.filter((r) => saleMatchesInvoice(r, invoiceNumber));
+  if (!matching.length) return null;
+  const compact = normalizeInvoiceKey(invoiceNumber);
+  const digitsOnly = /^\d+$/.test(compact);
+  const exact = matching.filter((r) => {
+    const inv = r.invoice_number != null ? normalizeInvoiceKey(String(r.invoice_number)) : '';
+    return inv === compact;
+  });
+  const pool = !digitsOnly && exact.length ? exact : matching;
+  if (pool.length === 1) return pool[0];
+  return [...pool].sort((a, b) => saleSearchTime(b) - saleSearchTime(a))[0] ?? null;
 }
 
 function resolveSaleCustomer(payload: Record<string, unknown>): POSSale['customer'] {

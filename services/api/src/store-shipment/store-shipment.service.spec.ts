@@ -185,6 +185,61 @@ describe('StoreShipmentService.resolveSaleForShipment', () => {
     expect(result.status).toBe('CUSTOMER_DETAILS_REQUIRED');
   });
 
+  it('does not keep a linked sale with valid SKUs when it is a different Lightspeed sale', async () => {
+    const { service, prisma, adapter, skuCustoms, salesImport } = makeService();
+    prisma.storeShipmentRequest.findUnique.mockResolvedValue({
+      ...shipmentBase,
+      invoiceNumber: '22',
+      posExternalSaleId: 'old-sale',
+      posSaleId: 'pos-wrong',
+      posSale: {
+        id: 'pos-wrong',
+        status: 'PROCESSED',
+        externalSaleId: 'old-sale',
+        items: [{ sku: 'NMR-52760-C', productId: null, name: 'Spider-Man Cards', quantity: 1 }],
+      },
+    });
+    prisma.store.findUnique.mockResolvedValue(shipmentBase.store);
+    adapter.getSaleById.mockResolvedValue({
+      externalId: 'old-sale',
+      invoiceNumber: '22',
+      state: 'closed',
+      saleDate: new Date('2026-09-01T00:00:00.000Z'),
+      customer: { email: 'guest@example.com' },
+      items: [{ sku: 'NMR-52760-C', name: 'Spider-Man Cards', quantity: 1 }],
+    });
+    adapter.getSaleByInvoice.mockResolvedValue({
+      externalId: 'hos22-sale',
+      invoiceNumber: 'HOS22',
+      state: 'closed',
+      saleDate: new Date('2026-10-01T00:13:00.000Z'),
+      customer: { email: 'guest@example.com' },
+      items: [{ sku: 'PENCIL-1', name: 'Hufflepuff Pencil', quantity: 1, externalProductId: 'p-pencil' }],
+    });
+    salesImport.importParsedSale.mockResolvedValue({ id: 'pos-pencil', duplicate: false });
+    prisma.pOSSale.findUnique.mockResolvedValue({
+      id: 'pos-pencil',
+      status: 'PROCESSED',
+      externalSaleId: 'hos22-sale',
+      items: [{ sku: 'PENCIL-1', productId: null, name: 'Hufflepuff Pencil', quantity: 1, externalProductId: 'p-pencil' }],
+    });
+    skuCustoms.enrichSaleItems.mockResolvedValue({
+      allReady: true,
+      anyBlocked: false,
+      results: [{ sku: 'PENCIL-1', status: 'READY' }],
+    });
+
+    const result = await service.resolveSaleForShipment('ship-1', 'user-1');
+
+    expect(salesImport.importParsedSale).toHaveBeenCalledWith(
+      'store-1',
+      'lightspeed',
+      expect.objectContaining({ externalId: 'hos22-sale', invoiceNumber: 'HOS22' }),
+      { refreshItems: true },
+    );
+    expect(result.enrichment[0].sku).toBe('PENCIL-1');
+  });
+
   it('tells the customer the till sale is unfinished when Lightspeed returns a non-closed sale', async () => {
     const { service, prisma, adapter, salesImport } = makeService();
     prisma.storeShipmentRequest.findUnique.mockResolvedValue(shipmentBase);

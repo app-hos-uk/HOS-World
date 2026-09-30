@@ -308,4 +308,28 @@ describe('lightspeed.mapper', () => {
       expect(M.isReturnSale({ totalAmount: 12, returnForSaleId: undefined })).toBe(false);
     });
   });
+
+  describe('invoicesEquivalent / saleMatchesInvoice', () => {
+    it('treats till shorthand 22 as HOS22 and HOS-22', () => {
+      expect(M.invoicesEquivalent('22', 'HOS22')).toBe(true);
+      expect(M.invoicesEquivalent('22', 'HOS-22')).toBe(true);
+      expect(M.saleMatchesInvoice({ invoice_number: 'HOS22' }, '22')).toBe(true);
+    });
+
+    it('does not treat 22 as HOS221 or HOS122', () => {
+      expect(M.invoicesEquivalent('22', 'HOS221')).toBe(false);
+      expect(M.invoicesEquivalent('22', 'HOS122')).toBe(false);
+    });
+
+    it('picks the newest sale when 22 matches both an old invoice 22 and HOS22', () => {
+      const pick = M.pickSaleSearchHit(
+        [
+          { id: 'old', invoice_number: '22', sale_date: '2026-09-01T00:00:00Z' },
+          { id: 'new', invoice_number: 'HOS22', sale_date: '2026-10-01T00:13:00Z' },
+        ],
+        '22',
+      );
+      expect(pick?.id).toBe('new');
+    });
+  });
 });

@@ -14,6 +14,7 @@ import { POSAdapterFactory } from '../pos/pos-adapter.factory';
 import type { POSAdapter } from '../pos/interfaces/pos-adapter.interface';
 import { PosSalesImportService, posSaleItemsNeedRefresh } from '../pos/sync/sales-import.service';
 import {
+  invoicesEquivalent,
   isClosedSale,
   isVoidedSale,
 } from '../pos/adapters/lightspeed/lightspeed.mapper';
@@ -765,19 +766,26 @@ export class StoreShipmentService {
     if (!invoice) throw new BadRequestException('Invoice number missing');
 
     let posSale = shipment.posSale;
-    // Prefer matching by the exact Lightspeed sale UUID stored on the
-    // shipment — invoice numbers can repeat across registers/resets,
-    // so a plain invoice lookup may return a different (older) sale.
-    if (!posSale && shipment.posExternalSaleId) {
+    const expectedExternalId = shipment.posExternalSaleId?.trim() || '';
+    if (posSale && expectedExternalId && posSale.externalSaleId !== expectedExternalId) {
+      this.logger.warn(
+        `Discarding linked POS sale ${posSale.id} for shipment ${shipment.id}: ` +
+          `external id ${posSale.externalSaleId} does not match Lightspeed sale ${expectedExternalId}`,
+      );
+      posSale = null;
+    }
+    if (!posSale && expectedExternalId) {
       posSale = await this.prisma.pOSSale.findFirst({
         where: {
           storeId: shipment.storeId,
-          externalSaleId: shipment.posExternalSaleId,
+          externalSaleId: expectedExternalId,
         },
         include: { items: true },
       });
     }
-    if (!posSale) {
+    // Only search by invoice number when we do not already know the Lightspeed sale UUID.
+    // Invoice "22" can match an older local sale while Lightspeed's receipt is HOS22.
+    if (!posSale && !expectedExternalId) {
       posSale = await this.prisma.pOSSale.findFirst({
         where: {
           storeId: shipment.storeId,
@@ -791,7 +799,10 @@ export class StoreShipmentService {
       });
     }
 
-    if (!posSale || posSaleItemsNeedRefresh(posSale.items)) {
+    const shouldFetchLive =
+      Boolean(expectedExternalId) || !posSale || posSaleItemsNeedRefresh(posSale.items);
+
+    if (shouldFetchLive) {
       try {
         const adapter = await this.buildAdapter(
           shipment.storeId,
@@ -801,13 +812,15 @@ export class StoreShipmentService {
           shipment.store.posConnection?.externalOutletId ||
           shipment.store.externalStoreId ||
           undefined;
-        let remote: POSSale | null = null;
-        if (shipment.posExternalSaleId && adapter?.getSaleById) {
-          remote = await adapter.getSaleById(shipment.posExternalSaleId);
+        let byId: POSSale | null = null;
+        let byInvoice: POSSale | null = null;
+        if (expectedExternalId && adapter?.getSaleById) {
+          byId = await adapter.getSaleById(expectedExternalId);
         }
-        if (!remote && adapter?.getSaleByInvoice) {
-          remote = await adapter.getSaleByInvoice({ invoiceNumber: invoice, outletId });
+        if (adapter?.getSaleByInvoice) {
+          byInvoice = await adapter.getSaleByInvoice({ invoiceNumber: invoice, outletId });
         }
+        const remote = this.preferLiveSaleForInvoice(byId, byInvoice, invoice);
         if (remote) {
           const provider = shipment.store.posConnection?.provider || adapter!.providerName;
           const imported = await this.salesImport.importParsedSale(
@@ -861,6 +874,31 @@ export class StoreShipmentService {
     });
 
     return this.enrichShipment(shipment.id, posSale.items);
+  }
+
+  /**
+   * When till staff typed a short invoice ("22"), a previously linked sale UUID
+   * may be an older invoice 22 while Lightspeed search now finds HOS22.
+   * Prefer the live sale whose invoice matches and that closed most recently.
+   */
+  private preferLiveSaleForInvoice(
+    byId: POSSale | null,
+    byInvoice: POSSale | null,
+    invoice: string,
+  ): POSSale | null {
+    const candidates = [byId, byInvoice].filter((s): s is POSSale => Boolean(s));
+    const matching = candidates.filter(
+      (s) =>
+        invoicesEquivalent(s.invoiceNumber || '', invoice) ||
+        invoicesEquivalent(s.externalId, invoice),
+    );
+    const pool = matching.length ? matching : candidates;
+    if (!pool.length) return null;
+    const time = (s: POSSale) => {
+      const t = s.saleDate instanceof Date ? s.saleDate.getTime() : Date.parse(String(s.saleDate ?? ''));
+      return Number.isFinite(t) ? t : 0;
+    };
+    return pool.reduce((best, s) => (time(s) > time(best) ? s : best));
   }
 
   private async enrichShipment(

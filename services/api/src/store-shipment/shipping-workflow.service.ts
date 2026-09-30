@@ -938,7 +938,17 @@ export class ShippingWorkflowService {
     }
 
     const boxes = await this.boxSizes.list(order.storeId);
-    const invoiceItems = (order.posSale?.items || []).map((i) => ({
+    let sale = order.posSale;
+    if (order.posExternalSaleId && sale?.externalSaleId !== order.posExternalSaleId) {
+      sale = await this.prisma.pOSSale.findFirst({
+        where: {
+          storeId: order.storeId,
+          externalSaleId: order.posExternalSaleId,
+        },
+        include: { items: true },
+      });
+    }
+    const invoiceItems = (sale?.items || []).map((i) => ({
       id: i.id,
       sku: i.sku,
       name: i.name,
