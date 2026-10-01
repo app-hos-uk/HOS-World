@@ -428,7 +428,7 @@ export class StoreShipmentService {
 
     await this.prisma.storeShipmentRequest.update({
       where: { id: row.id },
-      data: { userId, claimEmail: email, claimTokenHash: null },
+      data: { userId, claimEmail: email },
     });
 
     await this.prisma.gDPRConsentLog.updateMany({
@@ -436,7 +436,17 @@ export class StoreShipmentService {
       data: { userId },
     });
 
-    return this.resolveSaleForShipment(row.id, userId);
+    const result = await this.resolveSaleForShipment(row.id, userId);
+
+    // Consume the claim token only after the full flow succeeds so a
+    // client-side timeout during resolveSaleForShipment does not orphan
+    // the link (the customer can retry with the same token).
+    await this.prisma.storeShipmentRequest.update({
+      where: { id: row.id },
+      data: { claimTokenHash: null },
+    });
+
+    return result;
   }
 
   private adapterFromStore(

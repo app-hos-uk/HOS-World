@@ -16,6 +16,27 @@ type ClaimContext = {
   emailMatchesInvoice?: boolean | null;
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  DRAFT: 'Draft',
+  NEW: 'New',
+  PENDING_ENRICHMENT: 'Verifying Items',
+  CUSTOMER_DETAILS_REQUIRED: 'Customer Details to be Added',
+  QUOTED: 'Quoted',
+  AWAITING_PAYMENT: 'Awaiting Payment',
+  PAID: 'Paid',
+  SENT_TO_LOGISTICS: 'Sent to Logistics',
+  PACKING: 'Packing',
+  PACKED: 'Packed',
+  LABEL_CREATED: 'Label Created',
+  READY_FOR_PICKUP: 'Ready for Pickup',
+  HANDED_TO_CARRIER: 'Handed to Carrier',
+  LABEL_PURCHASED: 'Label Purchased',
+  IN_TRANSIT: 'In Transit',
+  DELIVERED: 'Delivered',
+  CANCELLED: 'Cancelled',
+  BLOCKED: 'Blocked',
+};
+
 export default function ShipClaimPage() {
   const { token } = useParams<{ token: string }>();
   const router = useRouter();
@@ -136,7 +157,8 @@ export default function ShipClaimPage() {
             </p>
           )}
           <p>
-            <span className="text-hos-text-muted">Status:</span> {ctx.status}
+            <span className="text-hos-text-muted">Status:</span>{' '}
+            {STATUS_LABELS[ctx.status || ''] || ctx.status}
           </p>
         </div>
       )}

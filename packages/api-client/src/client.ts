@@ -3113,6 +3113,7 @@ export class ApiClient {
   async attachStoreShipmentClaim(token: string) {
     return this.request<ApiResponse<unknown>>(`/store-shipment/claim/${token}/attach`, {
       method: 'POST',
+      timeoutMs: STORE_SHIPMENT_CLAIM_TIMEOUT_MS,
     });
   }
 
