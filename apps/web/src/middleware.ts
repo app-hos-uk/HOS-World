@@ -160,7 +160,7 @@ export async function middleware(request: NextRequest) {
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com https://connect.facebook.net${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://images.unsplash.com https://images.pexels.com https://lh3.googleusercontent.com https://hos-world-web.vercel.app https://cdn.shopify.com https://www.facebook.com https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.openstreetmap.de https://cdnjs.cloudflare.com",
+    "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://*.r2.dev https://*.r2.cloudflarestorage.com https://images.unsplash.com https://images.pexels.com https://lh3.googleusercontent.com https://hos-world-web.vercel.app https://cdn.shopify.com https://www.facebook.com https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.openstreetmap.de https://cdnjs.cloudflare.com",
     "font-src 'self' data:",
     "connect-src 'self' https://*.houseofspells.com https://api.stripe.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://graph.facebook.com wss://*.houseofspells.com https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.openstreetmap.de https://nominatim.openstreetmap.org",
     "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",

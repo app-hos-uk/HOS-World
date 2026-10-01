@@ -51,6 +51,8 @@
     "db:migrate-phase6": "ts-node src/database/run-phase6-migration.ts",
     "db:run-migration-sql": "ts-node src/database/run-migration.ts",
     "db:migrate-seller-role": "ts-node src/database/migrate-seller-role.ts",
+    "migrate:cloudinary-to-r2": "ts-node scripts/migrate-cloudinary-to-r2.ts",
+    "migrate:cloudinary-to-r2:dry": "ts-node scripts/migrate-cloudinary-to-r2.ts --dry-run",
     "db:migrate-seller-role:dry": "ts-node src/database/migrate-seller-role.ts --dry-run",
     "verify:deployment": "ts-node scripts/verify-deployment.ts",
     "verify:oauth": "ts-node scripts/verify-oauth-table.ts",
