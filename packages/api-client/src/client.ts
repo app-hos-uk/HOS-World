@@ -52,6 +52,15 @@ export class ApiError extends Error {
  */
 const POS_VOUCHER_TIMEOUT_MS = 45000;
 
+/**
+ * Creating a shipping claim chains up to 3 sequential Lightspeed API calls
+ * (confirm invoice 20 s + resolve email 20 s + import items 20 s) plus DB
+ * writes and email send.  The default 15 s client timeout was causing
+ * AbortErrors and duplicate claim emails on retry.  65 s covers the
+ * theoretical 60 s Lightspeed worst-case with headroom for DB/email.
+ */
+const STORE_SHIPMENT_CLAIM_TIMEOUT_MS = 65000;
+
 export class ApiClient {
   private baseUrl: string;
   private getToken: () => string | null;
@@ -3087,6 +3096,7 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>('/store-shipment/staff/create-claim', {
       method: 'POST',
       body: JSON.stringify(body),
+      timeoutMs: STORE_SHIPMENT_CLAIM_TIMEOUT_MS,
     });
   }
 
