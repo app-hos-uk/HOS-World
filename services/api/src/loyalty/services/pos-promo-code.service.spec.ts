@@ -156,7 +156,15 @@ describe('PosPromoCodeService', () => {
     expect(code).toMatch(/^HOS-LYL-[A-Z0-9]{8}$/);
   });
 
-  it('burns points and creates a Lightspeed promotion', async () => {
+  it('toLightspeedTime strips millis and Z, and backdates when requested', () => {
+    const { svc } = build({});
+    const d = new Date('2026-10-01T14:30:00.123Z');
+    expect(svc.toLightspeedTime(d)).toBe('2026-10-01T14:30:00');
+    expect(svc.toLightspeedTime(d, 5 * 60 * 1000)).toBe('2026-10-01T14:25:00');
+  });
+
+  it('burns points and creates a Lightspeed promotion with a backdated start time', async () => {
+    const before = Date.now();
     const { svc, adapter, burn } = build({});
     const result = await svc.redeemForPromoCode({
       points: 500,
@@ -173,6 +181,9 @@ describe('PosPromoCodeService', () => {
         promoCodeLimit: 1,
       }),
     );
+    const call = adapter.createPromotion.mock.calls[0][0];
+    const startMs = new Date(call.startTime + 'Z').getTime();
+    expect(startMs).toBeLessThanOrEqual(before - 5 * 60 * 1000 + 2000);
     expect(result.type).toBe('PROMO_CODE');
     expect(result.status).toBe('ISSUED');
     expect(result.promoCode).toBe('HOS-LYL-ABCD2345');

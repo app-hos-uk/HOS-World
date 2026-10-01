@@ -522,7 +522,8 @@ export class PosPromoCodeService {
       voucher.store.posConnection?.externalOutletId ||
       undefined;
     const amount = Number(voucher.amount);
-    const startTime = this.toLightspeedTime(new Date());
+    const BACKDATE_MS = 5 * 60 * 1000;
+    const startTime = this.toLightspeedTime(new Date(), BACKDATE_MS);
     const endTime = this.toLightspeedTime(
       voucher.ttlExpiresAt ?? new Date(Date.now() + VOUCHER_TTL_HOURS * 60 * 60 * 1000),
     );
@@ -612,8 +613,14 @@ export class PosPromoCodeService {
     }
   }
 
-  private toLightspeedTime(d: Date): string {
-    return d.toISOString().replace(/\.\d{3}Z$/, '');
+  /**
+   * Lightspeed expects UTC without a timezone suffix, e.g. `2026-10-01T14:30:00`.
+   * Backdate start_time by a few minutes so the promo is immediately redeemable
+   * despite any clock skew between our server and the Lightspeed register.
+   */
+  toLightspeedTime(d: Date, backdateMs = 0): string {
+    const adjusted = backdateMs ? new Date(d.getTime() - backdateMs) : d;
+    return adjusted.toISOString().replace(/\.\d{3}Z$/, '');
   }
 
   private assertPromotions(adapter: POSAdapter, requireArchive = false): void {

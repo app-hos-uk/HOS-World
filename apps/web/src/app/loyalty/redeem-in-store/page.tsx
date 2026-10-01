@@ -43,9 +43,11 @@ export default function RedeemInStorePage() {
     if (!result?.ttlExpiresAt) return null;
     const ms = new Date(result.ttlExpiresAt).getTime() - now;
     if (ms <= 0) return 'Expired';
-    const m = Math.floor(ms / 60000);
-    const s = Math.floor((ms % 60000) / 1000);
-    return `${m}:${String(s).padStart(2, '0')}`;
+    const h = Math.floor(ms / 3_600_000);
+    const m = Math.floor((ms % 3_600_000) / 60_000);
+    const s = Math.floor((ms % 60_000) / 1_000);
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    return `${m}m ${s}s`;
   }, [result?.ttlExpiresAt, now]);
 
   const redeem = async () => {
