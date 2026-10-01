@@ -39,6 +39,7 @@ describe('PosPromoCodeService', () => {
       ttlExpiresAt: new Date(Date.now() + 3_600_000),
       redemption: { pointsSpent: 500, status: 'COMPLETED' },
       store: {
+        timezone: 'America/New_York',
         posConnection: {
           isActive: true,
           provider: 'lightspeed',
@@ -163,8 +164,15 @@ describe('PosPromoCodeService', () => {
     expect(svc.toLightspeedTime(d, 5 * 60 * 1000)).toBe('2026-10-01T14:25:00');
   });
 
-  it('burns points and creates a Lightspeed promotion with a backdated start time', async () => {
-    const before = Date.now();
+  it('toLightspeedTime converts to store local timezone when provided', () => {
+    const { svc } = build({});
+    const d = new Date('2026-10-01T14:30:00.000Z');
+    expect(svc.toLightspeedTime(d, 0, 'America/New_York')).toBe('2026-10-01T10:30:00');
+    expect(svc.toLightspeedTime(d, 0, 'Europe/London')).toBe('2026-10-01T15:30:00');
+    expect(svc.toLightspeedTime(d, 5 * 60 * 1000, 'America/New_York')).toBe('2026-10-01T10:25:00');
+  });
+
+  it('burns points and creates a Lightspeed promotion with start time in store timezone', async () => {
     const { svc, adapter, burn } = build({});
     const result = await svc.redeemForPromoCode({
       points: 500,
@@ -182,8 +190,17 @@ describe('PosPromoCodeService', () => {
       }),
     );
     const call = adapter.createPromotion.mock.calls[0][0];
-    const startMs = new Date(call.startTime + 'Z').getTime();
-    expect(startMs).toBeLessThanOrEqual(before - 5 * 60 * 1000 + 2000);
+    const startLocal = call.startTime;
+    const endLocal = call.endTime;
+    expect(startLocal).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/);
+    expect(endLocal).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/);
+
+    const nowNY = new Date(
+      new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }),
+    );
+    const startDate = new Date(startLocal);
+    expect(startDate.getTime()).toBeLessThanOrEqual(nowNY.getTime());
+
     expect(result.type).toBe('PROMO_CODE');
     expect(result.status).toBe('ISSUED');
     expect(result.promoCode).toBe('HOS-LYL-ABCD2345');
