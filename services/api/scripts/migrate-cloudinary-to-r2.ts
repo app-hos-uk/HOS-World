@@ -49,14 +49,29 @@ interface MigrationResult {
   error?: string;
 }
 
-function initR2Client(): S3Client {
-  if (!R2_ACCESS_KEY || !R2_SECRET_KEY || !R2_BUCKET) {
-    console.error('\n❌  Missing R2 credentials. Set these env vars:');
-    console.error('   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET');
-    console.error('   AWS_S3_ENDPOINT (e.g. https://<account_id>.r2.cloudflarestorage.com)');
-    console.error('   AWS_S3_PUBLIC_URL (e.g. https://pub-xxx.r2.dev or your custom domain)\n');
+function isAbsoluteHttpUrl(value: string): boolean {
+  return /^https?:\/\//i.test(value);
+}
+
+function requireR2Config(): void {
+  const missing: string[] = [];
+  if (!R2_ACCESS_KEY) missing.push('AWS_ACCESS_KEY_ID');
+  if (!R2_SECRET_KEY) missing.push('AWS_SECRET_ACCESS_KEY');
+  if (!R2_BUCKET) missing.push('AWS_S3_BUCKET');
+  if (!R2_PUBLIC_URL || !isAbsoluteHttpUrl(R2_PUBLIC_URL)) {
+    missing.push('AWS_S3_PUBLIC_URL (absolute http(s) URL)');
+  }
+
+  if (missing.length > 0) {
+    console.error('\n❌  Missing or invalid R2 configuration. Set these env vars:');
+    missing.forEach((name) => console.error(`   ${name}`));
+    console.error('   AWS_S3_ENDPOINT (e.g. https://<account_id>.r2.cloudflarestorage.com)\n');
     process.exit(1);
   }
+}
+
+function initR2Client(): S3Client {
+  requireR2Config();
 
   return new S3Client({
     region: 'auto',
@@ -110,13 +125,27 @@ function buildR2Key(url: string): string {
  * Download a file from a URL into a Buffer.
  */
 function downloadFile(url: string): Promise<Buffer> {
+  if (!url || !isAbsoluteHttpUrl(url)) {
+    return Promise.reject(new Error(`Invalid download URL: ${url || '(empty)'}`));
+  }
+
   return new Promise((resolve, reject) => {
     const client = url.startsWith('https') ? https : http;
     client.get(url, { timeout: 30_000 }, (res) => {
       if (res.statusCode === 301 || res.statusCode === 302) {
-        return downloadFile(res.headers.location!).then(resolve, reject);
+        const location = res.headers.location;
+        if (!location) {
+          res.resume();
+          return reject(
+            new Error(`HTTP ${res.statusCode} redirect from ${url} with no Location header`),
+          );
+        }
+        res.resume();
+        const nextUrl = new URL(location, url).toString();
+        return downloadFile(nextUrl).then(resolve, reject);
       }
       if (res.statusCode !== 200) {
+        res.resume();
         return reject(new Error(`HTTP ${res.statusCode} for ${url}`));
       }
       const chunks: Buffer[] = [];
@@ -177,6 +206,10 @@ async function uploadToR2(
     Body: body,
     ContentType: contentType,
   }));
+
+  if (!R2_PUBLIC_URL || !isAbsoluteHttpUrl(R2_PUBLIC_URL)) {
+    throw new Error('AWS_S3_PUBLIC_URL must be an absolute http(s) URL');
+  }
 
   const publicBase = R2_PUBLIC_URL.replace(/\/$/, '');
   return `${publicBase}/${key}`;
