@@ -1,8 +1,16 @@
 'use client';
 
-import type { FandomChallenge } from '@/lib/fandomChallenge';
+import { useEffect, useState } from 'react';
+import { fandomChallengeExpiryMs, type FandomChallenge } from '@/lib/fandomChallenge';
 
 const OPTION_LABELS = ['A', 'B', 'C', 'D'];
+
+function formatRemaining(ms: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = String(totalSeconds % 60).padStart(2, '0');
+  return `${minutes}:${seconds}`;
+}
 
 export function FandomChallengeWidget({
   challenge,
@@ -49,6 +57,39 @@ export function FandomChallengeWidget({
   }
 
   return (
+    <FandomChallengeReady
+      challenge={challenge}
+      selectedIndex={selectedIndex}
+      onSelect={onSelect}
+      onRefresh={onRefresh}
+      disabled={disabled}
+    />
+  );
+}
+
+function FandomChallengeReady({
+  challenge,
+  selectedIndex,
+  onSelect,
+  onRefresh,
+  disabled,
+}: {
+  challenge: FandomChallenge;
+  selectedIndex: number | null;
+  onSelect: (idx: number) => void;
+  onRefresh: () => void;
+  disabled?: boolean;
+}) {
+  const [remainingMs, setRemainingMs] = useState(() => fandomChallengeExpiryMs(challenge) - Date.now());
+
+  useEffect(() => {
+    const tick = () => setRemainingMs(fandomChallengeExpiryMs(challenge) - Date.now());
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [challenge]);
+
+  return (
     <div className="rounded-xl border border-amber-600/40 bg-gradient-to-b from-amber-950/20 to-stone-950/80 p-4 shadow-[0_0_16px_rgba(217,119,6,0.08)]">
       <div className="flex items-center gap-2 mb-3">
         <span className="text-lg" role="img" aria-label="wand">
@@ -92,14 +133,25 @@ export function FandomChallengeWidget({
         })}
       </div>
 
-      <button
-        type="button"
-        onClick={onRefresh}
-        disabled={disabled}
-        className="mt-3 font-secondary text-xs text-amber-500/70 hover:text-amber-400 disabled:opacity-40"
-      >
-        Try a different question
-      </button>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={disabled}
+          className="font-secondary text-xs text-amber-500/70 hover:text-amber-400 disabled:opacity-40"
+        >
+          Try a different question
+        </button>
+        {remainingMs <= 3 * 60_000 && (
+          <p
+            className={`font-secondary text-[11px] ${
+              remainingMs <= 30_000 ? 'text-red-300' : 'text-amber-400/80'
+            }`}
+          >
+            {remainingMs <= 0 ? 'Timed out — tap for a new question' : `Valid for ${formatRemaining(remainingMs)}`}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

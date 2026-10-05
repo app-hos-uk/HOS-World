@@ -18,8 +18,15 @@ import {
   getFandomChallengeSubmitError,
   isFandomChallengeExpired,
   isRegisterSubmitBlockedByChallenge,
-  type FandomChallenge,
 } from '@/lib/fandomChallenge';
+import { useFandomChallenge } from '@/lib/useFandomChallenge';
+import {
+  clearJoinDraft,
+  joinDraftResumeLabel,
+  readJoinDraft,
+  writeJoinDraft,
+  type JoinDraft,
+} from '@/lib/joinDraft';
 import {
   clearPendingReferral,
   getPendingReferralCode,
@@ -98,13 +105,13 @@ function JoinPageInner() {
   const [checkingSession, setCheckingSession] = useState(true);
   const didCheckSession = useRef(false);
 
-  const [fandomChallenge, setFandomChallenge] = useState<FandomChallenge | null>(null);
-  const [fandomAnswer, setFandomAnswer] = useState<number | null>(null);
-  const [challengeLoadFailed, setChallengeLoadFailed] = useState(false);
   const [verificationPending, setVerificationPending] = useState<{ email: string } | null>(null);
+  const [resumeDraft, setResumeDraft] = useState<JoinDraft | null>(null);
+  const [draftStoreId, setDraftStoreId] = useState<string | undefined>(undefined);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [resendSuccess, setResendSuccess] = useState(false);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [draftHydrated, setDraftHydrated] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -116,32 +123,73 @@ function JoinPageInner() {
   const countryName = COUNTRIES.find((c) => c.code === countryCode)?.name || countryCode;
   const loginHref = `/login?returnUrl=${encodeURIComponent('/loyalty/card')}`;
 
+  const {
+    challenge: fandomChallenge,
+    answer: fandomAnswer,
+    setAnswer: setFandomAnswer,
+    loadFailed: challengeLoadFailed,
+    refresh: loadFandomChallenge,
+  } = useFandomChallenge(!user);
+
+  const storeParam = searchParams.get('store')?.trim();
+  const storeIdFromUrl = storeParam && UUID_RE.test(storeParam) ? storeParam : undefined;
+  const resolvedStoreId = storeIdFromUrl || draftStoreId;
+
+  const persistJoinDraft = useCallback(
+    (overrides: Partial<Omit<JoinDraft, 'v' | 'savedAt'>> = {}) => {
+      writeJoinDraft({
+        firstName,
+        lastName,
+        email,
+        phone,
+        referralCode,
+        storeId: resolvedStoreId,
+        step: verificationPending ? 'verify' : 'form',
+        ...overrides,
+      });
+    },
+    [firstName, lastName, email, phone, referralCode, resolvedStoreId, verificationPending],
+  );
+
+  const applyJoinDraft = useCallback((draft: JoinDraft) => {
+    setFirstName(draft.firstName);
+    setLastName(draft.lastName);
+    setEmail(draft.email);
+    setPhone(draft.phone);
+    if (draft.referralCode) setReferralCode(draft.referralCode);
+    if (draft.storeId && UUID_RE.test(draft.storeId)) setDraftStoreId(draft.storeId);
+    setPassword('');
+    setGdprConsent(false);
+    setFandomAnswer(null);
+    if (draft.step === 'verify' && draft.email.trim()) {
+      setVerificationPending({ email: draft.email.trim() });
+    }
+    setResumeDraft(null);
+  }, [setFandomAnswer]);
+
+  const discardJoinDraft = useCallback(() => {
+    clearJoinDraft();
+    setResumeDraft(null);
+    setDraftStoreId(undefined);
+  }, []);
+
   useEffect(() => {
     const refParam = searchParams.get('ref');
     if (refParam) stashReferralFromQuery(refParam);
     const pending = getPendingReferralCode();
     if (pending) setReferralCode(pending);
     else if (refParam) setReferralCode(refParam);
+
+    const draft = readJoinDraft();
+    if (draft) setResumeDraft(draft);
+    setDraftHydrated(true);
   }, [searchParams]);
 
-  const loadFandomChallenge = useCallback(async () => {
-    try {
-      const res = await apiClient.getFandomChallenge();
-      if (res?.data) {
-        setFandomChallenge(res.data);
-        setFandomAnswer(null);
-        setChallengeLoadFailed(false);
-      } else {
-        setFandomChallenge(null);
-        setFandomAnswer(null);
-        setChallengeLoadFailed(true);
-      }
-    } catch {
-      setFandomChallenge(null);
-      setFandomAnswer(null);
-      setChallengeLoadFailed(true);
-    }
-  }, []);
+  useEffect(() => {
+    if (!draftHydrated || resumeDraft) return;
+    const timer = window.setTimeout(() => persistJoinDraft(), 350);
+    return () => window.clearTimeout(timer);
+  }, [persistJoinDraft, resumeDraft, draftHydrated]);
 
   const startResendCooldown = useCallback(() => {
     setResendCooldown(60);
@@ -174,10 +222,6 @@ function JoinPageInner() {
       setError('Failed to resend verification email. Please try again.');
     }
   }, [startResendCooldown]);
-
-  useEffect(() => {
-    if (!user) void loadFandomChallenge();
-  }, [user, loadFandomChallenge]);
 
   const loadExistingMembership = useCallback(async (): Promise<JoinSuccess | null> => {
     try {
@@ -239,17 +283,16 @@ function JoinPageInner() {
     setSubmitting(true);
     try {
       const ref = referralCode.trim() || getPendingReferralCode();
-      const storeParam = searchParams.get('store')?.trim();
-      const storeId = storeParam && UUID_RE.test(storeParam) ? storeParam : undefined;
       await apiClient.enrollLoyalty({
         enrollmentChannel: 'STORE',
         ...(ref ? { referralCode: ref } : {}),
-        ...(storeId ? { storeId } : {}),
+        ...(resolvedStoreId ? { storeId: resolvedStoreId } : {}),
         ...(countryCode.length === 2 ? { regionCode: countryCode.toUpperCase() } : {}),
       });
       if (ref) clearPendingReferral();
       await refreshUser();
       const existing = await loadExistingMembership();
+      clearJoinDraft();
       setSuccess(
         existing ?? {
           firstName: user?.firstName || firstName,
@@ -263,6 +306,7 @@ function JoinPageInner() {
       if (/already|enrolled/i.test(msg)) {
         const existing = await loadExistingMembership();
         if (existing) {
+          clearJoinDraft();
           setSuccess(existing);
           return;
         }
@@ -284,8 +328,7 @@ function JoinPageInner() {
     const ph = phone.trim();
     const ref = referralCode.trim() || getPendingReferralCode();
     const inviteParam = searchParams.get('invite')?.trim();
-    const storeParam = searchParams.get('store')?.trim();
-    const storeId = storeParam && UUID_RE.test(storeParam) ? storeParam : undefined;
+    const storeId = resolvedStoreId;
 
     const fnErr = validateNameLike(fn, 'First name');
     if (fnErr) {
@@ -362,10 +405,14 @@ function JoinPageInner() {
       // Handle email verification flow
       const regAny = regResponse as any;
       if (regAny?.requiresVerification || regAny?.data?.requiresVerification) {
-        setVerificationPending({ email: regAny.email || regAny.data?.email || em });
+        const verifyEmail = regAny.email || regAny.data?.email || em;
+        persistJoinDraft({ email: verifyEmail, firstName: fn, lastName: ln, phone: ph, step: 'verify' });
+        setVerificationPending({ email: verifyEmail });
         setSubmitting(false);
         return;
       }
+
+      clearJoinDraft();
 
       setFrontendSessionCookie();
       markLoginSuccess();
@@ -393,6 +440,7 @@ function JoinPageInner() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Could not complete sign-up';
       if (isAlreadyRegisteredError(msg)) {
+        clearJoinDraft();
         setAlreadyMember(true);
         setError(null);
       } else {
@@ -557,6 +605,33 @@ function JoinPageInner() {
           </div>
         ) : (
           <form onSubmit={(e) => void onSubmit(e)} className="space-y-4" noValidate>
+            {resumeDraft && (
+              <div className="rounded-xl border border-amber-600/40 bg-amber-950/30 p-4">
+                <p className="font-secondary text-sm text-amber-100">
+                  Continue where you left off as {joinDraftResumeLabel(resumeDraft)}?
+                </p>
+                <p className="font-secondary mt-1 text-xs text-stone-400">
+                  We saved your name and contact details on this device. You&apos;ll still need to
+                  set a password, accept the privacy notice, and answer a new fandom question.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => applyJoinDraft(resumeDraft)}
+                    className="min-h-10 rounded-lg bg-amber-500 px-3 py-2 text-sm font-semibold text-stone-950 hover:bg-amber-400"
+                  >
+                    Continue
+                  </button>
+                  <button
+                    type="button"
+                    onClick={discardJoinDraft}
+                    className="min-h-10 rounded-lg border border-amber-700/40 px-3 py-2 text-sm font-secondary text-amber-200 hover:bg-stone-950/60"
+                  >
+                    Start over
+                  </button>
+                </div>
+              </div>
+            )}
             {alreadyMember && (
               <div className="rounded-xl border border-amber-700/40 bg-amber-950/30 p-4">
                 <p className="font-secondary text-sm text-amber-100">

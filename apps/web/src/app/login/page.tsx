@@ -25,8 +25,8 @@ import {
   getFandomChallengeSubmitError,
   isFandomChallengeExpired,
   isRegisterSubmitBlockedByChallenge,
-  type FandomChallenge,
 } from '@/lib/fandomChallenge';
+import { useFandomChallenge } from '@/lib/useFandomChallenge';
 
 /** Shared auth form field styles — inset wells, primary text, muted placeholders, Inter UI font */
 const AUTH_INPUT_CLASS =
@@ -83,9 +83,13 @@ function LoginPageInner() {
   const [currencyPreference, setCurrencyPreference] = useState('USD');
   const [inviteCode, setInviteCode] = useState('');
   const [pendingReferral, setPendingReferral] = useState<string | undefined>(undefined);
-  const [fandomChallenge, setFandomChallenge] = useState<FandomChallenge | null>(null);
-  const [fandomAnswer, setFandomAnswer] = useState<number | null>(null);
-  const [challengeLoadFailed, setChallengeLoadFailed] = useState(false);
+  const {
+    challenge: fandomChallenge,
+    answer: fandomAnswer,
+    setAnswer: setFandomAnswer,
+    loadFailed: challengeLoadFailed,
+    refresh: loadFandomChallenge,
+  } = useFandomChallenge(isMounted && !isLogin);
   const requiresInviteCode = process.env.NEXT_PUBLIC_REGISTRATION_REQUIRES_INVITE === 'true';
   // Enchanted Circle (HOS-*) and partner (PARTNER-*) codes substitute for invite-only
   // registration. Influencer/other ?ref= values must not hide the invite field.
@@ -217,31 +221,6 @@ function LoginPageInner() {
       setDetectingCountry(false);
     }
   };
-
-  const loadFandomChallenge = useCallback(async () => {
-    try {
-      const res = await apiClient.getFandomChallenge();
-      if (res?.data) {
-        setFandomChallenge(res.data);
-        setFandomAnswer(null);
-        setChallengeLoadFailed(false);
-      } else {
-        setFandomChallenge(null);
-        setFandomAnswer(null);
-        setChallengeLoadFailed(true);
-      }
-    } catch {
-      setFandomChallenge(null);
-      setFandomAnswer(null);
-      setChallengeLoadFailed(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isMounted && !isLogin) {
-      void loadFandomChallenge();
-    }
-  }, [isMounted, isLogin, loadFandomChallenge]);
 
   const handleCountryConfirm = () => {
     if (detectedCountry) {

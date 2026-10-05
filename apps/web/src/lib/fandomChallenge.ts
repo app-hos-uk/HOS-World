@@ -6,9 +6,27 @@ export type FandomChallenge = {
   expiresAt: string;
 };
 
+/** Refresh an unanswered challenge this far before expiry so submit never uses a dead token. */
+export const FANDOM_CHALLENGE_REFRESH_BUFFER_MS = 20_000;
+
+export function fandomChallengeExpiryMs(challenge: FandomChallenge): number {
+  return Date.parse(challenge.expiresAt);
+}
+
 export function isFandomChallengeExpired(challenge: FandomChallenge, now = Date.now()): boolean {
-  const expiresAt = Date.parse(challenge.expiresAt);
+  const expiresAt = fandomChallengeExpiryMs(challenge);
   return !Number.isFinite(expiresAt) || expiresAt <= now;
+}
+
+export function shouldRefreshUnansweredChallenge(
+  challenge: FandomChallenge,
+  hasAnswer: boolean,
+  now = Date.now(),
+): boolean {
+  if (hasAnswer) return false;
+  const expiresAt = fandomChallengeExpiryMs(challenge);
+  if (!Number.isFinite(expiresAt)) return true;
+  return expiresAt - now <= FANDOM_CHALLENGE_REFRESH_BUFFER_MS;
 }
 
 /** Client-side gate so register cannot be submitted without a live trivia answer. */
@@ -27,7 +45,7 @@ export function getFandomChallengeSubmitError(params: {
     return 'Answer the fandom question to prove you are a true fan!';
   }
   if (isFandomChallengeExpired(params.challenge, params.now)) {
-    return 'The fandom challenge expired. Answer the new question, then try again.';
+    return 'This question timed out. Answer the new one to finish joining.';
   }
   return null;
 }

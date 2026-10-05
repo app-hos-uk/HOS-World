@@ -3,6 +3,7 @@ import {
   getFandomChallengeSubmitError,
   isFandomChallengeExpired,
   isRegisterSubmitBlockedByChallenge,
+  shouldRefreshUnansweredChallenge,
 } from './fandomChallenge';
 
 const challenge = {
@@ -34,7 +35,16 @@ describe('fandom challenge helpers', () => {
         answer: 1,
         now: Date.parse(challenge.expiresAt) + 1,
       }),
-    ).toMatch(/expired/i);
+    ).toMatch(/timed out/i);
+  });
+
+  it('refreshes unanswered challenges near expiry but keeps answered ones', () => {
+    const now = Date.parse(challenge.expiresAt) - 10_000;
+    expect(shouldRefreshUnansweredChallenge(challenge, false, now)).toBe(true);
+    expect(shouldRefreshUnansweredChallenge(challenge, true, now)).toBe(false);
+    expect(shouldRefreshUnansweredChallenge(challenge, false, Date.parse(challenge.expiresAt) - 60_000)).toBe(
+      false,
+    );
   });
 
   it('only attaches register fields when both token and answer exist', () => {

@@ -36,6 +36,14 @@ describe('FandomChallengeService', () => {
       }
       expect(indices.size).toBeGreaterThan(1);
     });
+
+    it('issues tokens that remain valid well after a typical join form fill', () => {
+      const before = Date.now();
+      const challenge = service.generate();
+      const expiresAt = Date.parse(challenge.expiresAt);
+      expect(expiresAt - before).toBeGreaterThan(14 * 60_000);
+      expect(expiresAt - before).toBeLessThan(16 * 60_000);
+    });
   });
 
   describe('validate', () => {
@@ -82,7 +90,7 @@ describe('FandomChallengeService', () => {
       const sig = (svc2 as any).sign(payload);
       const newToken = Buffer.from(`${payload}|${sig}`).toString('base64url');
 
-      expect(() => svc2.validate(newToken, correctIdx)).toThrow(/expired/);
+      expect(() => svc2.validate(newToken, correctIdx)).toThrow(/timed out/);
     });
 
     it('rejects null/undefined token', () => {

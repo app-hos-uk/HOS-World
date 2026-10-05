@@ -61,6 +61,13 @@ const POS_VOUCHER_TIMEOUT_MS = 45000;
  */
 const STORE_SHIPMENT_CLAIM_TIMEOUT_MS = 65000;
 
+/**
+ * Registration hashes the password, enrolls loyalty, writes consent, and queues
+ * a verification email. The default 15 s client timeout aborts that work and
+ * looks like a fandom-challenge failure on join.houseofspells.com.
+ */
+const AUTH_REGISTER_TIMEOUT_MS = 45000;
+
 export class ApiClient {
   private baseUrl: string;
   private getToken: () => string | null;
@@ -394,7 +401,7 @@ export class ApiClient {
       expiresAt: string;
     }>
   > {
-    return this.request('/auth/fandom-challenge');
+    return this.request('/auth/fandom-challenge', { timeoutMs: 20000 });
   }
 
   async register(data: {
@@ -421,6 +428,7 @@ export class ApiClient {
     return this.request<ApiResponse<AuthResponse>>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
+      timeoutMs: AUTH_REGISTER_TIMEOUT_MS,
     });
   }
 

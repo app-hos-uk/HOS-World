@@ -19,7 +19,8 @@ export interface FandomChallenge {
   expiresAt: string;
 }
 
-const CHALLENGE_TTL_MS = 120_000; // 2 minutes
+/** Long enough to fill the join form on a store phone without the token dying. */
+const CHALLENGE_TTL_MS = 15 * 60_000;
 
 const QUESTIONS: FandomQuestion[] = [
   {
@@ -255,7 +256,9 @@ export class FandomChallengeService {
 
     const expiresAt = Number(expiresAtStr);
     if (Date.now() > expiresAt) {
-      throw new BadRequestException('Fandom challenge has expired — please request a new one');
+      throw new BadRequestException(
+        'This fandom question timed out. Answer the new question to finish joining.',
+      );
     }
 
     const tokenKey = `${nonce}:${expiresAtStr}`;
