@@ -37,6 +37,12 @@ export type LoyaltyProgrammeSettings = {
   campaignBonusEarnRate: number;
   /** Loyalty points per currency unit of campaign bonus. */
   campaignBonusPointsPerDollar: number;
+  /** Max % of qualifying subtotal payable by loyalty points (1–100). 100 = no cap. */
+  maxRedemptionPercent: number;
+  /** Max points a member can burn per single order/transaction. 0 = unlimited. */
+  maxRedemptionPointsPerOrder: number;
+  /** Max total points a member can burn in a calendar day. 0 = unlimited. */
+  dailyRedemptionPointsLimit: number;
 };
 
 export type LoyaltyRuntimeStatus = {
@@ -70,6 +76,8 @@ type ResolvedSettings = { settings: LoyaltyProgrammeSettings; source: 'database'
 export class LoyaltySettingsService {
   private readonly logger = new Logger(LoyaltySettingsService.name);
   private localCache: { at: number; value: ResolvedSettings } | null = null;
+  /** Market-scoped snapshots. Kept apart from `localCache` so a market read cannot replace the platform value. */
+  private marketLocalCache = new Map<string, { at: number; value: ResolvedSettings }>();
   /**
    * Bounds how long any single instance can serve a stale value after another
    * instance saves. Kept short because the backing read is one indexed
@@ -135,6 +143,18 @@ export class LoyaltySettingsService {
         0,
         Math.floor(num(this.config.get('LOYALTY_CAMPAIGN_BONUS_POINTS_PER_DOLLAR'), 100)),
       ),
+      maxRedemptionPercent: Math.min(
+        100,
+        Math.max(1, num(this.config.get('LOYALTY_MAX_REDEMPTION_PERCENT'), 100)),
+      ),
+      maxRedemptionPointsPerOrder: Math.max(
+        0,
+        Math.floor(num(this.config.get('LOYALTY_MAX_REDEMPTION_POINTS_PER_ORDER'), 0)),
+      ),
+      dailyRedemptionPointsLimit: Math.max(
+        0,
+        Math.floor(num(this.config.get('LOYALTY_DAILY_REDEMPTION_POINTS_LIMIT'), 0)),
+      ),
     };
   }
 
@@ -191,13 +211,25 @@ export class LoyaltySettingsService {
         0,
         Math.floor(num(partial.campaignBonusPointsPerDollar, base.campaignBonusPointsPerDollar)),
       ),
+      maxRedemptionPercent: Math.min(
+        100,
+        Math.max(1, num(partial.maxRedemptionPercent, base.maxRedemptionPercent)),
+      ),
+      maxRedemptionPointsPerOrder: Math.max(
+        0,
+        Math.floor(num(partial.maxRedemptionPointsPerOrder, base.maxRedemptionPointsPerOrder)),
+      ),
+      dailyRedemptionPointsLimit: Math.max(
+        0,
+        Math.floor(num(partial.dailyRedemptionPointsLimit, base.dailyRedemptionPointsLimit)),
+      ),
     };
   }
 
-  private async readShared(): Promise<ResolvedSettings | null> {
+  private async readShared(cacheKey = LOYALTY_SETTINGS_CACHE_KEY): Promise<ResolvedSettings | null> {
     if (!this.sharedCache) return null;
     try {
-      const hit = await this.sharedCache.get<ResolvedSettings>(LOYALTY_SETTINGS_CACHE_KEY);
+      const hit = await this.sharedCache.get<ResolvedSettings>(cacheKey);
       if (hit?.settings) return hit;
     } catch {
       // Cache is best-effort; fall through to the database.
@@ -205,10 +237,13 @@ export class LoyaltySettingsService {
     return null;
   }
 
-  private async writeShared(value: ResolvedSettings): Promise<void> {
+  private async writeShared(
+    value: ResolvedSettings,
+    cacheKey = LOYALTY_SETTINGS_CACHE_KEY,
+  ): Promise<void> {
     if (!this.sharedCache || this.cacheTtlMs <= 0) return;
     try {
-      await this.sharedCache.set(LOYALTY_SETTINGS_CACHE_KEY, value, this.cacheTtlMs);
+      await this.sharedCache.set(cacheKey, value, this.cacheTtlMs);
     } catch {
       // Non-fatal: the database remains the source of truth.
     }
@@ -217,6 +252,7 @@ export class LoyaltySettingsService {
   /** Drops the cached value locally and, when Redis-backed, for every instance. */
   async invalidate(): Promise<void> {
     this.localCache = null;
+    this.marketLocalCache.clear();
     if (!this.sharedCache) return;
     try {
       await this.sharedCache.del(LOYALTY_SETTINGS_CACHE_KEY);
@@ -225,11 +261,28 @@ export class LoyaltySettingsService {
     }
   }
 
-  async getResolved(force = false): Promise<ResolvedSettings> {
-    if (!force && this.localCache && Date.now() - this.localCache.at < this.cacheTtlMs) {
+  private isSettingsValue(value: unknown): value is Partial<LoyaltyProgrammeSettings> {
+    return !!value && typeof value === 'object' && !Array.isArray(value);
+  }
+
+  /**
+   * Platform settings, with an optional market overlay.
+   * A boolean first argument is the historical `force` flag (`getResolved(true)`).
+   * A string is a market id: market Config is merged on top of the platform row.
+   */
+  async getResolved(marketIdOrForce?: string | boolean, force = false): Promise<ResolvedSettings> {
+    const marketId =
+      typeof marketIdOrForce === 'string' && marketIdOrForce.trim()
+        ? marketIdOrForce.trim()
+        : undefined;
+    const forceRefresh = typeof marketIdOrForce === 'boolean' ? marketIdOrForce : force;
+    if (marketId) {
+      return this.getResolvedForMarket(marketId, forceRefresh);
+    }
+    if (!forceRefresh && this.localCache && Date.now() - this.localCache.at < this.cacheTtlMs) {
       return this.localCache.value;
     }
-    if (!force) {
+    if (!forceRefresh) {
       const shared = await this.readShared();
       if (shared) {
         this.localCache = { at: Date.now(), value: shared };
@@ -242,9 +295,9 @@ export class LoyaltySettingsService {
         where: { level: 'PLATFORM', levelId: 'PLATFORM', key: LOYALTY_SETTINGS_CONFIG_KEY },
       });
       let resolved: ResolvedSettings = { settings: base, source: 'env' };
-      if (row?.value && typeof row.value === 'object' && !Array.isArray(row.value)) {
+      if (this.isSettingsValue(row?.value)) {
         resolved = {
-          settings: this.normalize(row.value as Partial<LoyaltyProgrammeSettings>, base),
+          settings: this.normalize(row.value, base),
           source: 'database',
         };
       }
@@ -259,11 +312,65 @@ export class LoyaltySettingsService {
     }
   }
 
+  /** Market Config row overlaid on the platform row (which itself overlays env defaults). */
+  private async getResolvedForMarket(marketId: string, force: boolean): Promise<ResolvedSettings> {
+    const cacheKey = `${LOYALTY_SETTINGS_CACHE_KEY}:${marketId}`;
+    if (!force) {
+      const local = this.marketLocalCache.get(marketId);
+      if (local && Date.now() - local.at < this.cacheTtlMs) return local.value;
+      const shared = await this.readShared(cacheKey);
+      if (shared) {
+        this.marketLocalCache.set(marketId, { at: Date.now(), value: shared });
+        return shared;
+      }
+    }
+
+    const base = await this.envDefaults();
+    try {
+      const [globalRow, marketRow] = await Promise.all([
+        this.prisma.config.findFirst({
+          where: { level: 'PLATFORM', levelId: 'PLATFORM', key: LOYALTY_SETTINGS_CONFIG_KEY },
+        }),
+        this.prisma.config.findFirst({
+          where: { level: 'MARKET', levelId: marketId, key: LOYALTY_SETTINGS_CONFIG_KEY },
+        }),
+      ]);
+
+      let resolved: ResolvedSettings = { settings: base, source: 'env' };
+      if (this.isSettingsValue(globalRow?.value)) {
+        resolved = {
+          settings: this.normalize(globalRow.value, base),
+          source: 'database',
+        };
+      }
+      if (this.isSettingsValue(marketRow?.value)) {
+        resolved = {
+          settings: this.normalize(marketRow.value, resolved.settings),
+          source: 'database',
+        };
+      }
+      this.marketLocalCache.set(marketId, { at: Date.now(), value: resolved });
+      await this.writeShared(resolved, cacheKey);
+      return resolved;
+    } catch (e) {
+      this.logger.warn(
+        `Loyalty settings market read failed for ${marketId}: ${(e as Error).message}`,
+      );
+      const local = this.marketLocalCache.get(marketId);
+      if (local) return local.value;
+      return this.getResolved(true);
+    }
+  }
+
   async update(
     partial: Partial<LoyaltyProgrammeSettings>,
     updatedByUserId?: string,
+    marketId?: string,
   ): Promise<LoyaltyProgrammeSettings> {
-    const { settings: current } = await this.getResolved(true);
+    const scopedMarketId = typeof marketId === 'string' ? marketId.trim() : '';
+    const { settings: current } = scopedMarketId
+      ? await this.getResolved(scopedMarketId, true)
+      : await this.getResolved(true);
     const next = this.normalize(partial, current);
     if (next.posVoucherMinAmount > next.posVoucherMaxAmount) {
       throw new Error('posVoucherMinAmount cannot exceed posVoucherMaxAmount');
@@ -273,26 +380,35 @@ export class LoyaltySettingsService {
       updatedByUserId: updatedByUserId ?? null,
       updatedAt: new Date().toISOString(),
     };
+    const level = scopedMarketId ? 'MARKET' : 'PLATFORM';
+    const levelId = scopedMarketId || 'PLATFORM';
 
     await this.prisma.$transaction(async (tx) => {
       const existing = await tx.config.findFirst({
-        where: { level: 'PLATFORM', levelId: 'PLATFORM', key: LOYALTY_SETTINGS_CONFIG_KEY },
+        where: { level, levelId, key: LOYALTY_SETTINGS_CONFIG_KEY },
         select: { id: true },
       });
       if (existing) {
         await tx.config.update({ where: { id: existing.id }, data: { value } });
       } else {
         await tx.config.create({
-          data: { level: 'PLATFORM', levelId: 'PLATFORM', key: LOYALTY_SETTINGS_CONFIG_KEY, value },
+          data: { level, levelId, key: LOYALTY_SETTINGS_CONFIG_KEY, value },
         });
       }
     });
 
     const resolved: ResolvedSettings = { settings: next, source: 'database' };
-    this.localCache = { at: Date.now(), value: resolved };
-    // Publish to the shared cache so other instances pick the new value up on
-    // their next read instead of waiting out their own TTL.
-    await this.writeShared(resolved);
+    if (scopedMarketId) {
+      this.marketLocalCache.set(scopedMarketId, { at: Date.now(), value: resolved });
+      await this.writeShared(resolved, `${LOYALTY_SETTINGS_CACHE_KEY}:${scopedMarketId}`);
+    } else {
+      this.localCache = { at: Date.now(), value: resolved };
+      // Merged market snapshots include the platform row, so drop them after a global save.
+      this.marketLocalCache.clear();
+      // Publish to the shared cache so other instances pick the new value up on
+      // their next read instead of waiting out their own TTL.
+      await this.writeShared(resolved);
+    }
     return next;
   }
 

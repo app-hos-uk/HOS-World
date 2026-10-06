@@ -77,6 +77,8 @@ export class LoyaltyBurnEngine {
     idempotencyKey?: string | null;
     /** Qualifying merchandise subtotal (gift cards excluded) for welcome-reward gates. */
     purchaseSubtotal?: number | null;
+    /** Market override for programme limits. Falls back to store.marketId when omitted. */
+    marketId?: string | null;
     /**
      * Skip the welcome-reward purchase minimum gate. Set by the POS voucher flow
      * where points are converted to a gift card used at the till — the purchase
@@ -94,15 +96,46 @@ export class LoyaltyBurnEngine {
       await this.validatePosStore(params.storeId);
     }
 
-    if (!params.optionId && !params.orderId && params.channel === 'MARKETPLACE_CHECKOUT') {
-      throw new BadRequestException('A redemption option is required for marketplace redemptions');
+    if (!params.optionId && !params.orderId) {
+      throw new BadRequestException('A redemption option is required');
     }
 
-    const minRedeem = this.loyaltySettings
-      ? (await this.loyaltySettings.getResolved()).settings.minRedemptionPoints
-      : this.config.get<number>('LOYALTY_MIN_REDEMPTION_POINTS', 100);
+    const marketId = await this.resolveSettingsMarketId(params);
+    const resolvedSettings = this.loyaltySettings
+      ? (await this.loyaltySettings.getResolved(marketId)).settings
+      : null;
+    const minRedeem = resolvedSettings?.minRedemptionPoints
+      ?? this.config.get<number>('LOYALTY_MIN_REDEMPTION_POINTS', 100);
     if (params.points < minRedeem) {
       throw new BadRequestException(`Minimum redemption is ${minRedeem} points`);
+    }
+
+    const maxPerOrder = resolvedSettings?.maxRedemptionPointsPerOrder ?? 0;
+    if (maxPerOrder > 0 && params.points > maxPerOrder) {
+      throw new BadRequestException(
+        `Maximum ${maxPerOrder} points per transaction`,
+      );
+    }
+
+    const dailyLimit = resolvedSettings?.dailyRedemptionPointsLimit ?? 0;
+    if (dailyLimit > 0 && params.membershipId) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const todayBurns = await this.prisma.loyaltyTransaction.aggregate({
+        where: {
+          membershipId: params.membershipId,
+          type: 'BURN',
+          createdAt: { gte: startOfDay },
+        },
+        _sum: { points: true },
+      });
+      const burnedToday = Math.abs(todayBurns._sum.points ?? 0);
+      if (burnedToday + params.points > dailyLimit) {
+        const remaining = Math.max(0, dailyLimit - burnedToday);
+        throw new BadRequestException(
+          `Daily redemption limit reached (${remaining} points remaining today)`,
+        );
+      }
     }
 
     const run = async (tx: Prisma.TransactionClient) => {
@@ -191,6 +224,14 @@ export class LoyaltyBurnEngine {
         }
       }
 
+      this.assertMaxRedemptionPercent({
+        option: option ? { value: option.value, type: option.type } : null,
+        points: params.points,
+        purchaseSubtotal: params.purchaseSubtotal,
+        maxPercent: resolvedSettings?.maxRedemptionPercent ?? 100,
+        redeemValue: resolvedSettings?.defaultRedeemValue ?? 0.01,
+      });
+
       if (!params.skipWelcomeGate) {
         await this.assertWelcomePurchaseMinimum({
           option,
@@ -198,6 +239,7 @@ export class LoyaltyBurnEngine {
           points: params.points,
           purchaseSubtotal: params.purchaseSubtotal,
           orderId: params.orderId,
+          marketId,
           prismaTx: tx,
         });
       }
@@ -331,6 +373,59 @@ export class LoyaltyBurnEngine {
   }
 
   /**
+   * Catalogue options have a fixed pointsCost, so a percent cap cannot silently
+   * shrink the discount while still burning the full option. Reject instead.
+   */
+  assertMaxRedemptionPercent(params: {
+    option?: { value?: unknown; type?: string | null } | null;
+    points: number;
+    purchaseSubtotal?: number | null;
+    maxPercent: number;
+    redeemValue: number;
+  }): void {
+    const maxPercent = Number(params.maxPercent);
+    if (!Number.isFinite(maxPercent) || maxPercent >= 100) return;
+
+    if (params.purchaseSubtotal == null) {
+      throw new BadRequestException(
+        `Purchase subtotal is required when redemption is capped at ${maxPercent}% of the cart`,
+      );
+    }
+    if (params.purchaseSubtotal <= 0) {
+      throw new BadRequestException(
+        `Loyalty discount cannot exceed ${maxPercent}% of the purchase subtotal`,
+      );
+    }
+
+    const optionValue = params.option?.value != null ? Number(params.option.value) : NaN;
+    const monetaryValue = Number.isFinite(optionValue)
+      ? optionValue
+      : params.points * (Number.isFinite(params.redeemValue) && params.redeemValue > 0
+        ? params.redeemValue
+        : 0.01);
+    const maxAllowed = (params.purchaseSubtotal * maxPercent) / 100;
+    if (monetaryValue > maxAllowed + 0.005) {
+      throw new BadRequestException(
+        `This reward exceeds the ${maxPercent}% cart cap (max ${maxAllowed.toFixed(2)})`,
+      );
+    }
+  }
+
+  private async resolveSettingsMarketId(params: {
+    marketId?: string | null;
+    storeId?: string | null;
+  }): Promise<string | undefined> {
+    const hinted = params.marketId?.trim();
+    if (hinted) return hinted;
+    if (!params.storeId) return undefined;
+    const store = await this.prisma.store?.findUnique?.({
+      where: { id: params.storeId },
+      select: { marketId: true },
+    });
+    return store?.marketId ?? undefined;
+  }
+
+  /**
    * Welcome Reward (signup bonus) cannot be redeemed below the campaign purchase minimum.
    */
   async assertWelcomePurchaseMinimum(params: {
@@ -338,6 +433,7 @@ export class LoyaltyBurnEngine {
     membershipId?: string | null;
     points?: number | null;
     purchaseSubtotal?: number | null;
+    marketId?: string | null;
     orderId?: string | null;
     prismaTx?: Prisma.TransactionClient;
   }): Promise<void> {
@@ -394,7 +490,9 @@ export class LoyaltyBurnEngine {
     let fallback = 85;
     if (this.loyaltySettings) {
       try {
-        const { settings } = await this.loyaltySettings.getResolved();
+        const { settings } = await this.loyaltySettings.getResolved(
+          params.marketId ?? undefined,
+        );
         if (settings.welcomeRewardMinPurchase > 0) {
           fallback = settings.welcomeRewardMinPurchase;
         } else if (settings.campaignMinPurchaseThreshold > 0) {
