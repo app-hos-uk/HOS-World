@@ -12,6 +12,12 @@ function createSharedCache() {
     del: jest.fn(async (key: string) => {
       store.delete(key);
     }),
+    delPattern: jest.fn(async (pattern: string) => {
+      const prefix = pattern.endsWith('*') ? pattern.slice(0, -1) : pattern;
+      for (const key of [...store.keys()]) {
+        if (key.startsWith(prefix)) store.delete(key);
+      }
+    }),
   };
 }
 
@@ -188,6 +194,79 @@ describe('LoyaltySettingsService caching', () => {
     expect(settings.defaultEarnRate).toBe(9);
     expect(settings.cardPrefix).toBe('MYHOS');
     expect(settings.minRedemptionPoints).toBe(250);
+  });
+
+  it('drops the platform local cache after a market save', async () => {
+    const prisma = createPrisma({ value: { defaultEarnRate: 1 } });
+    prisma.config.findFirst.mockImplementation(async (args: { where?: { level?: string } }) => {
+      if (args?.where?.level === 'MARKET') return { value: { defaultEarnRate: 4 } };
+      return { id: 'config-1', value: { defaultEarnRate: 1 } };
+    });
+    const service = createService(prisma, undefined, 5_000);
+
+    await service.getResolved();
+    const callsAfterWarm = prisma.config.findFirst.mock.calls.length;
+
+    await service.update({ defaultEarnRate: 4 }, 'admin-1', 'market-my');
+    const callsAfterMarketSave = prisma.config.findFirst.mock.calls.length;
+    expect(callsAfterMarketSave).toBeGreaterThan(callsAfterWarm);
+    expect((service as { localCache: unknown }).localCache).toBeNull();
+
+    await service.getResolved();
+    expect(prisma.config.findFirst.mock.calls.length).toBeGreaterThan(callsAfterMarketSave);
+  });
+
+  it('evicts market snapshots after a platform save so overlays rematerialize', async () => {
+    let platformEarn = 1;
+    const prisma = createPrisma({ value: { defaultEarnRate: 1 } });
+    prisma.config.findFirst.mockImplementation(async (args: { where?: { level?: string } }) => {
+      if (args?.where?.level === 'MARKET') {
+        return { value: { cardPrefix: 'MYHOS' } };
+      }
+      return { value: { defaultEarnRate: platformEarn, cardPrefix: 'HOS', minRedemptionPoints: 250 } };
+    });
+    prisma.tx.config.update.mockImplementation(async () => {
+      platformEarn = 7;
+    });
+
+    const sharedCache = createSharedCache();
+    const writer = createService(prisma, sharedCache, 1);
+    const reader = createService(prisma, sharedCache, 1);
+
+    const before = await reader.getResolved('market-my');
+    expect(before.settings.defaultEarnRate).toBe(1);
+    expect(before.settings.cardPrefix).toBe('MYHOS');
+    expect(sharedCache.store.has(`${LOYALTY_SETTINGS_CACHE_KEY}:market-my`)).toBe(true);
+
+    await writer.update({ defaultEarnRate: 7 });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+
+    expect(sharedCache.store.has(`${LOYALTY_SETTINGS_CACHE_KEY}:market-my`)).toBe(false);
+    expect(sharedCache.store.has(LOYALTY_SETTINGS_CACHE_KEY)).toBe(true);
+
+    const after = await reader.getResolved('market-my');
+    expect(after.settings.defaultEarnRate).toBe(7);
+    expect(after.settings.cardPrefix).toBe('MYHOS');
+    expect(after.settings.minRedemptionPoints).toBe(250);
+  });
+
+  it('invalidate() drops market shared snapshots as well as the platform key', async () => {
+    const prisma = createPrisma({ value: {} });
+    prisma.config.findFirst.mockImplementation(async (args: { where?: { level?: string } }) => {
+      if (args?.where?.level === 'MARKET') return { value: { cardPrefix: 'MYHOS' } };
+      return { value: { defaultEarnRate: 3 } };
+    });
+    const sharedCache = createSharedCache();
+    const service = createService(prisma, sharedCache, 5_000);
+
+    await service.getResolved();
+    await service.getResolved('market-my');
+    expect(sharedCache.store.has(LOYALTY_SETTINGS_CACHE_KEY)).toBe(true);
+    expect(sharedCache.store.has(`${LOYALTY_SETTINGS_CACHE_KEY}:market-my`)).toBe(true);
+
+    await service.invalidate();
+    expect(sharedCache.store.has(LOYALTY_SETTINGS_CACHE_KEY)).toBe(false);
+    expect(sharedCache.store.has(`${LOYALTY_SETTINGS_CACHE_KEY}:market-my`)).toBe(false);
   });
 
   it('writes market settings to the MARKET config row', async () => {

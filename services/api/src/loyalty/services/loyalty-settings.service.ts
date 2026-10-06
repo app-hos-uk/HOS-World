@@ -78,6 +78,8 @@ export class LoyaltySettingsService {
   private localCache: { at: number; value: ResolvedSettings } | null = null;
   /** Market-scoped snapshots. Kept apart from `localCache` so a market read cannot replace the platform value. */
   private marketLocalCache = new Map<string, { at: number; value: ResolvedSettings }>();
+  /** Redis keys written for market merges, so a platform save can evict them without a SCAN. */
+  private knownSharedMarketKeys = new Set<string>();
   /**
    * Bounds how long any single instance can serve a stale value after another
    * instance saves. Kept short because the backing read is one indexed
@@ -237,12 +239,40 @@ export class LoyaltySettingsService {
     return null;
   }
 
+  private marketCacheKey(marketId: string): string {
+    return `${LOYALTY_SETTINGS_CACHE_KEY}:${marketId}`;
+  }
+
+  /**
+   * Drops Redis snapshots that merge a market overlay onto platform settings.
+   * A platform save or full invalidate must evict these so other instances
+   * rematerialize instead of serving a merge built from the previous platform row.
+   */
+  private async dropSharedMarketSnapshots(): Promise<void> {
+    if (!this.sharedCache) return;
+    try {
+      const delPattern = this.sharedCache.delPattern?.bind(this.sharedCache);
+      if (delPattern) {
+        await delPattern(`${LOYALTY_SETTINGS_CACHE_KEY}:*`);
+      }
+      for (const key of this.knownSharedMarketKeys) {
+        await this.sharedCache.del(key);
+      }
+      this.knownSharedMarketKeys.clear();
+    } catch {
+      // Non-fatal.
+    }
+  }
+
   private async writeShared(
     value: ResolvedSettings,
     cacheKey = LOYALTY_SETTINGS_CACHE_KEY,
   ): Promise<void> {
     if (!this.sharedCache || this.cacheTtlMs <= 0) return;
     try {
+      if (cacheKey !== LOYALTY_SETTINGS_CACHE_KEY) {
+        this.knownSharedMarketKeys.add(cacheKey);
+      }
       await this.sharedCache.set(cacheKey, value, this.cacheTtlMs);
     } catch {
       // Non-fatal: the database remains the source of truth.
@@ -256,6 +286,7 @@ export class LoyaltySettingsService {
     if (!this.sharedCache) return;
     try {
       await this.sharedCache.del(LOYALTY_SETTINGS_CACHE_KEY);
+      await this.dropSharedMarketSnapshots();
     } catch {
       // Non-fatal.
     }
@@ -314,7 +345,8 @@ export class LoyaltySettingsService {
 
   /** Market Config row overlaid on the platform row (which itself overlays env defaults). */
   private async getResolvedForMarket(marketId: string, force: boolean): Promise<ResolvedSettings> {
-    const cacheKey = `${LOYALTY_SETTINGS_CACHE_KEY}:${marketId}`;
+    const cacheKey = this.marketCacheKey(marketId);
+    this.knownSharedMarketKeys.add(cacheKey);
     if (!force) {
       const local = this.marketLocalCache.get(marketId);
       if (local && Date.now() - local.at < this.cacheTtlMs) return local.value;
@@ -399,8 +431,12 @@ export class LoyaltySettingsService {
 
     const resolved: ResolvedSettings = { settings: next, source: 'database' };
     if (scopedMarketId) {
+      // Market overlays inherit platform defaults for unset fields. Drop the
+      // platform snapshot so the next unscoped read rematerializes from DB
+      // rather than serving a pre-overlay view.
+      this.localCache = null;
       this.marketLocalCache.set(scopedMarketId, { at: Date.now(), value: resolved });
-      await this.writeShared(resolved, `${LOYALTY_SETTINGS_CACHE_KEY}:${scopedMarketId}`);
+      await this.writeShared(resolved, this.marketCacheKey(scopedMarketId));
     } else {
       this.localCache = { at: Date.now(), value: resolved };
       // Merged market snapshots include the platform row, so drop them after a global save.
@@ -408,6 +444,7 @@ export class LoyaltySettingsService {
       // Publish to the shared cache so other instances pick the new value up on
       // their next read instead of waiting out their own TTL.
       await this.writeShared(resolved);
+      await this.dropSharedMarketSnapshots();
     }
     return next;
   }
