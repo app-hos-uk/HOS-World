@@ -47,7 +47,9 @@ describe('LoyaltyJobsService points expiry', () => {
       settings: { pointsExpiryMonths: opts.expiryMonths ?? 12 },
       source: 'database',
     });
-    prisma.loyaltyTransaction.findMany.mockResolvedValue(opts.expirable);
+    prisma.loyaltyTransaction.findMany
+      .mockResolvedValueOnce(opts.expirable)
+      .mockResolvedValue([]);
     prisma.loyaltyTransaction.aggregate.mockImplementation(async ({ where }: any) =>
       where?.points?.gt !== undefined
         ? { _sum: { points: opts.agedCredits } }

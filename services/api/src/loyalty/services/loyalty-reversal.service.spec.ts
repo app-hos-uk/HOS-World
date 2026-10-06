@@ -27,6 +27,8 @@ describe('LoyaltyReversalService', () => {
           userId,
           orderNumber: 'HOS-1',
           total: 100,
+          subtotal: 100,
+          qualifyingSubtotal: 90,
           loyaltyPointsEarned: 200,
           loyaltyPointsRedeemed: 300,
           parentOrderId: null,

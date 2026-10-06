@@ -167,7 +167,7 @@ describe('LoyaltyBurnEngine', () => {
               update: jest.fn(),
             },
             loyaltyRedemptionOption: {
-              findUnique: jest.fn(),
+              findUnique: jest.fn().mockResolvedValue({ id: 'opt-1', isActive: true, regionCodes: [], channels: [], stock: null, pointsCost: 100 }),
               findFirst: jest.fn().mockResolvedValue({ id: 'generic-opt' }),
               create: jest.fn(),
               update: jest.fn(),
@@ -845,6 +845,9 @@ describe('LoyaltyBurnEngine', () => {
 
     it('gates a POS voucher burn of the signup bonus without a catalogue option', async () => {
       const mockPrisma = {
+        store: {
+          findUnique: jest.fn().mockResolvedValue({ id: 'store-1', sellerId: 'seller-1' }),
+        },
         $transaction: jest.fn().mockImplementation(async (fn: any) =>
           fn({
             loyaltyMembership: {
@@ -885,6 +888,7 @@ describe('LoyaltyBurnEngine', () => {
           membershipId: 'm1',
           points: 2000,
           channel: 'HOS_OUTLET_POS',
+          storeId: 'store-1',
           purchaseSubtotal: 40,
         }),
       ).rejects.toThrow('Minimum purchase of 85.00 required to redeem Welcome Reward');
