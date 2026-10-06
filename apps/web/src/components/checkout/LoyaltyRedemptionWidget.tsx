@@ -22,6 +22,8 @@ interface RedemptionOption {
   pointsCost: number;
   value?: number;
   type?: string;
+  stock?: number | null;
+  minCartValue?: number | null;
 }
 
 export function LoyaltyRedemptionWidget({ cart, onCartUpdate }: LoyaltyRedemptionWidgetProps) {
@@ -47,7 +49,7 @@ export function LoyaltyRedemptionWidget({ cart, onCartUpdate }: LoyaltyRedemptio
       try {
         const [membershipRes, optionsRes] = await Promise.all([
           apiClient.getLoyaltyMembership(),
-          apiClient.getRedemptionOptions(),
+          apiClient.getRedemptionOptions({ channel: 'MARKETPLACE_CHECKOUT' }),
         ]);
 
         if (cancelled) return;
@@ -226,16 +228,33 @@ export function LoyaltyRedemptionWidget({ cart, onCartUpdate }: LoyaltyRedemptio
                     const valueLabel = formatOptionValue(opt);
                     const affordable = canAfford(opt.pointsCost);
                     const isApplying = applying === opt.id;
+                    const isOutOfStock = opt.stock != null && opt.stock < 1;
+                    // Soft UI guard; server re-validates against qualifying subtotal (excludes gift cards).
+                    const cartSubtotal = Number(cart.subtotal ?? cart.total ?? 0);
+                    const belowMinCart = opt.minCartValue != null && Number(opt.minCartValue) > 0 && cartSubtotal < Number(opt.minCartValue);
+                    const blocked = isOutOfStock || belowMinCart;
 
                     return (
                       <li
                         key={opt.id}
                         className={`flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg border ${
-                          affordable ? 'border-hos-border hover:bg-hos-bg-tertiary/50' : 'border-hos-border opacity-60'
+                          blocked ? 'border-hos-border opacity-50' : affordable ? 'border-hos-border hover:bg-hos-bg-tertiary/50' : 'border-hos-border opacity-60'
                         }`}
                       >
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-hos-text-primary">{opt.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-hos-text-primary">{opt.name}</p>
+                            {isOutOfStock && (
+                              <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide rounded bg-red-500/15 text-red-400">
+                                Sold out
+                              </span>
+                            )}
+                            {belowMinCart && !isOutOfStock && (
+                              <span className="px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide rounded bg-amber-500/15 text-amber-400">
+                                Min {formatPrice(Number(opt.minCartValue))}
+                              </span>
+                            )}
+                          </div>
                           {opt.description && (
                             <p className="text-xs text-hos-text-muted mt-0.5">{opt.description}</p>
                           )}
@@ -249,10 +268,10 @@ export function LoyaltyRedemptionWidget({ cart, onCartUpdate }: LoyaltyRedemptio
                         <button
                           type="button"
                           onClick={() => handleApply(opt.id)}
-                          disabled={!affordable || isApplying || applying !== null}
+                          disabled={blocked || !affordable || isApplying || applying !== null}
                           className="px-4 py-2 text-sm bg-hos-gold text-[#1a1406] rounded-lg hover:bg-hos-gold-hover font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {isApplying ? 'Applying…' : affordable ? 'Apply' : 'Not enough pts'}
+                          {isOutOfStock ? 'Sold out' : belowMinCart ? `Min ${formatPrice(Number(opt.minCartValue))}` : isApplying ? 'Applying…' : affordable ? 'Apply' : 'Not enough pts'}
                         </button>
                       </li>
                     );

@@ -16,30 +16,37 @@ export default function LoyaltyHistoryPage() {
   const [rows, setRows] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [typeFilter, setTypeFilter] = useState('');
   const limit = 25;
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiClient.getLoyaltyTransactions({ page, limit });
+      const params: Record<string, any> = { page, limit };
+      if (typeFilter) params.type = typeFilter;
+      const res = await apiClient.getLoyaltyTransactions(params);
       const data = res?.data as { items?: any[]; total?: number } | any[] | null;
+      let items: any[];
+      let totalCount: number;
       if (Array.isArray(data)) {
-        setRows(data);
-        setTotal((res as any)?.pagination?.total ?? data.length);
+        items = data;
+        totalCount = (res as any)?.pagination?.total ?? data.length;
       } else if (data && Array.isArray(data.items)) {
-        setRows(data.items);
-        setTotal(typeof data.total === 'number' ? data.total : data.items.length);
+        items = data.items;
+        totalCount = typeof data.total === 'number' ? data.total : data.items.length;
       } else {
-        setRows([]);
-        setTotal(0);
+        items = [];
+        totalCount = 0;
       }
+      setRows(items);
+      setTotal(totalCount);
     } catch (e: any) {
       toast.error(e?.message || 'Failed to load history');
       setRows([]);
     } finally {
       setLoading(false);
     }
-  }, [page, toast]);
+  }, [page, typeFilter, toast]);
 
   useEffect(() => {
     load();
@@ -56,9 +63,26 @@ export default function LoyaltyHistoryPage() {
             ← Loyalty home
           </Link>
           <h1 className="font-primary text-3xl text-amber-100 mt-3 mb-2">Points history</h1>
-          <p className="font-secondary text-stone-400 mb-8">
+          <p className="font-secondary text-stone-400 mb-4">
             Earns, redemptions, and adjustments on your Enchanted Circle account.
           </p>
+
+          <div className="mb-6">
+            <label className="text-sm text-stone-400 font-secondary mr-2">Filter by type:</label>
+            <select
+              value={typeFilter}
+              onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
+              className="bg-stone-900 border border-stone-700 text-stone-200 rounded px-3 py-1.5 text-sm font-secondary focus:outline-none focus:border-amber-500"
+            >
+              <option value="">All</option>
+              <option value="EARN">Earn</option>
+              <option value="BURN">Burn</option>
+              <option value="EXPIRE">Expire</option>
+              <option value="ADJUST">Adjust</option>
+              <option value="BONUS">Bonus</option>
+              <option value="TRANSFER">Transfer</option>
+            </select>
+          </div>
 
           {loading ? (
             <p className="font-secondary text-stone-500">Loading…</p>
@@ -72,6 +96,7 @@ export default function LoyaltyHistoryPage() {
                     <th className="px-3 py-2 text-left">Date</th>
                     <th className="px-3 py-2 text-left">Type</th>
                     <th className="px-3 py-2 text-right">Points</th>
+                    <th className="px-3 py-2 text-right">Balance</th>
                     <th className="px-3 py-2 text-left">Details</th>
                   </tr>
                 </thead>
@@ -84,6 +109,9 @@ export default function LoyaltyHistoryPage() {
                       <td className="px-3 py-2">{t.type}</td>
                       <td className="px-3 py-2 text-right tabular-nums">
                         {Number(t.points) > 0 ? `+${t.points}` : t.points}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums text-stone-400">
+                        {t.balanceAfter != null ? Number(t.balanceAfter).toLocaleString() : '—'}
                       </td>
                       <td className="px-3 py-2 text-xs text-stone-400">
                         {t.description || t.source || t.channel || '—'}

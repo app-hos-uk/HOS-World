@@ -75,6 +75,10 @@ export default function RedeemInStorePage() {
     } finally {
       setLoading(false);
     }
+    try {
+      const refreshed = await apiClient.getLoyaltyMembership();
+      setMembership((refreshed.data as any) ?? null);
+    } catch { /* balance refresh is best-effort */ }
   };
 
   const cancel = async () => {
@@ -85,7 +89,12 @@ export default function RedeemInStorePage() {
       setResult(null);
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Cancel failed');
+      return;
     }
+    try {
+      const refreshed = await apiClient.getLoyaltyMembership();
+      setMembership((refreshed.data as any) ?? null);
+    } catch { /* balance refresh is best-effort */ }
   };
 
   return (

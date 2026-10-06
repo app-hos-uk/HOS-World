@@ -7,7 +7,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { apiClient } from '@/lib/api';
 
-const EARN_ACTIONS = [
+const EARN_ACTIONS_FALLBACK = [
   { action: 'Purchase', description: 'Earn on every qualifying order', pointsExample: '1 pt per $1' },
   { action: 'Product Review', description: 'Write a review on a product you bought', pointsExample: '25 pts' },
   { action: 'Photo Review', description: 'Include a photo with your review', pointsExample: '50 pts' },
@@ -18,8 +18,14 @@ const EARN_ACTIONS = [
   { action: 'Check-in', description: 'Check in at a House of Spells store', pointsExample: '15 pts' },
 ];
 
+function formatEarnPoints(rule: any): string {
+  if (rule.pointsType === 'PER_CURRENCY_UNIT') return `${rule.pointsAmount} pts per $1`;
+  return `${rule.pointsAmount} pts`;
+}
+
 export default function LoyaltyRewardsPage() {
   const [options, setOptions] = useState<any[]>([]);
+  const [earnRules, setEarnRules] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +35,14 @@ export default function LoyaltyRewardsPage() {
       .then((r) => setOptions(Array.isArray(r.data) ? r.data : []))
       .catch((e: any) => setError(e?.message || 'Failed to load'))
       .finally(() => setLoading(false));
+
+    // Fetch dynamic earn rules from admin endpoint; fall back to static list on failure
+    apiClient.adminGetLoyaltyEarnRules?.()
+      .then((res) => {
+        const rules = (Array.isArray(res?.data) ? res.data : []).filter((r: any) => r.isActive);
+        if (rules.length > 0) setEarnRules(rules);
+      })
+      .catch(() => {});
   }, []);
 
   return (
@@ -53,13 +67,21 @@ export default function LoyaltyRewardsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {EARN_ACTIONS.map((ea) => (
-                    <tr key={ea.action} className="border-t border-stone-800">
-                      <td className="p-2 font-secondary">{ea.action}</td>
-                      <td className="p-2 text-stone-400 font-secondary">{ea.description}</td>
-                      <td className="text-right p-2 text-amber-200 font-secondary whitespace-nowrap">{ea.pointsExample}</td>
-                    </tr>
-                  ))}
+                  {earnRules
+                    ? earnRules.map((rule) => (
+                        <tr key={rule.id} className="border-t border-stone-800">
+                          <td className="p-2 font-secondary">{rule.name || rule.action}</td>
+                          <td className="p-2 text-stone-400 font-secondary">{rule.description || '—'}</td>
+                          <td className="text-right p-2 text-amber-200 font-secondary whitespace-nowrap">{formatEarnPoints(rule)}</td>
+                        </tr>
+                      ))
+                    : EARN_ACTIONS_FALLBACK.map((ea) => (
+                        <tr key={ea.action} className="border-t border-stone-800">
+                          <td className="p-2 font-secondary">{ea.action}</td>
+                          <td className="p-2 text-stone-400 font-secondary">{ea.description}</td>
+                          <td className="text-right p-2 text-amber-200 font-secondary whitespace-nowrap">{ea.pointsExample}</td>
+                        </tr>
+                      ))}
                 </tbody>
               </table>
             </div>

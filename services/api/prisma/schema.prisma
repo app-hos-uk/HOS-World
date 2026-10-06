@@ -3885,22 +3885,23 @@ model LoyaltyEarnRule {
 }
 
 model LoyaltyRedemptionOption {
-  id          String              @id @default(uuid())
-  name        String
-  type        String
-  pointsCost  Int
-  value       Decimal?            @db.Decimal(10, 2)
-  description String?             @db.Text
-  image       String?
-  stock       Int?
-  regionCodes String[]            @default([])
-  channels    String[]            @default([])
-  isActive    Boolean             @default(true)
-  startsAt    DateTime?
-  endsAt      DateTime?
-  redemptions LoyaltyRedemption[]
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  id           String              @id @default(uuid())
+  name         String
+  type         String
+  pointsCost   Int
+  value        Decimal?            @db.Decimal(10, 2)
+  minCartValue Decimal?            @db.Decimal(10, 2)
+  description  String?             @db.Text
+  image        String?
+  stock        Int?
+  regionCodes  String[]            @default([])
+  channels     String[]            @default([])
+  isActive     Boolean             @default(true)
+  startsAt     DateTime?
+  endsAt       DateTime?
+  redemptions  LoyaltyRedemption[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
 
   @@map("loyalty_redemption_options")
 }

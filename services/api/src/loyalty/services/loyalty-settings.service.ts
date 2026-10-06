@@ -143,8 +143,8 @@ export class LoyaltySettingsService {
     base: LoyaltyProgrammeSettings,
   ): LoyaltyProgrammeSettings {
     return {
-      defaultEarnRate: num(partial.defaultEarnRate, base.defaultEarnRate),
-      defaultRedeemValue: num(partial.defaultRedeemValue, base.defaultRedeemValue),
+      defaultEarnRate: Math.max(0, num(partial.defaultEarnRate, base.defaultEarnRate)),
+      defaultRedeemValue: Math.max(0, num(partial.defaultRedeemValue, base.defaultRedeemValue)),
       minRedemptionPoints: Math.max(
         0,
         Math.floor(num(partial.minRedemptionPoints, base.minRedemptionPoints)),
@@ -166,8 +166,8 @@ export class LoyaltySettingsService {
       posRedemptionMethod: this.normalizeRedemptionMethod(
         partial.posRedemptionMethod ?? base.posRedemptionMethod,
       ),
-      posVoucherMinAmount: num(partial.posVoucherMinAmount, base.posVoucherMinAmount),
-      posVoucherMaxAmount: num(partial.posVoucherMaxAmount, base.posVoucherMaxAmount),
+      posVoucherMinAmount: Math.max(0, num(partial.posVoucherMinAmount, base.posVoucherMinAmount)),
+      posVoucherMaxAmount: Math.max(0, num(partial.posVoucherMaxAmount, base.posVoucherMaxAmount)),
       giftCardCatalogAmounts: String(partial.giftCardCatalogAmounts ?? base.giftCardCatalogAmounts),
       giftCardDefaultCurrency: String(
         partial.giftCardDefaultCurrency ?? base.giftCardDefaultCurrency,
@@ -183,10 +183,10 @@ export class LoyaltySettingsService {
           base.campaignMinPurchaseThreshold ?? base.welcomeRewardMinPurchase,
         ),
       ),
-      campaignBonusEarnRate: campaignEarnRateToFraction(
+      campaignBonusEarnRate: Math.max(0, campaignEarnRateToFraction(
         partial.campaignBonusEarnRate ?? base.campaignBonusEarnRate,
         { treatOneAsProgrammeDefault: true },
-      ),
+      )),
       campaignBonusPointsPerDollar: Math.max(
         0,
         Math.floor(num(partial.campaignBonusPointsPerDollar, base.campaignBonusPointsPerDollar)),

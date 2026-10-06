@@ -730,20 +730,22 @@ export class LoyaltyService implements OnModuleInit {
     return (m.fandomProfile as Record<string, number> | null) ?? {};
   }
 
-  async getTransactions(userId: string, query: { page?: number; limit?: number }) {
+  async getTransactions(userId: string, query: { page?: number; limit?: number; type?: string }) {
     this.assertEnabled();
     const membership = await this.prisma.loyaltyMembership.findUnique({ where: { userId } });
     if (!membership) throw new NotFoundException('Not enrolled');
     const page = Math.max(1, query.page || 1);
     const limit = Math.min(100, Math.max(1, query.limit || 20));
+    const where: Prisma.LoyaltyTransactionWhereInput = { membershipId: membership.id };
+    if (query.type) where.type = query.type as LoyaltyTxType;
     const [items, total] = await Promise.all([
       this.prisma.loyaltyTransaction.findMany({
-        where: { membershipId: membership.id },
+        where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
-      this.prisma.loyaltyTransaction.count({ where: { membershipId: membership.id } }),
+      this.prisma.loyaltyTransaction.count({ where }),
     ]);
     return { items, total, page, limit };
   }
@@ -976,7 +978,7 @@ export class LoyaltyService implements OnModuleInit {
     };
   }
 
-  getRedemptionOptions(region?: string) {
+  getRedemptionOptions(region?: string, channel?: string) {
     this.assertEnabled();
     const now = new Date();
     const where: Prisma.LoyaltyRedemptionOptionWhereInput = {
@@ -984,11 +986,17 @@ export class LoyaltyService implements OnModuleInit {
       AND: [
         { OR: [{ startsAt: null }, { startsAt: { lte: now } }] },
         { OR: [{ endsAt: null }, { endsAt: { gte: now } }] },
+        { OR: [{ stock: null }, { stock: { gte: 1 } }] },
       ],
     };
     if (region) {
       (where.AND as Prisma.LoyaltyRedemptionOptionWhereInput[]).push({
         OR: [{ regionCodes: { isEmpty: true } }, { regionCodes: { has: region } }],
+      });
+    }
+    if (channel) {
+      (where.AND as Prisma.LoyaltyRedemptionOptionWhereInput[]).push({
+        OR: [{ channels: { isEmpty: true } }, { channels: { has: channel } }],
       });
     }
     return this.prisma.loyaltyRedemptionOption.findMany({
@@ -1363,6 +1371,7 @@ export class LoyaltyService implements OnModuleInit {
       channel: 'MARKETPLACE_CHECKOUT',
       optionId,
       orderId,
+      regionCode: membership.regionCode ?? undefined,
       prismaTx: tx,
       purchaseSubtotal,
     });
@@ -1406,6 +1415,26 @@ export class LoyaltyService implements OnModuleInit {
     if (opt.endsAt && opt.endsAt < now) throw new BadRequestException('Reward has expired');
     if (opt.stock != null && opt.stock < 1) throw new BadRequestException('Reward is out of stock');
 
+    if (opt.channels.length > 0 && !opt.channels.includes('MARKETPLACE_CHECKOUT')) {
+      throw new BadRequestException('This reward is not available for online checkout');
+    }
+    if (opt.regionCodes.length > 0) {
+      if (membership.regionCode && !opt.regionCodes.includes(membership.regionCode)) {
+        throw new BadRequestException('This reward is not available in your region');
+      }
+    }
+
+    if (
+      opt.minCartValue != null &&
+      Number(opt.minCartValue) > 0 &&
+      purchaseSubtotal != null &&
+      purchaseSubtotal < Number(opt.minCartValue)
+    ) {
+      throw new BadRequestException(
+        `Minimum cart value of ${Number(opt.minCartValue).toFixed(2)} required for this reward`,
+      );
+    }
+
     if (membership.currentBalance < opt.pointsCost) {
       throw new BadRequestException('Insufficient points');
     }
@@ -1425,6 +1454,9 @@ export class LoyaltyService implements OnModuleInit {
     let discount = new Decimal(0);
     if (opt.type === 'DISCOUNT' && opt.value != null) {
       discount = new Decimal(opt.value);
+    }
+    if (purchaseSubtotal != null) {
+      discount = Decimal.min(discount, new Decimal(purchaseSubtotal));
     }
 
     return { points: opt.pointsCost, discount };

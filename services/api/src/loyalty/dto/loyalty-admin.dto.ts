@@ -13,6 +13,29 @@ import {
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
+export class UpdateLoyaltySettingsDto {
+  @IsOptional() @IsNumber() @Min(0) defaultEarnRate?: number;
+  @IsOptional() @IsNumber() @Min(0) defaultRedeemValue?: number;
+  @IsOptional() @IsInt() @Min(0) minRedemptionPoints?: number;
+  @IsOptional() @IsInt() @Min(0) pointsExpiryMonths?: number;
+  @IsOptional() @IsNumber() @Min(0) welcomeRewardMinPurchase?: number;
+  @IsOptional() @IsNumber() @Min(0) campaignMinPurchaseThreshold?: number;
+  @IsOptional() @IsBoolean() redemptionAtCheckout?: boolean;
+  @IsOptional() @IsBoolean() posVoucherEnabled?: boolean;
+  @IsOptional() @IsNumber() @Min(0) posVoucherMinAmount?: number;
+  @IsOptional() @IsNumber() @Min(0) posVoucherMaxAmount?: number;
+  @IsOptional() @IsString() posRedemptionMethod?: string;
+  @IsOptional() @IsString() cardPrefix?: string;
+  @IsOptional() @IsString() giftCardDefaultCurrency?: string;
+  @IsOptional() @IsString() giftCardCatalogAmounts?: string;
+  @IsOptional() @IsNumber() @Min(0) campaignBonusEarnRate?: number;
+  @IsOptional() @IsNumber() @Min(0) campaignBonusPointsPerDollar?: number;
+  @IsOptional() @IsBoolean() clawEarnOnCancel?: boolean;
+  @IsOptional() @IsBoolean() clawEarnOnReturn?: boolean;
+  @IsOptional() @IsBoolean() restoreBurnOnCancel?: boolean;
+  @IsOptional() @IsBoolean() restoreBurnOnReturn?: boolean;
+}
+
 export class UpdateLoyaltyTierDto {
   @IsOptional() @IsString() name?: string;
   @IsOptional() @IsString() slug?: string;
@@ -72,6 +95,7 @@ export class CreateRedemptionOptionDto {
   @IsString() type!: string;
   @IsInt() @Min(1) pointsCost!: number;
   @IsOptional() @IsNumber() @Type(() => Number) value?: number;
+  @IsOptional() @IsNumber() @Min(0) @Type(() => Number) minCartValue?: number;
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsString() image?: string;
   @IsOptional() @IsInt() @Min(0) stock?: number;
@@ -87,6 +111,7 @@ export class UpdateRedemptionOptionDto {
   @IsOptional() @IsString() type?: string;
   @IsOptional() @IsInt() @Min(1) pointsCost?: number;
   @IsOptional() @IsNumber() @Type(() => Number) value?: number;
+  @IsOptional() @IsNumber() @Min(0) @Type(() => Number) minCartValue?: number | null;
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsString() image?: string;
   @IsOptional() @IsInt() @Min(0) stock?: number;

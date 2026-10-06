@@ -930,6 +930,8 @@ export default function CheckoutPage() {
     void refreshCart();
   };
 
+  const loyaltyExceedsSubtotal = loyaltyRewardApplied && rawLoyaltyDiscount > subtotal;
+
   return (
     <div className="min-h-screen bg-hos-bg-secondary">
       <MinimalCheckoutHeader />
@@ -1357,6 +1359,12 @@ export default function CheckoutPage() {
                     {/* A free-shipping reward has no cash discount — its benefit shows on the Shipping row. */}
                     <span>{loyaltyDiscount > 0 ? `-${formatPrice(loyaltyDiscount)}` : 'Applied'}</span>
                   </div>
+                )}
+
+                {loyaltyExceedsSubtotal && (
+                  <p className="text-amber-300 text-sm">
+                    Your loyalty discount exceeds the cart total. Consider removing it to avoid wasting points.
+                  </p>
                 )}
 
                 <div className="flex justify-between text-sm">
