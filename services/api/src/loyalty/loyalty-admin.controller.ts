@@ -38,7 +38,7 @@ import { FandomProfileService } from './services/fandom-profile.service';
 import { PosVoucherService } from './services/pos-voucher.service';
 import { LoyaltyTierEngine } from './engines/tier.engine';
 import { QueueService, JobType } from '../queue/queue.service';
-import { LoyaltySettingsService } from './services/loyalty-settings.service';
+import { LoyaltySettingsService, LoyaltyProgrammeSettings } from './services/loyalty-settings.service';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { AdminLoyaltySendMemberEmailDto } from './dto/send-member-email.dto';
 import { DeactivateMemberDto } from './dto/member-status.dto';
@@ -523,7 +523,7 @@ export class LoyaltyAdminController {
     @Request() req: any,
   ): Promise<ApiResponse<unknown>> {
     try {
-      const settings = await this.settings.update({ ...(body || {}) }, req.user?.id);
+      const settings = await this.settings.update(body as Partial<LoyaltyProgrammeSettings>, req.user?.id);
       return { data: settings, message: 'Settings saved' };
     } catch (e) {
       throw new BadRequestException((e as Error).message);
