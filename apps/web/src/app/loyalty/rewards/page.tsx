@@ -38,7 +38,7 @@ export default function LoyaltyRewardsPage() {
 
     // Fetch dynamic earn rules from admin endpoint; fall back to static list on failure
     apiClient.adminGetLoyaltyEarnRules?.()
-      .then((res) => {
+      ?.then((res) => {
         const rules = (Array.isArray(res?.data) ? res.data : []).filter((r: any) => r.isActive);
         if (rules.length > 0) setEarnRules(rules);
       })
