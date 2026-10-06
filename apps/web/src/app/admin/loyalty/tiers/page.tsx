@@ -5,6 +5,8 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
+type MarketOption = { id: string; code: string; name: string };
+
 export default function AdminLoyaltyTiersPage() {
   const [tiers, setTiers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -12,20 +14,26 @@ export default function AdminLoyaltyTiersPage() {
   const [form, setForm] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [markets, setMarkets] = useState<MarketOption[]>([]);
+  const [marketId, setMarketId] = useState('');
   const toast = useToast();
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiClient.adminGetLoyaltyTiers();
+      const [res, marketsRes] = await Promise.all([
+        apiClient.adminGetLoyaltyTiers(marketId || undefined),
+        apiClient.getMarkets().catch(() => ({ data: [] as MarketOption[] })),
+      ]);
       if (res?.data) setTiers(res.data as any[]);
+      setMarkets(Array.isArray(marketsRes?.data) ? marketsRes.data : []);
     } catch (err: any) {
       toast.error(err.message || 'Failed to load tiers');
     } finally {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [marketId]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -70,11 +78,26 @@ export default function AdminLoyaltyTiersPage() {
   };
 
   return (
-    <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
+    <RouteGuard allowedRoles={['ADMIN']} requiredPermissions={['loyalty.manage']} showAccessDenied>
               <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-hos-text-secondary">Loyalty Tiers</h1>
             <p className="text-hos-text-secondary mt-1">Configure tier thresholds, multipliers, and branding</p>
+            <label className="block text-sm text-hos-text-secondary mt-3 max-w-xs">
+              Market
+              <select
+                className="mt-1 w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary border-hos-border"
+                value={marketId}
+                onChange={(e) => setMarketId(e.target.value)}
+              >
+                <option value="">All markets</option>
+                {markets.map((market) => (
+                  <option key={market.id} value={market.id}>
+                    {market.name} ({market.code})
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
           <div className="text-right">
             <button

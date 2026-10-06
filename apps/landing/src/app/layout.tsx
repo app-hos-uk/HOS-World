@@ -1,18 +1,23 @@
 import type { Metadata, Viewport } from 'next';
 import { Suspense } from 'react';
 import { landingPageMetadata } from './lib/landingMetadata';
+import { getMarketConfig } from './lib/marketConfig';
 import { getSiteUrl } from '../lib/siteUrls';
 import { cinzel, cinzelDecorative, cormorant } from '../lib/fonts';
 import { LandingAnalytics } from './components/LandingAnalytics';
 import { LandingStructuredData } from './components/LandingStructuredData';
 import './landing.css';
 
+const market = getMarketConfig();
+
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   ...landingPageMetadata({
-    title: "House of Spells — Earth's Multi-Fandom Universe",
-    description:
-      'House of Spells — the multi-fandom flagship opening in Times Square, New York. Every universe. One destination. Register for founding membership.',
+    title:
+      market.code === 'US'
+        ? "House of Spells — Earth's Multi-Fandom Universe"
+        : `House of Spells ${market.country} — Earth's Multi-Fandom Universe`,
+    description: `House of Spells — the multi-fandom flagship opening in ${market.store.location}. Every universe. One destination. Register for founding membership.`,
     path: '/',
   }),
   manifest: '/landing/site.webmanifest',
@@ -32,8 +37,9 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const market = getMarketConfig();
   return (
-    <html lang="en">
+    <html lang={market.locale}>
       <head>
         <LandingStructuredData />
       </head>

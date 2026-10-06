@@ -22,6 +22,8 @@ import { useDateTime } from '@/hooks/useDateTime';
 
 const ALLOWED_ROLES = ['ADMIN', 'MARKETING'] as const;
 
+type MarketOption = { id: string; code: string; name: string; isActive?: boolean };
+
 interface FoundingMember {
   id: string;
   email: string;
@@ -144,19 +146,46 @@ export default function AdminFoundingMembersPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [includeDeactivated, setIncludeDeactivated] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+  const [markets, setMarkets] = useState<MarketOption[]>([]);
+  const [selectedMarketId, setSelectedMarketId] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadMarkets = async () => {
+      try {
+        const res = await apiClient.listAdminMarkets();
+        if (!cancelled) setMarkets(Array.isArray(res?.data) ? res.data : []);
+        return;
+      } catch {
+        // Marketing staff may not have markets.manage; fall back to markets they can see.
+      }
+      try {
+        const res = await apiClient.listAccessControlMarkets();
+        if (!cancelled) setMarkets(Array.isArray(res?.data) ? res.data : []);
+      } catch {
+        if (!cancelled) setMarkets([]);
+      }
+    };
+    void loadMarkets();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      const marketId = selectedMarketId || undefined;
       const [listRes, statsRes] = await Promise.all([
         apiClient.getFoundingMembers({
           page,
           limit: 25,
           search: search || undefined,
           includeDeactivated,
+          marketId,
         }),
-        apiClient.getFoundingMemberStats(),
+        apiClient.getFoundingMemberStats(marketId),
       ]);
       const listData = listRes.data as {
         items: FoundingMember[];
@@ -173,7 +202,7 @@ export default function AdminFoundingMembersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, includeDeactivated]);
+  }, [page, search, includeDeactivated, selectedMarketId]);
 
   useEffect(() => {
     fetchMembers();
@@ -272,6 +301,7 @@ export default function AdminFoundingMembersPage() {
         source: manualForm.source.trim() || 'manual_import',
         spendBracket: manualForm.spendBracket.trim() || undefined,
         sendConfirmationEmail: manualForm.sendConfirmationEmail,
+        marketCode: markets.find((market) => market.id === selectedMarketId)?.code,
       });
       setManualMessage('Founding member added successfully.');
       setManualForm({
@@ -399,7 +429,7 @@ export default function AdminFoundingMembersPage() {
   };
 
   return (
-    <RouteGuard allowedRoles={[...ALLOWED_ROLES]}>
+    <RouteGuard allowedRoles={[...ALLOWED_ROLES]} requiredPermissions={['founding_members.manage']} showAccessDenied>
               <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
@@ -408,13 +438,36 @@ export default function AdminFoundingMembersPage() {
                 View, manually add, or bulk import founding members from CSV or Excel files.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setTab('import')}
-              className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm font-medium hover:bg-hos-gold-hover shrink-0"
-            >
-              Bulk Import CSV / Excel
-            </button>
+            <div className="flex flex-col sm:items-end gap-3 shrink-0">
+              <div className="w-full sm:w-56">
+                <label htmlFor="founding-member-market" className="block text-xs font-medium text-hos-text-muted mb-1">
+                  Market
+                </label>
+                <select
+                  id="founding-member-market"
+                  value={selectedMarketId}
+                  onChange={(e) => {
+                    setSelectedMarketId(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full rounded-lg border border-hos-border bg-hos-bg-secondary px-3 py-2 text-sm text-hos-text-secondary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+                >
+                  <option value="">All markets</option>
+                  {markets.map((market) => (
+                    <option key={market.id} value={market.id}>
+                      {market.name} ({market.code}){market.isActive === false ? ' — inactive' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTab('import')}
+                className="px-4 py-2 bg-hos-gold text-[#1a1406] rounded-lg text-sm font-medium hover:bg-hos-gold-hover shrink-0"
+              >
+                Bulk Import CSV / Excel
+              </button>
+            </div>
           </div>
 
           <FeatureFlagBanner

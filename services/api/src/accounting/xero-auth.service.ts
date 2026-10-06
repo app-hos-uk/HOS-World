@@ -244,40 +244,47 @@ export class XeroAuthService {
 
   async storeTokens(creds: XeroTokenCredentials): Promise<void> {
     const encrypted = this.encryption.encryptJson(creds as unknown as Record<string, unknown>);
-    await this.prisma.integrationConfig.upsert({
+    const existing = await this.prisma.integrationConfig.findFirst({
       where: {
-        category_provider: {
-          category: XERO_INTEGRATION_CATEGORY,
-          provider: XERO_INTEGRATION_PROVIDER,
-        },
-      },
-      create: {
         category: XERO_INTEGRATION_CATEGORY,
         provider: XERO_INTEGRATION_PROVIDER,
-        displayName: 'Xero Accounting',
-        description: 'HOS → Xero daily summary manual journals (online + liabilities only)',
-        isActive: true,
-        isTestMode: true,
-        credentials: encrypted,
-        settings: {},
-        testStatus: 'NEVER_TESTED',
-        priority: 0,
-      },
-      update: {
-        credentials: encrypted,
-        isActive: true,
+        marketId: null,
       },
     });
+    if (existing) {
+      await this.prisma.integrationConfig.update({
+        where: { id: existing.id },
+        data: {
+          credentials: encrypted,
+          isActive: true,
+        },
+      });
+    } else {
+      await this.prisma.integrationConfig.create({
+        data: {
+          category: XERO_INTEGRATION_CATEGORY,
+          provider: XERO_INTEGRATION_PROVIDER,
+          marketId: null,
+          displayName: 'Xero Accounting',
+          description: 'HOS → Xero daily summary manual journals (online + liabilities only)',
+          isActive: true,
+          isTestMode: true,
+          credentials: encrypted,
+          settings: {},
+          testStatus: 'NEVER_TESTED',
+          priority: 0,
+        },
+      });
+    }
     this.logger.log('Xero OAuth tokens stored (encrypted)');
   }
 
   async loadTokens(): Promise<XeroTokenCredentials | null> {
-    const row = await this.prisma.integrationConfig.findUnique({
+    const row = await this.prisma.integrationConfig.findFirst({
       where: {
-        category_provider: {
-          category: XERO_INTEGRATION_CATEGORY,
-          provider: XERO_INTEGRATION_PROVIDER,
-        },
+        category: XERO_INTEGRATION_CATEGORY,
+        provider: XERO_INTEGRATION_PROVIDER,
+        marketId: null,
       },
     });
     if (!row?.credentials) return null;

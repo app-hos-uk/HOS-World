@@ -1,5 +1,12 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
+import { CourierFactoryService } from './courier/courier-factory.service';
 import { CreateShippingMethodDto } from './dto/create-shipping-method.dto';
 import { CreateShippingRuleDto } from './dto/create-shipping-rule.dto';
 import {
@@ -22,7 +29,10 @@ import {
 export class ShippingService {
   private readonly logger = new Logger(ShippingService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Optional() private readonly courierFactory?: CourierFactoryService,
+  ) {}
 
   async getSellerByUserId(userId: string) {
     return this.prisma.seller.findUnique({
@@ -167,7 +177,14 @@ export class ShippingService {
     cartValue: number,
     destination: ShippingDestination,
     sellerId?: string,
+    marketId?: string,
   ): Promise<ShippingOption[]> {
+    // Destination country matching (findMatchingRule) already selects market-appropriate
+    // methods. marketId is the hook for a future per-market method catalog.
+    if (marketId) {
+      await this.courierFactory?.loadProviders(marketId);
+    }
+
     // Get applicable shipping methods
     const methods = await this.findAllShippingMethods(sellerId);
 
@@ -381,6 +398,7 @@ export class ShippingService {
     cartValue: number,
     destination: ShippingDestination,
     sellerId?: string,
+    marketId?: string,
   ): Promise<ShippingOption[]> {
     // Calculate total weight
     let totalWeight = 0;
@@ -393,7 +411,7 @@ export class ShippingService {
       }
     }
 
-    return this.calculateShippingRate(totalWeight, cartValue, destination, sellerId);
+    return this.calculateShippingRate(totalWeight, cartValue, destination, sellerId, marketId);
   }
 
   /**

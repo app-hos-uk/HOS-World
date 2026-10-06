@@ -13,6 +13,9 @@ function buildService(overrides?: {
   configGet?: (key: string) => string | undefined;
   upsert?: jest.Mock;
   findUnique?: jest.Mock;
+  findFirst?: jest.Mock;
+  create?: jest.Mock;
+  update?: jest.Mock;
   encryptJson?: jest.Mock;
   decryptJson?: jest.Mock;
 }) {
@@ -30,10 +33,14 @@ function buildService(overrides?: {
 
   const config = { get: jest.fn(configGet) } as any;
 
+  const findUnique = overrides?.findUnique ?? jest.fn().mockResolvedValue(null);
   const prisma = {
     integrationConfig: {
       upsert: overrides?.upsert ?? jest.fn().mockResolvedValue({}),
-      findUnique: overrides?.findUnique ?? jest.fn().mockResolvedValue(null),
+      findUnique,
+      findFirst: overrides?.findFirst ?? findUnique,
+      create: overrides?.create ?? jest.fn().mockResolvedValue({}),
+      update: overrides?.update ?? jest.fn().mockResolvedValue({}),
     },
   } as any;
 
@@ -128,8 +135,7 @@ describe('XeroAuthService', () => {
 
   describe('exchangeCode', () => {
     it('exchanges an authorization code for tokens and stores them', async () => {
-      const upsert = jest.fn().mockResolvedValue({});
-      const { service } = buildService({ upsert });
+      const { service, prisma } = buildService();
 
       mockFetch
         .mockResolvedValueOnce({
@@ -151,7 +157,7 @@ describe('XeroAuthService', () => {
       expect(result.accessToken).toBe('at');
       expect(result.refreshToken).toBe('rt');
       expect(result.tenantId).toBe('tenant-1');
-      expect(upsert).toHaveBeenCalled();
+      expect(prisma.integrationConfig.create).toHaveBeenCalled();
     });
 
     it('uses XERO_TENANT_ID from config if available', async () => {
@@ -225,11 +231,11 @@ describe('XeroAuthService', () => {
         expiresAt: Date.now() - 60_000,
         tenantId: 'tid',
       };
-      const upsert = jest.fn().mockResolvedValue({});
+      const update = jest.fn().mockResolvedValue({});
       const { service } = buildService({
         findUnique: jest.fn().mockResolvedValue({ credentials: 'enc' }),
         decryptJson: jest.fn().mockReturnValue(creds),
-        upsert,
+        update,
       });
 
       mockFetch.mockResolvedValueOnce({
@@ -243,7 +249,7 @@ describe('XeroAuthService', () => {
 
       const result = await service.getValidAccessToken();
       expect(result.accessToken).toBe('new-at');
-      expect(upsert).toHaveBeenCalled();
+      expect(update).toHaveBeenCalled();
     });
 
     it('throws when no tokens stored', async () => {
@@ -305,10 +311,10 @@ describe('XeroAuthService', () => {
   });
 
   describe('storeTokens', () => {
-    it('upserts encrypted credentials into integrationConfig', async () => {
-      const upsert = jest.fn().mockResolvedValue({});
+    it('stores encrypted credentials on the global integrationConfig row', async () => {
       const encryptJson = jest.fn().mockReturnValue('enc-blob');
-      const { service } = buildService({ upsert, encryptJson });
+      const create = jest.fn().mockResolvedValue({});
+      const { service } = buildService({ create, encryptJson });
 
       const creds: XeroTokenCredentials = {
         accessToken: 'at',
@@ -317,14 +323,14 @@ describe('XeroAuthService', () => {
       };
       await service.storeTokens(creds);
       expect(encryptJson).toHaveBeenCalledWith(creds);
-      expect(upsert).toHaveBeenCalledWith(
+      expect(create).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: {
-            category_provider: {
-              category: XERO_INTEGRATION_CATEGORY,
-              provider: XERO_INTEGRATION_PROVIDER,
-            },
-          },
+          data: expect.objectContaining({
+            category: XERO_INTEGRATION_CATEGORY,
+            provider: XERO_INTEGRATION_PROVIDER,
+            marketId: null,
+            credentials: 'enc-blob',
+          }),
         }),
       );
     });

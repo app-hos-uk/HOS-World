@@ -4,6 +4,7 @@ import {
   Post,
   Query,
   Req,
+  Headers,
   ParseIntPipe,
   DefaultValuePipe,
   UseGuards,
@@ -109,6 +110,8 @@ export class MeilisearchController {
   @SwaggerApiResponse({ status: 200, description: 'Search results returned successfully' })
   async search(
     @Req() req: Request,
+    @Headers('x-market-code') marketHeader?: string,
+    @Query('marketCode') marketCode?: string,
     @Query('q') query: string = '',
     @Query('categoryId') categoryId?: string,
     @Query('sellerId') sellerId?: string,
@@ -153,6 +156,9 @@ export class MeilisearchController {
         .map((t) => t.trim())
         .filter(Boolean);
 
+    const resolvedMarket = (marketHeader || marketCode || '').trim().toUpperCase();
+    if (resolvedMarket) filters.marketCode = resolvedMarket;
+
     const result = await this.meilisearchService.search(query, filters);
 
     return {
@@ -188,6 +194,8 @@ export class MeilisearchController {
   @SwaggerApiResponse({ status: 200, description: 'Instant search results' })
   async instantSearch(
     @Query('q') query: string,
+    @Headers('x-market-code') marketHeader?: string,
+    @Query('marketCode') marketCode?: string,
     @Query('limit', new DefaultValuePipe(5), ParseIntPipe) limit: number = 5,
   ): Promise<ApiResponse<any>> {
     if (!query || query.trim().length < 1) {
@@ -197,9 +205,11 @@ export class MeilisearchController {
       };
     }
 
+    const resolvedMarket = (marketHeader || marketCode || '').trim().toUpperCase();
     const result = await this.meilisearchService.search(query, {
       limit: Math.min(limit, 10),
       page: 1,
+      ...(resolvedMarket ? { marketCode: resolvedMarket } : {}),
     });
 
     // Return minimal data for instant search

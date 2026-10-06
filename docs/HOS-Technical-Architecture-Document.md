@@ -155,11 +155,15 @@ graph TB
 
 | Service | Domain | Purpose |
 |---------|--------|---------|
-| Main Website / Landing | `houseofspells.com` | Landing pages, gallery, experiences |
-| Marketplace / Shop | `shop.houseofspells.com` | Product catalog, checkout, seller storefronts |
-| Loyalty Join | `join.houseofspells.com` | Loyalty programme enrollment |
-| Seller Storefronts | `{slug}.houseofspells.com` | Individual seller shops |
-| API (internal) | `api.houseofspells.com` | Backend REST API |
+| Global Corporate Hub | `houseofspells.com` | Country picker, brand |
+| US Marketing / Landing | `us.houseofspells.com` | US landing, founding members |
+| US Shop | `shop.houseofspells.com` | Product catalog, checkout |
+| US Loyalty Join | `join.houseofspells.com` | Loyalty enrollment |
+| US Seller Storefronts | `{slug}.houseofspells.com` | Individual seller shops |
+| Malaysia Marketing | `houseofspells.my` | MY landing, founding members |
+| Malaysia Shop | `shop.houseofspells.my` | MY product catalog, checkout |
+| Malaysia Loyalty Join | `join.houseofspells.my` | MY loyalty enrollment |
+| API (shared) | `api.houseofspells.com` | Backend REST API |
 | Business Email | `app@houseofspells.co.uk` | Business communications |
 
 > **Note:** Railway-generated URLs (`*.up.railway.app`) are used only for CI health checks and internal deployment documentation, never in user-facing code.
@@ -170,19 +174,21 @@ graph TB
 
 ### 2.1 Complete Monorepo Layout
 
+Country shops and marketing sites live in `apps/web`. A planned `apps/global-hub/` app will serve the global corporate hub (country picker and brand) at houseofspells.com.
+
 ```
 hos-marketplace/
 ├── apps/
-│   └── web/                          # Next.js 14 frontend (App Router)
-│       ├── src/
-│       │   ├── app/                  # ~353 route directories
-│       │   ├── components/           # ~89 shared React components
-│       │   ├── lib/                  # API client, auth, utilities
-│       │   └── middleware.ts         # Edge middleware pipeline
-│       ├── public/                   # Static assets
-│       ├── next.config.mjs           # Next.js configuration
-│       └── package.json
-│
+│   ├── web/                          # Next.js 14 frontend (App Router)
+│   │   ├── src/
+│   │   │   ├── app/                  # ~353 route directories
+│   │   │   ├── components/           # ~89 shared React components
+│   │   │   ├── lib/                  # API client, auth, utilities
+│   │   │   └── middleware.ts         # Edge middleware pipeline
+│   │   ├── public/                   # Static assets
+│   │   ├── next.config.mjs           # Next.js configuration
+│   │   └── package.json
+│   └── global-hub/                   # Planned: global corporate hub (houseofspells.com)
 ├── packages/
 │   ├── shared-types/                 # @hos-marketplace/shared-types
 │   │   └── src/                      # TypeScript types, enums, interfaces

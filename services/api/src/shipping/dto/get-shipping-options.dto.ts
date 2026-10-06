@@ -52,4 +52,8 @@ export class GetShippingOptionsDto {
   @IsOptional()
   @IsString()
   sellerId?: string;
+
+  @IsOptional()
+  @IsString()
+  marketId?: string;
 }

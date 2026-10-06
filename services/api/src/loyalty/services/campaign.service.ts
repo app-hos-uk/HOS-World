@@ -11,8 +11,19 @@ import {
 export class LoyaltyCampaignService {
   constructor(private prisma: PrismaService) {}
 
-  /** Active campaigns overlapping now, optionally filtered by region / channel / store */
-  async getActiveForContext(regionCode: string, channel: string, storeId?: string) {
+  /**
+   * Active campaigns overlapping now, optionally filtered by region / channel / store.
+   * `marketId` is accepted so earn and enroll can pass the member's market.
+   * LoyaltyBonusCampaign has no marketId column — country regionCodes are the
+   * market filter (US, MY, and so on).
+   */
+  async getActiveForContext(
+    regionCode: string,
+    channel: string,
+    storeId?: string,
+    marketId?: string | null,
+  ) {
+    void marketId;
     const now = new Date();
     // Store-scoped campaigns are outlet-only. Web (no storeId) must not inherit
     // a Times Square campaign just because channelCodes is empty.

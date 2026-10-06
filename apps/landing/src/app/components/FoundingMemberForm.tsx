@@ -3,6 +3,25 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { FANDOMS, OTHER_UNIVERSE_NAME, type Fandom } from '../lib/fandoms';
+import { marketConfig } from '../lib/marketConfig';
+
+const COUNTRY_OPTIONS = [
+  'United States',
+  'Malaysia',
+  'United Kingdom',
+  'Canada',
+  'Australia',
+  'Germany',
+  'France',
+  'Japan',
+  'India',
+  'Brazil',
+  'Other',
+];
+
+const countryOptions = COUNTRY_OPTIONS.includes(marketConfig.foundingMember.defaultCountry)
+  ? COUNTRY_OPTIONS
+  : [marketConfig.foundingMember.defaultCountry, ...COUNTRY_OPTIONS];
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 const REG_MIN_HUMAN_FILL_MS = 1800;
@@ -43,6 +62,7 @@ async function postRegistrationPayload(data: Record<string, unknown>) {
     headers: {
       'Content-Type': 'application/json',
       'X-Requested-With': 'XMLHttpRequest',
+      'x-market-code': marketConfig.code,
     },
     body: JSON.stringify(payload),
   });
@@ -243,7 +263,7 @@ export function FoundingMemberForm({ registrationOpen = true, fandoms = FANDOMS 
     return (
       <div className="reg-form-inner rv vis" style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center' }}>
         <h2 className="confirm-h1">Welcome, {success.name}</h2>
-        <p className="confirm-msg">Your place in the circle is claimed. We&apos;ll summon you when the gates open in Times Square.</p>
+        <p className="confirm-msg">{marketConfig.foundingMember.successMessage}</p>
         <div className="confirm-fandoms" id="confirmFandoms">
           {success.fandoms.map((n) => {
             const f = fandoms.find((x) => x.n === n);
@@ -320,38 +340,25 @@ export function FoundingMemberForm({ registrationOpen = true, fandoms = FANDOMS 
               </div>
               <div className="f-g">
                 <label htmlFor="ph">Phone (Optional)</label>
-                <input type="tel" id="ph" name="phone" autoComplete="tel" placeholder="+1 (000) 000-0000" />
+                <input type="tel" id="ph" name="phone" autoComplete="tel" placeholder={marketConfig.foundingMember.phonePlaceholder} />
               </div>
               <div className="f-row">
                 <div className="f-g">
                   <label htmlFor="co">Country</label>
-                  <select id="co" name="country" required defaultValue="">
+                  <select id="co" name="country" required defaultValue={marketConfig.foundingMember.defaultCountry}>
                     <option value="">Select country</option>
-                    <option>United States</option>
-                    <option>United Kingdom</option>
-                    <option>Canada</option>
-                    <option>Australia</option>
-                    <option>Germany</option>
-                    <option>France</option>
-                    <option>Japan</option>
-                    <option>India</option>
-                    <option>Brazil</option>
-                    <option>Other</option>
+                    {countryOptions.map((country) => (
+                      <option key={country}>{country}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="f-g">
                   <label htmlFor="src">How Found Us?</label>
                   <select id="src" name="source" required defaultValue="">
                     <option value="">Select source</option>
-                    <option>QR Code / Flyer</option>
-                    <option>Instagram</option>
-                    <option>TikTok</option>
-                    <option>Friend / Word of Mouth</option>
-                    <option>House Of Spells</option>
-                    <option>House Of Spells UK</option>
-                    <option>Times Square Ad</option>
-                    <option>Google Search</option>
-                    <option>Other</option>
+                    {marketConfig.foundingMember.referralSources.map((source) => (
+                      <option key={source}>{source}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -359,11 +366,9 @@ export function FoundingMemberForm({ registrationOpen = true, fandoms = FANDOMS 
                 <label htmlFor="sp">Monthly Fandom Spend</label>
                 <select id="sp" name="spend" required defaultValue="">
                   <option value="">Select range — helps us stock wisely</option>
-                  <option>Under $25</option>
-                  <option>$25 – $75</option>
-                  <option>$75 – $150</option>
-                  <option>$150 – $300</option>
-                  <option>$300+</option>
+                  {marketConfig.foundingMember.spendBrackets.map((bracket) => (
+                    <option key={bracket}>{bracket}</option>
+                  ))}
                 </select>
               </div>
               <div className="f-g" id="otherFranchisesWrap" hidden={!otherSelected}>

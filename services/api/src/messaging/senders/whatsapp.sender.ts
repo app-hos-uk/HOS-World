@@ -19,6 +19,7 @@ export class WhatsAppSender implements ChannelSender {
         to: params.to.replace(/^whatsapp:/, ''),
         message: params.body,
         userId: params.userId,
+        marketId: params.marketId,
       });
       const ok = (res as { status?: string }).status !== 'FAILED';
       return { success: ok, providerRef: (res as { messageId?: string }).messageId };

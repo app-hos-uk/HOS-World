@@ -91,4 +91,18 @@ export class CreateFoundingMemberDto {
   @IsString()
   @MaxLength(50)
   spendBracket?: string;
+
+  @ApiPropertyOptional({
+    example: 'US',
+    description: 'ISO 3166-1 alpha-2 market code. Scopes this registration to that market.',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value !== 'string') return value;
+    const t = value.trim().toUpperCase();
+    return t.length ? t : undefined;
+  })
+  @IsString()
+  @Length(2, 2)
+  marketCode?: string;
 }

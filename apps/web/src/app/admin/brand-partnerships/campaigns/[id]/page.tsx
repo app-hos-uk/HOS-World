@@ -7,6 +7,8 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
+const MARKET_REGIONS = ['US', 'GB', 'AE', 'MY'] as const;
+
 export default function AdminBrandCampaignDetailPage() {
   const params = useParams();
   const id = String(params.id);
@@ -26,6 +28,7 @@ export default function AdminBrandCampaignDetailPage() {
     maxPointsPerUser: 0,
     totalPointsBudget: 0,
     notifyOnStart: false,
+    regionCodes: [] as string[],
   });
 
   const load = useCallback(() => {
@@ -76,6 +79,9 @@ export default function AdminBrandCampaignDetailPage() {
         maxPointsPerUser: Number(row.maxPointsPerUser ?? 0),
         totalPointsBudget: Number(row.totalPointsBudget ?? 0),
         notifyOnStart: Boolean(row.notifyOnStart),
+        regionCodes: Array.isArray(row.regionCodes)
+          ? row.regionCodes.filter((code): code is string => typeof code === 'string')
+          : [],
       });
     }
     setEditing(true);
@@ -215,6 +221,29 @@ export default function AdminBrandCampaignDetailPage() {
                       <input type="checkbox" checked={form.notifyOnStart} onChange={(e) => setForm({ ...form, notifyOnStart: e.target.checked })} className="rounded border-hos-border" />
                       <span className="text-sm text-hos-text-secondary">Notify on Start</span>
                     </label>
+                    <fieldset className="block sm:col-span-2">
+                      <legend className="text-xs text-hos-text-muted">Target Regions</legend>
+                      <div className="mt-2 flex flex-wrap gap-3">
+                        {MARKET_REGIONS.map((code) => (
+                          <label key={code} className="flex items-center gap-2 text-sm text-hos-text-secondary">
+                            <input
+                              type="checkbox"
+                              checked={form.regionCodes.includes(code)}
+                              onChange={() =>
+                                setForm((prev) => ({
+                                  ...prev,
+                                  regionCodes: prev.regionCodes.includes(code)
+                                    ? prev.regionCodes.filter((c) => c !== code)
+                                    : [...prev.regionCodes, code],
+                                }))
+                              }
+                              className="rounded border-hos-border"
+                            />
+                            {code}
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
                   </div>
                   <div className="flex gap-2 pt-2">
                     <button type="button" disabled={saving} onClick={handleSave} className="rounded-md bg-hos-gold px-4 py-2 text-sm font-medium text-black disabled:opacity-50">

@@ -656,7 +656,10 @@ export class SellersService {
   }
 
   private async sendVerificationEmailForUser(userId: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { homeMarket: { select: { code: true } } },
+    });
     if (!user || user.emailVerified) return;
 
     const token = crypto.randomBytes(32).toString('hex');
@@ -676,10 +679,14 @@ export class SellersService {
     const customerName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'there';
 
     if (this.templatesService && this.notificationsService) {
-      const rendered = await this.templatesService.render('email_verification', {
-        customerName,
-        verifyLink,
-      });
+      const rendered = await this.templatesService.render(
+        'email_verification',
+        {
+          customerName,
+          verifyLink,
+        },
+        user.homeMarket?.code,
+      );
       const subject = rendered?.subject || 'Verify your email — House of Spells';
       const html =
         rendered?.body ||

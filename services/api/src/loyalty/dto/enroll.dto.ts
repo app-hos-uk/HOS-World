@@ -32,4 +32,20 @@ export class EnrollLoyaltyDto {
   @IsString()
   @MaxLength(80)
   referralCode?: string;
+
+  /** Selling market to enroll into. Resolved before marketCode. */
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? undefined : value))
+  @IsUUID('4')
+  marketId?: string;
+
+  /** ISO market code (for example US, MY) when the client does not know the market id. */
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toUpperCase() : value))
+  @IsString()
+  @Length(2, 2, { message: 'Market code must be exactly 2 characters (ISO 3166-1 alpha-2)' })
+  @Matches(/^[A-Z]{2}$/, {
+    message: 'Market code must be uppercase ISO format (e.g., US, GB, AE, MY)',
+  })
+  marketCode?: string;
 }

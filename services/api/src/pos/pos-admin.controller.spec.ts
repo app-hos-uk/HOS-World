@@ -54,6 +54,9 @@ describe('PosAdminController — credential updates', () => {
       unused(), // queue
       unused(), // discrepancies
       { resolvePlatformRetailSellerId: jest.fn() } as any,
+      { isEnabled: jest.fn().mockReturnValue(true) } as any, // featureFlags
+      unused(), // productImport
+      unused(), // activityService
     );
   });
 

@@ -57,12 +57,51 @@ export class WarehouseRoutingService {
   }
 
   /**
-   * Find the nearest warehouse that has sufficient stock for all products
+   * Warehouse has country/countryCode and no marketId. When a market is supplied,
+   * prefer warehouses in that market's country, then fall back to geo routing.
+   */
+  private async filterWarehousesForMarket<
+    T extends { country: string; countryCode: string | null },
+  >(warehouses: T[], marketId?: string): Promise<T[] | null> {
+    if (!marketId) return null;
+
+    const market = await this.prisma.market.findUnique({
+      where: { id: marketId },
+      select: { countryCode: true, country: true },
+    });
+    if (!market) {
+      this.logger.debug(`Market ${marketId} not found; using geo-based warehouse routing`);
+      return null;
+    }
+
+    const code = market.countryCode?.trim().toUpperCase();
+    const name = market.country?.trim().toLowerCase();
+    const matched = warehouses.filter((warehouse) => {
+      const warehouseCode = warehouse.countryCode?.trim().toUpperCase();
+      if (code && warehouseCode && warehouseCode === code) return true;
+      if (name && warehouse.country.trim().toLowerCase() === name) return true;
+      return false;
+    });
+
+    if (matched.length === 0) {
+      this.logger.debug(
+        `No warehouses match market ${marketId} country; falling back to geo-based routing`,
+      );
+      return null;
+    }
+
+    return matched;
+  }
+
+  /**
+   * Find the nearest warehouse that has sufficient stock for all products.
+   * Optional marketId prefers warehouses in that market's country before geo fallback.
    */
   async findNearestWarehouseWithStock(
     customerLat: number,
     customerLon: number,
     productQuantities: ProductQuantity[],
+    marketId?: string,
   ): Promise<WarehouseWithDistance | null> {
     // Get all active warehouses with coordinates
     const warehouses = await this.prisma.warehouse.findMany({
@@ -85,6 +124,38 @@ export class WarehouseRoutingService {
       return null;
     }
 
+    const marketWarehouses = await this.filterWarehousesForMarket(warehouses, marketId);
+    if (marketWarehouses) {
+      const preferred = this.pickNearestWarehouse(
+        marketWarehouses,
+        customerLat,
+        customerLon,
+        productQuantities,
+      );
+      if (preferred?.hasFullStock) {
+        this.logger.log(
+          `Preferred market warehouse: ${preferred.warehouseName} at ${preferred.distance.toFixed(2)} km`,
+        );
+        return preferred;
+      }
+    }
+
+    return this.pickNearestWarehouse(warehouses, customerLat, customerLon, productQuantities);
+  }
+
+  private pickNearestWarehouse(
+    warehouses: Array<{
+      id: string;
+      name: string;
+      code: string;
+      latitude: number | null;
+      longitude: number | null;
+      inventory: Array<{ productId: string; quantity: number; reserved: number }>;
+    }>,
+    customerLat: number,
+    customerLon: number,
+    productQuantities: ProductQuantity[],
+  ): WarehouseWithDistance | null {
     // Filter warehouses that have sufficient stock for ALL products
     const eligibleWarehouses = warehouses.filter((warehouse) => {
       return productQuantities.every(({ productId, quantity }) => {
@@ -185,6 +256,7 @@ export class WarehouseRoutingService {
     customerLat: number | null,
     customerLon: number | null,
     productQuantities: ProductQuantity[],
+    marketId?: string,
   ): Promise<RoutingResult> {
     // If no coordinates, try zone-based routing
     if (!customerLat || !customerLon) {
@@ -202,6 +274,7 @@ export class WarehouseRoutingService {
       customerLat,
       customerLon,
       productQuantities,
+      marketId,
     );
 
     if (nearestWarehouse && nearestWarehouse.hasFullStock) {
@@ -244,6 +317,7 @@ export class WarehouseRoutingService {
     customerLat: number,
     customerLon: number,
     productQuantities: ProductQuantity[],
+    marketId?: string,
   ): Promise<WarehouseWithDistance[]> {
     const warehouses = await this.prisma.warehouse.findMany({
       where: {
@@ -259,6 +333,9 @@ export class WarehouseRoutingService {
         },
       },
     });
+
+    const marketWarehouses = await this.filterWarehousesForMarket(warehouses, marketId);
+    const marketIds = new Set(marketWarehouses?.map((warehouse) => warehouse.id) ?? []);
 
     const warehousesWithDistance = warehouses.map((warehouse) => {
       const hasFullStock = productQuantities.every(({ productId, quantity }) => {
@@ -281,7 +358,12 @@ export class WarehouseRoutingService {
       };
     });
 
-    warehousesWithDistance.sort((a, b) => a.distance - b.distance);
+    warehousesWithDistance.sort((a, b) => {
+      const aPreferred = marketIds.has(a.warehouseId);
+      const bPreferred = marketIds.has(b.warehouseId);
+      if (aPreferred !== bPreferred) return aPreferred ? -1 : 1;
+      return a.distance - b.distance;
+    });
     return warehousesWithDistance;
   }
 

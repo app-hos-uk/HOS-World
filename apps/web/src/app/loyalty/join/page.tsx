@@ -37,6 +37,21 @@ import {
 /** Points-per-currency-unit fallback when the actual balance is not yet available. */
 const DEFAULT_POINTS_PER_CURRENCY_UNIT = 100;
 
+/** Market this storefront enrolls into. NEXT_PUBLIC_MARKET_CODE wins over the region snapshot. */
+function loyaltyEnrollMarket(countryCode: string): { regionCode?: string; marketCode?: string } {
+  const envMarket = (process.env.NEXT_PUBLIC_MARKET_CODE || '').trim().toUpperCase();
+  const regionCode =
+    envMarket.length === 2
+      ? envMarket
+      : countryCode.length === 2
+        ? countryCode.toUpperCase()
+        : undefined;
+  return {
+    ...(regionCode ? { regionCode } : {}),
+    ...(envMarket.length === 2 ? { marketCode: envMarket } : {}),
+  };
+}
+
 /** Global Enchanted Circle join code — bypasses invite-only registration gate. */
 const ENCHANTED_CIRCLE_JOIN_CODE = 'ENCHANTED-CIRCLE-2026';
 
@@ -287,7 +302,7 @@ function JoinPageInner() {
         enrollmentChannel: 'STORE',
         ...(ref ? { referralCode: ref } : {}),
         ...(resolvedStoreId ? { storeId: resolvedStoreId } : {}),
-        ...(countryCode.length === 2 ? { regionCode: countryCode.toUpperCase() } : {}),
+        ...loyaltyEnrollMarket(countryCode),
       });
       if (ref) clearPendingReferral();
       await refreshUser();
@@ -422,7 +437,7 @@ function JoinPageInner() {
           enrollmentChannel: 'STORE',
           ...(ref ? { referralCode: ref } : {}),
           ...(storeId ? { storeId } : {}),
-          ...(countryCode.length === 2 ? { regionCode: countryCode.toUpperCase() } : {}),
+          ...loyaltyEnrollMarket(countryCode),
         });
         if (ref) clearPendingReferral();
       } catch {

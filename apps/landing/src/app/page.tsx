@@ -8,15 +8,14 @@ import { Ticker } from './components/Ticker';
 import { GalleryAlbumGrid } from './components/GalleryAlbumGrid';
 import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from './lib/constants';
 import { fetchGalleryAlbums } from './lib/galleryApi';
+import { getMarketConfig } from './lib/marketConfig';
 
 export default async function LandingHomePage() {
   if (process.env.NEXT_PUBLIC_SITE_ROLE === 'hub') {
     const { GlobalHub } = await import('./components/GlobalHub');
     return <GlobalHub />;
   }
-  const market = process.env.NEXT_PUBLIC_MARKET_CODE || 'US';
-  const placeLine = market === 'MY' ? 'Kuala Lumpur' : 'Times Square';
-  const regionLine = market === 'MY' ? 'Malaysia' : 'New York';
+  const market = getMarketConfig();
   const galleryAlbums = await fetchGalleryAlbums();
   const featuredAlbums = galleryAlbums.slice(0, 3);
   return (
@@ -55,11 +54,11 @@ export default async function LandingHomePage() {
             <span className="h-pre-sep" aria-hidden="true">
               ·
             </span>
-            <span className="h-pre-line">{placeLine}</span>
+            <span className="h-pre-line">{market.hero.locationLine}</span>
             <span className="h-pre-sep" aria-hidden="true">
               ·
             </span>
-            <span className="h-pre-line">{regionLine}</span>
+            <span className="h-pre-line">{market.hero.cityLine}</span>
           </p>
           <div className="h-rule" />
           <p className="h-tag">
@@ -97,8 +96,8 @@ export default async function LandingHomePage() {
             <div className="stat-label">Fans Worldwide</div>
           </div>
           <div className="stat-cell rv" style={{ transitionDelay: '.3s' }}>
-            <div className="stat-value">NYC</div>
-            <div className="stat-label">Next Destination</div>
+            <div className="stat-value">{market.hero.statCell}</div>
+            <div className="stat-label">{market.hero.statLabel}</div>
           </div>
         </div>
 
@@ -149,8 +148,8 @@ export default async function LandingHomePage() {
               equal. Every fan is sovereign.
               <br />
               <br />
-              Now <strong>House Of Spells</strong> brings that vision to the centre of the world — opening in Times
-              Square, New York.
+              Now <strong>House Of Spells</strong> brings that vision to the centre of the world — opening in{' '}
+              {market.store.location}.
             </p>
             <div className="manifesto-cta">
               <Link href="/the-experience" className="btn-p">

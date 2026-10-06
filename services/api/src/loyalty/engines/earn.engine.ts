@@ -23,6 +23,7 @@ import {
   type ThresholdCampaignInput,
 } from '../qualifying-amount';
 import { resolveSignupCampaignAward } from '../signup-bonus';
+import { resolveDefaultMarketId, resolveLoyaltyCardPrefix } from '../loyalty-market.util';
 
 @Injectable()
 export class LoyaltyEarnEngine {
@@ -41,9 +42,11 @@ export class LoyaltyEarnEngine {
     @Optional() private loyaltySettings?: LoyaltySettingsService,
   ) {}
 
-  private async platformDefaultEarnRate(): Promise<number> {
+  private async platformDefaultEarnRate(marketId?: string | null): Promise<number> {
     if (this.loyaltySettings) {
-      const { settings } = await this.loyaltySettings.getResolved();
+      const { settings } = marketId
+        ? await this.loyaltySettings.getResolved(marketId)
+        : await this.loyaltySettings.getResolved();
       return settings.defaultEarnRate || 0;
     }
     return Number(this.config.get('LOYALTY_DEFAULT_EARN_RATE', 0)) || 0;
@@ -58,11 +61,30 @@ export class LoyaltyEarnEngine {
     userId: string,
     channel = 'WEB',
     storeId?: string,
+    hintedMarketId?: string | null,
   ) {
-    const existing = await this.prisma.loyaltyMembership.findUnique({
-      where: { userId },
-      include: { tier: true },
-    });
+    const marketId = hintedMarketId || (await resolveDefaultMarketId(this.prisma));
+    if (marketId && typeof this.prisma.loyaltyMembership.findFirst === 'function') {
+      const sameMarket = await this.prisma.loyaltyMembership.findFirst({
+        where: { userId, marketId },
+        include: { tier: true },
+      });
+      if (sameMarket) {
+        if (sameMarket.status === 'DEACTIVATED') return null;
+        return sameMarket;
+      }
+    }
+
+    const existing =
+      typeof this.prisma.loyaltyMembership.findUnique === 'function'
+        ? await this.prisma.loyaltyMembership.findUnique({
+            where: { userId },
+            include: { tier: true },
+          })
+        : await this.prisma.loyaltyMembership.findFirst({
+            where: marketId ? { userId, OR: [{ marketId }, { marketId: null }] } : { userId },
+            include: { tier: true },
+          });
     if (existing) {
       if (existing.status === 'DEACTIVATED') return null;
       return existing;
@@ -98,7 +120,7 @@ export class LoyaltyEarnEngine {
       return null;
     }
 
-    const prefix = this.config.get<string>('LOYALTY_CARD_PREFIX', 'HOS');
+    const prefix = await resolveLoyaltyCardPrefix(this.prisma, this.config, marketId);
     const cardNumber = `${prefix}-${randomBytes(4).toString('hex').toUpperCase()}-${randomBytes(2).toString('hex').toUpperCase()}`;
     const region = await this.region.getRegion();
 
@@ -107,6 +129,7 @@ export class LoyaltyEarnEngine {
         data: {
           userId,
           tierId: tier.id,
+          marketId: marketId || undefined,
           regionCode: user.country || region.country,
           preferredCurrency: user.currencyPreference || region.currency,
           enrollmentChannel: 'AUTO_PURCHASE',
@@ -168,7 +191,7 @@ export class LoyaltyEarnEngine {
 
     const membership = await this.prisma.loyaltyMembership.findUnique({
       where: { id: membershipId },
-      select: { regionCode: true },
+      select: { regionCode: true, marketId: true },
     });
     const signupRule = await this.prisma.loyaltyEarnRule.findFirst({
       where: { action: 'SIGNUP', isActive: true },
@@ -194,7 +217,9 @@ export class LoyaltyEarnEngine {
     }
 
     const region = membership?.regionCode || (await this.region.getRegion()).country;
-    const activeCampaigns = await this.campaigns.getActiveForContext(region, channel, storeId);
+    const activeCampaigns = membership?.marketId
+      ? await this.campaigns.getActiveForContext(region, channel, storeId, membership.marketId)
+      : await this.campaigns.getActiveForContext(region, channel, storeId);
     const award = resolveSignupCampaignAward(activeCampaigns, fallbackPoints);
     const points = award.points;
     if (points <= 0) {
@@ -286,10 +311,13 @@ export class LoyaltyEarnEngine {
   /** Settings campaign rates apply when no live % of-qualifying Bonus Campaign exists. */
   private async resolveThresholdCampaigns(
     activeCampaigns: ThresholdCampaignInput[],
+    marketId?: string | null,
   ): Promise<ThresholdCampaignInput[]> {
     if (!this.loyaltySettings) return activeCampaigns;
     try {
-      const { settings } = await this.loyaltySettings.getResolved();
+      const { settings } = marketId
+        ? await this.loyaltySettings.getResolved(marketId)
+        : await this.loyaltySettings.getResolved();
       return mergeProgrammeThresholdCampaign(activeCampaigns, settings);
     } catch {
       return activeCampaigns;
@@ -720,7 +748,12 @@ export class LoyaltyEarnEngine {
       })),
     );
 
-    const membership = await this.ensureMembershipForUser(order.userId, 'WEB');
+    const membership = await this.ensureMembershipForUser(
+      order.userId,
+      'WEB',
+      undefined,
+      order.marketId,
+    );
     if (!membership) {
       await this.prisma.order.update({
         where: { id: order.id },
@@ -732,7 +765,8 @@ export class LoyaltyEarnEngine {
     const purchaseRule = await this.prisma.loyaltyEarnRule.findUnique({
       where: { action: 'PURCHASE' },
     });
-    const platformDefaultRate = await this.platformDefaultEarnRate();
+    const earnMarketId = membership.marketId || order.marketId || null;
+    const platformDefaultRate = await this.platformDefaultEarnRate(earnMarketId);
     const hosSellerId = this.config.get<string>('HOS_SELLER_ID') || '';
 
     let basePoints = new Decimal(0);
@@ -784,8 +818,10 @@ export class LoyaltyEarnEngine {
 
     const platformRegion = await this.region.getRegion();
     const region = membership.regionCode || order.user?.country || platformRegion.country;
-    const activeCampaigns = await this.campaigns.getActiveForContext(region, 'WEB');
-    const thresholdCampaigns = await this.resolveThresholdCampaigns(activeCampaigns);
+    const activeCampaigns = earnMarketId
+      ? await this.campaigns.getActiveForContext(region, 'WEB', undefined, earnMarketId)
+      : await this.campaigns.getActiveForContext(region, 'WEB');
+    const thresholdCampaigns = await this.resolveThresholdCampaigns(activeCampaigns, earnMarketId);
     const thresholdBonus = this.computeThresholdBonusPoints(qualifyingSubtotal, thresholdCampaigns);
 
     if (basePoints.lte(0) && thresholdBonus.points <= 0) {
@@ -1063,17 +1099,20 @@ export class LoyaltyEarnEngine {
       })),
     );
 
+    const saleMarketId = sale.marketId || sale.store?.marketId || null;
     const membership = await this.ensureMembershipForUser(
       sale.customerId,
       'HOS_OUTLET_POS',
       sale.storeId,
+      saleMarketId,
     );
     if (!membership) return;
 
     const purchaseRule = await this.prisma.loyaltyEarnRule.findUnique({
       where: { action: 'PURCHASE' },
     });
-    const platformDefaultRate = await this.platformDefaultEarnRate();
+    const earnMarketId = membership.marketId || saleMarketId || null;
+    const platformDefaultRate = await this.platformDefaultEarnRate(earnMarketId);
     const hosSellerId = this.config.get<string>('HOS_SELLER_ID') || '';
 
     let basePoints = new Decimal(0);
@@ -1143,12 +1182,15 @@ export class LoyaltyEarnEngine {
     const user = await this.prisma.user.findUnique({ where: { id: sale.customerId } });
     const platformRegion = await this.region.getRegion();
     const region = membership.regionCode || user?.country || platformRegion.country;
-    const activeCampaigns = await this.campaigns.getActiveForContext(
-      region,
-      'HOS_OUTLET_POS',
-      sale.storeId,
-    );
-    const thresholdCampaigns = await this.resolveThresholdCampaigns(activeCampaigns);
+    const activeCampaigns = earnMarketId
+      ? await this.campaigns.getActiveForContext(
+          region,
+          'HOS_OUTLET_POS',
+          sale.storeId,
+          earnMarketId,
+        )
+      : await this.campaigns.getActiveForContext(region, 'HOS_OUTLET_POS', sale.storeId);
+    const thresholdCampaigns = await this.resolveThresholdCampaigns(activeCampaigns, earnMarketId);
     const thresholdBonus = this.computeThresholdBonusPoints(qualifyingSubtotal, thresholdCampaigns);
 
     if (basePoints.lte(0) && thresholdBonus.points <= 0) {

@@ -116,8 +116,8 @@ export class ProductsService {
     let counter = 1;
 
     while (
-      await this.prisma.product.findUnique({
-        where: { sellerId_slug: { sellerId: seller.id, slug } },
+      await this.prisma.product.findFirst({
+        where: { slug, deletedAt: null },
       })
     ) {
       slug = `${baseSlug}-${counter}`;
@@ -702,6 +702,19 @@ export class ProductsService {
               },
             }
           : {}),
+        vendorProducts: {
+          where: { status: 'ACTIVE' as any },
+          include: {
+            seller: {
+              select: {
+                id: true,
+                storeName: true,
+                slug: true,
+              },
+            },
+          },
+          orderBy: { vendorPrice: 'asc' as const },
+        },
       },
     });
 
@@ -730,12 +743,11 @@ export class ProductsService {
       throw new NotFoundException('Seller not found');
     }
 
-    const product = await this.prisma.product.findUnique({
+    const product = await this.prisma.product.findFirst({
       where: {
-        sellerId_slug: {
-          sellerId: seller.id,
-          slug: productSlug,
-        },
+        sellerId: seller.id,
+        slug: productSlug,
+        deletedAt: null,
       },
       include: {
         images: {
@@ -834,6 +846,19 @@ export class ProductsService {
               },
             }
           : {}),
+        vendorProducts: {
+          where: { status: 'ACTIVE' as any },
+          include: {
+            seller: {
+              select: {
+                id: true,
+                storeName: true,
+                slug: true,
+              },
+            },
+          },
+          orderBy: { vendorPrice: 'asc' as const },
+        },
       },
     });
 
@@ -1241,6 +1266,15 @@ export class ProductsService {
           name: v.name,
           options: this.normalizeVariationOptions(v.options),
         })) || [],
+      vendorOffers: Array.isArray(product.vendorProducts)
+        ? product.vendorProducts.map((offer: any) => ({
+            id: offer.id,
+            sellerName: offer.seller?.storeName || 'Seller',
+            price: Number(offer.platformPrice ?? offer.vendorPrice),
+            currency: offer.vendorCurrency || product.currency,
+            stock: offer.vendorStock,
+          }))
+        : undefined,
       fandom: product.fandom || undefined,
       category: product.category || undefined, // Backward compatibility
       tags: product.tags || [], // Backward compatibility
@@ -1388,8 +1422,8 @@ export class ProductsService {
     let counter = 1;
 
     while (
-      await this.prisma.product.findUnique({
-        where: { sellerId_slug: { sellerId: seller.id, slug } },
+      await this.prisma.product.findFirst({
+        where: { slug, deletedAt: null },
       })
     ) {
       slug = `${baseSlug}-${counter}`;

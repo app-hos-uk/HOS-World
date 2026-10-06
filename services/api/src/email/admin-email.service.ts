@@ -168,26 +168,27 @@ export class AdminEmailService {
     const snapshotSlug = `admin_campaign_${campaign.id}`;
     const variables = this.extractTemplateVars(subject + bodyHtml);
 
-    await this.prisma.emailTemplate.upsert({
-      where: { slug: snapshotSlug },
-      create: {
-        slug: snapshotSlug,
-        subject,
-        body: bodyHtml,
-        variables,
-        description: 'Admin campaign snapshot',
-        isActive: true,
-        updatedBy: sentBy,
-      },
-      update: {
-        subject,
-        body: bodyHtml,
-        variables,
-        description: 'Admin campaign snapshot',
-        isActive: true,
-        updatedBy: sentBy,
-      },
+    const snapshotFields = {
+      subject,
+      body: bodyHtml,
+      variables,
+      description: 'Admin campaign snapshot',
+      isActive: true,
+      updatedBy: sentBy,
+    };
+    const existingSnapshot = await this.prisma.emailTemplate.findFirst({
+      where: { slug: snapshotSlug, marketCode: null },
     });
+    if (existingSnapshot) {
+      await this.prisma.emailTemplate.update({
+        where: { id: existingSnapshot.id },
+        data: snapshotFields,
+      });
+    } else {
+      await this.prisma.emailTemplate.create({
+        data: { slug: snapshotSlug, marketCode: null, ...snapshotFields },
+      });
+    }
 
     await this.prisma.adminEmailCampaign.update({
       where: { id: campaign.id },

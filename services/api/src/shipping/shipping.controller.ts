@@ -210,6 +210,7 @@ export class ShippingController {
       body.cartValue,
       body.destination,
       body.sellerId,
+      body.marketId,
     );
     return {
       data: options,
@@ -327,6 +328,7 @@ export class ShippingController {
       body.cartValue,
       body.destination,
       body.sellerId,
+      body.marketId,
     );
     return {
       data: options,

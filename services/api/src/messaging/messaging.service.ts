@@ -53,6 +53,28 @@ export class MessagingService {
     }
   }
 
+  /**
+   * Prefer an explicit market, then the user's home market.
+   * Template resolution falls back to the global template when this is omitted.
+   */
+  private async resolveTemplateMarketCode(
+    userId: string,
+    marketId?: string,
+  ): Promise<string | undefined> {
+    if (marketId) {
+      const market = await this.prisma.market.findUnique({
+        where: { id: marketId },
+        select: { code: true },
+      });
+      if (market?.code) return market.code;
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { homeMarket: { select: { code: true } } },
+    });
+    return user?.homeMarket?.code;
+  }
+
   /** Marketing consent + per-channel loyalty opt-in. IN_APP bypasses marketing check per spec. */
   async canSendMarketing(userId: string, channel: MessagingChannel): Promise<boolean> {
     const user = await this.prisma.user.findUnique({
@@ -107,6 +129,7 @@ export class MessagingService {
     journeyId?: string;
     enrollmentId?: string;
     metadata?: Record<string, unknown>;
+    marketId?: string;
   }): Promise<SendResult> {
     let channel: MessagingChannel;
     if (!params.channel || params.channel === 'USER_PREFERRED') {
@@ -148,7 +171,8 @@ export class MessagingService {
 
     let rendered: { subject: string; body: string };
     try {
-      rendered = await this.templates.render(params.templateSlug, vars);
+      const marketCode = await this.resolveTemplateMarketCode(params.userId, params.marketId);
+      rendered = await this.templates.render(params.templateSlug, vars, marketCode);
     } catch (e) {
       await this.prisma.messageLog.update({
         where: { id: log.id },
@@ -202,6 +226,7 @@ export class MessagingService {
         subject,
         body,
         templateSlug: params.templateSlug,
+        marketId: params.marketId,
       });
 
       const skipped = result.providerRef?.startsWith('skipped-');

@@ -61,6 +61,11 @@ export class WhatsAppController {
         userId: { type: 'string', format: 'uuid', description: 'Optional user ID' },
         sellerId: { type: 'string', format: 'uuid', description: 'Optional seller ID' },
         ticketId: { type: 'string', format: 'uuid', description: 'Optional ticket ID' },
+        marketId: {
+          type: 'string',
+          format: 'uuid',
+          description: 'Optional market ID. Uses that market WhatsApp integration when set.',
+        },
       },
     },
   })
@@ -76,6 +81,7 @@ export class WhatsAppController {
       userId?: string;
       sellerId?: string;
       ticketId?: string;
+      marketId?: string;
     },
   ): Promise<ApiResponse<any>> {
     const message = await this.whatsappService.sendMessage(body);

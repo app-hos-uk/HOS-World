@@ -64,12 +64,11 @@ export class AccountingService {
   }
 
   async getCoaMapping(): Promise<ChartOfAccountsMapping> {
-    const row = await this.prisma.integrationConfig.findUnique({
+    const row = await this.prisma.integrationConfig.findFirst({
       where: {
-        category_provider: {
-          category: XERO_INTEGRATION_CATEGORY,
-          provider: XERO_INTEGRATION_PROVIDER,
-        },
+        category: XERO_INTEGRATION_CATEGORY,
+        provider: XERO_INTEGRATION_PROVIDER,
+        marketId: null,
       },
     });
     const settings = (row?.settings || {}) as Record<string, unknown>;
@@ -89,12 +88,11 @@ export class AccountingService {
     this.assertEnabled();
     const next = { ...(await this.getCoaMapping()), ...mapping };
 
-    const existing = await this.prisma.integrationConfig.findUnique({
+    const existing = await this.prisma.integrationConfig.findFirst({
       where: {
-        category_provider: {
-          category: XERO_INTEGRATION_CATEGORY,
-          provider: XERO_INTEGRATION_PROVIDER,
-        },
+        category: XERO_INTEGRATION_CATEGORY,
+        provider: XERO_INTEGRATION_PROVIDER,
+        marketId: null,
       },
     });
 

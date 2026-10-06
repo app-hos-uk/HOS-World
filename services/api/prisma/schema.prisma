@@ -143,7 +143,7 @@ model User {
   influencerProfile     Influencer?
   influencerInvitations InfluencerInvitation[] @relation("InfluencerInvitedBy")
 
-  // Enchanted Circle loyalty
+  // Enchanted Circle loyalty — one membership per user (multi-market deferred)
   loyaltyMembership     LoyaltyMembership?
   posVouchersStaff      LoyaltyPosVoucher[]    @relation("PosVoucherStaff")
   posVouchersIssued     LoyaltyPosVoucher[]    @relation("PosVoucherIssuedBy")
@@ -739,7 +739,7 @@ model Product {
   // Soft delete
   deletedAt DateTime?
 
-  @@unique([sellerId, slug])
+  @@unique([slug])
   @@index([productType])
   @@index([parentProductId])
   @@index([status])
@@ -2603,7 +2603,7 @@ model WhatsAppTemplate {
 
 model EmailTemplate {
   id          String   @id @default(uuid())
-  slug        String   @unique
+  slug        String
   subject     String?
   body        String   @db.Text
   variables   String[]
@@ -2614,6 +2614,7 @@ model EmailTemplate {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@unique([slug, marketCode])
   @@index([isActive])
   @@index([marketCode])
 }
@@ -2813,7 +2814,12 @@ model Testimonial {
   @@map("testimonials")
 }
 
-// Platform-wide key-value settings (feature flags, config overrides)
+// Platform-wide key-value settings (feature flags, config overrides).
+// Global rows leave marketId null. Per-market overrides set marketId.
+// Uniqueness is enforced by partial indexes (see
+// 20261028140000_platform_settings_market_flag_uniqueness): one global row
+// per (category, key), and one row per (category, key, marketId). Prisma
+// cannot model partial unique indexes, so writers use findFirst + create/update.
 model PlatformSetting {
   id        String   @id @default(uuid())
   category  String // e.g. "feature_flag", "site", "social"
@@ -2824,7 +2830,7 @@ model PlatformSetting {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([category, key])
+  @@index([category, key])
   @@index([category])
   @@index([marketId])
   @@map("platform_settings")
@@ -3343,7 +3349,9 @@ model IntegrationConfig {
   // Relations
   logs IntegrationLog[]
 
-  @@unique([category, provider])
+  // One config per provider per market. Null marketId is the global default.
+  // PostgreSQL treats NULL as distinct, so IntegrationsService.create also rejects a second global row.
+  @@unique([category, provider, marketId])
   @@index([category])
   @@index([isActive])
   @@index([provider])
@@ -3735,7 +3743,7 @@ model NewsletterSubscription {
 model LoyaltyTier {
   id               String              @id @default(uuid())
   name             String              @unique
-  slug             String              @unique
+  slug             String
   level            Int                 @unique
   pointsThreshold  Int
   multiplier       Decimal             @db.Decimal(3, 2)
@@ -3754,6 +3762,7 @@ model LoyaltyTier {
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
 
+  @@unique([slug, marketId])
   @@index([marketId])
   @@map("loyalty_tiers")
 }
@@ -3813,6 +3822,7 @@ model LoyaltyMembership {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([userId, marketId])
   @@index([tierId])
   @@index([marketId])
   @@index([cardNumber])
@@ -5051,7 +5061,7 @@ model StoreOnboardingChecklist {
 
 model FoundingMember {
   id              String   @id @default(uuid())
-  email           String   @unique
+  email           String
   firstName       String
   lastName        String?
   phone           String?
@@ -5072,6 +5082,7 @@ model FoundingMember {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  @@unique([email, marketId])
   @@index([email])
   @@index([status])
   @@index([registeredAt])

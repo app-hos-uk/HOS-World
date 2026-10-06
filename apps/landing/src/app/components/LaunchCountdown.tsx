@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
+import { formatLaunchLabel, launchInstantMs, marketConfig } from '../lib/marketConfig';
 
-/** 29 July 2026, 10:00 AM America/New_York (EDT, UTC−4) */
-const LAUNCH_INSTANT = Date.parse('2026-07-29T14:00:00.000Z');
-const LAUNCH_LABEL = 'July 29, 2026 · 10:00 AM EDT';
+const PLACE = marketConfig.store.location;
+const LAUNCH_INSTANT = launchInstantMs(marketConfig) ?? Date.parse('2026-07-29T14:00:00.000Z');
+const LAUNCH_LABEL = formatLaunchLabel(marketConfig) || 'July 29, 2026 · 10:00 AM EDT';
 
 type CountdownParts = {
   days: number;
@@ -30,6 +31,14 @@ function pad2(n: number): string {
   return String(n).padStart(2, '0');
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function showLive(root: HTMLElement) {
   const grid = root.querySelector<HTMLElement>('.launch-countdown__grid');
   const eyebrow = root.querySelector<HTMLElement>('.launch-countdown__eyebrow');
@@ -49,7 +58,7 @@ function showLive(root: HTMLElement) {
   panel.className = 'launch-countdown--live-panel';
   panel.innerHTML =
     '<p class="launch-countdown__eyebrow launch-countdown__eyebrow--celebrate">The gates are open</p>' +
-    '<p class="launch-countdown__headline launch-countdown__headline--live">We\'re live in <span class="launch-countdown__place">Times Square, New York</span></p>' +
+    `<p class="launch-countdown__headline launch-countdown__headline--live">We're live in <span class="launch-countdown__place">${escapeHtml(PLACE)}</span></p>` +
     '<p class="launch-countdown__subline">House of Spells has arrived. Every universe. One destination.</p>';
   root.appendChild(panel);
 }
@@ -73,7 +82,7 @@ function bindCountdown(root: HTMLElement) {
     if (seconds) seconds.textContent = pad2(remaining.seconds);
     root.setAttribute(
       'aria-label',
-      `Grand launch in Times Square, New York. ${remaining.days} days, ${remaining.hours} hours, ${remaining.minutes} minutes, ${remaining.seconds} seconds remaining.`,
+      `Grand launch in ${PLACE}. ${remaining.days} days, ${remaining.hours} hours, ${remaining.minutes} minutes, ${remaining.seconds} seconds remaining.`,
     );
   };
 
@@ -100,7 +109,7 @@ export function LaunchCountdown() {
       <div className="launch-countdown launch-countdown--live" role="status" aria-live="polite">
         <p className="launch-countdown__eyebrow launch-countdown__eyebrow--celebrate">The gates are open</p>
         <p className="launch-countdown__headline launch-countdown__headline--live">
-          We&apos;re live in <span className="launch-countdown__place">Times Square, New York</span>
+          We&apos;re live in <span className="launch-countdown__place">{PLACE}</span>
         </p>
         <p className="launch-countdown__subline">
           House of Spells has arrived. Every universe. One destination.
@@ -116,11 +125,11 @@ export function LaunchCountdown() {
       role="timer"
       aria-live="off"
       data-launch-instant={String(LAUNCH_INSTANT)}
-      aria-label={`Grand launch in Times Square, New York on ${LAUNCH_LABEL}`}
+      aria-label={`Grand launch in ${PLACE} on ${LAUNCH_LABEL}`}
     >
       <p className="launch-countdown__eyebrow launch-countdown__eyebrow--celebrate">Grand Launch</p>
       <p className="launch-countdown__headline">
-        <span className="launch-countdown__place">Times Square, New York</span>
+        <span className="launch-countdown__place">{PLACE}</span>
       </p>
       <p className="launch-countdown__subline">{LAUNCH_LABEL}</p>
 

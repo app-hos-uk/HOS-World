@@ -34,7 +34,12 @@ interface CartContextType {
   refreshCart: () => Promise<void>;
   /** Sync context with cart data from an API response (avoids an extra getCart() call). */
   syncCart: (cart: Cart | null) => void;
-  addToCart: (productId: string, quantity?: number, variationOptions?: Record<string, string>) => Promise<void>;
+  addToCart: (
+    productId: string,
+    quantity?: number,
+    variationOptions?: Record<string, string>,
+    vendorProductId?: string,
+  ) => Promise<void>;
   removeFromCart: (itemId: string) => Promise<void>;
   updateCartItem: (itemId: string, quantity: number) => Promise<void>;
 }
@@ -91,14 +96,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const addToCart = useCallback(
-    async (productId: string, quantity: number = 1, variationOptions?: Record<string, string>) => {
+    async (
+      productId: string,
+      quantity: number = 1,
+      variationOptions?: Record<string, string>,
+      vendorProductId?: string,
+    ) => {
       if (!isAuthenticated) {
         const sid = getOrCreateGuestCartSessionId();
-        await apiClient.addToGuestCart(sid, productId, quantity, variationOptions);
+        await apiClient.addToGuestCart(sid, productId, quantity, variationOptions, vendorProductId);
         await fetchCart();
         return;
       }
-      await apiClient.addToCart(productId, quantity, variationOptions);
+      await apiClient.addToCart(productId, quantity, variationOptions, vendorProductId);
       await fetchCart();
     },
     [fetchCart, isAuthenticated],

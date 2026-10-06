@@ -47,6 +47,12 @@ import {
   type PurchaseHistoryItem,
 } from './purchase-history.util';
 import { ReturnPoliciesService } from '../return-policies/return-policies.service';
+import { getActiveMarketId } from '../access-control/access-control.als';
+import {
+  findMarketId,
+  resolveDefaultMarketId,
+  resolveLoyaltyCardPrefix,
+} from './loyalty-market.util';
 
 /** Prefer Prisma `meta.message` — Error.message is often just "Raw query failed. Code: `42883`." */
 function prismaErrorDetail(err: unknown): string {
@@ -156,10 +162,26 @@ export class LoyaltyService implements OnModuleInit {
       await this.ensurePhoneNormalized(userId, user.phone, dto?.regionCode || user.country);
     }
 
-    const existing = await this.prisma.loyaltyMembership.findUnique({
-      where: { userId },
-      include: { tier: true },
-    });
+    const marketId = await this.resolveEnrollmentMarketId(dto);
+    // userId is still @unique. findFirst({ userId, marketId }) is the duplicate
+    // check that stays correct once the constraint becomes @@unique([userId, marketId]).
+    let existing = marketId
+      ? await this.prisma.loyaltyMembership.findFirst({
+          where: { userId, marketId },
+          include: { tier: true },
+        })
+      : await this.prisma.loyaltyMembership.findUnique({
+          where: { userId },
+          include: { tier: true },
+        });
+    if (!existing && marketId) {
+      // Legacy rows have a null marketId. A membership in another market also
+      // has to be reused until userId stops being globally unique.
+      existing = await this.prisma.loyaltyMembership.findFirst({
+        where: { userId },
+        include: { tier: true },
+      });
+    }
 
     // Idempotent: already enrolled → still apply referral + repair missing bonuses.
     if (existing) {
@@ -218,7 +240,7 @@ export class LoyaltyService implements OnModuleInit {
       }
 
       const membership = await this.prisma.loyaltyMembership.findUnique({
-        where: { userId },
+        where: { id: existing.id },
         include: { tier: true },
       });
       await this.linkUnattributedPosSalesForUser(userId);
@@ -227,13 +249,14 @@ export class LoyaltyService implements OnModuleInit {
 
     const tier = await this.ensureInitiateTier();
 
-    const prefix = this.config.get<string>('LOYALTY_CARD_PREFIX', 'HOS');
+    const prefix = await resolveLoyaltyCardPrefix(this.prisma, this.config, marketId);
     const cardNumber = `${prefix}-${randomBytes(4).toString('hex').toUpperCase()}-${randomBytes(2).toString('hex').toUpperCase()}`;
 
     const membership = await this.prisma.loyaltyMembership.create({
       data: {
         userId,
         tierId: tier.id,
+        marketId: marketId || undefined,
         regionCode: dto?.regionCode || user.country || (await this.region.getCountry()),
         preferredCurrency:
           dto?.preferredCurrency || user.currencyPreference || PLATFORM_DEFAULT_CURRENCY,
@@ -404,11 +427,17 @@ export class LoyaltyService implements OnModuleInit {
 
     const membership = await this.prisma.loyaltyMembership.findUnique({
       where: { id: membershipId },
-      select: { enrollmentChannel: true, regionCode: true, enrollmentStoreId: true },
+      select: {
+        enrollmentChannel: true,
+        regionCode: true,
+        enrollmentStoreId: true,
+        marketId: true,
+      },
     });
     const channel = ctx?.channel || membership?.enrollmentChannel || 'WEB';
     const regionCode = ctx?.regionCode || membership?.regionCode || (await this.region.getCountry());
     const storeId = ctx?.storeId || membership?.enrollmentStoreId || undefined;
+    const signupMarketId = membership?.marketId || undefined;
 
     const signupRule = await this.prisma.loyaltyEarnRule.findFirst({
       where: { action: 'SIGNUP', isActive: true },
@@ -433,11 +462,9 @@ export class LoyaltyService implements OnModuleInit {
       }
     }
 
-    const activeCampaigns = await this.campaigns.getActiveForContext(
-      regionCode,
-      channel,
-      storeId,
-    );
+    const activeCampaigns = signupMarketId
+      ? await this.campaigns.getActiveForContext(regionCode, channel, storeId, signupMarketId)
+      : await this.campaigns.getActiveForContext(regionCode, channel, storeId);
     const award = resolveSignupCampaignAward(activeCampaigns, fallbackPoints);
     const points = award.points;
     if (points <= 0) {
@@ -586,13 +613,27 @@ export class LoyaltyService implements OnModuleInit {
     }
   }
 
-  async getMembership(userId: string) {
+  async getMembership(userId: string, marketId?: string) {
     this.assertEnabled();
     await this.ensureInitiateTier();
-    const membership = await this.prisma.loyaltyMembership.findUnique({
-      where: { userId },
-      include: { tier: true },
-    });
+    const scopedMarketId = marketId?.trim() || undefined;
+    let membership = scopedMarketId
+      ? await this.prisma.loyaltyMembership.findFirst({
+          where: { userId, marketId: scopedMarketId },
+          include: { tier: true },
+        })
+      : await this.prisma.loyaltyMembership.findUnique({
+          where: { userId },
+          include: { tier: true },
+        });
+    // Memberships created before market scoping have a null marketId and still
+    // belong to this customer when a market filter is applied.
+    if (!membership && scopedMarketId) {
+      membership = await this.prisma.loyaltyMembership.findFirst({
+        where: { userId, marketId: null },
+        include: { tier: true },
+      });
+    }
     // Repair missing joining / profile / founding-member bonuses for members enrolled before reliability fixes
     if (membership && membership.status !== 'DEACTIVATED') {
       const awardedSignup = await this.ensureSignupBonus(membership.id, userId, {
@@ -611,7 +652,7 @@ export class LoyaltyService implements OnModuleInit {
       }
       if (awardedSignup || awardedFm || awardedProfile > 0) {
         return this.prisma.loyaltyMembership.findUnique({
-          where: { userId },
+          where: { id: membership.id },
           include: { tier: true },
         });
       }
@@ -1372,6 +1413,7 @@ export class LoyaltyService implements OnModuleInit {
       optionId,
       orderId,
       regionCode: membership.regionCode ?? undefined,
+      marketId: membership.marketId ?? undefined,
       prismaTx: tx,
       purchaseSubtotal,
     });
@@ -1396,7 +1438,11 @@ export class LoyaltyService implements OnModuleInit {
     purchaseSubtotal?: number,
   ): Promise<{ points: number; discount: Decimal }> {
     this.assertEnabled();
-    const { settings } = await this.loyaltySettings.getResolved();
+    const cart = await this.prisma.cart.findUnique({
+      where: { userId },
+      select: { marketId: true },
+    });
+    const { settings } = await this.loyaltySettings.getResolved(cart?.marketId ?? undefined);
     if (!settings.redemptionAtCheckout) {
       throw new BadRequestException('Checkout redemption is not enabled');
     }
@@ -1444,11 +1490,45 @@ export class LoyaltyService implements OnModuleInit {
       throw new BadRequestException(`Minimum redemption is ${minRedeem} points`);
     }
 
+    if (settings.maxRedemptionPointsPerOrder > 0 && opt.pointsCost > settings.maxRedemptionPointsPerOrder) {
+      throw new BadRequestException(
+        `This reward exceeds the per-order limit of ${settings.maxRedemptionPointsPerOrder} points`,
+      );
+    }
+
+    if (settings.dailyRedemptionPointsLimit > 0) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const todayBurns = await this.prisma.loyaltyTransaction.aggregate({
+        where: {
+          membershipId: membership.id,
+          type: 'BURN',
+          createdAt: { gte: startOfDay },
+        },
+        _sum: { points: true },
+      });
+      const burnedToday = Math.abs(todayBurns._sum.points ?? 0);
+      if (burnedToday + opt.pointsCost > settings.dailyRedemptionPointsLimit) {
+        const remaining = Math.max(0, settings.dailyRedemptionPointsLimit - burnedToday);
+        throw new BadRequestException(
+          `Daily redemption limit reached. You can redeem up to ${remaining} more points today.`,
+        );
+      }
+    }
+
     await this.burn.assertWelcomePurchaseMinimum({
       option: { id: opt.id, name: opt.name, type: opt.type },
       membershipId: membership.id,
       points: opt.pointsCost,
       purchaseSubtotal,
+    });
+
+    this.burn.assertMaxRedemptionPercent({
+      option: { value: opt.value, type: opt.type },
+      points: opt.pointsCost,
+      purchaseSubtotal,
+      maxPercent: settings.maxRedemptionPercent,
+      redeemValue: settings.defaultRedeemValue,
     });
 
     let discount = new Decimal(0);
@@ -1770,6 +1850,31 @@ export class LoyaltyService implements OnModuleInit {
     );
 
     return { membershipDeleted: true, userDeleted: deleteUser };
+  }
+
+  /**
+   * dto.marketId, then dto.marketCode, then the request access-control store
+   * (set by MarketContextService), then the default market.
+   */
+  private async resolveEnrollmentMarketId(dto?: EnrollLoyaltyDto): Promise<string | null> {
+    const requestedId = dto?.marketId?.trim();
+    if (requestedId) {
+      const byId = await findMarketId(this.prisma, { id: requestedId });
+      if (byId) return byId;
+      throw new BadRequestException(`Unknown market ID: ${requestedId}`);
+    }
+
+    const requestedCode = dto?.marketCode?.trim().toUpperCase();
+    if (requestedCode) {
+      const byCode = await findMarketId(this.prisma, { code: requestedCode });
+      if (byCode) return byCode;
+      throw new BadRequestException(`Unknown market code: ${requestedCode}`);
+    }
+
+    const fromStore = getActiveMarketId();
+    if (fromStore) return fromStore;
+
+    return resolveDefaultMarketId(this.prisma);
   }
 
   /** Ensure the Initiate tier exists; safe under concurrent enrollment. */

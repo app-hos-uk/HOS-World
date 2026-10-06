@@ -13,6 +13,8 @@ export interface ChannelSenderParams {
   body: string;
   templateSlug?: string;
   metadata?: Record<string, unknown>;
+  /** When set, SMS uses the market Twilio integration before env credentials. */
+  marketId?: string;
 }
 
 export interface ChannelSender {

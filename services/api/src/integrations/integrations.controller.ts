@@ -95,11 +95,19 @@ export class IntegrationsController {
     description: 'Retrieves all configured integrations. Credentials are masked.',
   })
   @ApiQuery({ name: 'category', required: false, enum: IntegrationCategory })
+  @ApiQuery({
+    name: 'marketId',
+    required: false,
+    type: String,
+    description:
+      'Market UUID, or "global" for default rows only. A market id includes that market plus global defaults.',
+  })
   @SwaggerApiResponse({ status: 200, description: 'Integrations retrieved successfully' })
   async findAll(
     @Query('category') category?: IntegrationCategory,
+    @Query('marketId') marketId?: string,
   ): Promise<ApiResponse<IntegrationResponseDto[]>> {
-    const integrations = await this.integrationsService.findAll(category);
+    const integrations = await this.integrationsService.findAll(category, marketId);
     return {
       data: integrations,
       message: 'Integrations retrieved successfully',

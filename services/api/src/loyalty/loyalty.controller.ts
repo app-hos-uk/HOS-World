@@ -64,8 +64,11 @@ export class LoyaltyController {
   @RequireAccess({ permission: 'loyalty.view', scope: 'SELF' })
   @Roles('CUSTOMER')
   @ApiOperation({ summary: 'Current membership' })
-  async membership(@Request() req: { user: { id: string } }): Promise<ApiResponse<unknown>> {
-    const data = await this.loyalty.getMembership(req.user.id);
+  async membership(
+    @Request() req: { user: { id: string } },
+    @Query('marketId') marketId?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const data = await this.loyalty.getMembership(req.user.id, marketId?.trim() || undefined);
     return { data, message: 'OK' };
   }
 

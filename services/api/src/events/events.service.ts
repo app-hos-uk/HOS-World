@@ -387,16 +387,20 @@ export class EventsService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { firstName: true, email: true },
+      select: { firstName: true, email: true, homeMarket: { select: { code: true } } },
     });
     try {
-      const rendered = await this.templates.render('event_rsvp_confirmation', {
-        firstName: user?.firstName || 'Member',
-        eventTitle: event.title,
-        ticketCode: ticketCode,
-        startsAt: event.startsAt.toISOString(),
-        unsubscribeUrl: this.unsubscribeLink(),
-      });
+      const rendered = await this.templates.render(
+        'event_rsvp_confirmation',
+        {
+          firstName: user?.firstName || 'Member',
+          eventTitle: event.title,
+          ticketCode: ticketCode,
+          startsAt: event.startsAt.toISOString(),
+          unsubscribeUrl: this.unsubscribeLink(),
+        },
+        user?.homeMarket?.code,
+      );
       const subject = rendered.subject || 'Your event RSVP';
       const userRecord = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -475,15 +479,19 @@ export class EventsService {
       try {
         const u = await this.prisma.user.findUnique({
           where: { id: next.userId },
-          select: { firstName: true },
+          select: { firstName: true, homeMarket: { select: { code: true } } },
         });
-        const rendered = await this.templates.render('event_waitlist_promoted', {
-          firstName: u?.firstName || 'Member',
-          eventTitle: event.title,
-          ticketCode: next.ticketCode || '',
-          startsAt: event.startsAt.toISOString(),
-          unsubscribeUrl: this.unsubscribeLink(),
-        });
+        const rendered = await this.templates.render(
+          'event_waitlist_promoted',
+          {
+            firstName: u?.firstName || 'Member',
+            eventTitle: event.title,
+            ticketCode: next.ticketCode || '',
+            startsAt: event.startsAt.toISOString(),
+            unsubscribeUrl: this.unsubscribeLink(),
+          },
+          u?.homeMarket?.code,
+        );
         const subject = rendered.subject || "You're in!";
         const userRecord = await this.prisma.user.findUnique({
           where: { id: next.userId },

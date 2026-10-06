@@ -468,12 +468,14 @@ export class InventoryController {
       latitude: number;
       longitude: number;
       productQuantities: Array<{ productId: string; quantity: number }>;
+      marketId?: string;
     },
   ): Promise<ApiResponse<any>> {
     const result = await this.warehouseRoutingService.findNearestWarehouseWithStock(
       body.latitude,
       body.longitude,
       body.productQuantities,
+      body.marketId,
     );
     return {
       data: result,
@@ -521,6 +523,7 @@ export class InventoryController {
     body: {
       shippingAddressId: string;
       productQuantities: Array<{ productId: string; quantity: number }>;
+      marketId?: string;
     },
   ): Promise<ApiResponse<any>> {
     // Get coordinates for the shipping address
@@ -543,6 +546,7 @@ export class InventoryController {
       coords.latitude,
       coords.longitude,
       body.productQuantities,
+      body.marketId,
     );
 
     return {
@@ -567,12 +571,14 @@ export class InventoryController {
       latitude: number;
       longitude: number;
       productQuantities: Array<{ productId: string; quantity: number }>;
+      marketId?: string;
     },
   ): Promise<ApiResponse<any[]>> {
     const result = await this.warehouseRoutingService.getWarehousesWithStockByDistance(
       body.latitude,
       body.longitude,
       body.productQuantities,
+      body.marketId,
     );
     return {
       data: result,

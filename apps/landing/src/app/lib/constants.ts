@@ -1,8 +1,10 @@
+import { grandLaunchTicker, marketConfig } from './marketConfig';
+
 /**
  * Platform display locale. Keep in sync with the API's PLATFORM_LOCALE /
  * PlatformRegionService and the storefront's DEFAULT_REGION.locale.
  */
-export const LANDING_LOCALE = process.env.NEXT_PUBLIC_PLATFORM_LOCALE || 'en-US';
+export const LANDING_LOCALE = process.env.NEXT_PUBLIC_PLATFORM_LOCALE || marketConfig.locale;
 
 /** Official transparent brand marks (shared with storefront) */
 export const LANDING_LOGO = '/assets/logo-emblem.png';
@@ -13,8 +15,8 @@ export const LANDING_REGISTER_PATH = '/founding-members';
 
 export const TICKER_ITEMS = [
   "Earth's Multi-Fandom Universe",
-  'Grand Launch · July 29 · 10:00 AM EDT',
-  'Times Square · New York',
+  grandLaunchTicker(marketConfig),
+  `${marketConfig.hero.locationLine} · ${marketConfig.hero.cityLine}`,
   'Marvel · Star Wars · DC Universe',
   'Naruto · Middle Earth · Studio Ghibli',
   'House Of Spells',

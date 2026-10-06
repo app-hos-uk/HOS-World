@@ -242,10 +242,12 @@ export class RefundsService {
         paymentId: stripePaymentId,
         amount: cardRefundAmount,
         currency: data.currency || returnRequest.order.currency,
+        marketId: returnRequest.order.marketId || undefined,
         metadata: {
           currency: data.currency || returnRequest.order.currency,
           returnId: data.returnId,
           retryAttempt: String(retryAttempt),
+          ...(returnRequest.order.marketId ? { marketId: returnRequest.order.marketId } : {}),
         },
       });
 

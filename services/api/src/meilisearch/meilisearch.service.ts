@@ -1,8 +1,9 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service';
 import { MeiliSearch, Index, SearchParams, Settings } from 'meilisearch';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
+import { FeatureFlag, FeatureFlagsService } from '../config/feature-flags.service';
 
 export interface MeiliSearchResult {
   hits: any[];
@@ -31,6 +32,8 @@ export interface SearchFilters {
   sort?: string;
   /** When set, search only product title and SKU (reduces irrelevant hits from long descriptions). */
   searchNameAndSkuOnly?: boolean;
+  /** ISO market code (US, MY). Applied only when MARKET_CATALOG is enabled. */
+  marketCode?: string;
 }
 
 @Injectable()
@@ -53,6 +56,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    @Optional() private readonly featureFlags?: FeatureFlagsService,
   ) {}
 
   async onModuleInit() {
@@ -150,6 +154,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         'isPlatformOwned',
         'createdAt',
         'brand',
+        'marketCodes',
       ],
 
       // Sortable attributes
@@ -181,7 +186,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
 
       // Pagination settings
       pagination: {
-        maxTotalHits: 10000,
+        maxTotalHits: 50000,
       },
 
       // Faceting settings
@@ -213,6 +218,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         'isActive',
         'isPlatformOwned',
         'createdAt',
+        'marketCodes',
       ],
 
       // Synonyms for better search matching — bidirectional groups
@@ -330,7 +336,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
   async indexProduct(product: any): Promise<void> {
     if (!this.isAvailable()) return;
 
-    const document = this.transformProductToDocument(product);
+    const document = await this.transformProductToDocument(product);
     this.indexingQueue.push(document);
 
     // Schedule batch flush
@@ -387,7 +393,8 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
   /**
    * Transform product to Meilisearch document
    */
-  private transformProductToDocument(product: any): Record<string, any> {
+  private async transformProductToDocument(product: any): Promise<Record<string, any>> {
+    const marketCodes = await this.resolveMarketCodes(product);
     return {
       id: product.id,
       name: product.name,
@@ -416,7 +423,28 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
       isActive: product.status === 'ACTIVE',
       isPlatformOwned: product.isPlatformOwned || false,
       createdAt: product.createdAt ? new Date(product.createdAt).getTime() : Date.now(),
+      marketCodes,
     };
+  }
+
+  /**
+   * Active market codes for this product. An empty list means the product is
+   * not restricted (visible everywhere while MARKET_CATALOG is off).
+   */
+  private async resolveMarketCodes(product: any): Promise<string[]> {
+    if (Array.isArray(product?.productMarkets)) {
+      return product.productMarkets
+        .filter((row: any) => row?.isActive !== false)
+        .map((row: any) => row?.market?.code)
+        .filter((code: unknown): code is string => typeof code === 'string' && code.length > 0);
+    }
+    if (!product?.id) return [];
+
+    const rows = await this.prisma.productMarket.findMany({
+      where: { productId: product.id, isActive: true },
+      select: { market: { select: { code: true } } },
+    });
+    return rows.map((row) => row.market?.code).filter((code): code is string => Boolean(code));
   }
 
   /**
@@ -459,6 +487,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     'tags',
     'isPlatformOwned',
     'createdAt',
+    'marketCodes',
   ]);
 
   /**
@@ -524,6 +553,11 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     }
     if (filters.inStock) {
       filterConditions.push(`stock > 0`);
+    }
+    if (filters.marketCode && this.featureFlags?.isEnabled(FeatureFlag.MARKET_CATALOG) === true) {
+      const code = this.sanitizeFilterValue(filters.marketCode.trim().toUpperCase());
+      // Empty marketCodes = no ProductMarket rows = available in every market.
+      filterConditions.push(`(marketCodes = "${code}" OR marketCodes IS EMPTY)`);
     }
     if (filters.tags && filters.tags.length > 0) {
       const tagFilters = filters.tags
@@ -735,12 +769,18 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
               orderBy: { order: 'asc' },
               take: 3,
             },
+            productMarkets: {
+              where: { isActive: true },
+              select: { isActive: true, market: { select: { code: true } } },
+            },
           },
         });
 
         if (products.length === 0) break;
 
-        const documents = products.map((p) => this.transformProductToDocument(p));
+        const documents = await Promise.all(
+          products.map((p) => this.transformProductToDocument(p)),
+        );
 
         try {
           const task = await this.productsIndex!.addDocuments(documents, { primaryKey: 'id' });
@@ -833,6 +873,16 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     if (filters.minRating !== undefined) {
       where.averageRating = { gte: filters.minRating };
     }
+    if (filters.marketCode && this.featureFlags?.isEnabled(FeatureFlag.MARKET_CATALOG) === true) {
+      const code = filters.marketCode.trim().toUpperCase();
+      const marketClause = {
+        OR: [
+          { productMarkets: { none: {} } },
+          { productMarkets: { some: { isActive: true, market: { code } } } },
+        ],
+      };
+      where.AND = Array.isArray(where.AND) ? [...where.AND, marketClause] : [marketClause];
+    }
 
     const safeTake = Math.min(limit, 50);
     const maxFallbackDepth = 5000;
@@ -853,6 +903,10 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
         include: {
           seller: { select: { id: true, storeName: true, slug: true } },
           images: { orderBy: { order: 'asc' }, take: 3 },
+          productMarkets: {
+            where: { isActive: true },
+            select: { isActive: true, market: { select: { code: true } } },
+          },
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -861,7 +915,7 @@ export class MeilisearchService implements OnModuleInit, OnModuleDestroy {
     ]);
 
     return {
-      hits: products.map((p) => this.transformProductToDocument(p)),
+      hits: await Promise.all(products.map((p) => this.transformProductToDocument(p))),
       total,
       processingTimeMs: 0,
       facetDistribution,

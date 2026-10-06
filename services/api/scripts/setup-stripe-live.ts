@@ -111,8 +111,8 @@ async function upsertStripeIntegration(
   credentials: Record<string, string>,
 ): Promise<void> {
   const encrypted = encryptionService.encryptJson(credentials);
-  const existing = await prisma.integrationConfig.findUnique({
-    where: { category_provider: { category: 'PAYMENT', provider: 'stripe' } },
+  const existing = await prisma.integrationConfig.findFirst({
+    where: { category: 'PAYMENT', provider: 'stripe', marketId: null },
   });
 
   if (existing) {

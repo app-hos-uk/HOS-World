@@ -393,10 +393,8 @@ export class TaxFactoryService implements OnModuleInit {
     metadata?: Record<string, any>,
   ): Promise<void> {
     try {
-      const integration = await this.prisma.integrationConfig.findUnique({
-        where: {
-          category_provider: { category: 'TAX', provider },
-        },
+      const integration = await this.prisma.integrationConfig.findFirst({
+        where: { category: 'TAX', provider, marketId: null },
       });
 
       if (integration) {

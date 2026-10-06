@@ -189,6 +189,24 @@ export class CartService {
       throw new BadRequestException('Product is not available');
     }
 
+    // When MARKET_CATALOG flag is on, verify product is available in request market
+    if (this.featureFlags?.isEnabled(FeatureFlag.MARKET_CATALOG)) {
+      const cart = await this.prisma.cart.findUnique({
+        where: { userId },
+        select: { marketId: true },
+      });
+      const marketId = cart?.marketId;
+      if (marketId) {
+        const productMarket = await this.prisma.productMarket.findUnique({
+          where: { productId_marketId: { productId: product.id, marketId } },
+        });
+        if (productMarket && !productMarket.isActive) {
+          throw new BadRequestException('Product is not available in your market');
+        }
+        // If no ProductMarket row exists, product is available everywhere (backward compat)
+      }
+    }
+
     const offer = await this.resolveOffer(
       product.id,
       addToCartDto.vendorProductId,
@@ -495,6 +513,23 @@ export class CartService {
 
     if (product.status !== 'ACTIVE') {
       throw new BadRequestException('Product is not available');
+    }
+
+    // When MARKET_CATALOG flag is on, verify product is available in the guest cart market
+    if (this.featureFlags?.isEnabled(FeatureFlag.MARKET_CATALOG)) {
+      const cart = await this.prisma.cart.findUnique({
+        where: { guestSessionId: sid },
+        select: { marketId: true },
+      });
+      const marketId = cart?.marketId;
+      if (marketId) {
+        const productMarket = await this.prisma.productMarket.findUnique({
+          where: { productId_marketId: { productId: product.id, marketId } },
+        });
+        if (productMarket && !productMarket.isActive) {
+          throw new BadRequestException('Product is not available in your market');
+        }
+      }
     }
 
     const offer = await this.resolveOffer(

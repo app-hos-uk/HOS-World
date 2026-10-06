@@ -23,7 +23,9 @@ describe('AdminEmailService', () => {
       count: jest.fn(),
     },
     emailTemplate: {
-      upsert: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
     },
     messageLog: {
       findMany: jest.fn(),
@@ -125,7 +127,8 @@ describe('AdminEmailService', () => {
         bodyHtml: '<p>Hi</p>',
       });
       prisma.adminEmailCampaign.update.mockResolvedValue({});
-      prisma.emailTemplate.upsert.mockResolvedValue({});
+      prisma.emailTemplate.findFirst.mockResolvedValue(null);
+      prisma.emailTemplate.create.mockResolvedValue({});
       queue.addJob.mockResolvedValue('job-1');
 
       const result = await service.sendCampaign(
@@ -161,11 +164,11 @@ describe('AdminEmailService', () => {
         }),
       );
 
-      expect(prisma.emailTemplate.upsert).toHaveBeenCalledWith(
+      expect(prisma.emailTemplate.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { slug: 'admin_campaign_campaign-1' },
-          create: expect.objectContaining({
+          data: expect.objectContaining({
             slug: 'admin_campaign_campaign-1',
+            marketCode: null,
             description: 'Admin campaign snapshot',
             variables: expect.arrayContaining(['firstName']),
           }),

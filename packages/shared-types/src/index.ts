@@ -150,6 +150,14 @@ export interface Product {
     storeName?: string;
     slug?: string;
   };
+  /** Active seller offers for the same catalog product. Present on product detail. */
+  vendorOffers?: Array<{
+    id: string;
+    sellerName: string;
+    price: number;
+    currency?: string;
+    stock?: number;
+  }>;
   images: ProductImage[];
   variations?: ProductVariation[];
   fandom?: string;

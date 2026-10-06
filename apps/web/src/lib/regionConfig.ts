@@ -12,12 +12,15 @@ export type RegionConfig = {
 export const DEFAULT_CURRENCY = 'USD';
 
 /** Platform defaults when /config/region is unavailable — keep in sync with API PlatformRegionService. */
-export const DEFAULT_REGION: RegionConfig = {
-  currency: DEFAULT_CURRENCY,
-  country: 'US',
-  locale: 'en-US',
-  timezone: 'America/New_York',
+const MARKET_DEFAULTS: Record<string, RegionConfig> = {
+  US: { currency: 'USD', country: 'US', locale: 'en-US', timezone: 'America/New_York' },
+  GB: { currency: 'GBP', country: 'GB', locale: 'en-GB', timezone: 'Europe/London' },
+  AE: { currency: 'AED', country: 'AE', locale: 'en-AE', timezone: 'Asia/Dubai' },
+  MY: { currency: 'MYR', country: 'MY', locale: 'en-MY', timezone: 'Asia/Kuala_Lumpur' },
 };
+
+const marketCode = process.env.NEXT_PUBLIC_MARKET_CODE || 'US';
+export const DEFAULT_REGION: RegionConfig = MARKET_DEFAULTS[marketCode] || MARKET_DEFAULTS.US;
 
 export const REGION_STORAGE_KEY = 'platform_region';
 

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { FoundingMembersService } from './founding-members.service';
 import { PrismaService } from '../database/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { MarketService } from '../access-control/market.service';
 
 describe('FoundingMembersService import deduplication', () => {
   let service: FoundingMembersService;
@@ -10,6 +11,7 @@ describe('FoundingMembersService import deduplication', () => {
     foundingMember: {
       findMany: jest.Mock;
       findUnique: jest.Mock;
+      findFirst: jest.Mock;
       create: jest.Mock;
       count: jest.Mock;
       update: jest.Mock;
@@ -27,11 +29,12 @@ describe('FoundingMembersService import deduplication', () => {
   beforeEach(() => {
     prisma = {
       foundingMember: {
-        findMany: jest.fn(),
-        findUnique: jest.fn(),
-        create: jest.fn(),
-        count: jest.fn(),
-        update: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      create: jest.fn(),
+      count: jest.fn(),
+      update: jest.fn(),
       },
       user: {
         findMany: jest.fn(),
@@ -47,6 +50,7 @@ describe('FoundingMembersService import deduplication', () => {
       prisma as unknown as PrismaService,
       notifications as unknown as NotificationsService,
       { get: jest.fn((key: string) => (key === 'FRONTEND_URL' ? 'http://localhost:3000' : undefined)) } as unknown as ConfigService,
+      { getDefault: jest.fn().mockResolvedValue(null) } as unknown as MarketService,
     );
   });
 

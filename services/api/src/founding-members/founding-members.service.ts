@@ -12,6 +12,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { CreateFoundingMemberDto } from './dto/create-founding-member.dto';
 import { ImportFoundingMemberRowDto } from './dto/import-founding-members.dto';
 import { normalizeCountryCode } from '../common/utils/country-code';
+import { MarketService } from '../access-control/market.service';
 
 export interface FoundingMemberImportResult {
   total: number;
@@ -56,27 +57,38 @@ export class FoundingMembersService {
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
     private readonly configService: ConfigService,
+    private readonly markets: MarketService,
   ) {}
 
   async register(
     dto: CreateFoundingMemberDto,
     metadata?: Record<string, unknown>,
     options?: { sendConfirmationEmail?: boolean },
+    marketId?: string,
   ) {
     if (!this.isValidEmail(dto.email)) {
       throw new BadRequestException('Please provide a valid email address.');
     }
 
-    await this.assertEmailAvailable(dto.email.toLowerCase().trim());
+    const resolvedMarketId = await this.resolveMarketId(marketId);
+    await this.assertEmailAvailable(dto.email.toLowerCase().trim(), resolvedMarketId);
 
-    return this.createMember(dto, metadata, options);
+    return this.createMember(dto, metadata, {
+      ...options,
+      marketId: resolvedMarketId,
+    });
   }
 
   async adminCreate(
     dto: CreateFoundingMemberDto,
-    options?: { sendConfirmationEmail?: boolean; metadata?: Record<string, unknown> },
+    options?: {
+      sendConfirmationEmail?: boolean;
+      metadata?: Record<string, unknown>;
+      marketId?: string;
+    },
   ) {
-    await this.assertEmailAvailable(dto.email.toLowerCase().trim());
+    const resolvedMarketId = await this.resolveMarketId(options?.marketId);
+    await this.assertEmailAvailable(dto.email.toLowerCase().trim(), resolvedMarketId);
 
     return this.createMember(
       dto,
@@ -84,7 +96,10 @@ export class FoundingMembersService {
         registeredFrom: 'admin_manual',
         ...(options?.metadata || {}),
       },
-      { sendConfirmationEmail: options?.sendConfirmationEmail ?? false },
+      {
+        sendConfirmationEmail: options?.sendConfirmationEmail ?? false,
+        marketId: resolvedMarketId,
+      },
     );
   }
 
@@ -536,7 +551,7 @@ export class FoundingMembersService {
   ): Promise<{ kind: 'founding_member' | 'user'; message: string } | null> {
     const normalized = email.toLowerCase().trim();
     const [existingMember, existingUser] = await Promise.all([
-      this.prisma.foundingMember.findUnique({
+      this.prisma.foundingMember.findFirst({
         where: { email: normalized },
         select: { id: true },
       }),
@@ -561,8 +576,26 @@ export class FoundingMembersService {
     return null;
   }
 
-  private async assertEmailAvailable(email: string): Promise<void> {
-    const conflict = await this.findEmailConflict(email);
+  /**
+   * When a marketId is provided, uniqueness is scoped to that market (the
+   * same person may register as a founding member in multiple markets).
+   * Without a marketId, the legacy global check is used.
+   */
+  private async assertEmailAvailable(email: string, marketId?: string | null): Promise<void> {
+    const normalized = email.toLowerCase().trim();
+
+    if (marketId) {
+      const inMarket = await this.prisma.foundingMember.findFirst({
+        where: { email: normalized, marketId },
+        select: { id: true },
+      });
+      if (inMarket) {
+        throw new ConflictException('This email is already registered as a founding member in this market.');
+      }
+      return;
+    }
+
+    const conflict = await this.findEmailConflict(normalized);
     if (!conflict) return;
     if (conflict.kind === 'founding_member') {
       throw new ConflictException('This email is already registered as a founding member.');
@@ -572,6 +605,21 @@ export class FoundingMembersService {
     );
   }
 
+  /** Use the provided market, otherwise the platform default market. */
+  private async resolveMarketId(marketId?: string | null): Promise<string | null> {
+    const explicit = marketId?.trim();
+    if (explicit) return explicit;
+    try {
+      const fallback = await this.markets.getDefault();
+      return fallback?.id ?? null;
+    } catch (err) {
+      this.logger.warn(
+        `Default market lookup failed, founding member will be unscoped: ${err instanceof Error ? err.message : 'unknown'}`,
+      );
+      return null;
+    }
+  }
+
   private isValidEmail(email: string): boolean {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
@@ -579,12 +627,13 @@ export class FoundingMembersService {
   private async createMember(
     dto: CreateFoundingMemberDto,
     metadata?: Record<string, unknown>,
-    options?: { sendConfirmationEmail?: boolean; registeredAt?: Date },
+    options?: { sendConfirmationEmail?: boolean; registeredAt?: Date; marketId?: string | null },
   ) {
     // Normalize country code to ISO format, fallback to normalizing legacy country field
     const normalizedCode = dto.countryCode
       ? dto.countryCode.toUpperCase()
       : normalizeCountryCode(dto.country);
+    const resolvedMarketId = await this.resolveMarketId(options?.marketId);
 
     const member = await this.prisma.foundingMember.create({
       data: {
@@ -598,6 +647,7 @@ export class FoundingMembersService {
         otherFranchises: dto.otherFranchises?.trim() || null,
         source: dto.source?.trim() || null,
         spendBracket: dto.spendBracket?.trim() || null,
+        marketId: resolvedMarketId,
         registeredAt: options?.registeredAt ?? new Date(),
         metadata: (metadata || Prisma.JsonNull) as Prisma.InputJsonValue,
       },
@@ -776,7 +826,7 @@ export class FoundingMembersService {
   }
 
   async findByEmail(email: string) {
-    return this.prisma.foundingMember.findUnique({
+    return this.prisma.foundingMember.findFirst({
       where: { email: email.toLowerCase().trim() },
     });
   }
@@ -841,15 +891,32 @@ export class FoundingMembersService {
     });
   }
 
-  async getStats() {
+  async getStats(marketId?: string) {
+    const scopedMarketId = marketId?.trim() || undefined;
+    const where: Prisma.FoundingMemberWhereInput | undefined = scopedMarketId
+      ? { marketId: scopedMarketId }
+      : undefined;
+    const topFandomsQuery = scopedMarketId
+      ? (this.prisma.$queryRaw`
+          SELECT unnest(fandoms) as fandom, COUNT(*) as count
+          FROM founding_members
+          WHERE "marketId" = ${scopedMarketId}
+          GROUP BY fandom ORDER BY count DESC LIMIT 20
+        ` as Promise<Array<{ fandom: string; count: bigint }>>)
+      : (this.prisma.$queryRaw`
+          SELECT unnest(fandoms) as fandom, COUNT(*) as count
+          FROM founding_members
+          GROUP BY fandom ORDER BY count DESC LIMIT 20
+        ` as Promise<Array<{ fandom: string; count: bigint }>>);
+
     const [total, byStatus, topFandoms] = await Promise.all([
-      this.prisma.foundingMember.count(),
-      this.prisma.foundingMember.groupBy({ by: ['status'], _count: true }),
-      this.prisma.$queryRaw`
-        SELECT unnest(fandoms) as fandom, COUNT(*) as count
-        FROM founding_members
-        GROUP BY fandom ORDER BY count DESC LIMIT 20
-      ` as Promise<Array<{ fandom: string; count: bigint }>>,
+      this.prisma.foundingMember.count(where ? { where } : undefined),
+      this.prisma.foundingMember.groupBy({
+        by: ['status'],
+        ...(where ? { where } : {}),
+        _count: true,
+      }),
+      topFandomsQuery,
     ]);
 
     return {
@@ -859,22 +926,33 @@ export class FoundingMembersService {
     };
   }
 
-  async findAll(page = 1, limit = 50, search?: string, includeDeactivated = false) {
+  async findAll(
+    page = 1,
+    limit = 50,
+    search?: string,
+    includeDeactivated = false,
+    marketId?: string,
+  ) {
     const skip = (page - 1) * limit;
-    const searchWhere = search
-      ? {
-          OR: [
-            { email: { contains: search, mode: 'insensitive' as const } },
-            { firstName: { contains: search, mode: 'insensitive' as const } },
-            { lastName: { contains: search, mode: 'insensitive' as const } },
-          ],
-        }
-      : undefined;
-    const statusFilter = includeDeactivated ? undefined : { status: { not: 'DEACTIVATED' as const } };
-    const where =
-      searchWhere && statusFilter
-        ? { AND: [searchWhere, statusFilter] }
-        : searchWhere ?? statusFilter;
+    const filters: Prisma.FoundingMemberWhereInput[] = [];
+    if (search) {
+      filters.push({
+        OR: [
+          { email: { contains: search, mode: 'insensitive' } },
+          { firstName: { contains: search, mode: 'insensitive' } },
+          { lastName: { contains: search, mode: 'insensitive' } },
+        ],
+      });
+    }
+    if (!includeDeactivated) {
+      filters.push({ status: { not: 'DEACTIVATED' } });
+    }
+    const scopedMarketId = marketId?.trim();
+    if (scopedMarketId) {
+      filters.push({ marketId: scopedMarketId });
+    }
+    const where: Prisma.FoundingMemberWhereInput | undefined =
+      filters.length === 0 ? undefined : filters.length === 1 ? filters[0] : { AND: filters };
 
     const [items, total] = await Promise.all([
       this.prisma.foundingMember.findMany({

@@ -53,7 +53,7 @@ export default function AdminProductMarketsPage() {
   useEffect(() => { load(); }, [load]);
 
   return (
-    <RouteGuard allowedRoles={['ADMIN']}>
+    <RouteGuard allowedRoles={['ADMIN']} requiredPermissions={['products.manage']} showAccessDenied>
       <div className="p-6 max-w-6xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-semibold text-hos-text-secondary">Product Markets</h1>

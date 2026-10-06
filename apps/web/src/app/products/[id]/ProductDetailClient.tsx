@@ -66,6 +66,7 @@ export default function ProductDetailClient() {
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState<string | null>(null);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', title: '', images: [] as string[] });
@@ -83,6 +84,30 @@ export default function ProductDetailClient() {
       setCanGoBack(true);
     }
   }, []);
+
+  const vendorOffers: Array<{
+    id: string;
+    sellerName: string;
+    price: number;
+    currency?: string;
+    stock?: number;
+  }> = Array.isArray(product?.vendorOffers) ? product.vendorOffers : [];
+
+  const vendorOfferKey = vendorOffers.map((offer) => offer.id).join('|');
+  useEffect(() => {
+    if (!vendorOfferKey) {
+      setSelectedVendor(null);
+      return;
+    }
+    const ids = vendorOfferKey.split('|');
+    setSelectedVendor((current) => (current && ids.includes(current) ? current : ids[0]));
+  }, [vendorOfferKey]);
+
+  const selectedOffer =
+    vendorOffers.length > 1 ? vendorOffers.find((offer) => offer.id === selectedVendor) : undefined;
+  const displayPrice = selectedOffer?.price ?? product?.price ?? 0;
+  const displayCurrency = selectedOffer?.currency || product?.currency || DEFAULT_CURRENCY;
+  const displayStock = selectedOffer?.stock ?? product?.stock;
 
   const handleGoBack = () => {
     if (canGoBack) {
@@ -322,12 +347,19 @@ export default function ProductDetailClient() {
       }
     }
 
+    const vendorProductId = vendorOffers.length > 1 ? selectedVendor || undefined : undefined;
+    if (vendorOffers.length > 1 && !vendorProductId) {
+      toast.error('Please choose a seller');
+      return;
+    }
+
     try {
       setAddingToCart(true);
       await addToCartContext(
         product.id,
         quantity,
-        hasVariations && Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined
+        hasVariations && Object.keys(selectedVariations).length > 0 ? selectedVariations : undefined,
+        vendorProductId,
       );
       trackAddToCart(product, quantity);
       toast.success('Product added to cart!');
@@ -458,11 +490,11 @@ export default function ProductDetailClient() {
 
             <div className="mb-6">
               <div className="text-3xl font-bold text-hos-gold mb-2">
-                {formatPrice(product.price, product.currency || DEFAULT_CURRENCY)}
+                {formatPrice(displayPrice, displayCurrency)}
               </div>
-              {product.stock !== undefined && (
-                <p className={`text-sm ${product.stock > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {product.stock > 0 ? `In Stock (${product.stock} available)` : 'Out of Stock'}
+              {displayStock !== undefined && (
+                <p className={`text-sm ${displayStock > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {displayStock > 0 ? `In Stock (${displayStock} available)` : 'Out of Stock'}
                 </p>
               )}
               {deliveryEstimate && (
@@ -471,6 +503,33 @@ export default function ProductDetailClient() {
                 </p>
               )}
             </div>
+
+            {vendorOffers.length > 1 && (
+              <div className="mt-4 mb-6 border border-hos-border rounded-lg p-4">
+                <h3 className="text-sm font-semibold mb-2 text-hos-text-primary">
+                  {vendorOffers.length} sellers offer this product
+                </h3>
+                <div className="space-y-2">
+                  {vendorOffers.map((offer) => (
+                    <button
+                      key={offer.id}
+                      type="button"
+                      onClick={() => setSelectedVendor(offer.id)}
+                      className={`w-full flex justify-between items-center p-3 rounded border ${
+                        selectedVendor === offer.id
+                          ? 'border-hos-gold bg-hos-gold/10'
+                          : 'border-hos-border'
+                      }`}
+                    >
+                      <span className="text-sm text-hos-text-primary">{offer.sellerName}</span>
+                      <span className="font-medium text-hos-text-primary">
+                        {formatPrice(offer.price, offer.currency || displayCurrency)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Variation selectors (e.g. Size, Color) */}
             {product.variations && product.variations.length > 0 && (
@@ -527,10 +586,10 @@ export default function ProductDetailClient() {
                 <button
                   type="button"
                   onClick={() => {
-                    const max = product.stock ?? 99;
+                    const max = displayStock ?? 99;
                     setQuantity(Math.min(max, quantity + 1));
                   }}
-                  disabled={quantity >= (product.stock ?? 99)}
+                  disabled={quantity >= (displayStock ?? 99)}
                   aria-label="Increase quantity"
                   className="min-w-11 min-h-11 px-4 py-3 text-xl leading-none border border-hos-border rounded-lg hover:bg-hos-bg-tertiary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -545,7 +604,8 @@ export default function ProductDetailClient() {
                 onClick={handleAddToCart}
                 disabled={
                   addingToCart ||
-                  (product.stock !== undefined && product.stock === 0) ||
+                  (displayStock !== undefined && displayStock === 0) ||
+                  (vendorOffers.length > 1 && !selectedVendor) ||
                   (product.variations?.length
                     ? !(product.variations as any[]).every((v: any) => selectedVariations[v.name])
                     : false)
@@ -595,7 +655,8 @@ export default function ProductDetailClient() {
               }}
               disabled={
                 addingToCart ||
-                (product.stock !== undefined && product.stock === 0) ||
+                (displayStock !== undefined && displayStock === 0) ||
+                (vendorOffers.length > 1 && !selectedVendor) ||
                 (product.variations?.length
                   ? !(product.variations as any[]).every((v: any) => selectedVariations[v.name])
                   : false)

@@ -7,6 +7,8 @@ import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 
+const MARKET_REGIONS = ['US', 'GB', 'AE', 'MY'] as const;
+
 export default function AdminBrandCampaignNewPage() {
   const params = useParams();
   const partnershipId = String(params.id);
@@ -20,7 +22,14 @@ export default function AdminBrandCampaignNewPage() {
   const [bonusPoints, setBonusPoints] = useState('');
   const [targetFandoms, setTargetFandoms] = useState('');
   const [targetBrands, setTargetBrands] = useState('');
+  const [regionCodes, setRegionCodes] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const toggleRegion = (code: string) => {
+    setRegionCodes((prev) =>
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code],
+    );
+  };
 
   const save = async () => {
     if (!name.trim() || !startsAt || !endsAt) {
@@ -47,6 +56,7 @@ export default function AdminBrandCampaignNewPage() {
         .filter(Boolean);
       if (tf.length) body.targetFandoms = tf;
       if (tb.length) body.targetBrands = tb;
+      if (regionCodes.length) body.regionCodes = regionCodes;
 
       const r = await apiClient.adminCreateBrandCampaign(partnershipId, body);
       const cid = (r.data as Record<string, unknown>)?.id;
@@ -147,6 +157,22 @@ export default function AdminBrandCampaignNewPage() {
               onChange={(e) => setTargetBrands(e.target.value)}
             />
           </label>
+          <fieldset className="block text-sm">
+            <legend className="text-hos-text-secondary">Target Regions</legend>
+            <div className="mt-2 flex flex-wrap gap-3">
+              {MARKET_REGIONS.map((code) => (
+                <label key={code} className="flex items-center gap-2 text-hos-text-secondary">
+                  <input
+                    type="checkbox"
+                    checked={regionCodes.includes(code)}
+                    onChange={() => toggleRegion(code)}
+                    className="rounded border-hos-border"
+                  />
+                  {code}
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <button
             type="button"
             disabled={saving}

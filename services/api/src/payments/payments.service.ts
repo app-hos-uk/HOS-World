@@ -149,7 +149,10 @@ export class PaymentsService {
     if (order.stripePaymentIntentId) {
       try {
         if (provider.cancelPaymentIntent) {
-          const cancelStatus = await provider.cancelPaymentIntent(order.stripePaymentIntentId);
+          const cancelStatus = await provider.cancelPaymentIntent(
+            order.stripePaymentIntentId,
+            order.marketId || undefined,
+          );
           if (cancelStatus === 'already_succeeded') {
             this.logger.warn(
               `Prior intent ${order.stripePaymentIntentId} already succeeded for order ${order.id} — not creating a new intent`,
@@ -184,6 +187,7 @@ export class PaymentsService {
           currency: this.BASE_CURRENCY.toLowerCase(),
           vendorAccountId,
           platformFee,
+          marketId: order.marketId || undefined,
         });
         paymentIntentId = result.paymentIntentId;
         clientSecret = result.clientSecret || null;
@@ -193,9 +197,11 @@ export class PaymentsService {
           currency: this.BASE_CURRENCY.toLowerCase(),
           orderId: order.id,
           customerId: userId,
+          marketId: order.marketId || undefined,
           metadata: {
             originalCurrency: order.currency,
             originalAmount: Number(order.total).toFixed(2),
+            ...(order.marketId ? { marketId: order.marketId } : {}),
           },
         });
         paymentIntentId = result.paymentIntentId;
@@ -276,6 +282,7 @@ export class PaymentsService {
       const result = await provider.confirmPayment({
         paymentIntentId,
         orderId,
+        marketId: order.marketId || undefined,
       });
 
       if (!result.success) {

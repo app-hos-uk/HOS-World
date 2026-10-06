@@ -111,6 +111,13 @@ const PROVIDER_METADATA: Record<string, ProviderMetadata> = {
     optionalCredentials: ['fromEmail', 'fromName'],
     documentationUrl: 'https://docs.sendgrid.com/',
   },
+  twilio: {
+    displayName: 'Twilio',
+    description: 'SMS delivery via Twilio',
+    requiredCredentials: ['accountSid', 'authToken', 'fromNumber'],
+    optionalCredentials: [],
+    documentationUrl: 'https://www.twilio.com/docs/sms',
+  },
   // Accounting — tokens normally written by XeroAuthService OAuth flow
   xero: {
     displayName: 'Xero',
@@ -135,19 +142,21 @@ export class IntegrationsService {
    * Create a new integration configuration
    */
   async create(createDto: CreateIntegrationDto): Promise<IntegrationResponseDto> {
-    // Check if integration already exists
-    const existing = await this.prisma.integrationConfig.findUnique({
+    const marketId = createDto.marketId || null;
+    // One row per category + provider + market (null market = global default).
+    const existing = await this.prisma.integrationConfig.findFirst({
       where: {
-        category_provider: {
-          category: createDto.category,
-          provider: createDto.provider,
-        },
+        category: createDto.category,
+        provider: createDto.provider,
+        marketId,
       },
     });
 
     if (existing) {
       throw new ConflictException(
-        `Integration for ${createDto.provider} in ${createDto.category} already exists`,
+        marketId
+          ? `Integration for ${createDto.provider} in ${createDto.category} already exists for this market`
+          : `Integration for ${createDto.provider} in ${createDto.category} already exists`,
       );
     }
 
@@ -193,7 +202,9 @@ export class IntegrationsService {
         webhookSecret,
         testStatus: 'NEVER_TESTED',
         priority: createDto.priority ?? 0,
+        marketId,
       },
+      include: { market: { select: { id: true, code: true, name: true } } },
     });
 
     // Log the creation
@@ -208,11 +219,19 @@ export class IntegrationsService {
   /**
    * Get all integrations
    */
-  async findAll(category?: string): Promise<IntegrationResponseDto[]> {
-    const where = category ? { category } : {};
+  async findAll(category?: string, marketId?: string): Promise<IntegrationResponseDto[]> {
+    const where: Record<string, any> = {};
+    if (category) where.category = category;
+    if (marketId === 'global') {
+      where.marketId = null;
+    } else if (marketId) {
+      // Market overrides plus the global defaults they fall back to.
+      where.OR = [{ marketId }, { marketId: null }];
+    }
 
     const integrations = await this.prisma.integrationConfig.findMany({
       where,
+      include: { market: { select: { id: true, code: true, name: true } } },
       orderBy: [{ category: 'asc' }, { priority: 'desc' }, { displayName: 'asc' }],
     });
 
@@ -225,6 +244,7 @@ export class IntegrationsService {
   async findById(id: string): Promise<IntegrationResponseDto> {
     const integration = await this.prisma.integrationConfig.findUnique({
       where: { id },
+      include: { market: { select: { id: true, code: true, name: true } } },
     });
 
     if (!integration) {
@@ -238,10 +258,9 @@ export class IntegrationsService {
    * Get integration by category and provider
    */
   async findByProvider(category: string, provider: string): Promise<IntegrationResponseDto | null> {
-    const integration = await this.prisma.integrationConfig.findUnique({
-      where: {
-        category_provider: { category, provider },
-      },
+    const integration = await this.prisma.integrationConfig.findFirst({
+      where: { category, provider, marketId: null },
+      include: { market: true },
     });
 
     if (!integration) {
@@ -252,22 +271,48 @@ export class IntegrationsService {
   }
 
   /**
-   * Get active integration for a category (returns highest priority)
+   * Get active integration for a category (highest priority).
+   * When marketId is set: market-specific row, then the global row (marketId null).
+   * When marketId is omitted: global row only.
    */
-  async getActiveIntegration(category: string): Promise<IntegrationResponseDto | null> {
-    const integration = await this.prisma.integrationConfig.findFirst({
-      where: {
-        category,
-        isActive: true,
-      },
-      orderBy: { priority: 'desc' },
-    });
+  async getActiveIntegration(
+    category: string,
+    marketId?: string,
+  ): Promise<IntegrationResponseDto | null> {
+    const integration = await this.resolveIntegration(category, undefined, marketId);
 
     if (!integration) {
       return null;
     }
 
     return this.toResponseDto(integration);
+  }
+
+  /**
+   * Market-specific row, then global (marketId null).
+   * With no marketId, returns the global row only.
+   * Active filter applies to market rows and to category-only lookups.
+   */
+  async resolveIntegration(category: string, provider?: string, marketId?: string) {
+    const base: Record<string, any> = { category };
+    if (provider) base.provider = provider;
+
+    if (marketId) {
+      const marketRow = await this.prisma.integrationConfig.findFirst({
+        where: { ...base, marketId, isActive: true },
+        orderBy: { priority: 'desc' },
+      });
+      if (marketRow) return marketRow;
+    }
+
+    return this.prisma.integrationConfig.findFirst({
+      where: {
+        ...base,
+        marketId: null,
+        ...(provider ? {} : { isActive: true }),
+      },
+      orderBy: { priority: 'desc' },
+    });
   }
 
   /**
@@ -499,6 +544,8 @@ export class IntegrationsService {
       [IntegrationCategory.TAX]: ['avalara', 'taxjar', 'stripe_tax'],
       [IntegrationCategory.PAYMENT]: ['stripe'],
       [IntegrationCategory.EMAIL]: ['sendgrid'],
+      [IntegrationCategory.SMS]: ['twilio'],
+      [IntegrationCategory.WHATSAPP]: ['twilio'],
       [IntegrationCategory.ACCOUNTING]: ['xero'],
     };
 
@@ -515,19 +562,20 @@ export class IntegrationsService {
    * Get decrypted credentials (for internal use by other services)
    */
   getDecryptedCredentials(integrationId: string): Promise<Record<string, any>>;
-  getDecryptedCredentials(category: string, provider: string): Promise<Record<string, any>>;
+  getDecryptedCredentials(
+    category: string,
+    provider: string,
+    marketId?: string,
+  ): Promise<Record<string, any>>;
   async getDecryptedCredentials(
     idOrCategory: string,
     provider?: string,
+    marketId?: string,
   ): Promise<Record<string, any>> {
     let integration;
 
     if (provider) {
-      integration = await this.prisma.integrationConfig.findUnique({
-        where: {
-          category_provider: { category: idOrCategory, provider },
-        },
-      });
+      integration = await this.resolveIntegration(idOrCategory, provider, marketId);
     } else {
       integration = await this.prisma.integrationConfig.findUnique({
         where: { id: idOrCategory },
@@ -658,6 +706,14 @@ export class IntegrationsService {
       testStatus: integration.testStatus,
       testMessage: integration.testMessage,
       priority: integration.priority,
+      marketId: integration.marketId ?? null,
+      market: integration.market
+        ? {
+            id: integration.market.id,
+            code: integration.market.code,
+            name: integration.market.name,
+          }
+        : null,
       createdAt: integration.createdAt,
       updatedAt: integration.updatedAt,
     };

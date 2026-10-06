@@ -50,11 +50,13 @@ export const apiClient = ApiClient.create({
   baseUrl: API_BASE_URL,
   getToken: () => null,
   getMarketCode: () => {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') {
+      return process.env.NEXT_PUBLIC_MARKET_CODE || null;
+    }
     try {
-      return window.localStorage.getItem('hos_market_code');
+      return window.localStorage.getItem('hos_market_code') || process.env.NEXT_PUBLIC_MARKET_CODE || null;
     } catch {
-      return null;
+      return process.env.NEXT_PUBLIC_MARKET_CODE || null;
     }
   },
   onUnauthorized: () => {

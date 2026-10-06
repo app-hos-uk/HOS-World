@@ -97,7 +97,15 @@ async function bootstrap() {
   logger.info('Bootstrap started', 'Bootstrap');
   logger.info(`Node ${process.version} | cwd: ${process.cwd()}`, 'Bootstrap');
 
-  // CORS allowed origins - defined early so OPTIONS handler and enableCors both use it
+  // CORS allowed origins - defined early so OPTIONS handler and enableCors both use it.
+  // The allowlist is env-driven (FRONTEND_URL, CORS_ALLOWED_ORIGINS, CORS_RAILWAY_ORIGINS).
+  // Required production origins per market:
+  //   US: https://houseofspells.com, https://www.houseofspells.com,
+  //       https://us.houseofspells.com, https://shop.houseofspells.com,
+  //       https://join.houseofspells.com
+  //   MY: https://houseofspells.my, https://www.houseofspells.my,
+  //       https://shop.houseofspells.my, https://join.houseofspells.my
+  //   Seller storefronts: https://{slug}.houseofspells.com
   // Normalize: trim and remove trailing slash so "https://example.com" and "https://example.com/" both match
   const normalizeOrigin = (o: string) => (o || '').trim().replace(/\/+$/, '') || null;
   const isProduction = process.env.NODE_ENV === 'production';

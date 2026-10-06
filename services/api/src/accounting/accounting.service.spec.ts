@@ -25,9 +25,11 @@ function buildService(overrides?: {
     isEnabled: jest.fn().mockReturnValue(overrides?.featureFlagEnabled ?? true),
   } as any;
 
+  const findUnique = overrides?.findUnique ?? jest.fn().mockResolvedValue(null);
   const prisma = {
     integrationConfig: {
-      findUnique: overrides?.findUnique ?? jest.fn().mockResolvedValue(null),
+      findUnique,
+      findFirst: findUnique,
       create: overrides?.create ?? jest.fn().mockResolvedValue({}),
       update: overrides?.update ?? jest.fn().mockResolvedValue({}),
     },

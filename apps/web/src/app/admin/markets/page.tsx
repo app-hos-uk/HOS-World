@@ -98,7 +98,7 @@ export default function AdminMarketsPage() {
   };
 
   return (
-    <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
+    <RouteGuard allowedRoles={['ADMIN']} requiredPermissions={['settings.view']} showAccessDenied>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">Markets</h1>

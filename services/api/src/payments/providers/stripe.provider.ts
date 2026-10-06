@@ -26,6 +26,8 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
   readonly name = 'stripe';
   private readonly logger = new Logger(StripeProvider.name);
   private stripe: Stripe | null = null;
+  /** Per-market Stripe clients. Key is a market id, or "global" for the default account. */
+  private readonly clients = new Map<string, Stripe>();
   private webhookSecret: string | null = null;
   /** When false, skip STRIPE_SECRET_KEY fallback (admin deactivated/deleted Stripe). */
   private allowEnvFallback = true;
@@ -59,6 +61,7 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
       return;
     }
     this.stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
+    this.clients.set('global', this.stripe);
     this.webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || null;
     this.circuitBreaker.reset();
     this.logger.log('Stripe provider initialized from env vars');
@@ -68,13 +71,26 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
    * Re-initialize from integrations DB. Called on startup and when
    * Stripe integration is activated/updated at runtime.
    */
-  async initFromIntegrations(): Promise<void> {
+  async initFromIntegrations(marketId?: string): Promise<void> {
+    if (marketId) {
+      this.clients.delete(marketId);
+      try {
+        await this.getClientForMarket(marketId);
+      } catch (err: any) {
+        this.logger.warn(
+          `Market Stripe client not loaded for ${marketId}: ${err?.message || 'unknown error'}`,
+        );
+      }
+      return;
+    }
+
     try {
       const creds = await this.integrationsService.getDecryptedCredentials('PAYMENT', 'stripe');
       const secretKey = creds.secretKey?.trim();
       if (!secretKey) {
         this.logger.warn('Stripe integration has no secretKey');
         this.stripe = null;
+        this.clients.delete('global');
         this.webhookSecret = null;
         return;
       }
@@ -83,16 +99,19 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
           'Stripe integration secretKey is invalid (expected sk_test_/sk_live_). Payments will fail until a real secret is saved.',
         );
         this.stripe = null;
+        this.clients.delete('global');
         this.webhookSecret = null;
         return;
       }
       this.stripe = new Stripe(secretKey, { apiVersion: '2023-10-16' });
+      this.clients.set('global', this.stripe);
       this.webhookSecret = creds.webhookSecret?.trim() || null;
       this.circuitBreaker.reset();
       this.logger.log('Stripe provider initialized from admin integrations DB');
     } catch (err: any) {
       // Clear so callers can fall back to env instead of keeping a stale/invalid client.
       this.stripe = null;
+      this.clients.delete('global');
       this.webhookSecret = null;
       const message = String(err?.message || 'unknown error');
       // Admin deactivated Stripe — do not resurrect via STRIPE_SECRET_KEY
@@ -131,6 +150,7 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
   /** Drop the in-memory client (e.g. Stripe integration deactivated). */
   clearClient(options?: { disableEnvFallback?: boolean }): void {
     this.stripe = null;
+    this.clients.delete('global');
     this.webhookSecret = null;
     this.circuitBreaker.reset();
     if (options?.disableEnvFallback) {
@@ -148,8 +168,56 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
   private async reloadStripeClient(): Promise<void> {
     this.stripe = null;
     this.webhookSecret = null;
+    this.clients.clear();
     await this.initFromIntegrations();
     if (!this.stripe && this.allowEnvFallback) this.initFromEnv();
+  }
+
+  /**
+   * Global Stripe client. Optional marketId delegates to the per-market cache.
+   */
+  async getClient(marketId?: string): Promise<Stripe> {
+    if (marketId) return this.getClientForMarket(marketId);
+    await this.ensureStripeClient();
+    if (!this.stripe) {
+      throw new Error('Stripe provider is not available');
+    }
+    this.clients.set('global', this.stripe);
+    return this.stripe;
+  }
+
+  /**
+   * Market Stripe account when that market has its own secret key, otherwise the global client.
+   */
+  async getClientForMarket(marketId?: string): Promise<Stripe> {
+    const key = marketId || 'global';
+    const cached = this.clients.get(key);
+    if (cached) return cached;
+
+    if (marketId) {
+      try {
+        const row = await this.integrationsService.resolveIntegration(
+          'PAYMENT',
+          'stripe',
+          marketId,
+        );
+        if (row?.marketId === marketId && row.isActive) {
+          const creds = await this.integrationsService.getDecryptedCredentials(row.id);
+          const secretKey = creds?.secretKey?.trim();
+          if (isValidStripeSecretKey(secretKey)) {
+            const client = new Stripe(secretKey, { apiVersion: '2023-10-16' });
+            this.clients.set(key, client);
+            return client;
+          }
+        }
+      } catch (err: any) {
+        this.logger.warn(
+          `No market Stripe client for ${marketId}, using global: ${err?.message || 'unknown error'}`,
+        );
+      }
+    }
+
+    return this.getClient();
   }
 
   private isStripeAuthError(error: any): boolean {
@@ -162,15 +230,21 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
   }
 
   async createPaymentIntent(params: CreatePaymentIntentParams): Promise<PaymentIntentResult> {
-    await this.ensureStripeClient();
-    if (!this.stripe) {
+    const marketId =
+      params.marketId ||
+      (typeof params.metadata?.marketId === 'string' ? params.metadata.marketId : undefined);
+
+    let stripeClient: Stripe;
+    try {
+      stripeClient = await this.getClientForMarket(marketId);
+    } catch {
       throw new Error('Stripe provider is not available');
     }
 
     return this.circuitBreaker.execute(async () => {
       const amountMinor = toMinorUnits(params.amount, params.currency);
       const createOnce = async (idempotencyKey: string) => {
-        const paymentIntent = await this.stripe!.paymentIntents.create(
+        const paymentIntent = await stripeClient.paymentIntents.create(
           {
             amount: amountMinor,
             currency: params.currency.toLowerCase(),
@@ -203,9 +277,13 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
         if (this.isStripeAuthError(error)) {
           // Admin may have rotated keys after boot; IntegrationsController used to miss re-init.
           this.logger.warn('Stripe auth failed — reloading credentials and retrying once');
+          if (marketId) this.clients.delete(marketId);
           await this.reloadStripeClient();
-          if (this.stripe) {
+          try {
+            stripeClient = await this.getClientForMarket(marketId);
             return await createOnce(`${baseKey}-reload`);
+          } catch {
+            // Fall through to the original error.
           }
         }
 
@@ -216,7 +294,18 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
   }
 
   async confirmPayment(params: ConfirmPaymentParams): Promise<PaymentResult> {
-    if (!this.stripe) {
+    const marketId =
+      params.marketId ||
+      (typeof params.metadata?.marketId === 'string' ? params.metadata.marketId : undefined);
+    let stripeClient: Stripe | null = this.stripe;
+    if (marketId) {
+      try {
+        stripeClient = await this.getClientForMarket(marketId);
+      } catch {
+        stripeClient = this.stripe;
+      }
+    }
+    if (!stripeClient) {
       throw new Error('Stripe provider is not available');
     }
 
@@ -224,7 +313,7 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
       try {
         // Expanding the charge gives us the masked card details the order
         // confirmation page shows ("Visa •••• 4242").
-        const paymentIntent = await this.stripe!.paymentIntents.retrieve(params.paymentIntentId, {
+        const paymentIntent = await stripeClient!.paymentIntents.retrieve(params.paymentIntentId, {
           expand: ['latest_charge.payment_method_details'],
         });
 
@@ -261,17 +350,26 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
 
   async cancelPaymentIntent(
     paymentIntentId: string,
+    marketId?: string,
   ): Promise<'cancelled' | 'already_succeeded' | 'skipped'> {
-    if (!this.stripe) return 'skipped';
+    let client = this.stripe;
+    if (marketId) {
+      try {
+        client = await this.getClientForMarket(marketId);
+      } catch {
+        client = this.stripe;
+      }
+    }
+    if (!client) return 'skipped';
     try {
-      const intent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+      const intent = await client.paymentIntents.retrieve(paymentIntentId);
       if (intent.status === 'succeeded') {
         return 'already_succeeded';
       }
       if (['canceled', 'requires_payment_method'].includes(intent.status)) {
         return 'cancelled';
       }
-      await this.stripe.paymentIntents.cancel(paymentIntentId);
+      await client.paymentIntents.cancel(paymentIntentId);
       return 'cancelled';
     } catch (err: any) {
       if (err?.code === 'payment_intent_unexpected_state') return 'cancelled';
@@ -281,8 +379,16 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
   }
 
   async refundPayment(params: RefundPaymentParams): Promise<RefundResult> {
-    await this.ensureStripeClient();
-    if (!this.stripe) {
+    const marketId =
+      params.marketId ||
+      (typeof params.metadata?.marketId === 'string' ? params.metadata.marketId : undefined);
+    let stripeClient: Stripe | null = this.stripe;
+    try {
+      stripeClient = await this.getClientForMarket(marketId);
+    } catch {
+      stripeClient = this.stripe;
+    }
+    if (!stripeClient) {
       return {
         success: false,
         refundId: '',
@@ -299,12 +405,12 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
         params.currency ||
         (typeof params.metadata?.currency === 'string' ? params.metadata.currency : undefined);
       if (!currency) {
-        currency = (await this.stripe.paymentIntents.retrieve(params.paymentId)).currency;
+        currency = (await stripeClient.paymentIntents.retrieve(params.paymentId)).currency;
       }
       amountMinor = toMinorUnits(params.amount, currency);
     }
     const createRefund = async () =>
-      this.stripe!.refunds.create(
+      stripeClient!.refunds.create(
         {
           payment_intent: params.paymentId,
           amount: amountMinor,
@@ -323,9 +429,15 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
           this.logger.warn(
             'Stripe auth failed on refund — reloading credentials and retrying once',
           );
+          if (marketId) this.clients.delete(marketId);
           await this.reloadStripeClient();
-          if (!this.stripe) throw error;
-          refund = await this.stripe.refunds.create(
+          try {
+            stripeClient = await this.getClientForMarket(marketId);
+          } catch {
+            stripeClient = this.stripe;
+          }
+          if (!stripeClient) throw error;
+          refund = await stripeClient.refunds.create(
             {
               payment_intent: params.paymentId,
               amount: amountMinor,
@@ -501,14 +613,22 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
     connectedAccountId: string;
     applicationFeeAmount: number;
     metadata?: Record<string, string>;
+    marketId?: string;
   }): Promise<PaymentIntentResult> {
-    await this.ensureStripeClient();
-    if (!this.stripe) throw new Error('Stripe provider is not available');
+    const marketId =
+      params.marketId ||
+      (typeof params.metadata?.marketId === 'string' ? params.metadata.marketId : undefined);
+    let stripeClient: Stripe;
+    try {
+      stripeClient = await this.getClientForMarket(marketId);
+    } catch {
+      throw new Error('Stripe provider is not available');
+    }
 
     const amountMinor = toMinorUnits(params.amount, params.currency);
     const feeMinor = toMinorUnits(params.applicationFeeAmount, params.currency);
     const createOnce = async (idempotencyKey: string) => {
-      const paymentIntent = await this.stripe!.paymentIntents.create(
+      const paymentIntent = await stripeClient.paymentIntents.create(
         {
           amount: amountMinor,
           currency: params.currency.toLowerCase(),
@@ -540,11 +660,15 @@ export class StripeProvider implements PaymentProvider, OnModuleInit {
         this.logger.warn(
           'Stripe auth failed on split intent — reloading credentials and retrying once',
         );
+        if (marketId) this.clients.delete(marketId);
         await this.reloadStripeClient();
-        if (this.stripe) {
+        try {
+          stripeClient = await this.getClientForMarket(marketId);
           return await createOnce(
             `order-split-${params.orderId}-${amountMinor}-${feeMinor}-reload`,
           );
+        } catch {
+          // Fall through to the original error.
         }
       }
       this.logger.error('Failed to create Stripe split payment intent:', error);

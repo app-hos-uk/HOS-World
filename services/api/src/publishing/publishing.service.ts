@@ -309,6 +309,34 @@ export class PublishingService {
         }
       }
 
+      // Auto-create ProductMarket for the seller's active markets
+      if (product?.id) {
+        const sellerMarkets = await tx.sellerMarket.findMany({
+          where: { sellerId: submission.seller.id, status: 'ACTIVE' },
+          select: { marketId: true },
+        });
+        // If seller has no explicit markets, create for default market
+        const marketIds =
+          sellerMarkets.length > 0
+            ? sellerMarkets.map((sm) => sm.marketId)
+            : await tx.market
+                .findMany({ where: { isDefault: true }, select: { id: true } })
+                .then((ms) => ms.map((m) => m.id));
+
+        for (const marketId of marketIds) {
+          await tx.productMarket.upsert({
+            where: { productId_marketId: { productId: product.id, marketId } },
+            create: {
+              productId: product.id,
+              marketId,
+              isActive: true,
+              currency: product.currency,
+            },
+            update: {}, // Don't overwrite existing settings
+          });
+        }
+      }
+
       const productAlreadyLinked = await tx.productSubmission.findFirst({
         where: { productId: product.id, id: { not: submissionId } },
         select: { id: true },

@@ -48,8 +48,8 @@ export class NotificationsService implements OnModuleInit {
     // Non-blocking: do not delay HTTP listen / healthcheck while probing integrations DB.
     void this.detectSendGridProvider();
     this.queueService.registerProcessor(JobType.EMAIL_NOTIFICATION, async (job: Job) => {
-      const { to, subject, html, notificationId } = job.data;
-      const sent = await this.sendEmail(to, subject, html);
+      const { to, subject, html, notificationId, marketId } = job.data;
+      const sent = await this.sendEmail(to, subject, html, marketId);
       if (notificationId) {
         try {
           await this.prisma.notification.update({
@@ -100,10 +100,11 @@ export class NotificationsService implements OnModuleInit {
     to: string,
     subject: string,
     html: string,
+    marketId?: string,
   ): Promise<boolean | null> {
     if (!this.sendGridActive) {
       await this.detectSendGridProvider();
-      if (!this.sendGridActive) {
+      if (!this.sendGridActive && !marketId) {
         return null;
       }
     }
@@ -112,6 +113,7 @@ export class NotificationsService implements OnModuleInit {
       const credentials = await this.integrationsService.getDecryptedCredentials(
         'EMAIL',
         'sendgrid',
+        marketId,
       );
       const apiKey = credentials.apiKey?.trim();
       if (!apiKey) {
@@ -140,6 +142,10 @@ export class NotificationsService implements OnModuleInit {
       return false;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
+      if (marketId && !this.sendGridActive) {
+        this.logger.warn(`Market email config unavailable, skipping SendGrid: ${message}`);
+        return null;
+      }
       this.logger.error(`❌ SendGrid send error: ${message}`);
       return false;
     }
@@ -150,12 +156,14 @@ export class NotificationsService implements OnModuleInit {
     subject: string,
     html: string,
     notificationId?: string,
+    marketId?: string,
   ): Promise<void> {
     await this.queueService.addJob(JobType.EMAIL_NOTIFICATION, {
       to,
       subject,
       html,
       notificationId,
+      marketId,
     });
   }
 
@@ -194,8 +202,31 @@ export class NotificationsService implements OnModuleInit {
     }
   }
 
-  private async sendEmail(to: string, subject: string, html: string): Promise<boolean> {
-    const sendGridResult = await this.sendViaActiveSendGrid(to, subject, html);
+  private async resolveMarketFrom(
+    marketId?: string,
+  ): Promise<{ fromEmail: string; fromName: string } | null> {
+    if (!marketId) return null;
+    try {
+      const credentials = await this.integrationsService.getDecryptedCredentials(
+        'EMAIL',
+        'sendgrid',
+        marketId,
+      );
+      const fromEmail = resolveOutboundFromEmail(credentials.fromEmail, this.defaultFromEmail());
+      const fromName = credentials.fromName?.trim() || 'House of Spells';
+      return { fromEmail, fromName };
+    } catch {
+      return null;
+    }
+  }
+
+  private async sendEmail(
+    to: string,
+    subject: string,
+    html: string,
+    marketId?: string,
+  ): Promise<boolean> {
+    const sendGridResult = await this.sendViaActiveSendGrid(to, subject, html, marketId);
     if (sendGridResult === true) {
       return true;
     }
@@ -211,8 +242,12 @@ export class NotificationsService implements OnModuleInit {
     }
 
     try {
+      const marketFrom = await this.resolveMarketFrom(marketId);
+      const from = marketFrom
+        ? `${marketFrom.fromName} <${marketFrom.fromEmail}>`
+        : this.defaultFromEmail();
       await this.transporter.sendMail({
-        from: this.defaultFromEmail(),
+        from,
         to,
         subject,
         html,
@@ -518,6 +553,7 @@ export class NotificationsService implements OnModuleInit {
       where: { id: orderId },
       include: {
         user: true,
+        market: { select: { code: true } },
         items: {
           include: {
             product: {
@@ -556,13 +592,17 @@ export class NotificationsService implements OnModuleInit {
 
     const itemsTable = `<table><thead><tr><th>Product</th><th>Quantity</th><th>Price</th><th>Total</th></tr></thead><tbody>${order.items.map((item: any) => `<tr><td>${escapeHtml(item.product.name)}</td><td>${item.quantity}</td><td>$${Number(item.price).toFixed(2)}</td><td>$${(Number(item.price) * item.quantity).toFixed(2)}</td></tr>`).join('')}</tbody></table>`;
 
-    const rendered = await this.templatesService.render('order_confirmation', {
-      orderNumber: order.orderNumber,
-      customerName,
-      itemsTable,
-      orderTotal: Number(order.total).toFixed(2),
-      currency: '$',
-    });
+    const rendered = await this.templatesService.render(
+      'order_confirmation',
+      {
+        orderNumber: order.orderNumber,
+        customerName,
+        itemsTable,
+        orderTotal: Number(order.total).toFixed(2),
+        currency: '$',
+      },
+      order.market?.code,
+    );
 
     const notification = await this.prisma.notification.create({
       data: {
@@ -580,6 +620,7 @@ export class NotificationsService implements OnModuleInit {
       rendered.subject,
       rendered.body,
       notification.id,
+      order.marketId || undefined,
     );
   }
 
@@ -597,7 +638,12 @@ export class NotificationsService implements OnModuleInit {
 
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { email: true, firstName: true, lastName: true },
+      select: {
+        email: true,
+        firstName: true,
+        lastName: true,
+        homeMarket: { select: { code: true } },
+      },
     });
 
     if (!user?.email) {
@@ -621,12 +667,16 @@ export class NotificationsService implements OnModuleInit {
       this.configService.get<string>('FRONTEND_URL')?.replace(/\/$/, '') || 'http://localhost:3000';
     const cartLink = `${baseUrl}/cart`;
 
-    const rendered = await this.templatesService.render('abandoned_cart', {
-      customerName,
-      itemsTable,
-      cartTotal,
-      cartLink,
-    });
+    const rendered = await this.templatesService.render(
+      'abandoned_cart',
+      {
+        customerName,
+        itemsTable,
+        cartTotal,
+        cartLink,
+      },
+      user.homeMarket?.code,
+    );
 
     const notification = await this.prisma.notification.create({
       data: {
@@ -646,7 +696,10 @@ export class NotificationsService implements OnModuleInit {
   async sendOrderShipped(orderId: string, trackingCode: string, carrier = 'USPS'): Promise<void> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      include: { user: { select: { id: true, email: true, firstName: true, lastName: true } } },
+      include: {
+        user: { select: { id: true, email: true, firstName: true, lastName: true } },
+        market: { select: { code: true } },
+      },
     });
 
     if (!order) {
@@ -657,16 +710,20 @@ export class NotificationsService implements OnModuleInit {
       [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || 'Customer';
 
     const trackingUrl = order.trackingUrl?.trim() || '';
-    const rendered = await this.templatesService.render('order_shipped', {
-      orderNumber: order.orderNumber,
-      customerName,
-      trackingCode,
-      carrier,
-      trackingUrl,
-      trackingLinkHtml: trackingUrl
-        ? `<p><a class="cta" href="${trackingUrl}">Track your shipment</a></p>`
-        : '<p>You can track your order using the tracking code above.</p>',
-    });
+    const rendered = await this.templatesService.render(
+      'order_shipped',
+      {
+        orderNumber: order.orderNumber,
+        customerName,
+        trackingCode,
+        carrier,
+        trackingUrl,
+        trackingLinkHtml: trackingUrl
+          ? `<p><a class="cta" href="${trackingUrl}">Track your shipment</a></p>`
+          : '<p>You can track your order using the tracking code above.</p>',
+      },
+      order.market?.code,
+    );
 
     const notification = await this.prisma.notification.create({
       data: {
@@ -684,13 +741,17 @@ export class NotificationsService implements OnModuleInit {
       rendered.subject,
       rendered.body,
       notification.id,
+      order.marketId || undefined,
     );
   }
 
   async sendOrderDelivered(orderId: string): Promise<void> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      include: { user: { select: { id: true, email: true, firstName: true, lastName: true } } },
+      include: {
+        user: { select: { id: true, email: true, firstName: true, lastName: true } },
+        market: { select: { code: true } },
+      },
     });
 
     if (!order) {
@@ -700,10 +761,14 @@ export class NotificationsService implements OnModuleInit {
     const customerName =
       [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || 'Customer';
 
-    const rendered = await this.templatesService.render('order_delivered', {
-      orderNumber: order.orderNumber,
-      customerName,
-    });
+    const rendered = await this.templatesService.render(
+      'order_delivered',
+      {
+        orderNumber: order.orderNumber,
+        customerName,
+      },
+      order.market?.code,
+    );
 
     const notification = await this.prisma.notification.create({
       data: {
@@ -721,6 +786,7 @@ export class NotificationsService implements OnModuleInit {
       rendered.subject,
       rendered.body,
       notification.id,
+      order.marketId || undefined,
     );
   }
 

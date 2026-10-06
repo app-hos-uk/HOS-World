@@ -2709,7 +2709,12 @@ export class OrdersService {
               paymentId: order.stripePaymentIntentId,
               amount: cardRefundAmount,
               currency: order.currency,
-              metadata: { currency: order.currency, reason: 'order_cancelled' },
+              marketId: order.marketId || undefined,
+              metadata: {
+                currency: order.currency,
+                reason: 'order_cancelled',
+                ...(order.marketId ? { marketId: order.marketId } : {}),
+              },
             });
             if (result?.success) {
               stripeRefundSucceeded = true;

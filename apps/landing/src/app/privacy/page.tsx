@@ -2,21 +2,24 @@ import type { Metadata } from 'next';
 import { LandingShell } from '../components/LandingShell';
 import { LandingFooter } from '../components/LandingFooter';
 import { landingPageMetadata } from '../lib/landingMetadata';
+import { getMarketConfig } from '../lib/marketConfig';
 import { sanitizeCmsHtml } from '@/lib/sanitizeHtml';
+
+const marketMeta = getMarketConfig();
 
 export const metadata: Metadata = landingPageMetadata({
   title: 'Privacy Policy — House of Spells',
-  description: 'Privacy Policy for House of Spells USA — Times Square, New York.',
+  description: `Privacy Policy for ${marketMeta.privacy.entityName} — ${marketMeta.store.location}.`,
   path: '/privacy',
 });
 
 const STRAPI_URL = process.env.NEXT_PUBLIC_STRAPI_URL?.trim() || '';
 
 
-async function fetchPrivacyContent(): Promise<string | null> {
+async function fetchPrivacyContent(slug: string): Promise<string | null> {
   if (!STRAPI_URL) return null;
   try {
-    const res = await fetch(`${STRAPI_URL}/api/pages?filters[slug][$eq]=privacy-policy-usa&populate=*`, {
+    const res = await fetch(`${STRAPI_URL}/api/pages?filters[slug][$eq]=${slug}&populate=*`, {
       next: { revalidate: 300 },
     });
     if (!res.ok) return null;
@@ -29,14 +32,15 @@ async function fetchPrivacyContent(): Promise<string | null> {
 }
 
 export default async function PrivacyPage() {
-  const cmsContent = await fetchPrivacyContent();
+  const market = getMarketConfig();
+  const cmsContent = await fetchPrivacyContent(market.privacy.cmsSlug);
 
   return (
     <LandingShell nav="home" mainId="pg-privacy">
       <main id="pg-privacy" className="hos-page" tabIndex={-1}>
         <div className="privacy-container">
           <h1 className="privacy-title">Privacy Policy</h1>
-          <p className="privacy-subtitle">House of Spells — United States</p>
+          <p className="privacy-subtitle">House of Spells — {market.privacy.jurisdiction}</p>
           <div className="privacy-rule" />
 
           {cmsContent ? (
@@ -47,8 +51,8 @@ export default async function PrivacyPage() {
 
               <h2>1. Who We Are</h2>
               <p>
-                House of Spells USA (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates the website houseofspells.com and the
-                House of Spells flagship store at Times Square, New York. We are committed to protecting your personal information
+                {market.privacy.entityName} (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates the website {market.privacy.website} and the
+                House of Spells flagship store at {market.store.location}. We are committed to protecting your personal information
                 and your right to privacy.
               </p>
 

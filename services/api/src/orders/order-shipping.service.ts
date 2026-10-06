@@ -424,8 +424,8 @@ export class OrderShippingService {
 
   private async getShippoDefaultFromAddress(): Promise<Address | null> {
     try {
-      const integration = await this.prisma.integrationConfig.findUnique({
-        where: { category_provider: { category: 'SHIPPING', provider: 'shippo' } },
+      const integration = await this.prisma.integrationConfig.findFirst({
+        where: { category: 'SHIPPING', provider: 'shippo', marketId: null },
       });
       if (!integration?.isActive) return null;
 

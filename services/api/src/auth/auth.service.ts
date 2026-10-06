@@ -1454,7 +1454,10 @@ export class AuthService {
   }
 
   async requestPasswordReset(email: string): Promise<{ message: string }> {
-    const user = await this.prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      include: { homeMarket: { select: { code: true } } },
+    });
     if (!user) {
       return { message: 'If an account with that email exists, a reset link has been sent.' };
     }
@@ -1476,11 +1479,15 @@ export class AuthService {
     const customerName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'there';
 
     try {
-      const rendered = await this.templatesService.render('password_reset', {
-        customerName,
-        resetLink,
-        expiresInMinutes: '60',
-      });
+      const rendered = await this.templatesService.render(
+        'password_reset',
+        {
+          customerName,
+          resetLink,
+          expiresInMinutes: '60',
+        },
+        user.homeMarket?.code,
+      );
       await this.notificationsService.queueNotification(
         user.email,
         rendered.subject,
@@ -1604,7 +1611,10 @@ export class AuthService {
   }
 
   async sendVerificationEmail(userId: string): Promise<{ message: string }> {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { homeMarket: { select: { code: true } } },
+    });
     if (!user) throw new NotFoundException('User not found');
     if (user.emailVerified) return { message: 'Email is already verified.' };
 
@@ -1626,10 +1636,14 @@ export class AuthService {
     const customerName = [user.firstName, user.lastName].filter(Boolean).join(' ') || 'there';
 
     try {
-      const rendered = await this.templatesService.render('email_verification', {
-        customerName,
-        verifyLink,
-      });
+      const rendered = await this.templatesService.render(
+        'email_verification',
+        {
+          customerName,
+          verifyLink,
+        },
+        user.homeMarket?.code,
+      );
       const subject = rendered?.subject || 'Verify your email — House of Spells';
       const html =
         rendered?.body ||

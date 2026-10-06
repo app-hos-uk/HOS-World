@@ -58,7 +58,7 @@ export default function AdminBrandPartnershipsPage() {
   };
 
   return (
-    <RouteGuard allowedRoles={['ADMIN']}>
+    <RouteGuard allowedRoles={['ADMIN']} requiredPermissions={['marketing.manage']} showAccessDenied>
               <div className="p-6 max-w-6xl mx-auto">
           <div className="flex flex-wrap gap-4 justify-between items-center mb-6">
             <h1 className="text-2xl font-semibold text-hos-text-secondary">Brand partnerships</h1>

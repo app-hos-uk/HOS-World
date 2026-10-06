@@ -4,13 +4,14 @@ import { LandingShell } from '../components/LandingShell';
 import { LandingFooter } from '../components/LandingFooter';
 import { UniverseGrid } from '../components/UniverseGrid';
 import { landingPageMetadata } from '../lib/landingMetadata';
+import { getMarketConfig } from '../lib/marketConfig';
 import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from '../lib/constants';
 import { fetchUniverses } from '../lib/universesApi';
 
 export const metadata: Metadata = landingPageMetadata({
   title: 'Universes — House of Spells',
   description:
-    'Explore every universe at House of Spells — Marvel, Star Wars, DC, Middle Earth, Wizarding World, Naruto, and more. Times Square, New York.',
+    `Explore every universe at House of Spells — Marvel, Star Wars, DC, Middle Earth, Wizarding World, Naruto, and more. ${getMarketConfig().store.location}.`,
   path: '/universes',
 });
 

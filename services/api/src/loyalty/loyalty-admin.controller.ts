@@ -73,8 +73,16 @@ export class LoyaltyAdminController {
 
   @Get('tiers')
   @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
-  async tiers(): Promise<ApiResponse<unknown>> {
-    const data = await this.prisma.loyaltyTier.findMany({ orderBy: { level: 'asc' } });
+  async tiers(@Query('marketId') marketId?: string): Promise<ApiResponse<unknown>> {
+    const scopedMarketId = marketId?.trim() || undefined;
+    const data = await this.prisma.loyaltyTier.findMany({
+      // Global tiers (marketId null) stay visible for every market so members
+      // enrolled before market scoping still have a ladder.
+      where: scopedMarketId
+        ? { OR: [{ marketId: scopedMarketId }, { marketId: null }] }
+        : undefined,
+      orderBy: { level: 'asc' },
+    });
     return { data, message: 'OK' };
   }
 
@@ -510,8 +518,11 @@ export class LoyaltyAdminController {
   @Get('settings')
   @RequireAccess({ permission: 'loyalty.view', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Get loyalty programme settings (DB over env)' })
-  async getSettings(): Promise<ApiResponse<unknown>> {
-    const { settings, source } = await this.settings.getResolved(true);
+  async getSettings(@Query('marketId') marketId?: string): Promise<ApiResponse<unknown>> {
+    const scopedMarketId = marketId?.trim() || undefined;
+    const { settings, source } = scopedMarketId
+      ? await this.settings.getResolved(scopedMarketId, true)
+      : await this.settings.getResolved(true);
     return { data: { settings, source }, message: 'OK' };
   }
 
@@ -521,9 +532,14 @@ export class LoyaltyAdminController {
   async putSettings(
     @Body() body: UpdateLoyaltySettingsDto,
     @Request() req: any,
+    @Query('marketId') marketId?: string,
   ): Promise<ApiResponse<unknown>> {
     try {
-      const settings = await this.settings.update(body || {}, req.user?.id);
+      const settings = await this.settings.update(
+        (body || {}) as Partial<import('./services/loyalty-settings.service').LoyaltyProgrammeSettings>,
+        req.user?.id,
+        marketId?.trim() || undefined,
+      );
       return { data: settings, message: 'Settings saved' };
     } catch (e) {
       throw new BadRequestException((e as Error).message);

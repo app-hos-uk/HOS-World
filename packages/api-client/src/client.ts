@@ -589,10 +589,15 @@ export class ApiClient {
     return this.request<ApiResponse<Cart>>('/cart');
   }
 
-  async addToCart(productId: string, quantity: number, variationOptions?: Record<string, string>): Promise<ApiResponse<Cart>> {
+  async addToCart(
+    productId: string,
+    quantity: number,
+    variationOptions?: Record<string, string>,
+    vendorProductId?: string,
+  ): Promise<ApiResponse<Cart>> {
     return this.request<ApiResponse<Cart>>('/cart/items', {
       method: 'POST',
-      body: JSON.stringify({ productId, quantity, variationOptions }),
+      body: JSON.stringify({ productId, quantity, variationOptions, vendorProductId }),
     });
   }
 
@@ -642,6 +647,8 @@ export class ApiClient {
     enrollmentChannel?: string;
     referralCode?: string;
     storeId?: string;
+    marketId?: string;
+    marketCode?: string;
   }): Promise<ApiResponse<unknown>> {
     return this.request<ApiResponse<unknown>>('/loyalty/enroll', {
       method: 'POST',
@@ -1809,8 +1816,9 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>('/admin/loyalty/dashboard');
   }
 
-  async adminGetLoyaltyTiers(): Promise<ApiResponse<unknown>> {
-    return this.request<ApiResponse<unknown>>('/admin/loyalty/tiers');
+  async adminGetLoyaltyTiers(marketId?: string): Promise<ApiResponse<unknown>> {
+    const qs = marketId ? `?marketId=${encodeURIComponent(marketId)}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/tiers${qs}`);
   }
 
   async adminGetLoyaltyTier(id: string): Promise<ApiResponse<unknown>> {
@@ -2005,12 +2013,17 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>(`/admin/loyalty/transactions${query ? `?${query}` : ''}`);
   }
 
-  async adminGetLoyaltySettings(): Promise<ApiResponse<unknown>> {
-    return this.request<ApiResponse<unknown>>('/admin/loyalty/settings');
+  async adminGetLoyaltySettings(marketId?: string): Promise<ApiResponse<unknown>> {
+    const qs = marketId ? `?marketId=${encodeURIComponent(marketId)}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/settings${qs}`);
   }
 
-  async adminUpdateLoyaltySettings(data: Record<string, unknown>): Promise<ApiResponse<unknown>> {
-    return this.request<ApiResponse<unknown>>('/admin/loyalty/settings', {
+  async adminUpdateLoyaltySettings(
+    data: Record<string, unknown>,
+    marketId?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const qs = marketId ? `?marketId=${encodeURIComponent(marketId)}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/settings${qs}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
@@ -2115,11 +2128,12 @@ export class ApiClient {
     productId: string,
     quantity: number,
     variationOptions?: Record<string, string>,
+    vendorProductId?: string,
   ): Promise<ApiResponse<Cart>> {
     return this.request<ApiResponse<Cart>>('/cart/guest/items', {
       method: 'POST',
       headers: { 'X-Guest-Session': guestSessionId },
-      body: JSON.stringify({ productId, quantity, variationOptions }),
+      body: JSON.stringify({ productId, quantity, variationOptions, vendorProductId }),
     });
   }
 
@@ -3047,6 +3061,7 @@ export class ApiClient {
     phone?: string;
     cardNumber?: string;
     voucherId?: string;
+    optionId?: string;
     idempotencyKey?: string;
     terminalId?: string;
     otpCode?: string;
@@ -3081,6 +3096,8 @@ export class ApiClient {
     points: number;
     storeId?: string;
     storeCode?: string;
+    optionId: string;
+    purchaseSubtotal?: number;
     idempotencyKey?: string;
   }) {
     return this.request<ApiResponse<unknown>>('/loyalty/redeem-in-store', {
@@ -4933,7 +4950,7 @@ export class ApiClient {
   }
 
   async getMarkets(): Promise<ApiResponse<any[]>> {
-    return this.request<ApiResponse<any[]>>('/admin/markets');
+    return this.request<ApiResponse<any[]>>('/access-control/admin/markets');
   }
 
   // POS Job Management
@@ -7401,9 +7418,12 @@ export class ApiClient {
 
   // ==================== Integrations ====================
 
-  async getIntegrations(category?: string): Promise<ApiResponse<any[]>> {
-    const query = category ? `?category=${encodeURIComponent(category)}` : '';
-    return this.request<ApiResponse<any[]>>(`/integrations${query}`);
+  async getIntegrations(category?: string, marketId?: string): Promise<ApiResponse<any[]>> {
+    const params = new URLSearchParams();
+    if (category) params.set('category', category);
+    if (marketId) params.set('marketId', marketId);
+    const query = params.toString();
+    return this.request<ApiResponse<any[]>>(`/integrations${query ? `?${query}` : ''}`);
   }
 
   async getIntegrationById(id: string): Promise<ApiResponse<any>> {
@@ -7436,6 +7456,7 @@ export class ApiClient {
     credentials: Record<string, any>;
     settings?: Record<string, any>;
     priority?: number;
+    marketId?: string;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/integrations', {
       method: 'POST',
@@ -8576,18 +8597,21 @@ export class ApiClient {
     limit?: number;
     search?: string;
     includeDeactivated?: boolean;
+    marketId?: string;
   }): Promise<ApiResponse<any>> {
     const query = new URLSearchParams();
     if (params?.page) query.set('page', String(params.page));
     if (params?.limit) query.set('limit', String(params.limit));
     if (params?.search) query.set('search', params.search);
     if (params?.includeDeactivated) query.set('includeDeactivated', 'true');
+    if (params?.marketId) query.set('marketId', params.marketId);
     const qs = query.toString();
     return this.request<ApiResponse<any>>(`/founding-members${qs ? `?${qs}` : ''}`);
   }
 
-  async getFoundingMemberStats(): Promise<ApiResponse<any>> {
-    return this.request<ApiResponse<any>>('/founding-members/stats');
+  async getFoundingMemberStats(marketId?: string): Promise<ApiResponse<any>> {
+    const qs = marketId ? `?marketId=${encodeURIComponent(marketId)}` : '';
+    return this.request<ApiResponse<any>>(`/founding-members/stats${qs}`);
   }
 
   async deactivateFoundingMember(id: string, reason?: string): Promise<ApiResponse<any>> {
@@ -8658,6 +8682,7 @@ export class ApiClient {
     source?: string;
     spendBracket?: string;
     sendConfirmationEmail?: boolean;
+    marketCode?: string;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/founding-members/admin', {
       method: 'POST',
@@ -8726,14 +8751,24 @@ export class ApiClient {
   }
 
   // ===== Feature Flags =====
-  async getFeatureFlags(): Promise<ApiResponse<Record<string, boolean>>> {
-    return this.request<ApiResponse<Record<string, boolean>>>('/admin/feature-flags');
+  async getFeatureFlags(marketId?: string): Promise<
+    ApiResponse<
+      | Record<string, boolean>
+      | {
+          flags: Record<string, boolean>;
+          global: Record<string, boolean>;
+          overrides: Record<string, boolean>;
+        }
+    >
+  > {
+    const qs = marketId ? `?marketId=${encodeURIComponent(marketId)}` : '';
+    return this.request(`/admin/feature-flags${qs}`);
   }
 
-  async setFeatureFlag(flag: string, enabled: boolean): Promise<ApiResponse<any>> {
+  async setFeatureFlag(flag: string, enabled: boolean, marketId?: string): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>(`/admin/feature-flags/${flag}`, {
       method: 'PUT',
-      body: JSON.stringify({ enabled }),
+      body: JSON.stringify(marketId ? { enabled, marketId } : { enabled }),
     });
   }
 

@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../database/prisma.service';
 
 export enum FeatureFlag {
@@ -56,12 +57,24 @@ const FLAG_DEFAULTS: Record<FeatureFlag, boolean> = {
 };
 
 const CACHE_TTL_MS = 30_000;
+const FEATURE_FLAG_CATEGORY = 'feature_flag';
+
+/** Effective flags for one market, plus the global defaults and explicit overrides. */
+export interface FeatureFlagMarketView {
+  flags: Record<string, boolean>;
+  global: Record<string, boolean>;
+  overrides: Record<string, boolean>;
+}
 
 @Injectable()
 export class FeatureFlagsService implements OnModuleInit {
   private readonly logger = new Logger(FeatureFlagsService.name);
   private readonly flags = new Map<string, boolean>();
   private readonly envDefaults = new Map<string, boolean>();
+  /** flag -> marketId -> enabled. Only explicit per-market rows. */
+  private marketFlags = new Map<string, Map<string, boolean>>();
+  /** Flags that have a real global row (marketId null), not a lone backfilled market row. */
+  private explicitGlobalFlags = new Set<string>();
   private lastRefreshAt = 0;
 
   constructor(
@@ -87,35 +100,82 @@ export class FeatureFlagsService implements OnModuleInit {
     );
   }
 
-  isEnabled(flag: FeatureFlag): boolean {
+  /**
+   * Cache-only lookup. This is the previous synchronous `isEnabled`.
+   * When `marketId` is set, an in-memory override wins; otherwise the global flag is used.
+   * Callers that cannot await should keep using this (or `isEnabled(flag)` with no market).
+   */
+  isEnabledSync(flag: FeatureFlag, marketId?: string): boolean {
     this.maybeRefresh();
-    return this.flags.get(flag) ?? false;
+    return this.readCached(flag, marketId);
+  }
+
+  /**
+   * Global checks stay synchronous so existing callers keep a boolean.
+   * A market id does a fresh database read, then falls back to the global flag.
+   */
+  isEnabled(flag: FeatureFlag): boolean;
+  isEnabled(flag: FeatureFlag, marketId: string): Promise<boolean>;
+  isEnabled(flag: FeatureFlag, marketId?: string): boolean | Promise<boolean> {
+    if (marketId?.trim()) {
+      return this.resolveMarketFlag(flag, marketId.trim());
+    }
+    return this.isEnabledSync(flag);
   }
 
   getAll(): Record<string, boolean> {
     this.maybeRefresh();
-    const result: Record<string, boolean> = {};
-    for (const [key, value] of this.flags) {
-      result[key] = value;
-    }
-    return result;
+    return this.readGlobalFlags();
   }
 
-  async setFlag(flag: FeatureFlag, enabled: boolean): Promise<{ persisted: boolean }> {
-    this.flags.set(flag, enabled);
+  /**
+   * Effective values for one market. Overrides replace the global flag only
+   * where a market-specific row exists.
+   */
+  async getMarketView(marketId: string): Promise<FeatureFlagMarketView> {
+    await this.refreshFromDb();
+    const global = this.readGlobalFlags();
+    const overrides: Record<string, boolean> = {};
+    for (const [flag, byMarket] of this.marketFlags) {
+      if (!byMarket.has(marketId)) continue;
+      // A single backfilled row is the global value until a real global row exists.
+      if (!this.explicitGlobalFlags.has(flag) && byMarket.size === 1) continue;
+      overrides[flag] = byMarket.get(marketId) as boolean;
+    }
+    const flags: Record<string, boolean> = { ...global };
+    for (const [flag, enabled] of Object.entries(overrides)) {
+      flags[flag] = enabled;
+    }
+    return { flags, global, overrides };
+  }
+
+  async setFlag(
+    flag: FeatureFlag,
+    enabled: boolean,
+    marketId?: string,
+  ): Promise<{ persisted: boolean }> {
+    const scopedMarketId = marketId?.trim() || undefined;
+    if (scopedMarketId) {
+      this.rememberMarketFlag(flag, scopedMarketId, enabled);
+    } else {
+      this.flags.set(flag, enabled);
+    }
+
     let persisted = false;
     try {
-      await this.prisma.platformSetting.upsert({
-        where: { category_key: { category: 'feature_flag', key: flag } },
-        update: { value: String(enabled) },
-        create: { category: 'feature_flag', key: flag, value: String(enabled) },
-      });
+      await this.persistFlag(flag, enabled, scopedMarketId);
       persisted = true;
     } catch (err) {
-      this.logger.warn(`Could not persist flag ${flag} — ${(err as Error).message}`);
+      const detail =
+        err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002'
+          ? 'unique (category, key) still blocks a second row — apply the platform_settings market uniqueness migration'
+          : (err as Error).message;
+      this.logger.warn(`Could not persist flag ${flag} — ${detail}`);
     }
     this.lastRefreshAt = Date.now();
-    this.logger.log(`Feature flag ${flag} set to ${enabled} (persisted=${persisted})`);
+    this.logger.log(
+      `Feature flag ${flag} set to ${enabled}${scopedMarketId ? ` (market ${scopedMarketId})` : ''} (persisted=${persisted})`,
+    );
     return { persisted };
   }
 
@@ -134,14 +194,192 @@ export class FeatureFlagsService implements OnModuleInit {
     }
   }
 
+  private readCached(flag: string, marketId?: string): boolean {
+    if (marketId) {
+      const override = this.marketFlags.get(flag)?.get(marketId);
+      if (override !== undefined) return override;
+    }
+    return this.flags.get(flag) ?? false;
+  }
+
+  private readGlobalFlags(): Record<string, boolean> {
+    const result: Record<string, boolean> = {};
+    for (const [key, value] of this.flags) {
+      result[key] = value;
+    }
+    return result;
+  }
+
+  private rememberMarketFlag(flag: string, marketId: string, enabled: boolean) {
+    let byMarket = this.marketFlags.get(flag);
+    if (!byMarket) {
+      byMarket = new Map();
+      this.marketFlags.set(flag, byMarket);
+    }
+    byMarket.set(marketId, enabled);
+  }
+
+  private forgetMarketFlag(flag: string, marketId: string) {
+    const byMarket = this.marketFlags.get(flag);
+    if (!byMarket) return;
+    byMarket.delete(marketId);
+    if (byMarket.size === 0) this.marketFlags.delete(flag);
+  }
+
+  /**
+   * Fresh row lookup. Missing override falls back to the global cache.
+   * A database error falls back to the cached override, then the global flag.
+   */
+  private async resolveMarketFlag(flag: FeatureFlag, marketId: string): Promise<boolean> {
+    try {
+      const row = await this.prisma.platformSetting.findFirst({
+        where: { category: FEATURE_FLAG_CATEGORY, key: flag, marketId },
+      });
+      if (row) {
+        const enabled = row.value === 'true';
+        this.rememberMarketFlag(flag, marketId, enabled);
+        return enabled;
+      }
+      this.forgetMarketFlag(flag, marketId);
+    } catch (err) {
+      this.logger.warn(
+        `Market feature flag lookup failed for ${flag}/${marketId}: ${(err as Error).message}`,
+      );
+      return this.isEnabledSync(flag, marketId);
+    }
+    return this.isEnabledSync(flag);
+  }
+
+  /**
+   * marketId is nullable and the historical unique is (category, key), so
+   * Prisma upsert on a compound market key is not available. findFirst +
+   * create/update keeps global and per-market rows distinct.
+   */
+  private async persistFlag(flag: string, enabled: boolean, marketId?: string) {
+    const value = String(enabled);
+    if (marketId) {
+      const existing = await this.prisma.platformSetting.findFirst({
+        where: { category: FEATURE_FLAG_CATEGORY, key: flag, marketId },
+      });
+      if (existing) {
+        await this.prisma.platformSetting.update({
+          where: { id: existing.id },
+          data: { value },
+        });
+        return;
+      }
+      await this.preserveLegacyGlobalRow(flag);
+      await this.prisma.platformSetting.create({
+        data: { category: FEATURE_FLAG_CATEGORY, key: flag, value, marketId },
+      });
+      return;
+    }
+
+    const existingGlobal = await this.prisma.platformSetting.findFirst({
+      where: { category: FEATURE_FLAG_CATEGORY, key: flag, marketId: null },
+    });
+    if (existingGlobal) {
+      await this.prisma.platformSetting.update({
+        where: { id: existingGlobal.id },
+        data: { value },
+      });
+      return;
+    }
+
+    try {
+      await this.prisma.platformSetting.create({
+        data: { category: FEATURE_FLAG_CATEGORY, key: flag, value },
+      });
+      this.explicitGlobalFlags.add(flag);
+      return;
+    } catch (err) {
+      // The pre-migration unique index is (category, key), so a second row
+      // cannot be inserted. Update the single existing row instead.
+      if (!(err instanceof Prisma.PrismaClientKnownRequestError) || err.code !== 'P2002') {
+        throw err;
+      }
+    }
+
+    const legacy = await this.prisma.platformSetting.findMany({
+      where: { category: FEATURE_FLAG_CATEGORY, key: flag },
+    });
+    if (legacy.length === 1) {
+      await this.prisma.platformSetting.update({
+        where: { id: legacy[0].id },
+        data: { value },
+      });
+      if (legacy[0].marketId) {
+        this.rememberMarketFlag(flag, legacy[0].marketId, enabled);
+      }
+      return;
+    }
+
+    throw new Error(
+      `Could not persist global flag ${flag} separately from market overrides`,
+    );
+  }
+
+  /**
+   * Copy a single pre-market row into an explicit global (marketId null) row
+   * before inserting a second, market-scoped row. If the old unique index is
+   * still in place this insert fails and the caller surfaces persisted=false.
+   */
+  private async preserveLegacyGlobalRow(flag: string) {
+    const rows = await this.prisma.platformSetting.findMany({
+      where: { category: FEATURE_FLAG_CATEGORY, key: flag },
+    });
+    if (rows.some((row) => !row.marketId) || rows.length !== 1) return;
+    const legacy = rows[0];
+    if (!legacy.marketId) return;
+    await this.prisma.platformSetting.create({
+      data: {
+        category: FEATURE_FLAG_CATEGORY,
+        key: flag,
+        value: legacy.value,
+        marketId: null,
+      },
+    });
+    this.flags.set(flag, legacy.value === 'true');
+    this.explicitGlobalFlags.add(flag);
+  }
+
   private async refreshFromDb() {
     try {
       const rows = await this.prisma.platformSetting.findMany({
-        where: { category: 'feature_flag' },
+        where: { category: FEATURE_FLAG_CATEGORY },
       });
+
+      const nextMarket = new Map<string, Map<string, boolean>>();
+      const explicitGlobal = new Set<string>();
+      for (const row of rows) {
+        if (!row.marketId) {
+          explicitGlobal.add(row.key);
+          continue;
+        }
+        let byMarket = nextMarket.get(row.key);
+        if (!byMarket) {
+          byMarket = new Map();
+          nextMarket.set(row.key, byMarket);
+        }
+        byMarket.set(row.marketId, row.value === 'true');
+      }
+      this.marketFlags = nextMarket;
+      this.explicitGlobalFlags = explicitGlobal;
+
       for (const [flag, envDefault] of this.envDefaults) {
-        const row = rows.find((r) => r.key === flag);
-        this.flags.set(flag, row ? row.value === 'true' : envDefault);
+        const globalRow = rows.find((row) => row.key === flag && !row.marketId);
+        if (globalRow) {
+          this.flags.set(flag, globalRow.value === 'true');
+          continue;
+        }
+        // Rows written before per-market flags were backfilled onto the US
+        // market. While that is the only stored row, it remains the global value.
+        const scoped = rows.filter((row) => row.key === flag && row.marketId);
+        if (scoped.length === 1) {
+          this.flags.set(flag, scoped[0].value === 'true');
+          continue;
+        }
+        this.flags.set(flag, envDefault);
       }
       this.lastRefreshAt = Date.now();
     } catch {

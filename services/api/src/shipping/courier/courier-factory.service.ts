@@ -42,6 +42,12 @@ export class CourierFactoryService implements OnModuleInit {
     string,
     { isActive: boolean; isTestMode: boolean; priority: number }
   > = new Map();
+  /** Per-market carrier instances. Market rows override shared (marketId null) credentials. */
+  private marketProviders = new Map<string, Map<string, ICourierProvider>>();
+  private marketProviderConfigs = new Map<
+    string,
+    Map<string, { isActive: boolean; isTestMode: boolean; priority: number }>
+  >();
   private quoteFailures = new Map<string, { until: number; message: string }>();
 
   constructor(
@@ -67,16 +73,14 @@ export class CourierFactoryService implements OnModuleInit {
   }
 
   /**
-   * Load all configured shipping providers from database
+   * Load configured shipping providers from database.
+   * When marketId is set, market-scoped SHIPPING integrations are preferred and
+   * shared rows (marketId null) fill any carrier the market has not overridden.
+   * Market loads are cached separately so they do not replace the global provider map.
    */
-  async loadProviders(): Promise<void> {
+  async loadProviders(marketId?: string): Promise<void> {
     try {
-      const integrations = await this.prisma.integrationConfig.findMany({
-        where: {
-          category: 'SHIPPING',
-        },
-        orderBy: { priority: 'desc' },
-      });
+      const integrations = await this.fetchShippingIntegrations(marketId);
 
       // Build next maps then swap atomically — avoids empty-map race during refresh
       const nextProviders = new Map<string, ICourierProvider>();
@@ -114,6 +118,20 @@ export class CourierFactoryService implements OnModuleInit {
         }
       }
 
+      if (marketId) {
+        const previous = this.marketProviders.get(marketId);
+        if (nextProviders.size === 0 && previous && previous.size > 0 && integrations.length > 0) {
+          this.logger.error(
+            `All shipping providers failed to load for market ${marketId}; keeping the previous provider map`,
+          );
+          return;
+        }
+        this.marketProviders.set(marketId, nextProviders);
+        this.marketProviderConfigs.set(marketId, nextConfigs);
+        this.logger.log(`Loaded ${nextProviders.size} shipping providers for market ${marketId}`);
+        return;
+      }
+
       if (nextProviders.size === 0 && this.providers.size > 0 && integrations.length > 0) {
         this.logger.error(
           'All shipping providers failed to load; keeping the previous provider map',
@@ -128,6 +146,34 @@ export class CourierFactoryService implements OnModuleInit {
     } catch (error: any) {
       this.logger.error(`Failed to load shipping providers: ${error.message}`);
     }
+  }
+
+  /**
+   * Shared SHIPPING integrations, or market-specific rows with a null-market fallback.
+   */
+  private async fetchShippingIntegrations(marketId?: string) {
+    if (!marketId) {
+      return this.prisma.integrationConfig.findMany({
+        where: { category: 'SHIPPING' },
+        orderBy: { priority: 'desc' },
+      });
+    }
+
+    const [marketSpecific, globalFallback] = await Promise.all([
+      this.prisma.integrationConfig.findMany({
+        where: { category: 'SHIPPING', marketId },
+        orderBy: { priority: 'desc' },
+      }),
+      this.prisma.integrationConfig.findMany({
+        where: { category: 'SHIPPING', marketId: null },
+        orderBy: { priority: 'desc' },
+      }),
+    ]);
+
+    const byProvider = new Map<string, (typeof globalFallback)[number]>();
+    for (const row of globalFallback) byProvider.set(row.provider, row);
+    for (const row of marketSpecific) byProvider.set(row.provider, row);
+    return [...byProvider.values()];
   }
 
   /**
@@ -168,7 +214,15 @@ export class CourierFactoryService implements OnModuleInit {
   /**
    * Get a specific provider
    */
-  getProvider(providerName: string): ICourierProvider | null {
+  getProvider(providerName: string, marketId?: string): ICourierProvider | null {
+    if (marketId) {
+      const scoped = this.marketProviders.get(marketId)?.get(providerName);
+      const scopedConfig = this.marketProviderConfigs.get(marketId)?.get(providerName);
+      if (scoped && scopedConfig?.isActive) {
+        return scoped;
+      }
+    }
+
     const provider = this.providers.get(providerName);
     const config = this.providerConfigs.get(providerName);
 
@@ -478,10 +532,8 @@ export class CourierFactoryService implements OnModuleInit {
     metadata?: Record<string, any>,
   ): Promise<void> {
     try {
-      const integration = await this.prisma.integrationConfig.findUnique({
-        where: {
-          category_provider: { category: 'SHIPPING', provider },
-        },
+      const integration = await this.prisma.integrationConfig.findFirst({
+        where: { category: 'SHIPPING', provider, marketId: null },
       });
 
       if (integration) {

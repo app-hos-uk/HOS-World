@@ -986,6 +986,7 @@ export class TemplatesService {
   async render(
     slug: string,
     variables: Record<string, string>,
+    marketCode?: string,
   ): Promise<{ subject: string; body: string; channel: TemplateChannel }> {
     const globalDefaults: Record<string, string> = {
       socialInstagramUrl:
@@ -997,7 +998,7 @@ export class TemplatesService {
     };
     const mergedVariables = { ...globalDefaults, ...variables };
 
-    const template = await this.resolve(slug);
+    const template = await this.resolve(slug, marketCode);
 
     const escapeHtml = (str: string): string =>
       str
@@ -1035,17 +1036,32 @@ export class TemplatesService {
   }
 
   /**
+   * Market-specific template resolution: market slug → global slug → null.
+   */
+  async resolveTemplate(slug: string, marketCode?: string) {
+    if (marketCode) {
+      const marketTemplate = await this.prisma.emailTemplate.findFirst({
+        where: { slug, marketCode, isActive: true },
+      });
+      if (marketTemplate) return marketTemplate;
+    }
+    // Fall back to global template (null marketCode)
+    return this.prisma.emailTemplate.findFirst({
+      where: { slug, marketCode: null, isActive: true },
+    });
+  }
+
+  /**
    * Resolve a template: check DB overrides (EmailTemplate / WhatsAppTemplate),
    * then fall back to built-in defaults.
+   * Email overrides prefer a market-specific row, then the global (null marketCode) row.
    */
-  private async resolve(slug: string): Promise<TemplateDefinition> {
+  private async resolve(slug: string, marketCode?: string): Promise<TemplateDefinition> {
     const builtIn = BUILT_IN_TEMPLATES.find((t) => t.slug === slug);
 
     if (builtIn?.channel === 'EMAIL') {
       try {
-        const emailOverride = await this.prisma.emailTemplate.findUnique({
-          where: { slug },
-        });
+        const emailOverride = await this.resolveTemplate(slug, marketCode);
 
         if (emailOverride?.isActive) {
           return {
@@ -1085,9 +1101,7 @@ export class TemplatesService {
     if (!builtIn) {
       // Custom EmailTemplate rows (created via POST /templates) are not in BUILT_IN_TEMPLATES.
       try {
-        const emailRow = await this.prisma.emailTemplate.findUnique({
-          where: { slug },
-        });
+        const emailRow = await this.resolveTemplate(slug, marketCode);
         if (emailRow?.isActive) {
           return {
             slug: emailRow.slug,
@@ -1179,8 +1193,8 @@ export class TemplatesService {
   /**
    * Get a single template definition (for preview / edit).
    */
-  async getTemplate(slug: string): Promise<TemplateDefinition> {
-    return this.resolve(slug);
+  async getTemplate(slug: string, marketCode?: string): Promise<TemplateDefinition> {
+    return this.resolve(slug, marketCode);
   }
 
   /**
@@ -1192,13 +1206,14 @@ export class TemplatesService {
    */
   async preview(
     slug: string,
+    marketCode?: string,
   ): Promise<{ subject: string; body: string; channel: TemplateChannel }> {
-    const template = await this.resolve(slug);
+    const template = await this.resolve(slug, marketCode);
     const sampleVars: Record<string, string> = {};
     for (const v of template.variables) {
       sampleVars[v] = this.getSampleValue(v);
     }
-    return this.render(slug, sampleVars);
+    return this.render(slug, sampleVars, marketCode);
   }
 
   /**
@@ -1223,26 +1238,25 @@ export class TemplatesService {
     }
 
     if (channel === 'EMAIL') {
-      return this.prisma.emailTemplate.upsert({
-        where: { slug: data.name },
-        create: {
-          slug: data.name,
-          subject: data.subject,
-          body: data.content,
-          variables: data.variables ?? [],
-          description: data.description,
-          updatedBy: data.updatedBy,
-          isActive: true,
-        },
-        update: {
-          subject: data.subject,
-          body: data.content,
-          variables: data.variables ?? [],
-          description: data.description,
-          updatedBy: data.updatedBy,
-          isActive: true,
-          updatedAt: new Date(),
-        },
+      const existing = await this.prisma.emailTemplate.findFirst({
+        where: { slug: data.name, marketCode: null },
+      });
+      const fields = {
+        subject: data.subject,
+        body: data.content,
+        variables: data.variables ?? [],
+        description: data.description,
+        updatedBy: data.updatedBy,
+        isActive: true,
+      };
+      if (existing) {
+        return this.prisma.emailTemplate.update({
+          where: { id: existing.id },
+          data: { ...fields, updatedAt: new Date() },
+        });
+      }
+      return this.prisma.emailTemplate.create({
+        data: { slug: data.name, marketCode: null, ...fields },
       });
     }
 
@@ -1276,11 +1290,14 @@ export class TemplatesService {
     const channel = data.channel ?? builtIn?.channel ?? 'WHATSAPP';
 
     if (channel === 'EMAIL') {
-      const existing = await this.prisma.emailTemplate.findUnique({ where: { slug } });
+      // Admin edits the global override. Inactive rows must still be found so they can be reactivated.
+      const existing = await this.prisma.emailTemplate.findFirst({
+        where: { slug, marketCode: null },
+      });
 
       if (existing) {
         return this.prisma.emailTemplate.update({
-          where: { slug },
+          where: { id: existing.id },
           data: {
             ...(data.subject !== undefined && { subject: data.subject }),
             ...(data.content !== undefined && { body: data.content }),
@@ -1300,6 +1317,7 @@ export class TemplatesService {
       return this.prisma.emailTemplate.create({
         data: {
           slug,
+          marketCode: null,
           subject: data.subject ?? builtIn.subject,
           body: data.content ?? builtIn.body,
           variables: data.variables ?? builtIn.variables,
@@ -1328,15 +1346,15 @@ export class TemplatesService {
   async resetEmailTemplate(slug: string): Promise<void> {
     // Built-in slug: delete override only (falls back to BUILT_IN_TEMPLATES).
     // Custom slug: delete the EmailTemplate row (no built-in to fall back to).
-    await this.prisma.emailTemplate.deleteMany({ where: { slug } });
+    await this.prisma.emailTemplate.deleteMany({ where: { slug, marketCode: null } });
   }
 
   /**
    * Check whether an email template has an active DB override in use.
    */
-  async hasEmailOverride(slug: string): Promise<boolean> {
+  async hasEmailOverride(slug: string, marketCode?: string): Promise<boolean> {
     try {
-      const row = await this.prisma.emailTemplate.findUnique({ where: { slug } });
+      const row = await this.resolveTemplate(slug, marketCode);
       return !!row?.isActive;
     } catch {
       return false;

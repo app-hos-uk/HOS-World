@@ -31,6 +31,7 @@ export interface PaymentProvider {
    */
   cancelPaymentIntent?(
     paymentIntentId: string,
+    marketId?: string,
   ): Promise<'cancelled' | 'already_succeeded' | 'skipped'>;
 
   /**
@@ -68,6 +69,8 @@ export interface CreatePaymentIntentParams {
    * and amount, where the default key would replay the cancelled intent.
    */
   idempotencyKey?: string;
+  /** Use the Stripe account configured for this market, falling back to the global client. */
+  marketId?: string;
 }
 
 export interface PaymentIntentResult {
@@ -82,6 +85,7 @@ export interface ConfirmPaymentParams {
   paymentIntentId: string;
   orderId: string;
   metadata?: Record<string, any>;
+  marketId?: string;
 }
 
 export interface PaymentResult {
@@ -107,6 +111,7 @@ export interface RefundPaymentParams {
   currency?: string;
   reason?: string;
   metadata?: Record<string, any>;
+  marketId?: string;
 }
 
 export interface RefundResult {

@@ -2,24 +2,57 @@ import { Injectable, NotFoundException, BadRequestException, Logger } from '@nes
 import { PrismaService } from '../database/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { TemplatesService } from '../templates/templates.service';
+import { IntegrationsService } from '../integrations/integrations.service';
 
 @Injectable()
 export class WhatsAppService {
   private readonly logger = new Logger(WhatsAppService.name);
-  private twilioAccountSid: string;
-  private twilioAuthToken: string;
-  private twilioWhatsAppNumber: string;
-  private useTwilio: boolean;
 
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
     private templatesService: TemplatesService,
-  ) {
-    this.twilioAccountSid = this.configService.get<string>('TWILIO_ACCOUNT_SID') || '';
-    this.twilioAuthToken = this.configService.get<string>('TWILIO_AUTH_TOKEN') || '';
-    this.twilioWhatsAppNumber = this.configService.get<string>('TWILIO_WHATSAPP_NUMBER') || '';
-    this.useTwilio = !!(this.twilioAccountSid && this.twilioAuthToken && this.twilioWhatsAppNumber);
+    private integrationsService: IntegrationsService,
+  ) {}
+
+  /**
+   * Market IntegrationConfig, then global IntegrationConfig, then env vars.
+   * Category WHATSAPP / provider twilio. Expected credential keys: accountSid, authToken, fromNumber.
+   */
+  private async getWhatsAppConfig(
+    marketId?: string,
+  ): Promise<{ sid: string; token: string; from: string }> {
+    if (marketId) {
+      try {
+        const creds = await this.integrationsService.getDecryptedCredentials(
+          'WHATSAPP',
+          'twilio',
+          marketId,
+        );
+        if (creds?.accountSid && creds?.authToken && creds?.fromNumber) {
+          return { sid: creds.accountSid, token: creds.authToken, from: creds.fromNumber };
+        }
+      } catch (error: any) {
+        this.logger.debug(
+          `Market WhatsApp config unavailable (${marketId}): ${error?.message || error}`,
+        );
+      }
+    }
+
+    try {
+      const creds = await this.integrationsService.getDecryptedCredentials('WHATSAPP', 'twilio');
+      if (creds?.accountSid && creds?.authToken && creds?.fromNumber) {
+        return { sid: creds.accountSid, token: creds.authToken, from: creds.fromNumber };
+      }
+    } catch (error: any) {
+      this.logger.debug(`Global WhatsApp config unavailable: ${error?.message || error}`);
+    }
+
+    return {
+      sid: this.configService.get<string>('TWILIO_ACCOUNT_SID') || '',
+      token: this.configService.get<string>('TWILIO_AUTH_TOKEN') || '',
+      from: this.configService.get<string>('TWILIO_WHATSAPP_NUMBER') || '',
+    };
   }
 
   async sendMessage(data: {
@@ -29,6 +62,7 @@ export class WhatsAppService {
     userId?: string;
     sellerId?: string;
     ticketId?: string;
+    marketId?: string;
   }) {
     // Get or create conversation
     let conversation = await this.prisma.whatsAppConversation.findFirst({
@@ -50,18 +84,20 @@ export class WhatsAppService {
       });
     }
 
-    // Send message via Twilio (if configured)
+    // Send message via Twilio (market config, then global config, then env)
     let messageId: string;
     let status: 'SENT' | 'FAILED' = 'SENT';
+    const config = await this.getWhatsAppConfig(data.marketId);
+    const fromNumber = config.from.replace(/^whatsapp:/i, '');
 
-    if (this.useTwilio) {
+    if (config.sid && config.token && fromNumber) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const twilio = require('twilio');
-        const client = twilio(this.twilioAccountSid, this.twilioAuthToken);
+        const client = twilio(config.sid, config.token);
 
         const twilioMessage = await client.messages.create({
-          from: `whatsapp:${this.twilioWhatsAppNumber}`,
+          from: `whatsapp:${fromNumber}`,
           to: `whatsapp:${data.to}`,
           body: data.message,
           mediaUrl: data.mediaUrl ? [data.mediaUrl] : undefined,
@@ -351,6 +387,7 @@ export class WhatsAppService {
     to: string;
     templateName: string;
     variables: Record<string, string>;
+    marketId?: string;
   }) {
     const template = await this.prisma.whatsAppTemplate.findUnique({
       where: { name: data.templateName },
@@ -373,6 +410,7 @@ export class WhatsAppService {
     return this.sendMessage({
       to: data.to,
       message,
+      marketId: data.marketId,
     });
   }
 
@@ -391,7 +429,7 @@ export class WhatsAppService {
     to: string,
     templateSlug: string,
     variables: Record<string, string>,
-    options?: { userId?: string; sellerId?: string; ticketId?: string },
+    options?: { userId?: string; sellerId?: string; ticketId?: string; marketId?: string },
   ) {
     const rendered = await this.templatesService.render(templateSlug, variables);
 
@@ -401,6 +439,7 @@ export class WhatsAppService {
       userId: options?.userId,
       sellerId: options?.sellerId,
       ticketId: options?.ticketId,
+      marketId: options?.marketId,
     });
   }
 }

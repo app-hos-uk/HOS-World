@@ -26,8 +26,17 @@ interface Integration {
   testStatus?: string;
   testMessage?: string;
   priority: number;
+  marketId?: string | null;
+  market?: { id: string; code: string; name: string } | null;
   createdAt: string;
   updatedAt: string;
+}
+
+interface MarketOption {
+  id: string;
+  code: string;
+  name: string;
+  isActive?: boolean;
 }
 
 interface ProviderMetadata {
@@ -67,6 +76,11 @@ const CATEGORY_INFO: Record<string, { name: string; icon: React.ReactNode; descr
     name: 'SMS Services',
     icon: navIcon('smartphone', 'w-6 h-6'),
     description: 'SMS and text messaging providers',
+  },
+  WHATSAPP: {
+    name: 'WhatsApp',
+    icon: navIcon('message', 'w-6 h-6'),
+    description: 'Twilio WhatsApp. Use accountSid, authToken, and fromNumber. Market rows override the global config.',
   },
   STORAGE: {
     name: 'Cloud Storage',
@@ -114,18 +128,24 @@ export default function IntegrationsPage() {
     credentials: {} as Record<string, string>,
   });
   const [submitting, setSubmitting] = useState(false);
+  const [markets, setMarkets] = useState<MarketOption[]>([]);
+  const [selectedMarketId, setSelectedMarketId] = useState('');
 
   useEffect(() => {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [selectedMarketId]);
+
+  const scopedMarketId =
+    selectedMarketId && selectedMarketId !== 'global' ? selectedMarketId : undefined;
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [integrationsRes, providersRes] = await Promise.all([
-        apiClient.getIntegrations(),
+      const [integrationsRes, providersRes, marketsRes] = await Promise.all([
+        apiClient.getIntegrations(undefined, selectedMarketId || undefined),
         apiClient.getAvailableProviders(),
+        apiClient.getMarkets().catch(() => ({ data: [] })),
       ]);
       // Ensure data is an array before setting state
       if (integrationsRes?.data && Array.isArray(integrationsRes.data)) {
@@ -139,6 +159,7 @@ export default function IntegrationsPage() {
       } else {
         setAvailableProviders({});
       }
+      setMarkets(Array.isArray(marketsRes?.data) ? marketsRes.data : []);
     } catch (error: any) {
       console.error('Error fetching integrations:', error);
       toast.error('Failed to load integrations');
@@ -269,6 +290,7 @@ export default function IntegrationsPage() {
           isTestMode: effectiveTestMode,
           isActive: true,
           credentials: formData.credentials,
+          ...(scopedMarketId ? { marketId: scopedMarketId } : {}),
         });
         toast.success('Integration added and activated!');
       }
@@ -346,7 +368,7 @@ export default function IntegrationsPage() {
   };
 
   return (
-    <RouteGuard allowedRoles={['ADMIN']} showAccessDenied={true}>
+    <RouteGuard allowedRoles={['ADMIN']} requiredPermissions={['settings.view']} showAccessDenied={true}>
               <div className="mb-6">
           <div className="flex items-center gap-2 text-sm text-hos-text-muted mb-2">
             <Link href="/admin/settings" className="hover:text-hos-gold">Settings</Link>
@@ -364,6 +386,34 @@ export default function IntegrationsPage() {
             >
               + Add Integration
             </button>
+          </div>
+          <div className="mt-4 max-w-sm">
+            <label htmlFor="integration-market" className="block text-sm font-medium text-hos-text-secondary mb-1">
+              Market
+            </label>
+            <select
+              id="integration-market"
+              value={selectedMarketId}
+              onChange={(e) => setSelectedMarketId(e.target.value)}
+              className="w-full px-3 py-2 border border-hos-border rounded-lg focus:ring-2 focus:ring-hos-gold/50 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none focus:border-hos-gold"
+            >
+              <option value="">All integrations</option>
+              <option value="global">Global defaults</option>
+              {markets
+                .filter((market) => market.isActive !== false)
+                .map((market) => (
+                  <option key={market.id} value={market.id}>
+                    {market.name} ({market.code})
+                  </option>
+                ))}
+            </select>
+            <p className="text-xs text-hos-text-muted mt-1">
+              {scopedMarketId
+                ? 'Showing overrides for this market and the global defaults they fall back to. New integrations are saved for this market only.'
+                : selectedMarketId === 'global'
+                  ? 'Showing global integrations used when a market has no override.'
+                  : 'Global rows apply everywhere. Market rows override them for that country.'}
+            </p>
           </div>
         </div>
 
@@ -449,6 +499,19 @@ export default function IntegrationsPage() {
                                 }`}
                               >
                                 {integration.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                              <span
+                                className={`px-2 py-1 text-xs rounded ${
+                                  integration.marketId
+                                    ? 'bg-blue-500/15 text-blue-300'
+                                    : 'bg-hos-bg-tertiary text-hos-text-secondary'
+                                }`}
+                              >
+                                {integration.market?.code
+                                  ? integration.market.code
+                                  : integration.marketId
+                                    ? 'Market'
+                                    : 'Global'}
                               </span>
                             </div>
 
@@ -541,6 +604,13 @@ export default function IntegrationsPage() {
                     </Dialog.Title>
 
                     <form onSubmit={handleAddIntegration} className="space-y-4">
+                      {scopedMarketId && !editingIntegration && (
+                        <p className="text-sm text-hos-text-secondary rounded-lg border border-hos-border bg-hos-bg-tertiary/40 px-3 py-2">
+                          Saving for{' '}
+                          {markets.find((market) => market.id === scopedMarketId)?.code || 'this market'}{' '}
+                          only. Leave the market selector on Global defaults to save a fallback used by every country.
+                        </p>
+                      )}
                       {/* Category Selection */}
                       <div>
                         <label className="block text-sm font-medium text-hos-text-secondary mb-1">

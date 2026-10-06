@@ -122,6 +122,7 @@ export class StripeConnectService {
     currency: string;
     vendorAccountId: string;
     platformFee: number;
+    marketId?: string;
   }) {
     return this.stripeProvider.createPaymentIntentWithSplit({
       amount: params.amount,
@@ -129,6 +130,8 @@ export class StripeConnectService {
       orderId: params.orderId,
       connectedAccountId: params.vendorAccountId,
       applicationFeeAmount: params.platformFee,
+      marketId: params.marketId,
+      metadata: params.marketId ? { marketId: params.marketId } : undefined,
     });
   }
 

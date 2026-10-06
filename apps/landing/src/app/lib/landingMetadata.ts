@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getSiteUrl } from '../../lib/siteUrls';
+import { getMarketConfig } from './marketConfig';
 
 const DEFAULT_OG_IMAGE_PATH = '/assets/logo-emblem.png';
 
@@ -25,7 +26,7 @@ export function landingPageMetadata(options: {
       description: options.description,
       type: 'website',
       url: absoluteUrl,
-      locale: 'en_GB',
+      locale: getMarketConfig().locale.replace('-', '_'),
       images: [{ url: absoluteImage, width: 1080, height: 1080, alt: 'House of Spells' }],
     },
     twitter: {

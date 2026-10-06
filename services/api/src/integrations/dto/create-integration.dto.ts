@@ -1,4 +1,13 @@
-import { IsString, IsOptional, IsBoolean, IsObject, IsEnum, IsInt, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsObject,
+  IsEnum,
+  IsInt,
+  IsUUID,
+  Min,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 /**
@@ -10,6 +19,7 @@ export enum IntegrationCategory {
   TAX = 'TAX',
   EMAIL = 'EMAIL',
   SMS = 'SMS',
+  WHATSAPP = 'WHATSAPP',
   STORAGE = 'STORAGE',
   SEARCH = 'SEARCH',
   ANALYTICS = 'ANALYTICS',
@@ -141,6 +151,13 @@ export class CreateIntegrationDto {
   @IsInt()
   @Min(0)
   priority?: number;
+
+  @ApiPropertyOptional({
+    description: 'Market this integration applies to. Omit for the global default.',
+  })
+  @IsOptional()
+  @IsUUID()
+  marketId?: string;
 }
 
 /**
@@ -255,6 +272,12 @@ export class IntegrationResponseDto {
 
   @ApiProperty()
   priority: number;
+
+  @ApiPropertyOptional({ description: 'Null when this row is the global default' })
+  marketId?: string | null;
+
+  @ApiPropertyOptional()
+  market?: { id: string; code: string; name: string } | null;
 
   @ApiProperty()
   createdAt: Date;

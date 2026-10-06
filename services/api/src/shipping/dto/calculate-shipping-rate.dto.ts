@@ -36,4 +36,8 @@ export class CalculateShippingRateDto {
   @IsOptional()
   @IsString()
   sellerId?: string;
+
+  @IsOptional()
+  @IsString()
+  marketId?: string;
 }

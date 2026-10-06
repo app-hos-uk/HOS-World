@@ -4,18 +4,19 @@ import { LandingShell } from '../components/LandingShell';
 import { LandingFooter } from '../components/LandingFooter';
 import { FoundingMemberForm } from '../components/FoundingMemberForm';
 import { landingPageMetadata } from '../lib/landingMetadata';
+import { getMarketConfig } from '../lib/marketConfig';
 import { LANDING_LOGO, LANDING_WORDMARK } from '../lib/constants';
 import { isFoundingMembersEnabled } from '../lib/foundingMembersConfig';
 import { fetchFandomsFromUniverses } from '../lib/universesApi';
 
 export const metadata: Metadata = landingPageMetadata({
   title: 'Register — Founding Members | House of Spells',
-  description:
-    'Register as a founding member of House of Spells — Times Square. Choose your fandoms and help shape what we stock.',
+  description: `Register as a founding member of House of Spells — ${getMarketConfig().hero.locationLine}. Choose your fandoms and help shape what we stock.`,
   path: '/founding-members',
 });
 
 export default async function FoundingMembersPage() {
+  const market = getMarketConfig();
   const registrationOpen = await isFoundingMembersEnabled();
   const fandoms = await fetchFandomsFromUniverses();
 
@@ -31,7 +32,7 @@ export default async function FoundingMembersPage() {
           <h2 className="sec-h2">Enter the Circle</h2>
           <p className="sec-sub">
             Tell us your universe. Shape our inventory. Be among the first summoned when the gates of House of Spells open
-            in Times Square.
+            in {market.hero.locationLine}.
           </p>
         </div>
 

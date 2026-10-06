@@ -906,7 +906,7 @@ function AdminProductsContent() {
 
   if (loading && products.length === 0) {
     return (
-      <RouteGuard allowedRoles={['ADMIN']}>
+      <RouteGuard allowedRoles={['ADMIN']} requiredPermissions={['products.manage']} showAccessDenied>
                   <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>
@@ -915,7 +915,7 @@ function AdminProductsContent() {
   }
 
   return (
-    <RouteGuard allowedRoles={['ADMIN']}>
+    <RouteGuard allowedRoles={['ADMIN']} requiredPermissions={['products.manage']} showAccessDenied>
               <div className="space-y-6 flex flex-col min-h-[calc(100vh-8rem)]">
           {/* Header */}
           <div className="flex justify-between items-center">
@@ -1823,7 +1823,7 @@ function AdminProductsContent() {
 export default function AdminProductsPage() {
   return (
     <Suspense fallback={
-      <RouteGuard allowedRoles={['ADMIN']}>
+      <RouteGuard allowedRoles={['ADMIN']} requiredPermissions={['products.manage']} showAccessDenied>
                   <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-hos-gold"></div>
           </div>

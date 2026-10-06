@@ -23,7 +23,11 @@ import {
 } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { ReviewsService } from '../reviews/reviews.service';
-import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
+import {
+  FeatureFlagsService,
+  FeatureFlag,
+  type FeatureFlagMarketView,
+} from '../config/feature-flags.service';
 import { CreateAdminUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -46,8 +50,21 @@ export class AdminController {
   ) {}
 
   @Get('feature-flags')
-  @ApiOperation({ summary: 'Get all feature flags' })
-  async getFeatureFlags(): Promise<ApiResponse<Record<string, boolean>>> {
+  @ApiOperation({
+    summary: 'Get feature flags',
+    description:
+      'Without marketId, returns global flags. With marketId, returns effective values, global defaults, and market overrides.',
+  })
+  async getFeatureFlags(
+    @Query('marketId') marketId?: string,
+  ): Promise<ApiResponse<Record<string, boolean> | FeatureFlagMarketView>> {
+    const scopedMarketId = marketId?.trim();
+    if (scopedMarketId) {
+      return {
+        data: await this.featureFlagsService.getMarketView(scopedMarketId),
+        message: 'Feature flags retrieved',
+      };
+    }
     return {
       data: this.featureFlagsService.getAll(),
       message: 'Feature flags retrieved',
@@ -57,20 +74,40 @@ export class AdminController {
   @Put('feature-flags/:flag')
   @ApiOperation({ summary: 'Toggle a feature flag' })
   @ApiParam({ name: 'flag', description: 'Feature flag name' })
-  @ApiBody({ schema: { type: 'object', properties: { enabled: { type: 'boolean' } } } })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        enabled: { type: 'boolean' },
+        marketId: { type: 'string', description: 'When set, stores a per-market override' },
+      },
+      required: ['enabled'],
+    },
+  })
   async setFeatureFlag(
     @Param('flag') flag: string,
-    @Body() body: { enabled: boolean },
-  ): Promise<ApiResponse<{ flag: string; enabled: boolean }>> {
+    @Body() body: { enabled: boolean; marketId?: string | null },
+  ): Promise<ApiResponse<{ flag: string; enabled: boolean; marketId?: string }>> {
     if (!Object.values(FeatureFlag).includes(flag as FeatureFlag)) {
       return { data: { flag, enabled: false }, message: `Unknown feature flag: ${flag}` };
     }
-    const { persisted } = await this.featureFlagsService.setFlag(flag as FeatureFlag, body.enabled);
+    const scopedMarketId =
+      typeof body.marketId === 'string' && body.marketId.trim() ? body.marketId.trim() : undefined;
+    const { persisted } = await this.featureFlagsService.setFlag(
+      flag as FeatureFlag,
+      body.enabled,
+      scopedMarketId,
+    );
+    const scope = scopedMarketId ? ` for market ${scopedMarketId}` : '';
     return {
-      data: { flag, enabled: body.enabled },
+      data: {
+        flag,
+        enabled: body.enabled,
+        ...(scopedMarketId ? { marketId: scopedMarketId } : {}),
+      },
       message: persisted
-        ? `Feature flag ${flag} set to ${body.enabled}`
-        : `Feature flag ${flag} set to ${body.enabled} (in-memory only — DB persistence failed)`,
+        ? `Feature flag ${flag} set to ${body.enabled}${scope}`
+        : `Feature flag ${flag} set to ${body.enabled}${scope} (in-memory only — DB persistence failed)`,
     };
   }
 

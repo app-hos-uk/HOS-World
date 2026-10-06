@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Param,
   Body,
   Query,
@@ -21,6 +22,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { SellersService } from './sellers.service';
+import { SellerMarketService } from './seller-market.service';
 import { UpdateSellerDto } from './dto/update-seller.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -34,7 +36,10 @@ import { VendorApplicationDto } from './dto/vendor-application.dto';
 @ApiTags('sellers')
 @Controller('sellers')
 export class SellersController {
-  constructor(private readonly sellersService: SellersService) {}
+  constructor(
+    private readonly sellersService: SellersService,
+    private readonly sellerMarketService: SellerMarketService,
+  ) {}
 
   @Public()
   @Get('directory')
@@ -199,6 +204,132 @@ export class SellersController {
       data: seller,
       message: 'Seller profile updated successfully',
     };
+  }
+
+  // === Seller market assignments (Admin) ===
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @RequireAccess({ permission: 'sellers.operate', scope: 'GLOBAL' })
+  @Post('bulk-assign-market')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Bulk assign sellers to a market',
+    description: 'Assigns many sellers to one market with ACTIVE status. Admin access required.',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['sellerIds', 'marketId'],
+      properties: {
+        sellerIds: { type: 'array', items: { type: 'string' } },
+        marketId: { type: 'string' },
+      },
+    },
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Sellers assigned to market' })
+  @SwaggerApiResponse({ status: 404, description: 'Market not found' })
+  async bulkAssignMarket(
+    @Body() body: { sellerIds: string[]; marketId: string },
+  ): Promise<ApiResponse<any[]>> {
+    const results = await this.sellerMarketService.bulkAssign(body.sellerIds ?? [], body.marketId);
+    return { data: results, message: 'Sellers assigned to market' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @RequireAccess({ permission: 'sellers.view', scope: 'GLOBAL' })
+  @Get(':id/markets')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: "Get a seller's market assignments",
+    description: 'Returns market assignments for a seller. Admin access required.',
+  })
+  @ApiParam({ name: 'id', description: 'Seller UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Seller markets retrieved' })
+  async getSellerMarkets(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<any[]>> {
+    const markets = await this.sellerMarketService.findBySeller(id);
+    return { data: markets, message: 'Seller markets retrieved' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @RequireAccess({ permission: 'sellers.operate', scope: 'GLOBAL' })
+  @Post(':id/markets')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Assign seller to a market',
+    description: 'Creates or reactivates a seller market assignment. Admin access required.',
+  })
+  @ApiParam({ name: 'id', description: 'Seller UUID', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['marketId'],
+      properties: { marketId: { type: 'string' } },
+    },
+  })
+  @SwaggerApiResponse({ status: 201, description: 'Seller assigned to market' })
+  @SwaggerApiResponse({ status: 404, description: 'Seller or market not found' })
+  async assignSellerMarket(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { marketId: string },
+  ): Promise<ApiResponse<any>> {
+    const assignment = await this.sellerMarketService.assign(id, body.marketId);
+    return { data: assignment, message: 'Seller assigned to market' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @RequireAccess({ permission: 'sellers.operate', scope: 'GLOBAL' })
+  @Delete(':id/markets/:marketId')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Remove seller from a market',
+    description: 'Deletes a seller market assignment. Admin access required.',
+  })
+  @ApiParam({ name: 'id', description: 'Seller UUID', type: String })
+  @ApiParam({ name: 'marketId', description: 'Market UUID', type: String })
+  @SwaggerApiResponse({ status: 200, description: 'Seller removed from market' })
+  @SwaggerApiResponse({ status: 404, description: 'Seller market assignment not found' })
+  async removeSellerMarket(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('marketId', ParseUUIDPipe) marketId: string,
+  ): Promise<ApiResponse<any>> {
+    const removed = await this.sellerMarketService.remove(id, marketId);
+    return { data: removed, message: 'Seller removed from market' };
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @RequireAccess({ permission: 'sellers.operate', scope: 'GLOBAL' })
+  @Put(':id/markets/:marketId/status')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Update seller market status',
+    description: 'Sets a seller market assignment to ACTIVE, PENDING, or SUSPENDED.',
+  })
+  @ApiParam({ name: 'id', description: 'Seller UUID', type: String })
+  @ApiParam({ name: 'marketId', description: 'Market UUID', type: String })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['status'],
+      properties: { status: { type: 'string', enum: ['ACTIVE', 'PENDING', 'SUSPENDED'] } },
+    },
+  })
+  @SwaggerApiResponse({ status: 200, description: 'Seller market status updated' })
+  @SwaggerApiResponse({ status: 400, description: 'Invalid status' })
+  @SwaggerApiResponse({ status: 404, description: 'Seller market assignment not found' })
+  async updateSellerMarketStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('marketId', ParseUUIDPipe) marketId: string,
+    @Body() body: { status: string },
+  ): Promise<ApiResponse<any>> {
+    const updated = await this.sellerMarketService.updateStatus(id, marketId, body.status);
+    return { data: updated, message: 'Seller market status updated' };
   }
 
   // === Vendor Management Endpoints (Admin) ===

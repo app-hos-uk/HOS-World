@@ -11,6 +11,7 @@ import {
   HttpStatus,
   UseGuards,
   ForbiddenException,
+  BadRequestException,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
@@ -27,6 +28,8 @@ import { DeactivateFoundingMemberDto } from './dto/member-status.dto';
 import { FOUNDING_MEMBER_ADMIN_ROLES } from './founding-members.roles';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { FeatureFlagsService, FeatureFlag } from '../config/feature-flags.service';
+import { MarketContextService } from '../access-control/market-context.service';
+import { MarketService } from '../access-control/market.service';
 
 @ApiTags('Founding Members')
 @Controller('founding-members')
@@ -35,7 +38,48 @@ export class FoundingMembersController {
   constructor(
     private readonly foundingMembersService: FoundingMembersService,
     private readonly featureFlagsService: FeatureFlagsService,
+    private readonly marketContext: MarketContextService,
+    private readonly markets: MarketService,
   ) {}
+
+  /**
+   * Explicit body market code wins, then the access-control context the guard
+   * already attached, then the x-market-code header.
+   */
+  private async resolveRequestMarketId(
+    req: {
+      accessControl?: { marketId?: string | null; store?: { marketId?: string | null } };
+      market?: { id?: string | null };
+      user?: { id?: string; role?: string; homeMarketId?: string | null };
+      headers?: Record<string, unknown>;
+      hostname?: string;
+      header?: (name: string) => string | undefined;
+    },
+    explicitCode?: string,
+  ): Promise<string | undefined> {
+    const code = explicitCode?.trim();
+    if (code) {
+      const market = await this.markets.findByCode(code);
+      if (!market) {
+        throw new BadRequestException(`Unknown market code: ${code}`);
+      }
+      return market.id;
+    }
+
+    const fromAccess = req.accessControl?.marketId;
+    if (typeof fromAccess === 'string' && fromAccess) return fromAccess;
+
+    const fromStore = req.accessControl?.store?.marketId;
+    if (typeof fromStore === 'string' && fromStore) return fromStore;
+
+    const fromMarket = req.market?.id;
+    if (typeof fromMarket === 'string' && fromMarket) return fromMarket;
+
+    const hint = this.marketContext.extractHint(req);
+    if (!hint.code) return undefined;
+    const resolved = await this.marketContext.resolve(hint, req.user ?? null);
+    return resolved.store.marketId ?? resolved.market?.id ?? undefined;
+  }
 
   @Public()
   @Throttle({ default: { limit: 3, ttl: 60000 } })
@@ -44,7 +88,11 @@ export class FoundingMembersController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Register as a founding member' })
   async register(@Body() dto: CreateFoundingMemberDto, @Request() req: any) {
-    if (!this.featureFlagsService.isEnabled(FeatureFlag.FOUNDING_MEMBERS)) {
+    const marketId = await this.resolveRequestMarketId(req, dto.marketCode);
+    const registrationOpen = marketId
+      ? await this.featureFlagsService.isEnabled(FeatureFlag.FOUNDING_MEMBERS, marketId)
+      : this.featureFlagsService.isEnabled(FeatureFlag.FOUNDING_MEMBERS);
+    if (!registrationOpen) {
       throw new ForbiddenException('Founding member registration is currently closed.');
     }
 
@@ -60,6 +108,7 @@ export class FoundingMembersController {
         registeredFrom: 'landing_page',
       },
       { sendConfirmationEmail: true },
+      marketId,
     );
 
     return {
@@ -73,8 +122,8 @@ export class FoundingMembersController {
   @Roles(...FOUNDING_MEMBER_ADMIN_ROLES)
   @RequireAccess({ permission: 'marketing.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Get founding member statistics (Admin / Marketing)' })
-  async stats() {
-    return { data: await this.foundingMembersService.getStats() };
+  async stats(@Query('marketId') marketId?: string) {
+    return { data: await this.foundingMembersService.getStats(marketId?.trim() || undefined) };
   }
 
   @RequireAccess({ permission: 'users.edit', scope: 'MARKET' })
@@ -125,9 +174,11 @@ export class FoundingMembersController {
   @ApiOperation({ summary: 'Manually add a single founding member (Admin / Marketing)' })
   async adminCreate(@Body() dto: AdminCreateFoundingMemberDto, @Request() req: any) {
     const { sendConfirmationEmail, ...memberDto } = dto;
+    const marketId = await this.resolveRequestMarketId(req, memberDto.marketCode);
     const member = await this.foundingMembersService.adminCreate(memberDto, {
       sendConfirmationEmail: sendConfirmationEmail ?? false,
       metadata: { importedBy: req.user?.id },
+      marketId,
     });
 
     return {
@@ -188,6 +239,7 @@ export class FoundingMembersController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('includeDeactivated') includeDeactivatedRaw?: string,
+    @Query('marketId') marketId?: string,
   ) {
     const includeDeactivated =
       includeDeactivatedRaw === '1' ||
@@ -199,6 +251,7 @@ export class FoundingMembersController {
         parseInt(limit || '50', 10),
         search?.trim() || undefined,
         includeDeactivated,
+        marketId?.trim() || undefined,
       ),
     };
   }

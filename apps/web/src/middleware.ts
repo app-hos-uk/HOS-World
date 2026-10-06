@@ -57,6 +57,10 @@ const PROTECTED_PREFIXES = [
 const ROOT_DOMAINS = [
   'houseofspells.com',
   'www.houseofspells.com',
+  'houseofspells.my',
+  'www.houseofspells.my',
+  'shop.houseofspells.my',
+  'us.houseofspells.com',
   'localhost',
   '127.0.0.1',
 ];
@@ -162,7 +166,7 @@ export async function middleware(request: NextRequest) {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://*.r2.dev https://*.r2.cloudflarestorage.com https://images.unsplash.com https://images.pexels.com https://lh3.googleusercontent.com https://hos-world-web.vercel.app https://cdn.shopify.com https://www.facebook.com https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.openstreetmap.de https://cdnjs.cloudflare.com",
     "font-src 'self' data:",
-    "connect-src 'self' https://*.houseofspells.com https://api.stripe.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://graph.facebook.com wss://*.houseofspells.com https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.openstreetmap.de https://nominatim.openstreetmap.org",
+    "connect-src 'self' https://*.houseofspells.com https://*.houseofspells.my https://api.stripe.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://graph.facebook.com wss://*.houseofspells.com wss://*.houseofspells.my https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://tile.openstreetmap.de https://nominatim.openstreetmap.org",
     "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
     "object-src 'none'",
     "base-uri 'self'",
@@ -327,14 +331,22 @@ export async function middleware(request: NextRequest) {
   let subdomain: string | null = null;
   const hostWithoutPort = hostname.split(':')[0];
 
-  for (const root of ROOT_DOMAINS) {
-    const rootWithoutPort = root.split(':')[0];
-    if (
-      hostWithoutPort !== rootWithoutPort &&
-      hostWithoutPort.endsWith(`.${rootWithoutPort}`)
-    ) {
-      subdomain = hostWithoutPort.replace(`.${rootWithoutPort}`, '');
-      break;
+  // Hosts listed in ROOT_DOMAINS (us.houseofspells.com, shop.houseofspells.my, www, …)
+  // are country or shop frontends, not seller storefronts of a shorter parent.
+  const isExactRootDomain = ROOT_DOMAINS.some(
+    (root) => hostWithoutPort === root.split(':')[0],
+  );
+
+  if (!isExactRootDomain) {
+    for (const root of ROOT_DOMAINS) {
+      const rootWithoutPort = root.split(':')[0];
+      if (
+        hostWithoutPort !== rootWithoutPort &&
+        hostWithoutPort.endsWith(`.${rootWithoutPort}`)
+      ) {
+        subdomain = hostWithoutPort.replace(`.${rootWithoutPort}`, '');
+        break;
+      }
     }
   }
 
@@ -342,8 +354,12 @@ export async function middleware(request: NextRequest) {
     subdomain = hostWithoutPort.replace('.localhost', '');
   }
 
-  // Known non-seller subdomains: redirect their root to the intended page.
-  if (subdomain === 'join') {
+  // Loyalty join hosts: join.houseofspells.com and join.houseofspells.my → /loyalty/join.
+  const isLoyaltyJoinHost =
+    subdomain === 'join' ||
+    hostWithoutPort === 'join.houseofspells.com' ||
+    hostWithoutPort === 'join.houseofspells.my';
+  if (isLoyaltyJoinHost) {
     if (pathname === '/' || pathname === '') {
       const url = request.nextUrl.clone();
       url.pathname = '/loyalty/join';

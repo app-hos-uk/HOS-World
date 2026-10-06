@@ -56,25 +56,63 @@ const FLAG_CATEGORIES: Record<string, string[]> = {
   ],
 };
 
+type MarketOption = { id: string; code: string; name: string; isActive?: boolean };
+
+function isMarketFlagView(
+  data: unknown,
+): data is { flags: Record<string, boolean>; global: Record<string, boolean>; overrides: Record<string, boolean> } {
+  if (!data || typeof data !== 'object') return false;
+  const view = data as { flags?: unknown; global?: unknown; overrides?: unknown };
+  return !!view.flags && typeof view.flags === 'object' && !!view.overrides && typeof view.overrides === 'object';
+}
+
 export default function AdminFeatureFlagsPage() {
   const [flags, setFlags] = useState<Record<string, boolean>>({});
+  const [globalFlags, setGlobalFlags] = useState<Record<string, boolean>>({});
+  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
+  const [markets, setMarkets] = useState<MarketOption[]>([]);
+  const [selectedMarketId, setSelectedMarketId] = useState('');
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+    apiClient.listAdminMarkets()
+      .then((res) => {
+        if (cancelled) return;
+        setMarkets(Array.isArray(res?.data) ? res.data : []);
+      })
+      .catch(() => {
+        if (!cancelled) setMarkets([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const fetchFlags = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiClient.getFeatureFlags();
-      setFlags(res.data || {});
+      const res = await apiClient.getFeatureFlags(selectedMarketId || undefined);
+      if (selectedMarketId && isMarketFlagView(res.data)) {
+        setFlags(res.data.flags || {});
+        setGlobalFlags(res.data.global || {});
+        setOverrides(res.data.overrides || {});
+      } else {
+        const flat = (res.data && !isMarketFlagView(res.data) ? res.data : {}) as Record<string, boolean>;
+        setFlags(flat);
+        setGlobalFlags(flat);
+        setOverrides({});
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load feature flags');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedMarketId]);
 
   useEffect(() => {
     fetchFlags();
@@ -84,12 +122,18 @@ export default function AdminFeatureFlagsPage() {
     setToggling(flag);
     setError(null);
     setSuccessMsg(null);
+    const next = !currentValue;
     try {
-      const res = await apiClient.setFeatureFlag(flag, !currentValue);
-      setFlags((prev) => ({ ...prev, [flag]: !currentValue }));
+      const res = await apiClient.setFeatureFlag(flag, next, selectedMarketId || undefined);
+      setFlags((prev) => ({ ...prev, [flag]: next }));
+      if (selectedMarketId) {
+        setOverrides((prev) => ({ ...prev, [flag]: next }));
+      } else {
+        setGlobalFlags((prev) => ({ ...prev, [flag]: next }));
+      }
       // Server message distinguishes a persisted toggle from an in-memory-only
       // fallback when the DB write fails.
-      setSuccessMsg(res?.message || `${flag} ${!currentValue ? 'enabled' : 'disabled'} successfully`);
+      setSuccessMsg(res?.message || `${flag} ${next ? 'enabled' : 'disabled'} successfully`);
       setTimeout(() => setSuccessMsg(null), 5000);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to update feature flag');
@@ -97,6 +141,8 @@ export default function AdminFeatureFlagsPage() {
       setToggling(null);
     }
   };
+
+  const selectedMarket = markets.find((market) => market.id === selectedMarketId);
 
   const categorizedFlags = Object.entries(FLAG_CATEGORIES).map(([category, flagKeys]) => ({
     category,
@@ -108,13 +154,34 @@ export default function AdminFeatureFlagsPage() {
   );
 
   return (
-    <RouteGuard allowedRoles={['ADMIN']}>
+    <RouteGuard allowedRoles={['ADMIN']} requiredPermissions={['settings.view']} showAccessDenied>
               <div className="space-y-6">
           <div>
             <h1 className="text-2xl font-bold text-hos-text-secondary">Feature Flags</h1>
             <p className="mt-1 text-sm text-hos-text-muted">
-              Toggle features on or off across the platform. Changes take effect immediately and are saved to the database.
+              {selectedMarket
+                ? `Overrides for ${selectedMarket.name} (${selectedMarket.code}). Flags without an override keep the global default.`
+                : 'Toggle features on or off across the platform. Changes take effect immediately and are saved to the database.'}
             </p>
+          </div>
+
+          <div className="max-w-xs">
+            <label htmlFor="feature-flag-market" className="block text-xs font-medium text-hos-text-muted mb-1">
+              Market
+            </label>
+            <select
+              id="feature-flag-market"
+              value={selectedMarketId}
+              onChange={(e) => setSelectedMarketId(e.target.value)}
+              className="w-full rounded-lg border border-hos-border bg-hos-bg-secondary px-3 py-2 text-sm text-hos-text-secondary focus:outline-none focus:ring-2 focus:ring-hos-gold/50"
+            >
+              <option value="">Global defaults</option>
+              {markets.map((market) => (
+                <option key={market.id} value={market.id}>
+                  {market.name} ({market.code}){market.isActive === false ? ' — inactive' : ''}
+                </option>
+              ))}
+            </select>
           </div>
 
           {error && (
@@ -148,10 +215,28 @@ export default function AdminFeatureFlagsPage() {
                               >
                                 {flags[flag] ? 'ON' : 'OFF'}
                               </span>
+                              {selectedMarketId && (
+                                <span
+                                  className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                    flag in overrides
+                                      ? 'bg-hos-gold/15 text-hos-gold'
+                                      : 'bg-hos-border text-hos-text-muted'
+                                  }`}
+                                >
+                                  {flag in overrides ? 'Override' : 'Global'}
+                                </span>
+                              )}
                             </div>
                             <p className="text-xs text-hos-text-muted mt-0.5">
                               {FLAG_DESCRIPTIONS[flag] || 'No description available'}
                             </p>
+                            {selectedMarketId && (
+                              <p className="text-[11px] text-hos-text-muted mt-0.5">
+                                {flag in overrides
+                                  ? `Market override. Global default is ${globalFlags[flag] ? 'ON' : 'OFF'}.`
+                                  : `Using the global default (${globalFlags[flag] ? 'ON' : 'OFF'}).`}
+                              </p>
+                            )}
                             {FLAG_DEPENDENCIES[flag]?.warning && (
                               <p className="text-[11px] text-amber-500/80 mt-0.5 flex items-center gap-1">
                                 <span>⚠</span> {FLAG_DEPENDENCIES[flag].warning}
@@ -198,10 +283,28 @@ export default function AdminFeatureFlagsPage() {
                             >
                               {flags[flag] ? 'ON' : 'OFF'}
                             </span>
+                            {selectedMarketId && (
+                              <span
+                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                  flag in overrides
+                                    ? 'bg-hos-gold/15 text-hos-gold'
+                                    : 'bg-hos-border text-hos-text-muted'
+                                }`}
+                              >
+                                {flag in overrides ? 'Override' : 'Global'}
+                              </span>
+                            )}
                           </div>
                           <p className="text-xs text-hos-text-muted mt-0.5">
                             {FLAG_DESCRIPTIONS[flag] || 'No description available'}
                           </p>
+                          {selectedMarketId && (
+                            <p className="text-[11px] text-hos-text-muted mt-0.5">
+                              {flag in overrides
+                                ? `Market override. Global default is ${globalFlags[flag] ? 'ON' : 'OFF'}.`
+                                : `Using the global default (${globalFlags[flag] ? 'ON' : 'OFF'}).`}
+                            </p>
+                          )}
                           {FLAG_DEPENDENCIES[flag]?.warning && (
                             <p className="text-[11px] text-amber-500/80 mt-0.5 flex items-center gap-1">
                               <span>⚠</span> {FLAG_DEPENDENCIES[flag].warning}
@@ -236,6 +339,7 @@ export default function AdminFeatureFlagsPage() {
             <p className="text-xs text-amber-200/70 mt-1">
               Changes take effect immediately and are saved to the database, where they override the
               corresponding <code className="text-amber-300">FF_*</code> environment variable on restart.
+              A selected market stores an override for that market only; other markets keep the global default.
               If a save fails, the banner above will say <em>in-memory only</em> — that change will be lost on restart.
             </p>
             <p className="text-xs text-amber-200/70 mt-2">
