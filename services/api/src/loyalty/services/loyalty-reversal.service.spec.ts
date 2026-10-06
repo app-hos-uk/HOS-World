@@ -52,6 +52,13 @@ describe('LoyaltyReversalService', () => {
       loyaltyTransaction: {
         findMany: jest.fn().mockResolvedValue(overrides.priorTransactions ?? []),
       },
+      loyaltyRedemption: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        update: jest.fn(),
+      },
+      loyaltyRedemptionOption: {
+        update: jest.fn(),
+      },
       $transaction: jest.fn().mockImplementation(async (fn: any) => fn(prisma)),
     };
 
