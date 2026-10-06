@@ -523,7 +523,7 @@ export class LoyaltyAdminController {
     @Request() req: any,
   ): Promise<ApiResponse<unknown>> {
     try {
-      const settings = await this.settings.update(body || {}, req.user?.id);
+      const settings = await this.settings.update({ ...(body || {}) }, req.user?.id);
       return { data: settings, message: 'Settings saved' };
     } catch (e) {
       throw new BadRequestException((e as Error).message);
