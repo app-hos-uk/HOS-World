@@ -1294,6 +1294,43 @@ export class PosVoucherService {
         this.logger.warn(`TTL expire failed for ${voucher.id}: ${(e as Error).message}`);
       }
     }
+    const pendingCutoff = new Date(now.getTime() - 60 * 60 * 1000);
+    const stuckPending = await this.prisma.loyaltyPosVoucher.findMany({
+      where: {
+        status: 'PENDING',
+        type: { not: 'PROMO_CODE' },
+        createdAt: { lte: pendingCutoff },
+      },
+      include: { redemption: true },
+      take: 50,
+    });
+
+    for (const voucher of stuckPending) {
+      try {
+        await this.reverseBurn(
+          voucher.membershipId,
+          voucher.redemption.pointsSpent,
+          voucher.redemptionId,
+          voucher.storeId,
+        );
+        await this.prisma.loyaltyPosVoucher.update({
+          where: { id: voucher.id },
+          data: {
+            status: 'EXPIRED',
+            metadata: {
+              ...((voucher.metadata as object) || {}),
+              expiredReason: 'PENDING_TIMEOUT',
+            } as Prisma.InputJsonValue,
+          },
+        });
+        count++;
+      } catch (err) {
+        this.logger.warn(
+          `Failed to cleanup stuck PENDING voucher ${voucher.id}: ${(err as Error).message}`,
+        );
+      }
+    }
+
     const promoExpired = this.promoCodes ? await this.promoCodes.expireUnusedPromoCodes() : 0;
     return count + promoExpired;
   }

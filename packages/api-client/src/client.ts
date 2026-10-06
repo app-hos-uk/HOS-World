@@ -678,8 +678,11 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>('/loyalty/tier-progress');
   }
 
-  async getRedemptionOptions(region?: string): Promise<ApiResponse<unknown>> {
-    const qs = region ? `?region=${encodeURIComponent(region)}` : '';
+  async getRedemptionOptions(params?: { region?: string; channel?: string }): Promise<ApiResponse<unknown>> {
+    const sp = new URLSearchParams();
+    if (params?.region) sp.set('region', params.region);
+    if (params?.channel) sp.set('channel', params.channel);
+    const qs = sp.toString() ? `?${sp.toString()}` : '';
     return this.request<ApiResponse<unknown>>(`/loyalty/redemption-options${qs}`);
   }
 

@@ -101,8 +101,9 @@ export class LoyaltyController {
     @Request() req: { user: { id: string } },
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+    @Query('type') type?: string,
   ): Promise<ApiResponse<unknown>> {
-    const data = await this.loyalty.getTransactions(req.user.id, { page, limit });
+    const data = await this.loyalty.getTransactions(req.user.id, { page, limit, type });
     return { data, message: 'OK' };
   }
 
@@ -145,9 +146,13 @@ export class LoyaltyController {
   async redemptionOptions(
     @Request() req: { user: { id: string } },
     @Query('region') region?: string,
+    @Query('channel') channel?: string,
   ): Promise<ApiResponse<unknown>> {
     const m = await this.loyalty.getMembership(req.user.id);
-    const data = await this.loyalty.getRedemptionOptions(region || m?.regionCode || undefined);
+    const data = await this.loyalty.getRedemptionOptions(
+      region || m?.regionCode || undefined,
+      channel || undefined,
+    );
     return { data, message: 'OK' };
   }
 

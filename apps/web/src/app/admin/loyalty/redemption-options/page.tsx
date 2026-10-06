@@ -16,7 +16,10 @@ export default function AdminLoyaltyRedemptionPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
-  const [form, setForm] = useState({ name: '', description: '', pointsCost: 0, type: 'DISCOUNT', value: 0, isActive: true });
+  const [form, setForm] = useState({
+    name: '', description: '', pointsCost: 0, type: 'DISCOUNT', value: 0, minCartValue: '' as string | number, isActive: true,
+    stock: '' as string | number, regionCodes: '', channels: [] as string[], startsAt: '', endsAt: '', image: '',
+  });
   const [fieldErrors, setFieldErrors] = useState<{ name?: string; description?: string; type?: string }>({});
   const [saving, setSaving] = useState(false);
   const toast = useToast();
@@ -44,7 +47,10 @@ export default function AdminLoyaltyRedemptionPage() {
   useEffect(() => { load(); }, [load]);
 
   const resetForm = () => {
-    setForm({ name: '', description: '', pointsCost: 0, type: 'DISCOUNT', value: 0, isActive: true });
+    setForm({
+      name: '', description: '', pointsCost: 0, type: 'DISCOUNT', value: 0, minCartValue: '' as string | number, isActive: true,
+      stock: '', regionCodes: '', channels: [], startsAt: '', endsAt: '', image: '',
+    });
     setEditing(null);
     setShowForm(false);
   };
@@ -57,7 +63,14 @@ export default function AdminLoyaltyRedemptionPage() {
       pointsCost: opt.pointsCost || 0,
       type: opt.type || 'DISCOUNT',
       value: opt.value ?? opt.discountValue ?? 0,
+      minCartValue: opt.minCartValue != null ? Number(opt.minCartValue) : '',
       isActive: opt.isActive ?? true,
+      stock: opt.stock ?? '',
+      regionCodes: Array.isArray(opt.regionCodes) ? opt.regionCodes.join(', ') : (opt.regionCodes || ''),
+      channels: Array.isArray(opt.channels) ? opt.channels : [],
+      startsAt: opt.startsAt ? new Date(opt.startsAt).toISOString().slice(0, 16) : '',
+      endsAt: opt.endsAt ? new Date(opt.endsAt).toISOString().slice(0, 16) : '',
+      image: opt.image || '',
     });
     setShowForm(true);
   };
@@ -80,7 +93,24 @@ export default function AdminLoyaltyRedemptionPage() {
       toast.error(nameErr || descriptionErr || typeErr || 'Please fix the form fields');
       return;
     }
-    const payload = { ...form, name, description, type };
+    const parsedRegionCodes = form.regionCodes
+      ? String(form.regionCodes).split(',').map((s) => s.trim().toUpperCase()).filter(Boolean)
+      : [];
+    const payload: Record<string, unknown> = {
+      name,
+      description,
+      type,
+      pointsCost: form.pointsCost,
+      value: form.value,
+      minCartValue: form.minCartValue === '' || form.minCartValue === null ? null : Number(form.minCartValue),
+      isActive: form.isActive,
+      stock: form.stock === '' || form.stock === null ? null : Number(form.stock),
+      regionCodes: parsedRegionCodes.length > 0 ? parsedRegionCodes : [],
+      channels: form.channels.length > 0 ? form.channels : [],
+      startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : null,
+      endsAt: form.endsAt ? new Date(form.endsAt).toISOString() : null,
+      image: form.image || null,
+    };
     setSaving(true);
     try {
       if (editing) {
@@ -155,6 +185,10 @@ export default function AdminLoyaltyRedemptionPage() {
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Discount Value</label>
                 <input type="number" step="0.01" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.value} onChange={(e) => setForm({ ...form, value: parseFloat(e.target.value) || 0 })} />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Min Cart Value (empty = none)</label>
+                <input type="number" step="0.01" min="0" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="No minimum" value={form.minCartValue} onChange={(e) => setForm({ ...form, minCartValue: e.target.value === '' ? '' : parseFloat(e.target.value) || 0 })} />
+              </div>
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-hos-text-secondary mb-1">Description</label>
                 <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
@@ -162,6 +196,49 @@ export default function AdminLoyaltyRedemptionPage() {
               <div className="flex items-center gap-2">
                 <input type="checkbox" id="optActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="rounded" />
                 <label htmlFor="optActive" className="text-sm font-medium text-hos-text-secondary">Active</label>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Stock (empty = unlimited)</label>
+                <input type="number" min="0" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="Unlimited" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value === '' ? '' : parseInt(e.target.value) || 0 })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Region Codes (comma-separated)</label>
+                <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="e.g. US, GB, MY" value={form.regionCodes} onChange={(e) => setForm({ ...form, regionCodes: e.target.value })} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Channels</label>
+                <div className="flex flex-wrap gap-3">
+                  {['MARKETPLACE_CHECKOUT', 'HOS_OUTLET_POS'].map((ch) => (
+                    <label key={ch} className="flex items-center gap-1.5 text-sm text-hos-text-secondary">
+                      <input
+                        type="checkbox"
+                        className="rounded"
+                        checked={form.channels.includes(ch)}
+                        onChange={(e) => {
+                          setForm((prev) => ({
+                            ...prev,
+                            channels: e.target.checked
+                              ? [...prev.channels, ch]
+                              : prev.channels.filter((c) => c !== ch),
+                          }));
+                        }}
+                      />
+                      {ch}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Starts At</label>
+                <input type="datetime-local" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Ends At</label>
+                <input type="datetime-local" className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary focus:outline-none border-hos-border" value={form.endsAt} onChange={(e) => setForm({ ...form, endsAt: e.target.value })} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-hos-text-secondary mb-1">Image URL</label>
+                <input className="w-full border rounded-lg px-3 py-2 bg-hos-bg-secondary text-hos-text-secondary placeholder-hos-text-muted focus:outline-none border-hos-border" placeholder="https://..." value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} />
               </div>
             </div>
             <div className="flex gap-2">

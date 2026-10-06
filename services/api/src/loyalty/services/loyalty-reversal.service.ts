@@ -30,6 +30,8 @@ export class LoyaltyReversalService {
         id: true,
         userId: true,
         orderNumber: true,
+        subtotal: true,
+        qualifyingSubtotal: true,
         loyaltyPointsEarned: true,
         loyaltyPointsRedeemed: true,
         parentOrderId: true,
@@ -38,14 +40,46 @@ export class LoyaltyReversalService {
     if (!order?.userId || order.parentOrderId) return;
 
     const { settings } = await this.settings.getResolved();
-    if (settings.clawEarnOnCancel && order.loyaltyPointsEarned > 0) {
-      await this.applyClawEarn(order.userId, order.loyaltyPointsEarned, {
-        source: 'ORDER_CANCEL',
-        sourceId: order.id,
-        description: `Clawback earn for cancelled order ${order.orderNumber}`,
-        idempotencyKey: `reverse:ORDER_EARN:${order.id}`,
+
+    const membership = await this.prisma.loyaltyMembership.findUnique({
+      where: { userId: order.userId },
+    });
+
+    if (settings.clawEarnOnCancel && order.loyaltyPointsEarned > 0 && membership) {
+      const prior = await this.prisma.loyaltyTransaction.findMany({
+        where: {
+          membershipId: membership.id,
+          sourceId: order.id,
+          source: 'ORDER_CANCEL',
+        },
+        select: { points: true },
+      });
+      const alreadyClawed = prior.reduce((s, t) => s + Math.abs(t.points), 0);
+      const earnClaw = Math.max(0, order.loyaltyPointsEarned - alreadyClawed);
+
+      if (earnClaw > 0) {
+        await this.applyClawEarn(order.userId, earnClaw, {
+          source: 'ORDER_CANCEL',
+          sourceId: order.id,
+          description: `Clawback earn for cancelled order ${order.orderNumber}`,
+          idempotencyKey: `reverse:ORDER_EARN:${order.id}:${order.loyaltyPointsEarned}:${alreadyClawed}`,
+        });
+      }
+    }
+
+    if (membership && order.loyaltyPointsEarned > 0) {
+      const spendToReverse = order.qualifyingSubtotal != null
+        ? Number(order.qualifyingSubtotal)
+        : Number(order.subtotal);
+      await this.prisma.loyaltyMembership.update({
+        where: { id: membership.id },
+        data: {
+          purchaseCount: { decrement: membership.purchaseCount > 0 ? 1 : 0 },
+          totalSpend: { decrement: Math.min(spendToReverse, Number(membership.totalSpend)) },
+        },
       });
     }
+
     if (settings.restoreBurnOnCancel && order.loyaltyPointsRedeemed > 0) {
       await this.applyRestoreBurn(order.userId, order.loyaltyPointsRedeemed, {
         source: 'ORDER_CANCEL_RESTORE_BURN',
@@ -53,6 +87,23 @@ export class LoyaltyReversalService {
         description: `Restore burn for cancelled order ${order.orderNumber}`,
         idempotencyKey: `restore:ORDER_BURN:${order.id}`,
       });
+
+      const redemption = await this.prisma.loyaltyRedemption.findFirst({
+        where: { orderId: order.id, status: 'COMPLETED' },
+        include: { option: { select: { id: true, stock: true } } },
+      });
+      if (redemption?.option?.stock != null) {
+        await this.prisma.loyaltyRedemptionOption.update({
+          where: { id: redemption.option.id },
+          data: { stock: { increment: 1 } },
+        });
+      }
+      if (redemption) {
+        await this.prisma.loyaltyRedemption.update({
+          where: { id: redemption.id },
+          data: { status: 'REVERSED' },
+        });
+      }
     }
   }
 
@@ -140,6 +191,28 @@ export class LoyaltyReversalService {
           targetPoints: targetBurnRestore,
         },
       });
+
+      // Only restore limited-stock inventory and mark REVERSED on a full return;
+      // partial returns pro-rate points but the physical reward was already used.
+      const isFullReturn = share >= 1;
+      if (isFullReturn) {
+        const redemption = await this.prisma.loyaltyRedemption.findFirst({
+          where: { orderId: order.id, status: 'COMPLETED' },
+          include: { option: { select: { id: true, stock: true } } },
+        });
+        if (redemption?.option?.stock != null) {
+          await this.prisma.loyaltyRedemptionOption.update({
+            where: { id: redemption.option.id },
+            data: { stock: { increment: 1 } },
+          });
+        }
+        if (redemption) {
+          await this.prisma.loyaltyRedemption.update({
+            where: { id: redemption.id },
+            data: { status: 'REVERSED' },
+          });
+        }
+      }
     }
   }
 

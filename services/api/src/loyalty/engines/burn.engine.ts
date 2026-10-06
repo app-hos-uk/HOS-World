@@ -94,6 +94,10 @@ export class LoyaltyBurnEngine {
       await this.validatePosStore(params.storeId);
     }
 
+    if (!params.optionId && !params.orderId && params.channel === 'MARKETPLACE_CHECKOUT') {
+      throw new BadRequestException('A redemption option is required for marketplace redemptions');
+    }
+
     const minRedeem = this.loyaltySettings
       ? (await this.loyaltySettings.getResolved()).settings.minRedemptionPoints
       : this.config.get<number>('LOYALTY_MIN_REDEMPTION_POINTS', 100);
@@ -174,6 +178,16 @@ export class LoyaltyBurnEngine {
         }
         if (option.stock != null && option.stock < 1) {
           throw new BadRequestException('Reward is out of stock');
+        }
+        if (
+          option.minCartValue != null &&
+          Number(option.minCartValue) > 0 &&
+          params.purchaseSubtotal != null &&
+          params.purchaseSubtotal < Number(option.minCartValue)
+        ) {
+          throw new BadRequestException(
+            `Minimum cart value of ${Number(option.minCartValue).toFixed(2)} required for this reward`,
+          );
         }
       }
 

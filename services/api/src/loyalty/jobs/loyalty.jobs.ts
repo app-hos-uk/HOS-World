@@ -67,12 +67,20 @@ export class LoyaltyJobsService implements OnModuleInit {
     }
 
     this.queue.registerProcessor(JobType.LOYALTY_TIER_REVIEW, async (_job: Job) => {
+      if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
+        this.logger.log('Loyalty disabled at runtime, skipping job');
+        return;
+      }
       this.logger.log('Starting batch tier review…');
       const { reviewed, changed } = await this.tiers.reviewAllMemberships();
       this.logger.log(`Tier review complete: ${changed}/${reviewed} changed`);
     });
 
     this.queue.registerProcessor(JobType.LOYALTY_POINTS_EXPIRY, async () => {
+      if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
+        this.logger.log('Loyalty disabled at runtime, skipping job');
+        return;
+      }
       const { settings } = await this.settings.getResolved(true);
       const expiryMonths = Math.max(0, Math.floor(Number(settings.pointsExpiryMonths) || 0));
       if (expiryMonths <= 0) {
@@ -83,60 +91,75 @@ export class LoyaltyJobsService implements OnModuleInit {
       const cutoff = new Date();
       cutoff.setMonth(cutoff.getMonth() - expiryMonths);
 
-      const expirable = await this.prisma.loyaltyTransaction.findMany({
-        where: {
-          type: LoyaltyTxType.EARN,
-          createdAt: { lt: cutoff },
-          expiresAt: null,
-          points: { gt: 0 },
-        },
-        orderBy: { createdAt: 'asc' },
-        take: 500,
-      });
+      let iteration = 0;
+      const MAX_ITERATIONS = 10;
+      while (iteration < MAX_ITERATIONS) {
+        const expirable = await this.prisma.loyaltyTransaction.findMany({
+          where: {
+            type: { in: [LoyaltyTxType.EARN, LoyaltyTxType.BONUS] },
+            createdAt: { lt: cutoff },
+            expiresAt: null,
+            points: { gt: 0 },
+          },
+          orderBy: { createdAt: 'asc' },
+          take: 2000,
+        });
 
-      this.logger.log(`Found ${expirable.length} transactions eligible for expiry`);
+        if (expirable.length === 0) break;
+        this.logger.log(`Expiry batch ${iteration + 1}: ${expirable.length} transactions`);
 
-      const byMembership = new Map<string, typeof expirable>();
-      for (const tx of expirable) {
-        const rows = byMembership.get(tx.membershipId) ?? [];
-        rows.push(tx);
-        byMembership.set(tx.membershipId, rows);
-      }
-
-      for (const [membershipId, rows] of byMembership) {
-        try {
-          let budget = await this.computeExpirableBudget(membershipId, cutoff);
-          for (const tx of rows) {
-            // Under FIFO, spends consume the oldest credits first, so only the
-            // portion of this earn that was never spent may expire. The row is
-            // still stamped when the budget is exhausted — its points are
-            // already accounted for by earlier burns.
-            const amount = Math.min(tx.points, Math.max(0, budget));
-            await this.prisma.$transaction(async (ptx) => {
-              if (amount > 0) {
-                await this.wallet.applyDelta(ptx, membershipId, -amount, LoyaltyTxType.EXPIRE, {
-                  source: 'EXPIRY',
-                  sourceId: tx.id,
-                  channel: 'SYSTEM',
-                  description: `Points expired (earned ${tx.createdAt.toISOString().slice(0, 10)})`,
-                  idempotencyKey: `expire:${tx.id}`,
-                  metadata: { earnedPoints: tx.points, expiredPoints: amount },
-                });
-              }
-              await ptx.loyaltyTransaction.update({
-                where: { id: tx.id },
-                data: { expiresAt: new Date() },
-              });
-            });
-            budget -= amount;
-          }
-        } catch (e) {
-          this.logger.warn(`Expiry failed for membership ${membershipId}: ${(e as Error).message}`);
+        const byMembership = new Map<string, typeof expirable>();
+        for (const tx of expirable) {
+          const rows = byMembership.get(tx.membershipId) ?? [];
+          rows.push(tx);
+          byMembership.set(tx.membershipId, rows);
         }
+
+        for (const [membershipId, rows] of byMembership) {
+          try {
+            let budget = await this.computeExpirableBudget(membershipId, cutoff);
+            let totalExpired = 0;
+            for (const tx of rows) {
+              const amount = Math.min(tx.points, Math.max(0, budget));
+              await this.prisma.$transaction(async (ptx) => {
+                if (amount > 0) {
+                  await this.wallet.applyDelta(ptx, membershipId, -amount, LoyaltyTxType.EXPIRE, {
+                    source: 'EXPIRY',
+                    sourceId: tx.id,
+                    channel: 'SYSTEM',
+                    description: `Points expired (earned ${tx.createdAt.toISOString().slice(0, 10)})`,
+                    idempotencyKey: `expire:${tx.id}`,
+                    metadata: { earnedPoints: tx.points, expiredPoints: amount },
+                  });
+                }
+                await ptx.loyaltyTransaction.update({
+                  where: { id: tx.id },
+                  data: { expiresAt: new Date() },
+                });
+              });
+              totalExpired += amount;
+              budget -= amount;
+            }
+            if (totalExpired > 0) {
+              await this.prisma.loyaltyMembership.updateMany({
+                where: { id: membershipId, totalPointsEarned: { gte: totalExpired } },
+                data: { totalPointsEarned: { decrement: totalExpired } },
+              });
+              await this.tiers.recalculateTier(membershipId);
+            }
+          } catch (e) {
+            this.logger.warn(`Expiry failed for membership ${membershipId}: ${(e as Error).message}`);
+          }
+        }
+        iteration++;
       }
     });
 
     this.queue.registerProcessor(JobType.LOYALTY_BIRTHDAY_BONUS, async () => {
+      if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
+        this.logger.log('Loyalty disabled at runtime, skipping job');
+        return;
+      }
       const bonusRule = await this.prisma.loyaltyEarnRule.findUnique({
         where: { action: 'BIRTHDAY' },
       });
@@ -229,6 +252,10 @@ export class LoyaltyJobsService implements OnModuleInit {
     });
 
     this.queue.registerProcessor(JobType.LOYALTY_ANNIVERSARY_BONUS, async () => {
+      if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
+        this.logger.log('Loyalty disabled at runtime, skipping job');
+        return;
+      }
       const bonusRule = await this.prisma.loyaltyEarnRule.findUnique({
         where: { action: 'ANNIVERSARY' },
       });
@@ -314,6 +341,10 @@ export class LoyaltyJobsService implements OnModuleInit {
     });
 
     this.queue.registerProcessor(JobType.LOYALTY_VOUCHER_TTL, async () => {
+      if (!isLoyaltyRuntimeEnabled(this.config, this.featureFlags)) {
+        this.logger.log('Loyalty disabled at runtime, skipping job');
+        return;
+      }
       const n = await this.posVouchers.expireUnusedVouchers();
       const otpPurged = await this.posOtp.purgeExpired();
       this.logger.log(`Voucher TTL sweep: ${n} reversed, ${otpPurged} OTP rows purged`);

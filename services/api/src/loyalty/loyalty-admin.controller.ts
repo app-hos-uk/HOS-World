@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -24,6 +25,7 @@ import { LoyaltyService } from './loyalty.service';
 import { AdminLoyaltyAdjustDto } from './dto/admin-adjust.dto';
 import { ReassignVoucherDto } from './dto/reassign-voucher.dto';
 import {
+  UpdateLoyaltySettingsDto,
   UpdateLoyaltyTierDto,
   CreateEarnRuleDto,
   UpdateEarnRuleDto,
@@ -36,10 +38,7 @@ import { FandomProfileService } from './services/fandom-profile.service';
 import { PosVoucherService } from './services/pos-voucher.service';
 import { LoyaltyTierEngine } from './engines/tier.engine';
 import { QueueService, JobType } from '../queue/queue.service';
-import {
-  LoyaltyProgrammeSettings,
-  LoyaltySettingsService,
-} from './services/loyalty-settings.service';
+import { LoyaltySettingsService } from './services/loyalty-settings.service';
 import { RequireAccess } from '../access-control/decorators/require-access.decorator';
 import { AdminLoyaltySendMemberEmailDto } from './dto/send-member-email.dto';
 import { DeactivateMemberDto } from './dto/member-status.dto';
@@ -139,6 +138,11 @@ export class LoyaltyAdminController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateEarnRuleDto,
   ): Promise<ApiResponse<unknown>> {
+    const SYSTEM_ACTIONS = new Set(['BIRTHDAY', 'ANNIVERSARY', 'SIGNUP', 'REFERRAL', 'CHECK_IN', 'SOCIAL_SHARE', 'PURCHASE']);
+    const existing = await this.prisma.loyaltyEarnRule.findUnique({ where: { id } });
+    if (existing && SYSTEM_ACTIONS.has(existing.action) && body.action && body.action !== existing.action) {
+      throw new BadRequestException(`Cannot rename system earn rule action "${existing.action}"`);
+    }
     const data = await this.prisma.loyaltyEarnRule.update({ where: { id }, data: body as any });
     return { data, message: 'Updated' };
   }
@@ -146,6 +150,11 @@ export class LoyaltyAdminController {
   @Delete('earn-rules/:id')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   async deleteEarnRule(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
+    const SYSTEM_ACTIONS = new Set(['BIRTHDAY', 'ANNIVERSARY', 'SIGNUP', 'REFERRAL', 'CHECK_IN', 'SOCIAL_SHARE', 'PURCHASE']);
+    const rule = await this.prisma.loyaltyEarnRule.findUnique({ where: { id } });
+    if (rule && SYSTEM_ACTIONS.has(rule.action)) {
+      throw new BadRequestException(`Cannot delete system earn rule "${rule.action}"`);
+    }
     await this.prisma.loyaltyEarnRule.delete({ where: { id } });
     return { data: null, message: 'Deleted' };
   }
@@ -212,6 +221,9 @@ export class LoyaltyAdminController {
   @Post('campaigns')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   async createCampaign(@Body() body: CreateCampaignDto): Promise<ApiResponse<unknown>> {
+    if (new Date(body.endsAt) <= new Date(body.startsAt)) {
+      throw new BadRequestException('endsAt must be after startsAt');
+    }
     const data = await this.prisma.loyaltyBonusCampaign.create({ data: body as any });
     return { data, message: 'Created' };
   }
@@ -222,6 +234,19 @@ export class LoyaltyAdminController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateCampaignDto,
   ): Promise<ApiResponse<unknown>> {
+    if (body.startsAt && body.endsAt && new Date(body.endsAt) <= new Date(body.startsAt)) {
+      throw new BadRequestException('endsAt must be after startsAt');
+    }
+    if (body.startsAt || body.endsAt) {
+      const existing = await this.prisma.loyaltyBonusCampaign.findUnique({ where: { id } });
+      if (existing) {
+        const effectiveStart = new Date(body.startsAt ?? existing.startsAt);
+        const effectiveEnd = new Date(body.endsAt ?? existing.endsAt);
+        if (effectiveEnd <= effectiveStart) {
+          throw new BadRequestException('endsAt must be after startsAt');
+        }
+      }
+    }
     const data = await this.prisma.loyaltyBonusCampaign.update({
       where: { id },
       data: body as any,
@@ -232,6 +257,11 @@ export class LoyaltyAdminController {
   @Delete('campaigns/:id')
   @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   async deleteCampaign(@Param('id', ParseUUIDPipe) id: string): Promise<ApiResponse<unknown>> {
+    const campaign = await this.prisma.loyaltyBonusCampaign.findUnique({ where: { id } });
+    if (!campaign) throw new NotFoundException('Campaign not found');
+    if (campaign.isActive && new Date(campaign.endsAt) > new Date()) {
+      throw new BadRequestException('Cannot delete an active campaign. Deactivate it first.');
+    }
     await this.prisma.loyaltyBonusCampaign.delete({ where: { id } });
     return { data: null, message: 'Deleted' };
   }
@@ -489,10 +519,11 @@ export class LoyaltyAdminController {
   @RequireAccess({ permission: 'loyalty.manage', scope: 'GLOBAL' })
   @ApiOperation({ summary: 'Update loyalty programme settings' })
   async putSettings(
-    @Body() body: Partial<LoyaltyProgrammeSettings>,
+    @Body() body: UpdateLoyaltySettingsDto,
+    @Request() req: any,
   ): Promise<ApiResponse<unknown>> {
     try {
-      const settings = await this.settings.update(body || {});
+      const settings = await this.settings.update(body || {}, req.user?.id);
       return { data: settings, message: 'Settings saved' };
     } catch (e) {
       throw new BadRequestException((e as Error).message);

@@ -373,13 +373,16 @@ export class LoyaltyListener {
         await this.wallet.lockMembership(tx, membership.id);
         if (!(await this.isWithinLimits(tx, membership.id, 'SOCIAL_SHARE', rule))) return;
 
-        await this.wallet.applyDelta(tx, membership.id, pts, LoyaltyTxType.EARN, {
+        const today = new Date().toISOString().slice(0, 10);
+        const delta = await this.wallet.applyDelta(tx, membership.id, pts, LoyaltyTxType.EARN, {
           source: 'SOCIAL_SHARE',
           channel: 'WEB',
           earnRuleId: rule?.id,
           description: `Social share on ${platform}`,
           metadata: { platform } as Prisma.InputJsonValue,
+          idempotencyKey: `earn:SOCIAL_SHARE:${membership.id}:${platform}:${today}`,
         });
+        if (!delta.applied) return;
         await tx.loyaltyMembership.update({
           where: { id: membership.id },
           data: {

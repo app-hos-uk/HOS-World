@@ -16,6 +16,7 @@ import { LoyaltySettingsService } from '../services/loyalty-settings.service';
 import {
   computeQualifyingSubtotal as sumQualifyingSubtotal,
   computeThresholdBonusPoints as sumThresholdBonusPoints,
+  isGiftCardLine,
   mergeProgrammeThresholdCampaign,
   type QualifyingLineInput,
   type ThresholdBonusRow,
@@ -749,6 +750,7 @@ export class LoyaltyEarnEngine {
     for (const line of order.items) {
       const p = line.product;
       if (!p) continue;
+      if (isGiftCardLine({ name: p.name, product: p })) continue;
 
       const seller = (await this.resolveSellerForItem(p, hosSellerId)) ??
         // Unresolved seller: still apply platform PURCHASE rule / default rate
@@ -994,7 +996,7 @@ export class LoyaltyEarnEngine {
             where: { id: membership.id },
             data: {
               totalPointsEarned: { increment: appliedPoints },
-              totalSpend: { increment: order.subtotal },
+              totalSpend: { increment: qualifyingSubtotal.toNumber() },
               purchaseCount: { increment: 1 },
             },
           });
@@ -1042,6 +1044,7 @@ export class LoyaltyEarnEngine {
       },
     });
     if (!sale?.customerId || sale.items.length === 0) return;
+    if (sale.status === 'VOIDED' || sale.status === 'RETURN') return;
     if (sale.loyaltyPointsEarned > 0) return;
 
     const qualifyingSubtotal = this.computeQualifyingSubtotal(

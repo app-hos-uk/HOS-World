@@ -36,7 +36,11 @@ export class LoyaltyTierEngine {
    * base without waiting for the weekly cron or for each member to transact.
    */
   async reviewAllMemberships(): Promise<{ reviewed: number; changed: number; failed: number }> {
-    const members = await this.prisma.loyaltyMembership.findMany({ select: { id: true } });
+    await this.validateTierOrdering();
+    const members = await this.prisma.loyaltyMembership.findMany({
+      where: { status: 'ACTIVE' },
+      select: { id: true },
+    });
     let changed = 0;
     let failed = 0;
 
@@ -51,6 +55,20 @@ export class LoyaltyTierEngine {
     }
 
     return { reviewed: members.length, changed, failed };
+  }
+
+  private async validateTierOrdering(): Promise<void> {
+    const tiers = await this.prisma.loyaltyTier.findMany({
+      where: { isActive: true },
+      orderBy: { level: 'asc' },
+    });
+    for (let i = 1; i < tiers.length; i++) {
+      if (tiers[i].pointsThreshold < tiers[i - 1].pointsThreshold) {
+        this.logger.warn(
+          `Tier ordering mismatch: Level ${tiers[i].level} (${tiers[i].name}) threshold ${tiers[i].pointsThreshold} < Level ${tiers[i - 1].level} (${tiers[i - 1].name}) threshold ${tiers[i - 1].pointsThreshold}`,
+        );
+      }
+    }
   }
 
   async recalculateTier(
@@ -70,7 +88,7 @@ export class LoyaltyTierEngine {
 
     const tiers = await this.prisma.loyaltyTier.findMany({
       where: { isActive: true },
-      orderBy: { level: 'desc' },
+      orderBy: [{ pointsThreshold: 'desc' }, { level: 'desc' }],
     });
 
     let chosen: (typeof tiers)[0] | null = null;
