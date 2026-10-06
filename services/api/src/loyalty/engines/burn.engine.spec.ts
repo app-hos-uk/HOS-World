@@ -884,7 +884,7 @@ describe('LoyaltyBurnEngine', () => {
         engine.processRedemption({
           membershipId: 'm1',
           points: 2000,
-          channel: 'POS',
+          channel: 'HOS_OUTLET_POS',
           purchaseSubtotal: 40,
         }),
       ).rejects.toThrow('Minimum purchase of 85.00 required to redeem Welcome Reward');
