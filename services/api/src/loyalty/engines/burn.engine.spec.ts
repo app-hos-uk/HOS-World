@@ -197,6 +197,7 @@ describe('LoyaltyBurnEngine', () => {
           membershipId: 'm1',
           points: 100,
           channel: 'MARKETPLACE_CHECKOUT',
+          optionId: 'opt-1',
         }),
       ).rejects.toThrow('Insufficient points balance');
       expect(mockWallet.applyDelta).not.toHaveBeenCalled();
@@ -306,6 +307,7 @@ describe('LoyaltyBurnEngine', () => {
         membershipId: 'm1',
         points: 500,
         channel: 'MARKETPLACE_CHECKOUT',
+        optionId: 'opt-1',
         idempotencyKey: 'till-1:sale-4821',
       });
 
@@ -882,7 +884,7 @@ describe('LoyaltyBurnEngine', () => {
         engine.processRedemption({
           membershipId: 'm1',
           points: 2000,
-          channel: 'MARKETPLACE_CHECKOUT',
+          channel: 'POS',
           purchaseSubtotal: 40,
         }),
       ).rejects.toThrow('Minimum purchase of 85.00 required to redeem Welcome Reward');
