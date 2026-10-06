@@ -32,8 +32,6 @@ type Settings = {
   campaignBonusPointsPerDollar: number;
 };
 
-type MarketOption = { id: string; code: string; name: string };
-
 function GateBadge({ on, label }: { on: boolean; label: string }) {
   return (
     <span
@@ -54,18 +52,14 @@ export default function AdminLoyaltySettingsPage() {
   const [source, setSource] = useState<'database' | 'env'>('env');
   const [form, setForm] = useState<Settings | null>(null);
   const [runtime, setRuntime] = useState<any>(null);
-  const [markets, setMarkets] = useState<MarketOption[]>([]);
-  const [marketId, setMarketId] = useState('');
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const [settingsRes, runtimeRes, marketsRes] = await Promise.all([
-        apiClient.adminGetLoyaltySettings(marketId || undefined),
+      const [settingsRes, runtimeRes] = await Promise.all([
+        apiClient.adminGetLoyaltySettings(),
         apiClient.adminGetLoyaltyRuntimeStatus(),
-        apiClient.getMarkets().catch(() => ({ data: [] as MarketOption[] })),
       ]);
-      setMarkets(Array.isArray(marketsRes?.data) ? marketsRes.data : []);
       const payload = settingsRes?.data as { settings: Settings; source: 'database' | 'env' };
       if (payload?.settings) {
         setForm({
@@ -75,6 +69,9 @@ export default function AdminLoyaltySettingsPage() {
           campaignMinPurchaseThreshold: Number(payload.settings.campaignMinPurchaseThreshold ?? 0),
           campaignBonusEarnRate: Number(payload.settings.campaignBonusEarnRate ?? 0),
           campaignBonusPointsPerDollar: Number(payload.settings.campaignBonusPointsPerDollar ?? 0),
+          maxRedemptionPercent: Number(payload.settings.maxRedemptionPercent ?? 100),
+          maxRedemptionPointsPerOrder: Number(payload.settings.maxRedemptionPointsPerOrder ?? 0),
+          dailyRedemptionPointsLimit: Number(payload.settings.dailyRedemptionPointsLimit ?? 0),
         });
         setSource(payload.source);
       }
@@ -85,7 +82,7 @@ export default function AdminLoyaltySettingsPage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [marketId]);
+  }, []);
 
   useEffect(() => {
     load();
@@ -95,10 +92,7 @@ export default function AdminLoyaltySettingsPage() {
     if (!form) return;
     setSaving(true);
     try {
-      await apiClient.adminUpdateLoyaltySettings(
-        form as unknown as Record<string, unknown>,
-        marketId || undefined,
-      );
+      await apiClient.adminUpdateLoyaltySettings(form as unknown as Record<string, unknown>);
       toast.success('Loyalty settings saved');
       await load();
     } catch (e: any) {
@@ -119,29 +113,8 @@ export default function AdminLoyaltySettingsPage() {
         <p className="text-hos-text-secondary mt-1 font-ui text-sm">
           Business rules for The Enchanted Circle. HOS is the customer ledger system of record.
           Source: <span className="text-hos-gold">{source}</span>
-          {marketId ? ' · market override' : ' · platform default'}
         </p>
       </div>
-
-      <label className="block text-sm text-hos-text-secondary font-ui mb-6 max-w-md">
-        Market
-        <select
-          className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
-          value={marketId}
-          onChange={(e) => setMarketId(e.target.value)}
-        >
-          <option value="">Platform default (all markets)</option>
-          {markets.map((market) => (
-            <option key={market.id} value={market.id}>
-              {market.name} ({market.code})
-            </option>
-          ))}
-        </select>
-        <span className="mt-1 block text-xs text-hos-text-muted">
-          A market saves its own overrides on top of the platform defaults. Leaving this on
-          platform default edits the shared rules.
-        </span>
-      </label>
 
       {runtime && (
         <div className="mb-6 p-4 rounded-lg border border-hos-border bg-hos-bg-secondary flex flex-wrap gap-2">
