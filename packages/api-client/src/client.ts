@@ -2005,12 +2005,17 @@ export class ApiClient {
     return this.request<ApiResponse<unknown>>(`/admin/loyalty/transactions${query ? `?${query}` : ''}`);
   }
 
-  async adminGetLoyaltySettings(): Promise<ApiResponse<unknown>> {
-    return this.request<ApiResponse<unknown>>('/admin/loyalty/settings');
+  async adminGetLoyaltySettings(marketId?: string): Promise<ApiResponse<unknown>> {
+    const qs = marketId ? `?marketId=${encodeURIComponent(marketId)}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/settings${qs}`);
   }
 
-  async adminUpdateLoyaltySettings(data: Record<string, unknown>): Promise<ApiResponse<unknown>> {
-    return this.request<ApiResponse<unknown>>('/admin/loyalty/settings', {
+  async adminUpdateLoyaltySettings(
+    data: Record<string, unknown>,
+    marketId?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const qs = marketId ? `?marketId=${encodeURIComponent(marketId)}` : '';
+    return this.request<ApiResponse<unknown>>(`/admin/loyalty/settings${qs}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
@@ -3035,6 +3040,7 @@ export class ApiClient {
     phone?: string;
     cardNumber?: string;
     voucherId?: string;
+    optionId?: string;
     idempotencyKey?: string;
     terminalId?: string;
     otpCode?: string;
@@ -3069,6 +3075,8 @@ export class ApiClient {
     points: number;
     storeId?: string;
     storeCode?: string;
+    optionId: string;
+    purchaseSubtotal?: number;
     idempotencyKey?: string;
   }) {
     return this.request<ApiResponse<unknown>>('/loyalty/redeem-in-store', {

@@ -167,7 +167,18 @@ describe('LoyaltyBurnEngine', () => {
               update: jest.fn(),
             },
             loyaltyRedemptionOption: {
-              findUnique: jest.fn().mockResolvedValue({ id: 'opt-1', isActive: true, regionCodes: [], channels: [], stock: null, pointsCost: 100 }),
+              findUnique: jest.fn().mockResolvedValue({
+                id: 'opt-1',
+                name: 'Test',
+                type: 'DISCOUNT',
+                pointsCost: 100,
+                value: null,
+                channels: [],
+                regionCodes: [],
+                stock: null,
+                minCartValue: null,
+                isActive: true,
+              }),
               findFirst: jest.fn().mockResolvedValue({ id: 'generic-opt' }),
               create: jest.fn(),
               update: jest.fn(),
@@ -389,6 +400,7 @@ describe('LoyaltyBurnEngine', () => {
         points: 500,
         channel: 'HOS_OUTLET_POS',
         storeId: 'store-1',
+        optionId: 'opt-1',
         idempotencyKey: 'till-1:sale-4821',
       });
 
@@ -843,7 +855,7 @@ describe('LoyaltyBurnEngine', () => {
       expect(mockWallet.applyDelta).toHaveBeenCalled();
     });
 
-    it('gates a POS voucher burn of the signup bonus without a catalogue option', async () => {
+    it('gates a POS voucher burn of the signup bonus even with an option selected', async () => {
       const mockPrisma = {
         $transaction: jest.fn().mockImplementation(async (fn: any) =>
           fn({
@@ -851,7 +863,18 @@ describe('LoyaltyBurnEngine', () => {
               findUnique: jest.fn().mockResolvedValue({ id: 'm1', currentBalance: 2000, userId: 'u1' }),
             },
             loyaltyRedemptionOption: {
-              findUnique: jest.fn().mockResolvedValue({ id: 'opt-welcome', isActive: true, regionCodes: [], channels: [], stock: null, pointsCost: 2000 }),
+              findUnique: jest.fn().mockResolvedValue({
+                id: 'opt-pos',
+                name: '2000-point reward',
+                type: 'DISCOUNT',
+                pointsCost: 2000,
+                value: null,
+                channels: [],
+                regionCodes: [],
+                stock: null,
+                minCartValue: null,
+                isActive: true,
+              }),
               findFirst: jest.fn().mockResolvedValue({ id: 'generic' }),
               create: jest.fn(),
               update: jest.fn(),
@@ -885,10 +908,120 @@ describe('LoyaltyBurnEngine', () => {
           membershipId: 'm1',
           points: 2000,
           channel: 'MARKETPLACE_CHECKOUT',
-          optionId: 'opt-welcome',
+          optionId: 'opt-pos',
           purchaseSubtotal: 40,
         }),
       ).rejects.toThrow('Minimum purchase of 85.00 required to redeem Welcome Reward');
+    });
+  });
+
+  describe('maxRedemptionPercent', () => {
+    it('rejects a catalogue option whose value exceeds the cart cap', () => {
+      const engine = new LoyaltyBurnEngine(null as any, null as any, null as any, null as any);
+      expect(() =>
+        engine.assertMaxRedemptionPercent({
+          option: { value: 80, type: 'DISCOUNT' },
+          points: 8000,
+          purchaseSubtotal: 100,
+          maxPercent: 50,
+          redeemValue: 0.01,
+        }),
+      ).toThrow(/exceeds the 50% cart cap/);
+    });
+
+    it('uses option.value, not points × redeemValue', () => {
+      const engine = new LoyaltyBurnEngine(null as any, null as any, null as any, null as any);
+      expect(() =>
+        engine.assertMaxRedemptionPercent({
+          option: { value: 10, type: 'DISCOUNT' },
+          points: 8000,
+          purchaseSubtotal: 100,
+          maxPercent: 50,
+          redeemValue: 0.01,
+        }),
+      ).not.toThrow();
+    });
+
+    it('requires a purchase subtotal when the percent cap is below 100', () => {
+      const engine = new LoyaltyBurnEngine(null as any, null as any, null as any, null as any);
+      expect(() =>
+        engine.assertMaxRedemptionPercent({
+          option: { value: 10, type: 'DISCOUNT' },
+          points: 1000,
+          purchaseSubtotal: null,
+          maxPercent: 50,
+          redeemValue: 0.01,
+        }),
+      ).toThrow(/Purchase subtotal is required/);
+    });
+
+    it('rejects a POS burn when option.value exceeds the market percent cap', async () => {
+      const mockLoyaltySettings = {
+        getResolved: jest.fn().mockResolvedValue({
+          settings: {
+            minRedemptionPoints: 100,
+            maxRedemptionPercent: 50,
+            defaultRedeemValue: 0.01,
+          },
+        }),
+      };
+      const mockPrisma = {
+        store: {
+          findUnique: jest.fn().mockResolvedValue({
+            marketId: 'market-us',
+            seller: { sellerType: 'PLATFORM_RETAIL' },
+          }),
+        },
+        $transaction: jest.fn().mockImplementation(async (fn: any) =>
+          fn({
+            loyaltyMembership: {
+              findUnique: jest.fn().mockResolvedValue({ id: 'm1', currentBalance: 5000 }),
+            },
+            loyaltyRedemptionOption: {
+              findUnique: jest.fn().mockResolvedValue({
+                id: 'opt-1',
+                name: '80-off',
+                type: 'DISCOUNT',
+                pointsCost: 800,
+                value: 80,
+                channels: ['HOS_OUTLET_POS'],
+                regionCodes: [],
+                stock: null,
+                minCartValue: null,
+                isActive: true,
+              }),
+            },
+            loyaltyTransaction: { findUnique: jest.fn().mockResolvedValue(null) },
+            loyaltyRedemption: { create: jest.fn(), findFirst: jest.fn() },
+          }),
+        ),
+      };
+      const mockConfig = {
+        get: jest.fn().mockImplementation((key: string, defaultVal?: any) => {
+          if (key === 'LOYALTY_ENABLED') return 'true';
+          if (key === 'LOYALTY_MIN_REDEMPTION_POINTS') return 100;
+          return defaultVal;
+        }),
+      };
+      const engine = new LoyaltyBurnEngine(
+        mockPrisma as any,
+        { applyDelta: jest.fn() } as any,
+        mockConfig as any,
+        mockFeatureFlags as any,
+        mockLoyaltySettings as any,
+      );
+
+      await expect(
+        engine.processRedemption({
+          membershipId: 'm1',
+          points: 800,
+          channel: 'HOS_OUTLET_POS',
+          storeId: 'store-1',
+          optionId: 'opt-1',
+          purchaseSubtotal: 100,
+        }),
+      ).rejects.toThrow(/exceeds the 50% cart cap/);
+      expect(mockLoyaltySettings.getResolved).toHaveBeenCalledWith('market-us');
     });
   });
 });

@@ -135,6 +135,26 @@ describe('LoyaltySettingsService caching', () => {
     expect(settings.campaignBonusEarnRate).toBe(0.2);
   });
 
+  it('defaults redemption limits to uncapped', async () => {
+    const service = createService(createPrisma(null), undefined, 0);
+    const { settings } = await service.getResolved();
+    expect(settings.maxRedemptionPercent).toBe(100);
+    expect(settings.maxRedemptionPointsPerOrder).toBe(0);
+    expect(settings.dailyRedemptionPointsLimit).toBe(0);
+  });
+
+  it('clamps maxRedemptionPercent to 1–100 range', async () => {
+    const prisma = createPrisma({ value: { maxRedemptionPercent: 150 } });
+    const service = createService(prisma, undefined, 0);
+    const { settings } = await service.getResolved();
+    expect(settings.maxRedemptionPercent).toBe(100);
+
+    const prisma2 = createPrisma({ value: { maxRedemptionPercent: 0 } });
+    const service2 = createService(prisma2, undefined, 0);
+    const { settings: s2 } = await service2.getResolved();
+    expect(s2.maxRedemptionPercent).toBe(1);
+  });
+
   it('does not cache env fallbacks when the database read fails', async () => {
     const prisma = createPrisma(null);
     prisma.config.findFirst.mockRejectedValue(new Error('db down'));
@@ -147,6 +167,49 @@ describe('LoyaltySettingsService caching', () => {
 
     await service.getResolved();
     expect(prisma.config.findFirst).toHaveBeenCalledTimes(2);
+  });
+
+  it('merges a market config row on top of the platform row', async () => {
+    const prisma = createPrisma(null);
+    prisma.config.findFirst.mockImplementation(async (args: { where?: { level?: string } }) => {
+      if (args?.where?.level === 'MARKET') {
+        return { value: { defaultEarnRate: 9, cardPrefix: 'MYHOS' } };
+      }
+      if (args?.where?.level === 'PLATFORM') {
+        return { value: { defaultEarnRate: 3, cardPrefix: 'HOS', minRedemptionPoints: 250 } };
+      }
+      return null;
+    });
+    const service = createService(prisma, undefined, 0);
+
+    const { settings, source } = await service.getResolved('market-my');
+
+    expect(source).toBe('database');
+    expect(settings.defaultEarnRate).toBe(9);
+    expect(settings.cardPrefix).toBe('MYHOS');
+    expect(settings.minRedemptionPoints).toBe(250);
+  });
+
+  it('writes market settings to the MARKET config row', async () => {
+    const prisma = createPrisma({ value: { defaultEarnRate: 1 } });
+    prisma.config.findFirst.mockImplementation(async (args: { where?: { level?: string } }) => {
+      if (args?.where?.level === 'MARKET') return null;
+      return { id: 'config-1', value: { defaultEarnRate: 1 } };
+    });
+    const service = createService(prisma, createSharedCache(), 0);
+
+    const saved = await service.update({ defaultEarnRate: 4 }, 'admin-1', 'market-my');
+
+    expect(saved.defaultEarnRate).toBe(4);
+    expect(prisma.tx.config.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          level: 'MARKET',
+          levelId: 'market-my',
+          key: 'LOYALTY_PROGRAMME_SETTINGS',
+        }),
+      }),
+    );
   });
 
   it('serves last-good settings when a later database read fails', async () => {

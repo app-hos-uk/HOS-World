@@ -6,6 +6,7 @@ describe('PosVoucherService', () => {
   const membershipId = 'mem-1';
   const storeId = 'store-1';
   const redemptionId = 'red-1';
+  const optionId = 'opt-1';
   const idempotencyKey = 'till-1:sale-4821';
 
   function build(overrides: {
@@ -217,13 +218,21 @@ describe('PosVoucherService', () => {
       },
     });
     await expect(
-      svc.redeemForVoucher({ points: 500, storeId, membershipId }),
+      svc.redeemForVoucher({ points: 500, storeId, membershipId, optionId }),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects a new redemption without optionId', async () => {
+    const { svc, burn } = build({});
+    await expect(
+      svc.redeemForVoucher({ points: 500, storeId, membershipId, idempotencyKey }),
+    ).rejects.toThrow(/optionId is required/);
+    expect(burn.processRedemption).not.toHaveBeenCalled();
   });
 
   it('rejects a new redemption without an idempotency key', async () => {
     const { svc, burn } = build({});
-    await expect(svc.redeemForVoucher({ points: 500, storeId, membershipId })).rejects.toThrow(
+    await expect(svc.redeemForVoucher({ points: 500, storeId, membershipId, optionId })).rejects.toThrow(
       /idempotencyKey of at least 8 characters is required/,
     );
     expect(burn.processRedemption).not.toHaveBeenCalled();
@@ -253,6 +262,7 @@ describe('PosVoucherService', () => {
       points: 500,
       storeId,
       membershipId,
+      optionId,
       idempotencyKey,
     });
 
@@ -292,6 +302,7 @@ describe('PosVoucherService', () => {
       points: 500,
       storeId,
       membershipId,
+      optionId,
       idempotencyKey,
     });
 
@@ -337,6 +348,7 @@ describe('PosVoucherService', () => {
       points: 500,
       storeId,
       membershipId,
+      optionId,
       idempotencyKey,
     });
 
@@ -383,6 +395,7 @@ describe('PosVoucherService', () => {
       points: 50,
       storeId,
       membershipId,
+      optionId,
       idempotencyKey,
     });
 
@@ -404,6 +417,7 @@ describe('PosVoucherService', () => {
       points: 500,
       storeId,
       membershipId,
+      optionId,
       idempotencyKey,
     });
 
@@ -468,7 +482,7 @@ describe('PosVoucherService', () => {
       posConnection: { isActive: true, provider: 'lightspeed', credentials: 'enc' },
     });
 
-    await svc.redeemForVoucher({ points: 500, storeId, membershipId, idempotencyKey });
+    await svc.redeemForVoucher({ points: 500, storeId, membershipId, optionId, idempotencyKey });
     expect(voucherCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ amount: new Decimal('10.00') }),
@@ -483,7 +497,7 @@ describe('PosVoucherService', () => {
     const { svc, wallet, prisma, voucherRow } = build({ createGiftCard, applyDelta });
 
     await expect(
-      svc.redeemForVoucher({ points: 500, storeId, membershipId, idempotencyKey }),
+      svc.redeemForVoucher({ points: 500, storeId, membershipId, optionId, idempotencyKey }),
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
 
     expect(prisma.loyaltyPosVoucher.update).toHaveBeenCalledWith(
@@ -554,7 +568,7 @@ describe('PosVoucherService', () => {
     });
 
     await expect(
-      svc.redeemForVoucher({ points: 500, storeId, membershipId, idempotencyKey }),
+      svc.redeemForVoucher({ points: 500, storeId, membershipId, optionId, idempotencyKey }),
     ).rejects.toThrow(/points were NOT restored/);
 
     expect(prisma.loyaltyPosVoucher.update).toHaveBeenCalledWith(
@@ -582,7 +596,7 @@ describe('PosVoucherService', () => {
       },
     });
     await expect(
-      svc.redeemForVoucher({ points: 100, storeId, membershipId, idempotencyKey }),
+      svc.redeemForVoucher({ points: 100, storeId, membershipId, optionId, idempotencyKey }),
     ).rejects.toThrow(/below the minimum/);
     expect(burn.processRedemption).not.toHaveBeenCalled();
   });
@@ -598,7 +612,7 @@ describe('PosVoucherService', () => {
       },
     });
     await expect(
-      svc.redeemForVoucher({ points: 500, storeId, membershipId, idempotencyKey }),
+      svc.redeemForVoucher({ points: 500, storeId, membershipId, optionId, idempotencyKey }),
     ).rejects.toThrow(/exceeds the maximum/);
     expect(burn.processRedemption).not.toHaveBeenCalled();
   });
@@ -748,6 +762,7 @@ describe('PosVoucherService', () => {
           points: 500,
           storeId: OTHER_STORE,
           membershipId,
+          optionId,
           idempotencyKey,
         }),
       ).rejects.toThrow('Voucher not found');
@@ -764,6 +779,7 @@ describe('PosVoucherService', () => {
         points: 500,
         storeId,
         membershipId,
+        optionId,
         idempotencyKey,
       });
 
@@ -806,7 +822,7 @@ describe('PosVoucherService', () => {
     });
 
     await svc.redeemForVoucher(
-      { points: 500, storeId, membershipId, idempotencyKey, terminalId: 'till-1' },
+      { points: 500, storeId, membershipId, optionId, idempotencyKey, terminalId: 'till-1' },
       { staffAssisted: true, staffUserId: 'staff-1' },
     );
 

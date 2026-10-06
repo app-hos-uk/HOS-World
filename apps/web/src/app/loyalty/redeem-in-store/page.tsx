@@ -20,24 +20,46 @@ type VoucherResult = {
   qrPayload?: string;
 };
 
+type RedemptionOption = {
+  id: string;
+  name: string;
+  description?: string;
+  pointsCost: number;
+  value?: number | null;
+  type?: string;
+};
+
 export default function RedeemInStorePage() {
   const toast = useToast();
   const { user } = useAuth();
   const [membership, setMembership] = useState<{ currentBalance?: number } | null>(null);
+  const [options, setOptions] = useState<RedemptionOption[]>([]);
+  const [optionId, setOptionId] = useState('');
   const [storeCode, setStoreCode] = useState('');
-  const [points, setPoints] = useState('');
+  const [purchaseSubtotal, setPurchaseSubtotal] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<VoucherResult | null>(null);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     apiClient.getLoyaltyMembership().then((r) => setMembership((r.data as any) ?? null)).catch(() => undefined);
+    apiClient
+      .getRedemptionOptions({ channel: 'HOS_OUTLET_POS' })
+      .then((r) => {
+        const list = Array.isArray(r.data) ? (r.data as RedemptionOption[]) : [];
+        setOptions(list);
+        if (list.length === 1) setOptionId(list[0].id);
+      })
+      .catch(() => undefined);
   }, []);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  const selected = options.find((o) => o.id === optionId) ?? null;
+  const balance = membership?.currentBalance ?? 0;
 
   const countdown = useMemo(() => {
     if (!result?.ttlExpiresAt) return null;
@@ -51,22 +73,32 @@ export default function RedeemInStorePage() {
   }, [result?.ttlExpiresAt, now]);
 
   const redeem = async () => {
-    const pts = Number(points);
     const code = storeCode.trim().toUpperCase();
     if (!code) {
       toast.error('Enter the store code shown at the till');
       return;
     }
-    if (!Number.isInteger(pts) || pts < 1) {
-      toast.error('Enter a valid points amount');
+    if (!selected) {
+      toast.error('Select a reward option');
+      return;
+    }
+    if (balance < selected.pointsCost) {
+      toast.error('Insufficient points for this reward');
+      return;
+    }
+    const merch = purchaseSubtotal.trim() === '' ? undefined : Number(purchaseSubtotal);
+    if (merch != null && (!Number.isFinite(merch) || merch < 0)) {
+      toast.error('Enter a valid till merchandise total');
       return;
     }
     setLoading(true);
     try {
       const r = await apiClient.redeemLoyaltyInStore({
-        points: pts,
+        points: selected.pointsCost,
+        optionId: selected.id,
         storeCode: code,
-        idempotencyKey: `web-customer:${user?.id}:${code}:${pts}:${Math.floor(Date.now() / 300000)}`,
+        purchaseSubtotal: merch,
+        idempotencyKey: `web-customer:${user?.id}:${code}:${selected.id}:${Math.floor(Date.now() / 300000)}`,
       });
       setResult(r.data as VoucherResult);
       toast.success('Voucher ready — show this code at the till');
@@ -105,7 +137,7 @@ export default function RedeemInStorePage() {
         </Link>
         <h1 className="text-2xl font-semibold mt-2 text-hos-text">Redeem in store</h1>
         <p className="text-sm text-hos-text-muted mt-1">
-          Burn points here, then show the QR or card number at the till within the countdown window.
+          Choose a listed reward, then show the QR or code at the till within the countdown window.
         </p>
       </div>
 
@@ -131,22 +163,48 @@ export default function RedeemInStorePage() {
             </span>
           </label>
           <label className="block text-sm text-hos-text-secondary">
-            Points to redeem
+            Reward
+            <select
+              className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg text-hos-text border-hos-border"
+              value={optionId}
+              onChange={(e) => setOptionId(e.target.value)}
+            >
+              <option value="">Select a reward</option>
+              {options.map((opt) => (
+                <option key={opt.id} value={opt.id} disabled={balance < opt.pointsCost}>
+                  {opt.name} — {opt.pointsCost.toLocaleString()} pts
+                  {opt.value != null ? ` · ${Number(opt.value).toFixed(2)} off` : ''}
+                </option>
+              ))}
+            </select>
+            {options.length === 0 && (
+              <span className="text-xs text-hos-text-muted mt-1 block">
+                No in-store rewards are available right now. Ask staff or try again later.
+              </span>
+            )}
+          </label>
+          <label className="block text-sm text-hos-text-secondary">
+            Till merchandise total
             <input
               type="number"
-              min={1}
+              min={0}
+              step="0.01"
               className="mt-1 w-full border rounded px-3 py-2 bg-hos-bg text-hos-text border-hos-border"
-              value={points}
-              onChange={(e) => setPoints(e.target.value)}
+              value={purchaseSubtotal}
+              onChange={(e) => setPurchaseSubtotal(e.target.value)}
+              placeholder="Current sale total, gift cards excluded"
             />
+            <span className="text-xs text-hos-text-muted mt-1 block">
+              Required when a redemption cap is set, and for Welcome Reward. Ask staff for the till subtotal.
+            </span>
           </label>
           <button
             type="button"
-            disabled={loading}
+            disabled={loading || !optionId}
             onClick={redeem}
             className="w-full py-2 rounded bg-violet-600 text-white font-medium disabled:opacity-50"
           >
-            {loading ? 'Issuing…' : 'Create till voucher'}
+            {loading ? 'Issuing…' : selected ? `Redeem ${selected.pointsCost.toLocaleString()} points` : 'Create till voucher'}
           </button>
         </div>
       ) : (

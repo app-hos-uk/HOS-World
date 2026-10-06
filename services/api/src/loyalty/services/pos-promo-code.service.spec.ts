@@ -6,7 +6,23 @@ describe('PosPromoCodeService', () => {
   const membershipId = 'mem-1';
   const storeId = 'store-1';
   const redemptionId = 'red-1';
+  const optionId = 'opt-1';
   const idempotencyKey = 'till-1:sale-4821';
+
+  const defaultOption = {
+    id: optionId,
+    name: '500-point discount',
+    type: 'DISCOUNT',
+    pointsCost: 500,
+    value: new Decimal('5.00'),
+    minCartValue: null,
+    channels: ['HOS_OUTLET_POS'],
+    regionCodes: [],
+    stock: null,
+    isActive: true,
+    startsAt: null,
+    endsAt: null,
+  };
 
   function build(overrides: {
     createPromotion?: jest.Mock;
@@ -14,6 +30,7 @@ describe('PosPromoCodeService', () => {
     voucherCreate?: jest.Mock;
     voucherFindUnique?: jest.Mock;
     voucherUpdate?: jest.Mock;
+    option?: typeof defaultOption | null;
   }) {
     const adapter = {
       authenticate: jest.fn().mockResolvedValue(undefined),
@@ -67,6 +84,11 @@ describe('PosPromoCodeService', () => {
       loyaltyMembership: {
         findUnique: jest.fn().mockResolvedValue({ id: membershipId }),
         update: jest.fn(),
+      },
+      loyaltyRedemptionOption: {
+        findUnique: jest.fn().mockResolvedValue(
+          overrides.option !== undefined ? overrides.option : defaultOption,
+        ),
       },
       loyaltyPosVoucher: {
         create: overrides.voucherCreate ?? jest.fn().mockResolvedValue(voucherRow),
@@ -178,9 +200,12 @@ describe('PosPromoCodeService', () => {
       points: 500,
       storeId,
       membershipId,
+      optionId,
       idempotencyKey,
     });
-    expect(burn.processRedemption).toHaveBeenCalled();
+    expect(burn.processRedemption).toHaveBeenCalledWith(
+      expect.objectContaining({ optionId }),
+    );
     expect(adapter.createPromotion).toHaveBeenCalledWith(
       expect.objectContaining({
         promoCode: 'HOS-LYL-ABCD2345',
@@ -206,10 +231,94 @@ describe('PosPromoCodeService', () => {
     expect(result.promoCode).toBe('HOS-LYL-ABCD2345');
   });
 
+  it('rejects a new redemption without optionId', async () => {
+    const { svc, burn } = build({});
+    await expect(
+      svc.redeemForPromoCode({ points: 500, storeId, membershipId, idempotencyKey }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(burn.processRedemption).not.toHaveBeenCalled();
+  });
+
+  it('rejects when points do not match option pointsCost', async () => {
+    const { svc, burn } = build({});
+    await expect(
+      svc.redeemForPromoCode({ points: 300, storeId, membershipId, optionId, idempotencyKey }),
+    ).rejects.toThrow(/do not match/);
+    expect(burn.processRedemption).not.toHaveBeenCalled();
+  });
+
+  it('rejects when option is inactive', async () => {
+    const { svc, burn } = build({ option: { ...defaultOption, isActive: false } });
+    await expect(
+      svc.redeemForPromoCode({ points: 500, storeId, membershipId, optionId, idempotencyKey }),
+    ).rejects.toThrow(/Invalid or inactive/);
+    expect(burn.processRedemption).not.toHaveBeenCalled();
+  });
+
+  it('uses option.value for amount instead of points × redeemValue', async () => {
+    const voucherFindUnique = jest.fn().mockImplementation(({ where }: any) => {
+      if (where?.redemptionId) return Promise.resolve(null);
+      return Promise.resolve({
+        id: 'voucher-1',
+        membershipId,
+        redemptionId,
+        storeId,
+        type: 'PROMO_CODE',
+        cardNumber: 'HOS-LYL-ABCD2345',
+        promoCode: 'HOS-LYL-ABCD2345',
+        amount: new Decimal('10.00'),
+        currency: 'GBP',
+        clientId: redemptionId,
+        status: 'PENDING',
+        ttlExpiresAt: new Date(Date.now() + 3_600_000),
+        redemption: { pointsSpent: 500, status: 'COMPLETED' },
+        store: {
+          timezone: 'America/New_York',
+          posConnection: {
+            isActive: true,
+            provider: 'lightspeed',
+            credentials: 'enc',
+            externalOutletId: 'outlet-1',
+          },
+        },
+      });
+    });
+    const { svc, adapter } = build({
+      option: { ...defaultOption, value: new Decimal('10.00'), pointsCost: 500 },
+      voucherFindUnique,
+    });
+    await svc.redeemForPromoCode({
+      points: 500,
+      storeId,
+      membershipId,
+      optionId,
+      idempotencyKey,
+    });
+    expect(adapter.createPromotion).toHaveBeenCalledWith(
+      expect.objectContaining({ discountValue: 10 }),
+    );
+  });
+
+  it('falls back to points × redeemValue when option.value is null', async () => {
+    const { svc, adapter } = build({
+      option: { ...defaultOption, value: null },
+    });
+    await svc.redeemForPromoCode({
+      points: 500,
+      storeId,
+      membershipId,
+      optionId,
+      idempotencyKey,
+    });
+    expect(adapter.createPromotion).toHaveBeenCalledWith(
+      expect.objectContaining({ discountValue: 5 }),
+    );
+  });
+
   it('rejects a new redemption without an idempotency key', async () => {
     const { svc, burn } = build({});
     await expect(
-      svc.redeemForPromoCode({ points: 500, storeId, membershipId }),
+      svc.redeemForPromoCode({ points: 500, storeId, membershipId, optionId }),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(burn.processRedemption).not.toHaveBeenCalled();
   });
@@ -223,6 +332,7 @@ describe('PosPromoCodeService', () => {
         points: 500,
         storeId,
         membershipId,
+        optionId,
         idempotencyKey,
       }),
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
@@ -251,6 +361,7 @@ describe('PosPromoCodeService', () => {
         points: 500,
         storeId,
         membershipId,
+        optionId,
         idempotencyKey,
       }),
     ).rejects.toThrow(/Points were not restored/);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +28,13 @@ const INPUT_CLS =
 
 type SearchMode = 'cardNumber' | 'email' | 'phone' | 'phoneLastFour' | 'name';
 
+type RedemptionOption = {
+  id: string;
+  name: string;
+  pointsCost: number;
+  value?: number | null;
+};
+
 export default function StoreLookupPage() {
   const toast = useToast();
   const { user } = useAuth();
@@ -37,7 +44,8 @@ export default function StoreLookupPage() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
-  const [redeemPoints, setRedeemPoints] = useState('');
+  const [options, setOptions] = useState<RedemptionOption[]>([]);
+  const [optionId, setOptionId] = useState('');
   const [merchandiseTotal, setMerchandiseTotal] = useState('');
   const [terminalId, setTerminalId] = useState('');
   const [otpSentFor, setOtpSentFor] = useState<string | null>(null);
@@ -52,6 +60,18 @@ export default function StoreLookupPage() {
   const [showEnroll, setShowEnroll] = useState(false);
 
   const needsAdminStore = user?.role === 'ADMIN' && !user.storeId;
+  const selectedOption = options.find((o) => o.id === optionId) ?? null;
+
+  useEffect(() => {
+    apiClient
+      .getRedemptionOptions({ channel: 'HOS_OUTLET_POS' })
+      .then((r) => {
+        const list = Array.isArray(r.data) ? (r.data as RedemptionOption[]) : [];
+        setOptions(list);
+        if (list.length === 1) setOptionId(list[0].id);
+      })
+      .catch(() => undefined);
+  }, []);
 
   const placeholder = useMemo(() => {
     switch (mode) {
@@ -122,11 +142,11 @@ export default function StoreLookupPage() {
   };
 
   const redeem = async (row: SearchResult) => {
-    const points = Number(redeemPoints);
-    if (!Number.isInteger(points) || points < 1) {
-      toast.error('Enter a valid points amount');
+    if (!selectedOption) {
+      toast.error('Select a redemption option');
       return;
     }
+    const points = selectedOption.pointsCost;
     if (!row.cardNumber) {
       toast.error('Member has no card number for redemption');
       return;
@@ -159,6 +179,7 @@ export default function StoreLookupPage() {
         storeId,
         membershipId: row.membershipId,
         cardNumber: row.cardNumber,
+        optionId: selectedOption.id,
         idempotencyKey,
         terminalId: terminalId.trim(),
         otpCode: otpCode.trim() || undefined,
@@ -187,7 +208,6 @@ export default function StoreLookupPage() {
           ? 'Promo code issued — enter it as a till discount, not a payment'
           : 'Voucher issued — show customer the card number',
       );
-      setRedeemPoints('');
       setOtpCode('');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Redeem failed';
@@ -340,16 +360,21 @@ export default function StoreLookupPage() {
 
             {row.cardNumber ? (
               <div className="flex flex-wrap items-end gap-2 pt-2 border-t border-hos-border">
-                <label className="block text-sm flex-1 min-w-[8rem]">
-                  <span className="text-hos-text-secondary">Redeem points</span>
-                  <input
+                <label className="block text-sm flex-1 min-w-[10rem]">
+                  <span className="text-hos-text-secondary">Reward</span>
+                  <select
                     className={INPUT_CLS}
-                    type="number"
-                    min={1}
-                    value={redeemPoints}
-                    onChange={(e) => setRedeemPoints(e.target.value)}
-                    placeholder="e.g. 2000"
-                  />
+                    value={optionId}
+                    onChange={(e) => setOptionId(e.target.value)}
+                  >
+                    <option value="">Select a reward</option>
+                    {options.map((opt) => (
+                      <option key={opt.id} value={opt.id} disabled={row.currentBalance < opt.pointsCost}>
+                        {opt.name} — {opt.pointsCost.toLocaleString()} pts
+                        {opt.value != null ? ` · ${Number(opt.value).toFixed(2)} off` : ''}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label className="block text-sm flex-1 min-w-[8rem]">
                   <span className="text-hos-text-secondary">Merchandise total</span>

@@ -108,6 +108,12 @@ export class PosPromoCodeService {
       return this.retryFailedPromoCode(dto.voucherId, dto.storeId);
     }
 
+    if (!dto.optionId) {
+      throw new BadRequestException(
+        'optionId is required — select a redemption option so that pointsCost, stock, channels, and minCartValue rules are enforced',
+      );
+    }
+
     const idempotencyKey = dto.idempotencyKey?.trim();
     if (!idempotencyKey || idempotencyKey.length < 8) {
       throw new BadRequestException(
@@ -127,8 +133,21 @@ export class PosPromoCodeService {
       throw new BadRequestException('Store has no active POS connection');
     }
 
-    const redeemValue = await this.resolveRedeemValue(store.loyaltyRedeemValue);
-    const amount = Math.round(dto.points * redeemValue * 100) / 100;
+    const option = await this.prisma.loyaltyRedemptionOption.findUnique({
+      where: { id: dto.optionId },
+    });
+    if (!option || !option.isActive) {
+      throw new BadRequestException('Invalid or inactive redemption option');
+    }
+    if (option.pointsCost !== dto.points) {
+      throw new BadRequestException(
+        `Points (${dto.points}) do not match the selected option's cost (${option.pointsCost})`,
+      );
+    }
+
+    const amount = option.value != null
+      ? Math.round(Number(option.value) * 100) / 100
+      : Math.round(dto.points * (await this.resolveRedeemValue(store.loyaltyRedeemValue)) * 100) / 100;
     if (amount <= 0) {
       throw new BadRequestException('Redemption amount must be greater than zero');
     }
@@ -156,6 +175,8 @@ export class PosPromoCodeService {
       points: dto.points,
       channel: 'HOS_OUTLET_POS',
       storeId: dto.storeId,
+      optionId: dto.optionId,
+      marketId: store.marketId ?? undefined,
       idempotencyKey,
       purchaseSubtotal: dto.purchaseSubtotal,
       skipWelcomeGate: true,

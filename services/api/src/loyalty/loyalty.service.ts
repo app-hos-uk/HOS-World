@@ -1444,6 +1444,40 @@ export class LoyaltyService implements OnModuleInit {
       throw new BadRequestException(`Minimum redemption is ${minRedeem} points`);
     }
 
+    if (settings.maxRedemptionPointsPerOrder > 0 && opt.pointsCost > settings.maxRedemptionPointsPerOrder) {
+      throw new BadRequestException(
+        `This reward exceeds the per-order limit of ${settings.maxRedemptionPointsPerOrder} points`,
+      );
+    }
+
+    if (settings.dailyRedemptionPointsLimit > 0) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const todayBurns = await this.prisma.loyaltyTransaction.aggregate({
+        where: {
+          membershipId: membership.id,
+          type: 'BURN',
+          createdAt: { gte: startOfDay },
+        },
+        _sum: { points: true },
+      });
+      const burnedToday = Math.abs(todayBurns._sum.points ?? 0);
+      if (burnedToday + opt.pointsCost > settings.dailyRedemptionPointsLimit) {
+        const remaining = Math.max(0, settings.dailyRedemptionPointsLimit - burnedToday);
+        throw new BadRequestException(
+          `Daily redemption limit reached. You can redeem up to ${remaining} more points today.`,
+        );
+      }
+    }
+
+    this.burn.assertMaxRedemptionPercent({
+      option: { value: opt.value, type: opt.type },
+      points: opt.pointsCost,
+      purchaseSubtotal,
+      maxPercent: settings.maxRedemptionPercent,
+      redeemValue: settings.defaultRedeemValue,
+    });
+
     await this.burn.assertWelcomePurchaseMinimum({
       option: { id: opt.id, name: opt.name, type: opt.type },
       membershipId: membership.id,

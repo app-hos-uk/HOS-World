@@ -30,6 +30,14 @@ export class RedeemForVoucherDto {
   cardNumber?: string;
 
   /**
+   * The redemption option being redeemed. Required for new redemptions so that
+   * pointsCost, stock, channels, regionCodes, and minCartValue are enforced.
+   */
+  @IsOptional()
+  @IsUUID()
+  optionId?: string;
+
+  /**
    * Retry a FAILED voucher: reuses the same row + clientId (never mints a new idempotency key).
    */
   @IsOptional()

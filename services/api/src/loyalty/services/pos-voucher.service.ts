@@ -126,6 +126,11 @@ export class PosVoucherService {
     }
 
     const { settings } = await this.loyaltySettings.getResolved();
+    if (!dto.voucherId && !dto.optionId) {
+      throw new BadRequestException(
+        'optionId is required — select a redemption option so that pointsCost, stock, channels, and minCartValue rules are enforced',
+      );
+    }
     // New redemptions follow the setting; retries stay on the original voucher type.
     if (settings.posRedemptionMethod === 'PROMO_CODE' && !dto.voucherId) {
       if (!this.promoCodes) {
@@ -256,6 +261,8 @@ export class PosVoucherService {
       points: dto.points,
       channel: 'HOS_OUTLET_POS',
       storeId: dto.storeId,
+      optionId: dto.optionId,
+      marketId: store.marketId ?? undefined,
       idempotencyKey,
       purchaseSubtotal: dto.purchaseSubtotal,
       skipWelcomeGate: true,
@@ -286,7 +293,13 @@ export class PosVoucherService {
   /** Flow A1 — customer-initiated in-store redeem (JWT member). */
   async redeemInStoreForCustomer(
     userId: string,
-    dto: { points: number; storeId: string; idempotencyKey?: string },
+    dto: {
+      points: number;
+      storeId: string;
+      optionId?: string;
+      idempotencyKey?: string;
+      purchaseSubtotal?: number;
+    },
   ) {
     const membership = await this.prisma.loyaltyMembership.findUnique({
       where: { userId },
@@ -303,7 +316,9 @@ export class PosVoucherService {
         points: dto.points,
         storeId: dto.storeId,
         membershipId: membership.id,
+        optionId: dto.optionId,
         idempotencyKey,
+        purchaseSubtotal: dto.purchaseSubtotal,
       },
       { issuedByUserId: userId, staffAssisted: false },
     );

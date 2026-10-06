@@ -14,6 +14,9 @@ type Settings = {
   pointsExpiryMonths: number;
   cardPrefix: string;
   redemptionAtCheckout: boolean;
+  maxRedemptionPercent: number;
+  maxRedemptionPointsPerOrder: number;
+  dailyRedemptionPointsLimit: number;
   posVoucherEnabled: boolean;
   posRedemptionMethod: 'GIFT_CARD' | 'PROMO_CODE';
   posVoucherMinAmount: number;
@@ -28,6 +31,8 @@ type Settings = {
   campaignBonusEarnRate: number;
   campaignBonusPointsPerDollar: number;
 };
+
+type MarketOption = { id: string; code: string; name: string };
 
 function GateBadge({ on, label }: { on: boolean; label: string }) {
   return (
@@ -49,14 +54,18 @@ export default function AdminLoyaltySettingsPage() {
   const [source, setSource] = useState<'database' | 'env'>('env');
   const [form, setForm] = useState<Settings | null>(null);
   const [runtime, setRuntime] = useState<any>(null);
+  const [markets, setMarkets] = useState<MarketOption[]>([]);
+  const [marketId, setMarketId] = useState('');
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const [settingsRes, runtimeRes] = await Promise.all([
-        apiClient.adminGetLoyaltySettings(),
+      const [settingsRes, runtimeRes, marketsRes] = await Promise.all([
+        apiClient.adminGetLoyaltySettings(marketId || undefined),
         apiClient.adminGetLoyaltyRuntimeStatus(),
+        apiClient.getMarkets().catch(() => ({ data: [] as MarketOption[] })),
       ]);
+      setMarkets(Array.isArray(marketsRes?.data) ? marketsRes.data : []);
       const payload = settingsRes?.data as { settings: Settings; source: 'database' | 'env' };
       if (payload?.settings) {
         setForm({
@@ -76,7 +85,7 @@ export default function AdminLoyaltySettingsPage() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [marketId]);
 
   useEffect(() => {
     load();
@@ -86,7 +95,10 @@ export default function AdminLoyaltySettingsPage() {
     if (!form) return;
     setSaving(true);
     try {
-      await apiClient.adminUpdateLoyaltySettings(form as unknown as Record<string, unknown>);
+      await apiClient.adminUpdateLoyaltySettings(
+        form as unknown as Record<string, unknown>,
+        marketId || undefined,
+      );
       toast.success('Loyalty settings saved');
       await load();
     } catch (e: any) {
@@ -101,14 +113,35 @@ export default function AdminLoyaltySettingsPage() {
   };
 
   return (
-    <RouteGuard allowedRoles={['ADMIN']} showAccessDenied>
+    <RouteGuard allowedRoles={['ADMIN']} requiredPermissions={['loyalty.manage']} showAccessDenied>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-hos-text-primary">Loyalty Settings</h1>
         <p className="text-hos-text-secondary mt-1 font-ui text-sm">
           Business rules for The Enchanted Circle. HOS is the customer ledger system of record.
           Source: <span className="text-hos-gold">{source}</span>
+          {marketId ? ' · market override' : ' · platform default'}
         </p>
       </div>
+
+      <label className="block text-sm text-hos-text-secondary font-ui mb-6 max-w-md">
+        Market
+        <select
+          className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
+          value={marketId}
+          onChange={(e) => setMarketId(e.target.value)}
+        >
+          <option value="">Platform default (all markets)</option>
+          {markets.map((market) => (
+            <option key={market.id} value={market.id}>
+              {market.name} ({market.code})
+            </option>
+          ))}
+        </select>
+        <span className="mt-1 block text-xs text-hos-text-muted">
+          A market saves its own overrides on top of the platform defaults. Leaving this on
+          platform default edits the shared rules.
+        </span>
+      </label>
 
       {runtime && (
         <div className="mb-6 p-4 rounded-lg border border-hos-border bg-hos-bg-secondary flex flex-wrap gap-2">
@@ -164,6 +197,63 @@ export default function AdminLoyaltySettingsPage() {
                 onChange={(e) => set('redemptionAtCheckout', e.target.checked)}
               />
               Allow redemption at checkout
+            </label>
+          </section>
+
+          <section className="space-y-3 p-4 rounded-lg border border-hos-border bg-hos-bg-secondary">
+            <h2 className="text-lg text-hos-gold font-display">Redemption limits</h2>
+            <p className="text-xs text-hos-text-muted font-ui">
+              Cap how much of an order a customer can pay with loyalty points. These limits apply to
+              both marketplace checkout and POS in-store redemptions.
+            </p>
+            <label className="block text-sm text-hos-text-secondary font-ui">
+              Max % of cart payable by points (1–100)
+              <input
+                type="number"
+                min="1"
+                max="100"
+                step="1"
+                className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
+                value={form.maxRedemptionPercent}
+                onChange={(e) => set('maxRedemptionPercent', Math.min(100, Math.max(1, Number(e.target.value))))}
+              />
+              <span className="mt-1 block text-xs text-hos-text-muted">
+                {form.maxRedemptionPercent < 100
+                  ? `A ${getCurrencySymbol(currency)}100 cart allows up to ${getCurrencySymbol(currency)}${(100 * form.maxRedemptionPercent / 100).toFixed(2)} loyalty discount.`
+                  : 'No percentage cap — a customer can cover the entire purchase with points.'}
+              </span>
+            </label>
+            <label className="block text-sm text-hos-text-secondary font-ui">
+              Max points per order (0 = unlimited)
+              <input
+                type="number"
+                min="0"
+                step="1"
+                className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
+                value={form.maxRedemptionPointsPerOrder}
+                onChange={(e) => set('maxRedemptionPointsPerOrder', Math.max(0, Math.floor(Number(e.target.value))))}
+              />
+              <span className="mt-1 block text-xs text-hos-text-muted">
+                {form.maxRedemptionPointsPerOrder > 0
+                  ? `A member cannot burn more than ${form.maxRedemptionPointsPerOrder.toLocaleString()} points in a single transaction.`
+                  : 'No per-order cap on points burned.'}
+              </span>
+            </label>
+            <label className="block text-sm text-hos-text-secondary font-ui">
+              Daily points limit per member (0 = unlimited)
+              <input
+                type="number"
+                min="0"
+                step="1"
+                className="mt-1 w-full px-3 py-2 bg-hos-bg border border-hos-border-input rounded text-hos-text-primary"
+                value={form.dailyRedemptionPointsLimit}
+                onChange={(e) => set('dailyRedemptionPointsLimit', Math.max(0, Math.floor(Number(e.target.value))))}
+              />
+              <span className="mt-1 block text-xs text-hos-text-muted">
+                {form.dailyRedemptionPointsLimit > 0
+                  ? `A member cannot redeem more than ${form.dailyRedemptionPointsLimit.toLocaleString()} points across all orders in a single day.`
+                  : 'No daily velocity limit.'}
+              </span>
             </label>
           </section>
 
