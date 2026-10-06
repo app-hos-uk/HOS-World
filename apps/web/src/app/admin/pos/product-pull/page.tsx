@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { RouteGuard } from '@/components/RouteGuard';
 import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
+import { useMoney } from '@/hooks/useMoney';
 import Link from 'next/link';
 
 type Connection = {
@@ -29,6 +30,7 @@ const INPUT_CLS =
 
 export default function AdminPosProductPullPage() {
   const toast = useToast();
+  const { formatMoney } = useMoney();
   const [connections, setConnections] = useState<Connection[]>([]);
   const [selectedConn, setSelectedConn] = useState('');
   const [loading, setLoading] = useState(true);
@@ -152,7 +154,7 @@ export default function AdminPosProductPullPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-hos-text-muted">{p.sku || '—'}</td>
                     <td className="px-4 py-3 text-sm text-hos-text-secondary">
-                      {p.price != null ? `$${p.price.toFixed(2)}` : '—'}
+                      {p.price != null ? formatMoney(p.price) : '—'}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {p.alreadyLinkedProductId ? (
