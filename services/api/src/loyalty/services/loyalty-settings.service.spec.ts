@@ -210,7 +210,7 @@ describe('LoyaltySettingsService caching', () => {
     await service.update({ defaultEarnRate: 4 }, 'admin-1', 'market-my');
     const callsAfterMarketSave = prisma.config.findFirst.mock.calls.length;
     expect(callsAfterMarketSave).toBeGreaterThan(callsAfterWarm);
-    expect((service as { localCache: unknown }).localCache).toBeNull();
+    expect((service as unknown as { localCache: unknown }).localCache).toBeNull();
 
     await service.getResolved();
     expect(prisma.config.findFirst.mock.calls.length).toBeGreaterThan(callsAfterMarketSave);
