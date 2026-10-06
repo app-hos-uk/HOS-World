@@ -10,9 +10,10 @@ import { BundleController } from './bundle.controller';
 import { CacheModule } from '../cache/cache.module';
 import { DatabaseModule } from '../database/database.module';
 import { QueueModule } from '../queue/queue.module';
+import { SubmissionsModule } from '../submissions/submissions.module';
 
 @Module({
-  imports: [forwardRef(() => CacheModule), DatabaseModule, QueueModule],
+  imports: [forwardRef(() => CacheModule), DatabaseModule, QueueModule, SubmissionsModule],
   controllers: [ProductsController, VolumePricingController, BundleController],
   providers: [ProductsService, ProductsBulkService, ProductsCacheHook, ProductViewSchedulerService, VolumePricingService],
   exports: [ProductsService, ProductsBulkService, ProductsCacheHook, VolumePricingService],

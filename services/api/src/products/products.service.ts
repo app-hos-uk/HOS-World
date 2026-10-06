@@ -16,6 +16,7 @@ import { Prisma, ProductStatus, ImageType } from '@prisma/client';
 import { slugify } from '@hos-marketplace/utils';
 import { ProductsCacheHook } from './products-cache.hook';
 import { MeilisearchService } from '../meilisearch/meilisearch.service';
+import { FeatureFlag, FeatureFlagsService } from '../config/feature-flags.service';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
 
 @Injectable()
@@ -26,6 +27,7 @@ export class ProductsService {
     private prisma: PrismaService,
     private cacheHook: ProductsCacheHook,
     @Optional() private meilisearchService?: MeilisearchService,
+    @Optional() private featureFlags?: FeatureFlagsService,
   ) {}
 
   private vendorTableChecked = false;
@@ -57,7 +59,14 @@ export class ProductsService {
     }
   }
 
-  async create(sellerId: string, createProductDto: CreateProductDto): Promise<Product> {
+  async create(
+    sellerId: string,
+    createProductDto: CreateProductDto,
+    options?: { platformOwned?: boolean },
+  ): Promise<Product> {
+    if (options?.platformOwned) {
+      return this.createPlatformOwned(createProductDto);
+    }
     // Check if user is admin - they may not have a seller profile
     const user = await this.prisma.user.findUnique({
       where: { id: sellerId },
@@ -285,6 +294,115 @@ export class ProductsService {
     return mappedProduct;
   }
 
+  /** Catalog row with no seller. Called only when MARKETPLACE_OWNED_CATALOG is on. */
+  private async createPlatformOwned(createProductDto: CreateProductDto): Promise<Product> {
+    if (
+      createProductDto.price != null &&
+      (typeof createProductDto.price !== 'number' || createProductDto.price < 0)
+    ) {
+      throw new BadRequestException('Price must be a non-negative number');
+    }
+    if (
+      createProductDto.stock != null &&
+      (typeof createProductDto.stock !== 'number' || createProductDto.stock < 0)
+    ) {
+      throw new BadRequestException('Stock cannot be negative');
+    }
+
+    const baseSlug = slugify(createProductDto.name) || `product-${Date.now()}`;
+    let slug = baseSlug;
+    let counter = 1;
+    while (
+      await this.prisma.product.findFirst({
+        where: { slug, deletedAt: null },
+        select: { id: true },
+      })
+    ) {
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+    }
+
+    if (createProductDto.categoryId) {
+      const category = await this.prisma.category.findUnique({
+        where: { id: createProductDto.categoryId },
+      });
+      if (!category) {
+        throw new NotFoundException('Category not found');
+      }
+    }
+
+    const product = await this.prisma.product.create({
+      data: {
+        sellerId: null,
+        isPlatformOwned: true,
+        name: createProductDto.name,
+        description: createProductDto.description,
+        shortDescription: createProductDto.shortDescription,
+        slug,
+        sku: createProductDto.sku,
+        barcode: createProductDto.barcode,
+        ean: createProductDto.ean,
+        price: createProductDto.price,
+        tradePrice: createProductDto.tradePrice,
+        rrp: createProductDto.rrp,
+        currency: createProductDto.currency || PLATFORM_DEFAULT_CURRENCY,
+        taxRate: createProductDto.taxRate || 0,
+        stock: createProductDto.stock,
+        fandom: createProductDto.fandom,
+        category: createProductDto.category,
+        tags: createProductDto.tags || [],
+        categoryId: createProductDto.categoryId,
+        status: (createProductDto.status as ProductStatus) || ProductStatus.DRAFT,
+        productType: createProductDto.productType || 'SIMPLE',
+        images:
+          createProductDto.images && createProductDto.images.length > 0
+            ? {
+                create: createProductDto.images.map((img, index) => ({
+                  url: img.url,
+                  alt: img.alt,
+                  order: img.order ?? index,
+                  type: (img.type as ImageType) || ImageType.IMAGE,
+                })),
+              }
+            : undefined,
+        variations: createProductDto.variations
+          ? {
+              create: createProductDto.variations.map((variation) => ({
+                name: variation.name,
+                options: variation.options as any,
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        images: true,
+        variations: true,
+        seller: { select: { id: true, storeName: true, slug: true } },
+        categoryRelation: {
+          include: { parent: { include: { parent: true } } },
+        },
+        tagsRelation: { include: { tag: true } },
+        attributes: {
+          include: {
+            attribute: { include: { values: true } },
+            attributeValue: true,
+          },
+        },
+      },
+    });
+
+    const mappedProduct = this.mapToProductType(product, false, false, false);
+    this.cacheHook.onProductCreated(product).catch((error) => {
+      console.error('Failed to sync product to cache:', error);
+    });
+    if (this.meilisearchService) {
+      this.meilisearchService.indexProduct(product).catch((err) => {
+        this.logger.warn(`Failed to index product ${product.id} in MeiliSearch:`, err);
+      });
+    }
+    return mappedProduct;
+  }
+
   async findAll(searchDto: SearchProductsDto): Promise<PaginatedResponse<Product>> {
     const page = searchDto.page || 1;
     const limit = Math.min(searchDto.limit || 20, 100);
@@ -300,6 +418,23 @@ export class ProductsService {
     const where: Prisma.ProductWhereInput = {
       status: effectiveStatus,
     };
+
+    if (
+      searchDto.marketCode &&
+      this.featureFlags?.isEnabled(FeatureFlag.MARKET_CATALOG) === true
+    ) {
+      if (!where.AND) where.AND = [];
+      (where.AND as Prisma.ProductWhereInput[]).push({
+        OR: [
+          { productMarkets: { none: {} } },
+          {
+            productMarkets: {
+              some: { isActive: true, market: { code: searchDto.marketCode } },
+            },
+          },
+        ],
+      });
+    }
 
     // Listing eligibility: when browsing publicly (status=ACTIVE), only show products that
     // either have an active VendorProduct with stock + price, or are platform-owned (no vendor mapping).
@@ -398,7 +533,23 @@ export class ProductsService {
         },
       });
       if (seller) {
-        where.sellerId = seller.id;
+        const offersOn =
+          this.featureFlags?.isEnabled(FeatureFlag.MULTI_VENDOR_OFFERS) === true;
+        if (offersOn) {
+          if (!where.AND) where.AND = [];
+          (where.AND as Prisma.ProductWhereInput[]).push({
+            OR: [
+              { sellerId: seller.id },
+              {
+                vendorProducts: {
+                  some: { sellerId: seller.id, status: 'ACTIVE' },
+                },
+              },
+            ],
+          });
+        } else {
+          where.sellerId = seller.id;
+        }
       }
     }
 

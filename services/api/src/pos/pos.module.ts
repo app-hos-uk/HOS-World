@@ -7,8 +7,10 @@ import { InventoryModule } from '../inventory/inventory.module';
 import { DiscrepanciesModule } from '../discrepancies/discrepancies.module';
 import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { StoreAdminModule } from '../stores/store-admin.module';
+import { ActivityModule } from '../activity/activity.module';
 import { POSAdapterFactory } from './pos-adapter.factory';
 import { PosProductSyncService } from './sync/product-sync.service';
+import { PosProductImportService } from './sync/product-import.service';
 import { PosInventorySyncService } from './sync/inventory-sync.service';
 import { PosCustomerSyncService } from './sync/customer-sync.service';
 import { PosCustomerIdentityBackfillService } from './sync/customer-identity-backfill.service';
@@ -30,11 +32,13 @@ import { PosJobsService } from './jobs/pos.jobs';
     DiscrepanciesModule,
     forwardRef(() => LoyaltyModule),
     StoreAdminModule,
+    ActivityModule,
   ],
   controllers: [PosWebhookController, PosAdminController, LightspeedOAuthController],
   providers: [
     POSAdapterFactory,
     PosProductSyncService,
+    PosProductImportService,
     PosInventorySyncService,
     PosCustomerSyncService,
     PosCustomerIdentityBackfillService,
@@ -46,6 +50,7 @@ import { PosJobsService } from './jobs/pos.jobs';
   exports: [
     POSAdapterFactory,
     PosProductSyncService,
+    PosProductImportService,
     PosInventorySyncService,
     PosSalesImportService,
   ],

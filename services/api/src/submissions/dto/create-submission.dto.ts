@@ -130,4 +130,13 @@ export class CreateSubmissionDto {
   @IsOptional()
   @IsNumber()
   quantity?: number; // For wholesalers - quantity to submit
+
+  /** Lightspeed product id from a read-only pull. Not a catalogue write. */
+  @IsOptional()
+  @IsString()
+  posExternalProductId?: string;
+
+  @IsOptional()
+  @IsString()
+  posStoreId?: string;
 }

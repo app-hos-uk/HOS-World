@@ -16,6 +16,7 @@ import { ActivityService } from '../activity/activity.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TemplatesService } from '../templates/templates.service';
 import { normalizeCountryCode } from '../common/utils/country-code';
+import { FeatureFlag, FeatureFlagsService } from '../config/feature-flags.service';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -28,6 +29,7 @@ export class SellersService {
     private configService: ConfigService,
     @Optional() private activityService?: ActivityService,
     @Optional() @Inject(NotificationsService) private notificationsService?: NotificationsService,
+    @Optional() private featureFlags?: FeatureFlagsService,
     @Optional() private templatesService?: TemplatesService,
   ) {
     const key = process.env.ENCRYPTION_KEY;
@@ -141,26 +143,54 @@ export class SellersService {
     if (!seller) {
       throw new NotFoundException('Seller profile not found');
     }
+    const offersOn = this.featureFlags?.isEnabled(FeatureFlag.MULTI_VENDOR_OFFERS) === true;
     const products = await this.prisma.product.findMany({
-      where: { sellerId: seller.id },
+      where: offersOn
+        ? {
+            OR: [
+              { sellerId: seller.id },
+              { vendorProducts: { some: { sellerId: seller.id, status: 'ACTIVE' } } },
+            ],
+          }
+        : { sellerId: seller.id },
       take: 200,
       orderBy: { createdAt: 'desc' },
       include: {
         images: { orderBy: { order: 'asc' }, take: 1 },
+        ...(offersOn
+          ? {
+              vendorProducts: {
+                where: { sellerId: seller.id, status: 'ACTIVE' as const },
+                take: 1,
+                select: { platformPrice: true, vendorPrice: true, vendorStock: true },
+              },
+            }
+          : {}),
       },
     });
-    return products.map((p) => ({
+    return products.map((p) => {
+      const listing = (
+        p as {
+          vendorProducts?: {
+            platformPrice: { toString(): string } | null;
+            vendorPrice: { toString(): string };
+            vendorStock: number;
+          }[];
+        }
+      ).vendorProducts?.[0];
+      return {
       id: p.id,
       name: p.name,
       slug: p.slug,
       status: p.status,
-      price: Number(p.price),
-      stock: p.stock,
+      price: listing ? Number(listing.platformPrice ?? listing.vendorPrice) : Number(p.price),
+      stock: listing ? listing.vendorStock : p.stock,
       images: p.images?.map((i) => i.url) ?? [],
       createdAt: p.createdAt.toISOString(),
       category: p.category ?? undefined,
       fandom: p.fandom ?? undefined,
-    }));
+      };
+    });
   }
 
   async findOne(userId: string) {
@@ -841,10 +871,16 @@ export class SellersService {
         this.prisma.order.count({
           where: { sellerId: seller.id, status: 'PENDING' },
         }),
-        this.prisma.product.count({ where: { sellerId: seller.id } }),
-        this.prisma.product.count({
-          where: { sellerId: seller.id, status: 'ACTIVE' },
-        }),
+        this.featureFlags?.isEnabled(FeatureFlag.MULTI_VENDOR_OFFERS)
+          ? this.prisma.vendorProduct.count({ where: { sellerId: seller.id } })
+          : this.prisma.product.count({ where: { sellerId: seller.id } }),
+        this.featureFlags?.isEnabled(FeatureFlag.MULTI_VENDOR_OFFERS)
+          ? this.prisma.vendorProduct.count({
+              where: { sellerId: seller.id, status: 'ACTIVE' },
+            })
+          : this.prisma.product.count({
+              where: { sellerId: seller.id, status: 'ACTIVE' },
+            }),
         this.prisma.vendorProduct.count({
           where: { sellerId: seller.id, status: 'PENDING_APPROVAL' },
         }),

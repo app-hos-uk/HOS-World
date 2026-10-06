@@ -13,6 +13,7 @@ import type {
   POSPromotionPromoCode,
   POSOutlet,
   POSProductPayload,
+  POSProductRecord,
   POSSale,
   POSSalesPage,
 } from '../../interfaces/pos-types';
@@ -249,6 +250,97 @@ export class LightspeedAdapter implements POSAdapter {
     return { customers, maxVersion };
   }
 
+  private mapProductRow(row: Record<string, unknown>): POSProductRecord | null {
+    const externalId = row.id != null ? String(row.id).trim() : '';
+    if (!externalId) return null;
+    const deleted = row.deleted_at != null && String(row.deleted_at).trim() !== '';
+    const priceRaw = row.price_including_tax ?? row.price;
+    const costRaw = row.supply_price;
+    const price = priceRaw != null && Number.isFinite(Number(priceRaw)) ? Number(priceRaw) : undefined;
+    const costPrice = costRaw != null && Number.isFinite(Number(costRaw)) ? Number(costRaw) : undefined;
+    const brand =
+      row.brand_name != null
+        ? String(row.brand_name)
+        : row.brand && typeof row.brand === 'object' && (row.brand as { name?: string }).name
+          ? String((row.brand as { name?: string }).name)
+          : undefined;
+    return {
+      externalId,
+      sku: row.sku != null && String(row.sku).trim() ? String(row.sku).trim() : undefined,
+      name: row.name != null && String(row.name).trim() ? String(row.name).trim() : 'Item',
+      description: row.description != null ? String(row.description) : undefined,
+      price,
+      costPrice,
+      imageUrl: row.image_url != null ? String(row.image_url) : undefined,
+      brand,
+      handle: row.handle != null ? String(row.handle) : undefined,
+      version: Number.isFinite(Number(row.version)) ? Number(row.version) : undefined,
+      deleted,
+    };
+  }
+
+  /** Read one page of Lightspeed products. Does not create or update anything. */
+  async listProductsPage(params: { after?: number; pageSize?: number }): Promise<{
+    products: POSProductRecord[];
+    maxVersion: number | null;
+  }> {
+    const pageSize = Math.min(params.pageSize ?? 100, 100);
+    let path = `/products?page_size=${pageSize}`;
+    if (params.after != null) path += `&after=${encodeURIComponent(String(params.after))}`;
+    const { data } = await this.client.request<{
+      data?: Record<string, unknown>[];
+      version?: { max?: number };
+    }>('GET', path);
+    const rows = Array.isArray(data?.data) ? data.data : [];
+    const products = rows
+      .map((row) => this.mapProductRow(row))
+      .filter((row): row is POSProductRecord => row != null && !row.deleted);
+    const versionMax = data?.version?.max;
+    let maxVersion: number | null =
+      versionMax != null && Number.isFinite(versionMax) ? versionMax : null;
+    if (maxVersion == null) {
+      const versions = products
+        .map((p) => p.version)
+        .filter((v): v is number => v != null && Number.isFinite(v));
+      maxVersion = versions.length ? Math.max(...versions) : null;
+    }
+    return { products, maxVersion };
+  }
+
+  async getProduct(externalId: string): Promise<POSProductRecord | null> {
+    const id = externalId.trim();
+    if (!id) return null;
+    try {
+      const { data } = await this.client.request<unknown>(
+        'GET',
+        `/products/${encodeURIComponent(id)}`,
+      );
+      const row = this.unwrapSaleRow(data);
+      if (!row) return null;
+      const mapped = this.mapProductRow(row);
+      if (!mapped || mapped.deleted) return null;
+      return mapped;
+    } catch (err) {
+      if (this.isNotFound(err)) return null;
+      throw err;
+    }
+  }
+
+  async findProductBySku(sku: string): Promise<POSProductRecord | null> {
+    const target = sku.trim();
+    if (!target) return null;
+    const q = encodeURIComponent(target);
+    const { data } = await this.client.request<{ data?: Record<string, unknown>[] }>(
+      'GET',
+      `/search?type=products&sku=${q}`,
+    );
+    const rows = Array.isArray(data?.data) ? data.data : [];
+    const exact = rows
+      .map((row) => this.mapProductRow(row))
+      .find((row) => row && !row.deleted && row.sku?.toLowerCase() === target.toLowerCase());
+    return exact ?? null;
+  }
+
   /** Stamp identity fields on an existing Lightspeed customer. */
   async updateCustomerIdentity(
     externalId: string,
@@ -368,6 +460,46 @@ export class LightspeedAdapter implements POSAdapter {
       // Page until empty collection (API may return full pages of non-matching outlets)
       if (rows.length === 0) break;
       if (rows.length < pageSize) break;
+    }
+
+    if (sales.length > 0) {
+      const idsToHydrate = new Set<string>();
+      for (const sale of sales) {
+        for (const item of sale.items) {
+          if (this.lineNeedsProductHydration(item)) idsToHydrate.add(item.externalProductId);
+        }
+      }
+      if (idsToHydrate.size > 0) {
+        const productCache = new Map<string, { sku?: string; name?: string }>();
+        for (const id of idsToHydrate) {
+          try {
+            const { data } = await this.client.request<{ data?: Record<string, unknown> }>(
+              'GET',
+              `/products/${encodeURIComponent(id)}`,
+            );
+            const row = this.unwrapSaleRow(data) ?? (data as Record<string, unknown> | null);
+            if (!row) continue;
+            productCache.set(id, {
+              sku: row.sku != null && String(row.sku).trim() ? String(row.sku).trim() : undefined,
+              name: row.name != null && String(row.name).trim() ? String(row.name).trim() : undefined,
+            });
+          } catch {
+            // best-effort
+          }
+        }
+        for (let i = 0; i < sales.length; i++) {
+          sales[i] = {
+            ...sales[i],
+            items: sales[i].items.map((item) => {
+              const product = productCache.get(item.externalProductId);
+              if (!product) return item;
+              const sku = item.sku && !item.sku.startsWith('ls:') ? item.sku : product.sku || item.sku;
+              const name = item.name !== 'Item' ? item.name : product.name || item.name;
+              return { ...item, sku, name };
+            }),
+          };
+        }
+      }
     }
 
     return { sales, maxVersion };

@@ -4,9 +4,10 @@ import { PublishingController } from './publishing.controller';
 import { DatabaseModule } from '../database/database.module';
 import { ProductsModule } from '../products/products.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { PosModule } from '../pos/pos.module';
 
 @Module({
-  imports: [DatabaseModule, forwardRef(() => ProductsModule), NotificationsModule],
+  imports: [DatabaseModule, forwardRef(() => ProductsModule), NotificationsModule, PosModule],
   controllers: [PublishingController],
   providers: [PublishingService],
   exports: [PublishingService],

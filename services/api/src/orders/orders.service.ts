@@ -42,6 +42,7 @@ import {
 } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
+import { FeatureFlag, FeatureFlagsService } from '../config/feature-flags.service';
 import { GiftCardsService } from '../gift-cards/gift-cards.service';
 
 @Injectable()
@@ -488,6 +489,7 @@ export class OrdersService {
     private vendorLedgerService?: VendorLedgerService,
     @Optional() private refundsService?: RefundsService,
     @Optional() private giftCardsService?: GiftCardsService,
+    @Optional() private featureFlags?: FeatureFlagsService,
   ) {
     this.defaultCommissionRate = this.configService.get<number>(
       'DEFAULT_COMMISSION_RATE',
@@ -681,9 +683,24 @@ export class OrdersService {
         }
       }
 
+      const multiVendorOffers =
+        this.featureFlags?.isEnabled(FeatureFlag.MULTI_VENDOR_OFFERS) === true;
+
       for (const item of cart.items) {
-        const groupKey =
+        let groupKey =
           vendorProductMap.get(item.productId) || item.product.sellerId || 'platform';
+        if (multiVendorOffers && item.vendorProductId) {
+          const offer = await this.prisma.vendorProduct.findUnique({
+            where: { id: item.vendorProductId },
+            select: { sellerId: true, status: true },
+          });
+          if (!offer || offer.status !== 'ACTIVE') {
+            throw new BadRequestException(
+              `Seller offer is no longer available for ${item.product.name}`,
+            );
+          }
+          groupKey = offer.sellerId;
+        }
         if (!itemsBySeller.has(groupKey)) {
           itemsBySeller.set(groupKey, []);
         }
@@ -729,7 +746,19 @@ export class OrdersService {
         let tax = new Decimal(0);
 
         for (const item of items) {
-          if (item.product.stock < item.quantity) {
+          if (multiVendorOffers && item.vendorProductId) {
+            const offer = await this.prisma.vendorProduct.findUnique({
+              where: { id: item.vendorProductId },
+              select: { status: true, vendorStock: true, allowBackorder: true },
+            });
+            if (
+              !offer ||
+              offer.status !== 'ACTIVE' ||
+              (!offer.allowBackorder && offer.vendorStock < item.quantity)
+            ) {
+              throw new BadRequestException(`Insufficient stock for product: ${item.product.name}`);
+            }
+          } else if (item.product.stock < item.quantity) {
             throw new BadRequestException(`Insufficient stock for product: ${item.product.name}`);
           }
 
@@ -979,6 +1008,7 @@ export class OrdersService {
                   quantity: item.quantity,
                   price: item.price,
                   variationOptions: item.variationOptions,
+                  ...(item.vendorProductId ? { vendorProductId: item.vendorProductId } : {}),
                 })),
               },
             },
@@ -1055,6 +1085,7 @@ export class OrdersService {
                       quantity: item.quantity,
                       price: item.price,
                       variationOptions: item.variationOptions,
+                      ...(item.vendorProductId ? { vendorProductId: item.vendorProductId } : {}),
                     })),
                   },
                 },
@@ -1103,29 +1134,57 @@ export class OrdersService {
             );
           }
 
-          // Decrement stock for all items (both Product.stock and VendorProduct.vendorStock).
-          // Use a conditional updateMany (stock >= quantity) so the decrement is atomic at the
-          // row level; this prevents two concurrent checkouts from both passing the earlier
-          // read-only stock check and overselling / driving stock negative.
+          // Decrement stock atomically. When multi-vendor offers are on and the line
+          // carries a vendorProductId, the vendor row is the source of truth — skip the
+          // product-level decrement so stock is not double-counted. When the flag is off,
+          // Product.stock is the canonical pool and VendorProduct is best-effort.
           for (const group of vendorGroups) {
             for (const item of group.items) {
-              const decremented = await tx.product.updateMany({
-                where: { id: item.productId, stock: { gte: item.quantity } },
-                data: { stock: { decrement: item.quantity } },
-              });
-              if (decremented.count === 0) {
-                const current = await tx.product.findUnique({
-                  where: { id: item.productId },
-                  select: { name: true, stock: true },
+              const useVendorStock = multiVendorOffers && !!item.vendorProductId;
+
+              if (!useVendorStock) {
+                const decremented = await tx.product.updateMany({
+                  where: { id: item.productId, stock: { gte: item.quantity } },
+                  data: { stock: { decrement: item.quantity } },
                 });
-                throw new BadRequestException(
-                  `Insufficient stock for product: ${current?.name ?? item.productId}. ` +
-                    `Available: ${current?.stock ?? 0}, Requested: ${item.quantity}`,
-                );
+                if (decremented.count === 0) {
+                  const current = await tx.product.findUnique({
+                    where: { id: item.productId },
+                    select: { name: true, stock: true },
+                  });
+                  throw new BadRequestException(
+                    `Insufficient stock for product: ${current?.name ?? item.productId}. ` +
+                      `Available: ${current?.stock ?? 0}, Requested: ${item.quantity}`,
+                  );
+                }
               }
 
-              // Atomic vendor stock decrement — mirrors the product stock pattern
-              if (group.seller) {
+              if (useVendorStock) {
+                const vp = await tx.vendorProduct.findUnique({
+                  where: { id: item.vendorProductId! },
+                  select: { vendorStock: true, allowBackorder: true },
+                });
+                if (vp && !vp.allowBackorder) {
+                  const vendorDecremented = await tx.vendorProduct.updateMany({
+                    where: {
+                      id: item.vendorProductId!,
+                      status: 'ACTIVE' as any,
+                      vendorStock: { gte: item.quantity },
+                    },
+                    data: { vendorStock: { decrement: item.quantity } },
+                  });
+                  if (vendorDecremented.count === 0) {
+                    throw new BadRequestException(
+                      `Insufficient vendor stock for product ${item.productId}. Requested: ${item.quantity}`,
+                    );
+                  }
+                } else if (vp) {
+                  await tx.vendorProduct.updateMany({
+                    where: { id: item.vendorProductId!, status: 'ACTIVE' as any },
+                    data: { vendorStock: { decrement: item.quantity } },
+                  });
+                }
+              } else if (group.seller) {
                 const vendorDecremented = await tx.vendorProduct.updateMany({
                   where: {
                     productId: item.productId,
@@ -2328,7 +2387,12 @@ export class OrdersService {
           data: { stock: { increment: item.quantity } },
         });
 
-        if (seller) {
+        if (item.vendorProductId) {
+          await tx.vendorProduct.update({
+            where: { id: item.vendorProductId },
+            data: { vendorStock: { increment: item.quantity } },
+          });
+        } else if (seller) {
           const vp = await tx.vendorProduct.findFirst({
             where: { productId: item.productId, sellerId: seller.id },
           });
@@ -2522,7 +2586,12 @@ export class OrdersService {
                 data: { stock: { increment: childItem.quantity } },
               });
 
-              if (child.sellerId) {
+              if (childItem.vendorProductId) {
+                await tx.vendorProduct.update({
+                  where: { id: childItem.vendorProductId },
+                  data: { vendorStock: { increment: childItem.quantity } },
+                });
+              } else if (child.sellerId) {
                 const vp = await tx.vendorProduct.findFirst({
                   where: { productId: childItem.productId, sellerId: child.sellerId },
                 });
@@ -2559,7 +2628,12 @@ export class OrdersService {
             data: { stock: { increment: item.quantity } },
           });
 
-          if (order.sellerId) {
+          if (item.vendorProductId) {
+            await tx.vendorProduct.update({
+              where: { id: item.vendorProductId },
+              data: { vendorStock: { increment: item.quantity } },
+            });
+          } else if (order.sellerId) {
             const vp = await tx.vendorProduct.findFirst({
               where: { productId: item.productId, sellerId: order.sellerId },
             });

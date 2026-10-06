@@ -20,6 +20,16 @@ export enum FeatureFlag {
   ACCOUNTING_XERO = 'ACCOUNTING_XERO',
   /** Stripe card payment on the customer phone for in-store shipping. Off = staff confirms cash/card at the counter. */
   SHIPPING_ONLINE_PAYMENT = 'SHIPPING_ONLINE_PAYMENT',
+  /** Marketplace-owned catalog. Default false: publish keeps writing seller-owned products. */
+  MARKETPLACE_OWNED_CATALOG = 'MARKETPLACE_OWNED_CATALOG',
+  /** Multiple active vendor offers. Default false: one active listing per product. */
+  MULTI_VENDOR_OFFERS = 'MULTI_VENDOR_OFFERS',
+  /** Anchor-store gating. Default false: POS earn is not gated until outlets are backfilled. */
+  ANCHOR_STORE_GATING = 'ANCHOR_STORE_GATING',
+  /** POS product push. Default true: push stays available until staging turns it off. */
+  POS_PRODUCT_PUSH = 'POS_PRODUCT_PUSH',
+  /** Per-market catalogue rows. Default false: products with no ProductMarket stay visible everywhere. */
+  MARKET_CATALOG = 'MARKET_CATALOG',
 }
 
 const FLAG_DEFAULTS: Record<FeatureFlag, boolean> = {
@@ -38,6 +48,11 @@ const FLAG_DEFAULTS: Record<FeatureFlag, boolean> = {
   [FeatureFlag.MULTI_CURRENCY]: false,
   [FeatureFlag.ACCOUNTING_XERO]: false,
   [FeatureFlag.SHIPPING_ONLINE_PAYMENT]: false,
+  [FeatureFlag.MARKETPLACE_OWNED_CATALOG]: false,
+  [FeatureFlag.MULTI_VENDOR_OFFERS]: false,
+  [FeatureFlag.ANCHOR_STORE_GATING]: false,
+  [FeatureFlag.POS_PRODUCT_PUSH]: true,
+  [FeatureFlag.MARKET_CATALOG]: false,
 };
 
 const CACHE_TTL_MS = 30_000;

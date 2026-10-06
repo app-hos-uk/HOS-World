@@ -137,6 +137,12 @@ export class StoreShipmentService {
       include: { posConnection: true },
     });
     if (!store?.isActive) throw new NotFoundException('Store not found');
+    if (
+      this.featureFlags.isEnabled(FeatureFlag.ANCHOR_STORE_GATING) &&
+      store.isAnchorStore !== true
+    ) {
+      throw new BadRequestException('Ship-from-store is only available at House of Spells anchor stores');
+    }
 
     const confirmed = await this.confirmTillInvoice({
       storeId,

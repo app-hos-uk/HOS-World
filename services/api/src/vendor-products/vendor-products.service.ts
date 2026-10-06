@@ -12,12 +12,14 @@ import { UpdateVendorProductDto } from './dto/update-vendor-product.dto';
 import { ApproveVendorProductDto, RejectVendorProductDto } from './dto/approve-vendor-product.dto';
 import { QueryVendorProductsDto } from './dto/query-vendor-products.dto';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
+import { FeatureFlag, FeatureFlagsService } from '../config/feature-flags.service';
 
 @Injectable()
 export class VendorProductsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly sellersService: SellersService,
+    private readonly featureFlags: FeatureFlagsService,
   ) {}
 
   async create(sellerId: string, dto: CreateVendorProductDto) {
@@ -292,30 +294,40 @@ export class VendorProductsService {
   }
 
   async activate(id: string) {
-    const vp = await this.prisma.vendorProduct.findUnique({
-      where: { id },
-    });
-    if (!vp) throw new NotFoundException('Vendor product not found');
-    if (vp.status !== 'APPROVED' && vp.status !== 'INACTIVE') {
-      throw new BadRequestException('Only approved or inactive listings can be activated');
-    }
-    if (vp.vendorStock <= 0) {
-      throw new BadRequestException('Cannot activate listing with zero stock');
-    }
+    return this.prisma.$transaction(async (tx) => {
+      const vp = await tx.vendorProduct.findUnique({
+        where: { id },
+      });
+      if (!vp) throw new NotFoundException('Vendor product not found');
+      if (vp.status !== 'APPROVED' && vp.status !== 'INACTIVE') {
+        throw new BadRequestException('Only approved or inactive listings can be activated');
+      }
+      if (
+        this.featureFlags.isEnabled(FeatureFlag.MULTI_VENDOR_OFFERS) &&
+        vp.status === 'INACTIVE' &&
+        (!vp.approvedAt || vp.platformPrice == null)
+      ) {
+        throw new BadRequestException('Only previously approved listings can be reactivated');
+      }
+      if (vp.vendorStock <= 0) {
+        throw new BadRequestException('Cannot activate listing with zero stock');
+      }
 
-    // Enforce single active vendor per product: deactivate any other ACTIVE listings
-    await this.prisma.vendorProduct.updateMany({
-      where: {
-        productId: vp.productId,
-        status: 'ACTIVE',
-        id: { not: id },
-      },
-      data: { status: 'INACTIVE' },
-    });
+      // One active listing per product until MULTI_VENDOR_OFFERS allows several.
+      // The flag does not lift this rule yet; cart lines must carry vendorProductId first.
+      await tx.vendorProduct.updateMany({
+        where: {
+          productId: vp.productId,
+          status: 'ACTIVE',
+          id: { not: id },
+        },
+        data: { status: 'INACTIVE' },
+      });
 
-    return this.prisma.vendorProduct.update({
-      where: { id },
-      data: { status: 'ACTIVE' },
+      return tx.vendorProduct.update({
+        where: { id },
+        data: { status: 'ACTIVE' },
+      });
     });
   }
 

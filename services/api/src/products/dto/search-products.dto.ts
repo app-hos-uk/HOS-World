@@ -93,4 +93,7 @@ export class SearchProductsDto {
 
   // Internal flag set by authenticated admin/seller controllers; not settable from query string
   isAdmin?: boolean;
+
+  /** Set from x-market-code. Ignored unless MARKET_CATALOG is on. */
+  marketCode?: string;
 }

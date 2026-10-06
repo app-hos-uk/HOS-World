@@ -11,7 +11,9 @@ import {
   ParseUUIDPipe,
   DefaultValuePipe,
   ParseIntPipe,
+  Injectable,
 } from '@nestjs/common';
+import { PrismaService } from '../database/prisma.service';
 import {
   ApiTags,
   ApiOperation,
@@ -34,7 +36,10 @@ import type { ApiResponse } from '@hos-marketplace/shared-types';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
 export class AdminProductsController {
-  constructor(private readonly productsService: AdminProductsService) {}
+  constructor(
+    private readonly productsService: AdminProductsService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Post()
   @RequireAccess({ permission: 'products.create', scope: 'GLOBAL' })
@@ -383,5 +388,37 @@ export class AdminProductsController {
       data: result,
       message: 'Product deleted successfully',
     };
+  }
+
+  @Get('product-markets')
+  @Roles('ADMIN')
+  @RequireAccess({ permission: 'products.read', scope: 'GLOBAL' })
+  @ApiOperation({ summary: 'List product-market assignments with optional filters' })
+  async listProductMarkets(
+    @Query('search') search?: string,
+    @Query('marketCode') marketCode?: string,
+  ): Promise<ApiResponse<unknown>> {
+    const where: any = {};
+    if (marketCode) {
+      where.market = { code: marketCode };
+    }
+    if (search) {
+      where.product = {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { sku: { contains: search, mode: 'insensitive' } },
+        ],
+      };
+    }
+    const rows = await this.prisma.productMarket.findMany({
+      where,
+      include: {
+        product: { select: { name: true, sku: true } },
+        market: { select: { code: true, name: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    });
+    return { data: rows, message: 'Product markets retrieved' };
   }
 }

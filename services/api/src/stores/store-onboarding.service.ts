@@ -211,6 +211,7 @@ export class StoreOnboardingService {
       data.loyaltyRedeemValue = new Decimal(dto.loyaltyRedeemValue);
     }
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
+    if (dto.isAnchorStore !== undefined) data.isAnchorStore = dto.isAnchorStore;
 
     await this.prisma.store.update({ where: { id }, data });
     return this.getStore(id);

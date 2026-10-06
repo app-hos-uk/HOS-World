@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateSubmissionDto } from './dto/create-submission.dto';
@@ -11,6 +12,7 @@ import { ProductSubmissionStatus } from '@prisma/client';
 import { DuplicatesService } from '../duplicates/duplicates.service';
 import { MeilisearchService } from '../meilisearch/meilisearch.service';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
+import { PosProductImportService } from '../pos/sync/product-import.service';
 
 @Injectable()
 export class SubmissionsService {
@@ -18,7 +20,28 @@ export class SubmissionsService {
     private prisma: PrismaService,
     private duplicatesService: DuplicatesService,
     private meilisearchService: MeilisearchService,
+    @Optional() private productImport?: PosProductImportService,
   ) {}
+
+  /** Read-only Lightspeed search for the seller's own POS connection. */
+  async searchPosProducts(userId: string, params: { sku?: string; query?: string }) {
+    if (!this.productImport) return { connected: false, products: [] };
+    const seller = await this.prisma.seller.findUnique({ where: { userId } });
+    if (!seller) return { connected: false, products: [] };
+    const conn = await this.prisma.pOSConnection.findFirst({
+      where: { sellerId: seller.id, isActive: true, provider: 'lightspeed' },
+    });
+    if (!conn) return { connected: false, products: [] };
+    if (!params.sku?.trim() && !params.query?.trim()) {
+      return { connected: true, storeId: conn.storeId, products: [] };
+    }
+    const products = await this.productImport.search({
+      connectionId: conn.id,
+      sku: params.sku,
+      query: params.query,
+    });
+    return { connected: true, storeId: conn.storeId, products };
+  }
 
   /** Idempotency window: reject duplicate submissions with same name from same seller within this period (ms). */
   private static readonly DUPLICATE_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
@@ -112,6 +135,8 @@ export class SubmissionsService {
       tags: createSubmissionDto.tags || [],
       images: createSubmissionDto.images,
       variations: createSubmissionDto.variations || [],
+      posExternalProductId: createSubmissionDto.posExternalProductId,
+      posStoreId: createSubmissionDto.posStoreId,
     };
 
     const submission = await this.prisma.productSubmission.create({

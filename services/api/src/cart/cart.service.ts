@@ -20,6 +20,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 import { LoyaltyService } from '../loyalty/loyalty.service';
 import { computeQualifyingSubtotal } from '../loyalty/qualifying-amount';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
+import { FeatureFlag, FeatureFlagsService } from '../config/feature-flags.service';
 
 // Valid product status values for the shared types Product interface
 type ValidProductStatus = 'draft' | 'active' | 'inactive' | 'out_of_stock';
@@ -61,7 +62,53 @@ export class CartService {
     @Optional() @Inject(ShippingService) private shippingService?: ShippingService,
     @Optional() @Inject(TaxService) private taxService?: TaxService,
     @Optional() @Inject(forwardRef(() => LoyaltyService)) private loyaltyService?: LoyaltyService,
+    @Optional() private featureFlags?: FeatureFlagsService,
   ) {}
+
+  private offersEnabled(): boolean {
+    return this.featureFlags?.isEnabled(FeatureFlag.MULTI_VENDOR_OFFERS) === true;
+  }
+
+  /**
+   * Flag off, or a product with no active offer: return null and keep Product.price / Product.stock.
+   * Flag on with offers: require the named offer, or the only active offer.
+   */
+  private async resolveOffer(
+    productId: string,
+    vendorProductId: string | undefined,
+    quantity: number,
+  ): Promise<{ id: string; price: Decimal } | null> {
+    if (!this.offersEnabled()) return null;
+
+    const offers = await this.prisma.vendorProduct.findMany({
+      where: { productId, status: 'ACTIVE' },
+      select: {
+        id: true,
+        platformPrice: true,
+        vendorPrice: true,
+        vendorStock: true,
+        allowBackorder: true,
+      },
+    });
+    if (offers.length === 0) return null;
+
+    const chosen = vendorProductId
+      ? offers.find((offer) => offer.id === vendorProductId)
+      : offers.length === 1
+        ? offers[0]
+        : undefined;
+    if (!chosen) {
+      throw new BadRequestException(
+        vendorProductId
+          ? 'That seller offer is not available'
+          : 'Choose a seller for this product',
+      );
+    }
+    if (!chosen.allowBackorder && chosen.vendorStock < quantity) {
+      throw new BadRequestException('Insufficient stock available');
+    }
+    return { id: chosen.id, price: chosen.platformPrice ?? chosen.vendorPrice };
+  }
 
   async getCart(userId: string): Promise<Cart> {
     let cart = await this.prisma.cart.findUnique({
@@ -142,7 +189,13 @@ export class CartService {
       throw new BadRequestException('Product is not available');
     }
 
-    if (product.stock < addToCartDto.quantity) {
+    const offer = await this.resolveOffer(
+      product.id,
+      addToCartDto.vendorProductId,
+      addToCartDto.quantity,
+    );
+    const unitPrice = offer ? offer.price : product.price;
+    if (!offer && product.stock < addToCartDto.quantity) {
       throw new BadRequestException('Insufficient stock available');
     }
 
@@ -174,6 +227,12 @@ export class CartService {
 
       const existingItem = cart.items.find((item) => {
         if (item.productId !== addToCartDto.productId) return false;
+        if (
+          this.offersEnabled() &&
+          (item.vendorProductId ?? null) !== (offer?.id ?? null)
+        ) {
+          return false;
+        }
         const itemVariations = item.variationOptions as Record<string, string> | null;
         const newVariations = addToCartDto.variationOptions || null;
 
@@ -194,15 +253,18 @@ export class CartService {
 
       if (existingItem) {
         const newQuantity = existingItem.quantity + addToCartDto.quantity;
-        if (newQuantity > product.stock) {
+        if (!offer && newQuantity > product.stock) {
           throw new BadRequestException('Insufficient stock available');
+        }
+        if (offer) {
+          await this.resolveOffer(product.id, offer.id, newQuantity);
         }
 
         await tx.cartItem.update({
           where: { id: existingItem.id },
           data: {
             quantity: newQuantity,
-            price: product.price,
+            price: unitPrice,
           },
         });
       } else {
@@ -212,7 +274,8 @@ export class CartService {
             productId: product.id,
             quantity: addToCartDto.quantity,
             variationOptions: addToCartDto.variationOptions || {},
-            price: product.price,
+            price: unitPrice,
+            ...(offer ? { vendorProductId: offer.id } : {}),
           },
         });
       }
@@ -261,7 +324,10 @@ export class CartService {
       throw new BadRequestException('Product is no longer available');
     }
 
-    if (item.product.stock < updateItemDto.quantity) {
+    const offer = item.vendorProductId
+      ? await this.resolveOffer(item.productId, item.vendorProductId, updateItemDto.quantity)
+      : null;
+    if (!offer && item.product.stock < updateItemDto.quantity) {
       throw new BadRequestException('Insufficient stock available');
     }
 
@@ -269,7 +335,7 @@ export class CartService {
       where: { id: itemId },
       data: {
         quantity: updateItemDto.quantity,
-        price: item.product.price,
+        price: offer ? offer.price : item.product.price,
       },
     });
 
@@ -431,7 +497,13 @@ export class CartService {
       throw new BadRequestException('Product is not available');
     }
 
-    if (product.stock < addToCartDto.quantity) {
+    const offer = await this.resolveOffer(
+      product.id,
+      addToCartDto.vendorProductId,
+      addToCartDto.quantity,
+    );
+    const unitPrice = offer ? offer.price : product.price;
+    if (!offer && product.stock < addToCartDto.quantity) {
       throw new BadRequestException('Insufficient stock available');
     }
 
@@ -466,6 +538,9 @@ export class CartService {
 
     const existingItem = cart.items.find((item) => {
       if (item.productId !== addToCartDto.productId) return false;
+      if (this.offersEnabled() && (item.vendorProductId ?? null) !== (offer?.id ?? null)) {
+        return false;
+      }
       const itemVariations = item.variationOptions as Record<string, string> | null;
       const newVariations = addToCartDto.variationOptions || null;
 
@@ -484,15 +559,18 @@ export class CartService {
 
     if (existingItem) {
       const newQuantity = existingItem.quantity + addToCartDto.quantity;
-      if (newQuantity > product.stock) {
+      if (!offer && newQuantity > product.stock) {
         throw new BadRequestException('Insufficient stock available');
+      }
+      if (offer) {
+        await this.resolveOffer(product.id, offer.id, newQuantity);
       }
 
       await this.prisma.cartItem.update({
         where: { id: existingItem.id },
         data: {
           quantity: newQuantity,
-          price: product.price,
+          price: unitPrice,
         },
       });
     } else {
@@ -502,7 +580,8 @@ export class CartService {
           productId: product.id,
           quantity: addToCartDto.quantity,
           variationOptions: addToCartDto.variationOptions || {},
-          price: product.price,
+          price: unitPrice,
+          ...(offer ? { vendorProductId: offer.id } : {}),
         },
       });
     }
@@ -536,7 +615,10 @@ export class CartService {
       throw new BadRequestException('Product is no longer available');
     }
 
-    if (item.product.stock < updateItemDto.quantity) {
+    const offer = item.vendorProductId
+      ? await this.resolveOffer(item.productId, item.vendorProductId, updateItemDto.quantity)
+      : null;
+    if (!offer && item.product.stock < updateItemDto.quantity) {
       throw new BadRequestException('Insufficient stock available');
     }
 
@@ -544,7 +626,7 @@ export class CartService {
       where: { id: itemId },
       data: {
         quantity: updateItemDto.quantity,
-        price: item.product.price,
+        price: offer ? offer.price : item.product.price,
       },
     });
 
@@ -615,6 +697,7 @@ export class CartService {
           productId: line.productId,
           quantity: line.quantity,
           variationOptions: (line.variationOptions as Record<string, string>) || undefined,
+          vendorProductId: line.vendorProductId ?? undefined,
         });
       } catch (err: any) {
         mergeErrors.push(`${line.productId}: ${err?.message ?? err}`);
@@ -696,7 +779,8 @@ export class CartService {
               .map((k) => `${k}=${vars[k]}`)
               .join('|')
           : '';
-      const key = `${item.productId}::${varKey}`;
+      const offerKey = this.offersEnabled() ? (item.vendorProductId ?? '') : '';
+      const key = `${item.productId}::${varKey}::${offerKey}`;
       const existing = consolidated.get(key);
       if (existing) {
         existing.quantity += item.quantity;
@@ -716,9 +800,32 @@ export class CartService {
       cart.items = [...consolidated.values()];
     }
 
-    // Refresh cart item prices from current product data
+    // Refresh cart item prices from current product data.
+    // Offer lines refresh from platformPrice only when MULTI_VENDOR_OFFERS is on.
+    const droppedOfferIds: string[] = [];
     for (const item of cart.items) {
-      const currentPrice = item.product.price;
+      let currentPrice = item.product.price;
+      if (this.offersEnabled() && item.vendorProductId) {
+        const offer = await this.prisma.vendorProduct.findUnique({
+          where: { id: item.vendorProductId },
+          select: {
+            status: true,
+            platformPrice: true,
+            vendorPrice: true,
+            vendorStock: true,
+            allowBackorder: true,
+          },
+        });
+        const purchasable =
+          offer?.status === 'ACTIVE' &&
+          (offer.allowBackorder || offer.vendorStock >= item.quantity);
+        if (!purchasable) {
+          await this.prisma.cartItem.delete({ where: { id: item.id } });
+          droppedOfferIds.push(item.id);
+          continue;
+        }
+        currentPrice = offer.platformPrice ?? offer.vendorPrice;
+      }
       if (!new Decimal(item.price).equals(currentPrice)) {
         await this.prisma.cartItem.update({
           where: { id: item.id },
@@ -726,6 +833,9 @@ export class CartService {
         });
         item.price = currentPrice;
       }
+    }
+    if (droppedOfferIds.length > 0) {
+      cart.items = cart.items.filter((item) => !droppedOfferIds.includes(item.id));
     }
 
     let subtotal = new Decimal(0);

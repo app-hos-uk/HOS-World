@@ -79,6 +79,21 @@ export interface POSSale {
   rawPayload?: unknown;
 }
 
+/** Read-only Lightspeed product used to pre-fill a submission. Never written back. */
+export interface POSProductRecord {
+  externalId: string;
+  sku?: string;
+  name: string;
+  description?: string;
+  price?: number;
+  costPrice?: number;
+  imageUrl?: string;
+  brand?: string;
+  handle?: string;
+  version?: number;
+  deleted?: boolean;
+}
+
 export type POSSalesPage = {
   sales: POSSale[];
   /** Max version from this fetch; persist as poll cursor. */

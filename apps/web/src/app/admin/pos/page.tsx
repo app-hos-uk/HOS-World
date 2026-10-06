@@ -55,24 +55,48 @@ export default function AdminPosDashboardPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <Link
               href="/admin/pos/connections"
-              className="rounded-md bg-hos-gold px-4 py-2 text-sm font-medium text-[#1a1406] hover:bg-hos-gold-hover hover:text-[#1a1406]"
+              className="flex flex-col rounded-lg border border-hos-gold/30 bg-hos-gold/5 px-4 py-3 hover:bg-hos-gold/10 transition-colors"
             >
-              Manage connections
+              <span className="text-sm font-medium text-hos-gold">Connections</span>
+              <span className="text-xs text-hos-text-muted mt-0.5">Lightspeed credentials, outlets, sync settings</span>
+            </Link>
+            <Link
+              href="/admin/pos/jobs"
+              className="flex flex-col rounded-lg border border-hos-border bg-hos-bg-secondary px-4 py-3 hover:bg-hos-bg-tertiary transition-colors"
+            >
+              <span className="text-sm font-medium text-hos-text-secondary">Job Management</span>
+              <span className="text-xs text-hos-text-muted mt-0.5">Cron schedules, queue health, DLQ, activity logs</span>
+            </Link>
+            <Link
+              href="/admin/pos/product-pull"
+              className="flex flex-col rounded-lg border border-hos-border bg-hos-bg-secondary px-4 py-3 hover:bg-hos-bg-tertiary transition-colors"
+            >
+              <span className="text-sm font-medium text-hos-text-secondary">Product Pull</span>
+              <span className="text-xs text-hos-text-muted mt-0.5">Search Lightspeed catalogue, preview before import</span>
             </Link>
             <Link
               href="/admin/pos/sync"
-              className="rounded-md border border-hos-border bg-hos-bg-secondary px-4 py-2 text-sm font-medium text-hos-text-secondary hover:bg-hos-bg-tertiary"
+              className="flex flex-col rounded-lg border border-hos-border bg-hos-bg-secondary px-4 py-3 hover:bg-hos-bg-tertiary transition-colors"
             >
-              Sync log
+              <span className="text-sm font-medium text-hos-text-secondary">Sync Log</span>
+              <span className="text-xs text-hos-text-muted mt-0.5">Recent entity mappings for products and customers</span>
             </Link>
             <Link
               href="/admin/pos/stores"
-              className="rounded-md border border-hos-border bg-hos-bg-secondary px-4 py-2 text-sm font-medium text-hos-text-secondary hover:bg-hos-bg-tertiary"
+              className="flex flex-col rounded-lg border border-hos-border bg-hos-bg-secondary px-4 py-3 hover:bg-hos-bg-tertiary transition-colors"
             >
-              Outlets
+              <span className="text-sm font-medium text-hos-text-secondary">Outlets</span>
+              <span className="text-xs text-hos-text-muted mt-0.5">Physical store locations mapped to Lightspeed</span>
+            </Link>
+            <Link
+              href="/admin/pos/sales"
+              className="flex flex-col rounded-lg border border-hos-border bg-hos-bg-secondary px-4 py-3 hover:bg-hos-bg-tertiary transition-colors"
+            >
+              <span className="text-sm font-medium text-hos-text-secondary">POS Sales</span>
+              <span className="text-xs text-hos-text-muted mt-0.5">Imported in-store transactions and line items</span>
             </Link>
           </div>
 

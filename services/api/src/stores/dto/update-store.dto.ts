@@ -78,4 +78,8 @@ export class UpdateStoreDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isAnchorStore?: boolean;
 }

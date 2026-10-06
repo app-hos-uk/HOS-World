@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
 import { InventoryService } from '../../inventory/inventory.service';
 import { DiscrepanciesService } from '../../discrepancies/discrepancies.service';
-import { FeatureFlagsService } from '../../config/feature-flags.service';
+import { FeatureFlag, FeatureFlagsService } from '../../config/feature-flags.service';
 import { POSAdapterFactory } from '../pos-adapter.factory';
 import { EncryptionService } from '../../integrations/encryption.service';
 import { MovementType } from '../../inventory/dto/create-stock-movement.dto';
@@ -88,6 +88,7 @@ export class PosInventorySyncService {
   /** Push online order quantities to POS outlet stock (best-effort). */
   async syncOnlineOrderToPos(orderId: string): Promise<void> {
     if (!isPosRuntimeEnabled(this.config, this.featureFlags)) return;
+    if (!this.featureFlags.isEnabled(FeatureFlag.POS_PRODUCT_PUSH)) return;
 
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, parentOrderId: null },

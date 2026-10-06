@@ -11,6 +11,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { MeilisearchService } from '../meilisearch/meilisearch.service';
 import { ImageType } from '@prisma/client';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
+import { FeatureFlag, FeatureFlagsService } from '../config/feature-flags.service';
+import { PosProductImportService } from '../pos/sync/product-import.service';
 
 interface PricingData {
   basePrice: number;
@@ -31,6 +33,8 @@ export class PublishingService {
     private productsService: ProductsService,
     private notificationsService: NotificationsService,
     @Optional() private meilisearchService?: MeilisearchService,
+    @Optional() private featureFlags?: FeatureFlagsService,
+    @Optional() private productImport?: PosProductImportService,
   ) {}
 
   async publish(submissionId: string, userId: string) {
@@ -93,6 +97,10 @@ export class PublishingService {
     // Check for existing product with matching identifiers to prevent duplicates.
     // If a matching product already exists, create a VendorProduct link instead of a new Product.
     // Matches on SKU / barcode / EAN first; falls back to exact name match when none are provided.
+    // Null sellerId only when storefront and cart already read VendorProduct.
+    const catalogOwned =
+      this.featureFlags?.isEnabled(FeatureFlag.MARKETPLACE_OWNED_CATALOG) === true &&
+      this.featureFlags?.isEnabled(FeatureFlag.MULTI_VENDOR_OFFERS) === true;
     const sku = productData.sku?.trim();
     const barcode = productData.barcode?.trim();
     const ean = productData.ean?.trim();
@@ -109,7 +117,9 @@ export class PublishingService {
         where: {
           status: { in: ['ACTIVE', 'DRAFT'] },
           OR: matchConditions,
-          sellerId: { not: submission.seller.id },
+          ...(catalogOwned
+            ? { deletedAt: null }
+            : { sellerId: { not: submission.seller.id } }),
         },
         select: { id: true, sellerId: true },
       });
@@ -122,7 +132,9 @@ export class PublishingService {
         where: {
           status: { in: ['ACTIVE', 'DRAFT'] },
           name: catalogEntry.title,
-          sellerId: { not: submission.seller.id },
+          ...(catalogOwned
+            ? { deletedAt: null }
+            : { sellerId: { not: submission.seller.id } }),
         },
         select: { id: true, sellerId: true },
       });
@@ -138,54 +150,13 @@ export class PublishingService {
 
     let product: any;
 
+    const isDuplicate = !!existingProduct;
+
     if (existingProduct) {
-      // Product already exists under a different seller — create a VendorProduct link
-      // instead of a duplicate Product record
       this.logger.log(
         `Duplicate product detected (existing: ${existingProduct.id}). ` +
           `Creating VendorProduct for seller ${submission.seller.id} instead of new Product.`,
       );
-
-      const existingVP = await this.prisma.vendorProduct.findUnique({
-        where: {
-          sellerId_productId: {
-            sellerId: submission.seller.id,
-            productId: existingProduct.id,
-          },
-        },
-      });
-
-      if (!existingVP) {
-        await this.prisma.vendorProduct.create({
-          data: {
-            sellerId: submission.seller.id,
-            productId: existingProduct.id,
-            vendorPrice: finalPrice,
-            vendorCurrency: productData.currency || PLATFORM_DEFAULT_CURRENCY,
-            costPrice: productData.tradePrice || null,
-            vendorStock: submission.selectedQuantity || productData.stock || 0,
-            lowStockThreshold: 5,
-            allowBackorder: false,
-            leadTimeDays: 3,
-            status: 'ACTIVE',
-            platformPrice: finalPrice,
-            marginPercent: hosMargin,
-            approvedAt: new Date(),
-            approvedBy: userId,
-            submittedAt: new Date(),
-          },
-        });
-      } else {
-        await this.prisma.vendorProduct.update({
-          where: { id: existingVP.id },
-          data: {
-            vendorPrice: finalPrice,
-            vendorStock: { increment: submission.selectedQuantity || productData.stock || 0 },
-            status: 'ACTIVE',
-          },
-        });
-      }
-
       product = await this.prisma.product.findUnique({
         where: { id: existingProduct.id },
         include: {
@@ -220,17 +191,17 @@ export class PublishingService {
             type: ImageType.IMAGE,
           })),
           variations: productData.variations || [],
-        });
+        }, catalogOwned ? { platformOwned: true } : undefined);
       } catch (error: any) {
         throw new BadRequestException(
           `Failed to create product during publish: ${error?.message || 'unknown error'}`,
         );
       }
+
     }
 
-    // Link product to submission and create pricing atomically
+    // All catalog mutations — VendorProduct, submission, and pricing — in one transaction.
     await this.prisma.$transaction(async (tx) => {
-      // Guard: re-check submission hasn't been published by a concurrent request
       const fresh = await tx.productSubmission.findUnique({
         where: { id: submissionId },
         select: { status: true },
@@ -239,10 +210,114 @@ export class PublishingService {
         throw new BadRequestException('This submission has already been published.');
       }
 
+      // When joining an existing product, create/update the VendorProduct inside the tx
+      if (isDuplicate && product?.id) {
+        const existingVP = await tx.vendorProduct.findUnique({
+          where: {
+            sellerId_productId: {
+              sellerId: submission.seller.id,
+              productId: product.id,
+            },
+          },
+        });
+
+        if (!existingVP) {
+          await tx.vendorProduct.create({
+            data: {
+              sellerId: submission.seller.id,
+              productId: product.id,
+              vendorPrice: finalPrice,
+              vendorCurrency: productData.currency || PLATFORM_DEFAULT_CURRENCY,
+              costPrice: productData.tradePrice || null,
+              vendorStock: submission.selectedQuantity || productData.stock || 0,
+              lowStockThreshold: 5,
+              allowBackorder: false,
+              leadTimeDays: 3,
+              status: 'ACTIVE',
+              platformPrice: finalPrice,
+              marginPercent: hosMargin,
+              approvedAt: new Date(),
+              approvedBy: userId,
+              submittedAt: new Date(),
+            },
+          });
+        } else if (catalogOwned) {
+          await tx.vendorProduct.update({
+            where: { id: existingVP.id },
+            data: {
+              vendorPrice: finalPrice,
+              platformPrice: finalPrice,
+              vendorStock: submission.selectedQuantity || productData.stock || 0,
+              status: 'ACTIVE',
+              approvedAt: existingVP.approvedAt ?? new Date(),
+              approvedBy: existingVP.approvedBy ?? userId,
+            },
+          });
+        } else {
+          await tx.vendorProduct.update({
+            where: { id: existingVP.id },
+            data: {
+              vendorPrice: finalPrice,
+              vendorStock: { increment: submission.selectedQuantity || productData.stock || 0 },
+              status: 'ACTIVE',
+            },
+          });
+        }
+
+        if (catalogOwned) {
+          await tx.vendorProduct.updateMany({
+            where: {
+              productId: product.id,
+              status: 'ACTIVE',
+              sellerId: { not: submission.seller.id },
+            },
+            data: { status: 'INACTIVE' },
+          });
+        }
+      }
+
+      // For new products with catalog ownership, create the originating VendorProduct
+      if (!isDuplicate && catalogOwned && product?.id) {
+        const existingVP = await tx.vendorProduct.findUnique({
+          where: {
+            sellerId_productId: {
+              sellerId: submission.seller.id,
+              productId: product.id,
+            },
+          },
+        });
+        if (!existingVP) {
+          await tx.vendorProduct.create({
+            data: {
+              sellerId: submission.seller.id,
+              productId: product.id,
+              vendorPrice: finalPrice,
+              vendorCurrency: productData.currency || PLATFORM_DEFAULT_CURRENCY,
+              costPrice: productData.tradePrice || null,
+              vendorStock: submission.selectedQuantity || productData.stock || 0,
+              lowStockThreshold: 5,
+              allowBackorder: false,
+              leadTimeDays: 3,
+              status: 'ACTIVE',
+              platformPrice: finalPrice,
+              marginPercent: hosMargin,
+              approvedAt: new Date(),
+              approvedBy: userId,
+              submittedAt: new Date(),
+            },
+          });
+        }
+      }
+
+      const productAlreadyLinked = await tx.productSubmission.findFirst({
+        where: { productId: product.id, id: { not: submissionId } },
+        select: { id: true },
+      });
+
       await tx.productSubmission.update({
         where: { id: submissionId },
         data: {
-          productId: product.id,
+          ...(productAlreadyLinked ? {} : { productId: product.id }),
           status: 'PUBLISHED',
           publishedAt: new Date(),
         },
@@ -265,6 +340,35 @@ export class PublishingService {
         });
       }
     });
+
+    const posExternalId = productData?.posExternalProductId;
+    const posStoreId = productData?.posStoreId;
+    if (this.productImport && posExternalId && posStoreId && product?.id) {
+      const storeOwned = await this.prisma.store.findFirst({
+        where: {
+          id: String(posStoreId),
+          sellerId: submission.seller.id,
+        },
+        select: { id: true },
+      });
+      if (storeOwned) {
+        await this.productImport
+          .linkProduct({
+            storeId: String(posStoreId),
+            hosProductId: product.id,
+            externalId: String(posExternalId),
+          })
+          .catch((err) => {
+            this.logger.warn(
+              `POS mapping was not saved for product ${product.id}: ${err?.message || err}`,
+            );
+          });
+      } else {
+        this.logger.warn(
+          `POS link skipped: seller ${submission.seller.id} does not own store ${posStoreId}`,
+        );
+      }
+    }
 
     // Index in MeiliSearch (non-blocking — don't let search indexing failures block publish)
     if (this.meilisearchService) {

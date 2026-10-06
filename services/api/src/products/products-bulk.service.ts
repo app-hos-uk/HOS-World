@@ -1,9 +1,11 @@
-import { Injectable, BadRequestException, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ProductsService } from './products.service';
 import { ProductStatus } from '@prisma/client';
 import { QueueService, JobType } from '../queue/queue.service';
 import { PLATFORM_DEFAULT_CURRENCY } from '../common/currency-defaults';
+import { FeatureFlag, FeatureFlagsService } from '../config/feature-flags.service';
+import { SubmissionsService } from '../submissions/submissions.service';
 
 @Injectable()
 export class ProductsBulkService implements OnModuleInit {
@@ -13,6 +15,8 @@ export class ProductsBulkService implements OnModuleInit {
     private prisma: PrismaService,
     private productsService: ProductsService,
     private queueService: QueueService,
+    @Optional() private submissionsService?: SubmissionsService,
+    @Optional() private featureFlags?: FeatureFlagsService,
   ) {}
 
   async onModuleInit() {
@@ -207,6 +211,50 @@ export class ProductsBulkService implements OnModuleInit {
             images: productData.images || '',
             status: productData.status || '',
           });
+          continue;
+        }
+
+        if (this.featureFlags?.isEnabled(FeatureFlag.MARKETPLACE_OWNED_CATALOG) === true) {
+          if (!this.submissionsService) {
+            throw new BadRequestException('Submission pipeline is not available');
+          }
+          const imageList = productData.images
+            ? typeof productData.images === 'string'
+              ? productData.images.split('|').map((url: string, index: number) => ({
+                  url: url.trim(),
+                  order: index,
+                }))
+              : Array.isArray(productData.images)
+                ? productData.images.map((img: any, index: number) => ({
+                    url: typeof img === 'string' ? img.trim() : img.url?.trim() || '',
+                    alt: typeof img === 'object' ? img.alt : undefined,
+                    order: typeof img === 'object' && img.order != null ? img.order : index,
+                  }))
+                : []
+            : [];
+          await this.submissionsService.create(sellerId, {
+            name: productData.name,
+            description: productData.description || 'Imported product',
+            sku: productData.sku,
+            barcode: productData.barcode,
+            ean: productData.ean,
+            price: Number(productData.price) || 0,
+            tradePrice: productData.tradePrice ? Number(productData.tradePrice) : undefined,
+            rrp: productData.rrp ? Number(productData.rrp) : undefined,
+            currency: productData.currency || PLATFORM_DEFAULT_CURRENCY,
+            taxRate: productData.taxRate ? Number(productData.taxRate) : 0,
+            stock: Number(productData.stock) || 0,
+            fandom: productData.fandom,
+            category: productData.category,
+            tags: this.normalizeTags(productData.tags),
+            images: imageList.filter((img: { url: string }) => img.url),
+            variations: productData.variations
+              ? typeof productData.variations === 'string'
+                ? JSON.parse(productData.variations)
+                : productData.variations
+              : undefined,
+          } as any);
+          success++;
           continue;
         }
 

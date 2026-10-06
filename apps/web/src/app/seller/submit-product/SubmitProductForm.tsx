@@ -176,6 +176,23 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
     complianceNotes: '',
   });
 
+  const [posQuery, setPosQuery] = useState('');
+  const [posHits, setPosHits] = useState<Array<{ externalId: string; name: string; sku?: string; price?: number; description?: string; imageUrl?: string }>>([]);
+  const [posStoreId, setPosStoreId] = useState('');
+  const [posExternalProductId, setPosExternalProductId] = useState('');
+  const [posSearching, setPosSearching] = useState(false);
+  const [posConnected, setPosConnected] = useState(false);
+  useEffect(() => {
+    if (editSubmissionId) return;
+    void apiClient
+      .searchPosProducts({})
+      .then((res) => {
+        const body = res?.data as { connected?: boolean; storeId?: string };
+        setPosConnected(body?.connected === true);
+        if (body?.storeId) setPosStoreId(body.storeId);
+      })
+      .catch(() => setPosConnected(false));
+  }, [editSubmissionId]);
   const [images, setImages] = useState<ImageUpload[]>([]);
   const [variations, setVariations] = useState<Variation[]>([]);
   const [newImageUrl, setNewImageUrl] = useState('');
@@ -534,6 +551,8 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
         brandAuthorization: formData.brandAuthorization || undefined,
         ageRestriction: formData.ageRestriction || undefined,
         complianceNotes: formData.complianceNotes.trim() || undefined,
+        posExternalProductId: posExternalProductId || undefined,
+        posStoreId: posStoreId || undefined,
       };
 
       if (editSubmissionId) {
@@ -949,6 +968,82 @@ export function SubmitProductForm({ editSubmissionId }: { editSubmissionId?: str
               <div className="bg-hos-bg-secondary border border-hos-border rounded-lg p-6 sm:p-8">
                 <h2 className="text-xl font-semibold mb-4 sm:mb-6">Basic Information</h2>
                 <div className="space-y-4 sm:space-y-6">
+                  {posConnected && (
+                  <div className="rounded-lg border border-hos-border p-4">
+                    <p className="text-sm font-medium text-hos-text-secondary mb-2">
+                      Pull from your POS
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={posQuery}
+                        onChange={(e) => setPosQuery(e.target.value)}
+                        placeholder="SKU or product name"
+                        className="flex-1 px-4 py-2 border border-hos-border rounded-lg bg-hos-bg-secondary text-hos-text-secondary"
+                      />
+                      <button
+                        type="button"
+                        disabled={posSearching || !posQuery.trim()}
+                        onClick={() => {
+                          setPosSearching(true);
+                          const skuLike = /^[A-Za-z0-9._-]+$/.test(posQuery.trim());
+                          void apiClient
+                            .searchPosProducts(
+                              skuLike ? { sku: posQuery.trim() } : { query: posQuery.trim() },
+                            )
+                            .then((res) => {
+                              const body = res?.data as {
+                                connected?: boolean;
+                                storeId?: string;
+                                products?: typeof posHits;
+                              };
+                              if (!body?.connected) {
+                                toast.error('No Lightspeed connection on this seller.');
+                                setPosHits([]);
+                                return;
+                              }
+                              setPosStoreId(body.storeId || '');
+                              setPosHits(body.products || []);
+                            })
+                            .catch((err: Error) => toast.error(err.message || 'POS search failed'))
+                            .finally(() => setPosSearching(false));
+                        }}
+                        className="px-4 py-2 rounded-lg border border-hos-border text-sm text-hos-text-secondary disabled:opacity-50"
+                      >
+                        {posSearching ? 'Searching…' : 'Search'}
+                      </button>
+                    </div>
+                    {posHits.length > 0 && (
+                      <ul className="mt-3 space-y-2">
+                        {posHits.map((hit) => (
+                          <li key={hit.externalId}>
+                            <button
+                              type="button"
+                              className="w-full text-left text-sm text-hos-text-secondary hover:text-hos-gold"
+                              onClick={() => {
+                                setPosExternalProductId(hit.externalId);
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  name: hit.name || prev.name,
+                                  sku: hit.sku || prev.sku,
+                                  description: hit.description || prev.description,
+                                  price: hit.price != null ? String(hit.price) : prev.price,
+                                }));
+                                if (hit.imageUrl) {
+                                  setImages([{ url: hit.imageUrl, alt: hit.name, order: 0 }]);
+                                }
+                              }}
+                            >
+                              {hit.name}
+                              {hit.sku ? ` · ${hit.sku}` : ''}
+                              {posExternalProductId === hit.externalId ? ' · selected' : ''}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  )}
                   <div>
                     <label htmlFor="name" className="block text-sm font-medium text-hos-text-secondary mb-1">
                       Product Name <span className="text-red-500">*</span>

@@ -9,7 +9,7 @@ import { LoyaltyCampaignService } from '../services/campaign.service';
 import { LoyaltyTierEngine } from './tier.engine';
 import { BrandPartnershipsService } from '../../brand-partnerships/brand-partnerships.service';
 import { ProductCampaignsService } from '../../product-campaigns/product-campaigns.service';
-import { FeatureFlagsService } from '../../config/feature-flags.service';
+import { FeatureFlag, FeatureFlagsService } from '../../config/feature-flags.service';
 import { PlatformRegionService } from '../../config/platform-region.service';
 import { isLoyaltyRuntimeEnabled } from '../loyalty-enabled';
 import { LoyaltySettingsService } from '../services/loyalty-settings.service';
@@ -1043,6 +1043,12 @@ export class LoyaltyEarnEngine {
     });
     if (!sale?.customerId || sale.items.length === 0) return;
     if (sale.loyaltyPointsEarned > 0) return;
+    if (
+      this.featureFlags.isEnabled(FeatureFlag.ANCHOR_STORE_GATING) &&
+      sale.store?.isAnchorStore !== true
+    ) {
+      return;
+    }
 
     const qualifyingSubtotal = this.computeQualifyingSubtotal(
       sale.items.map((line) => ({

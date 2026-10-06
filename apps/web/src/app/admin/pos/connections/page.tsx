@@ -56,6 +56,7 @@ const EMPTY_FORM = {
 export default function AdminPosConnectionsPage() {
   const toast = useToast();
   const [items, setItems] = useState<Connection[]>([]);
+  const [productPushEnabled, setProductPushEnabled] = useState(true);
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -77,6 +78,8 @@ export default function AdminPosConnectionsPage() {
       setLoading(true);
       const res = await apiClient.getPosConnections();
       const data = (res as { data?: Connection[] })?.data;
+      const push = (res as { productPushEnabled?: boolean }).productPushEnabled;
+      setProductPushEnabled(push !== false);
       setItems(Array.isArray(data) ? data : []);
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to load');
@@ -564,6 +567,7 @@ export default function AdminPosConnectionsPage() {
                 />
               </div>
               <div className="flex flex-col justify-center gap-2">
+                {productPushEnabled && (
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -576,6 +580,7 @@ export default function AdminPosConnectionsPage() {
                     Auto-sync products
                   </label>
                 </div>
+                )}
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
@@ -626,7 +631,11 @@ export default function AdminPosConnectionsPage() {
         )}
 
         {loading ? (
-          <div className="text-hos-text-muted">Loading…</div>
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-16 rounded-lg bg-hos-bg-secondary animate-pulse" />
+            ))}
+          </div>
         ) : (
           <div className="overflow-hidden rounded-lg border border-hos-border bg-hos-bg-secondary shadow">
             <table className="min-w-full divide-y divide-hos-border">
@@ -662,99 +671,115 @@ export default function AdminPosConnectionsPage() {
                   </tr>
                 ) : (
                   items.map((c) => (
-                    <tr key={c.id}>
+                    <tr key={c.id} className="hover:bg-hos-bg-tertiary/30 transition-colors">
                       <td className="px-4 py-3 text-sm text-hos-text-secondary">
-                        {c.store?.name ?? '—'}{' '}
-                        <span className="text-hos-text-muted">({c.store?.code})</span>
+                        <span className="font-medium">{c.store?.name ?? '—'}</span>
+                        <span className="text-hos-text-muted text-xs ml-1.5">({c.store?.code})</span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-hos-text-secondary">{c.provider}</td>
+                      <td className="px-4 py-3 text-sm text-hos-text-secondary capitalize">{c.provider}</td>
                       <td className="px-4 py-3 text-sm">
                         {c.isActive ? (
-                          <span className="text-green-400">Active</span>
+                          <span className="inline-flex items-center gap-1 text-green-400 text-xs font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                            Active
+                          </span>
                         ) : (
-                          <span className="text-hos-text-muted">Inactive</span>
+                          <span className="inline-flex items-center gap-1 text-hos-text-muted text-xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-hos-text-muted/50" />
+                            Inactive
+                          </span>
                         )}
                         {!c.hasCredentials && (
-                          <span className="ml-2 text-xs text-amber-300">no credentials</span>
+                          <span className="ml-2 text-[11px] text-amber-300/80">no credentials</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm text-hos-text-secondary">
-                        {c.externalOutletId || (
-                          <span className="text-amber-300">unmapped</span>
+                        {c.externalOutletId ? (
+                          <span className="font-mono text-xs">{c.externalOutletId}</span>
+                        ) : (
+                          <span className="text-amber-300 text-xs">unmapped</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm text-hos-text-secondary">{c.syncStatus}</td>
                       <td className="px-4 py-3 text-right text-sm">
-                        <div className="flex flex-wrap justify-end gap-x-3 gap-y-1">
-                          <button
-                            type="button"
-                            onClick={() => void test(c.id)}
-                            className="text-hos-gold hover:text-hos-gold-hover"
-                          >
-                            Test
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void runSync(c.id, 'products')}
-                            className="text-hos-gold hover:text-hos-gold-hover"
-                          >
-                            Sync products
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void runSync(c.id, 'inventory')}
-                            disabled={!c.isActive}
-                            title={
-                              !c.isActive
-                                ? 'Reconciliation skips inactive connections'
-                                : !c.externalOutletId
-                                  ? 'Without a mapped outlet this may not reconcile anything'
-                                  : undefined
-                            }
-                            className="text-hos-gold hover:text-hos-gold-hover disabled:opacity-40 disabled:hover:text-hos-gold"
-                          >
-                            Sync inventory
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void backfillCustomerIdentity(c.id, true)}
-                            className="text-hos-gold hover:text-hos-gold-hover"
-                            title="Dry-run: preview how many customers would be backfilled"
-                          >
-                            Backfill ID (dry)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setConfirmDialog({
-                                title: 'Backfill customer identity for this connection?',
-                                description: 'This will update customer records.',
-                                confirmLabel: 'Backfill',
-                                onConfirm: () => {
-                                  setConfirmDialog(null);
-                                  void backfillCustomerIdentity(c.id, false);
-                                },
-                              });
-                            }}
-                            className="text-hos-gold hover:text-hos-gold-hover"
-                            title="Backfill customer identity data from POS"
-                          >
-                            Backfill ID
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => startEdit(c)}
-                            className="text-hos-gold hover:text-hos-gold-hover"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void handleDelete(c)}
-                            className="text-red-400 hover:text-red-300"
-                          >
-                            Delete
-                          </button>
+                        <div className="flex flex-col gap-1.5 items-end">
+                          {/* Primary actions */}
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => void test(c.id)}
+                              className="px-2 py-0.5 text-xs rounded border border-hos-border text-hos-text-secondary hover:bg-hos-bg-tertiary transition-colors"
+                            >
+                              Test
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => startEdit(c)}
+                              className="px-2 py-0.5 text-xs rounded border border-hos-gold/30 text-hos-gold hover:bg-hos-gold/10 transition-colors"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleDelete(c)}
+                              className="px-2 py-0.5 text-xs rounded border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                          {/* Sync actions */}
+                          <div className="flex gap-2 text-[11px]">
+                            {productPushEnabled && (
+                            <button
+                              type="button"
+                              onClick={() => void runSync(c.id, 'products')}
+                              className="text-hos-text-muted hover:text-hos-gold transition-colors"
+                            >
+                              Sync products
+                            </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => void runSync(c.id, 'inventory')}
+                              disabled={!c.isActive}
+                              title={
+                                !c.isActive
+                                  ? 'Reconciliation skips inactive connections'
+                                  : !c.externalOutletId
+                                    ? 'Without a mapped outlet this may not reconcile anything'
+                                    : undefined
+                              }
+                              className="text-hos-text-muted hover:text-hos-gold disabled:opacity-40 transition-colors"
+                            >
+                              Sync inventory
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void backfillCustomerIdentity(c.id, true)}
+                              className="text-hos-text-muted hover:text-hos-gold transition-colors"
+                              title="Dry-run: preview how many customers would be backfilled"
+                            >
+                              Backfill (dry)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setConfirmDialog({
+                                  title: 'Backfill customer identity for this connection?',
+                                  description: 'This will update customer records.',
+                                  confirmLabel: 'Backfill',
+                                  onConfirm: () => {
+                                    setConfirmDialog(null);
+                                    void backfillCustomerIdentity(c.id, false);
+                                  },
+                                });
+                              }}
+                              className="text-hos-text-muted hover:text-hos-gold transition-colors"
+                              title="Backfill customer identity data from POS"
+                            >
+                              Backfill
+                            </button>
+                          </div>
                         </div>
                       </td>
                     </tr>

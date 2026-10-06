@@ -39,6 +39,17 @@ import { ProductSubmissionStatus } from '@prisma/client';
 export class SubmissionsController {
   constructor(private readonly submissionsService: SubmissionsService) {}
 
+  @Get('pos-products')
+  @ApiOperation({ summary: 'Read Lightspeed products to pre-fill a submission' })
+  async searchPosProducts(
+    @Request() req: any,
+    @Query('sku') sku?: string,
+    @Query('query') query?: string,
+  ): Promise<ApiResponse<any>> {
+    const data = await this.submissionsService.searchPosProducts(req.user.id, { sku, query });
+    return { data, message: 'OK' };
+  }
+
   @Get('browse-catalog')
   @RequireAccess({ permission: 'submissions.review', scope: 'MARKET' })
   @ApiOperation({

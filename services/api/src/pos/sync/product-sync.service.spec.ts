@@ -27,8 +27,9 @@ function makeMocks() {
   const encryption: any = {
     decryptJson: jest.fn().mockReturnValue({ domainPrefix: 'd' }),
   };
-  const service = new PosProductSyncService(prisma, factory, encryption);
-  return { service, prisma, factory, encryption };
+  const featureFlags: any = { isEnabled: jest.fn().mockReturnValue(true) };
+  const service = new PosProductSyncService(prisma, factory, encryption, featureFlags);
+  return { service, prisma, factory, encryption, featureFlags };
 }
 
 describe('PosProductSyncService', () => {

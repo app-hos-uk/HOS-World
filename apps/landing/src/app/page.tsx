@@ -10,6 +10,13 @@ import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from './lib/con
 import { fetchGalleryAlbums } from './lib/galleryApi';
 
 export default async function LandingHomePage() {
+  if (process.env.NEXT_PUBLIC_SITE_ROLE === 'hub') {
+    const { GlobalHub } = await import('./components/GlobalHub');
+    return <GlobalHub />;
+  }
+  const market = process.env.NEXT_PUBLIC_MARKET_CODE || 'US';
+  const placeLine = market === 'MY' ? 'Kuala Lumpur' : 'Times Square';
+  const regionLine = market === 'MY' ? 'Malaysia' : 'New York';
   const galleryAlbums = await fetchGalleryAlbums();
   const featuredAlbums = galleryAlbums.slice(0, 3);
   return (
@@ -48,11 +55,11 @@ export default async function LandingHomePage() {
             <span className="h-pre-sep" aria-hidden="true">
               ·
             </span>
-            <span className="h-pre-line">Times Square</span>
+            <span className="h-pre-line">{placeLine}</span>
             <span className="h-pre-sep" aria-hidden="true">
               ·
             </span>
-            <span className="h-pre-line">New York</span>
+            <span className="h-pre-line">{regionLine}</span>
           </p>
           <div className="h-rule" />
           <p className="h-tag">

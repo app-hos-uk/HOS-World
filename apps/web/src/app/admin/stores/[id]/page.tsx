@@ -18,6 +18,7 @@ type EditForm = {
   state: string;
   postalCode: string;
   countryCode: string;
+  isAnchorStore: boolean;
 };
 
 const INPUT_CLS =
@@ -32,6 +33,7 @@ function toEditForm(row: Record<string, unknown>): EditForm {
     state: String(row.state ?? ''),
     postalCode: String(row.postalCode ?? row.postcode ?? ''),
     countryCode: resolveCountryCode(row),
+    isAnchorStore: row.isAnchorStore === true,
   };
 }
 
@@ -51,6 +53,7 @@ export default function AdminStoreDetailPage() {
     state: '',
     postalCode: '',
     countryCode: '',
+    isAnchorStore: false,
   });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -121,6 +124,7 @@ export default function AdminStoreDetailPage() {
         country: countryName || form.countryCode || undefined,
         countryCode: form.countryCode || undefined,
         defaultRegionCode: form.countryCode || undefined,
+        isAnchorStore: form.isAnchorStore,
       });
       toast.success('Store updated');
       setEditing(false);
@@ -236,6 +240,17 @@ export default function AdminStoreDetailPage() {
                   <div>
                     <label className="block text-sm font-medium text-hos-text-secondary mb-1">Country</label>
                     <CountrySelect id="store-country" name="countryCode" value={form.countryCode} onChange={(e) => setForm({ ...form, countryCode: e.target.value })} className={INPUT_CLS} />
+                  </div>
+                  <div className="sm:col-span-2 flex items-center gap-2">
+                    <input
+                      id="anchor-store"
+                      type="checkbox"
+                      checked={form.isAnchorStore}
+                      onChange={(e) => setForm({ ...form, isAnchorStore: e.target.checked })}
+                    />
+                    <label htmlFor="anchor-store" className="text-sm text-hos-text-secondary">
+                      House of Spells anchor store
+                    </label>
                   </div>
                 </div>
                 <div className="flex gap-2">

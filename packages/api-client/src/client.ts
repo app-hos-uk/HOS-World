@@ -2512,6 +2512,16 @@ export class ApiClient {
     });
   }
 
+  async searchPosProducts(params: { sku?: string; query?: string }): Promise<ApiResponse<any>> {
+    const q = new URLSearchParams();
+    if (params.sku) q.set('sku', params.sku);
+    if (params.query) q.set('query', params.query);
+    const query = q.toString();
+    return this.request<ApiResponse<any>>(`/submissions/pos-products${query ? `?${query}` : ''}`, {
+      method: 'GET',
+    });
+  }
+
   async createSubmission(data: {
     name: string;
     description: string;
@@ -2532,6 +2542,8 @@ export class ApiClient {
     images: Array<{ url: string; alt?: string; order?: number }>;
     variations?: Array<{ name: string; options: Array<{ name: string; value: string }> }>;
     shortDescription?: string;
+    posExternalProductId?: string;
+    posStoreId?: string;
   }): Promise<ApiResponse<any>> {
     return this.request<ApiResponse<any>>('/submissions', {
       method: 'POST',
@@ -4885,6 +4897,106 @@ export class ApiClient {
       `/admin/pos/connections/${connectionId}/sync/customers`,
       { method: 'POST' },
     );
+  }
+
+  async searchPosConnectionProducts(
+    connectionId: string,
+    params: { query?: string; sku?: string },
+  ): Promise<ApiResponse<any[]>> {
+    const q = new URLSearchParams();
+    if (params.query) q.set('query', params.query);
+    if (params.sku) q.set('sku', params.sku);
+    const qs = q.toString();
+    return this.request<ApiResponse<any[]>>(
+      `/admin/pos/connections/${connectionId}/products/search${qs ? `?${qs}` : ''}`,
+    );
+  }
+
+  async previewPosConnectionProduct(
+    connectionId: string,
+    externalId: string,
+  ): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(
+      `/admin/pos/connections/${connectionId}/products/${encodeURIComponent(externalId)}/preview`,
+    );
+  }
+
+  async getProductMarkets(params?: { search?: string; marketCode?: string }): Promise<ApiResponse<any[]>> {
+    const q = new URLSearchParams();
+    if (params?.search) q.set('search', params.search);
+    if (params?.marketCode) q.set('marketCode', params.marketCode);
+    const qs = q.toString();
+    return this.request<ApiResponse<any[]>>(`/admin/products/product-markets${qs ? `?${qs}` : ''}`);
+  }
+
+  async getMarkets(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/admin/markets');
+  }
+
+  // POS Job Management
+  async getPosJobStats(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/pos/jobs/stats');
+  }
+
+  async getPosJobCrons(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/admin/pos/jobs/crons');
+  }
+
+  async disablePosCron(name: string, pattern: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(
+      `/admin/pos/jobs/crons/${encodeURIComponent(name)}/disable`,
+      { method: 'POST', body: JSON.stringify({ pattern }) },
+    );
+  }
+
+  async enablePosCron(name: string, pattern: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(
+      `/admin/pos/jobs/crons/${encodeURIComponent(name)}/enable`,
+      { method: 'POST', body: JSON.stringify({ pattern }) },
+    );
+  }
+
+  async triggerPosCronNow(name: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(
+      `/admin/pos/jobs/crons/${encodeURIComponent(name)}/trigger`,
+      { method: 'POST' },
+    );
+  }
+
+  async getPosRecentJobs(type?: string, status?: string): Promise<ApiResponse<any[]>> {
+    const q = new URLSearchParams();
+    if (type) q.set('type', type);
+    if (status) q.set('status', status);
+    const qs = q.toString();
+    return this.request<ApiResponse<any[]>>(`/admin/pos/jobs/recent${qs ? `?${qs}` : ''}`);
+  }
+
+  async getPosDlqJobs(): Promise<ApiResponse<any[]>> {
+    return this.request<ApiResponse<any[]>>('/admin/pos/jobs/dlq');
+  }
+
+  async retryPosDlqJob(jobId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(
+      `/admin/pos/jobs/dlq/${encodeURIComponent(jobId)}/retry`,
+      { method: 'POST' },
+    );
+  }
+
+  async purgePosDlq(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/admin/pos/jobs/dlq/purge', { method: 'POST' });
+  }
+
+  async getPosJobDetail(jobId: string): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>(`/admin/pos/jobs/${encodeURIComponent(jobId)}`);
+  }
+
+  async getPosActivity(action?: string, page?: number, limit?: number): Promise<ApiResponse<any>> {
+    const q = new URLSearchParams();
+    if (action) q.set('action', action);
+    if (page) q.set('page', String(page));
+    if (limit) q.set('limit', String(limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<any>>(`/admin/pos/activity${qs ? `?${qs}` : ''}`);
   }
 
   async getPosSales(filters?: {

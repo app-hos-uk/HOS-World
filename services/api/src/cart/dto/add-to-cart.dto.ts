@@ -11,4 +11,9 @@ export class AddToCartDto {
   @IsOptional()
   @IsObject()
   variationOptions?: Record<string, string>;
+
+  /** Seller offer. Ignored unless MULTI_VENDOR_OFFERS is on. */
+  @IsOptional()
+  @IsString()
+  vendorProductId?: string;
 }

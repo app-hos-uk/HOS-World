@@ -251,6 +251,12 @@ model Market {
   sellerMarkets         SellerMarket[]
   productMarkets        ProductMarket[]
   homeUsers             User[]                 @relation("UserHomeMarket")
+  productSubmissions    ProductSubmission[]
+  foundingMembers       FoundingMember[]
+  loyaltyMemberships    LoyaltyMembership[]
+  loyaltyTiers          LoyaltyTier[]
+  platformSettings      PlatformSetting[]
+  integrationConfigs    IntegrationConfig[]
 
   @@index([isActive])
   @@index([isDefault])
@@ -385,6 +391,7 @@ model Store {
   managerName    String?
   operatingHours Json?
   isActive       Boolean   @default(true)
+  isAnchorStore  Boolean   @default(false)
   openedAt       DateTime?
 
   externalStoreId String?
@@ -838,6 +845,9 @@ model VendorProduct {
   totalUnitsSold Int     @default(0)
   totalRevenue   Decimal @default(0) @db.Decimal(10, 2)
 
+  cartItems  CartItem[]  @relation("CartItemVendorProduct")
+  orderItems OrderItem[] @relation("OrderItemVendorProduct")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -999,7 +1009,10 @@ model CartItem {
   quantity         Int     @default(1)
   variationOptions Json? // Store selected variation options
   price            Decimal @db.Decimal(10, 2)
+  vendorProductId  String?
+  vendorProduct    VendorProduct? @relation("CartItemVendorProduct", fields: [vendorProductId], references: [id], onDelete: SetNull)
 
+  @@index([vendorProductId])
   @@map("cart_items")
 }
 
@@ -1252,9 +1265,12 @@ model OrderItem {
   price            Decimal      @db.Decimal(10, 2)
   variationOptions Json?
   returnItems      ReturnItem[] // Item-level returns
+  vendorProductId  String?
+  vendorProduct    VendorProduct? @relation("OrderItemVendorProduct", fields: [vendorProductId], references: [id], onDelete: SetNull)
 
   @@index([orderId])
   @@index([productId])
+  @@index([vendorProductId])
   @@map("order_items")
 }
 
@@ -1638,11 +1654,14 @@ model ProductSubmission {
   catalogEntry       CatalogEntry?
   marketingMaterials MarketingMaterial[]
   duplicateProducts  DuplicateProduct[]
+  marketId           String?
+  market             Market?             @relation(fields: [marketId], references: [id], onDelete: SetNull)
 
   // Soft delete
   deletedAt DateTime?
 
   @@index([crossSellerGroupId])
+  @@index([marketId])
   @@index([status])
   @@index([sellerId, status])
   @@index([status, createdAt])
@@ -2591,10 +2610,12 @@ model EmailTemplate {
   description String?
   isActive    Boolean  @default(true)
   updatedBy   String?
+  marketCode  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([isActive])
+  @@index([marketCode])
 }
 
 model AdminEmailCampaign {
@@ -2798,11 +2819,14 @@ model PlatformSetting {
   category  String // e.g. "feature_flag", "site", "social"
   key       String
   value     String   @db.Text
+  marketId  String?
+  market    Market?  @relation(fields: [marketId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([category, key])
   @@index([category])
+  @@index([marketId])
   @@map("platform_settings")
 }
 
@@ -3311,6 +3335,8 @@ model IntegrationConfig {
   testMessage   String?   @db.Text // Error message or success details
   priority      Int       @default(0) // For ordering when multiple providers in same category
   metadata      Json? // Additional provider-specific metadata
+  marketId      String?
+  market        Market?   @relation(fields: [marketId], references: [id], onDelete: SetNull)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -3321,6 +3347,7 @@ model IntegrationConfig {
   @@index([category])
   @@index([isActive])
   @@index([provider])
+  @@index([marketId])
   @@map("integration_configs")
 }
 
@@ -3722,9 +3749,12 @@ model LoyaltyTier {
   maxMembers       Int?
   isActive         Boolean             @default(true)
   members          LoyaltyMembership[]
+  marketId         String?
+  market           Market?             @relation(fields: [marketId], references: [id], onDelete: SetNull)
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
 
+  @@index([marketId])
   @@map("loyalty_tiers")
 }
 
@@ -3777,11 +3807,14 @@ model LoyaltyMembership {
   status              String    @default("ACTIVE")
   deactivatedAt       DateTime?
   deactivationReason  String?
+  marketId            String?
+  market              Market?              @relation(fields: [marketId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([tierId])
+  @@index([marketId])
   @@index([cardNumber])
   @@index([totalPointsEarned])
   @@index([compositeScore])
@@ -5030,6 +5063,8 @@ model FoundingMember {
   status          String   @default("REGISTERED")
   userId          String?  @unique
   user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  marketId        String?
+  market          Market?  @relation(fields: [marketId], references: [id], onDelete: SetNull)
   referralSource  String?
   metadata        Json?
   registeredAt    DateTime @default(now())
@@ -5039,6 +5074,7 @@ model FoundingMember {
   @@index([email])
   @@index([status])
   @@index([registeredAt])
+  @@index([marketId])
   @@map("founding_members")
 }
 

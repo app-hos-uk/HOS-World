@@ -7,6 +7,7 @@ import {
   Param,
   Body,
   Query,
+  Headers,
   UseGuards,
   Request,
   Req,
@@ -57,7 +58,9 @@ export class ProductsController {
   @SwaggerApiResponse({ status: 200, description: 'Products retrieved successfully' })
   async findAll(
     @Query() searchDto: SearchProductsDto,
+    @Headers('x-market-code') marketCode?: string,
   ): Promise<ApiResponse<PaginatedResponse<Product>>> {
+    if (marketCode?.trim()) searchDto.marketCode = marketCode.trim().toUpperCase();
     const result = await this.productsService.findAll(searchDto);
     return {
       data: result,

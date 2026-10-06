@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { EncryptionService } from '../../integrations/encryption.service';
+import { FeatureFlag, FeatureFlagsService } from '../../config/feature-flags.service';
 import { POSAdapterFactory } from '../pos-adapter.factory';
 import type { POSProductPayload } from '../interfaces/pos-types';
 
@@ -12,9 +13,18 @@ export class PosProductSyncService {
     private prisma: PrismaService,
     private factory: POSAdapterFactory,
     private encryption: EncryptionService,
+    private featureFlags: FeatureFlagsService,
   ) {}
 
+  private pushEnabled(): boolean {
+    return this.featureFlags.isEnabled(FeatureFlag.POS_PRODUCT_PUSH);
+  }
+
   async syncProductToStore(productId: string, storeId: string): Promise<void> {
+    if (!this.pushEnabled()) {
+      this.logger.log('POS product push is disabled; not calling Lightspeed');
+      return;
+    }
     const connection = await this.prisma.pOSConnection.findFirst({
       where: { storeId, isActive: true },
       include: { store: true },
@@ -124,6 +134,10 @@ export class PosProductSyncService {
   }
 
   async syncAllProductsForStore(storeId: string): Promise<void> {
+    if (!this.pushEnabled()) {
+      this.logger.log('POS product push is disabled; store sync skipped');
+      return;
+    }
     const channels = await this.prisma.productChannel.findMany({
       where: { storeId, channelType: 'STORE', isActive: true },
       select: { productId: true },

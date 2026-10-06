@@ -235,4 +235,60 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     });
     this.logger.log(`Registered repeatable job ${jobType} with pattern ${pattern}`);
   }
+
+  async getRepeatableJobs(): Promise<
+    { key: string; name: string; pattern?: string; next?: number }[]
+  > {
+    const jobs = await this.queue.getRepeatableJobs();
+    return jobs.map((j) => ({
+      key: j.key,
+      name: j.name,
+      pattern: j.pattern,
+      next: j.next,
+    }));
+  }
+
+  async removeRepeatable(name: string, pattern: string): Promise<boolean> {
+    try {
+      await this.queue.removeRepeatable(name, { pattern });
+      this.logger.log(`Removed repeatable job ${name} with pattern ${pattern}`);
+      return true;
+    } catch (e) {
+      this.logger.warn(`Failed to remove repeatable ${name}: ${(e as Error).message}`);
+      return false;
+    }
+  }
+
+  async getRecentJobs(
+    jobType?: string,
+    status: 'completed' | 'failed' | 'active' | 'waiting' | 'delayed' = 'completed',
+    start = 0,
+    end = 20,
+  ) {
+    const jobs = await this.queue.getJobs([status], start, end);
+    const filtered = jobType ? jobs.filter((j) => j.name === jobType) : jobs;
+    return filtered.map((j) => ({
+      id: j.id,
+      name: j.name,
+      data: j.data,
+      attemptsMade: j.attemptsMade,
+      timestamp: j.timestamp,
+      processedOn: j.processedOn,
+      finishedOn: j.finishedOn,
+      failedReason: j.failedReason,
+      returnvalue: j.returnvalue,
+    }));
+  }
+
+  async purgeDLQ(namePrefix?: string): Promise<number> {
+    const jobs = await this.dlq.getJobs(['waiting', 'failed']);
+    let count = 0;
+    for (const j of jobs) {
+      if (namePrefix && !j.name.startsWith(namePrefix)) continue;
+      await j.remove();
+      count++;
+    }
+    this.logger.log(`Purged ${count} jobs from DLQ (prefix: ${namePrefix || '*'})`);
+    return count;
+  }
 }

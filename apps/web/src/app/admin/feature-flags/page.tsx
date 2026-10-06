@@ -20,6 +20,26 @@ const FLAG_DESCRIPTIONS: Record<string, string> = {
   ACCOUNTING_XERO: 'Enable Xero accounting integration (daily journals, ledger outbox)',
   SHIPPING_ONLINE_PAYMENT:
     'Enable online card payment for in-store shipping (Stripe). When off, staff confirm cash or standalone-machine card at the counter before printing the slip.',
+  MARKETPLACE_OWNED_CATALOG:
+    'Marketplace-owned catalog. Products created through publish become platform-owned.',
+  MULTI_VENDOR_OFFERS:
+    'Multiple vendor offers per product. Cart and checkout use vendor price/stock instead of product-level fields.',
+  ANCHOR_STORE_GATING:
+    'Restrict POS loyalty earn and ship-from-store to anchor stores only.',
+  POS_PRODUCT_PUSH:
+    'Push products to Lightspeed POS. Turn off to stop all Lightspeed product and online-order stock writes.',
+  MARKET_CATALOG:
+    'Filter product listings by market. When on, the shop uses x-market-code to show only market-visible products.',
+};
+
+const FLAG_DEPENDENCIES: Record<string, { requires?: string; warning?: string }> = {
+  MARKETPLACE_OWNED_CATALOG: {
+    requires: 'MULTI_VENDOR_OFFERS',
+    warning: 'Requires MULTI_VENDOR_OFFERS to be enabled first',
+  },
+  ANCHOR_STORE_GATING: {
+    warning: 'Mark HOS outlets as anchor stores before enabling',
+  },
 };
 
 const FLAG_CATEGORIES: Record<string, string[]> = {
@@ -27,6 +47,13 @@ const FLAG_CATEGORIES: Record<string, string[]> = {
   'Loyalty & Members': ['LOYALTY_PROGRAMME', 'FOUNDING_MEMBERS', 'AMBASSADOR_PROGRAMME'],
   'Marketing & Partnerships': ['BRAND_PARTNERSHIPS', 'INFLUENCER_STOREFRONTS', 'AI_RECOMMENDATIONS'],
   System: ['EMAIL_TEMPLATE_OVERRIDES', 'POS_INTEGRATION', 'ACCOUNTING_XERO', 'SHIPPING_ONLINE_PAYMENT'],
+  'Multi-Country & Marketplace': [
+    'MARKETPLACE_OWNED_CATALOG',
+    'MULTI_VENDOR_OFFERS',
+    'POS_PRODUCT_PUSH',
+    'ANCHOR_STORE_GATING',
+    'MARKET_CATALOG',
+  ],
 };
 
 export default function AdminFeatureFlagsPage() {
@@ -125,10 +152,15 @@ export default function AdminFeatureFlagsPage() {
                             <p className="text-xs text-hos-text-muted mt-0.5">
                               {FLAG_DESCRIPTIONS[flag] || 'No description available'}
                             </p>
+                            {FLAG_DEPENDENCIES[flag]?.warning && (
+                              <p className="text-[11px] text-amber-500/80 mt-0.5 flex items-center gap-1">
+                                <span>⚠</span> {FLAG_DEPENDENCIES[flag].warning}
+                              </p>
+                            )}
                           </div>
                           <button
                             onClick={() => handleToggle(flag, flags[flag])}
-                            disabled={toggling === flag}
+                            disabled={toggling === flag || (FLAG_DEPENDENCIES[flag]?.requires && !flags[FLAG_DEPENDENCIES[flag].requires!])}
                             className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-hos-gold/50 focus:ring-offset-2 focus:ring-offset-hos-bg-secondary disabled:opacity-50 ${
                               flags[flag] ? 'bg-hos-gold' : 'bg-hos-border'
                             }`}
@@ -170,10 +202,15 @@ export default function AdminFeatureFlagsPage() {
                           <p className="text-xs text-hos-text-muted mt-0.5">
                             {FLAG_DESCRIPTIONS[flag] || 'No description available'}
                           </p>
+                          {FLAG_DEPENDENCIES[flag]?.warning && (
+                            <p className="text-[11px] text-amber-500/80 mt-0.5 flex items-center gap-1">
+                              <span>⚠</span> {FLAG_DEPENDENCIES[flag].warning}
+                            </p>
+                          )}
                         </div>
                         <button
                           onClick={() => handleToggle(flag, flags[flag])}
-                          disabled={toggling === flag}
+                          disabled={toggling === flag || (FLAG_DEPENDENCIES[flag]?.requires && !flags[FLAG_DEPENDENCIES[flag].requires!])}
                           className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-hos-gold/50 focus:ring-offset-2 focus:ring-offset-hos-bg-secondary disabled:opacity-50 ${
                             flags[flag] ? 'bg-hos-gold' : 'bg-hos-border'
                           }`}
