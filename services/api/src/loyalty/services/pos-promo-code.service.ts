@@ -509,7 +509,10 @@ export class PosPromoCodeService {
   ): Promise<PosPromoCodeResult> {
     const voucher = await this.prisma.loyaltyPosVoucher.findUnique({
       where: { id: voucherId },
-      include: { redemption: true, store: { include: { posConnection: true } } },
+      include: {
+        redemption: { include: { option: { select: { minCartValue: true } } } },
+        store: { include: { posConnection: true } },
+      },
     });
     if (!voucher) throw new NotFoundException('Voucher not found');
     if (voucher.status === 'ISSUED') {
@@ -554,6 +557,7 @@ export class PosPromoCodeService {
 
     let created: { id: string } | null = null;
     try {
+      const minCart = voucher.redemption.option?.minCartValue;
       created = await adapter.createPromotion!({
         name: `HOS Loyalty – ${voucher.currency} ${amount.toFixed(2)}`,
         description: `Enchanted Circle redemption ${voucher.redemptionId}`,
@@ -566,6 +570,7 @@ export class PosPromoCodeService {
         discountType: 'basic_fixed_discount',
         discountValue: amount,
         loyaltyMultiplier: 0,
+        minCartValue: minCart != null ? Number(minCart) : undefined,
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Promotion create failed';

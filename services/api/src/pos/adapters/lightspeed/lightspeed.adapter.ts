@@ -807,7 +807,10 @@ export class LightspeedAdapter implements POSAdapter {
       add_promo_code: [
         { code: payload.promoCode, limit: payload.promoCodeLimit ?? 1 },
       ],
-      condition: { type: 'product_set', quantity: 1, include: [], exclude: [] },
+      condition:
+        payload.minCartValue && payload.minCartValue > 0
+          ? { type: 'sale_price', min_price: payload.minCartValue, include: [], exclude: [] }
+          : { type: 'product_set', quantity: 1, include: [], exclude: [] },
       action: {
         type: payload.discountType ?? 'basic_fixed_discount',
         value: payload.discountValue,

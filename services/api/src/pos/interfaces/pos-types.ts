@@ -145,6 +145,8 @@ export type POSPromotionCreatePayload = {
   discountType?: 'basic_fixed_discount' | 'basic_percent_discount';
   discountValue: number;
   loyaltyMultiplier?: number;
+  /** Minimum sale total required for the promo to apply at the register. */
+  minCartValue?: number;
 };
 
 export type POSPromotionPromoCode = {
