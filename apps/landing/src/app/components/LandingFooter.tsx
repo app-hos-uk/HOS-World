@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from '../lib/constants';
-import { formatStoreStreet, marketConfig, phoneTelHref, storeMapsUrl } from '../lib/marketConfig';
+import { formatLaunchLabel, formatStoreStreet, marketConfig, phoneTelHref, storeMapsUrl, venueIsOpen } from '../lib/marketConfig';
 
 const SOCIAL_ICONS: Record<string, ReactNode> = {
   Instagram: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>,
@@ -13,6 +13,8 @@ const SOCIAL_ICONS: Record<string, ReactNode> = {
 };
 
 export function LandingFooter() {
+  const open = venueIsOpen();
+  const launchLabel = formatLaunchLabel();
   return (
     <footer>
       <div className="footer-container">
@@ -27,25 +29,38 @@ export function LandingFooter() {
           </div>
 
           <div className="footer-visit">
-            <h4>Visit Us</h4>
-            <address>
-              {marketConfig.store.name}
-              <br />
-              {formatStoreStreet(marketConfig.store)}
-              {marketConfig.store.addressLine2 ? (
-                <>
+            <h4>{open ? 'Visit Us' : 'Opening Soon'}</h4>
+            {open ? (
+              <>
+                <address>
+                  {marketConfig.store.name}
                   <br />
-                  {marketConfig.store.addressLine2}
-                </>
-              ) : null}
-            </address>
-            <p className="footer-hours">Open Daily · 10:00 AM – Midnight</p>
-            <p className="footer-contact">
-              Tel: <a href={phoneTelHref(marketConfig.store.phone)}>{marketConfig.store.phone}</a> ·{' '}
-              <a href={storeMapsUrl(marketConfig.store)} target="_blank" rel="noopener noreferrer">
-                Get Directions
-              </a>
-            </p>
+                  {formatStoreStreet(marketConfig.store)}
+                  {marketConfig.store.addressLine2 ? (
+                    <>
+                      <br />
+                      {marketConfig.store.addressLine2}
+                    </>
+                  ) : null}
+                </address>
+                <p className="footer-hours">Open Daily · 10:00 AM – Midnight</p>
+                <p className="footer-contact">
+                  Tel: <a href={phoneTelHref(marketConfig.store.phone)}>{marketConfig.store.phone}</a> ·{' '}
+                  <a href={storeMapsUrl(marketConfig.store)} target="_blank" rel="noopener noreferrer">
+                    Get Directions
+                  </a>
+                </p>
+              </>
+            ) : (
+              <>
+                <address>
+                  {marketConfig.store.name}
+                  <br />
+                  {marketConfig.store.location}
+                </address>
+                {launchLabel ? <p className="footer-hours">Grand launch · {launchLabel}</p> : null}
+              </>
+            )}
           </div>
 
           <div className="footer-connect">

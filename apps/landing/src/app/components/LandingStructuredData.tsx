@@ -1,10 +1,11 @@
 import { getSiteUrl } from '../../lib/siteUrls';
-import { getMarketConfig, marketSameAs, storeMapsUrl } from '../lib/marketConfig';
+import { getMarketConfig, marketSameAs, storeMapsUrl, venueIsOpen } from '../lib/marketConfig';
 
 export function LandingStructuredData() {
   const market = getMarketConfig();
   const siteUrl = getSiteUrl();
   const place = market.structuredData;
+  const open = venueIsOpen(market);
   const storeSchema = {
     '@context': 'https://schema.org',
     '@type': 'Store',
@@ -15,7 +16,7 @@ export function LandingStructuredData() {
     url: siteUrl,
     image: `${siteUrl}/assets/logo-emblem.png`,
     logo: `${siteUrl}/assets/logo-emblem.png`,
-    telephone: market.store.phone,
+    ...(open ? { telephone: market.store.phone } : {}),
     address: {
       '@type': 'PostalAddress',
       streetAddress: place.streetAddress,
@@ -29,15 +30,19 @@ export function LandingStructuredData() {
       latitude: market.store.geo.lat,
       longitude: market.store.geo.lng,
     },
-    hasMap: storeMapsUrl(market.store),
-    openingHoursSpecification: [
-      {
-        '@type': 'OpeningHoursSpecification',
-        dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-        opens: '10:00',
-        closes: '24:00',
-      },
-    ],
+    ...(open
+      ? {
+          hasMap: storeMapsUrl(market.store),
+          openingHoursSpecification: [
+            {
+              '@type': 'OpeningHoursSpecification',
+              dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+              opens: '10:00',
+              closes: '24:00',
+            },
+          ],
+        }
+      : {}),
     priceRange: '$$',
     currenciesAccepted: place.currencyCode,
     paymentAccepted: 'Cash, Credit Card, Debit Card, Contactless',

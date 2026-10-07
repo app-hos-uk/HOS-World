@@ -207,7 +207,7 @@ const MY_CONFIG: MarketConfig = {
     flagshipText:
       "Kuala Lumpur is where the region comes together. We're planting the House of Spells flag in the heart of the city — a flagship for every fan in Malaysia.",
   },
-  launchDate: '2026-07-29T10:00:00',
+  launchDate: '2026-11-26T10:00:00',
   launchTimezone: 'Asia/Kuala_Lumpur',
 };
 
@@ -219,6 +219,13 @@ export function getMarketConfig(): MarketConfig {
 }
 
 export const marketConfig = getMarketConfig();
+
+/** True once the market's grand opening instant has passed. */
+export function venueIsOpen(config: MarketConfig = marketConfig, now = Date.now()): boolean {
+  const instant = launchInstantMs(config);
+  if (instant == null) return true;
+  return now >= instant;
+}
 
 /** Wall-clock `launchDate` in `launchTimezone`, as a UTC epoch millisecond. */
 export function launchInstantMs(config: MarketConfig = marketConfig): number | null {

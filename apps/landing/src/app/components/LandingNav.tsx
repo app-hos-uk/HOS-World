@@ -88,24 +88,26 @@ export function LandingNav({ active }: Props) {
             </a>
           )}
         </div>
-        {active !== 'register' && (
-          <Link href={LANDING_REGISTER_PATH} className="nav-cta">
-            Claim Your Place
-          </Link>
-        )}
-        <button
-          type="button"
-          className="nav-burger"
-          id="navBurger"
-          onClick={() => setMobileOpen(true)}
-          aria-label="Open menu"
-          aria-expanded={mobileOpen}
-          aria-controls="mobileMenu"
-        >
-          <span />
-          <span />
-          <span />
-        </button>
+        <div className="nav-actions">
+          {active !== 'register' && (
+            <Link href={LANDING_REGISTER_PATH} className="nav-cta">
+              Claim Your Place
+            </Link>
+          )}
+          <button
+            type="button"
+            className="nav-burger"
+            id="navBurger"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+            aria-expanded={mobileOpen}
+            aria-controls="mobileMenu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </div>
       </nav>
     </>
   );

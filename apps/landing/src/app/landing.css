@@ -44,7 +44,8 @@
 /* Nav wordmark: see --hos-wordmark-min in :root; shown from min-width 769px */
 .nav-logo-mark{display:none;}
 .nav-links-center{display:none;align-items:center;gap:28px;position:absolute;left:50%;transform:translateX(-50%);}
-.nav-link{font-family:var(--font-cinzel),serif;font-size:var(--type-ui-sm);letter-spacing:.12em;text-transform:uppercase;color:var(--text);text-decoration:none;cursor:pointer;transition:color .3s;background:none;border:none;}
+.nav-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto;position:relative;z-index:2;flex-shrink:0;}
+.nav-link{font-family:var(--font-cinzel),serif;font-size:var(--type-ui-sm);letter-spacing:.12em;text-transform:uppercase;color:var(--text);text-decoration:none;cursor:pointer;transition:color .3s;background:none;border:none;white-space:nowrap;}
 .nav-link:hover,.nav-link.active{color:var(--gold);}
 .nav-cta{font-family:var(--font-cinzel),serif;font-size:clamp(0.72rem,0.68rem + 0.2vw,0.8125rem);letter-spacing:.2em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(201,168,76,.32);padding:10px 14px;background:rgba(201,168,76,.05);cursor:pointer;transition:all .3s;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;}
 .nav-cta:hover{background:rgba(201,168,76,.14);border-color:var(--gold);}
@@ -1071,11 +1072,14 @@
 /* ═══════════════════════════════════
    TABLET LANDSCAPE / SMALL LAPTOP  1024px – 1200px
 ═══════════════════════════════════ */
-@media(min-width:1024px) and (max-width:1200px){
+@media(min-width:1024px) and (max-width:1279px){
   .nav-logo-mark { display:none; }
-  .nav-links-center { display:flex; gap:16px; overflow:hidden; white-space:nowrap; }
-  .nav-burger { display:none; }
-  .nav-link { letter-spacing:.08em; font-size:0.8125rem; }
+  .nav-links-center { display:none; }
+  .nav-burger { display:flex; }
+}
+@media(min-width:1280px) and (max-width:1439px){
+  .nav-links-center { gap:16px; }
+  .nav-link { letter-spacing:.08em; }
 }
 
 /* ═══════════════════════════════════
