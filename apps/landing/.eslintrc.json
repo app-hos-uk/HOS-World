@@ -22,7 +22,7 @@
   },
   "overrides": [
     {
-      "files": ["src/app/components/LandingStructuredData.tsx"],
+      "files": ["src/app/components/LandingStructuredData.tsx", "src/app/lib/marketConfig.ts"],
       "rules": {
         "no-restricted-syntax": [
           "error",

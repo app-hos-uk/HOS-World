@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { LandingShell } from './LandingShell';
 import { LANDING_LOGO, LANDING_WORDMARK } from '../lib/constants';
@@ -8,12 +7,14 @@ const COUNTRIES = [
     code: 'US',
     name: 'United States',
     href: 'https://us.houseofspells.com',
+    shopHref: 'https://shop.houseofspells.com',
     detail: 'Times Square, New York',
   },
   {
     code: 'MY',
     name: 'Malaysia',
     href: 'https://houseofspells.my',
+    shopHref: 'https://shop.houseofspells.my',
     detail: 'Kuala Lumpur',
   },
 ];
@@ -22,6 +23,7 @@ export async function GlobalHub() {
   const jar = await cookies();
   const hinted = jar.get('hos_geo_country')?.value?.toUpperCase();
   const hint = COUNTRIES.find((c) => c.code === hinted);
+  const defaultShop = hint?.shopHref ?? COUNTRIES[0].shopHref;
 
   return (
     <LandingShell nav="home" mainId="pg-home">
@@ -62,9 +64,9 @@ export async function GlobalHub() {
                 {country.name}
               </a>
             ))}
-            <Link href="https://shop.houseofspells.com" className="btn-g">
+            <a href={defaultShop} className="btn-g">
               Shop
-            </Link>
+            </a>
           </div>
         </div>
       </main>
