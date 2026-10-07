@@ -829,7 +829,11 @@ export class LightspeedAdapter implements POSAdapter {
       '/promotions',
       body,
     );
-    return this.mapPromotion(data?.data ?? (data as unknown as Record<string, unknown>));
+    // #region agent log
+    const rawResp = data?.data ?? (data as unknown as Record<string, unknown>);
+    console.log(`[DEBUG-08d918] Lightspeed createPromotion RESPONSE: ${JSON.stringify({id:rawResp?.id,condition:rawResp?.condition,action:rawResp?.action,use_promo_code:rawResp?.use_promo_code,status:rawResp?.status})}`);
+    // #endregion
+    return this.mapPromotion(rawResp);
   }
 
   async getPromotion(promotionId: string): Promise<POSPromotion | null> {
