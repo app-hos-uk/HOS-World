@@ -8,12 +8,16 @@ type Props = {
   active: LandingNavKey;
 };
 
-const SHOP_URL = process.env.NEXT_PUBLIC_SHOP_URL || '';
+const SHOP_URL = (process.env.NEXT_PUBLIC_SHOP_URL || '').replace(/\/$/, '');
+const FANDOM_WORLD_HREF = SHOP_URL ? `${SHOP_URL}/fandom-world` : '';
 
-const LINKS: { key: LandingNavKey; href: string; label: string }[] = [
+const LINKS: { key: LandingNavKey; href: string; label: string; external?: boolean }[] = [
   { key: 'home', href: '/', label: 'Home' },
   { key: 'universes', href: '/universes', label: 'Universes' },
   { key: 'experience', href: '/the-experience', label: 'The Experience' },
+  ...(FANDOM_WORLD_HREF
+    ? [{ key: 'fandom' as const, href: FANDOM_WORLD_HREF, label: 'Fandom World', external: true }]
+    : []),
   { key: 'gallery', href: '/gallery', label: 'Gallery' },
   { key: 'blog', href: '/blog', label: 'Blog' },
   { key: 'register', href: LANDING_REGISTER_PATH, label: 'Register' },
@@ -54,11 +58,17 @@ export function LandingNav({ active }: Props) {
         <button type="button" className="mobile-menu-close" onClick={closeMobile} aria-label="Close menu">
           ✕
         </button>
-        {LINKS.map((l) => (
-          <Link key={l.key} href={l.href} className="nav-link" onClick={closeMobile}>
-            {l.label}
-          </Link>
-        ))}
+        {LINKS.map((l) =>
+          l.external ? (
+            <a key={l.key} href={l.href} className="nav-link" onClick={closeMobile}>
+              {l.label}
+            </a>
+          ) : (
+            <Link key={l.key} href={l.href} className="nav-link" onClick={closeMobile}>
+              {l.label}
+            </Link>
+          ),
+        )}
         {shopLink && (
           <a href={shopLink} className="nav-link" onClick={closeMobile}>
             Enter Shop
@@ -72,16 +82,22 @@ export function LandingNav({ active }: Props) {
           <img className="nav-logo-mark" src={LANDING_WORDMARK} width={1024} height={258} alt="" aria-hidden="true" />
         </Link>
         <div className="nav-links-center">
-          {LINKS.map((l) => (
-            <Link
-              key={l.key}
-              href={l.href}
-              className={`nav-link${active === l.key ? ' active' : ''}`}
-              aria-current={active === l.key ? 'page' : undefined}
-            >
-              {l.label}
-            </Link>
-          ))}
+          {LINKS.map((l) =>
+            l.external ? (
+              <a key={l.key} href={l.href} className="nav-link">
+                {l.label}
+              </a>
+            ) : (
+              <Link
+                key={l.key}
+                href={l.href}
+                className={`nav-link${active === l.key ? ' active' : ''}`}
+                aria-current={active === l.key ? 'page' : undefined}
+              >
+                {l.label}
+              </Link>
+            ),
+          )}
           {shopLink && (
             <a href={shopLink} className="nav-link nav-link-shop">
               Enter Shop

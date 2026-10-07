@@ -57,6 +57,9 @@ export interface MarketConfig {
   experience: {
     flagshipText: string;
   };
+  fandomWorldHeading: string;
+  fandomWorldSubtitle: string;
+  fandomWorldDescription: string;
   launchDate?: string;
   launchTimezone?: string;
   /** Shown instead of a dated countdown when the venue has no public opening time. */
@@ -138,6 +141,10 @@ const US_CONFIG: MarketConfig = {
     flagshipText:
       "50 million visitors pass through Times Square every year. We're planting the House of Spells flag at the very centre of that energy — a flagship for every fan on Earth.",
   },
+  fandomWorldHeading: 'Fandom World',
+  fandomWorldSubtitle: 'Every Universe. Every Story.',
+  fandomWorldDescription:
+    'News, premieres, and event announcements from every universe — including what is happening at House of Spells.',
   launchDate: '2026-07-29T10:00:00',
   launchTimezone: 'America/New_York',
 };
@@ -209,6 +216,10 @@ const MY_CONFIG: MarketConfig = {
     flagshipText:
       "Kuala Lumpur is where the region comes together. We're planting the House of Spells flag in the heart of the city — a flagship for every fan in Malaysia.",
   },
+  fandomWorldHeading: 'Fandom World',
+  fandomWorldSubtitle: 'Every Universe. Every Story.',
+  fandomWorldDescription:
+    'News, premieres, and event announcements from every universe — including what is coming to Kuala Lumpur.',
   comingSoonLine: 'Coming to Malaysia this November',
 };
 

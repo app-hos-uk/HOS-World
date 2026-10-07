@@ -6,7 +6,9 @@ import { CelebrationSparkles } from './components/CelebrationSparkles';
 import { FanFloaters } from './components/FanFloaters';
 import { Ticker } from './components/Ticker';
 import { GalleryAlbumGrid } from './components/GalleryAlbumGrid';
+import { FandomWorldFeed } from './components/FandomWorldFeed';
 import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from './lib/constants';
+import { fetchFandomWorldFeed, pickFandomTeaser } from './lib/fandomWorldApi';
 import { fetchGalleryAlbums } from './lib/galleryApi';
 import { getMarketConfig } from './lib/marketConfig';
 
@@ -18,12 +20,15 @@ export default async function LandingHomePage() {
     return <GlobalHub />;
   }
   const market = getMarketConfig();
-  const galleryAlbums = await fetchGalleryAlbums();
+  const [galleryAlbums, fandomFeed] = await Promise.all([fetchGalleryAlbums(), fetchFandomWorldFeed(24)]);
   const featuredAlbums = galleryAlbums.slice(0, 3);
+  const fandomItems = pickFandomTeaser(fandomFeed, 6);
+  const shopBase = (process.env.NEXT_PUBLIC_SHOP_URL || market.shopUrl).replace(/\/$/, '');
+  const fandomExploreHref = `${shopBase}/fandom-world`;
   return (
     <LandingShell nav="home" mainId="pg-home">
       <main id="pg-home" className="hos-page" tabIndex={-1}>
-        <div className="hero-inner hero-inner--launch">
+        <div className={`hero-inner hero-inner--launch${market.code === 'MY' ? ' hero-inner--my' : ''}`}>
           <CelebrationSparkles />
           <FanFloaters />
           <div className="hero-brand-lockup">
@@ -164,6 +169,8 @@ export default async function LandingHomePage() {
         </div>
 
         <Ticker />
+
+        <FandomWorldFeed items={fandomItems} exploreHref={fandomExploreHref} />
 
         {featuredAlbums.length > 0 && (
           <section className="gallery-home-section">
