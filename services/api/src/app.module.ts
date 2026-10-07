@@ -112,6 +112,7 @@ import { NavigationModule } from './navigation/navigation.module';
 import { UniversesModule } from './universes/universes.module';
 import { TestimonialsModule } from './testimonials/testimonials.module';
 import { GalleryModule } from './gallery/gallery.module';
+import { FandomNewsModule } from './fandom-news/fandom-news.module';
 import { FeatureFlagsModule } from './config/feature-flags.module';
 import { PlatformRegionModule } from './config/platform-region.module';
 import { validateEnvironmentVariables } from './config/env.validation';
@@ -224,6 +225,7 @@ import { AccessControlModule } from './access-control/access-control.module';
     // Testimonials (storefront customer quotes)
     TestimonialsModule,
     GalleryModule,
+    FandomNewsModule,
     // Invoices
     InvoicesModule,
     // Templates

@@ -4,52 +4,16 @@ import { LandingShell } from '../components/LandingShell';
 import { LandingFooter } from '../components/LandingFooter';
 import { TimesSquareCanvas } from '../components/TimesSquareCanvas';
 import { landingPageMetadata } from '../lib/landingMetadata';
+import { marketContent } from '../lib/marketContent';
 import { LANDING_REGISTER_PATH } from '../lib/constants';
 
 export const metadata: Metadata = landingPageMetadata({
   title: 'The Experience — House of Spells',
-  description:
-    'House of Spells in Times Square — immersive zones, collectibles, events, and fan-curated inventory. The global flagship experience.',
+  description: marketContent.experienceMetaDescription,
   path: '/the-experience',
 });
 
-const EXP_BLOCKS = [
-  {
-    num: '01',
-    title: 'Immersive Universe Zones',
-    text: 'Step inside your favourite worlds. Each zone is a fully realised environment — from the halls of Hogwarts to the streets of Gotham, the forests of Middle Earth to the galaxies of Star Wars.',
-  },
-  {
-    num: '02',
-    title: 'Exclusive Collectibles',
-    text: "Rare, limited-edition merchandise you won't find anywhere else on Earth. Founding members get first access to the most sought-after items before doors even open.",
-  },
-  {
-    num: '03',
-    title: 'Live Fandom Events',
-    text: "Screenings, signings, cosplay competitions, launch events, and community gatherings. The House is always alive — there's always something happening inside.",
-  },
-  {
-    num: '04',
-    title: 'Fan-Curated Inventory',
-    text: 'Every shelf is shaped by you. Registrants\' fandom preferences directly determine what we stock — this is the first store ever built by the fans themselves.',
-  },
-  {
-    num: '05',
-    title: 'Times Square, New York',
-    text: "50 million visitors pass through Times Square every year. We're planting the House of Spells flag at the very centre of that energy — a flagship for every fan on Earth.",
-  },
-  {
-    num: '06',
-    title: 'The Global Launch',
-    text: (
-      <>
-        <strong>House Of Spells</strong> is the global flagship story — our UK stores continue at{' '}
-        <strong>House Of Spells UK</strong>. New York is just the beginning. Register now to be part of day one.
-      </>
-    ),
-  },
-];
+const EXP_BLOCKS = marketContent.experienceBlocks;
 
 export default function ExperiencePage() {
   return (
@@ -58,13 +22,12 @@ export default function ExperiencePage() {
         <div className="exp-intro rv">
           <p className="eyebrow">The Experience</p>
           <h2 className="sec-h2">
-            Times Square.
+            {marketContent.experienceHeading[0]}
             <br />
-            The World&apos;s Stage.
+            {marketContent.experienceHeading[1]}
           </h2>
           <p className="sec-sub">
-            House of Spells is bringing the most ambitious multi-fandom experience centre ever built to the crossroads of
-            the world.
+            {marketContent.experienceIntroSub}
           </p>
         </div>
 
@@ -72,8 +35,8 @@ export default function ExperiencePage() {
           <TimesSquareCanvas />
           <div className="ts-overlay" />
           <div className="ts-label">
-            <h3>Times Square, New York</h3>
-            <p>The Global Flagship &nbsp;·&nbsp; Opening Soon</p>
+            <h3>{marketContent.location}</h3>
+            <p>{marketContent.experienceVisualLabel}</p>
           </div>
         </div>
 

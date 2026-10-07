@@ -195,6 +195,7 @@ export const menuItems: ShellMenuItem[] = [
       { title: 'Universes', href: '/admin/universes', icon: navIcon('orbit') },
       { title: 'Testimonials', href: '/admin/testimonials', icon: navIcon('message') },
       { title: 'Gallery', href: '/admin/gallery', icon: navIcon('camera') },
+      { title: 'Fandom News', href: '/admin/fandom-news', icon: navIcon('newspaper') },
       { title: 'Blog', href: '/cms/blog', icon: navIcon('fileText') },
       { title: 'Stores', href: '/admin/stores', icon: navIcon('warehouse') },
       { title: 'Store Staff', href: '/admin/store-staff', icon: navIcon('users') },

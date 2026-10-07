@@ -5,10 +5,16 @@ import { LandingStructuredData } from './components/LandingStructuredData';
 import { Ticker } from './components/Ticker';
 import { GalleryAlbumGrid } from './components/GalleryAlbumGrid';
 import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from './lib/constants';
+import { marketContent } from './lib/marketContent';
 import { fetchGalleryAlbums } from './lib/galleryApi';
+import { fetchFandomWorldFeed } from './lib/fandomWorldApi';
+import { FandomWorldFeed } from './components/FandomWorldFeed';
 
 export default async function LandingHomePage() {
-  const galleryAlbums = await fetchGalleryAlbums();
+  const [galleryAlbums, fandomItems] = await Promise.all([
+    fetchGalleryAlbums(),
+    fetchFandomWorldFeed(6),
+  ]);
   const featuredAlbums = galleryAlbums.slice(0, 3);
   return (
     <LandingShell nav="home" mainId="pg-home">
@@ -39,19 +45,29 @@ export default async function LandingHomePage() {
               />
             </h1>
           </div>
-          <p className="h-ny-banner" role="status">
-            A grand launch in <span className="h-ny-place">Times Square, New York</span> &mdash; coming soon.
-          </p>
+          {marketContent.phase === 'live' ? (
+            <div className="h-ny-banner" role="status">
+              <p className="h-live-eyebrow">The gates are open</p>
+              <p className="h-live-headline">
+                We&rsquo;re live in <span className="h-ny-place">{marketContent.location}</span>
+              </p>
+              <p className="h-live-sub">House of Spells has arrived. Every universe. One destination.</p>
+            </div>
+          ) : (
+            <p className="h-ny-banner" role="status">
+              A grand launch in <span className="h-ny-place">{marketContent.location}</span> &mdash; coming soon.
+            </p>
+          )}
           <p className="h-pre">
             <span className="h-pre-line">Earth&apos;s Multi-Fandom Universe</span>
             <span className="h-pre-sep" aria-hidden="true">
               ·
             </span>
-            <span className="h-pre-line">Times Square</span>
+            <span className="h-pre-line">{marketContent.locationShort}</span>
             <span className="h-pre-sep" aria-hidden="true">
               ·
             </span>
-            <span className="h-pre-line">New York</span>
+            <span className="h-pre-line">{marketContent.cityOrCountry}</span>
           </p>
           <div className="h-rule" />
           <p className="h-tag">
@@ -89,8 +105,8 @@ export default async function LandingHomePage() {
             <div className="stat-label">Fans Worldwide</div>
           </div>
           <div className="stat-cell rv" style={{ transitionDelay: '.3s' }}>
-            <div className="stat-value">NYC</div>
-            <div className="stat-label">Next Destination</div>
+            <div className="stat-value">{marketContent.cityCode}</div>
+            <div className="stat-label">{marketContent.statLabel}</div>
           </div>
         </div>
 
@@ -141,8 +157,7 @@ export default async function LandingHomePage() {
               equal. Every fan is sovereign.
               <br />
               <br />
-              Now <strong>House Of Spells</strong> brings that vision to the centre of the world — opening in Times
-              Square, New York.
+              {marketContent.manifestoClosing}
             </p>
             <div className="manifesto-cta">
               <Link href="/the-experience" className="btn-p">
@@ -153,6 +168,8 @@ export default async function LandingHomePage() {
         </div>
 
         <Ticker reverse />
+
+        <FandomWorldFeed items={fandomItems} />
 
         {featuredAlbums.length > 0 && (
           <section className="gallery-home-section">

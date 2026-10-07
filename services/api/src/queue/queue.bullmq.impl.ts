@@ -54,6 +54,8 @@ export enum JobType {
   PRODUCT_CAMPAIGN_EXPIRE = 'product-campaign:expire',
   MONITORING_HEALTH_CHECK = 'monitoring:health-check',
   MONITORING_DISCREPANCY_SCAN = 'monitoring:discrepancy-scan',
+  FANDOM_NEWS_FETCH = 'fandom-news:fetch',
+  FANDOM_NEWS_CLEANUP = 'fandom-news:cleanup',
 }
 
 export interface JobOptions {

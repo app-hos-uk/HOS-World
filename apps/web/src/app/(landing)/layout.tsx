@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from 'next';
 import { cinzel, cinzelDecorative, cormorantLanding } from '@/lib/fonts';
 import { landingPageMetadata } from './lib/landingMetadata';
+import { marketContent } from './lib/marketContent';
 import './landing.css';
 
 export const metadata: Metadata = {
   ...landingPageMetadata({
     title: "House of Spells — Earth's Multi-Fandom Universe",
-    description:
-      'House of Spells — the multi-fandom flagship opening in Times Square, New York. Every universe. One destination. Register for founding membership.',
+    description: marketContent.siteDescription,
     path: '/',
   }),
   manifest: '/landing/site.webmanifest',

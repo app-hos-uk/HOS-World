@@ -11,6 +11,7 @@ import {
   validateNameLike,
   validatePhoneMaxDigits,
 } from '@/lib/formFieldValidation';
+import { marketContent } from '../lib/marketContent';
 
 const REG_MIN_HUMAN_FILL_MS = 1800;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -263,7 +264,7 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
     return (
       <div className="reg-form-inner rv vis" style={{ maxWidth: 640, margin: '0 auto', textAlign: 'center' }}>
         <h2 className="confirm-h1">Welcome, {success.name}</h2>
-        <p className="confirm-msg">Your place in the circle is claimed. We&apos;ll summon you when the gates open in Times Square.</p>
+        <p className="confirm-msg">{marketContent.successMessage}</p>
         <div className="confirm-fandoms" id="confirmFandoms">
           {success.fandoms.map((n) => {
             const f = FANDOMS.find((x) => x.n === n);
@@ -318,7 +319,7 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
           <div className="reg-form-inner">
             <div className="reg-head">
               <h2>Your Details</h2>
-              <p>We&apos;ll summon you when the gates open. Your data shapes our store — it&apos;s always used for your benefit.</p>
+              <p>We&apos;ll summon you when the gates open. Your data shapes our universe — it&apos;s always used for your benefit.</p>
             </div>
             <form id="regForm" onSubmit={handleSubmit}>
               <div aria-hidden="true" style={{ position: 'absolute', left: -10000, top: 'auto', width: 1, height: 1, overflow: 'hidden' }}>
@@ -346,7 +347,7 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
                   id="ph"
                   name="phone"
                   autoComplete="tel"
-                  placeholder="+1 (000) 000-0000"
+                  placeholder={marketContent.phonePlaceholder}
                   inputMode="tel"
                   maxLength={20}
                   onInput={(e) => {
@@ -385,15 +386,9 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
                   <label htmlFor="src">How Found Us?</label>
                   <select id="src" name="source" required defaultValue="">
                     <option value="">Select source</option>
-                    <option>QR Code / Flyer</option>
-                    <option>Instagram</option>
-                    <option>TikTok</option>
-                    <option>Friend / Word of Mouth</option>
-                    <option>House Of Spells</option>
-                    <option>House Of Spells UK</option>
-                    <option>Times Square Ad</option>
-                    <option>Google Search</option>
-                    <option>Other</option>
+                    {marketContent.referralSources.map((src) => (
+                      <option key={src}>{src}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -401,11 +396,9 @@ export function FoundingMemberForm({ registrationOpen = true }: Props) {
                 <label htmlFor="sp">Monthly Fandom Spend</label>
                 <select id="sp" name="spend" required defaultValue="">
                   <option value="">Select range — helps us stock wisely</option>
-                  <option>Under $25</option>
-                  <option>$25 – $75</option>
-                  <option>$75 – $150</option>
-                  <option>$150 – $300</option>
-                  <option>$300+</option>
+                  {marketContent.spendBrackets.map((bracket) => (
+                    <option key={bracket}>{bracket}</option>
+                  ))}
                 </select>
               </div>
               <div className="f-g" id="otherFranchisesWrap" hidden={!otherSelected}>

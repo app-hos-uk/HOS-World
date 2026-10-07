@@ -32,7 +32,7 @@ const EXP_BLOCKS = [
   {
     num: '04',
     title: 'Fan-Curated Inventory',
-    text: 'Every shelf is shaped by you. Registrants\' fandom preferences directly determine what we stock — this is the first store ever built by the fans themselves.',
+    text: 'Every shelf is shaped by you. Registrants\' fandom preferences directly determine what we stock — this is the first destination ever built by the fans themselves.',
   },
 ];
 
@@ -50,7 +50,7 @@ export default function ExperiencePage() {
       title: 'The Global Launch',
       text: (
         <>
-          <strong>House Of Spells</strong> is the global flagship story — our UK stores continue at{' '}
+          <strong>House Of Spells</strong> is the global flagship story — our UK chapters continue at{' '}
           <strong>House Of Spells UK</strong>. {market.hero.cityLine} is just the beginning. Register now to be part of day one.
         </>
       ),

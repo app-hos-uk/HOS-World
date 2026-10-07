@@ -5,6 +5,7 @@ import {
   TrendingUp,
   ClipboardList,
   FileText,
+  Newspaper,
   ShoppingCart,
   Users,
   Plus,
@@ -125,6 +126,7 @@ export const NAV_ICONS = {
   // Lists, documents & content
   clipboard: ClipboardList,
   fileText: FileText,
+  newspaper: Newspaper,
   file: File,
   folder: Folder,
   penLine: PenLine,

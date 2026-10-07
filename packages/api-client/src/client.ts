@@ -1069,6 +1069,91 @@ export class ApiClient {
     });
   }
 
+  // ── Fandom News (admin) ──
+  async adminListFandomNewsSources(): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/fandom-news/sources');
+  }
+
+  async adminCreateFandomNewsSource(body: Record<string, unknown>): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/fandom-news/sources', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminUpdateFandomNewsSource(
+    id: string,
+    body: Record<string, unknown>,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/fandom-news/sources/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminDeleteFandomNewsSource(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/fandom-news/sources/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async adminFetchFandomNewsSource(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/fandom-news/sources/${id}/fetch`, {
+      method: 'POST',
+    });
+  }
+
+  async adminListFandomNewsArticles(params?: {
+    status?: string;
+    category?: string;
+    market?: string;
+    mediaType?: string;
+    sourceId?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<unknown>> {
+    const q = new URLSearchParams();
+    if (params?.status) q.set('status', params.status);
+    if (params?.category) q.set('category', params.category);
+    if (params?.market) q.set('market', params.market);
+    if (params?.mediaType) q.set('mediaType', params.mediaType);
+    if (params?.sourceId) q.set('sourceId', params.sourceId);
+    if (params?.search) q.set('search', params.search);
+    if (params?.page != null) q.set('page', String(params.page));
+    if (params?.limit != null) q.set('limit', String(params.limit));
+    const qs = q.toString();
+    return this.request<ApiResponse<unknown>>(
+      `/admin/fandom-news/articles${qs ? `?${qs}` : ''}`,
+    );
+  }
+
+  async adminUpdateFandomNewsArticle(
+    id: string,
+    body: Record<string, unknown>,
+  ): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/fandom-news/articles/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminBulkUpdateFandomNewsArticles(body: {
+    ids: string[];
+    status: string;
+  }): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>('/admin/fandom-news/articles/bulk', {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  async adminDeleteFandomNewsArticle(id: string): Promise<ApiResponse<unknown>> {
+    return this.request<ApiResponse<unknown>>(`/admin/fandom-news/articles/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // ── Phase 6: Segmentation (admin) ──
   async adminListSegments(params?: {
     status?: string;

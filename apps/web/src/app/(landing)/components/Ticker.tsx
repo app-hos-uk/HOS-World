@@ -1,11 +1,11 @@
-import { TICKER_ITEMS } from '../lib/constants';
+import { marketContent } from '../lib/marketContent';
 
 type Props = {
   reverse?: boolean;
 };
 
 export function Ticker({ reverse }: Props) {
-  const items = [...TICKER_ITEMS, ...TICKER_ITEMS];
+  const items = [...marketContent.tickerItems, ...marketContent.tickerItems];
   return (
     <div className="ticker">
       <div className={`ticker-track${reverse ? ' rev' : ''}`}>

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
       market.code === 'US'
         ? "House of Spells — Earth's Multi-Fandom Universe"
         : `House of Spells ${market.country} — Earth's Multi-Fandom Universe`,
-    description: `House of Spells — the multi-fandom flagship opening in ${market.store.location}. Every universe. One destination. Register for founding membership.`,
+    description: `House of Spells — the multi-fandom flagship in ${market.store.location}. Every universe. One destination. Register for founding membership.`,
     path: '/',
   }),
   manifest: '/landing/site.webmanifest',

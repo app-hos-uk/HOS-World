@@ -317,7 +317,7 @@ export function FoundingMemberForm({ registrationOpen = true, fandoms = FANDOMS 
           <div className="reg-form-inner">
             <div className="reg-head">
               <h2>Your Details</h2>
-              <p>We&apos;ll summon you when the gates open. Your data shapes our store — it&apos;s always used for your benefit.</p>
+              <p>We&apos;ll summon you when the gates open. Your data shapes our universe — it&apos;s always used for your benefit.</p>
             </div>
             <form id="regForm" onSubmit={handleSubmit}>
               <div aria-hidden="true" style={{ position: 'absolute', left: -10000, top: 'auto', width: 1, height: 1, overflow: 'hidden' }}>

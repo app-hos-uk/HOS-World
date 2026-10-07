@@ -8,27 +8,27 @@ import { useToast } from '@/hooks/useToast';
 import { EmailTestPanel } from '@/components/admin/EmailTestPanel';
 import { navIcon } from '@/lib/navIcons';
 import { DEFAULT_REGION, type RegionConfig } from '@/lib/regionConfig';
+import { DEFAULT_SITE_SETTINGS } from '@/lib/siteSettingsDefaults';
 
 const defaultSettings = {
   // General Settings
-  platformName: 'House of Spells Marketplace',
-  platformUrl: 'https://hos-marketplace.com',
+  platformName: DEFAULT_SITE_SETTINGS.platformName,
+  platformUrl: DEFAULT_SITE_SETTINGS.platformUrl || 'https://houseofspells.com',
   maintenanceMode: false,
   allowRegistration: true,
   requireEmailVerification: false,
   shopEnabled: false,
   
   // Social Media URLs
-  socialFacebookUrl: '',
-  socialInstagramUrl: '',
-  socialXUrl: '',
+  socialFacebookUrl: DEFAULT_SITE_SETTINGS.socialFacebookUrl,
+  socialInstagramUrl: DEFAULT_SITE_SETTINGS.socialInstagramUrl,
+  socialXUrl: DEFAULT_SITE_SETTINGS.socialXUrl,
 
   // Storefront contact (footer, structured data)
-  contactEmail: 'info@houseofspells.com',
-  contactPhone: '+1 (212) 555-0199',
-  contactAddress: '1564 Broadway, Times Square, New York, NY 10036',
-  footerAbout:
-    'An immersive fandom experience — franchises, collectibles, and unforgettable finds online and in our stores.',
+  contactEmail: DEFAULT_SITE_SETTINGS.contactEmail,
+  contactPhone: DEFAULT_SITE_SETTINGS.contactPhone,
+  contactAddress: DEFAULT_SITE_SETTINGS.contactAddress,
+  footerAbout: DEFAULT_SITE_SETTINGS.footerAbout,
   
   // Email Settings
   smtpHost: '',

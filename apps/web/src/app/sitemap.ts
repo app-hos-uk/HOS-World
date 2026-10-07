@@ -63,6 +63,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/universes', priority: 0.85, changeFrequency: 'weekly' },
     { path: '/the-experience', priority: 0.85, changeFrequency: 'weekly' },
     { path: '/founding-members', priority: 0.8, changeFrequency: 'weekly' },
+    { path: '/fandom-world', priority: 0.85, changeFrequency: 'daily' },
+    { path: '/gallery', priority: 0.7, changeFrequency: 'weekly' },
   ];
 
   const storefrontPages = [

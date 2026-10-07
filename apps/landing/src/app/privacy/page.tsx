@@ -52,7 +52,7 @@ export default async function PrivacyPage() {
               <h2>1. Who We Are</h2>
               <p>
                 {market.privacy.entityName} (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates the website {market.privacy.website} and the
-                House of Spells flagship store at {market.store.location}. We are committed to protecting your personal information
+                House of Spells flagship in {market.store.location}. We are committed to protecting your personal information
                 and your right to privacy.
               </p>
 
@@ -61,7 +61,7 @@ export default async function PrivacyPage() {
               <ul>
                 <li>Register as a Founding Member</li>
                 <li>Create an account on our platform</li>
-                <li>Make a purchase in-store or online</li>
+                <li>Make a purchase in-venue or online</li>
                 <li>Subscribe to our newsletter or communications</li>
                 <li>Contact us with inquiries or feedback</li>
               </ul>
@@ -71,7 +71,7 @@ export default async function PrivacyPage() {
               <p>We use your personal information to:</p>
               <ul>
                 <li>Process and manage your Founding Member registration</li>
-                <li>Send you updates about store launches, events, and exclusive offers</li>
+                <li>Send you updates about launches, events, and exclusive offers</li>
                 <li>Personalise your experience based on your fandom preferences</li>
                 <li>Manage our loyalty programme (The Enchanted Circle)</li>
                 <li>Process transactions and send related information</li>

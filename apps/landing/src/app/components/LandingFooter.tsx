@@ -81,7 +81,7 @@ export function LandingFooter() {
           <p className="footer-copyright">
             © 2026 House of Spells. All rights reserved. · houseofspells.com is the global flagship.
             <br />
-            The UK store lives on at{' '}
+            The UK chapter lives on at{' '}
             <a href="https://www.houseofspells.co.uk" target="_blank" rel="noopener noreferrer">
               houseofspells.co.uk
             </a>

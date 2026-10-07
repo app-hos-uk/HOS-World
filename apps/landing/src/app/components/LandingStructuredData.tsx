@@ -11,7 +11,7 @@ export function LandingStructuredData() {
     name: place.storeName,
     alternateName: 'House of Spells',
     slogan: "Earth's Multi-Fandom Universe",
-    description: `House of Spells is Earth's Multi-Fandom Universe — an immersive multi-fandom experience centre in ${market.store.location}, celebrating Marvel, Star Wars, Game of Thrones, the Wizarding World, anime, gaming and more.`,
+    description: `House of Spells is Earth's Multi-Fandom Universe — an immersive fandom experience destination in ${market.store.location}, celebrating Marvel, Star Wars, Game of Thrones, the Wizarding World, anime, gaming and more.`,
     url: siteUrl,
     image: `${siteUrl}/assets/logo-emblem.png`,
     logo: `${siteUrl}/assets/logo-emblem.png`,

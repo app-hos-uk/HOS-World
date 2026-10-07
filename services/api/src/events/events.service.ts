@@ -732,6 +732,11 @@ export class EventsService {
       virtualPlatform: dto.virtualPlatform,
       venueName: dto.venueName,
       venueAddress: dto.venueAddress,
+      showOnLanding: dto.showOnLanding ?? false,
+      marketCodes: dto.marketCodes ?? [],
+      displayOrder: dto.displayOrder ?? 0,
+      trailerUrl: dto.trailerUrl?.trim() || null,
+      externalUrl: dto.externalUrl?.trim() || null,
       createdBy,
       status: 'DRAFT',
     };
@@ -773,6 +778,11 @@ export class EventsService {
     if (dto.virtualPlatform !== undefined) data.virtualPlatform = dto.virtualPlatform;
     if (dto.venueName !== undefined) data.venueName = dto.venueName;
     if (dto.venueAddress !== undefined) data.venueAddress = dto.venueAddress;
+    if (dto.showOnLanding !== undefined) data.showOnLanding = dto.showOnLanding;
+    if (dto.marketCodes !== undefined) data.marketCodes = dto.marketCodes;
+    if (dto.displayOrder !== undefined) data.displayOrder = dto.displayOrder;
+    if (dto.trailerUrl !== undefined) data.trailerUrl = dto.trailerUrl?.trim() || null;
+    if (dto.externalUrl !== undefined) data.externalUrl = dto.externalUrl?.trim() || null;
     if (dto.storeId !== undefined) {
       data.store = dto.storeId ? { connect: { id: dto.storeId } } : { disconnect: true };
     }

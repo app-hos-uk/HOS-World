@@ -23,7 +23,17 @@ export class CreateEventDto {
   shortDescription?: string;
 
   @IsOptional()
-  @IsIn(['IN_STORE', 'VIRTUAL', 'HYBRID', 'PRODUCT_LAUNCH', 'FAN_MEETUP', 'VIP_EXPERIENCE'])
+  @IsIn([
+    'IN_STORE',
+    'VIRTUAL',
+    'HYBRID',
+    'PRODUCT_LAUNCH',
+    'FAN_MEETUP',
+    'VIP_EXPERIENCE',
+    'MOVIE_RELEASE',
+    'CONVENTION',
+    'FANDOM_CELEBRATION',
+  ])
   type?: string;
 
   @IsOptional()
@@ -128,4 +138,26 @@ export class CreateEventDto {
   @IsOptional()
   @IsString()
   bannerUrl?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  showOnLanding?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  marketCodes?: string[];
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  displayOrder?: number;
+
+  @IsOptional()
+  @IsString()
+  trailerUrl?: string | null;
+
+  @IsOptional()
+  @IsString()
+  externalUrl?: string | null;
 }

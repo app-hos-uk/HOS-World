@@ -4932,6 +4932,12 @@ model Event {
   fandom   Fandom?  @relation(fields: [fandomId], references: [id], onDelete: SetNull)
   tags     String[] @default([])
 
+  showOnLanding Boolean  @default(false)
+  marketCodes   String[] @default([])
+  displayOrder  Int      @default(0)
+  trailerUrl    String?
+  externalUrl   String?
+
   hostName String?
   hostBio  String? @db.Text
   agenda   Json?
@@ -5190,4 +5196,49 @@ model GalleryImage {
 
   @@index([albumId, order])
   @@map("gallery_images")
+}
+
+model FandomNewsSource {
+  id            String   @id @default(uuid())
+  name          String
+  feedUrl       String   @unique
+  feedType      String   @default("rss")
+  logoUrl       String?
+  isActive      Boolean  @default(true)
+  marketCodes   String[] @default([])
+  categories    String[] @default([])
+  lastFetchedAt DateTime?
+  errorCount    Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  articles      FandomNewsArticle[]
+
+  @@map("fandom_news_sources")
+}
+
+model FandomNewsArticle {
+  id          String           @id @default(uuid())
+  sourceId    String
+  source      FandomNewsSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  externalUrl String           @unique
+  title       String
+  excerpt     String?          @db.Text
+  imageUrl    String?
+  videoUrl    String?
+  videoType   String?
+  mediaType   String           @default("article")
+  author      String?
+  publishedAt DateTime
+  fetchedAt   DateTime         @default(now())
+  categories  String[]         @default([])
+  marketCodes String[]         @default([])
+  status      String           @default("auto")
+  isPinned    Boolean          @default(false)
+  clicks      Int              @default(0)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([sourceId])
+  @@map("fandom_news_articles")
 }

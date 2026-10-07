@@ -148,7 +148,7 @@ export default async function LandingHomePage() {
               equal. Every fan is sovereign.
               <br />
               <br />
-              Now <strong>House Of Spells</strong> brings that vision to the centre of the world — opening in{' '}
+              Now <strong>House Of Spells</strong> brings that vision to the centre of the world —{' '}
               {market.store.location}.
             </p>
             <div className="manifesto-cta">

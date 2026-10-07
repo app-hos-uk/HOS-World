@@ -75,11 +75,11 @@ export default async function RootLayout({
   const nonce = (await headers()).get('x-nonce') ?? '';
 
   return (
-    <html lang="en-US">
-      <head>
-        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: `if(typeof process==='undefined'){window.process={env:{}}}` }} />
+    <html lang="en-US" suppressHydrationWarning>
+      <head suppressHydrationWarning>
+        <script nonce={nonce} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: `if(typeof process==='undefined'){window.process={env:{}}}` }} />
       </head>
-      <body className={`${cormorant.variable} ${inter.variable} storefront-theme antialiased`}>
+      <body className={`${cormorant.variable} ${inter.variable} storefront-theme antialiased`} suppressHydrationWarning>
         <GoogleTags nonce={nonce} />
         <Suspense fallback={null}>
           <MetaPixel nonce={nonce} />

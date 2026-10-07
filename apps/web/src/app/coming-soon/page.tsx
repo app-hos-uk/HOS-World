@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import ShopPreviewSessionSync from '@/components/ShopPreviewSessionSync';
 import { cinzel, cinzelDecorative, cormorantLanding } from '@/lib/fonts';
+import { marketContent } from '../(landing)/lib/marketContent';
 import '../(landing)/landing.css';
 
 const LOGO = '/assets/logo-emblem.png';
@@ -83,8 +84,8 @@ export default async function ComingSoonPage({ searchParams }: ComingSoonPagePro
           </div>
           <div className="cs-feat">
             <span className="cs-feat-icon">&#9812;</span>
-            <h3>Times Square, NYC</h3>
-            <p>A planet-scale fandom destination — online and in the heart of New York.</p>
+            <h3>{marketContent.comingSoonFeature.title}</h3>
+            <p>{marketContent.comingSoonFeature.text}</p>
           </div>
         </div>
 
