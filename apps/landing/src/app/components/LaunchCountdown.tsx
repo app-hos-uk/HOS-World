@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { formatLaunchLabel, launchInstantMs, marketConfig } from '../lib/marketConfig';
 
 const PLACE = marketConfig.store.location;
+const COMING_SOON = marketConfig.comingSoonLine;
 const LAUNCH_INSTANT = launchInstantMs(marketConfig) ?? Date.parse('2026-07-29T14:00:00.000Z');
 const LAUNCH_LABEL = formatLaunchLabel(marketConfig) || 'July 29, 2026 · 10:00 AM EDT';
 
@@ -96,13 +97,26 @@ function bindCountdown(root: HTMLElement) {
  * (including Next.js client navigations back to Home).
  */
 export function LaunchCountdown() {
-  const initial = getRemaining(Date.now());
+  const initial = COMING_SOON ? null : getRemaining(Date.now());
 
   useEffect(() => {
+    if (COMING_SOON) return;
     const root = document.getElementById('launch-countdown');
     if (!root) return;
     return bindCountdown(root);
   }, []);
+
+  if (COMING_SOON) {
+    return (
+      <div className="launch-countdown launch-countdown--live" role="status">
+        <p className="launch-countdown__eyebrow launch-countdown__eyebrow--celebrate">Coming Soon</p>
+        <p className="launch-countdown__headline launch-countdown__headline--live">
+          <span className="launch-countdown__place">{COMING_SOON}</span>
+        </p>
+        <p className="launch-countdown__subline">Every universe. One destination.</p>
+      </div>
+    );
+  }
 
   if (!initial) {
     return (

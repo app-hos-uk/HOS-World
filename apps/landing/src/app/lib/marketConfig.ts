@@ -59,6 +59,8 @@ export interface MarketConfig {
   };
   launchDate?: string;
   launchTimezone?: string;
+  /** Shown instead of a dated countdown when the venue has no public opening time. */
+  comingSoonLine?: string;
 }
 
 const US_CONFIG: MarketConfig = {
@@ -207,8 +209,7 @@ const MY_CONFIG: MarketConfig = {
     flagshipText:
       "Kuala Lumpur is where the region comes together. We're planting the House of Spells flag in the heart of the city — a flagship for every fan in Malaysia.",
   },
-  launchDate: '2026-11-26T10:00:00',
-  launchTimezone: 'Asia/Kuala_Lumpur',
+  comingSoonLine: 'Coming to Malaysia this November',
 };
 
 const CONFIGS: Record<string, MarketConfig> = { US: US_CONFIG, MY: MY_CONFIG };
@@ -222,6 +223,7 @@ export const marketConfig = getMarketConfig();
 
 /** True once the market's grand opening instant has passed. */
 export function venueIsOpen(config: MarketConfig = marketConfig, now = Date.now()): boolean {
+  if (config.comingSoonLine) return false;
   const instant = launchInstantMs(config);
   if (instant == null) return true;
   return now >= instant;
@@ -242,6 +244,7 @@ export function formatLaunchLabel(config: MarketConfig = marketConfig): string {
 
 /** "Grand Launch · July 29 · 10:00 AM EDT" */
 export function grandLaunchTicker(config: MarketConfig = marketConfig): string {
+  if (config.comingSoonLine) return config.comingSoonLine;
   const parts = readLaunchParts(config);
   if (!parts) return `${config.hero.locationLine} · ${config.hero.cityLine}`;
   return `Grand Launch · ${parts.month} ${parts.day} · ${parts.hour}:${parts.minute} ${parts.dayPeriod} ${parts.timeZoneName}`;

@@ -58,7 +58,11 @@ export function LandingFooter() {
                   <br />
                   {marketConfig.store.location}
                 </address>
-                {launchLabel ? <p className="footer-hours">Grand launch · {launchLabel}</p> : null}
+                {marketConfig.comingSoonLine ? (
+                  <p className="footer-hours">{marketConfig.comingSoonLine}</p>
+                ) : launchLabel ? (
+                  <p className="footer-hours">Grand launch · {launchLabel}</p>
+                ) : null}
               </>
             )}
           </div>
