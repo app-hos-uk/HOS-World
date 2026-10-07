@@ -61,14 +61,13 @@ export function pickFandomTeaser(items: FandomWorldItem[], limit = 6): FandomWor
   return picked;
 }
 
-export async function fetchFandomWorldFeed(limit = 6): Promise<FandomWorldItem[]> {
+export async function fetchFandomWorldFeed(limit = 6, marketOverride?: string): Promise<FandomWorldItem[]> {
   if (!API_URL) return [];
 
   try {
-    const params = new URLSearchParams({
-      market: MARKET_CODE,
-      limit: String(limit),
-    });
+    const market = marketOverride !== undefined ? marketOverride : MARKET_CODE;
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (market) params.set('market', market);
     const base = API_URL.replace(/\/+$/, '');
     const prefix = base.endsWith('/api') ? base : `${base}/api`;
     const res = await fetch(`${prefix}/fandom-world/feed?${params.toString()}`, {

@@ -2,6 +2,31 @@ import { getSiteUrl } from '../../lib/siteUrls';
 import { getMarketConfig, marketSameAs, storeMapsUrl, venueIsOpen } from '../lib/marketConfig';
 
 export function LandingStructuredData() {
+  if (process.env.NEXT_PUBLIC_SITE_ROLE === 'hub') {
+    const organizationSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: 'House of Spells',
+      alternateName: "Earth's Multi-Fandom Universe",
+      url: 'https://houseofspells.com',
+      sameAs: [
+        'https://www.houseofspells.co.uk',
+        'https://us.houseofspells.com',
+        'https://houseofspells.my',
+        'https://shop.houseofspells.com',
+      ],
+    };
+
+    return (
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(organizationSchema),
+        }}
+      />
+    );
+  }
+
   const market = getMarketConfig();
   const siteUrl = getSiteUrl();
   const place = market.structuredData;

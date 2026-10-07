@@ -9,15 +9,19 @@ import { LandingStructuredData } from './components/LandingStructuredData';
 import './landing.css';
 
 const market = getMarketConfig();
+const isHub = process.env.NEXT_PUBLIC_SITE_ROLE === 'hub';
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   ...landingPageMetadata({
-    title:
-      market.code === 'US'
+    title: isHub
+      ? "House of Spells — Earth's Multi-Fandom Universe"
+      : market.code === 'US'
         ? "House of Spells — Earth's Multi-Fandom Universe"
         : `House of Spells ${market.country} — Earth's Multi-Fandom Universe`,
-    description: `House of Spells — the multi-fandom flagship in ${market.store.location}. Every universe. One destination. Register for founding membership.`,
+    description: isHub
+      ? 'Every fandom. Every universe. One destination. Established in the UK, now open in Times Square, New York, and coming to Kuala Lumpur, Malaysia in November 2026.'
+      : `House of Spells — the multi-fandom flagship in ${market.store.location}. Every universe. One destination. Register for founding membership.`,
     path: '/',
   }),
   manifest: '/landing/site.webmanifest',
