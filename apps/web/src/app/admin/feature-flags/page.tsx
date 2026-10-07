@@ -245,7 +245,7 @@ export default function AdminFeatureFlagsPage() {
                           </div>
                           <button
                             onClick={() => handleToggle(flag, flags[flag])}
-                            disabled={toggling === flag || (FLAG_DEPENDENCIES[flag]?.requires && !flags[FLAG_DEPENDENCIES[flag].requires!])}
+                            disabled={toggling === flag || !!(FLAG_DEPENDENCIES[flag]?.requires && !flags[FLAG_DEPENDENCIES[flag].requires!])}
                             className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-hos-gold/50 focus:ring-offset-2 focus:ring-offset-hos-bg-secondary disabled:opacity-50 ${
                               flags[flag] ? 'bg-hos-gold' : 'bg-hos-border'
                             }`}
