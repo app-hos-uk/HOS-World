@@ -809,10 +809,23 @@ export class LightspeedAdapter implements POSAdapter {
       ],
       condition:
         payload.minCartValue && payload.minCartValue > 0
-          ? { type: 'sale_price', min_price: payload.minCartValue, include: [], exclude: [] }
+          ? {
+              type: 'sale_price',
+              min_price: payload.minCartValue,
+              quantity: 1,
+              include: [],
+              exclude: [],
+            }
           : { type: 'product_set', quantity: 1, include: [], exclude: [] },
       action: {
-        type: payload.discountType ?? 'basic_fixed_discount',
+        // basic_* actions are Lightspeed "basic" promos and ignore sale_price
+        // at the register. Spend-threshold codes must use a pool (advanced) action.
+        type:
+          payload.minCartValue && payload.minCartValue > 0
+            ? payload.discountType === 'basic_percent_discount'
+              ? 'percent_pool_discount'
+              : 'fixed_pool_discount'
+            : (payload.discountType ?? 'basic_fixed_discount'),
         value: payload.discountValue,
       },
       loyalty_multiplier: payload.loyaltyMultiplier ?? 0,

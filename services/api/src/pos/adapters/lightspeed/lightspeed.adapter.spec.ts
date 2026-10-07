@@ -875,5 +875,37 @@ describe('LightspeedAdapter', () => {
       );
       expect(promo.id).toBe('promo-1');
     });
+
+    it('pairs minCartValue with sale_price + fixed_pool_discount', async () => {
+      const adapter = new LightspeedAdapter(creds);
+      const request = mockClientRequest(adapter);
+      request.mockResolvedValueOnce({
+        status: 201,
+        data: { data: { id: 'promo-2', name: 'HOS Loyalty – USD 10.00', status: 'active' } },
+      });
+      await adapter.createPromotion({
+        name: 'HOS Loyalty – USD 10.00',
+        startTime: '2026-10-07T15:00:00',
+        endTime: '2026-10-07T19:00:00',
+        promoCode: 'HOS-LYL-MINCART1',
+        discountValue: 10,
+        minCartValue: 33.34,
+      });
+      expect(request).toHaveBeenCalledWith(
+        'POST',
+        '/promotions',
+        expect.objectContaining({
+          condition: {
+            type: 'sale_price',
+            min_price: 33.34,
+            quantity: 1,
+            include: [],
+            exclude: [],
+          },
+          action: { type: 'fixed_pool_discount', value: 10 },
+        }),
+        { apiVersion: '2026-04' },
+      );
+    });
   });
 });
