@@ -34,6 +34,9 @@ export class UpdateLoyaltySettingsDto {
   @IsOptional() @IsBoolean() clawEarnOnReturn?: boolean;
   @IsOptional() @IsBoolean() restoreBurnOnCancel?: boolean;
   @IsOptional() @IsBoolean() restoreBurnOnReturn?: boolean;
+  @IsOptional() @IsInt() @Min(1) maxRedemptionPercent?: number;
+  @IsOptional() @IsInt() @Min(0) maxRedemptionPointsPerOrder?: number;
+  @IsOptional() @IsInt() @Min(0) dailyRedemptionPointsLimit?: number;
 }
 
 export class UpdateLoyaltyTierDto {
