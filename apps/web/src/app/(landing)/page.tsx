@@ -8,6 +8,8 @@ import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from './lib/con
 import { marketContent } from './lib/marketContent';
 import { fetchGalleryAlbums } from './lib/galleryApi';
 import { fetchFandomWorldFeed } from './lib/fandomWorldApi';
+
+export const dynamic = 'force-dynamic';
 import { FandomWorldFeed } from './components/FandomWorldFeed';
 
 export default async function LandingHomePage() {

@@ -10,6 +10,8 @@ import { LANDING_LOGO, LANDING_REGISTER_PATH, LANDING_WORDMARK } from './lib/con
 import { fetchGalleryAlbums } from './lib/galleryApi';
 import { getMarketConfig } from './lib/marketConfig';
 
+export const dynamic = 'force-dynamic';
+
 export default async function LandingHomePage() {
   if (process.env.NEXT_PUBLIC_SITE_ROLE === 'hub') {
     const { GlobalHub } = await import('./components/GlobalHub');
