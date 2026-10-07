@@ -820,6 +820,10 @@ export class LightspeedAdapter implements POSAdapter {
     if (payload.description) body.description = payload.description;
     if (payload.outletIds?.length) body.outlet_ids = payload.outletIds;
 
+    // #region agent log
+    console.log(`[DEBUG-08d918] Lightspeed createPromotion body: ${JSON.stringify({payloadMinCartValue:payload.minCartValue,condition:body.condition,action:body.action,promoCode:(body.add_promo_code as any)?.[0]?.code})}`);
+    // #endregion
+
     const { data } = await this.promotionsRequest<{ data?: Record<string, unknown> }>(
       'POST',
       '/promotions',

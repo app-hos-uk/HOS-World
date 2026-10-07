@@ -562,6 +562,9 @@ export class PosPromoCodeService {
         voucher.redemption.option?.minCartValue,
         voucher.store.marketId ?? undefined,
       );
+      // #region agent log
+      this.logger.log(`[DEBUG-08d918] createPromotion inputs: ${JSON.stringify({promoCode:voucher.promoCode,amount,effectiveMin,optionMinCartValue:voucher.redemption.option?.minCartValue??null,storeMarketId:voucher.store.marketId??null,hasOption:!!voucher.redemption.option})}`);
+      // #endregion
       created = await adapter.createPromotion!({
         name: `HOS Loyalty – ${voucher.currency} ${amount.toFixed(2)}`,
         description: `Enchanted Circle redemption ${voucher.redemptionId}`,
@@ -732,6 +735,9 @@ export class PosPromoCodeService {
         : 0;
 
     const effective = Math.max(optionMin, capMin);
+    // #region agent log
+    this.logger.log(`[DEBUG-08d918] computeEffectiveMinCart: ${JSON.stringify({discountAmount,optionMinCartValueRaw:String(optionMinCartValue),optionMin,marketId:marketId??null,maxPercent,capMin,effective,returning:effective>0?effective:undefined})}`);
+    // #endregion
     return effective > 0 ? effective : undefined;
   }
 
