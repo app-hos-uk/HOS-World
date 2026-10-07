@@ -50,9 +50,10 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-COPY --from=base /app/apps/landing/.next/standalone ./
-COPY --from=base /app/apps/landing/.next/static ./apps/landing/.next/static
-COPY --from=base /app/apps/landing/public ./apps/landing/public
+COPY --from=base --chown=node:node /app/apps/landing/.next/standalone ./
+COPY --from=base --chown=node:node /app/apps/landing/.next/static ./apps/landing/.next/static
+COPY --from=base --chown=node:node /app/apps/landing/public ./apps/landing/public
+RUN mkdir -p apps/landing/.next/cache && chown -R node:node apps/landing/.next
 
 USER node
 EXPOSE 3000
