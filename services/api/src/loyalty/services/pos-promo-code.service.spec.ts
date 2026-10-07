@@ -54,8 +54,9 @@ describe('PosPromoCodeService', () => {
       clientId: redemptionId,
       status: 'PENDING',
       ttlExpiresAt: new Date(Date.now() + 3_600_000),
-      redemption: { pointsSpent: 500, status: 'COMPLETED' },
+      redemption: { pointsSpent: 500, status: 'COMPLETED', option: { minCartValue: null } },
       store: {
+        marketId: null,
         timezone: 'America/New_York',
         posConnection: {
           isActive: true,
@@ -151,6 +152,7 @@ describe('PosPromoCodeService', () => {
           defaultRedeemValue: 0.01,
           posVoucherMinAmount: 1,
           posVoucherMaxAmount: 500,
+          maxRedemptionPercent: 100,
         },
       }),
     };
@@ -271,8 +273,9 @@ describe('PosPromoCodeService', () => {
         clientId: redemptionId,
         status: 'PENDING',
         ttlExpiresAt: new Date(Date.now() + 3_600_000),
-        redemption: { pointsSpent: 500, status: 'COMPLETED' },
+        redemption: { pointsSpent: 500, status: 'COMPLETED', option: { minCartValue: null } },
         store: {
+          marketId: null,
           timezone: 'America/New_York',
           posConnection: {
             isActive: true,
@@ -371,5 +374,133 @@ describe('PosPromoCodeService', () => {
         data: expect.objectContaining({ externalPromotionId: 'promo-ls-1' }),
       }),
     );
+  });
+
+  it('derives effective minCartValue from maxRedemptionPercent when option has no minCartValue', async () => {
+    const voucherFindUnique = jest.fn().mockImplementation(({ where }: any) => {
+      if (where?.redemptionId) return Promise.resolve(null);
+      return Promise.resolve({
+        id: 'voucher-1',
+        membershipId,
+        redemptionId,
+        storeId,
+        type: 'PROMO_CODE',
+        cardNumber: 'HOS-LYL-ABCD2345',
+        promoCode: 'HOS-LYL-ABCD2345',
+        amount: new Decimal('10.00'),
+        currency: 'USD',
+        clientId: redemptionId,
+        status: 'PENDING',
+        ttlExpiresAt: new Date(Date.now() + 3_600_000),
+        redemption: { pointsSpent: 1000, status: 'COMPLETED', option: { minCartValue: null } },
+        store: {
+          marketId: null,
+          timezone: 'America/New_York',
+          posConnection: {
+            isActive: true,
+            provider: 'lightspeed',
+            credentials: 'enc',
+            externalOutletId: 'outlet-1',
+          },
+        },
+      });
+    });
+    const { svc, adapter } = build({
+      option: { ...defaultOption, value: new Decimal('10.00'), pointsCost: 1000 },
+      voucherFindUnique,
+    });
+    // Override settings to set maxRedemptionPercent to 30%
+    (svc as any).loyaltySettings.getResolved.mockResolvedValue({
+      settings: {
+        posVoucherEnabled: true,
+        posRedemptionMethod: 'PROMO_CODE',
+        defaultRedeemValue: 0.01,
+        posVoucherMinAmount: 1,
+        posVoucherMaxAmount: 500,
+        maxRedemptionPercent: 30,
+      },
+    });
+    await svc.redeemForPromoCode({
+      points: 1000,
+      storeId,
+      membershipId,
+      optionId,
+      idempotencyKey,
+    });
+    const call = adapter.createPromotion.mock.calls[0][0];
+    // $10 / 30% = $33.34 (rounded up to nearest cent)
+    expect(call.minCartValue).toBeCloseTo(33.34, 1);
+  });
+
+  it('uses the higher of option.minCartValue and percent-implied minimum', async () => {
+    const voucherFindUnique = jest.fn().mockImplementation(({ where }: any) => {
+      if (where?.redemptionId) return Promise.resolve(null);
+      return Promise.resolve({
+        id: 'voucher-1',
+        membershipId,
+        redemptionId,
+        storeId,
+        type: 'PROMO_CODE',
+        cardNumber: 'HOS-LYL-ABCD2345',
+        promoCode: 'HOS-LYL-ABCD2345',
+        amount: new Decimal('10.00'),
+        currency: 'USD',
+        clientId: redemptionId,
+        status: 'PENDING',
+        ttlExpiresAt: new Date(Date.now() + 3_600_000),
+        redemption: {
+          pointsSpent: 1000,
+          status: 'COMPLETED',
+          option: { minCartValue: new Decimal('50.00') },
+        },
+        store: {
+          marketId: null,
+          timezone: 'America/New_York',
+          posConnection: {
+            isActive: true,
+            provider: 'lightspeed',
+            credentials: 'enc',
+            externalOutletId: 'outlet-1',
+          },
+        },
+      });
+    });
+    const { svc, adapter } = build({
+      option: { ...defaultOption, value: new Decimal('10.00'), pointsCost: 1000, minCartValue: new Decimal('50.00') },
+      voucherFindUnique,
+    });
+    (svc as any).loyaltySettings.getResolved.mockResolvedValue({
+      settings: {
+        posVoucherEnabled: true,
+        posRedemptionMethod: 'PROMO_CODE',
+        defaultRedeemValue: 0.01,
+        posVoucherMinAmount: 1,
+        posVoucherMaxAmount: 500,
+        maxRedemptionPercent: 30,
+      },
+    });
+    await svc.redeemForPromoCode({
+      points: 1000,
+      storeId,
+      membershipId,
+      optionId,
+      idempotencyKey,
+    });
+    const call = adapter.createPromotion.mock.calls[0][0];
+    // option minCartValue ($50) > percent-implied ($33.34), so $50 wins
+    expect(call.minCartValue).toBe(50);
+  });
+
+  it('sends no minCartValue when maxRedemptionPercent is 100 and option has none', async () => {
+    const { svc, adapter } = build({});
+    await svc.redeemForPromoCode({
+      points: 500,
+      storeId,
+      membershipId,
+      optionId,
+      idempotencyKey,
+    });
+    const call = adapter.createPromotion.mock.calls[0][0];
+    expect(call.minCartValue).toBeUndefined();
   });
 });

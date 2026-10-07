@@ -168,7 +168,7 @@ export class PosPromoCodeService {
       }
     }
 
-    await this.assertAmountLimits(amount, currency);
+    await this.assertAmountLimits(amount, currency, store.marketId ?? undefined);
 
     const { redemptionId } = await this.burn.processRedemption({
       membershipId,
@@ -557,7 +557,11 @@ export class PosPromoCodeService {
 
     let created: { id: string } | null = null;
     try {
-      const minCart = voucher.redemption.option?.minCartValue;
+      const effectiveMin = await this.computeEffectiveMinCart(
+        amount,
+        voucher.redemption.option?.minCartValue,
+        voucher.store.marketId ?? undefined,
+      );
       created = await adapter.createPromotion!({
         name: `HOS Loyalty – ${voucher.currency} ${amount.toFixed(2)}`,
         description: `Enchanted Circle redemption ${voucher.redemptionId}`,
@@ -570,7 +574,7 @@ export class PosPromoCodeService {
         discountType: 'basic_fixed_discount',
         discountValue: amount,
         loyaltyMultiplier: 0,
-        minCartValue: minCart != null ? Number(minCart) : undefined,
+        minCartValue: effectiveMin,
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Promotion create failed';
@@ -706,8 +710,33 @@ export class PosPromoCodeService {
     return fallback;
   }
 
-  private async assertAmountLimits(amount: number, currency: string): Promise<void> {
-    const { settings } = await this.loyaltySettings.getResolved();
+  /**
+   * Computes the effective Lightspeed min_price so the register enforces both
+   * the option's explicit minCartValue AND the maxRedemptionPercent cap.
+   *
+   * Without this, the percentage cap is only checked against the self-reported
+   * purchaseSubtotal at issue time — Lightspeed would accept the code on any cart.
+   */
+  private async computeEffectiveMinCart(
+    discountAmount: number,
+    optionMinCartValue: Decimal | number | null | undefined,
+    marketId?: string,
+  ): Promise<number | undefined> {
+    const optionMin = optionMinCartValue != null ? Number(optionMinCartValue) : 0;
+
+    const { settings } = await this.loyaltySettings.getResolved(marketId);
+    const maxPercent = settings.maxRedemptionPercent;
+    const capMin =
+      Number.isFinite(maxPercent) && maxPercent > 0 && maxPercent < 100
+        ? Math.ceil((discountAmount / maxPercent) * 100 * 100) / 100
+        : 0;
+
+    const effective = Math.max(optionMin, capMin);
+    return effective > 0 ? effective : undefined;
+  }
+
+  private async assertAmountLimits(amount: number, currency: string, marketId?: string): Promise<void> {
+    const { settings } = await this.loyaltySettings.getResolved(marketId);
     const min = settings.posVoucherMinAmount;
     const max = settings.posVoucherMaxAmount;
     if (Number.isFinite(min) && amount < min) {
