@@ -19,9 +19,6 @@ COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/utils/package.json ./packages/utils/
 COPY packages/api-client/package.json ./packages/api-client/
 COPY packages/theme-system/package.json ./packages/theme-system/
-COPY packages/cms-client/package.json ./packages/cms-client/
-COPY packages/events/package.json ./packages/events/
-COPY packages/observability/package.json ./packages/observability/
 
 RUN pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
@@ -33,7 +30,6 @@ RUN cd packages/shared-types && pnpm build \
     && cd ../utils && pnpm build \
     && cd ../api-client && pnpm build \
     && cd ../theme-system && pnpm build \
-    && cd ../cms-client && pnpm build \
     && cd ../../services/api && pnpm db:generate \
     && pnpm build \
     && test -f dist/main.js
